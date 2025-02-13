@@ -1,0 +1,106 @@
+﻿{
+  "$schema": "https://raw.githubusercontent.com/Ghost1372/DevWinUI/refs/heads/main/AppData.Schema.json",
+  "Groups": [
+    {
+      "UniqueId": "AutoOS",
+      "Title": "AutoOS",
+      "ImagePath": "ms-appx:///Assets/AppIcon.png",
+      "IsSpecialSection": false,
+      "ShowItemsWithoutGroup": true,
+      "IsExpanded": false,
+      "Items": [
+        {
+          "UniqueId": "AutoOS.Views.Settings.HomeLandingPage",
+          "Title": "Home",
+          "Subtitle": "Home Page",
+          "ImagePath": "ms-appx:///Assets/Fluent/Home.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Settings.DisplayPage",
+          "Title": "Display",
+          "Subtitle": "Manage your CRU profiles",
+          "ImagePath": "ms-appx:///Assets/Fluent/Display.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Settings.GraphicsPage",
+          "Title": "Graphics Card",
+          "Subtitle": "Graphics Card",
+          "ImagePath": "ms-appx:///Assets/Fluent/Gpu.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Settings.SchedulingPage",
+          "Title": "Per-CPU Scheduling",
+          "Subtitle": "Per-CPU Scheduling",
+          "ImagePath": "ms-appx:///Assets/Fluent/Cpu.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Settings.TimerPage",
+          "Title": "Timer Resolution",
+          "Subtitle": "Timer Resolution",
+          "ImagePath": "ms-appx:///Assets/Fluent/Timer.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Settings.DevicesPage",
+          "Title": "Bluetooth & Devices",
+          "Subtitle": "Bluetooth & Devices",
+          "ImagePath": "ms-appx:///Assets/Fluent/Bluetooth.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Settings.InternetPage",
+          "Title": "Network & Internet",
+          "Subtitle": "Network & Internet",
+          "ImagePath": "ms-appx:///Assets/Fluent/Internet.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Settings.PowerPage",
+          "Title": "Energy & Power",
+          "Subtitle": "Energy & Power",
+          "ImagePath": "ms-appx:///Assets/Fluent/Power.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Settings.ServicesPage",
+          "Title": "Services & Drivers",
+          "Subtitle": "Services & Drivers",
+          "ImagePath": "ms-appx:///Assets/Fluent/Services.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Settings.LoggingPage",
+          "Title": "Tracking & Logging",
+          "Subtitle": "Tracking & Logging",
+          "ImagePath": "ms-appx:///Assets/Fluent/Logging.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Settings.SecurityPage",
+          "Title": "Windows Security",
+          "Subtitle": "Windows Security",
+          "ImagePath": "ms-appx:///Assets/Fluent/Security.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Settings.UpdatePage",
+          "Title": "Windows Update",
+          "Subtitle": "Windows Update",
+          "ImagePath": "ms-appx:///Assets/Fluent/Update.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Settings.GamesPage",
+          "Title": "Games",
+          "Subtitle": "Games",
+          "ImagePath": "ms-appx:///Assets/Fluent/Games.png",
+          "HideItem": true
+        }
+      ]
+    }
+  ]
+}

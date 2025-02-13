@@ -1,0 +1,254 @@
+﻿using System.Diagnostics;
+using Microsoft.Win32;
+
+namespace AutoOS.Views.Installer;
+
+public sealed partial class PersonalizationPage : Page
+{
+    private string nsudoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NSudo", "NSudoLC.exe");
+    private bool isInitializingThemeState = true;
+    private bool isInitializingContextMenuState = true;
+    private bool isInitializingTrayIconsState = true;
+    private bool isInitializingShowMyTaskbarOnAllDisplaysState = true;
+    private bool isInitializingStartAllBackState = true;
+    private bool isInitializingTaskbarAlignmentState = true;
+
+    public PersonalizationPage()
+    {
+        InitializeComponent();
+        GetItems();
+        GetTheme();
+        GetContextMenuState();
+        GetTaskbarAlignmentState();
+        GetShowMyTaskbarOnAllDisplaysState();
+        GetTrayIconsState();
+        GetStartAllBackState();
+    }
+
+    public class GridViewItem
+    {
+        public string ImageSource { get; set; }
+    }
+
+    private void GetItems()
+    {
+        // add theme items
+        Themes.ItemsSource = new List<GridViewItem>
+        {
+            new GridViewItem { ImageSource = "ms-appx:///Assets/Fluent/Light.jpg" },
+            new GridViewItem { ImageSource = "ms-appx:///Assets/Fluent/Dark.jpg" }
+        };
+    }
+
+    private void GetTheme()
+    {
+        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
+        string selectedBrand = key?.GetValue("Theme") as string;
+
+        // default to light theme
+        if (string.IsNullOrEmpty(selectedBrand))
+        {
+            key?.SetValue("Theme", "Light", RegistryValueKind.String);
+            selectedBrand = "Light";
+        }
+
+        // select the theme
+        Themes.SelectedIndex = selectedBrand == "Light" ? 0 : selectedBrand == "Dark" ? 1 : -1;
+
+        isInitializingThemeState = false;
+    }
+
+    private async void Theme_Changed(object sender, RoutedEventArgs e)
+    {
+        if (isInitializingThemeState) return;
+
+        // set value
+        Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS")?
+            .SetValue("Theme", Themes.SelectedIndex == 0 ? "Light" : "Dark", RegistryValueKind.String);
+
+        // declare theme
+        string theme = Themes.SelectedIndex == 0 ? @"C:\Windows\Resources\Themes\aero.theme" : @"C:\Windows\Resources\Themes\dark.theme";
+
+        // rename settings
+        await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:T -P:E -Wait -ShowWindowMode:Hide cmd /c taskkill /f /im SystemSettings.exe & ren C:\\Windows\\ImmersiveControlPanel\\SystemSettings.exe SystemSettings.exee", CreateNoWindow = true }).WaitForExit());
+
+        // change theme
+        await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:P -P:E -Wait -ShowWindowMode:Hide cmd /c start \"\" \"{theme}\"", CreateNoWindow = true }).WaitForExit());
+            
+        await Task.Delay(1000);
+
+        // rename settings back
+        await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:T -P:E -Wait -ShowWindowMode:Hide cmd /c taskkill /f /im SystemSettings.exe & ren C:\\Windows\\ImmersiveControlPanel\\SystemSettings.exee SystemSettings.exe", CreateNoWindow = true }).WaitForExit());
+    }
+
+
+    private void GetContextMenuState()
+    {
+        // get state
+        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
+        var value = key?.GetValue("LegacyContextMenu");
+
+        if (value == null)
+        {
+            key?.SetValue("LegacyContextMenu", 1, RegistryValueKind.DWord);
+            ContextMenu.IsOn = true;
+        }
+        else
+        {
+            ContextMenu.IsOn = (int)value == 1;
+        }
+
+        isInitializingContextMenuState = false;
+    }
+
+    private void ContextMenu_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (isInitializingContextMenuState) return;
+
+        // set value
+        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
+        key?.SetValue("LegacyContextMenu", ContextMenu.IsOn ? 1 : 0, RegistryValueKind.DWord);
+    }
+
+
+    private void GetTrayIconsState()
+    {
+        // get state
+        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
+        var value = key?.GetValue("AlwaysShowTrayIcons");
+
+        if (value == null)
+        {
+            key?.SetValue("AlwaysShowTrayIcons", 1, RegistryValueKind.DWord);
+            TrayIcons.IsChecked = true;
+        }
+        else
+        {
+            TrayIcons.IsChecked = (int)value == 1;
+        }
+
+        isInitializingTrayIconsState = false;
+    }
+
+    private void TrayIcons_Click(object sender, RoutedEventArgs e)
+    {
+        if (isInitializingTrayIconsState) return;
+
+        // set value
+        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
+        key?.SetValue("AlwaysShowTrayIcons", TrayIcons.IsChecked ?? false ? 1 : 0, RegistryValueKind.DWord);
+    }
+
+    private void GetShowMyTaskbarOnAllDisplaysState()
+    {
+        // get state
+        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
+        var value = key?.GetValue("ShowMyTaskbarOnAllDisplays");
+
+        if (value == null)
+        {
+            key?.SetValue("ShowMyTaskbarOnAllDisplays", 1, RegistryValueKind.DWord);
+            ShowMyTaskbarOnAllDisplays.IsChecked = true;
+        }
+        else
+        {
+            ShowMyTaskbarOnAllDisplays.IsChecked = (int)value == 1;
+        }
+
+        isInitializingShowMyTaskbarOnAllDisplaysState = false;
+    }
+
+    private void ShowMyTaskbarOnAllDisplays_Click(object sender, RoutedEventArgs e)
+    {
+        if (isInitializingShowMyTaskbarOnAllDisplaysState) return;
+
+        // set value
+        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
+        key?.SetValue("ShowMyTaskbarOnAllDisplays", ShowMyTaskbarOnAllDisplays.IsChecked ?? false ? 1 : 0, RegistryValueKind.DWord);
+    }
+
+    private void GetTaskbarAlignmentState()
+    {
+        // get state
+        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
+        string value = key?.GetValue("TaskbarAlignment") as string ?? "Left";
+
+        TaskbarAlignment.SelectedIndex = value switch
+        {
+            "Left" => 0,
+            "Center" => 1,
+            _ => 0
+        };
+
+        // change header icon
+        TaskbarIcon.HeaderIcon = value switch
+        {
+            "Left" => new SymbolIcon(Symbol.AlignLeft),
+            "Center" => new SymbolIcon(Symbol.AlignCenter),
+            _ => new SymbolIcon(Symbol.AlignLeft)
+        };
+
+        // default to left
+        if (key?.GetValue("TaskbarAlignment") == null)
+        {
+            key?.SetValue("TaskbarAlignment", "Left", RegistryValueKind.String);
+        }
+
+        isInitializingTaskbarAlignmentState = false;
+    }
+
+
+    private void TaskbarAlignment_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (isInitializingTaskbarAlignmentState) return;
+
+        // set value
+        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
+        string alignment = TaskbarAlignment.SelectedIndex == 0 ? "Left" : "Center";
+        key?.SetValue("TaskbarAlignment", alignment, RegistryValueKind.String);
+
+        // change header icon
+        TaskbarIcon.HeaderIcon = new SymbolIcon(alignment == "Left" ? Symbol.AlignLeft : Symbol.AlignCenter);
+    }
+
+
+    private void GetStartAllBackState()
+    {
+        // get value
+        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
+        string value = key?.GetValue("StartAllBack") as string ?? "Always";
+
+        StartAllBack.SelectedIndex = value switch
+        {
+            "Always" => 0,
+            "Toggle with services" => 1,
+            "Never" => 2,
+            _ => 0
+        };
+
+        // default to left
+        if (key?.GetValue("StartAllBack") == null)
+        {
+            key?.SetValue("StartAllBack", "Always", RegistryValueKind.String);
+        }
+
+        isInitializingStartAllBackState = false;
+    }
+
+    private void StartAllBack_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (isInitializingStartAllBackState) return;
+
+        // set value
+        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
+        string value = StartAllBack.SelectedIndex switch
+        {
+            0 => "Always",
+            1 => "Toggle with services",
+            2 => "Never",
+            _ => null
+        };
+        key?.SetValue("StartAllBack", value, RegistryValueKind.String);
+    }
+}
+

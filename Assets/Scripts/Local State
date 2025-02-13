@@ -1,0 +1,55 @@
+{
+  "browser": {
+    "first_run_finished": true
+  },
+  "background_mode": {
+    "enabled": false
+  },
+  "brave": {
+    "dont_ask_for_crash_reporting": true,
+    "ens": {
+      "resolve_method": 1
+    },
+    "sns": {
+      "resolve_method": 1
+    },
+    "unstoppable_domains": {
+      "resolve_method": 1
+    },
+    "widevine_opted_in": false,
+    "p3a": {
+      "enabled": false
+    },
+    "stats": {
+      "reporting_enabled": false
+    },
+    "ad_block": {
+      "checked_all_default_regions": true,
+      "cookie_list_setting_touched": true,
+      "mobile_notifications_list_setting_touched": true,
+      "regional_filters": {
+        "319A754E-065A-465F-B09D-3F2C7BF1E67B": {
+          "enabled": false
+        },
+        "67E792D4-AE03-4D1A-9EDE-80E01C81F9B8": {
+          "enabled": true
+        }
+      }
+    }
+  },
+  "user_experience_metrics": {
+    "reporting_enabled": false
+  },
+  "dns_over_https": {
+    "mode": "secure",
+    "templates": "https://dns.adguard-dns.com/dns-query"
+  },
+  "hardware_acceleration_mode": {
+    "enabled": false
+  },
+  "performance_tuning": {
+    "high_efficiency_mode": {
+      "state": 2
+    }
+  }
+}

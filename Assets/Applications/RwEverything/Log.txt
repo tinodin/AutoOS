@@ -1,0 +1,6 @@
+OS=6.2.9200, 64bit=1
+WNT_6.2A,Windows 8 64,12
+Driver install=712
+SIO Vendor detected: SMSC
+SMBUS detected: Intel PCH
+PCI: Enumerating PCI Bus...

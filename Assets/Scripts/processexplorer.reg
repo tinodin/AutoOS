@@ -1,0 +1,165 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Software\Sysinternals\Process Explorer]
+"EulaAccepted"=dword:00000001
+"Windowplacement"=hex:2c,00,00,00,02,00,00,00,03,00,00,00,00,00,00,00,00,00,00,\
+  00,ff,ff,ff,ff,ff,ff,ff,ff,64,00,00,00,32,00,00,00,84,03,00,00,8a,02,00,00
+"FindWindowplacement"=hex:2c,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,\
+  00,00,00,00,00,00,00,00,00,00,00,96,00,00,00,96,00,00,00,00,00,00,00,00,00,\
+  00,00
+"SysinfoWindowplacement"=hex:2c,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,\
+  00,00,00,00,00,00,00,00,00,00,00,00,28,00,00,00,28,00,00,00,00,00,00,00,00,\
+  00,00,00
+"PropWindowplacement"=hex:2c,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,\
+  00,00,00,00,00,00,00,00,00,00,00,28,00,00,00,28,00,00,00,00,00,00,00,00,00,\
+  00,00
+"DllPropWindowplacement"=hex:2c,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,\
+  00,00,00,00,00,00,00,00,00,00,00,00,28,00,00,00,28,00,00,00,00,00,00,00,00,\
+  00,00,00
+"UnicodeFont"=hex:08,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,90,01,00,00,\
+  00,00,00,00,00,00,00,00,4d,00,53,00,20,00,53,00,68,00,65,00,6c,00,6c,00,20,\
+  00,44,00,6c,00,67,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,\
+  00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+"Divider"=hex:00,00,00,00,00,00,e0,3f
+"SavedDivider"=hex:00,00,00,00,00,00,e0,3f
+"ProcessImageColumnWidth"=dword:0000010d
+"ShowUnnamedHandles"=dword:00000000
+"ShowDllView"=dword:00000002
+"HandleSortColumn"=dword:00000000
+"HandleSortDirection"=dword:00000001
+"DllSortColumn"=dword:00000000
+"DllSortDirection"=dword:00000001
+"ProcessSortColumn"=dword:00000000
+"ProcessSortDirection"=dword:00000000
+"HighlightServices"=dword:00000001
+"HighlightOwnProcesses"=dword:00000001
+"HighlightRelocatedDlls"=dword:00000000
+"HighlightJobs"=dword:00000000
+"HighlightNewProc"=dword:00000001
+"HighlightDelProc"=dword:00000001
+"HighlightImmersive"=dword:00000001
+"HighlightProtected"=dword:00000000
+"HighlightPacked"=dword:00000001
+"HighlightNetProcess"=dword:00000000
+"HighlightSuspend"=dword:00000001
+"HighlightDuration"=dword:000003e8
+"ShowCpuFractions"=dword:00000001
+"ShowLowerpane"=dword:00000000
+"ShowAllUsers"=dword:00000001
+"ShowProcessTree"=dword:00000001
+"SymbolWarningShown"=dword:00000000
+"HideWhenMinimized"=dword:00000000
+"AlwaysOntop"=dword:00000000
+"OneInstance"=dword:00000001
+"NumColumnSets"=dword:00000000
+"ConfirmKill"=dword:00000000
+"RefreshRate"=dword:000003e8
+"PrcessColumnCount"=dword:0000000c
+"DllColumnCount"=dword:00000004
+"HandleColumnCount"=dword:00000002
+"DefaultProcPropPage"=dword:00000000
+"DefaultSysInfoPage"=dword:00000000
+"DefaultDllPropPage"=dword:00000000
+"DbgHelpPath"="C:\\Windows\\SYSTEM32\\dbghelp.dll"
+"SymbolPath"=""
+"ColorPacked"=dword:00ff0080
+"ColorPackedDark"=dword:0037001c
+"ColorImmersive"=dword:00eaea00
+"ColorImmersiveDark"=dword:00333300
+"ColorOwn"=dword:00ffd0d0
+"ColorOwnDark"=dword:00640000
+"ColorServices"=dword:00d0d0ff
+"ColorServicesDark"=dword:00000064
+"ColorRelocatedDlls"=dword:00a0ffff
+"ColorRelocatedDllsDark"=dword:00005959
+"ColorGraphBk"=dword:00f0f0f0
+"ColorGraphBkDark"=dword:00343434
+"ColorJobs"=dword:00006cd0
+"ColorJobsDark"=dword:0000172d
+"ColorDelProc"=dword:004646ff
+"ColorDelProcDark"=dword:00000046
+"ColorNewProc"=dword:0046ff46
+"ColorNewProcDark"=dword:00004600
+"ColorNet"=dword:00a0ffff
+"ColorNetDark"=dword:00005959
+"ColorProtected"=dword:008000ff
+"ColorProtectedDark"=dword:001c0037
+"ShowHeatmaps"=dword:00000001
+"ColorSuspend"=dword:00808080
+"ColorSuspendDark"=dword:001b1b1b
+"StatusBarColumns"=dword:00002015
+"ShowAllCpus"=dword:00000000
+"ShowAllGpus"=dword:00000000
+"Opacity"=dword:00000064
+"GpuNodeUsageMask"=dword:00000001
+"GpuNodeUsageMask1"=dword:00000000
+"VerifySignatures"=dword:00000000
+"VirusTotalCheck"=dword:00000000
+"VirusTotalSubmitUnknown"=dword:00000000
+"ToolbarBands"=hex:ef,00,00,00,00,00,00,00,00,00,00,00,4b,00,00,00,01,00,00,00,\
+  00,00,00,00,4b,00,00,00,02,00,00,00,00,00,00,00,4b,00,00,00,03,00,00,00,00,\
+  00,00,00,4b,00,00,00,04,00,00,00,00,00,00,00,4b,00,00,00,05,00,00,00,00,00,\
+  00,00,4b,00,00,00,06,00,00,00,00,00,00,00,4b,00,00,00,07,00,00,00,00,00,00,\
+  00,00,00,00,00,08,00,00,00,00,00,00,00
+"ShowNewProcesses"=dword:00000000
+"TrayCPUHistory"=dword:00000000
+"ShowIoTray"=dword:00000000
+"ShowNetTray"=dword:00000000
+"ShowDiskTray"=dword:00000000
+"ShowPhysTray"=dword:00000000
+"ShowCommitTray"=dword:00000000
+"ShowGpuTray"=dword:00000000
+"FormatIoBytes"=dword:00000001
+"StackWindowPlacement"=hex:00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,\
+  00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,\
+  00,00
+"ETWstandardUserWarning"=dword:00000000
+"Theme"=""
+
+[HKEY_CURRENT_USER\Software\Sysinternals\Process Explorer\DllColumnMap]
+"0"=dword:0000001a
+"1"=dword:0000002a
+"2"=dword:00000409
+"3"=dword:00000457
+
+[HKEY_CURRENT_USER\Software\Sysinternals\Process Explorer\DllColumns]
+"0"=dword:0000006e
+"1"=dword:000000b4
+"2"=dword:0000008c
+"3"=dword:0000012c
+
+[HKEY_CURRENT_USER\Software\Sysinternals\Process Explorer\HandleColumnMap]
+"0"=dword:00000015
+"1"=dword:00000016
+
+[HKEY_CURRENT_USER\Software\Sysinternals\Process Explorer\HandleColumns]
+"0"=dword:00000064
+"1"=dword:000001c2
+
+[HKEY_CURRENT_USER\Software\Sysinternals\Process Explorer\ProcessColumnMap]
+"0"=dword:00000003
+"1"=dword:0000041f
+"2"=dword:00000424
+"3"=dword:00000427
+"4"=dword:00000004
+"5"=dword:00000026
+"6"=dword:00000409
+"7"=dword:00000444
+"8"=dword:000004b0
+"9"=dword:0000052e
+"10"=dword:00000530
+"11"=dword:00000537
+
+[HKEY_CURRENT_USER\Software\Sysinternals\Process Explorer\ProcessColumns]
+"0"=dword:0000010d
+"1"=dword:0000003c
+"2"=dword:00000054
+"3"=dword:00000050
+"4"=dword:00000028
+"5"=dword:000000da
+"6"=dword:0000008c
+"7"=dword:00000064
+"8"=dword:00000064
+"9"=dword:00000064
+"10"=dword:00000064
+"11"=dword:00000064

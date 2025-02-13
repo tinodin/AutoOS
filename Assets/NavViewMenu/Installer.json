@@ -1,0 +1,130 @@
+﻿{
+  "$schema": "https://raw.githubusercontent.com/Ghost1372/DevWinUI/refs/heads/main/AppData.Schema.json",
+  "Groups": [
+    {
+      "UniqueId": "AutoOS",
+      "Title": "AutoOS",
+      "ImagePath": "ms-appx:///Assets/AppIcon.png",
+      "IsSpecialSection": false,
+      "ShowItemsWithoutGroup": true,
+      "IsExpanded": false,
+      "Items": [
+        {
+          "UniqueId": "AutoOS.Views.Installer.HomeLandingPage",
+          "Title": "Home",
+          "Subtitle": "Home Page",
+          "ImagePath": "ms-appx:///Assets/Fluent/Home.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Installer.PersonalizationPage",
+          "Title": "Personalization",
+          "Subtitle": "Personalization",
+          "ImagePath": "ms-appx:///Assets/Fluent/Personalization.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Installer.BrowserPage",
+          "Title": "Browser",
+          "Subtitle": "Browser",
+          "ImagePath": "ms-appx:///Assets/Fluent/Browser.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Installer.ApplicationsPage",
+          "Title": "Applications",
+          "Subtitle": "Applications",
+          "ImagePath": "ms-appx:///Assets/Fluent/Applications.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Installer.DisplayPage",
+          "Title": "Display",
+          "Subtitle": "Manage your CRU profiles",
+          "ImagePath": "ms-appx:///Assets/Fluent/Display.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Installer.GraphicsPage",
+          "Title": "Graphics Card",
+          "Subtitle": "Graphics Card",
+          "ImagePath": "ms-appx:///Assets/Fluent/Gpu.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Installer.SchedulingPage",
+          "Title": "Per-CPU Scheduling",
+          "Subtitle": "Per-CPU Scheduling",
+          "ImagePath": "ms-appx:///Assets/Fluent/Cpu.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Installer.TimerPage",
+          "Title": "Timer Resolution",
+          "Subtitle": "Timer Resolution",
+          "ImagePath": "ms-appx:///Assets/Fluent/Timer.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Installer.DevicesPage",
+          "Title": "Bluetooth & Devices",
+          "Subtitle": "Bluetooth & Devices",
+          "ImagePath": "ms-appx:///Assets/Fluent/Bluetooth.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Installer.InternetPage",
+          "Title": "Network & Internet",
+          "Subtitle": "Network & Internet",
+          "ImagePath": "ms-appx:///Assets/Fluent/Internet.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Installer.PowerPage",
+          "Title": "Energy & Power",
+          "Subtitle": "Energy & Power",
+          "ImagePath": "ms-appx:///Assets/Fluent/Power.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Installer.ServicesPage",
+          "Title": "Services & Drivers",
+          "Subtitle": "Services & Drivers",
+          "ImagePath": "ms-appx:///Assets/Fluent/Services.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Installer.SecurityPage",
+          "Title": "Windows Security",
+          "Subtitle": "Windows Security",
+          "ImagePath": "ms-appx:///Assets/Fluent/Security.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Installer.GamesPage",
+          "Title": "Games",
+          "Subtitle": "Games",
+          "ImagePath": "ms-appx:///Assets/Fluent/Games.png",
+          "HideItem": true
+        }
+      ]
+    },
+    {
+      "UniqueId": "FooterGroup",
+      "Title": "Install",
+      "IsFooterNavigationViewItem": true,
+      "IsSpecialSection": false,
+      "ShowItemsWithoutGroup": true,
+      "IsExpanded": false,
+      "Items": [
+        {
+          "UniqueId": "AutoOS.Views.Installer.InstallPage",
+          "Title": "Install AutoOS",
+          "Subtitle": "Install AutoOS",
+          "ImagePath": "ms-appx:///Assets/Fluent/Install.png",
+          "HideItem": true
+        }
+      ]
+    }
+  ]
+}

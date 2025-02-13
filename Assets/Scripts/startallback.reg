@@ -1,0 +1,67 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Software\StartIsBack]
+"WinBuild"=dword:00005867
+"WinLangID"=dword:00000409
+"SettingsVersion"=dword:00000006
+"WelcomeShown"=dword:00000003
+"FrameStyle"=dword:00000000
+"OrbBitmap"="C:\\Program Files\\StartAllBack\\Orbs\\"
+"AlterStyle"=""
+"TaskbarStyle"=""
+"SysTrayStyle"=dword:00000000
+"BottomDetails"=dword:00000000
+"LegacyTaskbar"=dword:00000000
+"DriveGrouping"=dword:00000001
+"Start_LargeAllAppsIcons"=dword:00000002
+"AllProgramsFlyout"=dword:00000000
+"StartMetroAppsFolder"=dword:00000002
+"Start_SortOverride"=dword:00000000
+"Start_NotifyNewApps"=dword:00000000
+"Start_AutoCascade"=dword:00000001
+"Start_LargeSearchIcons"=dword:00000000
+"Start_AskCortana"=dword:00000000
+"HideUserFrame"=dword:00000000
+"Start_RightPaneIcons"=dword:00000002
+"Start_ShowUser"=dword:00000000
+"Start_ShowMyDocs"=dword:00000001
+"Start_ShowMyPics"=dword:00000001
+"Start_ShowMyMusic"=dword:00000001
+"Start_ShowVideos"=dword:00000000
+"Start_ShowDownloads"=dword:00000001
+"Start_ShowSkyDrive"=dword:00000000
+"StartMenuFavorites"=dword:00000000
+"Start_ShowRecentDocs"=dword:00000002
+"Start_ShowNetPlaces"=dword:00000000
+"Start_ShowNetConn"=dword:00000000
+"Start_ShowMyComputer"=dword:00000001
+"Start_ShowControlPanel"=dword:00000001
+"Start_ShowPCSettings"=dword:00000001
+"Start_AdminToolsRoot"=dword:00000000
+"Start_ShowPrinters"=dword:00000000
+"Start_ShowSetProgramAccessAndDefaults"=dword:00000000
+"Start_ShowTerminal"=dword:00000000
+"Start_ShowCommandPrompt"=dword:00000000
+"Start_ShowRun"=dword:00000000
+"WinkeyFunction"=dword:00000000
+"Start_MinMFU"=dword:0000000a
+"AutoUpdates"=dword:00000000
+
+[HKEY_CURRENT_USER\Software\StartIsBack\Cache]
+"OrbWidth.96"=dword:00000030
+"OrbHeight.96"=dword:00000028
+"IdealHeight.6"=dword:00000000
+"IdealHeight.9"=dword:00020008
+"IdealWidth.9"="Control Panel"
+
+[HKEY_CURRENT_USER\Software\StartIsBack\DarkMagic]
+
+[HKEY_CURRENT_USER\Software\StartIsBack\Taskbaz]
+"Toolbars"=hex:0c,00,00,00,08,00,00,00,01,00,00,00,00,00,00,00,aa,4f,28,68,48,\
+  6a,d0,11,8c,78,00,c0,4f,d9,18,b4,00,00,00,00,40,0d,00,00,00,00,00,00,28,00,\
+  00,00,00,00,00,00,00,00,00,00,28,00,00,00,00,00,00,00,01,00,00,00
+"Settings"=hex:30,00,00,00,fe,ff,ff,ff,02,00,00,00,03,00,00,00,30,00,00,00,28,\
+  00,00,00,00,00,00,00,9e,03,00,00,80,07,00,00,c6,03,00,00,60,00,00,00,01,00,\
+  00,00
+
+[HKEY_CURRENT_USER\Software\StartIsBack\Recolor]

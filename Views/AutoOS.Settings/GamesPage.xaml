@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Page x:Class="AutoOS.Views.Settings.GamesPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:dev="using:DevWinUI"
+      xmlns:local="using:AutoOS"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:views="using:AutoOS.Views"
+      mc:Ignorable="d">
+    <ScrollView Margin="{ThemeResource ContentPageMargin}"
+                HorizontalAlignment="Stretch"
+                VerticalScrollBarVisibility="Hidden">
+        <StackPanel Margin="10"
+                    dev:PanelAttach.ChildrenTransitions="Default"
+                    Spacing="5">
+            <TextBlock Text="Games"
+                       FontSize="28"
+                       FontWeight="SemiBold"
+                       Margin="7,-11,0,57"/>
+            <dev:SettingsGroup x:Name="fortniteVersion"
+                               Header="Fortnite"
+                               HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Fortnite.png}">
+                <StackPanel x:Name="FortniteCard"
+                            Orientation="Horizontal">
+                    <Button Content="Checking for updates..."
+                            Style="{StaticResource AccentButtonStyle}"
+                            x:Name="launchFortnite" 
+                            Click="LaunchFortnite_Click"/>
+                    <ProgressRing x:Name="updateCheckProgress"
+                                  IsActive="True" 
+                                  Background="Transparent"
+                                  Width="25"
+                                  Height="25"
+                                  Margin="10,0,0,0"/>
+                </StackPanel>
+                <dev:SettingsGroup.Items>
+                    <dev:SettingsCard Header="Presentation Mode" 
+                                      Description="Hardware: Legacy Flip is better but if you tab out very often Hardware: Composed Flip may be the better option.">
+                        <ComboBox x:Name="PresentationMode"
+                                  SelectionChanged="PresentationMode_SelectionChanged">
+                            <ComboBoxItem Content="Hardware: Legacy Flip" />
+                            <ComboBoxItem Content="Hardware: Composed Flip" />
+                        </ComboBox>
+                    </dev:SettingsCard>
+                </dev:SettingsGroup.Items>
+            </dev:SettingsGroup>
+            <StackPanel x:Name="FortniteInfo"/>
+            <dev:SettingsGroup Description="Select your Epic Games Account."
+                               Header="Epic Games Account" HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Epicgames.png}">
+                <dev:SettingsGroup.Content>
+                    <ComboBox x:Name="Accounts"
+                              SelectionChanged="Accounts_SelectionChanged"/>
+                </dev:SettingsGroup.Content>
+                <dev:SettingsGroup.Items>
+                    <dev:SettingsCard Header="Add a new Account">
+                        <Button Content="Add"
+                                Click="AddAccount_Click"/>
+                    </dev:SettingsCard>
+                    <dev:SettingsCard Header="Remove Account">
+                        <Button Content="Remove"
+                                Click="RemoveAccount_Click"
+                                x:Name="removeButton"/>
+                    </dev:SettingsCard>
+                </dev:SettingsGroup.Items>
+            </dev:SettingsGroup>
+            <StackPanel x:Name="AccountInfo"/>
+        </StackPanel>
+    </ScrollView>
+</Page>

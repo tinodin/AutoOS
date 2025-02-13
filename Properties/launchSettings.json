@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "AutoOS (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "AutoOS (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

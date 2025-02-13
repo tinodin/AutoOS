@@ -1,0 +1,47 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35731.43
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoOS", "AutoOS.csproj", "{3EF7A6D5-4EE4-4DBF-877D-E5A738FD33E9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\source\repos\AutoOS\.editorconfig = ..\..\source\repos\AutoOS\.editorconfig
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|ARM64 = Debug|ARM64
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|ARM64 = Release|ARM64
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3EF7A6D5-4EE4-4DBF-877D-E5A738FD33E9}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{3EF7A6D5-4EE4-4DBF-877D-E5A738FD33E9}.Debug|ARM64.Build.0 = Debug|ARM64
+		{3EF7A6D5-4EE4-4DBF-877D-E5A738FD33E9}.Debug|ARM64.Deploy.0 = Debug|ARM64
+		{3EF7A6D5-4EE4-4DBF-877D-E5A738FD33E9}.Debug|x64.ActiveCfg = Debug|x64
+		{3EF7A6D5-4EE4-4DBF-877D-E5A738FD33E9}.Debug|x64.Build.0 = Debug|x64
+		{3EF7A6D5-4EE4-4DBF-877D-E5A738FD33E9}.Debug|x64.Deploy.0 = Debug|x64
+		{3EF7A6D5-4EE4-4DBF-877D-E5A738FD33E9}.Debug|x86.ActiveCfg = Debug|x86
+		{3EF7A6D5-4EE4-4DBF-877D-E5A738FD33E9}.Debug|x86.Build.0 = Debug|x86
+		{3EF7A6D5-4EE4-4DBF-877D-E5A738FD33E9}.Debug|x86.Deploy.0 = Debug|x86
+		{3EF7A6D5-4EE4-4DBF-877D-E5A738FD33E9}.Release|ARM64.ActiveCfg = Release|ARM64
+		{3EF7A6D5-4EE4-4DBF-877D-E5A738FD33E9}.Release|ARM64.Build.0 = Release|ARM64
+		{3EF7A6D5-4EE4-4DBF-877D-E5A738FD33E9}.Release|ARM64.Deploy.0 = Release|ARM64
+		{3EF7A6D5-4EE4-4DBF-877D-E5A738FD33E9}.Release|x64.ActiveCfg = Release|x64
+		{3EF7A6D5-4EE4-4DBF-877D-E5A738FD33E9}.Release|x64.Build.0 = Release|x64
+		{3EF7A6D5-4EE4-4DBF-877D-E5A738FD33E9}.Release|x64.Deploy.0 = Release|x64
+		{3EF7A6D5-4EE4-4DBF-877D-E5A738FD33E9}.Release|x86.ActiveCfg = Release|x86
+		{3EF7A6D5-4EE4-4DBF-877D-E5A738FD33E9}.Release|x86.Build.0 = Release|x86
+		{3EF7A6D5-4EE4-4DBF-877D-E5A738FD33E9}.Release|x86.Deploy.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {536A34E6-0630-4287-85B1-838464736D61}
+	EndGlobalSection
+EndGlobal

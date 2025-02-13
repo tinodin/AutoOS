@@ -1,0 +1,10 @@
+﻿global using Microsoft.UI;
+global using Microsoft.UI.Xaml;
+global using Microsoft.UI.Xaml.Controls;
+global using Microsoft.UI.Xaml.Navigation;
+global using DevWinUI;
+global using AutoOS.Views;
+global using AutoOS.Views.Installer;
+global using AutoOS.Views.Settings;
+global using AutoOS.Common;
+global using static AutoOS.Common.AppHelper;
