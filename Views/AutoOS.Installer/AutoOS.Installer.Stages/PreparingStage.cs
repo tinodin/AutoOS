@@ -85,7 +85,6 @@ public static class PreparingStage
     {
         await Task.Run(() =>
         {
-            // Non-registry variables first
             string cpuVendor = (string)Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\CentralProcessor\0", "VendorIdentifier", null);
 
             if (cpuVendor.Contains("GenuineIntel"))
@@ -161,7 +160,7 @@ public static class PreparingStage
                 Scheduling = key?.GetValue("Affinity")?.ToString().Contains("Manual");
             }
 
-            Rename = "System Product Name".Equals(Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\BIOS\SystemProductName", "System Product Name", "")?.ToString(), StringComparison.Ordinal);
+            Rename = "System Product Name".Equals(Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\BIOS", "SystemProductName", "")?.ToString(), StringComparison.Ordinal);
 
             using var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_SystemEnclosure");
             foreach (ManagementObject obj in searcher.Get())
@@ -195,7 +194,6 @@ public static class PreparingStage
                     if (physicalMediaType == "14" && classKey.GetValue("TxIntDelay") != null)
                     {
                         TxIntDelay = true;
-                        Debug.WriteLine(TxIntDelay);
                         break;
                     }
 

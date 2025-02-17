@@ -127,7 +127,6 @@ public static class GraphicsStage
             (async () => await ProcessActions.ImportProfile("Importing the optimized profile", "BaseProfile.nip"), () => NVIDIA == true),
             (async () => await ProcessActions.ImportProfile("Importing the optimized profile", "Fortnite.nip"), () => NVIDIA == true && Fortnite == true),
 
-
             // use gpu for physx
             (async () => await ProcessActions.RunNsudo("Configuring PhysX to use GPU", "TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\ControlSet001\Services\nvlddmkm\Global\NVTweak"" /v ""NvCplPhysxAuto"" /t REG_DWORD /d 0 /f"), () => NVIDIA == true),
 

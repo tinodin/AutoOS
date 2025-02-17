@@ -242,7 +242,7 @@ public static class ApplicationStage
             (async () => await ProcessActions.RunCustom("Updating Epic Games Launcher", async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Path.Combine(@"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win32\EpicGamesLauncher.exe")})!.WaitForExitAsync())), () => EpicGames == true),
 
             // log in to epic games launcher
-            (async () => await ProcessActions.Sleep("Updating Epic Games Launcher", 10000), () => EpicGames == true),
+            (async () => await ProcessActions.Sleep("Updating Epic Games Launcher", 8000), () => EpicGames == true),
 
             // disable epic games services
             (async () => await ProcessActions.RunNsudo("Disabling Epic Games services", "TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\EpicOnlineServices"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => EpicGames == true),

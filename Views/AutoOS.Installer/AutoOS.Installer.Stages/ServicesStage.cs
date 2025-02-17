@@ -2,6 +2,7 @@
 using Microsoft.UI.Xaml.Media;
 using Windows.UI;
 using Microsoft.Win32;
+using System.Diagnostics;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -39,11 +40,12 @@ public static class ServicesStage
             (async () => await ProcessActions.RunNsudo("Building service lists", "TrustedInstaller", $@"""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "service-list-builder.exe")}"" --config ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "lists.ini")}"" --disable-service-warning"), null),
             (async () => await ProcessActions.RunCustom("Building service lists", async () => { folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last(); }), null),
 
-            // write stage
-            (async () => await ProcessActions.RunCustom("Building service lists", async () => await Task.Run(() => Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", 3, RegistryValueKind.DWord))), null),
 
             // disable services and drivers
             (async () => await ProcessActions.RunNsudo("Disabling services and drivers", "TrustedInstaller", Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, "Services-Disable.bat")), null),
+
+            // write stage
+            (async () => await ProcessActions.RunCustom("Building service lists", async () => await Task.Run(() => Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", 3, RegistryValueKind.DWord))), null),
 
             // restart
             (async () => await ProcessActions.RunRestart(), null)

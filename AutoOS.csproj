@@ -26,14 +26,14 @@
   <PropertyGroup>
     <PublishAot>False</PublishAot>
     <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
-    <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
+    <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">False</PublishReadyToRun>
     <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
-    <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
+    <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">False</PublishTrimmed>
     <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
     <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
     <PackageCertificateKeyFile>AutoOS_TemporaryKey.pfx</PackageCertificateKeyFile>
     <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
-    <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
+    <AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
     <AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
     <GenerateTestArtifacts>True</GenerateTestArtifacts>
     <AppxBundle>Never</AppxBundle>

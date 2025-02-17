@@ -199,7 +199,7 @@ public sealed partial class GamesPage : Page
 
     private void StopProcesses_Click(object sender, RoutedEventArgs e)
     {
-        string[] serviceNames = { "StateRepository", "Appinfo", "AppXSvc", "CryptSvc", "ProfSvc", "TextInputManagementService", "netprofm", "nsi", "gpsvc" };
+        string[] serviceNames = { "StateRepository", "Appinfo", "AppXSvc", "CryptSvc", "ProfSvc", "TextInputManagementService", "netprofm", "nsi" };
 
         foreach (var serviceName in serviceNames)
         {
@@ -221,6 +221,8 @@ public sealed partial class GamesPage : Page
 
         string[] processNames = { "explorer", "ApplicationFrameHost", "WmiPrvSE", "WMIADAP", "useroobebroker", "TrustedInstaller", "FortniteClient-Win64-Shipping_EAC_EOS", "EasyAntiCheat_EOS", "CrashReportClient", "sppsvc", "secd.exe" };
 
+        Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon", "AutoRestartShell", 0, RegistryValueKind.DWord);
+
         foreach (var name in processNames)
         {
             foreach (var process in Process.GetProcessesByName(name))
@@ -230,6 +232,8 @@ public sealed partial class GamesPage : Page
         }
 
         try { new System.ServiceProcess.ServiceController("Winmgmt").Stop(); } catch { }
+
+        Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon", "AutoRestartShell", 1, RegistryValueKind.DWord);
     }
 
     private void LaunchExplorer_Click(object sender, RoutedEventArgs e)

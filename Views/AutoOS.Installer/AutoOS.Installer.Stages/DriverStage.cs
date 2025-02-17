@@ -41,7 +41,8 @@ public static class DriverStage
         var actions = new List<(Func<Task> Action, Func<bool> Condition)>
         {
             // check connection
-            (async () => await ProcessActions.RunConnectionCheck(""), null)
+            (async () => await ProcessActions.RunConnectionCheck(""), null),
+            (async () => await ProcessActions.Sleep("Internet connection successfully established", 1000), null)
         };
 
         foreach (var (action, condition) in actions)
