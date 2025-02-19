@@ -9,8 +9,9 @@
       xmlns:views="using:AutoOS.Views"
       mc:Ignorable="d">
     <ScrollView Margin="{ThemeResource ContentPageMargin}"
+                Padding="{ThemeResource ContentPagePadding}"
                 HorizontalAlignment="Stretch"
-                VerticalScrollBarVisibility="Hidden">
+                VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="10"
                     dev:PanelAttach.ChildrenTransitions="Default"
                     Spacing="5">
@@ -36,11 +37,11 @@
                 </StackPanel>
                 <dev:SettingsGroup.Items>
                     <dev:SettingsCard Header="Presentation Mode" 
-                                      Description="Hardware: Legacy Flip is better but if you tab out very often Hardware: Composed Flip may be the better option.">
+                                      Description="Hardware: Independent Flip is the newest presentation mode which performs almost identically to Hardware: Legacy Flip but without any delay or black screens when tabbing out.">
                         <ComboBox x:Name="PresentationMode"
                                   SelectionChanged="PresentationMode_SelectionChanged">
+                            <ComboBoxItem Content="Hardware: Independent Flip" />
                             <ComboBoxItem Content="Hardware: Legacy Flip" />
-                            <ComboBoxItem Content="Hardware: Composed Flip" />
                         </ComboBox>
                     </dev:SettingsCard>
                 </dev:SettingsGroup.Items>
@@ -65,6 +66,8 @@
                 </dev:SettingsGroup.Items>
             </dev:SettingsGroup>
             <StackPanel x:Name="AccountInfo"/>
+            <Border Height="60"
+                    Background="Transparent"/>
         </StackPanel>
     </ScrollView>
 </Page>

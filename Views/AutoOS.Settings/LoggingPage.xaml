@@ -9,8 +9,9 @@
       xmlns:views="using:AutoOS.Views"
       mc:Ignorable="d">
     <ScrollView Margin="{ThemeResource ContentPageMargin}"
+                Padding="{ThemeResource ContentPagePadding}"
                 HorizontalAlignment="Stretch"
-                VerticalScrollBarVisibility="Hidden">
+                VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="10"
                     dev:PanelAttach.ChildrenTransitions="Default"
                     Spacing="5">
@@ -27,6 +28,8 @@
                 </dev:SettingsGroup.Content>
             </dev:SettingsGroup>
             <StackPanel x:Name="EventTraceSessionsInfo"/>
+            <Border Height="60"
+                    Background="Transparent"/>
         </StackPanel>
     </ScrollView>
 </Page>

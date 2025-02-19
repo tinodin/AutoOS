@@ -15,7 +15,7 @@ public static class DriverStage
 
         InstallPage.Progress.ShowPaused = true;
         InstallPage.Info.Severity = InfoBarSeverity.Warning;
-        InstallPage.ProgressRingControl.Foreground = new SolidColorBrush(Color.FromArgb(255, 157, 93, 0));
+        InstallPage.ProgressRingControl.Foreground = new SolidColorBrush(Color.FromArgb(255, 252, 225, 0));
 
         int validActionsCount = 0;
         int stagePercentage = 2;
@@ -42,7 +42,6 @@ public static class DriverStage
         {
             // check connection
             (async () => await ProcessActions.RunConnectionCheck(""), null),
-            (async () => await ProcessActions.Sleep("Internet connection successfully established", 1000), null)
         };
 
         foreach (var (action, condition) in actions)

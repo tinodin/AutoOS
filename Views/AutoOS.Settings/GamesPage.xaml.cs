@@ -12,7 +12,8 @@ public sealed partial class GamesPage : Page
 {
     private string legendaryPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config", "legendary");
     private bool isLaunchingFortnite = false;
-    private bool isInitializingAccounts = false;
+    private bool isInitializingAccounts = true;
+    private bool isInitializingPresentationMode = true;
 
     public GamesPage()
     {
@@ -239,7 +240,7 @@ public sealed partial class GamesPage : Page
     private void LaunchExplorer_Click(object sender, RoutedEventArgs e)
     {
         // launch explorer
-        Process.Start(new ProcessStartInfo("cmd.exe") { Arguments = "/c start explorer.exe", UseShellExecute = false, CreateNoWindow = true });
+        Process.Start(new ProcessStartInfo("cmd.exe") { Arguments = "/c start explorer.exe", CreateNoWindow = true });
     }
 
     private void GetPresentationMode()
@@ -251,9 +252,19 @@ public sealed partial class GamesPage : Page
             {
                 if (subKey.GetValueNames().Any(valueName => subKey.GetValue(valueName) is string strValue && strValue.Contains("Fortnite")))
                 {
-                    int flags = Convert.ToInt32(subKey.GetValue("flags"));
-                    PresentationMode.SelectedIndex = flags == 0x211 ? 0 : flags == 0x11 ? 1 : PresentationMode.SelectedIndex;
-                    return;
+                    int flags = Convert.ToInt32(subKey.GetValue("Flags"));
+                    Debug.WriteLine($"SubKey: {subKeyName}, Flags: {flags}");
+                    if (flags == 0x211)
+                    {
+                        PresentationMode.SelectedIndex = 1;
+                        isInitializingPresentationMode = false;
+                        return;
+                    }
+                    else
+                    {
+                        PresentationMode.SelectedIndex = 0;
+                        isInitializingPresentationMode = false;
+                    }
                 }
             }
         }
@@ -261,6 +272,8 @@ public sealed partial class GamesPage : Page
 
     private void PresentationMode_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (isInitializingPresentationMode) return;
+
         using (var key = Registry.CurrentUser.OpenSubKey(@"System\GameConfigStore\Children", true))
         {
             foreach (var subKeyName in key.GetSubKeyNames())
@@ -269,7 +282,16 @@ public sealed partial class GamesPage : Page
                 {
                     if (subKey.GetValueNames().Any(valueName => subKey.GetValue(valueName) is string strValue && strValue.Contains("Fortnite")))
                     {
-                        subKey.SetValue("flags", PresentationMode.SelectedIndex == 0 ? 0x211 : 0x11, RegistryValueKind.DWord);
+                        if (PresentationMode.SelectedIndex == 0)
+                        {
+                            Debug.WriteLine("deleting");
+                            subKey.DeleteValue("Flags", false);
+                        }
+                        else if (PresentationMode.SelectedIndex == 1)
+                        {
+                            Debug.WriteLine("setting");
+                            subKey.SetValue("Flags", 0x211, RegistryValueKind.DWord);
+                        }
                         return;
                     }
                 }
@@ -416,8 +438,6 @@ public sealed partial class GamesPage : Page
 
     private void LoadAccounts()
     {
-        isInitializingAccounts = true;
-
         // clear list
         Accounts.Items.Clear();
 

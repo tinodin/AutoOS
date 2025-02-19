@@ -64,6 +64,8 @@
                 </dev:SettingsGroup.Items>
             </dev:SettingsGroup>
             <StackPanel x:Name="GamesInfo"/>
+            <Border Height="60"
+                    Background="Transparent"/>
         </StackPanel>
     </ScrollView>
 </Page>

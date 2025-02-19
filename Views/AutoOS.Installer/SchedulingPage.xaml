@@ -19,7 +19,7 @@
                        FontSize="28"
                        FontWeight="SemiBold"
                        Margin="7,-11,0,57"/>
-            <dev:SettingsGroup Description="Benchmark your GPU and XHCI Controller Affinities or set them manually. If your CPU has 6 or more cores they will be reserved."
+            <dev:SettingsGroup Description="Benchmark your GPU and XHCI Controller Affinities or set them manually. If your CPU has 6 cores or more they will be reserved."
                                Header="Per-CPU Scheduling"
                                HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Cpu.png}"
                                Margin="0,0,0,10">
@@ -41,6 +41,8 @@
                     </dev:SettingsCard>
                 </dev:SettingsGroup.Items>
             </dev:SettingsGroup>
+            <Border Height="60"
+                    Background="Transparent"/>
         </StackPanel>
     </ScrollView>
 </Page>

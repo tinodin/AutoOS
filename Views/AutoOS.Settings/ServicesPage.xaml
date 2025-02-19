@@ -11,7 +11,7 @@
     <ScrollView Margin="{ThemeResource ContentPageMargin}"
                 Padding="{ThemeResource ContentPagePadding}"
                 HorizontalAlignment="Stretch"
-                VerticalScrollBarVisibility="Visible">
+                VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="10"
                     dev:PanelAttach.ChildrenTransitions="Default"
                     Spacing="5">
@@ -23,7 +23,8 @@
                                Header="Service-list-builder"
                                HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Services.png}">
                 <dev:SettingsGroup.Content>
-                        <ToggleSwitch x:Name="Services"/>
+                        <ToggleSwitch x:Name="Services"
+                                      Toggled="Services_Toggled"/>
                 </dev:SettingsGroup.Content>
                 <dev:SettingsGroup.Items>
                     <dev:SettingsCard ContentAlignment="Left">

@@ -42,7 +42,9 @@ public sealed partial class InstallPage : Page
         Progress = ProgressBar;
         Info = InfoBar;
         ProgressRingControl = ProgressRingItem;
+
         Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", 2, RegistryValueKind.DWord);
+
         using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
         {
             var stageValue = key?.GetValue("Stage");
@@ -83,7 +85,7 @@ public sealed partial class InstallPage : Page
     private async void ExecuteSecondStage()
     {
         await PreparingStage.Run();
-        await DriverStage.Run();
+        //await DriverStage.Run();
         //await NetworkStage.Run();
         //await AudioStage.Run();
         //await GraphicsStage.Run();
@@ -93,16 +95,16 @@ public sealed partial class InstallPage : Page
         //await AppxStage.Run();
         //await RuntimesStage.Run();
         //await BrowserStage.Run();
-        await ApplicationStage.Run();
+        //await ApplicationStage.Run();
         //await GamesStage.Run();
-        await ServicesStage.Run();
+        //await ServicesStage.Run();
     }
 
     private async void ExecuteThirdStage()
     {
         await PreparingStage.Run();
-        //await SchedulingStage.Run();
-        //await TimerStage.Run();
+        await SchedulingStage.Run();
+        await TimerStage.Run();
         await CleanupStage.Run();
 
         InstallPage.Status.Text = "Installation finished";

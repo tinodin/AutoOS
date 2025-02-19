@@ -129,6 +129,8 @@
                     </GridView>
                 </dev:SettingsGroup.Content>
             </dev:SettingsGroup>
+            <Border Height="60"
+                    Background="Transparent"/>
         </StackPanel>
     </ScrollView>
 </Page>

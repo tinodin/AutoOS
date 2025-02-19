@@ -24,14 +24,14 @@ public sealed partial class PowerPage : Page
         if (value == null)
         {
             bool isDesktop = new ManagementObjectSearcher("SELECT * FROM Win32_SystemEnclosure")
-                .Get()
-                .Cast<ManagementObject>()
-                .Any(obj => ((ushort[])obj["ChassisTypes"])?.Any(type => new ushort[] { 3, 4, 5, 6, 7, 15, 16, 17 }.Contains(type)) == true);
+               .Get()
+               .Cast<ManagementObject>()
+               .Any(obj => ((ushort[])obj["ChassisTypes"])?.Any(type => new ushort[] { 3, 4, 5, 6, 7, 15, 16, 17 }.Contains(type)) == true);
 
             bool isHyperThreadingEnabled = new ManagementObjectSearcher("SELECT NumberOfCores, NumberOfLogicalProcessors FROM Win32_Processor")
-           .Get()
-           .Cast<ManagementObject>()
-           .Any(obj => Convert.ToInt32(obj["NumberOfLogicalProcessors"]) > Convert.ToInt32(obj["NumberOfCores"]));
+               .Get()
+               .Cast<ManagementObject>()
+               .Any(obj => Convert.ToInt32(obj["NumberOfLogicalProcessors"]) > Convert.ToInt32(obj["NumberOfCores"]));
 
             bool defaultEnabled = !isDesktop || isHyperThreadingEnabled;
             key?.SetValue("IdleStates", defaultEnabled ? 1 : 0, RegistryValueKind.DWord);

@@ -1,5 +1,5 @@
 param(
-    [double]$increment = 0.001,
+    [double]$increment = 0.0005,
     [double]$start = 0.5,
     [double]$end = 0.52,
     [int]$samples = 40

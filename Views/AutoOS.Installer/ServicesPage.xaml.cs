@@ -19,15 +19,6 @@ public sealed partial class ServicesPage : Page
     public ServicesPage()
     {
         InitializeComponent();
-
-        Process.Start(new ProcessStartInfo
-        {
-            FileName = "cmd.exe", 
-            Arguments = $"/c takeown /f \"{list}\" & icacls \"{list}\" /grant Everyone:F /T /C /Q",
-            UseShellExecute = false, 
-            CreateNoWindow = true
-        });
-
         GetWIFIState();
         GetBluetoothState();
         GetCameraState();
@@ -37,6 +28,14 @@ public sealed partial class ServicesPage : Page
         GetLaptopState();
         GetFACEITState();
         GetAMDVRRState();
+
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = "cmd.exe",
+            Arguments = $"/c takeown /f \"{list}\" & icacls \"{list}\" /grant Everyone:F /T /C /Q",
+            UseShellExecute = false,
+            CreateNoWindow = true
+        });
     }
 
     private void GetWIFIState()
@@ -180,7 +179,6 @@ public sealed partial class ServicesPage : Page
         // write changes
         await File.WriteAllLinesAsync(list, lines);
     }
-
 
     private void GetStartMenuState()
     {

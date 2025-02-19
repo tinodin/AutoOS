@@ -95,7 +95,10 @@ public static class VisualStage
                     InstallPage.Info.Title = ex.Message;
                     InstallPage.Progress.ShowError = true;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
-                    InstallPage.ProgressRingControl.Foreground = new SolidColorBrush(Color.FromArgb(255, 196, 43, 28));
+                    
+
+                    InstallPage.ProgressRingControl.Foreground = (SolidColorBrush)Application.Current.Resources["LightRed"];
+                    InstallPage.ProgressRingControl.Foreground = (SolidColorBrush)Application.Current.Resources["DarkRed"];
                     break;
                 }
 

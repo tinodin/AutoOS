@@ -1,6 +1,8 @@
 ﻿using Microsoft.Win32;
 using System.Management;
 using System.Diagnostics;
+using Microsoft.UI.Xaml.Media;
+using Windows.UI;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -72,17 +74,18 @@ public static class PreparingStage
     public static bool? Fortnite;
 
     public static bool? Scheduling;
+    public static bool? Hyperthreading;
 
     public static async Task Run()
     {
         InstallPage.Status.Text = "Preparing...";
         InstallPage.Info.Title = "Please wait...";
 
-        await GetConditions();
-    }
+        InstallPage.Progress.ShowPaused = true;
+        InstallPage.Info.Severity = InfoBarSeverity.Warning;
+        InstallPage.ProgressRingControl.Foreground = new SolidColorBrush(Color.FromArgb(255, 157, 93, 0)); // light mode
+        InstallPage.ProgressRingControl.Foreground = new SolidColorBrush(Color.FromArgb(255, 252, 225, 0)); // dark mode
 
-    private static async Task GetConditions()
-    {
         await Task.Run(() =>
         {
             string cpuVendor = (string)Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\CentralProcessor\0", "VendorIdentifier", null);
@@ -199,6 +202,12 @@ public static class PreparingStage
 
                 }
             }
+
+            Hyperthreading = new ManagementObjectSearcher("SELECT NumberOfCores, NumberOfLogicalProcessors FROM Win32_Processor")
+               .Get()
+               .Cast<ManagementObject>()
+               .Any(obj => Convert.ToInt32(obj["NumberOfLogicalProcessors"]) > Convert.ToInt32(obj["NumberOfCores"]));
+
         });
     }
 }

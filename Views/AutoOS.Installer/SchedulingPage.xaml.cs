@@ -1,10 +1,14 @@
 ﻿using Microsoft.Win32;
+using System.Diagnostics;
+using System.Management;
 
 namespace AutoOS.Views.Installer;
 
 public sealed partial class SchedulingPage : Page
 {
     private bool isInitializingAffinities = true;
+    private bool isHyperThreadingEnabled = false;
+
     public SchedulingPage()
     {
         InitializeComponent();
@@ -14,6 +18,11 @@ public sealed partial class SchedulingPage : Page
 
     private void GetCpuCount(params ComboBox[] comboBoxes)
     {
+        isHyperThreadingEnabled = new ManagementObjectSearcher("SELECT NumberOfCores, NumberOfLogicalProcessors FROM Win32_Processor")
+           .Get()
+           .Cast<ManagementObject>()
+           .Any(obj => Convert.ToInt32(obj["NumberOfLogicalProcessors"]) > Convert.ToInt32(obj["NumberOfCores"]));
+
         int processorCount = Environment.ProcessorCount;
 
         foreach (var comboBox in comboBoxes)
@@ -22,11 +31,15 @@ public sealed partial class SchedulingPage : Page
 
             for (int i = 0; i < processorCount; i++)
             {
-                comboBox.Items.Add(new ComboBoxItem { Content = $"CPU {i}" });
-            }
+                var item = new ComboBoxItem { Content = $"CPU {i}" };
 
-            if (comboBox.Items.Count > 0)
-                ((ComboBoxItem)comboBox.Items[0]).IsEnabled = false;
+                if (i == 0 || (isHyperThreadingEnabled && i % 2 == 1))
+                {
+                    item.IsEnabled = false;
+                }
+
+                comboBox.Items.Add(item);
+            }
         }
     }
 
@@ -34,48 +47,54 @@ public sealed partial class SchedulingPage : Page
     {
         using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
         {
-            if (key.GetValue("Affinities") == null)
+            var affinityValue = key.GetValue("Affinities") as string;
+            if (string.IsNullOrEmpty(affinityValue) || affinityValue == "Automatic")
             {
-                key.SetValue("Affinities", "Automatic", RegistryValueKind.String);
                 Affinities.SelectedIndex = 0;
                 GpuSettings.IsEnabled = false;
-                XhciSettings.IsEnabled = false;  
-            }
-            else
-            {
-                var affinityValue = key.GetValue("Affinities") as string;
-                if (affinityValue == "Automatic")
-                {
-                    Affinities.SelectedIndex = 0;
-                    GpuSettings.IsEnabled = false;
-                    XhciSettings.IsEnabled = false;
-                }
-                else if (affinityValue == "Manual")
-                {
-                    Affinities.SelectedIndex = 1;
-                    GpuSettings.IsEnabled = true;
-                    XhciSettings.IsEnabled = true;
-                }
-            }
+                XhciSettings.IsEnabled = false;
 
-            int gpuAffinity = (int)(key.GetValue("GpuAffinity") ?? -1);
-            if (gpuAffinity >= 0 && gpuAffinity < Environment.ProcessorCount)
-            {
-                GPU.SelectedIndex = gpuAffinity;
-            }
-            else
-            {
-                GPU.SelectedIndex = 1;
-            }
+                int gpuAffinity = (int)(key.GetValue("GpuAffinity") ?? -1);
+                if (gpuAffinity >= 0 && gpuAffinity < GPU.Items.Count && ((ComboBoxItem)GPU.Items[gpuAffinity]).IsEnabled)
+                {
+                    GPU.SelectedIndex = gpuAffinity;
+                }
+                else
+                {
+                    GPU.SelectedIndex = GPU.Items.OfType<ComboBoxItem>().ToList().FindIndex(item => item.IsEnabled);
+                }
+                UpdateComboBoxState(GPU, XHCI);
 
-            int xhciAffinity = (int)(key.GetValue("XhciAffinity") ?? -1);
-            if (xhciAffinity >= 0 && xhciAffinity < Environment.ProcessorCount)
-            {
-                XHCI.SelectedIndex = xhciAffinity;
+                int xhciAffinity = (int)(key.GetValue("XhciAffinity") ?? -1);
+                if (xhciAffinity >= 0 && xhciAffinity < XHCI.Items.Count && ((ComboBoxItem)XHCI.Items[xhciAffinity]).IsEnabled)
+                {
+                    XHCI.SelectedIndex = xhciAffinity;
+                }
+                else
+                {
+                    XHCI.SelectedIndex = XHCI.Items.OfType<ComboBoxItem>().ToList().FindIndex(item => item.IsEnabled);
+                }
+                UpdateComboBoxState(XHCI, GPU);
             }
-            else
+            else if (affinityValue == "Manual")
             {
-                XHCI.SelectedIndex = 2;
+                Affinities.SelectedIndex = 1;
+                GpuSettings.IsEnabled = true;
+                XhciSettings.IsEnabled = true;
+
+                int gpuAffinity = (int)(key.GetValue("GpuAffinity") ?? -1);
+                if (gpuAffinity >= 0 && gpuAffinity < GPU.Items.Count)
+                {
+                    GPU.SelectedIndex = gpuAffinity;
+                    UpdateComboBoxState(GPU, XHCI);
+                }
+
+                int xhciAffinity = (int)(key.GetValue("XhciAffinity") ?? -1);
+                if (xhciAffinity >= 0 && xhciAffinity < XHCI.Items.Count)
+                {
+                    XHCI.SelectedIndex = xhciAffinity;
+                    UpdateComboBoxState(XHCI, GPU);
+                }
             }
         }
 
@@ -99,6 +118,9 @@ public sealed partial class SchedulingPage : Page
                 key.SetValue("Affinities", "Manual", RegistryValueKind.String);
                 GpuSettings.IsEnabled = true;
                 XhciSettings.IsEnabled = true;
+
+                Gpu_Changed(null, null);
+                Xhci_Changed(null, null);
             }
         }
     }
@@ -136,8 +158,11 @@ public sealed partial class SchedulingPage : Page
         for (int i = 0; i < otherComboBox.Items.Count; i++)
         {
             var item = otherComboBox.Items[i] as ComboBoxItem;
-            item.IsEnabled = i != selectedIndex;
+
+            if (item != null)
+            {
+                item.IsEnabled = i != selectedIndex && !(i == 0 || (isHyperThreadingEnabled && i % 2 == 1));
+            }
         }
     }
 }
-

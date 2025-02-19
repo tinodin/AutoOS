@@ -42,6 +42,8 @@
                     </dev:SettingsCard>
                 </dev:SettingsGroup.Items>
             </dev:SettingsGroup>
+            <Border Height="60"
+                    Background="Transparent"/>
         </StackPanel>
     </ScrollView>
 </Page>

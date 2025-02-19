@@ -32,6 +32,8 @@
                     <ProgressRing x:Name="ProgressRingItem" HorizontalAlignment="Right" Height="25" Width="25" Background="LightGray" IsIndeterminate="True" Margin="0,-50,10,0"></ProgressRing>  
                 </InfoBar.Content>
             </InfoBar>
+            <Border Height="60"
+                    Background="Transparent"/>
         </StackPanel>
     </ScrollView>
 </Page>

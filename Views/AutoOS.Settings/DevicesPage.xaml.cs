@@ -26,8 +26,7 @@ public sealed partial class DevicesPage : Page
         // declare services and drivers
         var groups = new[]
         {
-            (new[] { "SystemEventsBroker" }, 2),
-            (new[] { "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DevicesFlowUserSvc", "DsmSvc", "NcbService", "WFDSConMgrSvc", "BthA2dp", "BthEnum", "BthHFAud", "BthHFEnum", "BthLEEnum", "BthMini", "BthPan", "BTHPORT", "BTHUSB", "HidBth", "Microsoft_Bluetooth_AvrcpTransport", "RFCOMM" }, 3),
+            (new[] { "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DevicesFlowUserSvc", "DsmSvc", "NcbService", "WFDSConMgrSvc", "BthA2dp", "BthEnum", "BthHFAud", "BthHFEnum", "BthLEEnum", "BTHMODEM", "BthMini", "BthPan", "BTHPORT", "BTHUSB", "HidBth", "Microsoft_Bluetooth_AvrcpTransport", "RFCOMM" }, 3),
             };
 
         // return if start values don't match
@@ -103,7 +102,6 @@ public sealed partial class DevicesPage : Page
         // declare services and drivers
         var groups = new[]
         {
-            (new[] { "SystemEventsBroker" }, 2),
             (new[] { "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DevicesFlowUserSvc", "DsmSvc", "NcbService", "WFDSConMgrSvc", "BthA2dp", "BthEnum", "BthHFAud", "BthHFEnum", "BthLEEnum", "BTHMODEM", "BthMini", "BthPan", "BTHPORT", "BTHUSB", "HidBth", "Microsoft_Bluetooth_AvrcpTransport", "RFCOMM" }, 3),
         };
 
@@ -149,7 +147,7 @@ public sealed partial class DevicesPage : Page
                 HorizontalAlignment = HorizontalAlignment.Right
             };
             ((Button)infoBar.ActionButton).Click += (s, args) =>
-            System.Diagnostics.Process.Start("shutdown", "/r /f /t 0");
+            Process.Start("shutdown", "/r /f /t 0");
         }
         else
         {
@@ -168,13 +166,13 @@ public sealed partial class DevicesPage : Page
                    .Get()
                    .Cast<ManagementObject>()
                    .Any(device => device["Status"]?.ToString() == "OK" &&
-                                  new[] {
-                                  "HID-compliant consumer control device",
-                                  "HID-compliant device",
-                                  "HID-compliant game controller",
-                                  "HID-compliant system controller",
-                                  "HID-compliant vendor-defined device"
-                                  }.Contains(device["Description"]?.ToString()));
+                    new[] {
+                    "HID-compliant consumer control device",
+                    "HID-compliant device",
+                    "HID-compliant game controller",
+                    "HID-compliant system controller",
+                    "HID-compliant vendor-defined device"
+                    }.Contains(device["Description"]?.ToString()));
 
         isInitializingHIDState = false;
     }
@@ -199,7 +197,7 @@ public sealed partial class DevicesPage : Page
         // toggle registry value
         using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
         {
-            int value = IMOD.IsOn ? 1 : 0;
+            int value = HID.IsOn ? 1 : 0;
             key?.SetValue("HumanInterfaceDevices", value, RegistryValueKind.DWord);
         }
 
@@ -223,6 +221,7 @@ public sealed partial class DevicesPage : Page
                 process.WaitForExit();
             }
         });
+
         // cleanup devices
         await Task.Run(() => Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "DeviceCleanup", "DeviceCleanupCmd.exe"), "-s *") { CreateNoWindow = true })?.WaitForExit());
 

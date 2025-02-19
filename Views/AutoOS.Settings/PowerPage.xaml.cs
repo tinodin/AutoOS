@@ -88,7 +88,7 @@ public sealed partial class PowerPage : Page
                 HorizontalAlignment = HorizontalAlignment.Right
             };
             ((Button)infoBar.ActionButton).Click += (s, args) =>
-            System.Diagnostics.Process.Start("shutdown", "/r /f /t 0");
+            Process.Start("shutdown", "/r /f /t 0");
             PowerInfo.Children.Add(infoBar);
         }
 
@@ -206,7 +206,7 @@ public sealed partial class PowerPage : Page
                 HorizontalAlignment = HorizontalAlignment.Right
             };
             ((Button)infoBar.ActionButton).Click += (s, args) =>
-            System.Diagnostics.Process.Start("shutdown", "/r /f /t 0");
+            Process.Start("shutdown", "/r /f /t 0");
         }
         else
         {

@@ -17,6 +17,9 @@ public sealed partial class ServicesPage : Page
     private bool isInitializingFACEITState = true;
     private bool isInitializingGTAState = true;
     private bool isInitializingAMDVRRState = true;
+    private string list = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "lists.ini");
+    private string[] listContent = File.ReadAllLines(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "lists.ini"));
+    private string nsudoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NSudo", "NSudoLC.exe");
 
     public ServicesPage()
     {
@@ -32,6 +35,14 @@ public sealed partial class ServicesPage : Page
         GetFACEITState();
         GetGTAState();
         GetAMDVRRState();
+
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = "cmd.exe",
+            Arguments = $"/c takeown /f \"{list}\" & icacls \"{list}\" /grant Everyone:F /T /C /Q",
+            UseShellExecute = false,
+            CreateNoWindow = true
+        });
     }
 
     private void GetServicesState()
@@ -51,8 +62,8 @@ public sealed partial class ServicesPage : Page
 
             var infoBar = new InfoBar
             {
-                Title = Services.IsOn ? "Successfully enabled services. A restart is required to apply the change."
-                                          : "Successfully disabled services. A restart is required to apply the change.",
+                Title = Services.IsOn ? "Successfully enabled Services & Drivers. A restart is required to apply the change."
+                                          : "Successfully disabled Services & Drivers. A restart is required to apply the change.",
                 IsClosable = false,
                 IsOpen = true,
                 Severity = InfoBarSeverity.Success,
@@ -70,22 +81,183 @@ public sealed partial class ServicesPage : Page
         isInitializingServicesState = false;
     }
 
+    private async void Services_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (isInitializingServicesState) return;
+
+        // remove infobar
+        ServiceInfo.Children.Clear();
+
+        // add infobar
+        ServiceInfo.Children.Add(new InfoBar
+        {
+            Title = Services.IsOn ? "Enabling Services & Drivers..." : "Disabling Services & Drivers...",
+            IsClosable = false,
+            IsOpen = true,
+            Severity = InfoBarSeverity.Informational,
+            Margin = new Thickness(5)
+        });
+
+        // get latest build
+        string folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+
+        // toggle services
+        await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, Services.IsOn ? "Services-Enable.bat" : "Services-Disable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+
+        // remove infobar
+        ServiceInfo.Children.Clear();
+
+        // add infobar
+        var infoBar = new InfoBar
+        {
+            Title = Services.IsOn ? "Successfully enabled Services & Drivers." : "Successfully disabled Services & Drivers.",
+            IsClosable = false,
+            IsOpen = true,
+            Severity = InfoBarSeverity.Success,
+            Margin = new Thickness(5)
+        };
+        ServiceInfo.Children.Add(infoBar);
+
+        // add restart button
+        var serviceController = new ServiceController("Beep");
+        bool isRunning = serviceController.Status == ServiceControllerStatus.Running;
+
+        if (Services.IsOn && !isRunning || (!Services.IsOn && isRunning))
+        {
+            infoBar.Title += " A restart is required to apply the change.";
+            infoBar.ActionButton = new Button
+            {
+                Content = "Restart",
+                HorizontalAlignment = HorizontalAlignment.Right
+            };
+            ((Button)infoBar.ActionButton).Click += (s, args) =>
+            Process.Start("shutdown", "/r /f /t 0");
+        }
+        else
+        {
+            // delay
+            await Task.Delay(2000);
+            
+            // remove infobar
+            ServiceInfo.Children.Clear();
+        }
+    }
+
     private void GetWIFIState()
     {
         // define services and drivers
         var services = new[] { "WlanSvc", "Dhcp", "EventLog", "Netman", "NetSetupSvc", "NlaSvc", "Wcmsvc" };
-        var drivers = new[] { "# tdx", "# vwififlt" };
-        var lines = File.ReadAllLines(@"C:\AutoOS\Utilities\Services\service-list-builder\lists.ini");
+        var drivers = new[] { "# tdx", "# vwififlt", "# Netwtw10", "# Netwtw14" };
 
         // check state
-        WIFI.IsChecked = services.All(service => lines.Any(line => line.Trim() == service))
-                         && drivers.All(driver => lines.Any(line => line.Trim() == driver));
+        WIFI.IsChecked = services.All(service => listContent.Any(line => line.Trim() == service))
+                         && drivers.All(driver => listContent.Any(line => line.Trim() == driver));
 
         isInitializingWIFIState = false;
     }
 
     private async void WIFI_Checked(object sender, RoutedEventArgs e)
     {
+        if (isInitializingWIFIState) return;
+
+        // remove infobar
+        ServiceInfo.Children.Clear();
+
+        // add infobar
+        ServiceInfo.Children.Add(new InfoBar
+        {
+            Title = WIFI.IsChecked == true ? "Enabling WiFi support..." : "Disabling WiFi support...",
+            IsClosable = false,
+            IsOpen = true,
+            Severity = InfoBarSeverity.Informational,
+            Margin = new Thickness(5)
+        });
+
+        // read list
+        var lines = await File.ReadAllLinesAsync(list);
+
+        // define services and drivers
+        var services = new[] { "WlanSvc", "Dhcp", "EventLog", "Netman", "NetSetupSvc", "NlaSvc", "Wcmsvc" };
+        var drivers = new[] { "tdx", "vwififlt", "Netwtw10", "Netwtw14" };
+
+        // make changes
+        bool isChecked = WIFI.IsChecked == true;
+        for (int i = 0; i < lines.Length; i++)
+        {
+            if (services.Contains(lines[i].Trim().TrimStart('#', ' ')))
+                lines[i] = (isChecked ? lines[i].TrimStart('#', ' ') : "# " + lines[i].TrimStart('#', ' ')).Trim();
+            if (drivers.Contains(lines[i].Trim().TrimStart('#', ' ')))
+                lines[i] = (isChecked ? "# " + lines[i] : lines[i].TrimStart('#')).Trim();
+        }
+
+        // write changes
+        await File.WriteAllLinesAsync(list, lines);
+
+        if (!Services.IsOn)
+        {
+            // get latest build
+            string folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+
+            // enable services
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, "Services-Enable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+        }
+
+        // build service list
+        await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $@"-U:T -P:E -Wait -ShowWindowMode:Hide ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "service-list-builder.exe")}"" --config ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "lists.ini")}"" --disable-service-warning", CreateNoWindow = true }).WaitForExitAsync();
+
+        if (!Services.IsOn)
+        {
+            // get latest build
+            string folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+
+            // disable services
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, "Services-Disable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+
+            // remove infobar
+            ServiceInfo.Children.Clear();
+
+            // add infobar
+            var infoBar = new InfoBar
+            {
+                Title = WIFI.IsChecked == true ? "Successfully enabled WiFi support. A restart is required to apply the change." : "Successfully disabled WiFi support. A restart is required to apply the change.",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            };
+
+            // add restart button
+            infoBar.ActionButton = new Button
+            {
+                Content = "Restart",
+                HorizontalAlignment = HorizontalAlignment.Right
+            };
+            ((Button)infoBar.ActionButton).Click += (s, args) =>
+            Process.Start("shutdown", "/r /f /t 0");
+
+            ServiceInfo.Children.Add(infoBar);
+        }
+        else
+        {
+            // remove infobar
+            ServiceInfo.Children.Clear();
+
+            // add infobar
+            ServiceInfo.Children.Add(new InfoBar
+            {
+                Title = WIFI.IsChecked == true ? "Successfully enabled WiFi support." : "Successfully disabled WiFi support.",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            });
+
+            // delay
+            await Task.Delay(2000);
+
+            // remove infobar
+            ServiceInfo.Children.Clear();
+        }
     }
 
     private void GetBluetoothState()
@@ -93,49 +265,340 @@ public sealed partial class ServicesPage : Page
         // define services and drivers
         var services = new[] { "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DevicesFlowUserSvc", "DsmSvc", "NcbService", "SystemEventsBroker", "WFDSConMgrSvc" };
         var drivers = new[] { "# BthA2dp", "# BthEnum", "# BthHFAud", "# BthHFEnum", "# BthLEEnum", "# BthMini", "# BTHMODEM", "# BthPan", "# BTHPORT", "# BTHUSB", "# HidBth", "# ibtusb", "# Microsoft_Bluetooth_AvrcpTransport", "# RFCOMM" };
-        var lines = File.ReadAllLines(@"C:\AutoOS\Utilities\Services\service-list-builder\lists.ini");
 
         // check state
-        Bluetooth.IsChecked = services.All(service => lines.Any(line => line.Trim() == service))
-                         && drivers.All(driver => lines.Any(line => line.Trim() == driver));
+        Bluetooth.IsChecked = services.All(service => listContent.Any(line => line.Trim() == service))
+                         && drivers.All(driver => listContent.Any(line => line.Trim() == driver));
 
         isInitializingBluetoothState = false;
     }
 
     private async void Bluetooth_Checked(object sender, RoutedEventArgs e)
     {
+        if (isInitializingBluetoothState) return;
+
+        // remove infobar
+        ServiceInfo.Children.Clear();
+
+        // add infobar
+        ServiceInfo.Children.Add(new InfoBar
+        {
+            Title = Bluetooth.IsChecked == true ? "Enabling Bluetooth support..." : "Disabling Bluetooth support...",
+            IsClosable = false,
+            IsOpen = true,
+            Severity = InfoBarSeverity.Informational,
+            Margin = new Thickness(5)
+        });
+
+        // read list
+        var lines = await File.ReadAllLinesAsync(list);
+
+        // define services and drivers
+        var services = new[] { "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DevicesFlowUserSvc", "DsmSvc", "NcbService", "SystemEventsBroker", "WFDSConMgrSvc" };
+        var drivers = new[] { "BthA2dp", "BthEnum", "BthHFAud", "BthHFEnum", "BthLEEnum", "BthMini", "BTHMODEM", "BthPan", "BTHPORT", "BTHUSB", "HidBth", "ibtusb", "Microsoft_Bluetooth_AvrcpTransport", "RFCOMM" };
+
+        // make changes
+        bool isChecked = Bluetooth.IsChecked == true;
+        for (int i = 0; i < lines.Length; i++)
+        {
+            if (services.Contains(lines[i].Trim().TrimStart('#', ' ')))
+                lines[i] = (isChecked ? lines[i].TrimStart('#', ' ') : "# " + lines[i].TrimStart('#', ' ')).Trim();
+            if (drivers.Contains(lines[i].Trim().TrimStart('#', ' ')))
+                lines[i] = (isChecked ? "# " + lines[i] : lines[i].TrimStart('#')).Trim();
+        }
+
+        // write changes
+        await File.WriteAllLinesAsync(list, lines);
+
+        if (!Services.IsOn)
+        {
+            // get latest build
+            string folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+
+            // enable services
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, "Services-Enable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+        }
+
+        // build service list
+        await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $@"-U:T -P:E -Wait -ShowWindowMode:Hide ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "service-list-builder.exe")}"" --config ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "lists.ini")}"" --disable-service-warning", CreateNoWindow = true }).WaitForExitAsync();
+
+        if (!Services.IsOn)
+        {
+            // get latest build
+            string folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+
+            // disable services
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, "Services-Disable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+
+            // remove infobar
+            ServiceInfo.Children.Clear();
+
+            // add infobar
+            var infoBar = new InfoBar
+            {
+                Title = Bluetooth.IsChecked == true ? "Successfully enabled Bluetooth support. A restart is required to apply the change." : "Successfully disabled Bluetooth support. A restart is required to apply the change.",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            };
+
+            // add restart button
+            infoBar.ActionButton = new Button
+            {
+                Content = "Restart",
+                HorizontalAlignment = HorizontalAlignment.Right
+            };
+            ((Button)infoBar.ActionButton).Click += (s, args) =>
+            Process.Start("shutdown", "/r /f /t 0");
+
+            ServiceInfo.Children.Add(infoBar);
+        }
+        else
+        {
+            // remove infobar
+            ServiceInfo.Children.Clear();
+
+            // add infobar
+            ServiceInfo.Children.Add(new InfoBar
+            {
+                Title = Bluetooth.IsChecked == true ? "Successfully enabled Bluetooth support." : "Successfully disabled Bluetooth support.",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            });
+
+            // delay
+            await Task.Delay(2000);
+
+            // remove infobar
+            ServiceInfo.Children.Clear();
+        }
     }
 
     private void GetCameraState()
     {
         // define services and drivers
         var drivers = new[] { "# swenum" };
-        var lines = File.ReadAllLines(@"C:\AutoOS\Utilities\Services\service-list-builder\lists.ini");
 
         // check state
-        Camera.IsChecked = drivers.All(driver => lines.Any(line => line.Trim() == driver));
+        Camera.IsChecked = drivers.All(driver => listContent.Any(line => line.Trim() == driver));
 
         isInitializingCameraState = false;
     }
 
     private async void Camera_Checked(object sender, RoutedEventArgs e)
     {
+        if (isInitializingCameraState) return;
+
+        // remove infobar
+        ServiceInfo.Children.Clear();
+
+        // add infobar
+        ServiceInfo.Children.Add(new InfoBar
+        {
+            Title = Camera.IsChecked == true ? "Enabling Camera support..." : "Disabling Camera support...",
+            IsClosable = false,
+            IsOpen = true,
+            Severity = InfoBarSeverity.Informational,
+            Margin = new Thickness(5)
+        });
+
+        // read list
+        var lines = await File.ReadAllLinesAsync(list);
+
+        // define drivers
+        var drivers = new[] { "swenum" };
+
+        // make changes
+        bool isChecked = Camera.IsChecked == true;
+        for (int i = 0; i < lines.Length; i++)
+        {
+            if (drivers.Contains(lines[i].Trim().TrimStart('#', ' ')))
+                lines[i] = (isChecked ? "# " + lines[i] : lines[i].TrimStart('#')).Trim();
+        }
+
+        // write changes
+        await File.WriteAllLinesAsync(list, lines);
+
+        if (!Services.IsOn)
+        {
+            // get latest build
+            string folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+
+            // enable services
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, "Services-Enable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+        }
+
+        // build service list
+        await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $@"-U:T -P:E -Wait -ShowWindowMode:Hide ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "service-list-builder.exe")}"" --config ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "lists.ini")}"" --disable-service-warning", CreateNoWindow = true }).WaitForExitAsync();
+
+        if (!Services.IsOn)
+        {
+            // get latest build
+            string folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+
+            // disable services
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, "Services-Disable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+
+            // remove infobar
+            ServiceInfo.Children.Clear();
+
+            // add infobar
+            var infoBar = new InfoBar
+            {
+                Title = Camera.IsChecked == true ? "Successfully enabled Camera support. A restart is required to apply the change." : "Successfully disabled Camera support. A restart is required to apply the change.",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            };
+
+            // add restart button
+            infoBar.ActionButton = new Button
+            {
+                Content = "Restart",
+                HorizontalAlignment = HorizontalAlignment.Right
+            };
+            ((Button)infoBar.ActionButton).Click += (s, args) =>
+            Process.Start("shutdown", "/r /f /t 0");
+
+            ServiceInfo.Children.Add(infoBar);
+        }
+        else
+        {
+            // remove infobar
+            ServiceInfo.Children.Clear();
+
+            // add infobar
+            ServiceInfo.Children.Add(new InfoBar
+            {
+                Title = Camera.IsChecked == true ? "Successfully enabled Camera support." : "Successfully disabled Camera support.",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            });
+
+            // delay
+            await Task.Delay(2000);
+
+            // remove infobar
+            ServiceInfo.Children.Clear();
+        }
     }
 
     private void GetSnippingState()
     {
         // define services and drivers
         var services = new[] { "cbdhsvc", "CaptureService" };
-        var lines = File.ReadAllLines(@"C:\AutoOS\Utilities\Services\service-list-builder\lists.ini");
 
         // check state
-        Snipping.IsChecked = services.All(service => lines.Any(line => line.Trim() == service));
+        Snipping.IsChecked = services.All(service => listContent.Any(line => line.Trim() == service));
 
         isInitializingSnippingState = false;
     }
 
     private async void Snipping_Checked(object sender, RoutedEventArgs e)
     {
+        if (isInitializingSnippingState) return;
+
+        // remove infobar
+        ServiceInfo.Children.Clear();
+
+        // add infobar
+        ServiceInfo.Children.Add(new InfoBar
+        {
+            Title = Snipping.IsChecked == true ? "Enabling Snipping Tool support..." : "Disabling Snipping Tool support...",
+            IsClosable = false,
+            IsOpen = true,
+            Severity = InfoBarSeverity.Informational,
+            Margin = new Thickness(5)
+        });
+
+        // read list
+        var lines = await File.ReadAllLinesAsync(list);
+
+        // define services
+        var services = new[] { "cbdhsvc", "CaptureService" };
+
+        // make changes
+        bool isChecked = Snipping.IsChecked == true;
+        for (int i = 0; i < lines.Length; i++)
+        {
+            if (services.Contains(lines[i].Trim().TrimStart('#', ' ')))
+                lines[i] = (isChecked ? lines[i].TrimStart('#', ' ') : "# " + lines[i].TrimStart('#', ' ')).Trim();
+        }
+
+        // write changes
+        await File.WriteAllLinesAsync(list, lines);
+
+        if (!Services.IsOn)
+        {
+            // get latest build
+            string folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+
+            // enable services
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, "Services-Enable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+        }
+
+        // build service list
+        await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $@"-U:T -P:E -Wait -ShowWindowMode:Hide ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "service-list-builder.exe")}"" --config ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "lists.ini")}"" --disable-service-warning", CreateNoWindow = true }).WaitForExitAsync();
+
+        if (!Services.IsOn)
+        {
+            // get latest build
+            string folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+
+            // disable services
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, "Services-Disable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+
+            // remove infobar
+            ServiceInfo.Children.Clear();
+
+            // add infobar
+            var infoBar = new InfoBar
+            {
+                Title = Snipping.IsChecked == true ? "Successfully enabled Snipping Tool support. A restart is required to apply the change." : "Successfully disabled Snipping Tool support. A restart is required to apply the change.",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            };
+
+            // add restart button
+            infoBar.ActionButton = new Button
+            {
+                Content = "Restart",
+                HorizontalAlignment = HorizontalAlignment.Right
+            };
+            ((Button)infoBar.ActionButton).Click += (s, args) =>
+            Process.Start("shutdown", "/r /f /t 0");
+
+            ServiceInfo.Children.Add(infoBar);
+        }
+        else
+        {
+            // remove infobar
+            ServiceInfo.Children.Clear();
+
+            // add infobar
+            ServiceInfo.Children.Add(new InfoBar
+            {
+                Title = Snipping.IsChecked == true ? "Successfully enabled Snipping Tool support." : "Successfully disabled Snipping Tool support.",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            });
+
+            // delay
+            await Task.Delay(2000);
+
+            // remove infobar
+            ServiceInfo.Children.Clear();
+        }
     }
 
     private void GetStartMenuState()
@@ -143,97 +606,682 @@ public sealed partial class ServicesPage : Page
         // define services and drivers
         var services = new[] { "UdkUserSvc" };
         var binaries = new[] { "# \\Windows\\System32\\ctfmon.exe", "# \\Windows\\System32\\RuntimeBroker.exe", "# \\Windows\\SystemApps\\ShellExperienceHost_cw5n1h2txyewy\\ShellExperienceHost.exe", "# \\Windows\\SystemApps\\Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy\\StartMenuExperienceHost.exe" };
-        var lines = File.ReadAllLines(@"C:\AutoOS\Utilities\Services\service-list-builder\lists.ini");
 
         // check state
-        StartMenu.IsChecked = services.All(service => lines.Any(line => line.Trim() == service))
-                         && binaries.All(driver => lines.Any(line => line.Trim() == driver));
+        StartMenu.IsChecked = services.All(service => listContent.Any(line => line.Trim() == service))
+                         && binaries.All(driver => listContent.Any(line => line.Trim() == driver));
 
         isInitializingStartMenuState = false;
     }
 
     private async void StartMenu_Checked(object sender, RoutedEventArgs e)
     {
+        if (isInitializingStartMenuState) return;
+
+        // remove infobar
+        ServiceInfo.Children.Clear();
+
+        // add infobar
+        ServiceInfo.Children.Add(new InfoBar
+        {
+            Title = StartMenu.IsChecked == true ? "Enabling Windows Start Menu support..." : "Disabling Windows Start Menu support...",
+            IsClosable = false,
+            IsOpen = true,
+            Severity = InfoBarSeverity.Informational,
+            Margin = new Thickness(5)
+        });
+
+        // read list
+        var lines = await File.ReadAllLinesAsync(list);
+
+        // define services and binaries
+        var services = new[] { "UdkUserSvc" };
+        var binaries = new[]
+        {
+            "\\Windows\\System32\\ctfmon.exe",
+            "\\Windows\\System32\\RuntimeBroker.exe",
+            "\\Windows\\SystemApps\\ShellExperienceHost_cw5n1h2txyewy\\ShellExperienceHost.exe",
+            "\\Windows\\SystemApps\\Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy\\StartMenuExperienceHost.exe"
+        };
+
+        // make changes
+        bool isChecked = StartMenu.IsChecked == true;
+        for (int i = 0; i < lines.Length; i++)
+        {
+            if (services.Contains(lines[i].Trim().TrimStart('#', ' ')))
+                lines[i] = (isChecked ? lines[i].TrimStart('#', ' ') : "# " + lines[i].TrimStart('#', ' ')).Trim();
+            if (binaries.Contains(lines[i].Trim().TrimStart('#', ' ')))
+                lines[i] = (isChecked ? "# " + lines[i] : lines[i].TrimStart('#')).Trim();
+        }
+
+        // write changes
+        await File.WriteAllLinesAsync(list, lines);
+
+        if (!Services.IsOn)
+        {
+            // get latest build
+            string folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+
+            // enable services
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, "Services-Enable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+        }
+
+        // build service list
+        await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $@"-U:T -P:E -Wait -ShowWindowMode:Hide ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "service-list-builder.exe")}"" --config ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "lists.ini")}"" --disable-service-warning", CreateNoWindow = true }).WaitForExitAsync();
+
+        if (!Services.IsOn)
+        {
+            // get latest build
+            string folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+
+            // disable services
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, "Services-Disable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+
+            // remove infobar
+            ServiceInfo.Children.Clear();
+
+            // add infobar
+            var infoBar = new InfoBar
+            {
+                Title = StartMenu.IsChecked == true ? "Successfully enabled Windows Start Menu support. A restart is required to apply the change." : "Successfully disabled Windows Start Menu support. A restart is required to apply the change.",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            };
+
+            // add restart button
+            infoBar.ActionButton = new Button
+            {
+                Content = "Restart",
+                HorizontalAlignment = HorizontalAlignment.Right
+            };
+            ((Button)infoBar.ActionButton).Click += (s, args) =>
+            Process.Start("shutdown", "/r /f /t 0");
+
+            ServiceInfo.Children.Add(infoBar);
+        }
+        else
+        {
+            // remove infobar
+            ServiceInfo.Children.Clear();
+
+            // add infobar
+            ServiceInfo.Children.Add(new InfoBar
+            {
+                Title = StartMenu.IsChecked == true ? "Successfully enabled Windows Start Menu support." : "Successfully disabled Windows Start Menu support.",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            });
+
+            // delay
+            await Task.Delay(2000);
+
+            // remove infobar
+            ServiceInfo.Children.Clear();
+        }
     }
 
     private void GetTaskManagerState()
     {
         // define services and drivers
         var drivers = new[] { "# pcw" };
-        var lines = File.ReadAllLines(@"C:\AutoOS\Utilities\Services\service-list-builder\lists.ini");
 
         // check state
-        TaskManager.IsChecked = drivers.All(driver => lines.Any(line => line.Trim() == driver));
+        TaskManager.IsChecked = drivers.All(driver => listContent.Any(line => line.Trim() == driver));
 
         isInitializingTaskManagerState = false;
     }
 
     private async void TaskManager_Checked(object sender, RoutedEventArgs e)
     {
+        if (isInitializingTaskManagerState) return;
+
+        // remove infobar
+        ServiceInfo.Children.Clear();
+
+        // add infobar
+        ServiceInfo.Children.Add(new InfoBar
+        {
+            Title = TaskManager.IsChecked == true ? "Enabling Task Manager support..." : "Disabling Task Manager support...",
+            IsClosable = false,
+            IsOpen = true,
+            Severity = InfoBarSeverity.Informational,
+            Margin = new Thickness(5)
+        });
+
+        // read list
+        var lines = await File.ReadAllLinesAsync(list);
+
+        // define drivers
+        var drivers = new[] { "pcw" };
+
+        // make changes
+        bool isChecked = TaskManager.IsChecked == true;
+        for (int i = 0; i < lines.Length; i++)
+        {
+            if (drivers.Contains(lines[i].Trim().TrimStart('#', ' ')))
+                lines[i] = (isChecked ? "# " + lines[i] : lines[i].TrimStart('#')).Trim();
+        }
+
+        // write changes
+        await File.WriteAllLinesAsync(list, lines);
+
+        if (!Services.IsOn)
+        {
+            // get latest build
+            string folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+
+            // enable services
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, "Services-Enable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+        }
+
+        // build service list
+        await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $@"-U:T -P:E -Wait -ShowWindowMode:Hide ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "service-list-builder.exe")}"" --config ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "lists.ini")}"" --disable-service-warning", CreateNoWindow = true }).WaitForExitAsync();
+
+        if (!Services.IsOn)
+        {
+            // get latest build
+            string folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+
+            // disable services
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, "Services-Disable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+
+            // remove infobar
+            ServiceInfo.Children.Clear();
+
+            // add infobar
+            var infoBar = new InfoBar
+            {
+                Title = TaskManager.IsChecked == true ? "Successfully enabled Task Manager support. A restart is required to apply the change." : "Successfully disabled Task Manager support. A restart is required to apply the change.",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            };
+
+            // add restart button
+            infoBar.ActionButton = new Button
+            {
+                Content = "Restart",
+                HorizontalAlignment = HorizontalAlignment.Right
+            };
+            ((Button)infoBar.ActionButton).Click += (s, args) =>
+            Process.Start("shutdown", "/r /f /t 0");
+
+            ServiceInfo.Children.Add(infoBar);
+        }
+        else
+        {
+            // remove infobar
+            ServiceInfo.Children.Clear();
+
+            // add infobar
+            ServiceInfo.Children.Add(new InfoBar
+            {
+                Title = TaskManager.IsChecked == true ? "Successfully enabled Task Manager support." : "Successfully disabled Task Manager support.",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            });
+
+            // delay
+            await Task.Delay(2000);
+
+            // remove infobar
+            ServiceInfo.Children.Clear();
+        }
     }
 
     private void GetLaptopState()
     {
         // define services and drivers
         var drivers = new[] { "# msisadrv" };
-        var lines = File.ReadAllLines(@"C:\AutoOS\Utilities\Services\service-list-builder\lists.ini");
 
         // check state
-        Laptop.IsChecked = drivers.All(driver => lines.Any(line => line.Trim() == driver));
+        Laptop.IsChecked = drivers.All(driver => listContent.Any(line => line.Trim() == driver));
 
         isInitializingLaptopState = false;
     }
 
     private async void Laptop_Checked(object sender, RoutedEventArgs e)
     {
+        if (isInitializingLaptopState) return;
+
+        // remove infobar
+        ServiceInfo.Children.Clear();
+
+        // add infobar
+        ServiceInfo.Children.Add(new InfoBar
+        {
+            Title = Laptop.IsChecked == true ? "Enabling Laptop Keyboard support..." : "Disabling Laptop Keyboard support...",
+            IsClosable = false,
+            IsOpen = true,
+            Severity = InfoBarSeverity.Informational,
+            Margin = new Thickness(5)
+        });
+
+        // read list
+        var lines = await File.ReadAllLinesAsync(list);
+
+        // define drivers
+        var drivers = new[] { "msisadrv" };
+
+        // make changes
+        bool isChecked = Laptop.IsChecked == true;
+        for (int i = 0; i < lines.Length; i++)
+        {
+            if (drivers.Contains(lines[i].Trim().TrimStart('#', ' ')))
+                lines[i] = (isChecked ? "# " + lines[i] : lines[i].TrimStart('#')).Trim();
+        }
+
+        // write changes
+        await File.WriteAllLinesAsync(list, lines);
+
+        if (!Services.IsOn)
+        {
+            // get latest build
+            string folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+
+            // enable services
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, "Services-Enable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+        }
+
+        // build service list
+        await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $@"-U:T -P:E -Wait -ShowWindowMode:Hide ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "service-list-builder.exe")}"" --config ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "lists.ini")}"" --disable-service-warning", CreateNoWindow = true }).WaitForExitAsync();
+
+        if (!Services.IsOn)
+        {
+            // get latest build
+            string folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+
+            // disable services
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, "Services-Disable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+
+            // remove infobar
+            ServiceInfo.Children.Clear();
+
+            // add infobar
+            var infoBar = new InfoBar
+            {
+                Title = Laptop.IsChecked == true ? "Successfully enabled Laptop Keyboard support. A restart is required to apply the change." : "Successfully disabled Laptop Keyboard support. A restart is required to apply the change.",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            };
+
+            // add restart button
+            infoBar.ActionButton = new Button
+            {
+                Content = "Restart",
+                HorizontalAlignment = HorizontalAlignment.Right
+            };
+            ((Button)infoBar.ActionButton).Click += (s, args) =>
+            Process.Start("shutdown", "/r /f /t 0");
+
+            ServiceInfo.Children.Add(infoBar);
+        }
+        else
+        {
+            // remove infobar
+            ServiceInfo.Children.Clear();
+
+            // add infobar
+            ServiceInfo.Children.Add(new InfoBar
+            {
+                Title = Laptop.IsChecked == true ? "Successfully enabled Laptop Keyboard support." : "Successfully disabled Laptop Keyboard support.",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            });
+
+            // delay
+            await Task.Delay(2000);
+
+            // remove infobar
+            ServiceInfo.Children.Clear();
+        }
     }
 
     private void GetFACEITState()
     {
         // define services and drivers
         var drivers = new[] { "# FileCrypt" };
-        var lines = File.ReadAllLines(@"C:\AutoOS\Utilities\Services\service-list-builder\lists.ini");
 
         // check state
-        FACEIT.IsChecked = drivers.All(driver => lines.Any(line => line.Trim() == driver));
+        FACEIT.IsChecked = drivers.All(driver => listContent.Any(line => line.Trim() == driver));
 
         isInitializingFACEITState = false;
     }
 
     private async void FACEIT_Checked(object sender, RoutedEventArgs e)
     {
+        if (isInitializingFACEITState) return;
+
+        // remove infobar
+        ServiceInfo.Children.Clear();
+
+        // add infobar
+        ServiceInfo.Children.Add(new InfoBar
+        {
+            Title = FACEIT.IsChecked == true ? "Enabling FACEIT support..." : "Disabling FACEIT support...",
+            IsClosable = false,
+            IsOpen = true,
+            Severity = InfoBarSeverity.Informational,
+            Margin = new Thickness(5)
+        });
+
+        // read list
+        var lines = await File.ReadAllLinesAsync(list);
+
+        // define drivers
+        var drivers = new[] { "FileCrypt" };
+
+        // make changes
+        bool isChecked = FACEIT.IsChecked == true;
+        for (int i = 0; i < lines.Length; i++)
+        {
+            if (drivers.Contains(lines[i].Trim().TrimStart('#', ' ')))
+                lines[i] = (isChecked ? "# " + lines[i] : lines[i].TrimStart('#')).Trim();
+        }
+
+        // write changes
+        await File.WriteAllLinesAsync(list, lines);
+
+        if (!Services.IsOn)
+        {
+            // get latest build
+            string folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+
+            // enable services
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, "Services-Enable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+        }
+
+        // build service list
+        await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $@"-U:T -P:E -Wait -ShowWindowMode:Hide ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "service-list-builder.exe")}"" --config ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "lists.ini")}"" --disable-service-warning", CreateNoWindow = true }).WaitForExitAsync();
+
+        if (!Services.IsOn)
+        {
+            // get latest build
+            string folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+
+            // disable services
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, "Services-Disable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+
+            // remove infobar
+            ServiceInfo.Children.Clear();
+
+            // add infobar
+            var infoBar = new InfoBar
+            {
+                Title = FACEIT.IsChecked == true ? "Successfully enabled FACEIT support. A restart is required to apply the change." : "Successfully disabled FACEIT support. A restart is required to apply the change.",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            };
+
+            // add restart button
+            infoBar.ActionButton = new Button
+            {
+                Content = "Restart",
+                HorizontalAlignment = HorizontalAlignment.Right
+            };
+            ((Button)infoBar.ActionButton).Click += (s, args) =>
+            Process.Start("shutdown", "/r /f /t 0");
+
+            ServiceInfo.Children.Add(infoBar);
+        }
+        else
+        {
+            // remove infobar
+            ServiceInfo.Children.Clear();
+
+            // add infobar
+            ServiceInfo.Children.Add(new InfoBar
+            {
+                Title = FACEIT.IsChecked == true ? "Successfully enabled FACEIT support." : "Successfully disabled FACEIT support.",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            });
+
+            // delay
+            await Task.Delay(2000);
+
+            // remove infobar
+            ServiceInfo.Children.Clear();
+        }
     }
 
     private void GetGTAState()
     {
         // define services and drivers
         var drivers = new[] { "# mssmbios" };
-        var lines = File.ReadAllLines(@"C:\AutoOS\Utilities\Services\service-list-builder\lists.ini");
 
         // check state
-        GTA.IsChecked = drivers.All(driver => lines.Any(line => line.Trim() == driver));
+        GTA.IsChecked = drivers.All(driver => listContent.Any(line => line.Trim() == driver));
 
         isInitializingGTAState = false;
     }
 
     private async void GTA_Checked(object sender, RoutedEventArgs e)
     {
+        if (isInitializingGTAState) return;
+
+        // remove infobar
+        ServiceInfo.Children.Clear();
+
+        // add infobar
+        ServiceInfo.Children.Add(new InfoBar
+        {
+            Title = GTA.IsChecked == true ? "Enabling GTA support..." : "Disabling GTA support...",
+            IsClosable = false,
+            IsOpen = true,
+            Severity = InfoBarSeverity.Informational,
+            Margin = new Thickness(5)
+        });
+
+        // read list
+        var lines = await File.ReadAllLinesAsync(list);
+
+        // define drivers
+        var drivers = new[] { "mssmbios" };
+
+        // make changes
+        bool isChecked = GTA.IsChecked == true;
+        for (int i = 0; i < lines.Length; i++)
+        {
+            if (drivers.Contains(lines[i].Trim().TrimStart('#', ' ')))
+                lines[i] = (isChecked ? "# " + lines[i] : lines[i].TrimStart('#')).Trim();
+        }
+
+        // write changes
+        await File.WriteAllLinesAsync(list, lines);
+
+        if (!Services.IsOn)
+        {
+            // get latest build
+            string folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+
+            // enable services
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, "Services-Enable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+        }
+
+        // build service list
+        await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $@"-U:T -P:E -Wait -ShowWindowMode:Hide ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "service-list-builder.exe")}"" --config ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "lists.ini")}"" --disable-service-warning", CreateNoWindow = true }).WaitForExitAsync();
+
+        if (!Services.IsOn)
+        {
+            // get latest build
+            string folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+
+            // disable services
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, "Services-Disable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+
+            // remove infobar
+            ServiceInfo.Children.Clear();
+
+            // add infobar
+            var infoBar = new InfoBar
+            {
+                Title = GTA.IsChecked == true ? "Successfully enabled GTA support. A restart is required to apply the change." : "Successfully disabled GTA support. A restart is required to apply the change.",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            };
+
+            // add restart button
+            infoBar.ActionButton = new Button
+            {
+                Content = "Restart",
+                HorizontalAlignment = HorizontalAlignment.Right
+            };
+            ((Button)infoBar.ActionButton).Click += (s, args) =>
+            Process.Start("shutdown", "/r /f /t 0");
+
+            ServiceInfo.Children.Add(infoBar);
+        }
+        else
+        {
+            // remove infobar
+            ServiceInfo.Children.Clear();
+
+            // add infobar
+            ServiceInfo.Children.Add(new InfoBar
+            {
+                Title = GTA.IsChecked == true ? "Successfully enabled GTA support." : "Successfully disabled GTA support.",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            });
+
+            // delay
+            await Task.Delay(2000);
+
+            // remove infobar
+            ServiceInfo.Children.Clear();
+        }
     }
 
     private void GetAMDVRRState()
     {
         // define services and drivers
         var services = new[] { "AMD External Events Utility" };
-        var lines = File.ReadAllLines(@"C:\AutoOS\Utilities\Services\service-list-builder\lists.ini");
 
         // check state
-        AMDVRR.IsChecked = services.All(service => lines.Any(line => line.Trim() == service));
+        AMDVRR.IsChecked = services.All(service => listContent.Any(line => line.Trim() == service));
 
         isInitializingAMDVRRState = false;
     }
 
     private async void AMDVRR_Checked(object sender, RoutedEventArgs e)
     {
+        if (isInitializingAMDVRRState) return;
+
+        // remove infobar
+        ServiceInfo.Children.Clear();
+
+        // add infobar
+        ServiceInfo.Children.Add(new InfoBar
+        {
+            Title = AMDVRR.IsChecked == true ? "Enabling AMD Variable Refresh Rate (VRR) / FreeSync support..." : "Disabling AMD Variable Refresh Rate (VRR) / FreeSync support...",
+            IsClosable = false,
+            IsOpen = true,
+            Severity = InfoBarSeverity.Informational,
+            Margin = new Thickness(5)
+        });
+
+        // read list
+        var lines = await File.ReadAllLinesAsync(list);
+
+        // define services
+        var services = new[] { "AMD External Events Utility" };
+
+        // make changes
+        bool isChecked = AMDVRR.IsChecked == true;
+        for (int i = 0; i < lines.Length; i++)
+        {
+            if (services.Contains(lines[i].Trim().TrimStart('#', ' ')))
+                lines[i] = (isChecked ? lines[i].TrimStart('#', ' ') : "# " + lines[i].TrimStart('#', ' ')).Trim();
+        }
+
+        // write changes
+        await File.WriteAllLinesAsync(list, lines);
+
+        if (!Services.IsOn)
+        {
+            // get latest build
+            string folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+
+            // enable services
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, "Services-Enable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+        }
+
+        // build service list
+        await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $@"-U:T -P:E -Wait -ShowWindowMode:Hide ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "service-list-builder.exe")}"" --config ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "lists.ini")}"" --disable-service-warning", CreateNoWindow = true }).WaitForExitAsync();
+
+        if (!Services.IsOn)
+        {
+            // get latest build
+            string folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+
+            // disable services
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, "Services-Disable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+
+            // remove infobar
+            ServiceInfo.Children.Clear();
+
+            // add infobar
+            var infoBar = new InfoBar
+            {
+                Title = AMDVRR.IsChecked == true ? "Successfully enabled AMD Variable Refresh Rate (VRR) / FreeSync support. A restart is required to apply the change." : "Successfully disabled AMD Variable Refresh Rate (VRR) / FreeSync support. A restart is required to apply the change.",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            };
+
+            // add restart button
+            infoBar.ActionButton = new Button
+            {
+                Content = "Restart",
+                HorizontalAlignment = HorizontalAlignment.Right
+            };
+            ((Button)infoBar.ActionButton).Click += (s, args) =>
+            Process.Start("shutdown", "/r /f /t 0");
+
+            ServiceInfo.Children.Add(infoBar);
+        }
+        else
+        {
+            // remove infobar
+            ServiceInfo.Children.Clear();
+
+            // add infobar
+            ServiceInfo.Children.Add(new InfoBar
+            {
+                Title = AMDVRR.IsChecked == true ? "Successfully enabled AMD Variable Refresh Rate (VRR) / FreeSync support." : "Successfully disabled AMD Variable Refresh Rate (VRR) / FreeSync support.",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            });
+
+            // delay
+            await Task.Delay(2000);
+
+            // remove infobar
+            ServiceInfo.Children.Clear();
+        }
     }
 
     private async void LaunchServiWin_Click(object sender, RoutedEventArgs e)

@@ -74,6 +74,8 @@
                 </dev:SettingsGroup.Content>
             </dev:SettingsGroup>
             <StackPanel x:Name="MsiAfterburnerInfo"/>
+            <Border Height="60"
+                    Background="Transparent"/>
         </StackPanel>
     </ScrollView>
 </Page>

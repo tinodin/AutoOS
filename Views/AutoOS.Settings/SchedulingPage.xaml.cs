@@ -169,7 +169,7 @@ public sealed partial class SchedulingPage : Page
                 HorizontalAlignment = HorizontalAlignment.Right
             };
             ((Button)infoBar.ActionButton).Click += (s, args) =>
-            System.Diagnostics.Process.Start("shutdown", "/r /f /t 0");
+            Process.Start("shutdown", "/r /f /t 0");
         }
         else
         {

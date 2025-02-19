@@ -1,9 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Net.NetworkInformation;
 using Microsoft.Win32;
-using Microsoft.UI.Xaml.Controls;
-using System.ServiceProcess;
-//using System.Management;
 
 namespace AutoOS.Views.Settings;
 
@@ -25,8 +22,8 @@ public sealed partial class InternetPage : Page
         // declare services and drivers
         var groups = new[]
         {
-            (new[] { "WlanSvc", "Dhcp", "EventLog", "nsi", "Wcmsvc" }, 2),
-            (new[] { "Netman", "netprofm", "NetSetupSvc", "NlaSvc" }, 3),
+            (new[] { "WlanSvc", "Dhcp", "EventLog", "Wcmsvc", "WinHttpAutoProxySvc" }, 2),
+            (new[] { "NlaSvc" }, 3),
             (new[] { "tdx", "vwififlt" }, 1)
         };
 
@@ -87,8 +84,8 @@ public sealed partial class InternetPage : Page
         // declare services and drivers
         var groups = new[]
         {
-            (new[] { "WlanSvc", "Dhcp", "EventLog", "nsi", "Wcmsvc" }, 2),
-            (new[] { "Netman", "netprofm", "NetSetupSvc", "NlaSvc" }, 3),
+            (new[] { "WlanSvc", "Dhcp", "EventLog", "Wcmsvc", "WinHttpAutoProxySvc"}, 2),
+            (new[] { "NlaSvc" }, 3),
             (new[] { "tdx", "vwififlt" }, 1)
         };
 
@@ -128,7 +125,7 @@ public sealed partial class InternetPage : Page
                 HorizontalAlignment = HorizontalAlignment.Right
             };
             ((Button)infoBar.ActionButton).Click += (s, args) =>
-            System.Diagnostics.Process.Start("shutdown", "/r /f /t 0");
+            Process.Start("shutdown", "/r /f /t 0");
         }
         else
         {

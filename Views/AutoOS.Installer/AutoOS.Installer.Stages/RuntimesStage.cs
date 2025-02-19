@@ -8,7 +8,7 @@ public static class RuntimesStage
 {
     public static async Task Run()
     {
-        InstallPage.Status.Text = "Installing Runtimes...";
+        InstallPage.Status.Text = "Configuring Runtimes...";
 
         int validActionsCount = 0;
         int stagePercentage = 5;
@@ -26,6 +26,7 @@ public static class RuntimesStage
 
             // install microsoft edge webview2 runtime
             (async () => await ProcessActions.RunNsudo("Installing the Microsoft Edge WebView2 Runtime", "CurrentUser", @"""%TEMP%\MicrosoftEdgeWebView2RuntimeInstallerX64.exe"" /silent /install"), null),
+            (async () => await ProcessActions.RunNsudo("Installing the Microsoft Edge WebView2 Runtime", "TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\MicrosoftEdgeUpdate.exe"" /v Debugger /t REG_SZ /d ""%windir%\System32\taskkill.exe"" /f"), null),
 
             // download the directx redistributable
             (async () => await ProcessActions.RunDownload("Downloading the DirectX Redistributable", "https://download.microsoft.com/download/8/4/A/84A35BF1-DAFE-4AE8-82AF-AD2AE20B6B14/directx_Jun2010_redist.exe", Path.GetTempPath(), "directx_Jun2010_redist.exe"), null),

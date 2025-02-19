@@ -1,6 +1,6 @@
 ﻿using Microsoft.UI.Windowing;
-using Microsoft.UI.Xaml.Controls;
 using Microsoft.Win32;
+using System.Diagnostics;
 
 namespace AutoOS
 {
@@ -48,6 +48,9 @@ namespace AutoOS
             }
 
             MainWindow.Activate();
+
+            
+            Debug.WriteLine(ThemeService.IsDarkTheme());
         }
     }
 }

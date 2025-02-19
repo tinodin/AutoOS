@@ -89,6 +89,8 @@
                 </dev:SettingsGroup.Items>                        
             </dev:SettingsGroup>
             <StackPanel x:Name="ServiceInfo"/>
+            <Border Height="60"
+                    Background="Transparent"/>
         </StackPanel>
     </ScrollView>
 </Page>

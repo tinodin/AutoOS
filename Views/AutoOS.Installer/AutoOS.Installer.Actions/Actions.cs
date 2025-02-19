@@ -30,7 +30,6 @@ public static class ProcessActions
     {
         previousTitle = InstallPage.Info.Title;
 
-        InstallPage.Status.Text = "Restarting...";
         InstallPage.Info.Title = "Restarting in 3...";
         await Task.Delay(1000);
         InstallPage.Info.Title = "Restarting in 2...";
@@ -68,7 +67,7 @@ public static class ProcessActions
 
         InstallPage.Progress.ShowPaused = true;
         InstallPage.Info.Severity = InfoBarSeverity.Warning;
-        InstallPage.ProgressRingControl.Foreground = new SolidColorBrush(Color.FromArgb(255, 157, 93, 0));
+        InstallPage.ProgressRingControl.Foreground = new SolidColorBrush(Color.FromArgb(255, 252, 225, 0));
 
         await Task.Delay(1000);
 
@@ -202,7 +201,7 @@ public static class ProcessActions
                     {
                         InstallPage.Progress.ShowPaused = true;
                         InstallPage.Info.Severity = InfoBarSeverity.Warning;
-                        InstallPage.ProgressRingControl.Foreground = new SolidColorBrush(Color.FromArgb(255, 157, 93, 0));
+                        InstallPage.ProgressRingControl.Foreground = new SolidColorBrush(Color.FromArgb(255, 252, 225, 0));
                         InstallPage.Info.Title = $"{title} ({speedMB:F1} MB/s - {receivedMB:F2} MB of {totalMB:F2} MB - Waiting for internet connection to reestablish...)";
                     }, null);
                 }

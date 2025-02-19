@@ -60,7 +60,6 @@ public static class NetworkStage
 
              // set txintdelay to 0
             (async () => await ProcessActions.RunPowerShellScript("Setting TxIntDelay to 0", "txintdelay.ps1", ""), () => TxIntDelay == true),
-            (async () => await ProcessActions.Sleep("Waiting 30 Seconds for you to check", 30000), () => TxIntDelay == true),
 
             // disable nagles algorithm
             (async () => await ProcessActions.RunPowerShell("Disabling Nagles Algorithm", @"Get-NetAdapter | ForEach-Object { New-ItemProperty -Path ""HKLM:\System\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\$($_.InterfaceGuid)"" -Name ""TcpAckFrequency"" -PropertyType DWord -Value 1 -Force; New-ItemProperty -Path ""HKLM:\System\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\$($_.InterfaceGuid)"" -Name ""TcpDelAckTicks"" -PropertyType DWord -Value 0 -Force; New-ItemProperty -Path ""HKLM:\System\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\$($_.InterfaceGuid)"" -Name ""TCPNoDelay"" -PropertyType DWord -Value 1 -Force }"), null),

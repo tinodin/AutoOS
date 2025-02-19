@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32;
+﻿using Microsoft.UI.Windowing;
+using Microsoft.Win32;
 using System.Diagnostics;
 
 namespace AutoOS.Views
@@ -10,10 +11,12 @@ namespace AutoOS.Views
         public MainWindow()
         {
             Instance = this;
-            this.InitializeComponent();
+            InitializeComponent();
             ExtendsContentIntoTitleBar = true;
             SetTitleBar(AppTitleBar);
-            //Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", 2, RegistryValueKind.DWord);
+            this.AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
+
+            Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", 2, RegistryValueKind.DWord);
             //Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", "Installed", RegistryValueKind.String);
             object stageObj = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS")?.GetValue("Stage");
 

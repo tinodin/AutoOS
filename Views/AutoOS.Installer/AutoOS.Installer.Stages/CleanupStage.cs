@@ -31,7 +31,7 @@ public static class CleanupStage
             (async () => await ProcessActions.RunNsudo("Cleaning temp directories", "TrustedInstaller", @"cmd /c del /s /f /q ""C:\Windows\SystemTemp\*.*"""), null),
             (async () => await ProcessActions.RunNsudo("Cleaning temp directories", "TrustedInstaller", @"cmd /c del /s /f /q ""C:\Windows\Temp\*.*"""), null),
             (async () => await ProcessActions.RunNsudo("Cleaning temp directories", "CurrentUser", @"cmd /c del /s /f /q %temp%\*.*"), null),
-            (async () => await ProcessActions.RunNsudo("Cleaning temp directories", "CurrentUser", @"cmd /c rd /s /f /q %temp%"), null),
+            (async () => await ProcessActions.RunNsudo("Cleaning temp directories", "CurrentUser", @"cmd /c rd /s /q %temp%"), null),
             (async () => await ProcessActions.RunNsudo("Cleaning temp directories", "CurrentUser", @"cmd /c md %temp%"), null),
 
             // clean event logs
