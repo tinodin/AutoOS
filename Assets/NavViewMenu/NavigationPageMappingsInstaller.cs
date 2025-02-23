@@ -16,7 +16,6 @@ public partial class NavigationPageMappingsInstaller
         {"AutoOS.Views.Installer.PowerPage", typeof(AutoOS.Views.Installer.PowerPage)},
         {"AutoOS.Views.Installer.ServicesPage", typeof(AutoOS.Views.Installer.ServicesPage)},
         {"AutoOS.Views.Installer.SecurityPage", typeof(AutoOS.Views.Installer.SecurityPage)},
-        {"AutoOS.Views.Installer.GamesPage", typeof(AutoOS.Views.Installer.GamesPage)},
         {"AutoOS.Views.Installer.InstallPage", typeof(AutoOS.Views.Installer.InstallPage)},
     };
 }

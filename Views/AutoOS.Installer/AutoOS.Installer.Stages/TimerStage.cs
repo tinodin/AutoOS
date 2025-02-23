@@ -1,6 +1,6 @@
 ﻿using AutoOS.Views.Installer.Actions;
-using Microsoft.UI.Xaml.Media;
-using Windows.UI;
+using Microsoft.Win32;
+using System.Diagnostics;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -22,8 +22,7 @@ public static class TimerStage
 
 
             // apply manually
-
-            (async () => await ProcessActions.Sleep("Placeholder", 5000), null),
+            (async () => await ProcessActions.RunCustom("Applying Timer Resolution " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "RequestedResolution", null)?.ToString(), async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "TimerResolution", "SetTimerResolution.exe"), Arguments = "--resolution " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "RequestedResolution", null)?.ToString() + " --no-console", CreateNoWindow = true }))), null),
         };
 
         foreach (var (action, condition) in actions)
@@ -49,7 +48,7 @@ public static class TimerStage
                     InstallPage.Info.Title = ex.Message;
                     InstallPage.Progress.ShowError = true;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
-                    InstallPage.ProgressRingControl.Foreground = new SolidColorBrush(Color.FromArgb(255, 196, 43, 28));
+                    InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightError", "DarkError");
                     break;
                 }
 

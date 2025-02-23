@@ -1,9 +1,6 @@
 ﻿using AutoOS.Views.Installer.Actions;
-using Microsoft.UI.Xaml.Media;
-using Windows.UI;
 using System.Diagnostics;
 using System.Text.Json;
-using Microsoft.UI.Xaml.Documents;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -45,8 +42,8 @@ public static class BrowserStage
 
             // install google chrome
             (async () => await ProcessActions.RunNsudo("Installing Google Chrome", "CurrentUser", @"""%TEMP%\ChromeSetup.exe"" /silent /install"), () => Chrome == true),
-            (async () => await ProcessActions.RunCustom("Installing Google Chrome", async () => { chromeVersion = FileVersionInfo.GetVersionInfo(Environment.ExpandEnvironmentVariables(@"%TEMP%\ChromeSetup.exe")).ProductVersion; }), () => Chrome == true),
-            (async () => await ProcessActions.RunCustom("Installing Google Chrome", async () => { chromeVersion2 = FileVersionInfo.GetVersionInfo(@"C:\Program Files\Google\Chrome\Application\chrome.exe").ProductVersion; }), () => Chrome == true),
+            (async () => await ProcessActions.RunCustom("Installing Google Chrome", async () => chromeVersion = await Task.Run(() => FileVersionInfo.GetVersionInfo(Environment.ExpandEnvironmentVariables(@"%TEMP%\ChromeSetup.exe")).ProductVersion)), () => Chrome == true),
+            (async () => await ProcessActions.RunCustom("Installing Google Chrome", async () => chromeVersion2 = await Task.Run(() => FileVersionInfo.GetVersionInfo(@"C:\Program Files\Google\Chrome\Application\chrome.exe").ProductVersion)), () => Chrome == true),
 
             // disable google chrome services
             (async () => await ProcessActions.RunNsudo("Disabling Google Chrome services", "TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\GoogleChromeElevationService"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => Chrome == true),
@@ -95,8 +92,8 @@ public static class BrowserStage
 
             // install brave
             (async () => await ProcessActions.RunNsudo("Installing Brave", "CurrentUser", @"""%TEMP%\BraveBrowserStandaloneSetup.exe"" /silent /install"), () => Brave == true),
-            (async () => await ProcessActions.RunCustom("Installing Brave", async () => { braveVersion = FileVersionInfo.GetVersionInfo(@"C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe").ProductVersion; }), () => Brave == true),
-            
+            (async () => await ProcessActions.RunCustom("Installing Brave", async () => braveVersion = await Task.Run(() => FileVersionInfo.GetVersionInfo(@"C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe").ProductVersion)), () => Brave == true),
+
             // remove brave shortcut from the desktop
             (async () => await ProcessActions.RunNsudo("Removing Brave shortcut from the desktop", "CurrentUser", @"cmd /c del /f /q ""C:\Users\Public\Desktop\Brave.lnk"""), () => Brave == true),
 
@@ -213,8 +210,6 @@ public static class BrowserStage
 
             // log in
             (async () => await ProcessActions.RunCustom("Please log in to your Arc account", async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Path.Combine(@"C:\Program Files\WindowsApps\TheBrowserCompany.Arc_" + arcVersion + @"_x64__ttt1ap7aakyb4", "Arc.exe"), WindowStyle = ProcessWindowStyle.Maximized })!.WaitForExitAsync())), () => Arc == true),
-
-
         };
 
         foreach (var (action, condition) in actions)
@@ -240,7 +235,7 @@ public static class BrowserStage
                     InstallPage.Info.Title = ex.Message;
                     InstallPage.Progress.ShowError = true;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
-                    InstallPage.ProgressRingControl.Foreground = new SolidColorBrush(Color.FromArgb(255, 196, 43, 28));
+                    InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightError", "DarkError");
                     break;
                 }
 

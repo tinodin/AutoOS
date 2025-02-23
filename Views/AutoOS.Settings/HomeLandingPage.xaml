@@ -13,4 +13,3 @@
                         HeaderText="AutoOS Settings"
                         JsonNavigationService="{x:Bind local:App.Current.NavService}" />
 </Page>
-

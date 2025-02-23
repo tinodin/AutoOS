@@ -1,7 +1,4 @@
 ﻿using AutoOS.Views.Installer.Actions;
-using Microsoft.UI.Xaml.Media;
-using Windows.UI;
-
 namespace AutoOS.Views.Installer.Stages;
 
 public static class SecurityStage
@@ -137,7 +134,7 @@ public static class SecurityStage
                     InstallPage.Info.Title = ex.Message;
                     InstallPage.Progress.ShowError = true;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
-                    InstallPage.ProgressRingControl.Foreground = new SolidColorBrush(Color.FromArgb(255, 196, 43, 28));
+                    InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightError", "DarkError");
                     break;
                 }
 

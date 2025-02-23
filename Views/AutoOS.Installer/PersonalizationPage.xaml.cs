@@ -177,7 +177,7 @@ public sealed partial class PersonalizationPage : Page
         {
             "Left" => 0,
             "Center" => 1,
-            _ => 0
+            _ => 1
         };
 
         // change header icon
@@ -185,13 +185,13 @@ public sealed partial class PersonalizationPage : Page
         {
             "Left" => new SymbolIcon(Symbol.AlignLeft),
             "Center" => new SymbolIcon(Symbol.AlignCenter),
-            _ => new SymbolIcon(Symbol.AlignLeft)
+            _ => new SymbolIcon(Symbol.AlignCenter)
         };
 
-        // default to left
+        // default to center
         if (key?.GetValue("TaskbarAlignment") == null)
         {
-            key?.SetValue("TaskbarAlignment", "Left", RegistryValueKind.String);
+            key?.SetValue("TaskbarAlignment", "Center", RegistryValueKind.String);
         }
 
         isInitializingTaskbarAlignmentState = false;

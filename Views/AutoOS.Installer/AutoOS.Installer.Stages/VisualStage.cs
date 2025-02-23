@@ -1,6 +1,4 @@
 ﻿using AutoOS.Views.Installer.Actions;
-using Microsoft.UI.Xaml.Media;
-using Windows.UI;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -36,7 +34,7 @@ public static class VisualStage
 
             // aligning the taskbar
             (async () => await ProcessActions.RunNsudo("Aligning the taskbar to the left", "CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"" /v ""TaskbarAl"" /t REG_DWORD /d 0 /f"),() => TaskbarAlignment == true),
-
+            
             // unpin copilot, microsoft edge and microsoft store
             (async () => await ProcessActions.RunPowerShell("Unpinning Copilot, Microsoft Edge, and Microsoft Store", @"function DoUnpin([string]$appname) { $ErrorActionPreference = 'silentlycontinue'; ((New-Object -Com Shell.Application).NameSpace('shell:::{4234d49b-0245-4df3-b780-3893943456e1}').Items() | Where-Object { $_.Name -eq $appname }).Verbs() | Where-Object { $_.Name.replace('&', '') -match 'Unpin from taskbar' } | ForEach-Object { $_.DoIt(); }; $ErrorActionPreference = 'continue' }; DoUnpin 'Copilot'; DoUnpin 'Microsoft Edge'; DoUnpin 'Microsoft Store'"), null),
 
@@ -95,10 +93,7 @@ public static class VisualStage
                     InstallPage.Info.Title = ex.Message;
                     InstallPage.Progress.ShowError = true;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
-                    
-
-                    InstallPage.ProgressRingControl.Foreground = (SolidColorBrush)Application.Current.Resources["LightRed"];
-                    InstallPage.ProgressRingControl.Foreground = (SolidColorBrush)Application.Current.Resources["DarkRed"];
+                    InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightError", "DarkError");
                     break;
                 }
 

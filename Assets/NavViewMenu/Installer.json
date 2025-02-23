@@ -99,13 +99,6 @@
           "Subtitle": "Windows Security",
           "ImagePath": "ms-appx:///Assets/Fluent/Security.png",
           "HideItem": true
-        },
-        {
-          "UniqueId": "AutoOS.Views.Installer.GamesPage",
-          "Title": "Games",
-          "Subtitle": "Games",
-          "ImagePath": "ms-appx:///Assets/Fluent/Games.png",
-          "HideItem": true
         }
       ]
     },

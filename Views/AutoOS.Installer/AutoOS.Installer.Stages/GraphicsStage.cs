@@ -1,6 +1,4 @@
 ﻿using AutoOS.Views.Installer.Actions;
-using Windows.UI;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
@@ -9,7 +7,6 @@ namespace AutoOS.Views.Installer.Stages;
 
 public static class GraphicsStage
 {
-    public static Window MainWindow => App.MainWindow;
     public static async Task Run()
     {
         bool? Intel10th = PreparingStage.Intel10th;
@@ -207,7 +204,7 @@ public static class GraphicsStage
                     InstallPage.Info.Title = ex.Message;
                     InstallPage.Progress.ShowError = true;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
-                    InstallPage.ProgressRingControl.Foreground = new SolidColorBrush(Color.FromArgb(255, 196, 43, 28));
+                    InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightError", "DarkError");
                     break;
                 }
 

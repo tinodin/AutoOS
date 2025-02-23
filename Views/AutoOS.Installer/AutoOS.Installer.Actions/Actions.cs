@@ -1,8 +1,7 @@
 ﻿using System.Diagnostics;
 using Downloader;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
-using Windows.UI;
+using Microsoft.UI.Xaml.Media;
 
 namespace AutoOS.Views.Installer.Actions;
 
@@ -67,7 +66,7 @@ public static class ProcessActions
 
         InstallPage.Progress.ShowPaused = true;
         InstallPage.Info.Severity = InfoBarSeverity.Warning;
-        InstallPage.ProgressRingControl.Foreground = new SolidColorBrush(Color.FromArgb(255, 252, 225, 0));
+        InstallPage.ProgressRingControl.Foreground = GetColor("LightPause", "DarkPause");
 
         await Task.Delay(1000);
 
@@ -112,7 +111,6 @@ public static class ProcessActions
 
         await Process.Start(new ProcessStartInfo("powershell.exe", $"-ExecutionPolicy Bypass -File \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", script)}\" {arguments}") { CreateNoWindow = true, UseShellExecute = false })!.WaitForExitAsync();
     }
-
 
     public static async Task RunApplication(string title, string folderName, string executable, string arguments)
     {
@@ -201,7 +199,7 @@ public static class ProcessActions
                     {
                         InstallPage.Progress.ShowPaused = true;
                         InstallPage.Info.Severity = InfoBarSeverity.Warning;
-                        InstallPage.ProgressRingControl.Foreground = new SolidColorBrush(Color.FromArgb(255, 252, 225, 0));
+                        InstallPage.ProgressRingControl.Foreground = GetColor("LightPause", "DarkPause");
                         InstallPage.Info.Title = $"{title} ({speedMB:F1} MB/s - {receivedMB:F2} MB of {totalMB:F2} MB - Waiting for internet connection to reestablish...)";
                     }, null);
                 }
@@ -218,7 +216,6 @@ public static class ProcessActions
 
         await Process.Start(new ProcessStartInfo { FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "7-Zip", "7za.exe"), Arguments = $"x \"{inputPath}\" -y -o\"{outputPath}\"", CreateNoWindow = true })!.WaitForExitAsync();
     }
-
 
     public static async Task RunNvidiaStrip(string title)
     {
@@ -451,6 +448,8 @@ public static class ProcessActions
                 Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netwtw10", "Start", 4, RegistryValueKind.DWord);
             }
         }
+
+        await Task.Delay(300);
     }
 
     public static async Task DisableBluetoothServicesAndDrivers(string title)
@@ -473,6 +472,8 @@ public static class ProcessActions
                 Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netwtw10", "Start", 4, RegistryValueKind.DWord);
             }
         }
+
+        await Task.Delay(300);
     }
 
     public static async Task Sleep(string title, int amount)
@@ -508,6 +509,10 @@ public static class ProcessActions
         var url = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
 
         await RunDownload(title, url, Path.GetTempPath(), fileName);
+    }
+    public static SolidColorBrush GetColor(string lightKey, string darkKey)
+    {
+        return (SolidColorBrush)Application.Current.Resources[App.Theme?.IsDarkTheme() == true ? darkKey : lightKey];
     }
 }
 

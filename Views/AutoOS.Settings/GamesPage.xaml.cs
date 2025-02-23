@@ -1,12 +1,11 @@
-﻿namespace AutoOS.Views.Settings;
-
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Management;
 using System.ServiceProcess;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Microsoft.Win32;
 using Newtonsoft.Json.Linq;
+
+namespace AutoOS.Views.Settings;
 
 public sealed partial class GamesPage : Page
 {
@@ -14,14 +13,14 @@ public sealed partial class GamesPage : Page
     private bool isLaunchingFortnite = false;
     private bool isInitializingAccounts = true;
     private bool isInitializingPresentationMode = true;
-
+    private readonly string configFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\GameUserSettings.ini");
     public GamesPage()
     {
         InitializeComponent();
-        CheckFortniteUpdate();
-        CheckFortniteRunning();
+        //CheckFortniteUpdate();
+        //CheckFortniteRunning();
         GetPresentationMode();
-        LoadAccounts();
+        LoadEpicAccounts();
     }
 
     private async void CheckFortniteUpdate()
@@ -282,16 +281,31 @@ public sealed partial class GamesPage : Page
                 {
                     if (subKey.GetValueNames().Any(valueName => subKey.GetValue(valueName) is string strValue && strValue.Contains("Fortnite")))
                     {
+                        string cmd = "";
                         if (PresentationMode.SelectedIndex == 0)
                         {
-                            Debug.WriteLine("deleting");
-                            subKey.DeleteValue("Flags", false);
+                            cmd = "reg delete \"HKCU\\System\\GameConfigStore\\Children\\" + subKeyName + "\" /v Flags /f";
                         }
                         else if (PresentationMode.SelectedIndex == 1)
                         {
-                            Debug.WriteLine("setting");
-                            subKey.SetValue("Flags", 0x211, RegistryValueKind.DWord);
+                            cmd = "reg add \"HKCU\\System\\GameConfigStore\\Children\\" + subKeyName + "\" /v Flags /t REG_DWORD /d 0x211 /f";
                         }
+
+                        if (!string.IsNullOrEmpty(cmd))
+                        {
+                            var process = new Process
+                            {
+                                StartInfo = new ProcessStartInfo
+                                {
+                                    FileName = "cmd.exe",
+                                    Arguments = "/C " + cmd,
+                                    CreateNoWindow = true,
+                                }
+                            };
+                            process.Start();
+                            process.WaitForExit();
+                        }
+
                         return;
                     }
                 }
@@ -342,155 +356,160 @@ public sealed partial class GamesPage : Page
                 return;
             }
         }
-
-        // launch fortnite
-        var output = await Task.Run(() => Process.Start(new ProcessStartInfo(@"C:\Windows\legendary.exe", "launch Fortnite") { CreateNoWindow = true, RedirectStandardError = true })?.StandardError.ReadToEndAsync());
-
-        // success or fail
-        if (output.Contains("ERROR: Login failed"))
-        {
-            // get the display name of the current account
-            string currentDisplayName = File.Exists(Path.Combine(legendaryPath, "user.json"))
-                ? JObject.Parse(File.ReadAllText(Path.Combine(legendaryPath, "user.json")))["displayName"]?.ToString()
-                : null;
-
-            // add infobar
-            FortniteInfo.Children.Add(new InfoBar
-            {
-                Title = "The login session is no longer valid.",
-                IsClosable = false,
-                IsOpen = true,
-                Severity = InfoBarSeverity.Error,
-                Margin = new Thickness(5)
-            });
-
-            // delay
-            await Task.Delay(350);
-
-            // add infobar
-            AccountInfo.Children.Add(new InfoBar
-            {
-                Title = "Removing " + currentDisplayName + "...",
-                IsClosable = false,
-                IsOpen = true,
-                Severity = InfoBarSeverity.Informational,
-                Margin = new Thickness(5)
-            });
-
-            // delay
-            await Task.Delay(500);
-
-            // remove current account data
-            Directory.Delete(Path.Combine(legendaryPath, currentDisplayName), true);
-            File.Delete(Path.Combine(legendaryPath, "user.json"));
-
-            // remove infobar
-            AccountInfo.Children.Clear();
-
-            // refresh combobox
-            isInitializingAccounts = true;
-            LoadAccounts();
-
-            // replace the account data
-            if (Accounts.SelectedItem?.ToString() != null)
-            {
-                File.Copy(Path.Combine(legendaryPath, Accounts.SelectedItem?.ToString(), "user.json"), Path.Combine(legendaryPath, "user.json"), true);
-            }
-
-            // add infobar
-            AccountInfo.Children.Add(new InfoBar
-            {
-                Title = "Successfully removed " + currentDisplayName + ".",
-                IsClosable = false,
-                IsOpen = true,
-                Severity = InfoBarSeverity.Success,
-                Margin = new Thickness(5)
-            });
-
-            // delay
-            await Task.Delay(2000);
-
-            // remove infobar
-            AccountInfo.Children.Clear();
-
-            isLaunchingFortnite = false;
-        }
-        else if (output.Contains("ERROR: Game is out of date"))
-        {
-            isLaunchingFortnite = false;
-            launchFortnite.Content = "Update required";
-        }
-        else if (output.Contains("ConnectionError"))
-        {
-            isLaunchingFortnite = false;
-            launchFortnite.Content = "No internet connection";
-
-            // delay
-            await Task.Delay(1000);
-
-            launchFortnite.Content = "Launch";
-        }
-        else if (output.Contains("INFO: Launching Fortnite..."))
-        {
-            launchFortnite.Content = "Launching...";
-        }
     }
 
-    private void LoadAccounts()
+    private async void LoadEpicAccounts()
     {
         // clear list
         Accounts.Items.Clear();
 
-        // search for all users
-        var accountData = Directory.GetFiles(legendaryPath, "user.json", SearchOption.AllDirectories)
+        // search for all valid accounts
+        var accountData = Directory.GetFiles(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows"), "GameUserSettings.ini", SearchOption.AllDirectories)
             .Select(file =>
             {
-                var jsonData = JObject.Parse(File.ReadAllText(file));
-                return jsonData["displayName"]?.ToString();
+                string configContent = File.ReadAllText(file);
+                Match dataMatch = Regex.Match(configContent, @"Data=([^\r\n]+)");
+
+                if (dataMatch.Success && dataMatch.Groups[1].Value.Length >= 1000)
+                {
+                    Match idMatch = Regex.Match(configContent, @"\[(.*?)_General\]");
+                    if (idMatch.Success)
+                    {
+                        return idMatch.Groups[1].Value;
+                    }
+                }
+                return null;
             })
-            .Where(name => !string.IsNullOrEmpty(name))
+            .Where(accountIdInFile => accountIdInFile != null)
             .Distinct()
-            .OrderBy(name => name)
+            .OrderBy(accountIdInFile => accountIdInFile)
             .ToList();
 
-        // add all accounts
-        foreach (var name in accountData)
+        // add all valid accounts to the Accounts combobox
+        foreach (var accountIdInFile in accountData)
         {
-            if (!Accounts.Items.Contains(name))
+            if (!Accounts.Items.Contains(accountIdInFile))
             {
-                Accounts.Items.Add(name);
+                Accounts.Items.Add(accountIdInFile);
             }
         }
 
-        // get the display name of the current account
-        string currentDisplayName = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config", "legendary", "user.json"))
-            ? JObject.Parse(File.ReadAllText(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config", "legendary", "user.json")))["displayName"]?.ToString()
-            : null;
-
-        // select the current user / default to the first item if not found
-        Accounts.SelectedIndex = Accounts.Items.IndexOf(currentDisplayName) is int index && index != -1 ? index : 0;
-
-        // disable buttons if no account is selected
-        if (Accounts.SelectedItem == null)
+        if (File.Exists(configFile))
         {
-            launchFortnite.IsEnabled = false;
-            removeButton.IsEnabled = false;
+            // check if logged in
+            string configContent = await File.ReadAllTextAsync(configFile);
+            Match dataMatch = Regex.Match(configContent, @"Data=([^\r\n]+)");
+
+            if (dataMatch.Success && dataMatch.Groups[1].Value.Length >= 1000)
+            {
+                // valid configFile, get accountId from it
+                Match idMatch = Regex.Match(configContent, @"\[(.*?)_General\]");
+                if (idMatch.Success)
+                {
+                    string accountId = idMatch.Groups[1].Value;
+                    Accounts.SelectedItem = accountId;
+
+                    // backup if not already
+                    string accountDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\" + accountId);
+
+                    if (!Directory.Exists(accountDir))
+                    {
+                        Directory.CreateDirectory(accountDir);
+                        File.Copy(configFile, Path.Combine(accountDir, "GameUserSettings.ini"));
+                    }
+                    isInitializingAccounts = false; // Set to false when we are done
+                    return;
+                }
+            }
+
+            // if configFile is invalid, replace it with the first found account
+            if (accountData.Any())
+            {
+                string selectedAccount = accountData.First();
+                // close epic games launcher
+                if (Process.GetProcessesByName("EpicGamesLauncher").Length > 0)
+                {
+                    foreach (var process in Process.GetProcessesByName("EpicGamesLauncher"))
+                    {
+                        process.Kill();
+                        process.WaitForExit();
+                    }
+                }
+
+                // replace the file
+                File.Copy(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows", selectedAccount, "GameUserSettings.ini"), configFile, true);
+                Accounts.SelectedItem = selectedAccount;
+
+                // backup if not already
+                string accountDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\" + selectedAccount);
+                if (!Directory.Exists(accountDir))
+                {
+                    Directory.CreateDirectory(accountDir);
+                    File.Copy(configFile, Path.Combine(accountDir, "GameUserSettings.ini"));
+                }
+                isInitializingAccounts = false; // Set to false after handling the first account
+            }
         }
         else
         {
-            launchFortnite.IsEnabled = true;
-            removeButton.IsEnabled = true;
-        }
+            // if configFile doesn't exist and no valid account found, show "Not logged in"
+            if (!accountData.Any())
+            {
+                Accounts.Items.Add("Not logged in");
+                Accounts.SelectedItem = "Not logged in";
+                launchFortnite.IsEnabled = false;
+                removeButton.IsEnabled = false;
+                isInitializingAccounts = false; // Set to false when no accounts are found
+                return;
+            }
+            else
+            {
+                // automatically select the first account from the combobox if no configFile exists
+                Accounts.SelectedItem = accountData.First();
 
-        isInitializingAccounts = false;
+                // close epic games launcher
+                if (Process.GetProcessesByName("EpicGamesLauncher").Length > 0)
+                {
+                    foreach (var process in Process.GetProcessesByName("EpicGamesLauncher"))
+                    {
+                        process.Kill();
+                        process.WaitForExit();
+                    }
+                }
+
+                // replace the file with the selected account's data
+                File.Copy(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows", Accounts.SelectedItem?.ToString(), "GameUserSettings.ini"), configFile, true);
+
+                // backup if not already
+                string accountDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\" + Accounts.SelectedItem?.ToString());
+                if (!Directory.Exists(accountDir))
+                {
+                    Directory.CreateDirectory(accountDir);
+                    File.Copy(configFile, Path.Combine(accountDir, "GameUserSettings.ini"));
+                }
+                isInitializingAccounts = false; // Set to false after selecting the first account
+            }
+        }
     }
+
+
 
     private void Accounts_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (isInitializingAccounts) return;
 
-        // replace the account data
-        File.Copy(Path.Combine(legendaryPath, Accounts.SelectedItem?.ToString(), "user.json"), Path.Combine(legendaryPath, "user.json"), true);
+        // close epic games launcher
+        if (Process.GetProcessesByName("EpicGamesLauncher").Length > 0)
+        {
+            foreach (var process in Process.GetProcessesByName("EpicGamesLauncher"))
+            {
+                process.Kill();
+                process.WaitForExit();
+            }
+        }
+
+        // replace file
+        File.Copy(Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows", Accounts.SelectedItem?.ToString()), "GameUserSettings.ini"), configFile, true);
     }
 
     private async void AddAccount_Click(object sender, RoutedEventArgs e)
@@ -499,220 +518,103 @@ public sealed partial class GamesPage : Page
         var contentDialog = new ContentDialog
         {
             Title = "Add New Account",
-            Content = "Choose your preferred login method:",
-            PrimaryButtonText = "Import from Epic Games Launcher",
-            SecondaryButtonText = "Login via WebView",
+            Content = "Are you sure that you want to add another account",
+            PrimaryButtonText = "Yes",
             CloseButtonText = "Cancel",
             XamlRoot = this.XamlRoot
         };
 
-        // fix button text
-        contentDialog.Resources["ContentDialogMaxWidth"] = 1080;
         ContentDialogResult result = await contentDialog.ShowAsync();
 
         // check result
         if (result == ContentDialogResult.Primary)
         {
-            // get all drives
-            string[] drives = Environment.GetLogicalDrives().OrderBy(d => d).ToArray();
-            string targetDrive = null;
-            string targetPath = null;
-
-            // check on every drive
-            foreach (string drive in drives)
-            {
-                // check for user folder
-                string usersPath = Path.Combine(drive, "Users");
-                if (!Directory.Exists(usersPath)) continue;
-
-                // check every user
-                foreach (string userDir in Directory.GetDirectories(usersPath))
-                {
-                    // check if data is valid (500+ characters)
-                    if (File.Exists(Path.Combine(userDir, "AppData", "Local", "EpicGamesLauncher", "Saved", "Config", "Windows", "GameUserSettings.ini")))
-                    {
-                        string[] lines = File.ReadAllLines(Path.Combine(userDir, "AppData", "Local", "EpicGamesLauncher", "Saved", "Config", "Windows", "GameUserSettings.ini"));
-                        string dataLine = lines.FirstOrDefault(line => line.StartsWith("Data="));
-                        if (dataLine != null && dataLine.Length > 505)
-                        {
-                            targetDrive = drive.TrimEnd('\\');
-                            targetPath = Path.Combine(userDir, "AppData", "Local", "EpicGamesLauncher", "Saved", "Config", "Windows", "GameUserSettings.ini");
-                            break;
-                        }
-                    }
-                }
-            }
-
-            // check if found
-            if (targetPath != null)
-            {
-                // if not already on C:
-                if (targetDrive != "C:")
-                {
-                    // create destination directory
-                    Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "EpicGamesLauncher", "Saved", "Config", "Windows")));
-
-                    // copy the file
-                    File.Copy(targetPath, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "EpicGamesLauncher", "Saved", "Config", "Windows", "GameUserSettings.ini"), true);
-                }
-
-                // remove infobar
-                AccountInfo.Children.Clear();
-
-                // remove current account data
-                File.Delete(Path.Combine(legendaryPath, "user.json"));
-
-                // add infobar
-                AccountInfo.Children.Add(new InfoBar
-                {
-                    Title = "Logging in using Epic Games Launcher account data...",
-                    IsClosable = false,
-                    IsOpen = true,
-                    Severity = InfoBarSeverity.Informational,
-                    Margin = new Thickness(5)
-                });
-
-                // log in
-                var output = await Task.Run(() => Process.Start(new ProcessStartInfo(@"C:\Windows\legendary.exe", "auth --import") { CreateNoWindow = true, RedirectStandardError = true})?.StandardError.ReadToEndAsync());
-
-                // success or fail
-                if (output.Contains("Now logged in as user"))
-                {
-                    // get the display name of the current account
-                    string currentDisplayName = File.Exists(Path.Combine(legendaryPath, "user.json"))
-                        ? JObject.Parse(File.ReadAllText(Path.Combine(legendaryPath, "user.json")))["displayName"]?.ToString()
-                        : null;
-
-                    // create folder with account data
-                    Directory.CreateDirectory(Path.Combine(legendaryPath, currentDisplayName));
-                    File.Copy(Path.Combine(legendaryPath, "user.json"), Path.Combine(legendaryPath, currentDisplayName, "user.json"), true);
-
-                    // refresh combobox
-                    isInitializingAccounts = true;
-                    LoadAccounts();
-
-                    // remove infobar
-                    AccountInfo.Children.Clear();
-
-                    // add infobar
-                    AccountInfo.Children.Add(new InfoBar
-                    {
-                        Title = $"Successfully logged in as {currentDisplayName}",
-                        IsClosable = false,
-                        IsOpen = true,
-                        Severity = InfoBarSeverity.Success,
-                        Margin = new Thickness(5)
-                    });
-
-                    // delay
-                    await Task.Delay(2000);
-
-                    // remove infobar
-                    AccountInfo.Children.Clear();
-                }
-                else if (output.Contains("WARNING"))
-                {
-                    // remove infobar
-                    AccountInfo.Children.Clear();
-
-                    // add infobar
-                    AccountInfo.Children.Add(new InfoBar
-                    {
-                        Title = "The login session is no longer valid.",
-                        IsClosable = false,
-                        IsOpen = true,
-                        Severity = InfoBarSeverity.Error,
-                        Margin = new Thickness(5)
-                    });
-
-                    // delay
-                    await Task.Delay(2000);
-
-                    // remove infobar
-                    AccountInfo.Children.Clear();
-                }   
-            }
-            else
-            {
-                // add infobar
-                AccountInfo.Children.Add(new InfoBar
-                {
-                    Title = $"No Epic Games Launcher account data found.",
-                    IsClosable = false,
-                    IsOpen = true,
-                    Severity = InfoBarSeverity.Error,
-                    Margin = new Thickness(5)
-                });
-
-                // delay
-                await Task.Delay(2000);
-
-                // remove infobar
-                AccountInfo.Children.Clear();
-            }
-        }
-        else if (result == ContentDialogResult.Secondary)
-        {
-            // remove current account data
-            File.Delete(Path.Combine(legendaryPath, "user.json"));
+            // remove infobar
+            AccountInfo.Children.Clear();
 
             // add infobar
             AccountInfo.Children.Add(new InfoBar
             {
-                Title = "Launching the WebView login window...",
+                Title = "Please log in to your Epic Games account...",
                 IsClosable = false,
                 IsOpen = true,
                 Severity = InfoBarSeverity.Informational,
                 Margin = new Thickness(5)
             });
 
-            // log in
-            var output = await Task.Run(() => Process.Start(new ProcessStartInfo(@"C:\Windows\legendary.exe", "auth") { CreateNoWindow = true, RedirectStandardError = true })?.StandardError.ReadToEndAsync());
-
-            // success or fail
-            if (output.Contains("Successfully logged in as"))
+            // close epic games launcher
+            if (Process.GetProcessesByName("EpicGamesLauncher").Length > 0)
             {
-                // get the display name of the current account
-                string currentDisplayName = File.Exists(Path.Combine(legendaryPath, "user.json"))
-                    ? JObject.Parse(File.ReadAllText(Path.Combine(legendaryPath, "user.json")))["displayName"]?.ToString()
-                    : null;
-
-                // create folder with account data
-                Directory.CreateDirectory(Path.Combine(legendaryPath, currentDisplayName));
-                File.Copy(Path.Combine(legendaryPath, "user.json"), Path.Combine(legendaryPath, currentDisplayName, "user.json"), true);
-
-                // refresh combobox
-                isInitializingAccounts = true;
-                LoadAccounts();
-
-                // remove infobar
-                AccountInfo.Children.Clear();
-
-                // add infobar
-                AccountInfo.Children.Add(new InfoBar
+                foreach (var process in Process.GetProcessesByName("EpicGamesLauncher"))
                 {
-                    Title = $"Successfully logged in as {currentDisplayName}",
-                    IsClosable = false,
-                    IsOpen = true,
-                    Severity = InfoBarSeverity.Success,
-                    Margin = new Thickness(5)
-                });
-
-                // delay
-                await Task.Delay(2000);
-
-                // remove infobar
-                AccountInfo.Children.Clear();
+                    process.Kill();
+                    process.WaitForExit();
+                }
             }
-            else
+
+            // delete gameusersettings.ini
+            if (File.Exists(configFile))
             {
-                // remove infobar
-                AccountInfo.Children.Clear();
-
-                // refresh combobox
-                isInitializingAccounts = true;
-                LoadAccounts();
+                File.Delete(configFile);
             }
+
+            // delay
+            await Task.Delay(500);
+
+            // launch epic games launcher
+            Process.Start(@"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win64\EpicGamesLauncher.exe");
+
+            // check when logged in
+            while (true)
+            {
+                if (File.Exists(configFile))
+                {
+                    string configContent = File.ReadAllText(configFile);
+                    Match dataMatch = Regex.Match(configContent, @"Data=([^\r\n]+)");
+
+                    if (dataMatch.Success && dataMatch.Groups[1].Value.Length >= 1000)
+                    {
+                        break;
+                    }
+                }
+
+                await Task.Delay(500);
+            }
+
+            // close epic games launcher
+            if (Process.GetProcessesByName("EpicGamesLauncher").Length > 0)
+            {
+                foreach (var process in Process.GetProcessesByName("EpicGamesLauncher"))
+                {
+                    process.Kill();
+                    process.WaitForExit();
+                }
+            }
+
+            // get new accountid
+            string accountId = Regex.Match(File.ReadAllText(configFile), @"\[(.*?)_General\]").Groups[1].Value;
+
+            // remove infobar
+            AccountInfo.Children.Clear();
+
+            // add infobar
+            AccountInfo.Children.Add(new InfoBar
+            {
+                Title = $"Successfully logged in as {accountId}",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            });
+
+            // refresh combobox
+            LoadEpicAccounts();
+
+            // delay
+            await Task.Delay(2000);
+
+            // remove infobar
+            AccountInfo.Children.Clear();
         }
     }
 
@@ -721,17 +623,14 @@ public sealed partial class GamesPage : Page
         // making sure an account is selected
         if (Accounts.SelectedItem != null)
         {
-            // get the display name of the current account
-            string currentDisplayName = File.Exists(Path.Combine(legendaryPath, "user.json"))
-                ? JObject.Parse(File.ReadAllText(Path.Combine(legendaryPath, "user.json")))["displayName"]?.ToString()
-                : null;
-
+            // get accountid
+            string accountId = Regex.Match(File.ReadAllText(configFile), @"\[(.*?)_General\]").Groups[1].Value;
 
             // add content dialog
             var contentDialog = new ContentDialog
             {
                 Title = "Remove Account",
-                Content = "Are you sure that you want to remove " + currentDisplayName + "?",
+                Content = "Are you sure that you want to remove " + accountId + "?",
                 PrimaryButtonText = "Yes",
                 CloseButtonText = "No",
                 XamlRoot = this.XamlRoot,
@@ -745,37 +644,39 @@ public sealed partial class GamesPage : Page
                 // add infobar
                 AccountInfo.Children.Add(new InfoBar
                 {
-                    Title = "Removing " + currentDisplayName + "...",
+                    Title = "Removing " + accountId + "...",
                     IsClosable = false,
                     IsOpen = true,
                     Severity = InfoBarSeverity.Informational,
                     Margin = new Thickness(5)
                 });
 
+                // close epic games launcher
+                if (Process.GetProcessesByName("EpicGamesLauncher").Length > 0)
+                {
+                    foreach (var process in Process.GetProcessesByName("EpicGamesLauncher"))
+                    {
+                        process.Kill();
+                        process.WaitForExit();
+                    }
+                }
+
+                // delete gameusersettings.ini
+                File.Delete(configFile);
+
                 // delay
                 await Task.Delay(500);
-
-                // remove current account data
-                Directory.Delete(Path.Combine(legendaryPath, currentDisplayName), true);
-                File.Delete(Path.Combine(legendaryPath, "user.json"));
 
                 // remove infobar
                 AccountInfo.Children.Clear();
 
                 // refresh combobox
-                isInitializingAccounts = true;
-                LoadAccounts();
-
-                // replace the account data
-                if (Accounts.SelectedItem?.ToString() != null)
-                {
-                    File.Copy(Path.Combine(legendaryPath, Accounts.SelectedItem?.ToString(), "user.json"), Path.Combine(legendaryPath, "user.json"), true);
-                }
+                LoadEpicAccounts();
 
                 // add infobar
                 AccountInfo.Children.Add(new InfoBar
                 {
-                    Title = "Successfully removed " + currentDisplayName + ".",
+                    Title = "Successfully removed " + accountId + ".",
                     IsClosable = false,
                     IsOpen = true,
                     Severity = InfoBarSeverity.Success,

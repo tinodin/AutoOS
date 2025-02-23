@@ -1,6 +1,4 @@
 ﻿using AutoOS.Views.Installer.Actions;
-using Microsoft.UI.Xaml.Media;
-using Windows.UI;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -13,6 +11,10 @@ public static class PowerStage
         bool? PowerService = PreparingStage.PowerService;
 
         InstallPage.Status.Text = "Configuring Power Options...";
+
+        InstallPage.Progress.ShowPaused = false;
+        InstallPage.Info.Severity = InfoBarSeverity.Informational;
+        InstallPage.ProgressRingControl.Foreground = null;
 
         int validActionsCount = 0;
         int stagePercentage = 2;
@@ -58,7 +60,7 @@ public static class PowerStage
                     InstallPage.Info.Title = ex.Message;
                     InstallPage.Progress.ShowError = true;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
-                    InstallPage.ProgressRingControl.Foreground = new SolidColorBrush(Color.FromArgb(255, 196, 43, 28));
+                    InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightError", "DarkError");
                     break;
                 }
 

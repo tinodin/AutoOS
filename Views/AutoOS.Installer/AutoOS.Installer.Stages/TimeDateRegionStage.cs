@@ -1,6 +1,4 @@
 ﻿using AutoOS.Views.Installer.Actions;
-using Microsoft.UI.Xaml.Media;
-using Windows.UI;
 using Newtonsoft.Json.Linq;
 
 namespace AutoOS.Views.Installer.Stages;
@@ -10,12 +8,18 @@ public static class TimeDateRegionStage
     private static string countryCode = null;
     public static async Task Run()
     {
-        GetConditions();
-
         InstallPage.Status.Text = "Time, Date and Region...";
 
         int validActionsCount = 0;
         int stagePercentage = 2;
+
+        using (HttpClient client = new HttpClient())
+        {
+            string response = client.GetStringAsync("https://get.geojs.io/v1/ip/geo.json").Result;
+            JObject jsonResponse = JObject.Parse(response);
+
+            countryCode = jsonResponse["country_code"]?.ToString();
+        }
 
         var actions = new List<(Func<Task> Action, Func<bool> Condition)>
         {
@@ -60,7 +64,7 @@ public static class TimeDateRegionStage
                     InstallPage.Info.Title = ex.Message;
                     InstallPage.Progress.ShowError = true;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
-                    InstallPage.ProgressRingControl.Foreground = new SolidColorBrush(Color.FromArgb(255, 196, 43, 28));
+                    InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightError", "DarkError");
                     break;
                 }
 
@@ -377,16 +381,5 @@ public static class TimeDateRegionStage
             "ZW" => "0409:00000409", // English (Zimbabwe)
             _ => null
         };
-    }
-
-    public static void GetConditions()
-    {
-        using (HttpClient client = new HttpClient())
-        {
-            string response = client.GetStringAsync("https://get.geojs.io/v1/ip/geo.json").Result;
-            JObject jsonResponse = JObject.Parse(response);
-
-            countryCode = jsonResponse["country_code"]?.ToString();
-        }
     }
 }

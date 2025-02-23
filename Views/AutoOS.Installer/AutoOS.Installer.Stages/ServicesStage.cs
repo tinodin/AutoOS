@@ -1,7 +1,4 @@
 ﻿using AutoOS.Views.Installer.Actions;
-using Microsoft.UI.Xaml.Media;
-using Windows.UI;
-using Microsoft.Win32;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -36,16 +33,10 @@ public static class ServicesStage
 
             // build service lists
             (async () => await ProcessActions.RunNsudo("Building service lists", "TrustedInstaller", $@"""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "service-list-builder.exe")}"" --config ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "lists.ini")}"" --disable-service-warning"), null),
-            (async () => await ProcessActions.RunCustom("Building service lists", async () => { folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last(); }), null),
+            (async () => await ProcessActions.RunCustom("Building service lists", async () => folderName = await Task.Run(() => Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last())), null),
 
             // disable services and drivers
             (async () => await ProcessActions.RunNsudo("Disabling services and drivers", "TrustedInstaller", Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, "Services-Disable.bat")), null),
-
-            // write stage
-            (async () => await ProcessActions.RunCustom("Building service lists", async () => await Task.Run(() => Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", 3, RegistryValueKind.DWord))), null),
-
-            // restart
-            (async () => await ProcessActions.RunRestart(), null)
         };
 
         foreach (var (action, condition) in actions)
@@ -71,7 +62,7 @@ public static class ServicesStage
                     InstallPage.Info.Title = ex.Message;
                     InstallPage.Progress.ShowError = true;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
-                    InstallPage.ProgressRingControl.Foreground = new SolidColorBrush(Color.FromArgb(255, 196, 43, 28));
+                    InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightError", "DarkError");
                     break;
                 }
 

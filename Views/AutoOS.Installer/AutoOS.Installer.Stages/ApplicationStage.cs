@@ -1,8 +1,5 @@
 ﻿using System.Diagnostics;
 using AutoOS.Views.Installer.Actions;
-using Microsoft.UI.Xaml.Media;
-using Windows.System;
-using Windows.UI;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -13,6 +10,7 @@ public static class ApplicationStage
         bool? iCloud = PreparingStage.iCloud;
         bool? Bitwarden = PreparingStage.Bitwarden;
         bool? OnePassword = PreparingStage.OnePassword;
+        bool? TaskbarAlignment = PreparingStage.TaskbarAlignment;
         bool? StartAllBack = PreparingStage.StartAllBack;
         bool? Spotify = PreparingStage.Spotify;
         bool? AppleMusic = PreparingStage.AppleMusic;
@@ -91,6 +89,7 @@ public static class ApplicationStage
 
             // install startallback
             (async () => await ProcessActions.RunNsudo("Installing StartAllBack", "CurrentUser", $"cmd /c reg import \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "startallback.reg")}\""), () => StartAllBack == true),
+            (async () => await ProcessActions.RunNsudo("Aligning the taskbar to the left", "CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\StartIsBack"" /v ""TaskbarCenterIcons"" /t REG_DWORD /d 2 /f"),() => TaskbarAlignment == true && StartAllBack == true),
             (async () => await ProcessActions.RunNsudo("Installing StartAllBack", "CurrentUser", @"""%TEMP%\StartAllBackSetup.exe"" /silent /allusers"),() => StartAllBack == true),
             (async () => await ProcessActions.RunNsudo("Installing StartAllBack", "CurrentUser", @"SCHTASKS /Change /TN ""StartAllBack Update"" /Disable"),() => StartAllBack == true),
 
@@ -248,7 +247,6 @@ public static class ApplicationStage
             (async () => await ProcessActions.RunNsudo("Disabling Epic Games services", "TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\EpicOnlineServices"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => EpicGames == true),
             (async () => await ProcessActions.RunNsudo("Disabling Epic Games services", "CurrentUser", @"reg add ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\AutorunsDisabled"" /v ""EpicGamesLauncher"" /t REG_SZ /d """"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win64\EpicGamesLauncher.exe"" -silent -launchcontext=boot"""" /f"), () => EpicGames == true),
             (async () => await ProcessActions.RunNsudo("Disabling Epic Games services", "CurrentUser", @"reg delete ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"" /v ""EpicGamesLauncher"" /f"), () => EpicGames == true),
-
         };
 
         foreach (var (action, condition) in actions)
@@ -274,7 +272,7 @@ public static class ApplicationStage
                     InstallPage.Info.Title = ex.Message;
                     InstallPage.Progress.ShowError = true;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
-                    InstallPage.ProgressRingControl.Foreground = new SolidColorBrush(Color.FromArgb(255, 196, 43, 28));
+                    InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightError", "DarkError");
                     break;
                 }
 

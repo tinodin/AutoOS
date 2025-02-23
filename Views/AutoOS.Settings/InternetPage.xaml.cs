@@ -24,7 +24,7 @@ public sealed partial class InternetPage : Page
         {
             (new[] { "WlanSvc", "Dhcp", "EventLog", "Wcmsvc", "WinHttpAutoProxySvc" }, 2),
             (new[] { "NlaSvc" }, 3),
-            (new[] { "tdx", "vwififlt" }, 1)
+            (new[] { "tdx", "vwififlt"}, 1)
         };
 
         // check if values match
@@ -38,6 +38,20 @@ public sealed partial class InternetPage : Page
                     return;
                 }
             }
+        }
+
+        // check for intel wifi driver
+        if (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netwtw10", "Start", null) is int value && value != 3)
+        {
+            isInitializingWIFIState = false;
+            return;
+        }
+
+        // check for intel wifi driver
+        if (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netwtw14", "Start", null) is int value2 && value2 != 3)
+        {
+            isInitializingWIFIState = false;
+            return;
         }
 
         // check for enabled wifi adapters
@@ -96,6 +110,18 @@ public sealed partial class InternetPage : Page
             {
                 Registry.SetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\{service}", "Start", WiFi.IsOn ? group.Item2 : 4);
             }
+        }
+
+        // check for intel wifi driver
+        if (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netwtw10", "Start", null) != null)
+        {
+            Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netwtw10", "Start", WiFi.IsOn ? 3 : 4);
+        }
+
+        // check for intel wifi driver
+        if (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netwtw14", "Start", null) != null)
+        {
+            Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netwtw14", "Start", WiFi.IsOn ? 3 : 4);
         }
 
         // delay

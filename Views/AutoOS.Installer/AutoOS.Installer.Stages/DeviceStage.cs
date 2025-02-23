@@ -1,6 +1,4 @@
 ﻿using AutoOS.Views.Installer.Actions;
-using Microsoft.UI.Xaml.Media;
-using Windows.UI;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -43,13 +41,13 @@ public static class DeviceStage
             (async () => await ProcessActions.RunNsudo("Setting MSI mode to undefined for all devices", "TrustedInstaller", @"cmd /c for /f ""tokens=*"" %i in ('reg query ""HKLM\SYSTEM\CurrentControlSet\Enum\PCI""^| findstr ""HKEY""') do for /f ""tokens=*"" %a in ('reg query ""%i""^| findstr ""HKEY""') do reg delete ""%a\Device Parameters\Interrupt Management\Affinity Policy"" /v ""DevicePriority"" /f"), null),
 
             // disable hid devices
-            (async () => await ProcessActions.RunPowerShell("Disabling HID devices", "Get-PnpDevice -Class HIDClass | Where-Object { $_.FriendlyName -match 'HID-compliant (consumer control device|device|game controller|system controller|vendor-defined device)' -and $_.FriendlyName -notmatch 'Mouse|Keyboard'} | Disable-PnpDevice -Confirm:$false"), () => HID == false),
+            (async () => await ProcessActions.RunPowerShell("Disabling Human Interface Devices (HID)", "Get-PnpDevice -Class HIDClass | Where-Object { $_.FriendlyName -match 'HID-compliant (consumer control device|device|game controller|system controller|vendor-defined device)' -and $_.FriendlyName -notmatch 'Mouse|Keyboard'} | Disable-PnpDevice -Confirm:$false"), () => HID == false),
 
             // save xhci interrupt moderation state
-            (async () => await ProcessActions.RunPowerShellScript("Saving XHCI Interrupt Moderation data", "imod.ps1", $"-save \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}\""),() => IMOD == false),
+            (async () => await ProcessActions.RunPowerShellScript("Saving XHCI Interrupt Moderation (IMOD) data", "imod.ps1", $"-save \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}\""),() => IMOD == false),
 
             // disable xhci interrupt moderation
-            (async () => await ProcessActions.RunPowerShellScript("Disabling XHCI Interrupt Moderation", "imod.ps1", $"-disable \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}\""),() => IMOD == false),
+            (async () => await ProcessActions.RunPowerShellScript("Disabling XHCI Interrupt Moderation (IMOD)", "imod.ps1", $"-disable \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}\""),() => IMOD == false),
 
             // disable reserved storage
             (async () => await ProcessActions.RunPowerShell("Disabling reserved storage", @"DISM /Online /Set-ReservedStorageState /State:Disabled"), null),
@@ -57,7 +55,7 @@ public static class DeviceStage
             // clean up devices
             (async () => await ProcessActions.RunApplication("Cleaning up devices", "DeviceCleanup", "DeviceCleanupCmd.exe", "/s *"), null),
 
-            // clean up drive
+            // clean up drives
             (async () => await ProcessActions.RunApplication("Cleaning up drives", "DriveCleanup", "DriveCleanup.exe", ""), null),
 
             // disable bluetooth services and drivers
@@ -87,7 +85,7 @@ public static class DeviceStage
                     InstallPage.Info.Title = ex.Message;
                     InstallPage.Progress.ShowError = true;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
-                    InstallPage.ProgressRingControl.Foreground = new SolidColorBrush(Color.FromArgb(255, 196, 43, 28));
+                    InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightError", "DarkError");
                     break;
                 }
 

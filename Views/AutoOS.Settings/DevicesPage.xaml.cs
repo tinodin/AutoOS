@@ -1,8 +1,6 @@
-﻿using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.Win32;
+﻿using Microsoft.Win32;
 using System.Diagnostics;
 using System.Management;
-using System.Net.NetworkInformation;
 
 namespace AutoOS.Views.Settings;
 
@@ -29,7 +27,7 @@ public sealed partial class DevicesPage : Page
             (new[] { "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DevicesFlowUserSvc", "DsmSvc", "NcbService", "WFDSConMgrSvc", "BthA2dp", "BthEnum", "BthHFAud", "BthHFEnum", "BthLEEnum", "BTHMODEM", "BthMini", "BthPan", "BTHPORT", "BTHUSB", "HidBth", "Microsoft_Bluetooth_AvrcpTransport", "RFCOMM" }, 3),
             };
 
-        // return if start values don't match
+        // check if values match
         foreach (var group in groups)
         {
             foreach (var service in group.Item1)
@@ -159,20 +157,24 @@ public sealed partial class DevicesPage : Page
         }
     }
 
-    private void GetHIDState()
+    private async void GetHIDState()
     {
-        // check if HID devices are enabled
-        HID.IsOn = new ManagementObjectSearcher("SELECT * FROM Win32_PnPEntity WHERE Description LIKE '%HID%'")
-                   .Get()
-                   .Cast<ManagementObject>()
-                   .Any(device => device["Status"]?.ToString() == "OK" &&
-                    new[] {
+        isInitializingHIDState = true;
+
+        HID.IsOn = await Task.Run(() =>
+        {
+            return new ManagementObjectSearcher("SELECT * FROM Win32_PnPEntity WHERE Description LIKE '%HID%'")
+                       .Get()
+                       .Cast<ManagementObject>()
+                       .Any(device => device["Status"]?.ToString() == "OK" &&
+                        new[] {
                     "HID-compliant consumer control device",
                     "HID-compliant device",
                     "HID-compliant game controller",
                     "HID-compliant system controller",
                     "HID-compliant vendor-defined device"
-                    }.Contains(device["Description"]?.ToString()));
+                        }.Contains(device["Description"]?.ToString()));
+        });
 
         isInitializingHIDState = false;
     }
@@ -212,7 +214,6 @@ public sealed partial class DevicesPage : Page
             {
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
-                UseShellExecute = false,
                 CreateNoWindow = true
             };
 

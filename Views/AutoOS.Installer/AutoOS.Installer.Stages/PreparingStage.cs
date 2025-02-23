@@ -1,8 +1,7 @@
-﻿using Microsoft.Win32;
+﻿using AutoOS.Views.Installer.Actions;
+using Microsoft.Win32;
 using System.Management;
 using System.Diagnostics;
-using Microsoft.UI.Xaml.Media;
-using Windows.UI;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -83,8 +82,7 @@ public static class PreparingStage
 
         InstallPage.Progress.ShowPaused = true;
         InstallPage.Info.Severity = InfoBarSeverity.Warning;
-        InstallPage.ProgressRingControl.Foreground = new SolidColorBrush(Color.FromArgb(255, 157, 93, 0)); // light mode
-        InstallPage.ProgressRingControl.Foreground = new SolidColorBrush(Color.FromArgb(255, 252, 225, 0)); // dark mode
+        InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightPause", "DarkPause");
 
         await Task.Run(() =>
         {
@@ -207,7 +205,6 @@ public static class PreparingStage
                .Get()
                .Cast<ManagementObject>()
                .Any(obj => Convert.ToInt32(obj["NumberOfLogicalProcessors"]) > Convert.ToInt32(obj["NumberOfCores"]));
-
         });
     }
 }

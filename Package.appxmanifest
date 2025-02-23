@@ -6,13 +6,12 @@
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
   xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  xmlns:desktop6="http://schemas.microsoft.com/appx/manifest/desktop/windows10/6"
   IgnorableNamespaces="uap rescap">
 
   <Identity
     Name="AutoOS"
     Publisher="CN=user"
-    Version="1.0.11.0" />
+    Version="1.0.6.0" />
 
   <mp:PhoneIdentity PhoneProductId="81be9a4c-5599-4f16-b2df-5df99b34cec2" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
@@ -20,8 +19,6 @@
     <DisplayName>AutoOS</DisplayName>
     <PublisherDisplayName>tinodin</PublisherDisplayName>
     <Logo>Assets\Store\StoreLogo.png</Logo>
-	<desktop6:RegistryWriteVirtualization>disabled</desktop6:RegistryWriteVirtualization>
-	<desktop6:FileSystemWriteVirtualization>disabled</desktop6:FileSystemWriteVirtualization>
   </Properties>
 
   <Dependencies>
@@ -60,8 +57,7 @@
   </Applications>
 
   <Capabilities>
-    <rescap:Capability Name="runFullTrust"/>
-	<rescap:Capability Name="allowElevation"/>
-	<rescap:Capability Name="unvirtualizedResources"/>
+        <rescap:Capability Name="runFullTrust"/>
+        <rescap:Capability Name="allowElevation"/>
   </Capabilities>
 </Package>

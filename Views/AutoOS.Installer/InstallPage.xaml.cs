@@ -1,8 +1,6 @@
 ﻿using Microsoft.Win32;
+using AutoOS.Views.Installer.Actions;
 using AutoOS.Views.Installer.Stages;
-using Microsoft.UI.Xaml.Media;
-using System.Diagnostics;
-using Windows.UI;
 
 namespace AutoOS.Views.Installer;
 
@@ -16,11 +14,10 @@ public sealed partial class InstallPage : Page
     public InstallPage()
     {
         InitializeComponent();
-
-        Actions();
+        InitializeView();
     }
 
-    private async void Actions() 
+    private async void InitializeView() 
     {
         var navView = MainWindow.Instance.GetNavView();
 
@@ -32,7 +29,7 @@ public sealed partial class InstallPage : Page
             item.IsEnabled = false;
         }
 
-        // rename footer item to installing autoos
+        // rename footer item to installing autoos...
         foreach (var item in navView.FooterMenuItems.OfType<NavigationViewItem>())
         {
             item.Content = "Installing AutoOS...";
@@ -42,8 +39,6 @@ public sealed partial class InstallPage : Page
         Progress = ProgressBar;
         Info = InfoBar;
         ProgressRingControl = ProgressRingItem;
-
-        Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", 2, RegistryValueKind.DWord);
 
         using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
         {
@@ -58,11 +53,6 @@ public sealed partial class InstallPage : Page
             {
                 Progress.Value = 30;
                 ExecuteSecondStage();
-            }
-            else if (stage == 3)
-            {
-                Progress.Value = 85;
-                ExecuteThirdStage();
             }
         }
     }
@@ -85,7 +75,7 @@ public sealed partial class InstallPage : Page
     private async void ExecuteSecondStage()
     {
         await PreparingStage.Run();
-        //await DriverStage.Run();
+        await DriverStage.Run();
         //await NetworkStage.Run();
         //await AudioStage.Run();
         //await GraphicsStage.Run();
@@ -97,36 +87,16 @@ public sealed partial class InstallPage : Page
         //await BrowserStage.Run();
         //await ApplicationStage.Run();
         //await GamesStage.Run();
+        //await SchedulingStage.Run();
+        //await TimerStage.Run();
         //await ServicesStage.Run();
-    }
-
-    private async void ExecuteThirdStage()
-    {
-        await PreparingStage.Run();
-        await SchedulingStage.Run();
-        await TimerStage.Run();
-        await CleanupStage.Run();
+        //await CleanupStage.Run();
 
         InstallPage.Status.Text = "Installation finished";
         InstallPage.Info.Severity = InfoBarSeverity.Success;
-        InstallPage.Progress.Foreground = new SolidColorBrush(Color.FromArgb(255, 108, 203, 95));
-        InstallPage.ProgressRingControl.Foreground = new SolidColorBrush(Color.FromArgb(255, 108, 203, 95));
+        InstallPage.Progress.Foreground = ProcessActions.GetColor("LightSuccess", "DarkSuccess");
+        InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightSuccess", "DarkSuccess");
 
-        InstallPage.Info.Title = "Restarting in 3...";
-        await Task.Delay(1000);
-        InstallPage.Info.Title = "Restarting in 2...";
-        await Task.Delay(1000);
-        InstallPage.Info.Title = "Restarting in 1...";
-        await Task.Delay(1000);
-        InstallPage.Info.Title = "Restarting...";
-        await Task.Delay(750);
-        ProcessStartInfo processStartInfo = new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c shutdown /r /t 0",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-        };
-        Process.Start(processStartInfo);
+        //await ProcessActions.RunRestart();
     }
 }

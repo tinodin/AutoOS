@@ -1,6 +1,5 @@
 ﻿using Microsoft.UI.Windowing;
 using Microsoft.Win32;
-using System.Diagnostics;
 
 namespace AutoOS.Views
 {
@@ -13,20 +12,15 @@ namespace AutoOS.Views
             Instance = this;
             InitializeComponent();
             ExtendsContentIntoTitleBar = true;
+            AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
             SetTitleBar(AppTitleBar);
-            this.AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
 
-            Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", 2, RegistryValueKind.DWord);
             //Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", "Installed", RegistryValueKind.String);
-            object stageObj = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS")?.GetValue("Stage");
 
-            //App.Current.NavService
-            //    .ConfigureTitleBar(AppTitleBar, false)
-            //    .ConfigureBreadcrumbBar(BreadCrumbNav, BreadcrumbPageMappings.PageDictionary);
+            object stageObj = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS")?.GetValue("Stage");
 
             if (stageObj is int stageValue && stageValue >= 1)
             {
-                Debug.WriteLine("Stage >= 1");
                 App.Current.NavService
                     .Initialize(NavView, NavFrame, NavigationPageMappingsInstaller.PageDictionary)
                     .ConfigureJsonFile("Assets/NavViewMenu/Installer.json")
@@ -37,7 +31,6 @@ namespace AutoOS.Views
             }
             else if (stageObj is string stageStr && stageStr.Equals("Installed", StringComparison.OrdinalIgnoreCase))
             {
-                Debug.WriteLine("Installed");
                 App.Current.NavService
                     .Initialize(NavView, NavFrame, NavigationPageMappingsSettings.PageDictionary)
                     .ConfigureJsonFile("Assets/NavViewMenu/Settings.json")
@@ -48,7 +41,6 @@ namespace AutoOS.Views
             }
             else
             {
-                Debug.WriteLine("doesnt exist");
                 App.Current.NavService
                     .Initialize(NavView, NavFrame, NavigationPageMappingsInstaller.PageDictionary)
                     .ConfigureJsonFile("Assets/NavViewMenu/Installer.json")
