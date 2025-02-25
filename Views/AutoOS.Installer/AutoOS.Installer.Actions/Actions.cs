@@ -7,14 +7,8 @@ namespace AutoOS.Views.Installer.Actions;
 
 public static class ProcessActions
 {
-    public static string previousTitle { get; private set; }
-
-    public static async Task RunNsudo(string title, string user, string command)
+    public static async Task RunNsudo(string user, string command)
     {
-        previousTitle = InstallPage.Info.Title;
-
-        InstallPage.Info.Title = $"{title}...";
-
         string arguments = user switch
         {
             "TrustedInstaller" => $"-U:T -P:E -Wait -ShowWindowMode:Hide {command}",
@@ -27,8 +21,6 @@ public static class ProcessActions
 
     public static async Task RunRestart()
     {
-        previousTitle = InstallPage.Info.Title;
-
         InstallPage.Info.Title = "Restarting in 3...";
         await Task.Delay(1000);
         InstallPage.Info.Title = "Restarting in 2...";
@@ -47,23 +39,13 @@ public static class ProcessActions
         Process.Start(processStartInfo);
     }
 
-    public static async Task RunPowerShell(string title, string command)
+    public static async Task RunPowerShell(string command)
     {
-        previousTitle = InstallPage.Info.Title;
-        InstallPage.Info.Title = $"{title}...";
-
         await Process.Start(new ProcessStartInfo("powershell.exe", $"-Command \"{command}\"") { CreateNoWindow = true, UseShellExecute = false })!.WaitForExitAsync();
     }
 
-    public static async Task RunConnectionCheck(string title)
+    public static async Task RunConnectionCheck()
     {
-        previousTitle = InstallPage.Info.Title;
-
-        if (!string.IsNullOrEmpty(title))
-        {
-            InstallPage.Info.Title = $"{title}...";
-        }
-
         InstallPage.Progress.ShowPaused = true;
         InstallPage.Info.Severity = InfoBarSeverity.Warning;
         InstallPage.ProgressRingControl.Foreground = GetColor("LightPause", "DarkPause");
@@ -95,36 +77,26 @@ public static class ProcessActions
         }
     }
 
-    public static async Task RunBatchScript(string title, string script, string arguments)
+    public static async Task RunBatchScript(string script, string arguments)
     {
-        previousTitle = InstallPage.Info.Title;
-
-        InstallPage.Info.Title = $"{title}...";
-
         await Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", script), arguments) { CreateNoWindow = true })!.WaitForExitAsync();
     }
 
-    public static async Task RunPowerShellScript(string title, string script, string arguments)
+    public static async Task RunPowerShellScript(string script, string arguments)
     {
-        previousTitle = InstallPage.Info.Title;
-        InstallPage.Info.Title = $"{title}...";
-
         await Process.Start(new ProcessStartInfo("powershell.exe", $"-ExecutionPolicy Bypass -File \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", script)}\" {arguments}") { CreateNoWindow = true, UseShellExecute = false })!.WaitForExitAsync();
     }
 
-    public static async Task RunApplication(string title, string folderName, string executable, string arguments)
+    public static async Task RunApplication(string folderName, string executable, string arguments)
     {
-        previousTitle = InstallPage.Info.Title;
-
-        InstallPage.Info.Title = $"{title}...";
-
         await Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", folderName, executable), arguments) { CreateNoWindow = true })!.WaitForExitAsync();
     }
 
-    public static async Task RunDownload(string title, string url, string path, string file)
+    public static async Task RunDownload(string url, string path, string file)
     {
+        string title = InstallPage.Info.Title;
+
         var uiContext = SynchronizationContext.Current;
-        uiContext?.Post(_ => InstallPage.Info.Title = $"{title}...", null);
 
         var download = DownloadBuilder.New()
             .WithUrl(url)
@@ -208,21 +180,13 @@ public static class ProcessActions
         }
     }
 
-    public static async Task RunExtract(string title, string inputPath, string outputPath)
+    public static async Task RunExtract(string inputPath, string outputPath)
     {
-        previousTitle = InstallPage.Info.Title;
-
-        InstallPage.Info.Title = $"{title}...";
-
         await Process.Start(new ProcessStartInfo { FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "7-Zip", "7za.exe"), Arguments = $"x \"{inputPath}\" -y -o\"{outputPath}\"", CreateNoWindow = true })!.WaitForExitAsync();
     }
 
-    public static async Task RunNvidiaStrip(string title)
+    public static async Task RunNvidiaStrip()
     {
-        previousTitle = InstallPage.Info.Title;
-
-        InstallPage.Info.Title = $"{title}...";
-
         var directories = Directory.GetDirectories(Path.Combine(Path.GetTempPath(), "driver"));
 
         foreach (var directory in directories)
@@ -269,39 +233,23 @@ public static class ProcessActions
         }
     }
 
-    public static async Task ImportProfile(string title, string file)
+    public static async Task ImportProfile(string file)
     {
-        previousTitle = InstallPage.Info.Title;
-
-        InstallPage.Info.Title = $"{title}...";
-
         await Process.Start(new ProcessStartInfo { FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NvidiaProfileInspector", "nvidiaProfileInspector.exe"), Arguments = $"-silentimport \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NvidiaProfileInspector", file)}\"", CreateNoWindow = true })!.WaitForExitAsync();
     }
 
-    public static async Task RemoveAppx(string title, string appx)
+    public static async Task RemoveAppx(string appx)
     {
-        previousTitle = InstallPage.Info.Title;
-
-        InstallPage.Info.Title = $"{title}...";
-
         await Process.Start(new ProcessStartInfo { FileName = "powershell.exe", Arguments = $"Get-AppxPackage \"{appx}\" | Remove-AppxPackage", CreateNoWindow = true })!.WaitForExitAsync();
     }
 
-    public static async Task RemoveAppxProvisioned(string title, string appx)
+    public static async Task RemoveAppxProvisioned(string appx)
     {
-        previousTitle = InstallPage.Info.Title;
-
-        InstallPage.Info.Title = $"{title}...";
-
         await Process.Start(new ProcessStartInfo { FileName = "powershell.exe", Arguments = $"Remove-AppxProvisionedPackage -PackageName (Get-AppxProvisionedPackage -Online | Where-Object {{ ('{appx}' -contains $_.DisplayName) }}).PackageName -Online -AllUsers", CreateNoWindow = true })!.WaitForExitAsync();
     }
 
-    public static async Task UpdateAppx(string title, string appx)
+    public static async Task UpdateAppx(string appx)
     {
-        previousTitle = InstallPage.Info.Title;
-
-        InstallPage.Info.Title = $"{title}...";
-
         ProcessStartInfo processStartInfo = new ProcessStartInfo("powershell.exe", $"-ExecutionPolicy Bypass -File \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "updateappx.ps1")}\" \"{appx}\"")
         {
             CreateNoWindow = true,
@@ -326,11 +274,8 @@ public static class ProcessActions
         }
     }
 
-    public static async Task DisableScheduledTasks(string title)
+    public static async Task DisableScheduledTasks()
     {
-        previousTitle = InstallPage.Info.Title;
-        InstallPage.Info.Title = $"{title}...";
-
         ProcessStartInfo processStartInfo = new ProcessStartInfo("powershell.exe", $"-ExecutionPolicy Bypass -File \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "disablescheduledtasks.ps1")}\" \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NSudo", "NSudoLC.exe")}\"")
         {
             CreateNoWindow = true,
@@ -358,11 +303,8 @@ public static class ProcessActions
         }
     }
 
-    public static async Task RemoveWindowsCapabilities(string title)
+    public static async Task RemoveWindowsCapabilities()
     {
-        previousTitle = InstallPage.Info.Title;
-        InstallPage.Info.Title = $"{title}...";
-
         ProcessStartInfo processStartInfo = new ProcessStartInfo("powershell.exe", $"-ExecutionPolicy Bypass -File \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "removecapabilities.ps1")}\"")
         {
             CreateNoWindow = true,
@@ -390,11 +332,8 @@ public static class ProcessActions
         }
     }
 
-    public static async Task DisableOptionalFeatures(string title)
+    public static async Task DisableOptionalFeatures()
     {
-        previousTitle = InstallPage.Info.Title;
-        InstallPage.Info.Title = $"{title}...";
-
         ProcessStartInfo processStartInfo = new ProcessStartInfo("powershell.exe", $"-ExecutionPolicy Bypass -File \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "disablefeatures.ps1")}\"")
         {
             CreateNoWindow = true,
@@ -422,12 +361,8 @@ public static class ProcessActions
         }
     }
 
-    public static async Task DisableWiFiServicesAndDrivers(string title)
+    public static async Task DisableWiFiServicesAndDrivers()
     {
-        previousTitle = InstallPage.Info.Title;
-
-        InstallPage.Info.Title = $"{title}...";
-
         string[] services = { "WlanSvc", "Dhcp", "EventLog", "Wcmsvc", "WinHttpAutoProxySvc", "NlaSvc", "tdx", "vwififlt" };
 
         foreach (string service in services)
@@ -452,14 +387,10 @@ public static class ProcessActions
         await Task.Delay(300);
     }
 
-    public static async Task DisableBluetoothServicesAndDrivers(string title)
+    public static async Task DisableBluetoothServicesAndDrivers()
     {
-        previousTitle = InstallPage.Info.Title;
-
-        InstallPage.Info.Title = $"{title}...";
-
         string[] services = {
-            "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DevicesFlowUserSvc", "DsmSvc", "NcbService", "WFDSConMgrSvc", "BthA2dp", "BthEnum", "BthHFAud", "BthHFEnum", "BthLEEnum", "BTHMODEM", "BthMini", "BthPan", "BTHPORT", "BTHUSB", "HidBth", "Microsoft_Bluetooth_AvrcpTransport", "RFCOMM"
+            "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DevicesFlowUserSvc", "DsmSvc", "WFDSConMgrSvc", "BthA2dp", "BthEnum", "BthHFAud", "BthHFEnum", "BthLEEnum", "BTHMODEM", "BthMini", "BthPan", "BTHPORT", "BTHUSB", "HidBth", "Microsoft_Bluetooth_AvrcpTransport", "RFCOMM"
         };
 
         foreach (string service in services)
@@ -476,29 +407,18 @@ public static class ProcessActions
         await Task.Delay(300);
     }
 
-    public static async Task Sleep(string title, int amount)
+    public static async Task Sleep(int amount)
     {
-        previousTitle = InstallPage.Info.Title;
-
-        InstallPage.Info.Title = $"{title}...";
-
         await Task.Delay(amount);
     }
 
-    public static async Task RunCustom(string title, Func<Task> action)
+    public static async Task RunCustom(Func<Task> action)
     {
-        previousTitle = InstallPage.Info.Title;
-
-        InstallPage.Info.Title = $"{title}...";
-
         await action();
     }
 
-    public static async Task RunMicrosoftStoreDownload(string title, string productFamilyName, string fileType, string architecture, string fileName)
+    public static async Task RunMicrosoftStoreDownload(string productFamilyName, string fileType, string architecture, string fileName)
     {
-        previousTitle = InstallPage.Info.Title;
-        InstallPage.Info.Title = $"{title}...";
-
         var output = await Process.Start(new ProcessStartInfo("powershell.exe", $"-ExecutionPolicy Bypass -File \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "getmicrosoftstorelink.ps1")}\" \"{productFamilyName}\" \"{fileType}\" \"{architecture}\"")
         {
             CreateNoWindow = true,
@@ -508,7 +428,7 @@ public static class ProcessActions
 
         var url = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
 
-        await RunDownload(title, url, Path.GetTempPath(), fileName);
+        await RunDownload(url, Path.GetTempPath(), fileName);
     }
     public static SolidColorBrush GetColor(string lightKey, string darkKey)
     {

@@ -2,6 +2,7 @@
 using Microsoft.Win32;
 using Microsoft.Windows.AppLifecycle;
 using Windows.Graphics;
+using System.Diagnostics;
 
 namespace AutoOS
 {
@@ -21,6 +22,9 @@ namespace AutoOS
 
         protected override void OnLaunched(LaunchActivatedEventArgs args)
         {
+            //Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", "Installed", RegistryValueKind.String);
+            //Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", 2, RegistryValueKind.DWord);
+
             string stage = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS")?.GetValue("Stage") as string;
 
             if (stage != null)
@@ -52,8 +56,13 @@ namespace AutoOS
 
                         ThemeService = new ThemeService(MainWindow);
 
-                        MainWindow.AppWindow.Resize(new SizeInt32(365, 165));
-                        MainWindow.AppWindow.Move(new PointInt32(1570, 865));
+                        ThemeService.SetBackdropType(BackdropType.AcrylicBase);
+
+                        MainWindow.AppWindow.Resize(new SizeInt32(340, 130));
+                        MainWindow.AppWindow.Move(new PointInt32(1570, 897));
+
+                        // MainWindow.AppWindow.MoveAndResize(new RectInt32(1570, 897, 340, 130));
+
                         MainWindow.Activate();
                     }
                     else
@@ -80,7 +89,26 @@ namespace AutoOS
                         ThemeService.SetBackdropType(BackdropType.AcrylicBase);
 
                         MainWindow.AppWindow.Resize(new SizeInt32(340, 130));
-                        MainWindow.AppWindow.Move(new PointInt32(1580, 910));
+                        MainWindow.AppWindow.Move(new PointInt32(1570, 897));
+
+                        MainWindow.AppWindow.MoveAndResize(new RectInt32(1570, 897, 340, 130));
+
+                        //var displayArea = DisplayArea.GetFromWindowId(MainWindow.AppWindow.Id, DisplayAreaFallback.Primary);
+                        //int screenWidth = displayArea.WorkArea.Width;
+                        //int screenHeight = displayArea.WorkArea.Height;
+
+                        //Debug.WriteLine(screenWidth);
+                        //Debug.WriteLine(screenHeight);
+                        //int windowWidth = 340;
+                        //int windowHeight = 130;
+
+                        //// Position it near the bottom-right corner
+                        //int posX = screenWidth - windowWidth - 20; // 20px margin from the right edge
+                        //int posY = screenHeight - windowHeight - 20; // 20px margin from the bottom edge
+
+                        //MainWindow.AppWindow.Resize(new SizeInt32(windowWidth, windowHeight));
+                        //MainWindow.AppWindow.Move(new PointInt32(posX, posY));
+
                         MainWindow.Activate();
                     }
                 }

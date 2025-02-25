@@ -10,41 +10,45 @@ public static class MemoryManagementStage
 
         InstallPage.Status.Text = "Configuring Memory Management...";
 
-        int validActionsCount = 0;
+        string previousTitle = string.Empty;
         int stagePercentage = 2;
 
-        var actions = new List<(Func<Task> Action, Func<bool> Condition)>
+        var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
             // disable application launch prefetching
-            (async () => await ProcessActions.RunPowerShell("Disabling application launch prefetching", @"Disable-MMAgent -ApplicationLaunchPrefetching"),() => SSD == true),
+            ("Disabling application launch prefetching", async () => await ProcessActions.RunPowerShell(@"Disable-MMAgent -ApplicationLaunchPrefetching"),() => SSD == true),
 
             // disable application pre launch
-            (async () => await ProcessActions.RunPowerShell("Disabling application pre launch", @"Disable-MMAgent -ApplicationPreLaunch"), null),
+            ("Disabling application pre launch", async () => await ProcessActions.RunPowerShell(@"Disable-MMAgent -ApplicationPreLaunch"), null),
 
             // disable memory compression
-            (async () => await ProcessActions.RunPowerShell("Disabling memory compression", @"Disable-MMAgent -MemoryCompression"), null),
+            ("Disabling memory compression", async () => await ProcessActions.RunPowerShell(@"Disable-MMAgent -MemoryCompression"), null),
 
             // disable operation apu
-            (async () => await ProcessActions.RunPowerShell("Disabling operation api", @"Disable-MMAgent -OperationAPI"), null),
+            ("Disabling operation api", async () => await ProcessActions.RunPowerShell(@"Disable-MMAgent -OperationAPI"), null),
 
             // disable page combining
-            (async () => await ProcessActions.RunPowerShell("Disabling page combining", @"Disable-MMAgent -PageCombining"), null),
+            ("Disabling page combining", async () => await ProcessActions.RunPowerShell(@"Disable-MMAgent -PageCombining"), null),
         };
 
-        foreach (var (action, condition) in actions)
+        var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();
+        var uniqueTitles = filteredActions.Select(a => a.Title).Distinct().ToList();
+        double incrementPerTitle = uniqueTitles.Count > 0 ? stagePercentage / (double)uniqueTitles.Count : 0;
+
+        foreach (var title in uniqueTitles)
         {
-            if ((condition == null || condition.Invoke()))
+            if (previousTitle != string.Empty && previousTitle != title)
             {
-                validActionsCount++;
+                await Task.Delay(150);
             }
-        }
 
-        double incrementPerAction = validActionsCount > 0 ? stagePercentage / (double)validActionsCount : 0;
+            var actionsForTitle = filteredActions.Where(a => a.Title == title).ToList();
+            int actionsForTitleCount = actionsForTitle.Count;
 
-        foreach (var (action, condition) in actions)
-        {
-            if ((condition == null || condition.Invoke()))
+            foreach (var (actionTitle, action, condition) in actionsForTitle)
             {
+                InstallPage.Info.Title = actionTitle;
+
                 try
                 {
                     await action();
@@ -55,16 +59,13 @@ public static class MemoryManagementStage
                     InstallPage.Progress.ShowError = true;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
                     InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightError", "DarkError");
-                    break;
-                }
-
-                InstallPage.Progress.Value += incrementPerAction;
-
-                if (InstallPage.Info.Title != ProcessActions.previousTitle)
-                {
-                    await Task.Delay(75);
+                    return;
                 }
             }
+
+            InstallPage.Progress.Value += incrementPerTitle;
+
+            previousTitle = title;
         }
     }
 }

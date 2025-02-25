@@ -12,59 +12,63 @@ public static class GamesStage
 
         InstallPage.Status.Text = "Configuring Games...";
 
-        int validActionsCount = 0;
+        string previousTitle = string.Empty;
         int stagePercentage = 2;
 
-        var actions = new List<(Func<Task> Action, Func<bool> Condition)>
+        var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
-            // download legendary
-            (async () => await ProcessActions.RunDownload("Downloading Legendary", "https://github.com/derrod/legendary/releases/latest/download/legendary.exe", @"C:\Windows", "legendary.exe"), () => Fortnite == true),
+            //// download legendary
+            //("Downloading Legendary", async () => await ProcessActions.RunDownload("https://github.com/derrod/legendary/releases/latest/download/legendary.exe", @"C:\Windows", "legendary.exe"), () => Fortnite == true),
 
-            // log in to legendary
-            (async () => await ProcessActions.Sleep("Please log in to your Epic Games account", 1000), () => Fortnite == true),
-            (async () => await ProcessActions.RunCustom("Please log in to your Epic Games account", async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = @"C:\Windows\legendary.exe", Arguments = "auth", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync())), () => Fortnite == true),
+            //// log in to legendary
+            //("Please log in to your Epic Games account", async () => await ProcessActions.Sleep(1000), () => Fortnite == true),
+            //("Please log in to your Epic Games account", async () => await ProcessActions.RunCustom(async() => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = @"C:\Windows\legendary.exe", Arguments = "auth", WindowStyle = ProcessWindowStyle.Hidden }) !.WaitForExitAsync())), () => Fortnite == true),
 
-            // import fortnite
-            (async () => await ProcessActions.RunCustom("Importing Fortnite", async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = @"C:\Windows\legendary.exe", Arguments = $"import --skip-dlcs Fortnite \"{Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GamePath", null)?.ToString()}\"", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync())), () => Fortnite == true),
+            //// import fortnite
+            //("Importing Fortnite", async () => await ProcessActions.RunCustom(async() => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = @"C:\Windows\legendary.exe", Arguments = $"import --skip-dlcs Fortnite \"{Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GamePath", null) ?.ToString()}\"", WindowStyle = ProcessWindowStyle.Hidden }) !.WaitForExitAsync())), () => Fortnite == true),
 
             // import fortnite settings
-            (async () => await ProcessActions.RunNsudo("Importing Fortnite settings", "CurrentUser", @"cmd /c mkdir ""%LocalAppData%\FortniteGame\Saved\Config\WindowsClient"""), () => Fortnite == true),
-            (async () => await ProcessActions.RunNsudo("Importing Fortnite settings", "CurrentUser", @"cmd /c copy /Y """ + Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "GameUserSettings.ini") + @""" ""%LocalAppData%\FortniteGame\Saved\Config\WindowsClient\GameUserSettings.ini"""), () => Fortnite == true),
+            ("Importing Fortnite settings", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c mkdir ""%LocalAppData%\FortniteGame\Saved\Config\WindowsClient"""), () => Fortnite == true),
+            ("Importing Fortnite settings", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c copy /Y """ + Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "GameUserSettings.ini") + @""" ""%LocalAppData%\FortniteGame\Saved\Config\WindowsClient\GameUserSettings.ini"""), () => Fortnite == true),
             
             // set refresh rate
 
 
             // set gpu preference to high performance for fortnite
-            (async () => await ProcessActions.RunNsudo("Setting GPU Preference to High Performance for Fortnite", "CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\DirectX\UserGpuPreferences"" /v """ + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GamePath", null).ToString() + @"\FortniteGame\Binaries\Win64\FortniteClient-Win64-Shipping.exe"" /t REG_SZ /d ""SwapEffectUpgradeEnable=1;GpuPreference=2;"" /f"), () => Fortnite == true),
+            ("Setting GPU Preference to High Performance for Fortnite", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\DirectX\UserGpuPreferences"" /v """ + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GamePath", null).ToString() + @"\FortniteGame\Binaries\Win64\FortniteClient-Win64-Shipping.exe"" /t REG_SZ /d ""SwapEffectUpgradeEnable=1;GpuPreference=2;"" /f"), () => Fortnite == true),
 
             // create fortnite qos policy
-            (async () => await ProcessActions.RunNsudo("Creating Fortnite QoS Policy", "TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\QoS\FortniteClient-Win64-Shipping.exe"" /v ""Application Name"" /t REG_SZ /d ""FortniteClient-Win64-Shipping.exe"" /f"), () => Fortnite == true),
-            (async () => await ProcessActions.RunNsudo("Creating Fortnite QoS Policy", "TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\QoS\FortniteClient-Win64-Shipping.exe"" /v ""Version"" /t REG_SZ /d ""1.0"" /f"), () => Fortnite == true),
-            (async () => await ProcessActions.RunNsudo("CrCreatingeate Fortnite QoS Policy", "TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\QoS\FortniteClient-Win64-Shipping.exe"" /v ""Protocol"" /t REG_SZ /d ""*"" /f"), () => Fortnite == true),
-            (async () => await ProcessActions.RunNsudo("Creating Fortnite QoS Policy", "TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\QoS\FortniteClient-Win64-Shipping.exe"" /v ""Local Port"" /t REG_SZ /d ""*"" /f"), () => Fortnite == true),
-            (async () => await ProcessActions.RunNsudo("Creating Fortnite QoS Policy", "TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\QoS\FortniteClient-Win64-Shipping.exe"" /v ""Local IP"" /t REG_SZ /d ""*"" /f"), () => Fortnite == true),
-            (async () => await ProcessActions.RunNsudo("Creating Fortnite QoS Policy", "TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\QoS\FortniteClient-Win64-Shipping.exe"" /v ""Local IP Prefix Length"" /t REG_SZ /d ""*"" /f"), () => Fortnite == true),
-            (async () => await ProcessActions.RunNsudo("Creating Fortnite QoS Policy", "TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\QoS\FortniteClient-Win64-Shipping.exe"" /v ""Remote Port"" /t REG_SZ /d ""*"" /f"), () => Fortnite == true),
-            (async () => await ProcessActions.RunNsudo("Creating Fortnite QoS Policy", "TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\QoS\FortniteClient-Win64-Shipping.exe"" /v ""Remote IP"" /t REG_SZ /d ""*"" /f"), () => Fortnite == true),
-            (async () => await ProcessActions.RunNsudo("Creating Fortnite QoS Policy", "TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\QoS\FortniteClient-Win64-Shipping.exe"" /v ""Remote IP Prefix Length"" /t REG_SZ /d ""*"" /f"), () => Fortnite == true),
-            (async () => await ProcessActions.RunNsudo("Creating Fortnite QoS Policy", "TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\QoS\FortniteClient-Win64-Shipping.exe"" /v ""DSCP Value"" /t REG_SZ /d ""46"" /f"), () => Fortnite == true),
-            (async () => await ProcessActions.RunPowerShell("Creating Fortnite QoS Policy", @"New-NetQosPolicy -Name ""FortniteClient-Win64-Shipping.exe"" -AppPathNameMatchCondition ""FortniteClient-Win64-Shipping.exe"" -Precedence 127 -DSCPAction 46 -IPProtocol Both"), () => Fortnite == true),
+            ("Creating Fortnite QoS Policy", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\QoS\FortniteClient-Win64-Shipping.exe"" /v ""Application Name"" /t REG_SZ /d ""FortniteClient-Win64-Shipping.exe"" /f"), () => Fortnite == true),
+            ("Creating Fortnite QoS Policy", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\QoS\FortniteClient-Win64-Shipping.exe"" /v ""Version"" /t REG_SZ /d ""1.0"" /f"), () => Fortnite == true),
+            ("Creating Fortnite QoS Policy", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\QoS\FortniteClient-Win64-Shipping.exe"" /v ""Protocol"" /t REG_SZ /d ""*"" /f"), () => Fortnite == true),
+            ("Creating Fortnite QoS Policy", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\QoS\FortniteClient-Win64-Shipping.exe"" /v ""Local Port"" /t REG_SZ /d ""*"" /f"), () => Fortnite == true),
+            ("Creating Fortnite QoS Policy", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\QoS\FortniteClient-Win64-Shipping.exe"" /v ""Local IP"" /t REG_SZ /d ""*"" /f"), () => Fortnite == true),
+            ("Creating Fortnite QoS Policy", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\QoS\FortniteClient-Win64-Shipping.exe"" /v ""Local IP Prefix Length"" /t REG_SZ /d ""*"" /f"), () => Fortnite == true),
+            ("Creating Fortnite QoS Policy", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\QoS\FortniteClient-Win64-Shipping.exe"" /v ""Remote Port"" /t REG_SZ /d ""*"" /f"), () => Fortnite == true),
+            ("Creating Fortnite QoS Policy", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\QoS\FortniteClient-Win64-Shipping.exe"" /v ""Remote IP"" /t REG_SZ /d ""*"" /f"), () => Fortnite == true),
+            ("Creating Fortnite QoS Policy", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\QoS\FortniteClient-Win64-Shipping.exe"" /v ""Remote IP Prefix Length"" /t REG_SZ /d ""*"" /f"), () => Fortnite == true),
+            ("Creating Fortnite QoS Policy", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\QoS\FortniteClient-Win64-Shipping.exe"" /v ""DSCP Value"" /t REG_SZ /d ""46"" /f"), () => Fortnite == true),
+            ("Creating Fortnite QoS Policy", async () => await ProcessActions.RunPowerShell(@"New-NetQosPolicy -Name ""FortniteClient-Win64-Shipping.exe"" -AppPathNameMatchCondition ""FortniteClient-Win64-Shipping.exe"" -Precedence 127 -DSCPAction 46 -IPProtocol Both"), () => Fortnite == true),
         };
 
-        foreach (var (action, condition) in actions)
+        var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();
+        var uniqueTitles = filteredActions.Select(a => a.Title).Distinct().ToList();
+        double incrementPerTitle = uniqueTitles.Count > 0 ? stagePercentage / (double)uniqueTitles.Count : 0;
+
+        foreach (var title in uniqueTitles)
         {
-            if ((condition == null || condition.Invoke()))
+            if (previousTitle != string.Empty && previousTitle != title)
             {
-                validActionsCount++;
+                await Task.Delay(150);
             }
-        }
 
-        double incrementPerAction = validActionsCount > 0 ? stagePercentage / (double)validActionsCount : 0;
+            var actionsForTitle = filteredActions.Where(a => a.Title == title).ToList();
+            int actionsForTitleCount = actionsForTitle.Count;
 
-        foreach (var (action, condition) in actions)
-        {
-            if ((condition == null || condition.Invoke()))
+            foreach (var (actionTitle, action, condition) in actionsForTitle)
             {
+                InstallPage.Info.Title = actionTitle;
+
                 try
                 {
                     await action();
@@ -75,16 +79,13 @@ public static class GamesStage
                     InstallPage.Progress.ShowError = true;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
                     InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightError", "DarkError");
-                    break;
-                }
-
-                InstallPage.Progress.Value += incrementPerAction;
-
-                if (InstallPage.Info.Title != ProcessActions.previousTitle)
-                {
-                    await Task.Delay(75);
+                    return;
                 }
             }
+
+            InstallPage.Progress.Value += incrementPerTitle;
+
+            previousTitle = title;
         }
     }
 }

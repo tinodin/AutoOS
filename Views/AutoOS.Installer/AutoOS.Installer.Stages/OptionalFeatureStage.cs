@@ -9,38 +9,42 @@ public static class OptionalFeatureStage
     {
         InstallPage.Status.Text = "Configuring Optional Features...";
 
-        int validActionsCount = 0;
+        string previousTitle = string.Empty;
         int stagePercentage = 2;
 
-        var actions = new List<(Func<Task> Action, Func<bool> Condition)>
+        var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {       
             // disable optional features
-            (async () => await ProcessActions.DisableOptionalFeatures("Disabling optional features"), null),
+            ("Disabling optional features", async () => await ProcessActions.DisableOptionalFeatures(), null),
 
             // remove windows capabilities
-            (async () => await ProcessActions.RemoveWindowsCapabilities("Removing windows capabilities"), null),
+            ("Removing windows capabilities", async () => await ProcessActions.RemoveWindowsCapabilities(), null),
 
             // write stage
-            (async () => await ProcessActions.RunCustom("Removing windows capabilities", async () => await Task.Run(() => Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", 2, RegistryValueKind.DWord))), null),
+            ("Removing windows capabilities", async () => await ProcessActions.RunCustom(async() => await Task.Run(() => Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", 2, RegistryValueKind.DWord))), null),
 
             // restart
-            (async () => await ProcessActions.RunRestart(), null)
+            ("", async () => await ProcessActions.RunRestart(), null)
         };
 
-        foreach (var (action, condition) in actions)
+        var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();
+        var uniqueTitles = filteredActions.Select(a => a.Title).Distinct().ToList();
+        double incrementPerTitle = uniqueTitles.Count > 0 ? stagePercentage / (double)uniqueTitles.Count : 0;
+
+        foreach (var title in uniqueTitles)
         {
-            if ((condition == null || condition.Invoke()))
+            if (previousTitle != string.Empty && previousTitle != title)
             {
-                validActionsCount++;
+                await Task.Delay(150);
             }
-        }
 
-        double incrementPerAction = validActionsCount > 0 ? stagePercentage / (double)validActionsCount : 0;
+            var actionsForTitle = filteredActions.Where(a => a.Title == title).ToList();
+            int actionsForTitleCount = actionsForTitle.Count;
 
-        foreach (var (action, condition) in actions)
-        {
-            if ((condition == null || condition.Invoke()))
+            foreach (var (actionTitle, action, condition) in actionsForTitle)
             {
+                InstallPage.Info.Title = actionTitle;
+
                 try
                 {
                     await action();
@@ -51,16 +55,13 @@ public static class OptionalFeatureStage
                     InstallPage.Progress.ShowError = true;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
                     InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightError", "DarkError");
-                    break;
-                }
-
-                InstallPage.Progress.Value += incrementPerAction;
-
-                if (InstallPage.Info.Title != ProcessActions.previousTitle)
-                {
-                    await Task.Delay(75);
+                    return;
                 }
             }
+
+            InstallPage.Progress.Value += incrementPerTitle;
+
+            previousTitle = title;
         }
     }
 }

@@ -15,7 +15,7 @@ public static class DriverStage
         InstallPage.Info.Severity = InfoBarSeverity.Warning;
         InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightPause", "DarkPause");
 
-        int validActionsCount = 0;
+        string previousTitle = string.Empty;
         int stagePercentage = 2;
 
         // set title
@@ -36,25 +36,27 @@ public static class DriverStage
             InstallPage.Info.Title = "Install your Ethernet and Audio driver, then connect to your internet.";
         }
 
-        var actions = new List<(Func<Task> Action, Func<bool> Condition)>
+        var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
             // check connection
-            (async () => await ProcessActions.RunConnectionCheck(""), null),
+            ("", async () => await ProcessActions.RunConnectionCheck(), null),
         };
 
-        foreach (var (action, condition) in actions)
+        var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();
+        var uniqueTitles = filteredActions.Select(a => a.Title).Distinct().ToList();
+        double incrementPerTitle = uniqueTitles.Count > 0 ? stagePercentage / (double)uniqueTitles.Count : 0;
+
+        foreach (var title in uniqueTitles)
         {
-            if ((condition == null || condition.Invoke()))
+            if (previousTitle != string.Empty && previousTitle != title)
             {
-                validActionsCount++;
+                await Task.Delay(150);
             }
-        }
 
-        double incrementPerAction = validActionsCount > 0 ? stagePercentage / (double)validActionsCount : 0;
+            var actionsForTitle = filteredActions.Where(a => a.Title == title).ToList();
+            int actionsForTitleCount = actionsForTitle.Count;
 
-        foreach (var (action, condition) in actions)
-        {
-            if ((condition == null || condition.Invoke()))
+            foreach (var (actionTitle, action, condition) in actionsForTitle)
             {
                 try
                 {
@@ -66,16 +68,13 @@ public static class DriverStage
                     InstallPage.Progress.ShowError = true;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
                     InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightError", "DarkError");
-                    break;
-                }
-
-                InstallPage.Progress.Value += incrementPerAction;
-
-                if (InstallPage.Info.Title != ProcessActions.previousTitle)
-                {
-                    await Task.Delay(75);
+                    return;
                 }
             }
+
+            InstallPage.Progress.Value += incrementPerTitle;
+
+            previousTitle = title;
         }
     }
 }

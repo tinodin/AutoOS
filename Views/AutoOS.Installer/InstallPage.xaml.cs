@@ -76,27 +76,27 @@ public sealed partial class InstallPage : Page
     {
         await PreparingStage.Run();
         await DriverStage.Run();
-        //await NetworkStage.Run();
-        //await AudioStage.Run();
-        //await GraphicsStage.Run();
-        //await DeviceStage.Run();
-        //await TimeDateRegionStage.Run();
-        //await ActivationStage.Run();
-        //await AppxStage.Run();
-        //await RuntimesStage.Run();
-        //await BrowserStage.Run();
-        //await ApplicationStage.Run();
-        //await GamesStage.Run();
-        //await SchedulingStage.Run();
-        //await TimerStage.Run();
-        //await ServicesStage.Run();
-        //await CleanupStage.Run();
+        await NetworkStage.Run();
+        await AudioStage.Run();
+        await GraphicsStage.Run();
+        await DeviceStage.Run();
+        await TimeDateRegionStage.Run();
+        await ActivationStage.Run();
+        await AppxStage.Run();
+        await RuntimesStage.Run();
+        await BrowserStage.Run();
+        await ApplicationStage.Run();
+        await GamesStage.Run();
+        await SchedulingStage.Run();
+        await TimerStage.Run();
+        await ServicesStage.Run();
+        await CleanupStage.Run();
 
         InstallPage.Status.Text = "Installation finished";
         InstallPage.Info.Severity = InfoBarSeverity.Success;
         InstallPage.Progress.Foreground = ProcessActions.GetColor("LightSuccess", "DarkSuccess");
         InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightSuccess", "DarkSuccess");
 
-        //await ProcessActions.RunRestart();
+        await ProcessActions.RunRestart();
     }
 }

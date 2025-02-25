@@ -10,7 +10,7 @@ public static class TimeDateRegionStage
     {
         InstallPage.Status.Text = "Time, Date and Region...";
 
-        int validActionsCount = 0;
+        string previousTitle = string.Empty;
         int stagePercentage = 2;
 
         using (HttpClient client = new HttpClient())
@@ -21,40 +21,44 @@ public static class TimeDateRegionStage
             countryCode = jsonResponse["country_code"]?.ToString();
         }
 
-        var actions = new List<(Func<Task> Action, Func<bool> Condition)>
+        var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
             // set time zone automatically
-            (async () => await ProcessActions.RunNsudo($"Setting time zone to {GetWindowsTimeZone(countryCode)}", "CurrentUser", $@"powershell -Command ""Set-TimeZone -Id '{GetWindowsTimeZone(countryCode)}'"""), null),
+            ($"Setting time zone to {GetWindowsTimeZone(countryCode)}", async () => await ProcessActions.RunNsudo("CurrentUser", $@"powershell -Command ""Set-TimeZone -Id '{GetWindowsTimeZone(countryCode)}'"""), null),
 
             // set keyboard layout automatically
-            (async () => await ProcessActions.RunNsudo($"Setting keyboard layout to {GetKeyboardLayout(countryCode)}", "CurrentUser", $@"powershell -Command ""$langList = New-WinUserLanguageList en-US; $langList[0].InputMethodTips.Clear(); $langList[0].InputMethodTips.Add('{GetKeyboardLayout(countryCode)}'); Set-WinUserLanguageList $langList -Force"""), null),
+            ($"Setting keyboard layout to {GetKeyboardLayout(countryCode)}", async () => await ProcessActions.RunNsudo("CurrentUser", $@"powershell -Command ""$langList = New-WinUserLanguageList en-US; $langList[0].InputMethodTips.Clear(); $langList[0].InputMethodTips.Add('{GetKeyboardLayout(countryCode)}'); Set-WinUserLanguageList $langList -Force"""), null),
 
             // set regional format automatically
-            (async () => await ProcessActions.RunNsudo($"Setting regional format to en-{countryCode}", "CurrentUser", $@"powershell -Command ""Set-Culture en-{countryCode}"""), null),
+            ($"Setting regional format to en-{countryCode}", async () => await ProcessActions.RunNsudo("CurrentUser", $@"powershell -Command ""Set-Culture en-{countryCode}"""), null),
 
             // sync the time
-            (async () => await ProcessActions.RunNsudo("Syncing time", "CurrentUser", "net start w32time"), null),
-            (async () => await ProcessActions.RunNsudo("Syncing time", "CurrentUser", "w32tm /resync"), null),
-            (async () => await ProcessActions.RunNsudo("Syncing time", "CurrentUser", "net stop w32time"), null),
+            ("Syncing time", async () => await ProcessActions.RunNsudo("CurrentUser", "net start w32time"), null),
+            ("Syncing time", async () => await ProcessActions.RunNsudo("CurrentUser", "w32tm /resync"), null),
+            ("Syncing time", async () => await ProcessActions.RunNsudo("CurrentUser", "net stop w32time"), null),
 
             // apply changes to the whole system
-            (async () => await ProcessActions.RunNsudo("Applying changes to the whole system", "CurrentUser", @"powershell -Command ""Copy-UserInternationalSettingsToSystem -WelcomeScreen $true -NewUser $true"""), null),
+            ("Applying changes to the whole system", async () => await ProcessActions.RunNsudo("CurrentUser", @"powershell -Command ""Copy-UserInternationalSettingsToSystem -WelcomeScreen $true -NewUser $true"""), null),
         };
 
-        foreach (var (action, condition) in actions)
+        var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();
+        var uniqueTitles = filteredActions.Select(a => a.Title).Distinct().ToList();
+        double incrementPerTitle = uniqueTitles.Count > 0 ? stagePercentage / (double)uniqueTitles.Count : 0;
+
+        foreach (var title in uniqueTitles)
         {
-            if ((condition == null || condition.Invoke()))
+            if (previousTitle != string.Empty && previousTitle != title)
             {
-                validActionsCount++;
+                await Task.Delay(150);
             }
-        }
 
-        double incrementPerAction = validActionsCount > 0 ? stagePercentage / (double)validActionsCount : 0;
+            var actionsForTitle = filteredActions.Where(a => a.Title == title).ToList();
+            int actionsForTitleCount = actionsForTitle.Count;
 
-        foreach (var (action, condition) in actions)
-        {
-            if ((condition == null || condition.Invoke()))
+            foreach (var (actionTitle, action, condition) in actionsForTitle)
             {
+                InstallPage.Info.Title = actionTitle;
+
                 try
                 {
                     await action();
@@ -65,16 +69,13 @@ public static class TimeDateRegionStage
                     InstallPage.Progress.ShowError = true;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
                     InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightError", "DarkError");
-                    break;
-                }
-
-                InstallPage.Progress.Value += incrementPerAction;
-
-                if (InstallPage.Info.Title != ProcessActions.previousTitle)
-                {
-                    await Task.Delay(75);
+                    return;
                 }
             }
+
+            InstallPage.Progress.Value += incrementPerTitle;
+
+            previousTitle = title;
         }
     }
 

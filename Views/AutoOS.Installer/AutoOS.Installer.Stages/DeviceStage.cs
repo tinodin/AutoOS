@@ -12,70 +12,74 @@ public static class DeviceStage
 
         InstallPage.Status.Text = "Configuring Devices...";
 
-        int validActionsCount = 0;
-        int stagePercentage = 2;
+        string previousTitle = string.Empty;
+        int stagePercentage = 5;
 
-        var actions = new List<(Func<Task> Action, Func<bool> Condition)>
+        var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
             // disable motherboard resources
-            (async () => await ProcessActions.RunApplication("Disabling motherboard resources", "DevManView", "DevManView.exe", @"/disable ""Motherboard resources"""), null),
+            ("Disabling motherboard resources", async () => await ProcessActions.RunApplication("DevManView", "DevManView.exe", @"/disable ""Motherboard resources"""), null),
 
             // disable write-cache buffer flushing on all drives
-            (async () => await ProcessActions.RunNsudo("Disabling write-cache buffer flushing on all drives", "TrustedInstaller", @"cmd /c for /f ""tokens=*"" %i in ('reg query ""HKLM\SYSTEM\CurrentControlSet\Enum\SCSI""^| findstr ""HKEY""') do for /f ""tokens=*"" %a in ('reg query ""%i""^| findstr ""HKEY""') do reg.exe add ""%a\Device Parameters\Disk"" /v ""CacheIsPowerProtected"" /t REG_DWORD /d 1 /f > NUL 2>&1 & for /f ""tokens=*"" %i in ('reg query ""HKLM\SYSTEM\CurrentControlSet\Enum\SCSI""^| findstr ""HKEY""') do for /f ""tokens=*"" %a in ('reg query ""%i""^| findstr ""HKEY""') do reg.exe add ""%a\Device Parameters\Disk"" /v ""UserWriteCacheSetting"" /t REG_DWORD /d 1 /f"), null),
+            ("Disabling write-cache buffer flushing on all drives", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"cmd /c for /f ""tokens=*"" %i in ('reg query ""HKLM\SYSTEM\CurrentControlSet\Enum\SCSI""^| findstr ""HKEY""') do for /f ""tokens=*"" %a in ('reg query ""%i""^| findstr ""HKEY""') do reg.exe add ""%a\Device Parameters\Disk"" /v ""CacheIsPowerProtected"" /t REG_DWORD /d 1 /f > NUL 2>&1 & for /f ""tokens=*"" %i in ('reg query ""HKLM\SYSTEM\CurrentControlSet\Enum\SCSI""^| findstr ""HKEY""') do for /f ""tokens=*"" %a in ('reg query ""%i""^| findstr ""HKEY""') do reg.exe add ""%a\Device Parameters\Disk"" /v ""UserWriteCacheSetting"" /t REG_DWORD /d 1 /f"), null),
 
             // disable drive powersaving features
-            (async () => await ProcessActions.RunNsudo("Disabling drive powersaving features", "TrustedInstaller", @"cmd /c for %a in (EnableHIPM EnableDIPM EnableHDDParking) do for /f ""delims="" %b in ('reg query ""HKLM\SYSTEM\CurrentControlSet\Services"" /s /f ""%a"" ^| findstr ""HKEY""') do reg.exe add ""%b"" /v ""%a"" /t REG_DWORD /d 0 /f"), null),
-            (async () => await ProcessActions.RunNsudo("Disabling drive powersaving features", "TrustedInstaller", @"cmd /c for /f ""tokens=*"" %%s in ('reg query ""HKLM\System\CurrentControlSet\Enum"" /S /F ""StorPort"" ^| findstr /e ""StorPort""') do Reg add ""%%s"" /v ""EnableIdlePowerManagement"" /t REG_DWORD /d ""0"" /f"), null),
-            (async () => await ProcessActions.RunNsudo("Disabling drive powersaving features", "TrustedInstaller", @"cmd /c for %a in (EnhancedPowerManagementEnabled AllowIdleIrpInD3 EnableSelectiveSuspend DeviceSelectiveSuspended SelectiveSuspendEnabled SelectiveSuspendOn EnumerationRetryCount ExtPropDescSemaphore WaitWakeEnabled D3ColdSupported WdfDirectedPowerTransitionEnable EnableIdlePowerManagement IdleInWorkingState) do for /f ""delims="" %b in ('reg query ""HKLM\SYSTEM\CurrentControlSet\Enum"" /s /f ""%a"" ^| findstr ""HKEY""') do reg add ""%b"" /v ""%a"" /t REG_DWORD /d 0 /f"), null),
+            ("Disabling drive powersaving features", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"cmd /c for %a in (EnableHIPM EnableDIPM EnableHDDParking) do for /f ""delims="" %b in ('reg query ""HKLM\SYSTEM\CurrentControlSet\Services"" /s /f ""%a"" ^| findstr ""HKEY""') do reg.exe add ""%b"" /v ""%a"" /t REG_DWORD /d 0 /f"), null),
+            ("Disabling drive powersaving features", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"cmd /c for /f ""tokens=*"" %%s in ('reg query ""HKLM\System\CurrentControlSet\Enum"" /S /F ""StorPort"" ^| findstr /e ""StorPort""') do Reg add ""%%s"" /v ""EnableIdlePowerManagement"" /t REG_DWORD /d ""0"" /f"), null),
+            ("Disabling drive powersaving features", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"cmd /c for %a in (EnhancedPowerManagementEnabled AllowIdleIrpInD3 EnableSelectiveSuspend DeviceSelectiveSuspended SelectiveSuspendEnabled SelectiveSuspendOn EnumerationRetryCount ExtPropDescSemaphore WaitWakeEnabled D3ColdSupported WdfDirectedPowerTransitionEnable EnableIdlePowerManagement IdleInWorkingState) do for /f ""delims="" %b in ('reg query ""HKLM\SYSTEM\CurrentControlSet\Enum"" /s /f ""%a"" ^| findstr ""HKEY""') do reg add ""%b"" /v ""%a"" /t REG_DWORD /d 0 /f"), null),
 
             // disable dma remapping
-            (async () => await ProcessActions.RunNsudo("Disabling DMA remapping", "TrustedInstaller", @"cmd /c for %a in (DmaRemappingCompatible) do for /f ""delims="" %b in ('reg query ""HKLM\SYSTEM\CurrentControlSet\Services"" /s /f ""%a"" ^| findstr ""HKEY""') do reg.exe add ""%b"" /v ""%a"" /t REG_DWORD /d 0 /f "), null),
+            ("Disabling DMA remapping", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"cmd /c for %a in (DmaRemappingCompatible) do for /f ""delims="" %b in ('reg query ""HKLM\SYSTEM\CurrentControlSet\Services"" /s /f ""%a"" ^| findstr ""HKEY""') do reg.exe add ""%b"" /v ""%a"" /t REG_DWORD /d 0 /f "), null),
 
             // disable device power management settings
-            (async () => await ProcessActions.RunPowerShellScript("Disabling device power management settings", "devicepowermanagement.ps1", ""), null),
+            ("Disabling device power management settings", async () => await ProcessActions.RunPowerShellScript("devicepowermanagement.ps1", ""), null),
 
             // enable msi mode for all devices
-            (async () => await ProcessActions.RunNsudo("Enabling MSI mode for all devices", "TrustedInstaller", @"cmd /c for /f ""tokens=*"" %i in ('reg query ""HKLM\SYSTEM\CurrentControlSet\Enum\PCI""^| findstr ""HKEY""') do for /f ""tokens=*"" %a in ('reg query ""%i""^| findstr ""HKEY""') do reg add ""%a\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties"" /v ""MSISupported"" /t REG_DWORD /d 1 /f"), null),
+            ("Enabling MSI mode for all devices", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"cmd /c for /f ""tokens=*"" %i in ('reg query ""HKLM\SYSTEM\CurrentControlSet\Enum\PCI""^| findstr ""HKEY""') do for /f ""tokens=*"" %a in ('reg query ""%i""^| findstr ""HKEY""') do reg add ""%a\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties"" /v ""MSISupported"" /t REG_DWORD /d 1 /f"), null),
 
             // set msi mode to undefined for all devices
-            (async () => await ProcessActions.RunNsudo("Setting MSI mode to undefined for all devices", "TrustedInstaller", @"cmd /c for /f ""tokens=*"" %i in ('reg query ""HKLM\SYSTEM\CurrentControlSet\Enum\PCI""^| findstr ""HKEY""') do for /f ""tokens=*"" %a in ('reg query ""%i""^| findstr ""HKEY""') do reg delete ""%a\Device Parameters\Interrupt Management\Affinity Policy"" /v ""DevicePriority"" /f"), null),
+            ("Setting MSI mode to undefined for all devices", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"cmd /c for /f ""tokens=*"" %i in ('reg query ""HKLM\SYSTEM\CurrentControlSet\Enum\PCI""^| findstr ""HKEY""') do for /f ""tokens=*"" %a in ('reg query ""%i""^| findstr ""HKEY""') do reg delete ""%a\Device Parameters\Interrupt Management\Affinity Policy"" /v ""DevicePriority"" /f"), null),
 
             // disable hid devices
-            (async () => await ProcessActions.RunPowerShell("Disabling Human Interface Devices (HID)", "Get-PnpDevice -Class HIDClass | Where-Object { $_.FriendlyName -match 'HID-compliant (consumer control device|device|game controller|system controller|vendor-defined device)' -and $_.FriendlyName -notmatch 'Mouse|Keyboard'} | Disable-PnpDevice -Confirm:$false"), () => HID == false),
+            ("Disabling Human Interface Devices (HID)", async () => await ProcessActions.RunPowerShell("Get-PnpDevice -Class HIDClass | Where-Object { $_.FriendlyName -match 'HID-compliant (consumer control device|device|game controller|system controller|vendor-defined device)' -and $_.FriendlyName -notmatch 'Mouse|Keyboard'} | Disable-PnpDevice -Confirm:$false"), () => HID == false),
 
             // save xhci interrupt moderation state
-            (async () => await ProcessActions.RunPowerShellScript("Saving XHCI Interrupt Moderation (IMOD) data", "imod.ps1", $"-save \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}\""),() => IMOD == false),
+            ("Saving XHCI Interrupt Moderation (IMOD) data", async () => await ProcessActions.RunPowerShellScript("imod.ps1", $"-save \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}\""),() => IMOD == false),
 
             // disable xhci interrupt moderation
-            (async () => await ProcessActions.RunPowerShellScript("Disabling XHCI Interrupt Moderation (IMOD)", "imod.ps1", $"-disable \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}\""),() => IMOD == false),
+            ("Disabling XHCI Interrupt Moderation (IMOD)", async () => await ProcessActions.RunPowerShellScript("imod.ps1", $"-disable \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}\""),() => IMOD == false),
 
             // disable reserved storage
-            (async () => await ProcessActions.RunPowerShell("Disabling reserved storage", @"DISM /Online /Set-ReservedStorageState /State:Disabled"), null),
+            ("Disabling reserved storage", async () => await ProcessActions.RunPowerShell(@"DISM /Online /Set-ReservedStorageState /State:Disabled"), null),
 
             // clean up devices
-            (async () => await ProcessActions.RunApplication("Cleaning up devices", "DeviceCleanup", "DeviceCleanupCmd.exe", "/s *"), null),
+            ("Cleaning up devices", async () => await ProcessActions.RunApplication("DeviceCleanup", "DeviceCleanupCmd.exe", "/s *"), null),
 
             // clean up drives
-            (async () => await ProcessActions.RunApplication("Cleaning up drives", "DriveCleanup", "DriveCleanup.exe", ""), null),
+            ("Cleaning up drives", async () => await ProcessActions.RunApplication("DriveCleanup", "DriveCleanup.exe", ""), null),
 
             // disable bluetooth services and drivers
-            (async () => await ProcessActions.DisableBluetoothServicesAndDrivers("Disabling Bluetooth services and drivers"), () => Bluetooth == false)
+            ("Disabling Bluetooth services and drivers", async () => await ProcessActions.DisableBluetoothServicesAndDrivers(), () => Bluetooth == false)
         };
 
-        foreach (var (action, condition) in actions)
+        var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();
+        var uniqueTitles = filteredActions.Select(a => a.Title).Distinct().ToList();
+        double incrementPerTitle = uniqueTitles.Count > 0 ? stagePercentage / (double)uniqueTitles.Count : 0;
+
+        foreach (var title in uniqueTitles)
         {
-            if ((condition == null || condition.Invoke()))
+            if (previousTitle != string.Empty && previousTitle != title)
             {
-                validActionsCount++;
+                await Task.Delay(150);
             }
-        }
 
-        double incrementPerAction = validActionsCount > 0 ? stagePercentage / (double)validActionsCount : 0;
+            var actionsForTitle = filteredActions.Where(a => a.Title == title).ToList();
+            int actionsForTitleCount = actionsForTitle.Count;
 
-        foreach (var (action, condition) in actions)
-        {
-            if ((condition == null || condition.Invoke()))
+            foreach (var (actionTitle, action, condition) in actionsForTitle)
             {
+                InstallPage.Info.Title = actionTitle;
+
                 try
                 {
                     await action();
@@ -86,16 +90,13 @@ public static class DeviceStage
                     InstallPage.Progress.ShowError = true;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
                     InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightError", "DarkError");
-                    break;
-                }
-
-                InstallPage.Progress.Value += incrementPerAction;
-
-                if (InstallPage.Info.Title != ProcessActions.previousTitle)
-                {
-                    await Task.Delay(75);
+                    return;
                 }
             }
+
+            InstallPage.Progress.Value += incrementPerTitle;
+
+            previousTitle = title;
         }
     }
 }

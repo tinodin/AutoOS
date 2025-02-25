@@ -6,14 +6,8 @@ namespace AutoOS.Views.Startup.Actions;
 
 public static class StartupActions
 {
-    public static string previousTitle { get; private set; }
-
-    public static async Task RunNsudo(string title, string user, string command)
+    public static async Task RunNsudo(string user, string command)
     {
-        previousTitle = StartupWindow.Status.Text;
-
-        StartupWindow.Status.Text = $"{title}...";
-
         string arguments = user switch
         {
             "TrustedInstaller" => $"-U:T -P:E -Wait -ShowWindowMode:Hide {command}",
@@ -24,23 +18,13 @@ public static class StartupActions
         await Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NSudo", "NSudoLC.exe"), arguments) { CreateNoWindow = true })!.WaitForExitAsync();
     }
 
-    public static async Task RunPowerShell(string title, string command)
+    public static async Task RunPowerShell(string command)
     {
-        previousTitle = StartupWindow.Status.Text;
-        StartupWindow.Status.Text = $"{title}...";
-
         await Process.Start(new ProcessStartInfo("powershell.exe", $"-Command \"{command}\"") { CreateNoWindow = true, UseShellExecute = false })!.WaitForExitAsync();
     }
 
-    public static async Task RunConnectionCheck(string title)
+    public static async Task RunConnectionCheck()
     {
-        previousTitle = StartupWindow.Status.Text;
-
-        if (!string.IsNullOrEmpty(title))
-        {
-            StartupWindow.Status.Text = $"{title}...";
-        }
-
         StartupWindow.Progress.ShowPaused = true;
 
         await Task.Delay(1000);
@@ -67,36 +51,26 @@ public static class StartupActions
         }
     }
 
-    public static async Task RunBatchScript(string title, string script, string arguments)
+    public static async Task RunBatchScript(string script, string arguments)
     {
-        previousTitle = StartupWindow.Status.Text;
-
-        StartupWindow.Status.Text = $"{title}...";
-
         await Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", script), arguments) { CreateNoWindow = true })!.WaitForExitAsync();
     }
 
-    public static async Task RunPowerShellScript(string title, string script, string arguments)
+    public static async Task RunPowerShellScript(string script, string arguments)
     {
-        previousTitle = StartupWindow.Status.Text;
-        StartupWindow.Status.Text = $"{title}...";
-
         await Process.Start(new ProcessStartInfo("powershell.exe", $"-ExecutionPolicy Bypass -File \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", script)}\" {arguments}") { CreateNoWindow = true })!.WaitForExitAsync();
     }
 
-    public static async Task RunApplication(string title, string folderName, string executable, string arguments)
+    public static async Task RunApplication(string folderName, string executable, string arguments)
     {
-        previousTitle = StartupWindow.Status.Text;
-
-        StartupWindow.Status.Text = $"{title}...";
-
         await Task.Run(() => Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", folderName, executable), arguments) { CreateNoWindow = true }));
     }
 
-    public static async Task RunDownload(string title, string url, string path, string file)
+    public static async Task RunDownload(string url, string path, string file)
     {
+        string title = InstallPage.Info.Title;
+
         var uiContext = SynchronizationContext.Current;
-        uiContext?.Post(_ => StartupWindow.Status.Text = $"{title}...", null);
 
         var download = DownloadBuilder.New()
             .WithUrl(url)
@@ -172,30 +146,18 @@ public static class StartupActions
         }
     }
 
-    public static async Task RunExtract(string title, string inputPath, string outputPath)
+    public static async Task RunExtract(string inputPath, string outputPath)
     {
-        previousTitle = StartupWindow.Status.Text;
-
-        StartupWindow.Status.Text = $"{title}...";
-
         await Process.Start(new ProcessStartInfo { FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "7-Zip", "7za.exe"), Arguments = $"x \"{inputPath}\" -y -o\"{outputPath}\"", CreateNoWindow = true })!.WaitForExitAsync();
     }
 
-    public static async Task Sleep(string title, int amount)
+    public static async Task Sleep(int amount)
     {
-        previousTitle = StartupWindow.Status.Text;
-
-        StartupWindow.Status.Text = $"{title}...";
-
         await Task.Delay(amount);
     }
 
-    public static async Task RunCustom(string title, Func<Task> action)
+    public static async Task RunCustom(Func<Task> action)
     {
-        previousTitle = StartupWindow.Status.Text;
-
-        StartupWindow.Status.Text = $"{title}...";
-
         await action();
     }
 

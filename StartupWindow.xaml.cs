@@ -37,7 +37,7 @@ namespace AutoOS.Views
 
             await StartupStage.Run();
 
-            StartupWindow.Status.Text = "Done";
+            StartupWindow.Status.Text = "Done.";
             StartupWindow.Progress.Foreground = StartupActions.GetColor("LightSuccess", "DarkSuccess");
 
             await Task.Delay(700);

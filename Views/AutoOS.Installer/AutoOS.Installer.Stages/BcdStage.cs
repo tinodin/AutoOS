@@ -8,69 +8,73 @@ public static class BcdStage
     {
         InstallPage.Status.Text = "Configuring the BCD Store...";
 
-        int validActionsCount = 0;
+        string previousTitle = string.Empty;
         int stagePercentage = 2;
 
-        var actions = new List<(Func<Task> Action, Func<bool> Condition)>
+        var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
             // rename os to autoos
-            (async () => await ProcessActions.RunNsudo("Renaming OS to AutoOS", "TrustedInstaller", @"bcdedit /set {current} description ""AutoOS"""), null),
+            ("Renaming OS to AutoOS", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"bcdedit /set {current} description ""AutoOS"""), null),
 
             // force the legacy bootloader
-            (async () => await ProcessActions.RunNsudo("Forcing the legacy bootloader", "TrustedInstaller", "bcdedit /set bootmenupolicy legacy"), null),
+            ("Forcing the legacy bootloader", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set bootmenupolicy legacy"), null),
 
             // set the boot loader timeout to 5 seconds
-            (async () => await ProcessActions.RunNsudo("Setting the bootloader timeout to 5 seconds", "TrustedInstaller", "bcdedit /timeout 5"), null),
+            ("Setting the bootloader timeout to 5 seconds", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /timeout 5"), null),
 
             // disable automatic repair
-            (async () => await ProcessActions.RunNsudo("Disabling automatic repair", "TrustedInstaller", "bcdedit /set {current} recoveryenabled No"), null),
+            ("Disabling automatic repair", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set {current} recoveryenabled No"), null),
 
             // disable dynamic tick
-            (async () => await ProcessActions.RunNsudo("Disabling dynamic tick", "TrustedInstaller", "bcdedit /set disabledynamictick yes"), null),
+            ("Disabling dynamic tick", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set disabledynamictick yes"), null),
 
             // force the use of the platform clock as system timer
-            (async () => await ProcessActions.RunNsudo("Forcing the use of the platform clock as system timer", "TrustedInstaller", "bcdedit /deletevalue useplatformclock"), null),
-            (async () => await ProcessActions.RunNsudo("Forcing the use of the platform clock as system timer", "TrustedInstaller", "bcdedit /set useplatformtick yes"), null),
+            ("Forcing the use of the platform clock as system timer", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /deletevalue useplatformclock"), null),
+            ("Forcing the use of the platform clock as system timer", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set useplatformtick yes"), null),
 
             // set tsc sync policy to enhanced
-            (async () => await ProcessActions.RunNsudo("Setting TSC Sync Policy to enhanced", "TrustedInstaller", "bcdedit /set tscsyncpolicy enhanced"), null),
+            ("Setting TSC Sync Policy to enhanced", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set tscsyncpolicy enhanced"), null),
 
             // disable kernel debugging
-            (async () => await ProcessActions.RunNsudo("Disabling kernel debugging", "TrustedInstaller", "bcdedit /set debug No"), null),
+            ("Disabling kernel debugging", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set debug No"), null),
 
             // disabling isolated context
-            (async () => await ProcessActions.RunNsudo("Disabling isolated context", "TrustedInstaller", "bcdedit /set isolatedcontext No"), null),
+            ("Disabling isolated context", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set isolatedcontext No"), null),
 
             // disable emergency management services (ems)
-            (async () => await ProcessActions.RunNsudo("Disables Emergency Management Services (EMS)", "TrustedInstaller", "bcdedit /set bootems No"), null),
+            ("Disables Emergency Management Services (EMS)", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set bootems No"), null),
 
             // disable elam drivers
-            (async () => await ProcessActions.RunNsudo("Disabling ELAM drivers", "TrustedInstaller", "bcdedit /set disableelamdrivers Yes"), null),
+            ("Disabling ELAM drivers", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set disableelamdrivers Yes"), null),
 
             // disable the trusted platform module (tpm)
-            (async () => await ProcessActions.RunNsudo("Disabling the Trusted Platform Module (TPM)", "TrustedInstaller", "bcdedit /set tpmbootentropy ForceDisable"), null),
+            ("Disabling the Trusted Platform Module (TPM)", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set tpmbootentropy ForceDisable"), null),
 
             // disable the virtual secure mode
-            (async () => await ProcessActions.RunNsudo("Disabling the Virtual Secure Mode (VSM)", "TrustedInstaller", "bcdedit /set vsmlaunchtype Off"), null),
+            ("Disabling the Virtual Secure Mode (VSM)", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set vsmlaunchtype Off"), null),
 
             // disable windows virtualization features
-            (async () => await ProcessActions.RunNsudo("Disabling windows virtualization features", "TrustedInstaller", "bcdedit /set vm No"), null),
+            ("Disabling windows virtualization features", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set vm No"), null),
         };
 
-        foreach (var (action, condition) in actions)
+        var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();
+        var uniqueTitles = filteredActions.Select(a => a.Title).Distinct().ToList();
+        double incrementPerTitle = uniqueTitles.Count > 0 ? stagePercentage / (double)uniqueTitles.Count : 0;
+
+        foreach (var title in uniqueTitles)
         {
-            if ((condition == null || condition.Invoke()))
+            if (previousTitle != string.Empty && previousTitle != title)
             {
-                validActionsCount++;
+                await Task.Delay(150);
             }
-        }
 
-        double incrementPerAction = validActionsCount > 0 ? stagePercentage / (double)validActionsCount : 0;
+            var actionsForTitle = filteredActions.Where(a => a.Title == title).ToList();
+            int actionsForTitleCount = actionsForTitle.Count;
 
-        foreach (var (action, condition) in actions)
-        {
-            if ((condition == null || condition.Invoke()))
+            foreach (var (actionTitle, action, condition) in actionsForTitle)
             {
+                InstallPage.Info.Title = actionTitle;
+
                 try
                 {
                     await action();
@@ -81,16 +85,13 @@ public static class BcdStage
                     InstallPage.Progress.ShowError = true;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
                     InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightError", "DarkError");
-                    break;
-                }
-
-                InstallPage.Progress.Value += incrementPerAction;
-
-                if (InstallPage.Info.Title != ProcessActions.previousTitle)
-                {
-                    await Task.Delay(75);
+                    return;
                 }
             }
+
+            InstallPage.Progress.Value += incrementPerTitle;
+
+            previousTitle = title;
         }
     }
 }

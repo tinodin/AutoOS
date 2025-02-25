@@ -15,8 +15,6 @@ namespace AutoOS.Views
             AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
             SetTitleBar(AppTitleBar);
 
-            //Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", "Installed", RegistryValueKind.String);
-
             object stageObj = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS")?.GetValue("Stage");
 
             if (stageObj is int stageValue && stageValue >= 1)
