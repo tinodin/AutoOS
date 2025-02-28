@@ -16,7 +16,7 @@ public static class MemoryManagementStage
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
             // disable application launch prefetching
-            ("Disabling application launch prefetching", async () => await ProcessActions.RunPowerShell(@"Disable-MMAgent -ApplicationLaunchPrefetching"),() => SSD == true),
+            ("Disabling application launch prefetching", async () => await ProcessActions.RunPowerShell(@"Disable-MMAgent -ApplicationLaunchPrefetching"), () => SSD == true),
 
             // disable application pre launch
             ("Disabling application pre launch", async () => await ProcessActions.RunPowerShell(@"Disable-MMAgent -ApplicationPreLaunch"), null),

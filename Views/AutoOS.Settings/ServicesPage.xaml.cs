@@ -98,11 +98,25 @@ public sealed partial class ServicesPage : Page
             Margin = new Thickness(5)
         });
 
-        // get latest build
-        string folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+        try
+        {
+            // get latest build
+            string folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
 
-        // toggle services
-        await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, Services.IsOn ? "Services-Enable.bat" : "Services-Disable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+            // toggle services
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, Services.IsOn ? "Services-Enable.bat" : "Services-Disable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+        }
+        catch
+        {
+            // build service list
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $@"-U:T -P:E -Wait -ShowWindowMode:Hide ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "service-list-builder.exe")}"" --config ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "lists.ini")}"" --disable-service-warning", CreateNoWindow = true }).WaitForExitAsync();
+
+            // get latest build
+            string folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+
+            // toggle services
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, Services.IsOn ? "Services-Enable.bat" : "Services-Disable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+        }
 
         // remove infobar
         ServiceInfo.Children.Clear();

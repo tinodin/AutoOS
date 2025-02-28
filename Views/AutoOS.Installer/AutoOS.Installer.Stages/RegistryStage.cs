@@ -297,6 +297,9 @@ public static class RegistryStage
             // disable show extracted files when complete
             ("Disable showing extracted files when complete", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\ExtractionWizard"" /v ShowFiles /t REG_DWORD /d 0 /f"), null),
 
+            // hide gallery from file explorer
+            ("Hiding gallery from file explorer", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg delete ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{e88865ea-0e1c-4e20-9aa6-edcd0212c87c}"" /f"), null),
+
             // disable autoplay
             ("Disabling autoplay", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Explorer"" /v NoAutoplayfornonVolume /t REG_DWORD /d 1 /f"), null),
             ("Disabling autoplay", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers"" /v DisableAutoplay /t REG_DWORD /d 1 /f"), null),

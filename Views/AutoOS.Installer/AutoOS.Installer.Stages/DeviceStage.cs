@@ -44,10 +44,10 @@ public static class DeviceStage
             ("Disabling Human Interface Devices (HID)", async () => await ProcessActions.RunPowerShell("Get-PnpDevice -Class HIDClass | Where-Object { $_.FriendlyName -match 'HID-compliant (consumer control device|device|game controller|system controller|vendor-defined device)' -and $_.FriendlyName -notmatch 'Mouse|Keyboard'} | Disable-PnpDevice -Confirm:$false"), () => HID == false),
 
             // save xhci interrupt moderation state
-            ("Saving XHCI Interrupt Moderation (IMOD) data", async () => await ProcessActions.RunPowerShellScript("imod.ps1", $"-save \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}\""),() => IMOD == false),
+            ("Saving XHCI Interrupt Moderation (IMOD) data", async () => await ProcessActions.RunPowerShellScript("imod.ps1", $"-save \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}\""), null),
 
             // disable xhci interrupt moderation
-            ("Disabling XHCI Interrupt Moderation (IMOD)", async () => await ProcessActions.RunPowerShellScript("imod.ps1", $"-disable \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}\""),() => IMOD == false),
+            ("Disabling XHCI Interrupt Moderation (IMOD)", async () => await ProcessActions.RunPowerShellScript("imod.ps1", $"-disable \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}\""), () => IMOD == false),
 
             // disable reserved storage
             ("Disabling reserved storage", async () => await ProcessActions.RunPowerShell(@"DISM /Online /Set-ReservedStorageState /State:Disabled"), null),

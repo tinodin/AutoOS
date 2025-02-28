@@ -39,7 +39,7 @@ public static class GraphicsStage
             ("Extracting the Intel driver", async () => await ProcessActions.RunExtract(Path.Combine(Path.GetTempPath(), "driver.zip"), Path.Combine(Path.GetTempPath(), "driver")), () => Intel10th == true),
 
             // install the driver
-            ("Installing the Intel driver", async () => await ProcessActions.RunNsudo("CurrentUser", @"""%TEMP%\driver\Installer.exe"" /silent"),() => Intel10th == true),
+            ("Installing the Intel driver", async () => await ProcessActions.RunNsudo("CurrentUser", @"""%TEMP%\driver\Installer.exe"" /silent"), () => Intel10th == true),
 
             // enable optimizations for windowed games
             ("Enabling optimizations for windowed games", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\DirectX\UserGpuPreferences"" /v ""DirectXUserGlobalSettings"" /t REG_SZ /d ""SwapEffectUpgradeEnable=1;"" /f"), () => Intel10th == true),
@@ -83,7 +83,7 @@ public static class GraphicsStage
 
             ("Configuring settings", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Intel\Display\igfxcui\MediaKeys"" /v ""UISharpnessOptimalEnabledAlways"" /t REG_DWORD /d 0 /f"), () => Intel10th == true),
 
-            ("Configuring settings", async () => await ProcessActions.RunPowerShellScript("intelsettings.ps1", ""),() => Intel10th == true),
+            ("Configuring settings", async () => await ProcessActions.RunPowerShellScript("intelsettings.ps1", ""), () => Intel10th == true),
 
             // disable unnecessary services
             ("Disabling unnecessary services", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\igccservice"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => Intel10th == true),

@@ -23,7 +23,7 @@ namespace AutoOS
         protected override void OnLaunched(LaunchActivatedEventArgs args)
         {
             //Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", "Installed", RegistryValueKind.String);
-            //Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", 2, RegistryValueKind.DWord);
+            Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", 2, RegistryValueKind.DWord);
 
             string stage = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS")?.GetValue("Stage") as string;
 
@@ -36,7 +36,8 @@ namespace AutoOS
                     MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Installer";
 
                     ThemeService = new ThemeService(MainWindow);
-
+                    ThemeService.SetBackdropType(BackdropType.Mica);
+                    
                     if (MainWindow.AppWindow.Presenter is OverlappedPresenter presenter)
                     {
                         presenter.Maximize();
@@ -55,7 +56,6 @@ namespace AutoOS
                         MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Startup";
 
                         ThemeService = new ThemeService(MainWindow);
-
                         ThemeService.SetBackdropType(BackdropType.AcrylicBase);
 
                         MainWindow.AppWindow.Resize(new SizeInt32(340, 130));
@@ -67,31 +67,35 @@ namespace AutoOS
                     }
                     else
                     {
-                        //MainWindow = new MainWindow();
+                        MainWindow = new MainWindow();
+                        MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
+                        MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Settings";
+
+                        ThemeService = new ThemeService(MainWindow);
+                        ThemeService.SetBackdropType(BackdropType.Mica);
+
+                        if (MainWindow.AppWindow.Presenter is OverlappedPresenter presenter)
+                        {
+                            presenter.Maximize();
+                        }
+
+                        MainWindow.Activate();
+
+                        //MainWindow = new StartupWindow();
                         //MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
-                        //MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Settings";
+                        //MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Startup";
 
                         //ThemeService = new ThemeService(MainWindow);
 
-                        //if (MainWindow.AppWindow.Presenter is OverlappedPresenter presenter)
-                        //{
-                        //    presenter.Maximize();
-                        //}
+                        //ThemeService.SetBackdropType(BackdropType.AcrylicBase);
+
+                        //MainWindow.AppWindow.Resize(new SizeInt32(340, 130));
+                        //MainWindow.AppWindow.Move(new PointInt32(1570, 897));
+
+                        //MainWindow.AppWindow.MoveAndResize(new RectInt32(1570, 897, 340, 130));
 
                         //MainWindow.Activate();
 
-                        MainWindow = new StartupWindow();
-                        MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
-                        MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Startup";
-
-                        ThemeService = new ThemeService(MainWindow);
-
-                        ThemeService.SetBackdropType(BackdropType.AcrylicBase);
-
-                        MainWindow.AppWindow.Resize(new SizeInt32(340, 130));
-                        MainWindow.AppWindow.Move(new PointInt32(1570, 897));
-
-                        MainWindow.AppWindow.MoveAndResize(new RectInt32(1570, 897, 340, 130));
 
                         //var displayArea = DisplayArea.GetFromWindowId(MainWindow.AppWindow.Id, DisplayAreaFallback.Primary);
                         //int screenWidth = displayArea.WorkArea.Width;
@@ -109,7 +113,7 @@ namespace AutoOS
                         //MainWindow.AppWindow.Resize(new SizeInt32(windowWidth, windowHeight));
                         //MainWindow.AppWindow.Move(new PointInt32(posX, posY));
 
-                        MainWindow.Activate();
+
                     }
                 }
             }
@@ -120,6 +124,7 @@ namespace AutoOS
                 MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Installer";
 
                 ThemeService = new ThemeService(MainWindow);
+                ThemeService.SetBackdropType(BackdropType.Mica);
 
                 if (MainWindow.AppWindow.Presenter is OverlappedPresenter presenter)
                 {

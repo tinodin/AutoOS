@@ -89,9 +89,9 @@ public static class ApplicationStage
 
             // install startallback
             ("Installing StartAllBack", async () => await ProcessActions.RunNsudo("CurrentUser", $"cmd /c reg import \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "startallback.reg")}\""), () => StartAllBack == true),
-            ("Aligning the taskbar to the left", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\StartIsBack"" /v ""TaskbarCenterIcons"" /t REG_DWORD /d 2 /f"),() => TaskbarAlignment == true && StartAllBack == true),
-            ("Installing StartAllBack", async () => await ProcessActions.RunNsudo("CurrentUser", @"""%TEMP%\StartAllBackSetup.exe"" /silent /allusers"),() => StartAllBack == true),
-            ("Installing StartAllBack", async () => await ProcessActions.RunNsudo("CurrentUser", @"SCHTASKS /Change /TN ""StartAllBack Update"" /Disable"),() => StartAllBack == true),
+            ("Aligning the taskbar to the left", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\StartIsBack"" /v ""TaskbarCenterIcons"" /t REG_DWORD /d 2 /f"), () => TaskbarAlignment == true && StartAllBack == true),
+            ("Installing StartAllBack", async () => await ProcessActions.RunNsudo("CurrentUser", @"""%TEMP%\StartAllBackSetup.exe"" /silent /allusers"), () => StartAllBack == true),
+            ("Installing StartAllBack", async () => await ProcessActions.RunNsudo("CurrentUser", @"SCHTASKS /Change /TN ""StartAllBack Update"" /Disable"), () => StartAllBack == true),
 
             // activate startallback
             ("Activating StartAllBack", async () => await ProcessActions.RunPowerShellScript("startallback.ps1", ""), () => StartAllBack == true),
@@ -188,7 +188,7 @@ public static class ApplicationStage
             ("Downloading Discord", async () => await ProcessActions.RunDownload("https://discord.com/api/downloads/distributions/app/installers/latest?channel=stable&platform=win&arch=x64", Path.GetTempPath(), "DiscordSetup.exe"), () => Discord == true),
 
             // install discord
-            ("Installing Discord", async () => await ProcessActions.RunNsudo("CurrentUser", @"""%TEMP%\DiscordSetup.exe"" /silent"),() => Discord == true),
+            ("Installing Discord", async () => await ProcessActions.RunNsudo("CurrentUser", @"""%TEMP%\DiscordSetup.exe"" /silent"), () => Discord == true),
             ("Installing Discord", async () => await ProcessActions.RunCustom(async() => { string filePath = Environment.ExpandEnvironmentVariables(@"%TEMP%\DiscordSetup.exe"); discordVersion = FileVersionInfo.GetVersionInfo(filePath).ProductVersion; }), () => Discord == true),
             ("Installing Discord", async () => await ProcessActions.RunCustom(async() => await Task.Run(() => File.Copy(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Discord", "app-" + discordVersion, "installer.db"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Discord", "installer.db"), true))), () => Discord == true),
 
@@ -222,7 +222,7 @@ public static class ApplicationStage
             ("Debloating Discord", async () => await ProcessActions.RunCustom(async() => await Task.Run(() => { try { Directory.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Discord", "app-" + discordVersion, "modules", "discord_cloudsync-1"), true); } catch { } })), () => Discord == true),
             ("Debloating Discord", async () => await ProcessActions.RunCustom(async() => await Task.Run(() => { try { Directory.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Discord", "app-" + discordVersion, "modules", "discord_dispatch-1"), true); } catch { } })), () => Discord == true),
             ("Debloating Discord", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => { try { Directory.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Discord", "app-" + discordVersion, "modules", "discord_erlpack-1"), true); } catch { } })), () => Discord == true),
-            ("Debloating Discord",async () => await ProcessActions.RunCustom( async () => await Task.Run(() => { try { Directory.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Discord", "app-" + discordVersion, "modules", "discord_game_utils-1"), true); } catch { } })), () => Discord == true),
+            ("Debloating Discord",async () => await ProcessActions.RunCustom(async () => await Task.Run(() => { try { Directory.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Discord", "app-" + discordVersion, "modules", "discord_game_utils-1"), true); } catch { } })), () => Discord == true),
             ("Debloating Discord",async () => await ProcessActions.RunCustom(async () => await Task.Run(() => { try { Directory.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Discord", "app-" + discordVersion, "modules", "discord_overlay2-1"), true); } catch { } })), () => Discord == true),
             ("Debloating Discord",async () => await ProcessActions.RunCustom(async () => await Task.Run(() => { try { Directory.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Discord", "app-" + discordVersion, "modules", "discord_rpc-1"), true); } catch { } })), () => Discord == true),
             ("Debloating Discord",async () => await ProcessActions.RunCustom(async () => await Task.Run(() => { try { Directory.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Discord", "app-" + discordVersion, "modules", "discord_spellcheck-1"), true); } catch { } })), () => Discord == true),
@@ -232,7 +232,7 @@ public static class ApplicationStage
             ("Downloading Epic Games Launcher", async () => await ProcessActions.RunDownload("https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncherInstaller.msi", Path.GetTempPath(), "EpicGamesLauncherInstaller.msi"), () => EpicGames == true),
 
             // install epic games launcher
-            ("Installing Epic Games Launcher", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c ""%TEMP%\EpicGamesLauncherInstaller.msi"" /qn"),() => EpicGames == true),
+            ("Installing Epic Games Launcher", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c ""%TEMP%\EpicGamesLauncherInstaller.msi"" /qn"), () => EpicGames == true),
 
             // remove desktop shortcut
             ("Removing desktop shortcut", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c del /f /q ""C:\Users\Public\Desktop\Epic Games Launcher.lnk"""), () => EpicGames == true),
@@ -240,8 +240,11 @@ public static class ApplicationStage
             // download update
             ("Updating Epic Games Launcher", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Path.Combine(@"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win32\EpicGamesLauncher.exe")})!.WaitForExitAsync())), () => EpicGames == true),
 
-            // log in to epic games launcher
-            ("Updating Epic Games Launcher", async () => await ProcessActions.Sleep(8000), () => EpicGames == true),
+            // importing epic games launcher account
+            ("Importing Epic Games Launcher Account", async () => await ProcessActions.RunImportEpicGamesLauncherAccount(), () => EpicGames == true),
+
+            // import epic games launcher games
+            ("Importing Epic Games Launcher Games", async () => await ProcessActions.RunImportEpicGamesLauncherGames(), () => EpicGames == true),
 
             // disable epic games services
             ("Disabling Epic Games services", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\EpicOnlineServices"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => EpicGames == true),

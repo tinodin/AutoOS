@@ -18,9 +18,9 @@ public sealed partial class GamesPage : Page
     {
         InitializeComponent();
         //CheckFortniteUpdate();
-        //CheckFortniteRunning();
+        CheckFortniteRunning();
         GetPresentationMode();
-        LoadEpicAccounts();
+        //LoadEpicAccounts();
     }
 
     private async void CheckFortniteUpdate()
@@ -219,9 +219,9 @@ public sealed partial class GamesPage : Page
             catch { }
         }
 
-        string[] processNames = { "explorer", "ApplicationFrameHost", "WmiPrvSE", "WMIADAP", "useroobebroker", "TrustedInstaller", "FortniteClient-Win64-Shipping_EAC_EOS", "EasyAntiCheat_EOS", "CrashReportClient", "sppsvc", "secd.exe" };
+        Process.Start(new ProcessStartInfo(@"C:\Windows\System32\taskkill.exe", "/F /IM explorer.exe") { CreateNoWindow = true });
 
-        Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon", "AutoRestartShell", 0, RegistryValueKind.DWord);
+        string[] processNames = { "ApplicationFrameHost", "WmiPrvSE", "WMIADAP", "WUDFHost", "useroobebroker", "TrustedInstaller", "FortniteClient-Win64-Shipping_EAC_EOS", "EpicGamesLauncher", "EasyAntiCheat_EOS", "CrashReportClient", "sppsvc", "secd.exe" };
 
         foreach (var name in processNames)
         {
@@ -232,8 +232,6 @@ public sealed partial class GamesPage : Page
         }
 
         try { new System.ServiceProcess.ServiceController("Winmgmt").Stop(); } catch { }
-
-        Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon", "AutoRestartShell", 1, RegistryValueKind.DWord);
     }
 
     private void LaunchExplorer_Click(object sender, RoutedEventArgs e)
@@ -491,8 +489,6 @@ public sealed partial class GamesPage : Page
             }
         }
     }
-
-
 
     private void Accounts_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
