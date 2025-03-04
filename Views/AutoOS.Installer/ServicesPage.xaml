@@ -19,7 +19,7 @@
                        FontSize="28"
                        FontWeight="SemiBold"
                        Margin="7,-11,0,57"/>
-            <dev:SettingsGroup Description="Manage functionality, build service lists, toggle between service states and more."
+            <dev:SettingsGroup Description="Toggle functionality needed in service disabled state."
                                Header="Service-list-builder"
                                HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Services.png}">
                 <dev:SettingsGroup.Items>
@@ -89,7 +89,7 @@
                 </dev:SettingsGroup.Items>                        
             </dev:SettingsGroup>
             <StackPanel x:Name="ServiceInfo"/>
-            <Border Height="60"
+            <Border Height="25"
                     Background="Transparent"/>
         </StackPanel>
     </ScrollView>

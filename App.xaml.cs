@@ -22,8 +22,8 @@ namespace AutoOS
 
         protected override void OnLaunched(LaunchActivatedEventArgs args)
         {
-            //Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", "Installed", RegistryValueKind.String);
-            Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", 2, RegistryValueKind.DWord);
+            Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", "Installed", RegistryValueKind.String);
+            //Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", 2, RegistryValueKind.DWord);
 
             string stage = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS")?.GetValue("Stage") as string;
 
@@ -36,7 +36,6 @@ namespace AutoOS
                     MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Installer";
 
                     ThemeService = new ThemeService(MainWindow);
-                    ThemeService.SetBackdropType(BackdropType.Mica);
                     
                     if (MainWindow.AppWindow.Presenter is OverlappedPresenter presenter)
                     {
@@ -56,12 +55,20 @@ namespace AutoOS
                         MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Startup";
 
                         ThemeService = new ThemeService(MainWindow);
-                        ThemeService.SetBackdropType(BackdropType.AcrylicBase);
 
-                        MainWindow.AppWindow.Resize(new SizeInt32(340, 130));
-                        MainWindow.AppWindow.Move(new PointInt32(1570, 897));
+                        var displayArea = DisplayArea.GetFromWindowId(MainWindow.AppWindow.Id, DisplayAreaFallback.Primary);
+                        int screenWidth = displayArea.WorkArea.Width;
+                        int screenHeight = displayArea.WorkArea.Height;
 
-                        // MainWindow.AppWindow.MoveAndResize(new RectInt32(1570, 897, 340, 130));
+                        Debug.WriteLine(screenWidth);
+                        Debug.WriteLine(screenHeight);
+                        int windowWidth = 340;
+                        int windowHeight = 130;
+
+                        int posX = screenWidth - windowWidth - 20;
+                        int posY = screenHeight - windowHeight - 20;
+
+                        MainWindow.AppWindow.MoveAndResize(new RectInt32(posX, posY, windowWidth, windowHeight));
 
                         MainWindow.Activate();
                     }
@@ -72,7 +79,6 @@ namespace AutoOS
                         MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Settings";
 
                         ThemeService = new ThemeService(MainWindow);
-                        ThemeService.SetBackdropType(BackdropType.Mica);
 
                         if (MainWindow.AppWindow.Presenter is OverlappedPresenter presenter)
                         {
@@ -81,6 +87,8 @@ namespace AutoOS
 
                         MainWindow.Activate();
 
+
+
                         //MainWindow = new StartupWindow();
                         //MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
                         //MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Startup";
@@ -88,14 +96,6 @@ namespace AutoOS
                         //ThemeService = new ThemeService(MainWindow);
 
                         //ThemeService.SetBackdropType(BackdropType.AcrylicBase);
-
-                        //MainWindow.AppWindow.Resize(new SizeInt32(340, 130));
-                        //MainWindow.AppWindow.Move(new PointInt32(1570, 897));
-
-                        //MainWindow.AppWindow.MoveAndResize(new RectInt32(1570, 897, 340, 130));
-
-                        //MainWindow.Activate();
-
 
                         //var displayArea = DisplayArea.GetFromWindowId(MainWindow.AppWindow.Id, DisplayAreaFallback.Primary);
                         //int screenWidth = displayArea.WorkArea.Width;
@@ -106,14 +106,12 @@ namespace AutoOS
                         //int windowWidth = 340;
                         //int windowHeight = 130;
 
-                        //// Position it near the bottom-right corner
-                        //int posX = screenWidth - windowWidth - 20; // 20px margin from the right edge
-                        //int posY = screenHeight - windowHeight - 20; // 20px margin from the bottom edge
+                        //int posX = screenWidth - windowWidth - 20;
+                        //int posY = screenHeight - windowHeight - 20;
 
-                        //MainWindow.AppWindow.Resize(new SizeInt32(windowWidth, windowHeight));
-                        //MainWindow.AppWindow.Move(new PointInt32(posX, posY));
+                        //MainWindow.AppWindow.MoveAndResize(new RectInt32(posX, posY, windowWidth, windowHeight));
 
-
+                        //MainWindow.Activate();
                     }
                 }
             }

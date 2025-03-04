@@ -215,5 +215,27 @@ public sealed partial class SchedulingPage : Page
             }
         }
     }
+
+    private async void Benchmark_Click(object sender, RoutedEventArgs e)
+    {
+        //Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NSudo", "NSudoLC.exe"), $"-U:T -P:E -Wait -ShowWindowMode:Hide cmd /c \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "AutoGpuAffinity.exe")}\" --analyze \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "captures", "AutoGpuAffinity-010325220526", "CSVs")}\"") { CreateNoWindow = true  });
+
+
+        var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NSudo", "NSudoLC.exe"),
+                Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide cmd /c \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "AutoGpuAffinity.exe")}\" --analyze \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "captures", "AutoGpuAffinity-010325221604", "CSVs")}\"",
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            }
+        };
+        process.Start();
+
+        string output = await process.StandardOutput.ReadToEndAsync();
+
+        Debug.WriteLine(output);
+    }
 }
 

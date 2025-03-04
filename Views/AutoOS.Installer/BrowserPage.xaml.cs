@@ -29,6 +29,7 @@ public sealed partial class BrowserPage : Page
             new GridViewItem { Text = "Chrome", ImageSource = "ms-appx:///Assets/Fluent/Chrome.png" },
             new GridViewItem { Text = "Brave", ImageSource = "ms-appx:///Assets/Fluent/Brave.png" },
             new GridViewItem { Text = "Firefox", ImageSource = "ms-appx:///Assets/Fluent/Firefox.png" },
+            //new GridViewItem { Text = "Zen", ImageSource = "ms-appx:///Assets/Fluent/Zen.png" },
             new GridViewItem { Text = "Arc", ImageSource = "ms-appx:///Assets/Fluent/Arc.png" }
         };
 

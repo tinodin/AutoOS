@@ -19,7 +19,7 @@
                        FontSize="28"
                        FontWeight="SemiBold"
                        Margin="7,-11,0,57"/>
-            <dev:SettingsGroup Description="Security stuff, some more stuff and more."
+            <dev:SettingsGroup Description="Toggle Windows Defender and other security settings."
                                Header="Windows Defender"
                                HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Defender.png}">
                 <dev:SettingsGroup.Content>

@@ -13,7 +13,6 @@ public static class GraphicsStage
         bool? Intel11th = PreparingStage.Intel11th;
         bool? NVIDIA = PreparingStage.NVIDIA;
         bool? AMD = PreparingStage.AMD;
-        bool? Fortnite = PreparingStage.Fortnite;
         bool? HDCP = PreparingStage.HDCP;
         bool? AlwaysShowTrayIcons = PreparingStage.AlwaysShowTrayIcons;
         bool? MSI = PreparingStage.MSI;
@@ -122,7 +121,6 @@ public static class GraphicsStage
 
             // import profiles
             ("Importing the optimized profile", async () => await ProcessActions.ImportProfile("BaseProfile.nip"), () => NVIDIA == true),
-            ("Fortnite.nip", async () => await ProcessActions.ImportProfile("Fortnite.nip"), () => NVIDIA == true && Fortnite == true),
 
             // use gpu for physx
             ("Configuring PhysX to use GPU", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\ControlSet001\Services\nvlddmkm\Global\NVTweak"" /v ""NvCplPhysxAuto"" /t REG_DWORD /d 0 /f"), () => NVIDIA == true),
@@ -196,7 +194,7 @@ public static class GraphicsStage
 
             foreach (var (actionTitle, action, condition) in actionsForTitle)
             {
-                InstallPage.Info.Title = actionTitle;
+                InstallPage.Info.Title = actionTitle + "...";
 
                 try
                 {

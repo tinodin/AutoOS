@@ -78,7 +78,7 @@ public static class DeviceStage
 
             foreach (var (actionTitle, action, condition) in actionsForTitle)
             {
-                InstallPage.Info.Title = actionTitle;
+                InstallPage.Info.Title = actionTitle + "...";
 
                 try
                 {

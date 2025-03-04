@@ -36,7 +36,7 @@
                     </StackPanel>
                 </dev:SettingsGroup.Content>
                 <dev:SettingsGroup.Items>
-                    <dev:SettingsCard Description="Disabling HDCP breaks Netflix and other protected streaming services."
+                    <dev:SettingsCard Description="Disabling HDCP breaks Netflix and other protected video streaming services."
                                       Header="High-Bandwidth Digital Content Protection (HDCP)">
                         <ToggleSwitch x:Name="HDCP"
                                       Toggled="HDCP_Toggled"/>

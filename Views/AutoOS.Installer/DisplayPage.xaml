@@ -19,7 +19,7 @@
                        FontSize="28"
                        FontWeight="SemiBold"
                        Margin="7,-11,0,57"/>
-            <dev:SettingsGroup Description="Add custom resolutions, remove unwanted resolutions, edit FreeSync ranges, and more."
+            <dev:SettingsGroup Description="Import your Custom Resolution Utility (CRU) profile here."
                                Header="Custom Resolution Utility (CRU)"
                                HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/CRU.png}">
                 <dev:SettingsGroup.Content>
@@ -30,7 +30,7 @@
                 </dev:SettingsGroup.Content>
             </dev:SettingsGroup>
             <StackPanel x:Name="CruInfo"/>
-            <Border Height="60"
+            <Border Height="25"
                     Background="Transparent"/>
         </StackPanel>
     </ScrollView>

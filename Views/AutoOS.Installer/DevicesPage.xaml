@@ -19,7 +19,7 @@
                        FontSize="28"
                        FontWeight="SemiBold"
                        Margin="7,-11,0,57"/>
-            <dev:SettingsGroup Description="Manage Bluetooth functionality."
+            <dev:SettingsGroup Description="Toggle services and drivers required for Bluetooth functionality."
                                Header="Bluetooth"
                                HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Bluetooth.png}"
                                x:Name="Bluetooth_SettingsGroup"
@@ -29,7 +29,7 @@
                                   Toggled="Bluetooth_Toggled"/>
                 </dev:SettingsGroup.Content>
             </dev:SettingsGroup>
-            <dev:SettingsGroup Description="Manage functionality and interrupt moderation of devices."
+            <dev:SettingsGroup Description="Manage detection and interrupt moderation of devices."
                                Header="Devices"
                                HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Devices.png}"
                                Margin="0,0,0,10">
@@ -46,7 +46,7 @@
                     </dev:SettingsCard>
                 </dev:SettingsGroup.Items>
             </dev:SettingsGroup>
-            <Border Height="60"
+            <Border Height="25"
                     Background="Transparent"/>
         </StackPanel>
     </ScrollView>

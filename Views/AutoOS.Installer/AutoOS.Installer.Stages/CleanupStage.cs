@@ -85,7 +85,7 @@ public static class CleanupStage
 
             foreach (var (actionTitle, action, condition) in actionsForTitle)
             {
-                InstallPage.Info.Title = actionTitle;
+                InstallPage.Info.Title = actionTitle + "...";
 
                 try
                 {

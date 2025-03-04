@@ -55,14 +55,14 @@
                     </GridView>
                 </dev:SettingsGroup.Content>
                 <dev:SettingsGroup.Items>
-                    <dev:SettingsCard Description="Disabling HDCP breaks Netflix and other protected streaming services."
+                    <dev:SettingsCard Description="Disabling HDCP breaks Netflix and other protected video streaming services."
                                       Header="High-Bandwidth Digital Content Protection (HDCP)">
                         <ToggleSwitch x:Name="HDCP"
                                       Toggled="HDCP_Toggled"/>
                     </dev:SettingsCard>
                 </dev:SettingsGroup.Items>
             </dev:SettingsGroup>
-            <dev:SettingsGroup Description="Overclock your graphics card, remove power limits, set custom fan curves, and more."
+            <dev:SettingsGroup Description="Import your MSI Afterburner profile here."
                                Header="MSI Afterburner"
                                HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/MsiAfterburner.png}"
                                Margin="0,0,0,10">
@@ -74,7 +74,7 @@
                 </dev:SettingsGroup.Content>
             </dev:SettingsGroup>
             <StackPanel x:Name="MsiAfterburnerInfo"/>
-            <Border Height="60"
+            <Border Height="25"
                     Background="Transparent"/>
         </StackPanel>
     </ScrollView>

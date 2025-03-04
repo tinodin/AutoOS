@@ -19,7 +19,7 @@
                        FontSize="28"
                        FontWeight="SemiBold"
                        Margin="7,-11,0,57"/>
-            <dev:SettingsGroup Description="Benchmark your Clock Interrupt Frequency (Timer Resolution) or set it manually."
+            <dev:SettingsGroup Description="Let AutoOS benchmark your Clock Interrupt Frequency (Timer Resolution) or set it manually."
                                Header="Clock Interrupt Frequency (Timer Resolution)"
                                HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Timer.png}">
                 <dev:SettingsGroup.Content>
@@ -37,7 +37,7 @@
                 </dev:SettingsGroup.Items>
             </dev:SettingsGroup>
             <StackPanel x:Name="TimerInfo"/>
-            <Border Height="60"
+            <Border Height="25"
                     Background="Transparent"/>
         </StackPanel>
     </ScrollView>

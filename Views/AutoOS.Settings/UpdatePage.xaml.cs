@@ -41,6 +41,13 @@ public sealed partial class UpdatePage : Page
             Margin = new Thickness(5)
         });
 
+        // toggle registry value
+        using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
+        {
+            int value = WindowsUpdate.IsOn ? 0 : 1;
+            key?.SetValue("PauseWindowsUpdate", value, RegistryValueKind.DWord);
+        }
+
         // toggle windows update
         if (WindowsUpdate.IsOn)
         {

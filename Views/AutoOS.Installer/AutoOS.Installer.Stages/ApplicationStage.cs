@@ -1,10 +1,12 @@
 ﻿using System.Diagnostics;
+using System.Text.Json.Nodes;
 using AutoOS.Views.Installer.Actions;
 
 namespace AutoOS.Views.Installer.Stages;
 
 public static class ApplicationStage
 {
+    public static bool? Fortnite;
     public static async Task Run()
     {
         bool? iCloud = PreparingStage.iCloud;
@@ -71,7 +73,7 @@ public static class ApplicationStage
 
             // install 1password
             ("Installing 1Password", async () => await ProcessActions.RunNsudo("CurrentUser", @"""%TEMP%\1PasswordSetup-latest.exe"" --silent"), () => OnePassword == true),
-            (   "Installing 1Password", async () => await ProcessActions.RunCustom(async() => { onePasswordVersion = FileVersionInfo.GetVersionInfo(Environment.ExpandEnvironmentVariables(@"%TEMP%\1PasswordSetup-latest.exe")).ProductVersion; }), () => OnePassword == true),
+            ("Installing 1Password", async () => await ProcessActions.RunCustom(async() => { onePasswordVersion = FileVersionInfo.GetVersionInfo(Environment.ExpandEnvironmentVariables(@"%TEMP%\1PasswordSetup-latest.exe")).ProductVersion; }), () => OnePassword == true),
             ("Installing 1Password", async () => await ProcessActions.RunCustom(async() => { var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "1Password", "settings", "settings.json"); Directory.CreateDirectory(Path.GetDirectoryName(path) !); await File.WriteAllTextAsync(path, "{ \"version\": 1, \"updates.updateChannel\": \"PRODUCTION\", \"authTags\": {}, \"app.keepInTray\": false }"); }), () => OnePassword == true),
 
             // log in to 1password
@@ -90,6 +92,7 @@ public static class ApplicationStage
             // install startallback
             ("Installing StartAllBack", async () => await ProcessActions.RunNsudo("CurrentUser", $"cmd /c reg import \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "startallback.reg")}\""), () => StartAllBack == true),
             ("Aligning the taskbar to the left", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\StartIsBack"" /v ""TaskbarCenterIcons"" /t REG_DWORD /d 2 /f"), () => TaskbarAlignment == true && StartAllBack == true),
+            ("Enabling AutoTray", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced"" /v EnableAutoTray /t REG_DWORD /d 0 /f"), null),
             ("Installing StartAllBack", async () => await ProcessActions.RunNsudo("CurrentUser", @"""%TEMP%\StartAllBackSetup.exe"" /silent /allusers"), () => StartAllBack == true),
             ("Installing StartAllBack", async () => await ProcessActions.RunNsudo("CurrentUser", @"SCHTASKS /Change /TN ""StartAllBack Update"" /Disable"), () => StartAllBack == true),
 
@@ -245,6 +248,7 @@ public static class ApplicationStage
 
             // import epic games launcher games
             ("Importing Epic Games Launcher Games", async () => await ProcessActions.RunImportEpicGamesLauncherGames(), () => EpicGames == true),
+            ("Importing Epic Games Launcher Games", async () => await ProcessActions.RunCustom(async () => Fortnite = File.Exists(@"C:\ProgramData\Epic\UnrealEngineLauncher\LauncherInstalled.dat") && (JsonNode.Parse(await File.ReadAllTextAsync(@"C:\ProgramData\Epic\UnrealEngineLauncher\LauncherInstalled.dat"))?["InstallationList"] is JsonArray installations) && installations.Any(entry => entry?["AppName"]?.ToString() == "Fortnite")) , () => EpicGames == true),
 
             // disable epic games services
             ("Disabling Epic Games services", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\EpicOnlineServices"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => EpicGames == true),
@@ -268,7 +272,7 @@ public static class ApplicationStage
 
             foreach (var (actionTitle, action, condition) in actionsForTitle)
             {
-                InstallPage.Info.Title = actionTitle;
+                InstallPage.Info.Title = actionTitle + "...";
 
                 try
                 {

@@ -42,29 +42,19 @@ public sealed partial class PersonalizationPage : Page
 
     private void GetTheme()
     {
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        string selectedBrand = key?.GetValue("Theme") as string;
-
-        // default to light theme
-        if (string.IsNullOrEmpty(selectedBrand))
-        {
-            key?.SetValue("Theme", "Light", RegistryValueKind.String);
-            selectedBrand = "Light";
-        }
+        using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
+        int systemUsesLightTheme = (int?)key?.GetValue("SystemUsesLightTheme", 1) ?? 1;
 
         // select the theme
-        Themes.SelectedIndex = selectedBrand == "Light" ? 0 : selectedBrand == "Dark" ? 1 : -1;
+        Themes.SelectedIndex = systemUsesLightTheme == 1 ? 0 : 1;
 
         isInitializingThemeState = false;
     }
 
+
     private async void Theme_Changed(object sender, RoutedEventArgs e)
     {
         if (isInitializingThemeState) return;
-
-        // set value
-        Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS")?
-            .SetValue("Theme", Themes.SelectedIndex == 0 ? "Light" : "Dark", RegistryValueKind.String);
 
         // declare theme
         string theme = Themes.SelectedIndex == 0 ? @"C:\Windows\Resources\Themes\aero.theme" : @"C:\Windows\Resources\Themes\dark.theme";
@@ -171,7 +161,7 @@ public sealed partial class PersonalizationPage : Page
     {
         // get state
         using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        string value = key?.GetValue("TaskbarAlignment") as string ?? "Left";
+        string value = key?.GetValue("TaskbarAlignment") as string ?? "Center";
 
         TaskbarAlignment.SelectedIndex = value switch
         {
@@ -187,12 +177,6 @@ public sealed partial class PersonalizationPage : Page
             "Center" => new SymbolIcon(Symbol.AlignCenter),
             _ => new SymbolIcon(Symbol.AlignCenter)
         };
-
-        // default to center
-        if (key?.GetValue("TaskbarAlignment") == null)
-        {
-            key?.SetValue("TaskbarAlignment", "Center", RegistryValueKind.String);
-        }
 
         isInitializingTaskbarAlignmentState = false;
     }

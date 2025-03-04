@@ -20,33 +20,38 @@
                        FontWeight="SemiBold"
                        Margin="7,-11,0,57"/>
             <dev:SettingsGroup x:Name="fortniteVersion"
-                               Header="Fortnite"
-                               HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Fortnite.png}">
-                <StackPanel x:Name="FortniteCard"
-                            Orientation="Horizontal">
-                    <Button Content="Checking for updates..."
-                            Style="{StaticResource AccentButtonStyle}"
-                            x:Name="launchFortnite" 
-                            Click="LaunchFortnite_Click"/>
-                    <ProgressRing x:Name="updateCheckProgress"
-                                  IsActive="True" 
-                                  Background="Transparent"
-                                  Width="25"
-                                  Height="25"
-                                  Margin="10,0,0,0"/>
+                                   Header="Installed Games"
+                                   HorizontalContentAlignment="Left">
+                <StackPanel Orientation="Vertical">
+                    <Border CornerRadius="5" Width="187" Height="250" HorizontalAlignment="Center">
+                        <Border.Background>
+                            <ImageBrush ImageSource="ms-appx:///Assets/Fluent/Fortnite3.jpeg" Stretch="UniformToFill"/>
+                        </Border.Background>
+                    </Border>
+                    <dev:ElementGroup Margin="0,25,0,0" HorizontalAlignment="Center">
+                        <Button HorizontalAlignment="Stretch"
+                                Content="Launch"
+                                Style="{StaticResource AccentButtonStyle}"
+                                x:Name="launchFortnite"
+                                Click="LaunchFortnite_Click"/>
+                        <Button HorizontalAlignment="Stretch"
+                                Content="Stop processes"
+                                x:Name="stopProcesses"
+                                Click="StopProcesses_Click"
+                                Visibility="Collapsed"/>
+                        <Button HorizontalAlignment="Stretch"
+                                Visibility="Collapsed"
+                                Content="Start explorer"
+                                x:Name="launchExplorer"
+                                Click="LaunchExplorer_Click"/>
+                        <Button HorizontalAlignment="Stretch"
+                                Click="FortniteOptions_Click">
+                            <FontIcon Glyph="&#xE713;" FontSize="19"/>
+                        </Button>
+                    </dev:ElementGroup>
                 </StackPanel>
-                <dev:SettingsGroup.Items>
-                    <dev:SettingsCard Header="Presentation Mode" 
-                                      Description="Hardware: Independent Flip is the newest presentation mode which performs almost identically to Hardware: Legacy Flip but without any delay or black screens when tabbing out.">
-                        <ComboBox x:Name="PresentationMode"
-                                  SelectionChanged="PresentationMode_SelectionChanged">
-                            <ComboBoxItem Content="Hardware: Independent Flip" />
-                            <ComboBoxItem Content="Hardware: Legacy Flip" />
-                        </ComboBox>
-                    </dev:SettingsCard>
-                </dev:SettingsGroup.Items>
             </dev:SettingsGroup>
-            <StackPanel x:Name="FortniteInfo"/>
+            <StackPanel/>
             <dev:SettingsGroup Description="Select your Epic Games Account."
                                Header="Epic Games Account" HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Epicgames.png}">
                 <dev:SettingsGroup.Content>
@@ -65,6 +70,7 @@
                     </dev:SettingsCard>
                 </dev:SettingsGroup.Items>
             </dev:SettingsGroup>
+            <Image Source="Assets/Fluent/Fortnite.png" Width="40" Height="40"/>
             <StackPanel x:Name="AccountInfo"/>
             <Border Height="60"
                     Background="Transparent"/>

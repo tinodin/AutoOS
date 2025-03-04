@@ -8,9 +8,11 @@ public static class StartupStage
 {
     public static async Task Run()
     {
+
         bool MSI = Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "MsiProfile", null) != null;
-        bool HID = Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "HumanInterfaceDevices", "0")?.ToString() == "1";
+        bool HID = Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "HumanInterfaceDevices", "0")?.ToString() == "1"; 
         bool IMOD = Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciInterruptModeration", "0")?.ToString() == "1";
+        bool WindowsUpdates = Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "PauseWindowsUpdates", "0")?.ToString() == "1";
         bool Discord = Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Messaging", "")?.ToString().Contains("Discord") == true;
 
         string discordVersion = "";
@@ -42,6 +44,9 @@ public static class StartupStage
 
             // disable event trace sessions (ets)
             ("Disabling Event Trace Sessions (ETS)", async () => await StartupActions.RunNsudo("TrustedInstaller", $"cmd /c reg import \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "ets-disable.reg")}\""), null),
+            
+            // pause windows updates
+            ("Pausing Windows Updates", async () => await StartupActions.RunPowerShellScript("pausewindowsupdates.ps1", ""), () => WindowsUpdates == false),
 
             // clean up devices
             ("Cleaning up devices", async () => await StartupActions.RunApplication("DeviceCleanup", "DeviceCleanupCmd.exe", "/s *"), null),
@@ -77,6 +82,7 @@ public static class StartupStage
 
             // clean event logs
             ("Cleaning event logs", async () => await StartupActions.RunPowerShell(@"Get-EventLog -LogName * | ForEach-Object { Clear-EventLog $_.Log }"), null),
+            ("Cleaning event logs", async () => await StartupActions.RunNsudo("CurrentUser", @"sc stop TrustedInstaller"), null),
         };
 
         var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();
@@ -95,7 +101,7 @@ public static class StartupStage
 
             foreach (var (actionTitle, action, condition) in actionsForTitle)
             {
-                StartupWindow.Status.Text = actionTitle;
+                StartupWindow.Status.Text = actionTitle + "...";
 
                 try
                 {

@@ -50,6 +50,7 @@ public static class PreparingStage
     public static bool? Chrome;
     public static bool? Brave;
     public static bool? Firefox;
+    public static bool? Zen;
     public static bool? Arc;
 
     public static bool? uBlock;
@@ -69,8 +70,6 @@ public static class PreparingStage
     public static bool? Discord;
     public static bool? EpicGames;
     public static bool? Steam;
-
-    public static bool? Fortnite;
 
     public static bool? Scheduling;
     public static bool? Hyperthreading;
@@ -141,6 +140,7 @@ public static class PreparingStage
                 Chrome = key?.GetValue("Browser")?.ToString() == "Chrome";
                 Brave = key?.GetValue("Browser")?.ToString() == "Brave";
                 Firefox = key?.GetValue("Browser")?.ToString() == "Firefox";
+                Zen = key?.GetValue("Browser")?.ToString() == "Zen";
                 Arc = key?.GetValue("Browser")?.ToString() == "Arc";
                 uBlock = key?.GetValue("Extensions")?.ToString()?.Contains("uBlock Origin");
                 SponsorBlock = key?.GetValue("Extensions")?.ToString()?.Contains("SponsorBlock");
@@ -157,7 +157,6 @@ public static class PreparingStage
                 Discord = key?.GetValue("Messaging")?.ToString().Contains("Discord");
                 EpicGames = key?.GetValue("Launchers")?.ToString().Contains("Epic Games");
                 Steam = key?.GetValue("Launchers")?.ToString().Contains("Steam");
-                Fortnite = key?.GetValue("Games")?.ToString().Contains("Fortnite");
                 Scheduling = key?.GetValue("Affinity")?.ToString().Contains("Manual");
             }
 

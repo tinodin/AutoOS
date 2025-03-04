@@ -4,75 +4,72 @@ using System.ServiceProcess;
 using System.Text.RegularExpressions;
 using Microsoft.Win32;
 using Newtonsoft.Json.Linq;
-
 namespace AutoOS.Views.Settings;
 
 public sealed partial class GamesPage : Page
 {
-    private string legendaryPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config", "legendary");
     private bool isLaunchingFortnite = false;
     private bool isInitializingAccounts = true;
-    private bool isInitializingPresentationMode = true;
     private readonly string configFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\GameUserSettings.ini");
     public GamesPage()
     {
         InitializeComponent();
         //CheckFortniteUpdate();
         CheckFortniteRunning();
-        GetPresentationMode();
-        //LoadEpicAccounts();
+        //GetPresentationMode();
+        LoadEpicAccounts();
     }
 
-    private async void CheckFortniteUpdate()
-    {
-        if (Process.GetProcessesByName("FortniteClient-Win64-Shipping").Length == 0)
-        {
-            // get current version
-            string currentVersion = Regex.Match(JObject.Parse(File.ReadAllText(Path.Combine(JObject.Parse(File.ReadAllText(Path.Combine(legendaryPath, "installed.json")))["Fortnite"]["install_path"]?.ToString(), "Cloud", "cloudcontent.json")))["BuildVersion"]?.ToString(), @"Release-(\d+\.\d+)").Groups[1].Value;
-            fortniteVersion.Description = "Current version: " + currentVersion;
+    //private async void CheckFortniteUpdate()
+    //{
+    //    if (Process.GetProcessesByName("FortniteClient-Win64-Shipping").Length == 0)
+    //    {
+    //        // get current version
+    //        string currentVersion = Regex.Match(JObject.Parse(File.ReadAllText(Path.Combine(JObject.Parse(File.ReadAllText(Path.Combine(legendaryPath, "installed.json")))["Fortnite"]["install_path"]?.ToString(), "Cloud", "cloudcontent.json")))["BuildVersion"]?.ToString(), @"Release-(\d+\.\d+)").Groups[1].Value;
+    //        fortniteVersion.Description = "Current version: " + currentVersion;
 
-            // list installed games
-            var output = await Task.Run(() => Process.Start(new ProcessStartInfo(@"C:\Windows\legendary.exe", "list-installed") { CreateNoWindow = true, RedirectStandardOutput = true })?.StandardOutput.ReadToEndAsync());
+    //        // list installed games
+    //        var output = await Task.Run(() => Process.Start(new ProcessStartInfo(@"C:\Windows\legendary.exe", "list-installed") { CreateNoWindow = true, RedirectStandardOutput = true })?.StandardOutput.ReadToEndAsync());
 
-            // check output
-            if (output.Contains("Latest: ++Fortnite+Release"))
-            {
-                // get newest version
-                string newestVersion = Regex.Match(output, @"Latest: \+\+Fortnite\+Release-(\d+\.\d+)").Groups[1].Value;
+    //        // check output
+    //        if (output.Contains("Latest: ++Fortnite+Release"))
+    //        {
+    //            // get newest version
+    //            string newestVersion = Regex.Match(output, @"Latest: \+\+Fortnite\+Release-(\d+\.\d+)").Groups[1].Value;
 
-                // delay
-                await Task.Delay(500);
+    //            // delay
+    //            await Task.Delay(500);
 
-                // hide progress ring
-                updateCheckProgress.Visibility = Visibility.Collapsed;
+    //            // hide progress ring
+    //            updateCheckProgress.Visibility = Visibility.Collapsed;
 
-                // check if update is needed
-                if (string.Compare(newestVersion, currentVersion, StringComparison.Ordinal) > 0)
-                {
-                    launchFortnite.Content = "Update to " + newestVersion;
-                }
-                else if (string.Compare(newestVersion, currentVersion, StringComparison.Ordinal) == 0)
-                {
-                    launchFortnite.Content = "Launch";
-                }
-            }
-            else
-            {
-                // delay
-                await Task.Delay(650);
+    //            // check if update is needed
+    //            if (string.Compare(newestVersion, currentVersion, StringComparison.Ordinal) > 0)
+    //            {
+    //                launchFortnite.Content = "Update to " + newestVersion;
+    //            }
+    //            else if (string.Compare(newestVersion, currentVersion, StringComparison.Ordinal) == 0)
+    //            {
+    //                launchFortnite.Content = "Launch";
+    //            }
+    //        }
+    //        else
+    //        {
+    //            // delay
+    //            await Task.Delay(650);
 
-                // hide progress ring
-                updateCheckProgress.Visibility = Visibility.Collapsed;
+    //            // hide progress ring
+    //            updateCheckProgress.Visibility = Visibility.Collapsed;
 
-                launchFortnite.Content = "Launch";
-            }
-        }
-        else
-        {
-            // hide progress ring
-            updateCheckProgress.Visibility = Visibility.Collapsed;
-        }
-    }
+    //            launchFortnite.Content = "Launch";
+    //        }
+    //    }
+    //    else
+    //    {
+    //        // hide progress ring
+    //        updateCheckProgress.Visibility = Visibility.Collapsed;
+    //    }
+    //}
 
     private void CheckFortniteRunning()
     {
@@ -82,32 +79,19 @@ public sealed partial class GamesPage : Page
             launchFortnite.Content = "Running...";
 
             // check if stop processes button exists
-            if (!FortniteCard.Children.OfType<Button>().Any(b => b.Content.ToString() == "Stop processes"))
+            if (stopProcesses.Visibility == Visibility.Collapsed)
             {
                 // add stop processes button
-                var stopProcesses = new Button
-                {
-                    Content = "Stop processes",
-                    Margin = new Thickness(15, 0, 0, 0)
-                };
-                FortniteCard.Children.Add(stopProcesses);
-                stopProcesses.Click += StopProcesses_Click;
+                stopProcesses.Visibility = Visibility.Visible;
             }
 
-            // Check if "explorer.exe" is not running and add "Launch Explorer" button
+            // add launch explorer button if explorer is not running
             if (Process.GetProcessesByName("explorer").Length == 0)
             {
                 // check if launch explorer button exists
-                if (!FortniteCard.Children.OfType<Button>().Any(b => b.Content.ToString() == "Launch explorer"))
+                if (launchExplorer.Visibility == Visibility.Collapsed)
                 {
-                    // add launch explorer button
-                    var launchExplorer = new Button
-                    {
-                        Content = "Launch explorer",
-                        Margin = new Thickness(15, 0, 0, 0)
-                    };
-                    FortniteCard.Children.Add(launchExplorer);
-                    launchExplorer.Click += LaunchExplorer_Click;
+                    launchExplorer.Visibility = Visibility.Visible;
                 }
             }
             isLaunchingFortnite = false;
@@ -128,40 +112,33 @@ public sealed partial class GamesPage : Page
                         launchFortnite.Content = "Running...";
 
                         // check if stop processes button exists
-                        if (!FortniteCard.Children.OfType<Button>().Any(b => b.Content.ToString() == "Stop processes"))
+                        if (stopProcesses.Visibility == Visibility.Collapsed)
                         {
                             // add stop processes button
-                            var stopProcesses = new Button
-                            {
-                                Content = "Stop processes",
-                                Margin = new Thickness(15, 0, 0, 0)
-                            };
-
-                            FortniteCard.Children.Add(stopProcesses);
-                            stopProcesses.Click += StopProcesses_Click;
+                            stopProcesses.Visibility = Visibility.Visible;
                             isLaunchingFortnite = false;
                         }
-
+                        
                         // check if explorer is not running
                         if (Process.GetProcessesByName("explorer").Length == 0)
                         {
-                            // check if launch explorer button exists
-                            if (!FortniteCard.Children.OfType<Button>().Any(b => b.Content.ToString() == "Launch explorer"))
+                            // add launch explorer button if explorer is not running
+                            if (Process.GetProcessesByName("explorer").Length == 0)
                             {
-                                // add launch explorer button
-                                var launchExplorer = new Button
+                                // check if launch explorer button exists
+                                if (launchExplorer.Visibility == Visibility.Collapsed)
                                 {
-                                    Content = "Launch explorer",
-                                    Margin = new Thickness(15, 0, 0, 0)
-                                };
-                                FortniteCard.Children.Add(launchExplorer);
-                                launchExplorer.Click += LaunchExplorer_Click;
+                                    launchExplorer.Visibility = Visibility.Visible;
+                                }
                             }
                         }
                         else
                         {
-                            // remove launch explorer
-                            FortniteCard.Children.Remove(FortniteCard.Children.OfType<Button>().FirstOrDefault(b => b.Content.ToString() == "Launch explorer"));
+                            // remove launch explorer button if explorer is running
+                            if (launchExplorer.Visibility == Visibility.Visible)
+                            {
+                                launchExplorer.Visibility = Visibility.Collapsed;
+                            }
                         }
                     }
                     else
@@ -175,15 +152,21 @@ public sealed partial class GamesPage : Page
                             }
 
                             // remove stop processes button
-                            FortniteCard.Children.Remove(FortniteCard.Children.OfType<Button>().FirstOrDefault(b => b.Content.ToString() == "Stop processes"));
+                            if (stopProcesses.Visibility == Visibility.Visible)
+                            {
+                                stopProcesses.Visibility = Visibility.Collapsed;
+                            }
 
                             // remove launch explorer
-                            FortniteCard.Children.Remove(FortniteCard.Children.OfType<Button>().FirstOrDefault(b => b.Content.ToString() == "Launch explorer"));
+                            if (launchExplorer.Visibility == Visibility.Visible)
+                            {
+                                launchExplorer.Visibility = Visibility.Collapsed;
+                            }
 
                             // launch explorer if not already
                             if (Process.GetProcessesByName("explorer").Length == 0)
                             {
-                                Process.Start(new ProcessStartInfo("cmd.exe") { Arguments = "/c start explorer.exe", CreateNoWindow = true });
+                                Process.Start("explorer.exe");
                             }
                         }
                     }
@@ -199,7 +182,7 @@ public sealed partial class GamesPage : Page
 
     private void StopProcesses_Click(object sender, RoutedEventArgs e)
     {
-        string[] serviceNames = { "StateRepository", "Appinfo", "AppXSvc", "CryptSvc", "ProfSvc", "TextInputManagementService", "netprofm", "nsi" };
+        string[] serviceNames = { "StateRepository", "Appinfo", "AppXSvc", "CryptSvc", "TextInputManagementService", "netprofm", "nsi" };
 
         foreach (var serviceName in serviceNames)
         {
@@ -211,104 +194,53 @@ public sealed partial class GamesPage : Page
                     try
                     {
                         int pid = Convert.ToInt32(service["ProcessId"]);
-                        Process.GetProcessById(pid)?.Kill();
+                        var process = Process.GetProcessById(pid);
+                        process.Kill();
+                        process.WaitForExit();
                     }
                     catch { }
                 }
             }
             catch { }
         }
+        
+        Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon", "AutoRestartShell", 0, RegistryValueKind.DWord);
 
-        Process.Start(new ProcessStartInfo(@"C:\Windows\System32\taskkill.exe", "/F /IM explorer.exe") { CreateNoWindow = true });
-
-        string[] processNames = { "ApplicationFrameHost", "WmiPrvSE", "WMIADAP", "WUDFHost", "useroobebroker", "TrustedInstaller", "FortniteClient-Win64-Shipping_EAC_EOS", "EpicGamesLauncher", "EasyAntiCheat_EOS", "CrashReportClient", "sppsvc", "secd.exe" };
+        string[] processNames = { "ApplicationFrameHost", "explorer", "WmiPrvSE", "WMIADAP", "WUDFHost", "useroobebroker", "TrustedInstaller", "FortniteClient-Win64-Shipping_EAC_EOS", "EpicGamesLauncher", "EasyAntiCheat_EOS", "CrashReportClient", "sppsvc", "secd.exe" };
 
         foreach (var name in processNames)
         {
             foreach (var process in Process.GetProcessesByName(name))
             {
-                try { process.Kill(); } catch { }
+                try { process.Kill(); process.WaitForExit(); } catch { }
             }
         }
 
-        try { new System.ServiceProcess.ServiceController("Winmgmt").Stop(); } catch { }
+        try { new ServiceController("Winmgmt").Stop(); } catch { }
+
+        Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon", "AutoRestartShell", 1, RegistryValueKind.DWord);
     }
 
     private void LaunchExplorer_Click(object sender, RoutedEventArgs e)
     {
         // launch explorer
-        Process.Start(new ProcessStartInfo("cmd.exe") { Arguments = "/c start explorer.exe", CreateNoWindow = true });
+        Process.Start("explorer.exe");
     }
 
-    private void GetPresentationMode()
+    private async void FortniteOptions_Click(object sender, RoutedEventArgs e)
     {
-        using (var key = Registry.CurrentUser.OpenSubKey(@"System\GameConfigStore\Children"))
+        
+        var contentDialog = new ContentDialog
         {
-            foreach (var subKeyName in key.GetSubKeyNames())
-            using (var subKey = key.OpenSubKey(subKeyName))
-            {
-                if (subKey.GetValueNames().Any(valueName => subKey.GetValue(valueName) is string strValue && strValue.Contains("Fortnite")))
-                {
-                    int flags = Convert.ToInt32(subKey.GetValue("Flags"));
-                    Debug.WriteLine($"SubKey: {subKeyName}, Flags: {flags}");
-                    if (flags == 0x211)
-                    {
-                        PresentationMode.SelectedIndex = 1;
-                        isInitializingPresentationMode = false;
-                        return;
-                    }
-                    else
-                    {
-                        PresentationMode.SelectedIndex = 0;
-                        isInitializingPresentationMode = false;
-                    }
-                }
-            }
-        }
-    }
+            Title = "Fortnite",
+            Content = new GameSettings(),
+            PrimaryButtonText = "Close",
+            XamlRoot = this.XamlRoot,
+        };
 
-    private void PresentationMode_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (isInitializingPresentationMode) return;
+        contentDialog.Resources["ContentDialogMinWidth"] = 850;
 
-        using (var key = Registry.CurrentUser.OpenSubKey(@"System\GameConfigStore\Children", true))
-        {
-            foreach (var subKeyName in key.GetSubKeyNames())
-            {
-                using (var subKey = key.OpenSubKey(subKeyName, true))
-                {
-                    if (subKey.GetValueNames().Any(valueName => subKey.GetValue(valueName) is string strValue && strValue.Contains("Fortnite")))
-                    {
-                        string cmd = "";
-                        if (PresentationMode.SelectedIndex == 0)
-                        {
-                            cmd = "reg delete \"HKCU\\System\\GameConfigStore\\Children\\" + subKeyName + "\" /v Flags /f";
-                        }
-                        else if (PresentationMode.SelectedIndex == 1)
-                        {
-                            cmd = "reg add \"HKCU\\System\\GameConfigStore\\Children\\" + subKeyName + "\" /v Flags /t REG_DWORD /d 0x211 /f";
-                        }
-
-                        if (!string.IsNullOrEmpty(cmd))
-                        {
-                            var process = new Process
-                            {
-                                StartInfo = new ProcessStartInfo
-                                {
-                                    FileName = "cmd.exe",
-                                    Arguments = "/C " + cmd,
-                                    CreateNoWindow = true,
-                                }
-                            };
-                            process.Start();
-                            process.WaitForExit();
-                        }
-
-                        return;
-                    }
-                }
-            }
-        }
+        ContentDialogResult result = await contentDialog.ShowAsync();
     }
 
     private async void LaunchFortnite_Click(object sender, RoutedEventArgs e)
@@ -342,8 +274,7 @@ public sealed partial class GamesPage : Page
                 Content = "Are you sure that you want to launch Fortnite in the service enabled state?",
                 PrimaryButtonText = "Yes",
                 SecondaryButtonText = "No",
-                XamlRoot = this.XamlRoot,
-                DefaultButton = ContentDialogButton.Primary
+                XamlRoot = this.XamlRoot
             };
             ContentDialogResult result = await contentDialog.ShowAsync();
 
@@ -354,6 +285,12 @@ public sealed partial class GamesPage : Page
                 return;
             }
         }
+
+        // launch fortnite
+        Process.Start(new ProcessStartInfo("com.epicgames.launcher://apps/fn%3A4fe75bbc5a674f4f9b356b5c90567da5%3AFortnite?action=launch&silent=true") { UseShellExecute = true });
+
+        // rename to launching...
+        launchFortnite.Content = "Launching...";
     }
 
     private async void LoadEpicAccounts()
@@ -400,7 +337,7 @@ public sealed partial class GamesPage : Page
 
             if (dataMatch.Success && dataMatch.Groups[1].Value.Length >= 1000)
             {
-                // valid configFile, get accountId from it
+                // get accountId from it
                 Match idMatch = Regex.Match(configContent, @"\[(.*?)_General\]");
                 if (idMatch.Success)
                 {
@@ -415,15 +352,15 @@ public sealed partial class GamesPage : Page
                         Directory.CreateDirectory(accountDir);
                         File.Copy(configFile, Path.Combine(accountDir, "GameUserSettings.ini"));
                     }
-                    isInitializingAccounts = false; // Set to false when we are done
+                    isInitializingAccounts = false;
                     return;
                 }
             }
 
-            // if configFile is invalid, replace it with the first found account
             if (accountData.Any())
             {
                 string selectedAccount = accountData.First();
+
                 // close epic games launcher
                 if (Process.GetProcessesByName("EpicGamesLauncher").Length > 0)
                 {
@@ -445,24 +382,23 @@ public sealed partial class GamesPage : Page
                     Directory.CreateDirectory(accountDir);
                     File.Copy(configFile, Path.Combine(accountDir, "GameUserSettings.ini"));
                 }
-                isInitializingAccounts = false; // Set to false after handling the first account
+                isInitializingAccounts = false;
             }
         }
         else
         {
-            // if configFile doesn't exist and no valid account found, show "Not logged in"
+            // show not logged in
             if (!accountData.Any())
             {
                 Accounts.Items.Add("Not logged in");
                 Accounts.SelectedItem = "Not logged in";
                 launchFortnite.IsEnabled = false;
                 removeButton.IsEnabled = false;
-                isInitializingAccounts = false; // Set to false when no accounts are found
+                isInitializingAccounts = false;
                 return;
             }
             else
             {
-                // automatically select the first account from the combobox if no configFile exists
                 Accounts.SelectedItem = accountData.First();
 
                 // close epic games launcher
@@ -485,7 +421,8 @@ public sealed partial class GamesPage : Page
                     Directory.CreateDirectory(accountDir);
                     File.Copy(configFile, Path.Combine(accountDir, "GameUserSettings.ini"));
                 }
-                isInitializingAccounts = false; // Set to false after selecting the first account
+
+                isInitializingAccounts = false;
             }
         }
     }
@@ -514,7 +451,7 @@ public sealed partial class GamesPage : Page
         var contentDialog = new ContentDialog
         {
             Title = "Add New Account",
-            Content = "Are you sure that you want to add another account",
+            Content = "Are you sure that you want to add another account?",
             PrimaryButtonText = "Yes",
             CloseButtonText = "Cancel",
             XamlRoot = this.XamlRoot

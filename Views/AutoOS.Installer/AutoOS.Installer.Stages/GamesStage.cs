@@ -1,6 +1,5 @@
 ﻿using AutoOS.Views.Installer.Actions;
 using Microsoft.Win32;
-using System.Diagnostics;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -8,7 +7,8 @@ public static class GamesStage
 {
     public static async Task Run()
     {
-        bool? Fortnite = PreparingStage.Fortnite;
+        bool? Fortnite = ApplicationStage.Fortnite;
+        bool? NVIDIA = PreparingStage.NVIDIA;
 
         InstallPage.Status.Text = "Configuring Games...";
 
@@ -17,20 +17,13 @@ public static class GamesStage
 
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
-            //// download legendary
-            //("Downloading Legendary", async () => await ProcessActions.RunDownload("https://github.com/derrod/legendary/releases/latest/download/legendary.exe", @"C:\Windows", "legendary.exe"), () => Fortnite == true),
-
-            //// log in to legendary
-            //("Please log in to your Epic Games account", async () => await ProcessActions.Sleep(1000), () => Fortnite == true),
-            //("Please log in to your Epic Games account", async () => await ProcessActions.RunCustom(async() => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = @"C:\Windows\legendary.exe", Arguments = "auth", WindowStyle = ProcessWindowStyle.Hidden }) !.WaitForExitAsync())), () => Fortnite == true),
-
-            //// import fortnite
-            //("Importing Fortnite", async () => await ProcessActions.RunCustom(async() => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = @"C:\Windows\legendary.exe", Arguments = $"import --skip-dlcs Fortnite \"{Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GamePath", null) ?.ToString()}\"", WindowStyle = ProcessWindowStyle.Hidden }) !.WaitForExitAsync())), () => Fortnite == true),
+            // import nvidia profile
+            ("Fortnite.nip", async () => await ProcessActions.ImportProfile("Fortnite.nip"), () => NVIDIA == true && Fortnite == true),
 
             // import fortnite settings
             ("Importing Fortnite settings", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c mkdir ""%LocalAppData%\FortniteGame\Saved\Config\WindowsClient"""), () => Fortnite == true),
             ("Importing Fortnite settings", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c copy /Y """ + Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "GameUserSettings.ini") + @""" ""%LocalAppData%\FortniteGame\Saved\Config\WindowsClient\GameUserSettings.ini"""), () => Fortnite == true),
-            
+
             // set refresh rate
 
 
@@ -67,7 +60,7 @@ public static class GamesStage
 
             foreach (var (actionTitle, action, condition) in actionsForTitle)
             {
-                InstallPage.Info.Title = actionTitle;
+                InstallPage.Info.Title = actionTitle + "...";
 
                 try
                 {

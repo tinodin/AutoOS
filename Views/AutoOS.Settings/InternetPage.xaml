@@ -19,17 +19,17 @@
                        FontSize="28"
                        FontWeight="SemiBold"
                        Margin="7,-11,0,57"/>
-            <dev:SettingsGroup Description="Manage Wi-Fi functionality by toggling required Services &amp; Drivers."
+            <dev:SettingsGroup Description="Toggle services and drivers required for Wi-Fi functionality."
                                Header="Wi-Fi" HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Wifi.png}" x:Name="WiFi_SettingsGroup">
                 <dev:SettingsGroup.Content>
                     <ToggleSwitch x:Name="WiFi" Toggled="WiFi_Toggled"/>
                 </dev:SettingsGroup.Content>
             </dev:SettingsGroup>
             <StackPanel x:Name="WiFiInfo"/>
-            <dev:SettingsGroup Description="Manage Ethernet functionality."
+            <dev:SettingsGroup Description="Toggle Ethernet functionality."
                                Header="Ethernet" HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Ethernet.png}" x:Name="Ethernet_SettingsGroup">
                 <dev:SettingsGroup.Items>
-                    <dev:SettingsCard Header="Wake-on-LAN (WOL)" Description="Changes the network adapter settings to make sure Wake-on-LAN (WOL) works. Requires Wake-on-LAN (WOL) to also be enabled in BIOS." IsClickEnabled="False">
+                    <dev:SettingsCard Header="Wake-on-LAN (WOL)" Description="Toggle network adapter settings to manage Wake-on-LAN (WOL) functionality. Additional BIOS settings may be required." IsClickEnabled="False">
                         <StackPanel Orientation="Horizontal">
                             <ToggleSwitch x:Name="WOL" Toggled="WOL_Toggled"/>
                             <ProgressRing x:Name="wolProgress"

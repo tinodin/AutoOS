@@ -129,7 +129,7 @@
                     </GridView>
                 </dev:SettingsGroup.Content>
             </dev:SettingsGroup>
-            <Border Height="60"
+            <Border Height="25"
                     Background="Transparent"/>
         </StackPanel>
     </ScrollView>
