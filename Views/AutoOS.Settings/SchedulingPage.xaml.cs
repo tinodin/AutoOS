@@ -38,7 +38,8 @@ public sealed partial class SchedulingPage : Page
         {
         "SELECT PNPDeviceID FROM Win32_VideoController",
         "SELECT PNPDeviceID FROM Win32_USBController"
-    })
+        })
+
         {
             foreach (ManagementObject obj in new ManagementObjectSearcher(query).Get())
             {

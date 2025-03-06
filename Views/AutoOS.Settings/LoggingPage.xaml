@@ -28,7 +28,7 @@
                 </dev:SettingsGroup.Content>
             </dev:SettingsGroup>
             <StackPanel x:Name="EventTraceSessionsInfo"/>
-            <Border Height="60"
+            <Border Height="95"
                     Background="Transparent"/>
         </StackPanel>
     </ScrollView>

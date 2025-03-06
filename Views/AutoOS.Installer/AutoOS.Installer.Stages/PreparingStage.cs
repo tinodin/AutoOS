@@ -73,6 +73,7 @@ public static class PreparingStage
 
     public static bool? Scheduling;
     public static bool? Hyperthreading;
+    public static bool? Reserve;
 
     public static async Task Run()
     {
@@ -204,6 +205,8 @@ public static class PreparingStage
                .Get()
                .Cast<ManagementObject>()
                .Any(obj => Convert.ToInt32(obj["NumberOfLogicalProcessors"]) > Convert.ToInt32(obj["NumberOfCores"]));
+
+            Reserve = Environment.ProcessorCount >= 6;
         });
     }
 }

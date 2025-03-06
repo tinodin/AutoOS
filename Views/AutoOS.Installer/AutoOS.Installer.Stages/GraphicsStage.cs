@@ -92,7 +92,7 @@ public static class GraphicsStage
             ("Disabling high-definition-content-protection (HDCP)", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\cphs"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => Intel10th == true),
             ("Disabling high-definition-content-protection (HDCP)", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\cplspcon"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => Intel10th == true),
 
-            // download the latest nvidia driver
+            // download the latest nvidia driver                                                     
             ("Downloading the latest NVIDIA Driver", async () => await ProcessActions.RunDownload($@"https://us.download.nvidia.com/Windows/{version}/{version}-desktop-win10-win11-64bit-international-dch-whql.exe", Path.GetTempPath(), "driver.exe"), () => NVIDIA == true),
 
             // extract the driver
@@ -103,7 +103,6 @@ public static class GraphicsStage
 
             // install the nvidia driver
             ("Installing the NVIDIA driver", async () => await ProcessActions.RunNsudo("CurrentUser", @"""%TEMP%\driver\setup.exe"" /s"), () => NVIDIA == true),
-            ("Installing the NVIDIA driver", async () => await ProcessActions.RunApplication("CRU", "restart64.exe", "/q"), () => NVIDIA == true),
             ("Installing the NVIDIA driver", async () => await ProcessActions.Sleep(2000), () => NVIDIA == true),
 
             // enable hardware accelerated gpu scheduling (hags)

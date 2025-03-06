@@ -74,13 +74,12 @@
     <PackageReference Include="DevWinUI" Version="8.0.0-Preview8" />
     <PackageReference Include="DevWinUI.Controls" Version="8.0.0-Preview8" />
     <PackageReference Include="Downloader" Version="3.3.3" />
-    <PackageReference Include="Microsoft.Toolkit.Uwp.Notifications" Version="7.1.3" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250208002-preview1" />
     <PackageReference Include="nucs.JsonSettings" Version="2.0.2" />
     <PackageReference Include="nucs.JsonSettings.AutoSaveGenerator" Version="2.0.4" />
-    <PackageReference Include="System.Management" Version="9.0.2" />
-    <PackageReference Include="System.ServiceProcess.ServiceController" Version="9.0.2" />
+    <PackageReference Include="System.Management" Version="10.0.0-preview.1.25080.5" />
+    <PackageReference Include="System.ServiceProcess.ServiceController" Version="10.0.0-preview.1.25080.5" />
   </ItemGroup>
   <!-- 
     Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution 

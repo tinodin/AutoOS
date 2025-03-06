@@ -18,7 +18,7 @@ public static class GamesStage
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
             // import nvidia profile
-            ("Fortnite.nip", async () => await ProcessActions.ImportProfile("Fortnite.nip"), () => NVIDIA == true && Fortnite == true),
+            ("Importing Fortnite profile", async () => await ProcessActions.ImportProfile("Fortnite.nip"), () => NVIDIA == true && Fortnite == true),
 
             // import fortnite settings
             ("Importing Fortnite settings", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c mkdir ""%LocalAppData%\FortniteGame\Saved\Config\WindowsClient"""), () => Fortnite == true),
@@ -42,6 +42,9 @@ public static class GamesStage
             ("Creating Fortnite QoS Policy", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\QoS\FortniteClient-Win64-Shipping.exe"" /v ""Remote IP Prefix Length"" /t REG_SZ /d ""*"" /f"), () => Fortnite == true),
             ("Creating Fortnite QoS Policy", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\QoS\FortniteClient-Win64-Shipping.exe"" /v ""DSCP Value"" /t REG_SZ /d ""46"" /f"), () => Fortnite == true),
             ("Creating Fortnite QoS Policy", async () => await ProcessActions.RunPowerShell(@"New-NetQosPolicy -Name ""FortniteClient-Win64-Shipping.exe"" -AppPathNameMatchCondition ""FortniteClient-Win64-Shipping.exe"" -Precedence 127 -DSCPAction 46 -IPProtocol Both"), () => Fortnite == true),
+        
+            // create presentation mode entries
+
         };
 
         var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();

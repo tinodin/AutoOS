@@ -47,8 +47,8 @@ public static class BcdStage
             // disable elam drivers
             ("Disabling ELAM drivers", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set disableelamdrivers Yes"), null),
 
-            // disable the trusted platform module (tpm)
-            ("Disabling the Trusted Platform Module (TPM)", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set tpmbootentropy ForceDisable"), null),
+            //// disable the trusted platform module (tpm)
+            //("Disabling the Trusted Platform Module (TPM)", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set tpmbootentropy ForceDisable"), null),
 
             // disable the virtual secure mode
             ("Disabling the Virtual Secure Mode (VSM)", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set vsmlaunchtype Off"), null),

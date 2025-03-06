@@ -92,11 +92,11 @@ public sealed partial class InstallPage : Page
         await ServicesStage.Run();
         await CleanupStage.Run();
 
-        //InstallPage.Status.Text = "Installation finished";
-        //InstallPage.Info.Severity = InfoBarSeverity.Success;
-        //InstallPage.Progress.Foreground = ProcessActions.GetColor("LightSuccess", "DarkSuccess");
-        //InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightSuccess", "DarkSuccess");
+        InstallPage.Status.Text = "Installation finished.";
+        InstallPage.Info.Severity = InfoBarSeverity.Success;
+        InstallPage.Progress.Foreground = ProcessActions.GetColor("LightSuccess", "DarkSuccess");
+        InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightSuccess", "DarkSuccess");
 
-        //await ProcessActions.RunRestart();
+        await ProcessActions.RunRestart();
     }
 }

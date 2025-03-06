@@ -8,6 +8,8 @@ public static class TimerStage
 {
     public static async Task Run()
     {
+        bool? Reserve = PreparingStage.Reserve;
+
         InstallPage.Status.Text = "Configuring Timer Resolution...";
 
         string previousTitle = string.Empty;
@@ -23,7 +25,10 @@ public static class TimerStage
 
             // apply manually
             ("Applying Timer Resolution " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "RequestedResolution", null)?.ToString(), async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "TimerResolution", "SetTimerResolution.exe"), Arguments = "--resolution " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "RequestedResolution", null)?.ToString() + " --no-console", CreateNoWindow = true }))), null),
-        };
+        
+            // reserve cpus
+            ("Reserving CPU " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GpuAffinity", null)?.ToString() + " and" + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "RequestedResolution", null)?.ToString(), async () => await ProcessActions.RunCustom(async () => await Task.Run(() => { using (var key = Registry.LocalMachine.OpenSubKey("SYSTEM\\CurrentControlSet\\Control\\Session Manager\\kernel", true)) key.SetValue("ReservedCpuSets", BitConverter.GetBytes((long)(1 << (int)Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GpuAffinity", 0)) | (long)(1 << (int)Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciAffinity", 0))).Concat(new byte[8 - BitConverter.GetBytes((long)(1 << (int)Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GpuAffinity", 0)) | (long)(1 << (int)Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciAffinity", 0))).Length]).ToArray(), RegistryValueKind.Binary); })), null),
+    };
 
         var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();
         var uniqueTitles = filteredActions.Select(a => a.Title).Distinct().ToList();
@@ -60,6 +65,7 @@ public static class TimerStage
             InstallPage.Progress.Value += incrementPerTitle;
 
             previousTitle = title;
+            
         }
     }
 }

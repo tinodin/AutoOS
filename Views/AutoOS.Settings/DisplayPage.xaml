@@ -47,7 +47,7 @@
                 </dev:SettingsGroup.Items>
             </dev:SettingsGroup>
             <StackPanel x:Name="CruInfo"/>
-            <Border Height="60"
+            <Border Height="95"
                     Background="Transparent"/>
         </StackPanel>
     </ScrollView>

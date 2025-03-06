@@ -37,7 +37,7 @@
                 </dev:SettingsGroup.Items>
             </dev:SettingsGroup>
             <StackPanel x:Name="TimerInfo"/>
-            <Border Height="25"
+            <Border Height="95"
                     Background="Transparent"/>
         </StackPanel>
     </ScrollView>

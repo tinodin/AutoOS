@@ -110,7 +110,7 @@
                 </dev:SettingsGroup.Content>
             </dev:SettingsGroup>
             <StackPanel x:Name="ServiWinInfo"/>
-            <Border Height="60"
+            <Border Height="95"
                     Background="Transparent"/>
         </StackPanel>
     </ScrollView>

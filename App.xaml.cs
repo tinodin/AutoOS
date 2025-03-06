@@ -1,8 +1,8 @@
 ﻿using Microsoft.UI.Windowing;
 using Microsoft.Win32;
 using Microsoft.Windows.AppLifecycle;
-using Windows.Graphics;
 using System.Diagnostics;
+using Windows.Graphics;
 
 namespace AutoOS
 {
@@ -22,7 +22,7 @@ namespace AutoOS
 
         protected override void OnLaunched(LaunchActivatedEventArgs args)
         {
-            Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", "Installed", RegistryValueKind.String);
+            //Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", "Installed", RegistryValueKind.String);
             //Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", 2, RegistryValueKind.DWord);
 
             string stage = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS")?.GetValue("Stage") as string;
@@ -56,17 +56,19 @@ namespace AutoOS
 
                         ThemeService = new ThemeService(MainWindow);
 
-                        var displayArea = DisplayArea.GetFromWindowId(MainWindow.AppWindow.Id, DisplayAreaFallback.Primary);
-                        int screenWidth = displayArea.WorkArea.Width;
-                        int screenHeight = displayArea.WorkArea.Height;
+                        Window window = MainWindow;
+                        var monitor = DisplayMonitorHelper.GetMonitorInfo(window);
+                        int X = (int)monitor.RectMonitor.Width;
+                        int Y = (int)monitor.RectMonitor.Height;
 
-                        Debug.WriteLine(screenWidth);
-                        Debug.WriteLine(screenHeight);
                         int windowWidth = 340;
                         int windowHeight = 130;
 
-                        int posX = screenWidth - windowWidth - 20;
-                        int posY = screenHeight - windowHeight - 20;
+                        int posX = X - windowWidth - 10;
+                        int posY = Y - windowHeight - 53;
+
+                        Debug.WriteLine(posX);
+                        Debug.WriteLine(posY);
 
                         MainWindow.AppWindow.MoveAndResize(new RectInt32(posX, posY, windowWidth, windowHeight));
 
@@ -95,19 +97,19 @@ namespace AutoOS
 
                         //ThemeService = new ThemeService(MainWindow);
 
-                        //ThemeService.SetBackdropType(BackdropType.AcrylicBase);
+                        //Window window = MainWindow;
+                        //var monitor = DisplayMonitorHelper.GetMonitorInfo(window);
+                        //int X = (int)monitor.RectMonitor.Width;
+                        //int Y = (int)monitor.RectMonitor.Height;
 
-                        //var displayArea = DisplayArea.GetFromWindowId(MainWindow.AppWindow.Id, DisplayAreaFallback.Primary);
-                        //int screenWidth = displayArea.WorkArea.Width;
-                        //int screenHeight = displayArea.WorkArea.Height;
-
-                        //Debug.WriteLine(screenWidth);
-                        //Debug.WriteLine(screenHeight);
                         //int windowWidth = 340;
                         //int windowHeight = 130;
 
-                        //int posX = screenWidth - windowWidth - 20;
-                        //int posY = screenHeight - windowHeight - 20;
+                        //int posX = X - windowWidth - 10;
+                        //int posY = Y - windowHeight - 53;
+
+                        //Debug.WriteLine(posX);
+                        //Debug.WriteLine(posY);
 
                         //MainWindow.AppWindow.MoveAndResize(new RectInt32(posX, posY, windowWidth, windowHeight));
 
