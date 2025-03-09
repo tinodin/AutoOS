@@ -1,6 +1,5 @@
-﻿using Microsoft.Win32;
-using AutoOS.Views.Installer.Actions;
-using AutoOS.Views.Installer.Stages;
+﻿using AutoOS.Views.Installer.Stages;
+using Microsoft.Win32;
 
 namespace AutoOS.Views.Installer;
 
@@ -10,18 +9,18 @@ public sealed partial class InstallPage : Page
     public static ProgressBar Progress { get; private set; }
     public static InfoBar Info { get; private set; }
     public static Microsoft.UI.Xaml.Controls.ProgressRing ProgressRingControl { get; private set; }
+    public static Button ResumeButton{ get; private set; }
 
     public InstallPage()
     {
         InitializeComponent();
-        InitializeView();
+        Loaded += InstallPage_Loaded;
     }
 
-    private async void InitializeView() 
+    private void InstallPage_Loaded(object sender, RoutedEventArgs e)
     {
+        // get navview
         var navView = MainWindow.Instance.GetNavView();
-
-        await Task.Delay(125);
 
         // disable all menu items
         foreach (var item in navView.MenuItems.OfType<NavigationViewItem>())
@@ -39,6 +38,7 @@ public sealed partial class InstallPage : Page
         Progress = ProgressBar;
         Info = InfoBar;
         ProgressRingControl = ProgressRingItem;
+        ResumeButton = ResumeButtonItem;
 
         using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
         {
@@ -55,6 +55,11 @@ public sealed partial class InstallPage : Page
                 ExecuteSecondStage();
             }
         }
+    }
+
+    private void ResumeButton_Click(object sender, RoutedEventArgs e)
+    {
+        
     }
 
     private async void ExecuteFirstStage() 
@@ -91,12 +96,5 @@ public sealed partial class InstallPage : Page
         await TimerStage.Run();
         await ServicesStage.Run();
         await CleanupStage.Run();
-
-        InstallPage.Status.Text = "Installation finished.";
-        InstallPage.Info.Severity = InfoBarSeverity.Success;
-        InstallPage.Progress.Foreground = ProcessActions.GetColor("LightSuccess", "DarkSuccess");
-        InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightSuccess", "DarkSuccess");
-
-        await ProcessActions.RunRestart();
     }
 }

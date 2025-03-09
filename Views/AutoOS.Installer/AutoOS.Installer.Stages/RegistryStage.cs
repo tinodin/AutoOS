@@ -494,6 +494,7 @@ public static class RegistryStage
             ("Optimizing Microsoft Edge settings", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge"" /v SearchInSidebarEnabled /t REG_DWORD /d 0 /f"), null),
             ("Optimizing Microsoft Edge settings", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\EdgeUI"" /v DisableMFUTracking /t REG_DWORD /d 1 /f"), null),
             ("Optimizing Microsoft Edge settings", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\EdgeUI"" /v DisableHelpSticker /t REG_DWORD /d 1 /f"), null),
+            ("Optimizing Microsoft Edge settings", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\EdgeUpdate"" /v CreateDesktopShortcutDefault /t REG_DWORD /d 0 /f"), null),
 
             // restrict internet communication
             ("Restricting internet communication", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Policies\Microsoft\InternetManagement"" /v RestrictCommunication /t REG_DWORD /d 1 /f"), null),
@@ -758,10 +759,26 @@ public static class RegistryStage
                 catch (Exception ex)
                 {
                     InstallPage.Info.Title = ex.Message;
-                    InstallPage.Progress.ShowError = true;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
+                    InstallPage.Progress.Foreground = ProcessActions.GetColor("LightError", "DarkError");
                     InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightError", "DarkError");
-                    return;
+                    InstallPage.ProgressRingControl.Visibility = Visibility.Collapsed;
+                    InstallPage.ResumeButton.Visibility = Visibility.Visible;
+
+                    var tcs = new TaskCompletionSource<bool>();
+
+                    InstallPage.ResumeButton.Click += (sender, e) =>
+                    {
+                        tcs.TrySetResult(true);
+                        InstallPage.Info.Severity = InfoBarSeverity.Informational;
+                        InstallPage.Progress.Foreground = ProcessActions.GetColor("LightNormal", "DarkNormal");
+                        InstallPage.ProgressRingControl.Foreground = null;
+                        InstallPage.ProgressRingControl.Visibility = Visibility.Visible;
+                        InstallPage.ResumeButton.Visibility = Visibility.Collapsed;
+
+                    };
+
+                    await tcs.Task;
                 }
             }
 

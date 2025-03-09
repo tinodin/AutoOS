@@ -50,10 +50,26 @@ public static class EventTraceSessionsStage
                 catch (Exception ex)
                 {
                     InstallPage.Info.Title = ex.Message;
-                    InstallPage.Progress.ShowError = true;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
+                    InstallPage.Progress.Foreground = ProcessActions.GetColor("LightError", "DarkError");
                     InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightError", "DarkError");
-                    return;
+                    InstallPage.ProgressRingControl.Visibility = Visibility.Collapsed;
+                    InstallPage.ResumeButton.Visibility = Visibility.Visible;
+
+                    var tcs = new TaskCompletionSource<bool>();
+
+                    InstallPage.ResumeButton.Click += (sender, e) =>
+                    {
+                        tcs.TrySetResult(true);
+                        InstallPage.Info.Severity = InfoBarSeverity.Informational;
+                        InstallPage.Progress.Foreground = ProcessActions.GetColor("LightNormal", "DarkNormal");
+                        InstallPage.ProgressRingControl.Foreground = null;
+                        InstallPage.ProgressRingControl.Visibility = Visibility.Visible;
+                        InstallPage.ResumeButton.Visibility = Visibility.Collapsed;
+
+                    };
+
+                    await tcs.Task;
                 }
             }
 

@@ -49,9 +49,9 @@ public static class ProcessActions
 
     public static async Task RunConnectionCheck()
     {
-        InstallPage.Progress.ShowPaused = true;
         InstallPage.Info.Severity = InfoBarSeverity.Warning;
-        InstallPage.ProgressRingControl.Foreground = GetColor("LightPause", "DarkPause");
+        InstallPage.Progress.Foreground = ProcessActions.GetColor("LightPause", "DarkPause");
+        InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightPause", "DarkPause");
 
         await Task.Delay(1000);
 
@@ -64,8 +64,8 @@ public static class ProcessActions
                     var response = await httpClient.GetAsync("http://www.google.com");
                     if (response.IsSuccessStatusCode)
                     {
-                        InstallPage.Progress.ShowPaused = false;
                         InstallPage.Info.Severity = InfoBarSeverity.Informational;
+                        InstallPage.Progress.Foreground = ProcessActions.GetColor("LightNormal", "DarkNormal");
                         InstallPage.ProgressRingControl.Foreground = null;
                         InstallPage.Info.Title = "Internet connection successfully established...";
                         await Task.Delay(500);
@@ -158,8 +158,8 @@ public static class ProcessActions
                     isPaused = false;
                     uiContext?.Post(_ =>
                     {
-                        InstallPage.Progress.ShowPaused = false;
                         InstallPage.Info.Severity = InfoBarSeverity.Informational;
+                        InstallPage.Progress.Foreground = ProcessActions.GetColor("LightNormal", "DarkNormal");
                         InstallPage.ProgressRingControl.Foreground = null;
                         InstallPage.Info.Title = $"{title} ({speedMB:F1} MB/s - {receivedMB:F2} MB of {totalMB:F2} MB)";
                     }, null);
@@ -172,9 +172,9 @@ public static class ProcessActions
                     isPaused = true;
                     uiContext?.Post(_ =>
                     {
-                        InstallPage.Progress.ShowPaused = true;
                         InstallPage.Info.Severity = InfoBarSeverity.Warning;
-                        InstallPage.ProgressRingControl.Foreground = GetColor("LightPause", "DarkPause");
+                        InstallPage.Progress.Foreground = ProcessActions.GetColor("LightPause", "DarkPause");
+                        InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightPause", "DarkPause");
                         InstallPage.Info.Title = $"{title} ({speedMB:F1} MB/s - {receivedMB:F2} MB of {totalMB:F2} MB - Waiting for internet connection to reestablish...)";
                     }, null);
                 }

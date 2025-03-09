@@ -32,7 +32,6 @@ public sealed partial class ServicesPage : Page
         GetStartMenuState();
         GetTaskManagerState();
         GetLaptopState();
-        GetFACEITState();
         GetGTAState();
         GetAMDVRRState();
 
@@ -948,118 +947,6 @@ public sealed partial class ServicesPage : Page
             ServiceInfo.Children.Add(new InfoBar
             {
                 Title = Laptop.IsChecked == true ? "Successfully enabled Laptop Keyboard support." : "Successfully disabled Laptop Keyboard support.",
-                IsClosable = false,
-                IsOpen = true,
-                Severity = InfoBarSeverity.Success,
-                Margin = new Thickness(5)
-            });
-
-            // delay
-            await Task.Delay(2000);
-
-            // remove infobar
-            ServiceInfo.Children.Clear();
-        }
-    }
-
-    private void GetFACEITState()
-    {
-        // define services and drivers
-        var drivers = new[] { "# FileCrypt" };
-
-        // check state
-        FACEIT.IsChecked = drivers.All(driver => listContent.Any(line => line.Trim() == driver));
-
-        isInitializingFACEITState = false;
-    }
-
-    private async void FACEIT_Checked(object sender, RoutedEventArgs e)
-    {
-        if (isInitializingFACEITState) return;
-
-        // remove infobar
-        ServiceInfo.Children.Clear();
-
-        // add infobar
-        ServiceInfo.Children.Add(new InfoBar
-        {
-            Title = FACEIT.IsChecked == true ? "Enabling FACEIT support..." : "Disabling FACEIT support...",
-            IsClosable = false,
-            IsOpen = true,
-            Severity = InfoBarSeverity.Informational,
-            Margin = new Thickness(5)
-        });
-
-        // read list
-        var lines = await File.ReadAllLinesAsync(list);
-
-        // define drivers
-        var drivers = new[] { "FileCrypt" };
-
-        // make changes
-        bool isChecked = FACEIT.IsChecked == true;
-        for (int i = 0; i < lines.Length; i++)
-        {
-            if (drivers.Contains(lines[i].Trim().TrimStart('#', ' ')))
-                lines[i] = (isChecked ? "# " + lines[i] : lines[i].TrimStart('#')).Trim();
-        }
-
-        // write changes
-        await File.WriteAllLinesAsync(list, lines);
-
-        if (!Services.IsOn)
-        {
-            // get latest build
-            string folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
-
-            // enable services
-            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, "Services-Enable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
-        }
-
-        // build service list
-        await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $@"-U:T -P:E -Wait -ShowWindowMode:Hide ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "service-list-builder.exe")}"" --config ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "lists.ini")}"" --disable-service-warning", CreateNoWindow = true }).WaitForExitAsync();
-
-        if (!Services.IsOn)
-        {
-            // get latest build
-            string folderName = Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
-
-            // disable services
-            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "build", folderName, "Services-Disable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
-
-            // remove infobar
-            ServiceInfo.Children.Clear();
-
-            // add infobar
-            var infoBar = new InfoBar
-            {
-                Title = FACEIT.IsChecked == true ? "Successfully enabled FACEIT support. A restart is required to apply the change." : "Successfully disabled FACEIT support. A restart is required to apply the change.",
-                IsClosable = false,
-                IsOpen = true,
-                Severity = InfoBarSeverity.Success,
-                Margin = new Thickness(5)
-            };
-
-            // add restart button
-            infoBar.ActionButton = new Button
-            {
-                Content = "Restart",
-                HorizontalAlignment = HorizontalAlignment.Right
-            };
-            ((Button)infoBar.ActionButton).Click += (s, args) =>
-            Process.Start("shutdown", "/r /f /t 0");
-
-            ServiceInfo.Children.Add(infoBar);
-        }
-        else
-        {
-            // remove infobar
-            ServiceInfo.Children.Clear();
-
-            // add infobar
-            ServiceInfo.Children.Add(new InfoBar
-            {
-                Title = FACEIT.IsChecked == true ? "Successfully enabled FACEIT support." : "Successfully disabled FACEIT support.",
                 IsClosable = false,
                 IsOpen = true,
                 Severity = InfoBarSeverity.Success,

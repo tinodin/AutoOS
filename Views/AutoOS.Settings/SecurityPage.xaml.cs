@@ -330,55 +330,77 @@ public sealed partial class SecurityPage: Page
         });
 
         // toggle dep
-        var process = new Process
+        var output = Process.Start(new ProcessStartInfo("cmd.exe", $"/c {(DEP.IsOn ? "bcdedit /set nx OptIn" : "bcdedit /set nx AlwaysOff")}"  ) { CreateNoWindow = true, RedirectStandardOutput = true }).StandardOutput.ReadToEnd();
+
+        if (output.Contains("error"))
         {
-            StartInfo = new ProcessStartInfo
+            // delay
+            await Task.Delay(500);
+
+            // remove infobar
+            WindowsDefenderInfo.Children.Clear();
+
+            // toggle back
+            isInitializingDEPState = true;
+            DEP.IsOn = !DEP.IsOn;
+            isInitializingDEPState = false;
+
+            // add infobar
+            WindowsDefenderInfo.Children.Add(new InfoBar
             {
-                FileName = "cmd.exe",
-                Arguments = $"/c {(DEP.IsOn ? "bcdedit /set nx OptIn" : "bcdedit /set nx AlwaysOff")}",
-                CreateNoWindow = true
-            }
-        };
-        process.Start();
-        await process.WaitForExitAsync();
+                Title = "Failed to disable Data Execution Prevention (DEP) because secure boot is enabled.",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Error,
+                Margin = new Thickness(5)
+            });
 
-        // delay
-        await Task.Delay(500);
-
-        // remove infobar
-        WindowsDefenderInfo.Children.Clear();
-
-        // add infobar
-        var infoBar = new InfoBar
-        {
-            Title = DEP.IsOn ? "Successfully enabled Data Execution Prevention (DEP)." : "Successfully disabled Data Execution Prevention (DEP).",
-            IsClosable = false,
-            IsOpen = true,
-            Severity = InfoBarSeverity.Success,
-            Margin = new Thickness(5)
-        };
-        WindowsDefenderInfo.Children.Add(infoBar);
-
-        // add restart button if needed
-        if ((DEP.IsOn && policy == 0) || (!DEP.IsOn && policy == 2))
-        {
-            infoBar.Title += " A restart is required to apply the change.";
-            infoBar.ActionButton = new Button
-            {
-                Content = "Restart",
-                HorizontalAlignment = HorizontalAlignment.Right
-            };
-            ((Button)infoBar.ActionButton).Click += (s, args) =>
-            Process.Start("shutdown", "/r /f /t 0");
-        }
-        else
-        {
             // delay
             await Task.Delay(2000);
 
             // remove infobar
             WindowsDefenderInfo.Children.Clear();
-        }     
+        }
+        else
+        {
+            // delay
+            await Task.Delay(500);
+
+            // remove infobar
+            WindowsDefenderInfo.Children.Clear();
+
+            // add infobar
+            var infoBar = new InfoBar
+            {
+                Title = DEP.IsOn ? "Successfully enabled Data Execution Prevention (DEP)." : "Successfully disabled Data Execution Prevention (DEP).",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            };
+            WindowsDefenderInfo.Children.Add(infoBar);
+
+            // add restart button if needed
+            if ((DEP.IsOn && policy == 0) || (!DEP.IsOn && policy == 2))
+            {
+                infoBar.Title += " A restart is required to apply the change.";
+                infoBar.ActionButton = new Button
+                {
+                    Content = "Restart",
+                    HorizontalAlignment = HorizontalAlignment.Right
+                };
+                ((Button)infoBar.ActionButton).Click += (s, args) =>
+                Process.Start("shutdown", "/r /f /t 0");
+            }
+            else
+            {
+                // delay
+                await Task.Delay(2000);
+
+                // remove infobar
+                WindowsDefenderInfo.Children.Clear();
+            }
+        }  
     }
 
     private void GetSpectreMeltdownState()

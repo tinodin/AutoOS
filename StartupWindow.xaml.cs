@@ -28,9 +28,10 @@ namespace AutoOS.Views
                 p.IsAlwaysOnTop = true;
             }
 
-            InitializeView(); 
+            this.Activated += StartupWindow_Activated;
         }
-        private async void InitializeView()
+
+        private async void StartupWindow_Activated(object sender, WindowActivatedEventArgs e)
         {
             Status = StatusText;
             Progress = ProgressBar;

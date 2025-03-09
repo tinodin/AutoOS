@@ -29,7 +29,10 @@
                      IsOpen="True"
                      IsClosable="False">
                 <InfoBar.Content>
-                    <ProgressRing x:Name="ProgressRingItem" HorizontalAlignment="Right" Height="25" Width="25" Background="LightGray" IsIndeterminate="True" Margin="0,-50,10,0"></ProgressRing>  
+                    <StackPanel Orientation="Vertical">
+                        <ProgressRing x:Name="ProgressRingItem" HorizontalAlignment="Right" Height="25" Width="25" Background="LightGray" IsIndeterminate="True" Margin="0,-50,10,0"></ProgressRing>
+                        <Button x:Name="ResumeButtonItem" Content="Resume" Click="ResumeButton_Click" HorizontalAlignment="Right" Margin="0,-50,10,0" Visibility="Collapsed"></Button>
+                    </StackPanel>
                 </InfoBar.Content>
             </InfoBar>
             <Border Height="25"

@@ -195,6 +195,38 @@ public sealed partial class SchedulingPage : Page
     private async void Xhci_Changed(object sender, SelectionChangedEventArgs e)
     {
         if (isInitializingAffinities) return;
+        
+        int processorCount = Environment.ProcessorCount;
+
+        // remove infobar
+        AffinityInfo.Children.Clear();
+
+        // add infobar
+        if (processorCount >= 6)
+        {
+            AffinityInfo.Children.Add(new InfoBar
+            {
+                Title = "Applying XHCI Affinity to CPU " + XHCI.SelectedIndex + " and reserving it...",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Informational,
+                Margin = new Thickness(5)
+            });
+        }
+        else
+        {
+            AffinityInfo.Children.Add(new InfoBar
+            {
+                Title = "Applying XHCI Affinity to CPU " + XHCI.SelectedIndex + "...",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Informational,
+                Margin = new Thickness(5)
+            });
+        }
+
+        // delay
+        await Task.Delay(800);
 
         var query = "SELECT PNPDeviceID FROM Win32_USBController";
         foreach (ManagementObject obj in new ManagementObjectSearcher(query).Get())
@@ -212,8 +244,66 @@ public sealed partial class SchedulingPage : Page
                         binaryValue[selectedIndex / 8] = (byte)(1 << (selectedIndex % 8));
                         key.SetValue("AssignmentSetOverride", binaryValue, RegistryValueKind.Binary);
                     }
+
+                    key.SetValue("DevicePolicy", 4, RegistryValueKind.DWord);
                 }
             }
+        }
+
+        // apply reserved cpu sets if 6 cores or more
+        if (processorCount >= 6)
+        {
+            using (var key = Registry.LocalMachine.OpenSubKey("SYSTEM\\CurrentControlSet\\Control\\Session Manager\\kernel", true))
+            {
+                key.SetValue("ReservedCpuSets", BitConverter.GetBytes((long)(1 << GPU.SelectedIndex) | (long)(1 << XHCI.SelectedIndex)).Concat(new byte[8 - BitConverter.GetBytes((long)(1 << GPU.SelectedIndex) | (long)(1 << XHCI.SelectedIndex)).Length]).ToArray(), RegistryValueKind.Binary);
+            }
+        }
+
+        // delay
+        await Task.Delay(800);
+
+        // remove infobar
+        AffinityInfo.Children.Clear();
+
+        // add infobar
+        if (processorCount >= 6)
+        {
+            var infoBar = new InfoBar
+            {
+                Title = "Successfully applied XHCI Affinity to CPU " + XHCI.SelectedIndex + " and reserved it.",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            };
+            AffinityInfo.Children.Add(infoBar);
+
+            infoBar.Title += " A restart is required to apply the change.";
+            infoBar.ActionButton = new Button
+            {
+                Content = "Restart",
+                HorizontalAlignment = HorizontalAlignment.Right
+            };
+            ((Button)infoBar.ActionButton).Click += (s, args) =>
+            Process.Start("shutdown", "/r /f /t 0");
+        }
+        else
+        {
+            var infoBar = new InfoBar
+            {
+                Title = "Successfully applied XHCI Affinity to CPU " + XHCI.SelectedIndex + ".",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            };
+            AffinityInfo.Children.Add(infoBar);
+
+            // delay
+            await Task.Delay(2000);
+
+            // remove infobar
+            AffinityInfo.Children.Clear();
         }
     }
 

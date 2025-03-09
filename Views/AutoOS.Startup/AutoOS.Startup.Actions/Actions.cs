@@ -25,7 +25,7 @@ public static class StartupActions
 
     public static async Task RunConnectionCheck()
     {
-        StartupWindow.Progress.ShowPaused = true;
+        StartupWindow.Progress.Foreground = StartupActions.GetColor("LightPause", "DarkPause");
 
         await Task.Delay(1000);
 
@@ -38,7 +38,7 @@ public static class StartupActions
                     var response = await httpClient.GetAsync("http://www.google.com");
                     if (response.IsSuccessStatusCode)
                     {
-                        StartupWindow.Progress.ShowPaused = false;
+                        StartupWindow.Progress.Foreground = StartupActions.GetColor("LightNormal", "DarkNormal");
                         await Task.Delay(500);
                         break;
                     }
@@ -125,7 +125,7 @@ public static class StartupActions
                     isPaused = false;
                     uiContext?.Post(_ =>
                     {
-                        StartupWindow.Progress.ShowPaused = false;
+                        StartupWindow.Progress.Foreground = StartupActions.GetColor("LightNormal", "DarkNormal");
                         StartupWindow.Status.Text = $"{title} ({speedMB:F1} MB/s - {receivedMB:F2} MB of {totalMB:F2} MB)";
                     }, null);
                 }
@@ -137,7 +137,7 @@ public static class StartupActions
                     isPaused = true;
                     uiContext?.Post(_ =>
                     {
-                        StartupWindow.Progress.ShowPaused = true;
+                        StartupWindow.Progress.Foreground = StartupActions.GetColor("LightPause", "DarkPause");
                         StartupWindow.Status.Text = $"{title} ({speedMB:F1} MB/s - {receivedMB:F2} MB of {totalMB:F2} MB - Waiting for internet connection to reestablish...)";
                     }, null);
                 }

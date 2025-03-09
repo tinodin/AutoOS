@@ -26,7 +26,6 @@ public sealed partial class ServicesPage : Page
         GetStartMenuState();
         GetTaskManagerState();
         GetLaptopState();
-        GetFACEITState();
         GetAMDVRRState();
 
         Process.Start(new ProcessStartInfo
@@ -280,39 +279,6 @@ public sealed partial class ServicesPage : Page
 
         // make changes
         bool isChecked = Laptop.IsChecked == true;
-        for (int i = 0; i < lines.Length; i++)
-        {
-            if (drivers.Contains(lines[i].Trim().TrimStart('#', ' ')))
-                lines[i] = (isChecked ? "# " + lines[i] : lines[i].TrimStart('#')).Trim();
-        }
-
-        // write changes
-        await File.WriteAllLinesAsync(list, lines);
-    }
-
-    private void GetFACEITState()
-    {
-        // define services and drivers
-        var drivers = new[] { "# FileCrypt" };
-
-        // check state
-        FACEIT.IsChecked = drivers.All(driver => listContent.Any(line => line.Trim() == driver));
-
-        isInitializingFACEITState = false;
-    }
-
-    private async void FACEIT_Checked(object sender, RoutedEventArgs e)
-    {
-        if (isInitializingFACEITState) return;
-
-        // read list
-        var lines = await File.ReadAllLinesAsync(list);
-
-        // define drivers
-        var drivers = new[] { "FileCrypt" };
-
-        // make changes
-        bool isChecked = FACEIT.IsChecked == true;
         for (int i = 0; i < lines.Length; i++)
         {
             if (drivers.Contains(lines[i].Trim().TrimStart('#', ' ')))

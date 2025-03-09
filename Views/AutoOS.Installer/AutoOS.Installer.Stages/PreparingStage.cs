@@ -1,7 +1,7 @@
 ﻿using AutoOS.Views.Installer.Actions;
 using Microsoft.Win32;
-using System.Management;
 using System.Diagnostics;
+using System.Management;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -80,8 +80,8 @@ public static class PreparingStage
         InstallPage.Status.Text = "Preparing...";
         InstallPage.Info.Title = "Please wait...";
 
-        InstallPage.Progress.ShowPaused = true;
         InstallPage.Info.Severity = InfoBarSeverity.Warning;
+        InstallPage.Progress.Foreground = ProcessActions.GetColor("LightPause", "DarkPause");
         InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightPause", "DarkPause");
 
         await Task.Run(() =>
@@ -158,7 +158,7 @@ public static class PreparingStage
                 Discord = key?.GetValue("Messaging")?.ToString().Contains("Discord");
                 EpicGames = key?.GetValue("Launchers")?.ToString().Contains("Epic Games");
                 Steam = key?.GetValue("Launchers")?.ToString().Contains("Steam");
-                Scheduling = key?.GetValue("Affinity")?.ToString().Contains("Manual");
+                Scheduling = key?.GetValue("Affinities")?.ToString() == "Automatic";
             }
 
             Rename = "System Product Name".Equals(Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\BIOS", "SystemProductName", "")?.ToString(), StringComparison.Ordinal);
@@ -208,5 +208,9 @@ public static class PreparingStage
 
             Reserve = Environment.ProcessorCount >= 6;
         });
+
+        InstallPage.Info.Severity = InfoBarSeverity.Informational;
+        InstallPage.Progress.Foreground = ProcessActions.GetColor("LightNormal", "DarkNormal");
+        InstallPage.ProgressRingControl.Foreground = null;
     }
 }

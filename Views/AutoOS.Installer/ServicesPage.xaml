@@ -73,13 +73,6 @@
                                   Padding="22,5,0,0"/>
                     </dev:SettingsCard>
                     <dev:SettingsCard ContentAlignment="Left">
-                        <CheckBox x:Name="FACEIT"
-                                  Click="FACEIT_Checked"
-                                  Content="FACEIT support"
-                                  Margin="0,0,0,15"
-                                  Padding="22,5,0,0"/>
-                    </dev:SettingsCard>
-                    <dev:SettingsCard ContentAlignment="Left">
                         <CheckBox x:Name="AMDVRR"
                                   Click="AMDVRR_Checked"
                                   Content="AMD Variable Refresh Rate (VRR) / FreeSync support"

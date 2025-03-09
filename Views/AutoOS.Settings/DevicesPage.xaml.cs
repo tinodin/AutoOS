@@ -347,11 +347,9 @@ public sealed partial class DevicesPage : Page
         // handle error
         if (error.Contains("Exception") || !output.Contains("Write"))
         {
-            isInitializingIMODState = true;
-
             // toggle back
+            isInitializingIMODState = true;
             IMOD.IsOn = !IMOD.IsOn;
-
             isInitializingIMODState = false;
 
             // remove infobar

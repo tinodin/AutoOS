@@ -17,9 +17,6 @@ public static class DeviceStage
 
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
-            // disable motherboard resources
-            ("Disabling motherboard resources", async () => await ProcessActions.RunApplication("DevManView", "DevManView.exe", @"/disable ""Motherboard resources"""), null),
-
             // disable write-cache buffer flushing on all drives
             ("Disabling write-cache buffer flushing on all drives", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"cmd /c for /f ""tokens=*"" %i in ('reg query ""HKLM\SYSTEM\CurrentControlSet\Enum\SCSI""^| findstr ""HKEY""') do for /f ""tokens=*"" %a in ('reg query ""%i""^| findstr ""HKEY""') do reg.exe add ""%a\Device Parameters\Disk"" /v ""CacheIsPowerProtected"" /t REG_DWORD /d 1 /f > NUL 2>&1 & for /f ""tokens=*"" %i in ('reg query ""HKLM\SYSTEM\CurrentControlSet\Enum\SCSI""^| findstr ""HKEY""') do for /f ""tokens=*"" %a in ('reg query ""%i""^| findstr ""HKEY""') do reg.exe add ""%a\Device Parameters\Disk"" /v ""UserWriteCacheSetting"" /t REG_DWORD /d 1 /f"), null),
 
@@ -43,10 +40,10 @@ public static class DeviceStage
             // disable hid devices
             ("Disabling Human Interface Devices (HID)", async () => await ProcessActions.RunPowerShell("Get-PnpDevice -Class HIDClass | Where-Object { $_.FriendlyName -match 'HID-compliant (consumer control device|device|game controller|system controller|vendor-defined device)' -and $_.FriendlyName -notmatch 'Mouse|Keyboard'} | Disable-PnpDevice -Confirm:$false"), () => HID == false),
 
-            // save xhci interrupt moderation state
+            // save xhci interrupt moderation (imod) data
             ("Saving XHCI Interrupt Moderation (IMOD) data", async () => await ProcessActions.RunPowerShellScript("imod.ps1", $"-save \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}\""), null),
 
-            // disable xhci interrupt moderation
+            // disable xhci interrupt moderation (imod)
             ("Disabling XHCI Interrupt Moderation (IMOD)", async () => await ProcessActions.RunPowerShellScript("imod.ps1", $"-disable \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}\""), () => IMOD == false),
 
             // disable reserved storage
@@ -87,10 +84,26 @@ public static class DeviceStage
                 catch (Exception ex)
                 {
                     InstallPage.Info.Title = ex.Message;
-                    InstallPage.Progress.ShowError = true;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
+                    InstallPage.Progress.Foreground = ProcessActions.GetColor("LightError", "DarkError");
                     InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightError", "DarkError");
-                    return;
+                    InstallPage.ProgressRingControl.Visibility = Visibility.Collapsed;
+                    InstallPage.ResumeButton.Visibility = Visibility.Visible;
+
+                    var tcs = new TaskCompletionSource<bool>();
+
+                    InstallPage.ResumeButton.Click += (sender, e) =>
+                    {
+                        tcs.TrySetResult(true);
+                        InstallPage.Info.Severity = InfoBarSeverity.Informational;
+                        InstallPage.Progress.Foreground = ProcessActions.GetColor("LightNormal", "DarkNormal");
+                        InstallPage.ProgressRingControl.Foreground = null;
+                        InstallPage.ProgressRingControl.Visibility = Visibility.Visible;
+                        InstallPage.ResumeButton.Visibility = Visibility.Collapsed;
+
+                    };
+
+                    await tcs.Task;
                 }
             }
 

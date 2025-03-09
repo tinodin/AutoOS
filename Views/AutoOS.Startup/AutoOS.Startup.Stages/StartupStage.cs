@@ -8,7 +8,6 @@ public static class StartupStage
 {
     public static async Task Run()
     {
-
         bool MSI = Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "MsiProfile", null) != null;
         bool HID = Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "HumanInterfaceDevices", "0")?.ToString() == "1"; 
         bool IMOD = Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciInterruptModeration", "0")?.ToString() == "1";
@@ -110,8 +109,7 @@ public static class StartupStage
                 catch (Exception ex)
                 {
                     StartupWindow.Status.Text = ex.Message;
-                    StartupWindow.Progress.ShowError = true;
-                    return;
+                    StartupWindow.Progress.Foreground = StartupActions.GetColor("LightError", "DarkError");
                 }
             }
 

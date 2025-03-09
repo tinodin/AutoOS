@@ -47,8 +47,8 @@ public static class BcdStage
             // disable elam drivers
             ("Disabling ELAM drivers", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set disableelamdrivers Yes"), null),
 
-            //// disable the trusted platform module (tpm)
-            //("Disabling the Trusted Platform Module (TPM)", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set tpmbootentropy ForceDisable"), null),
+            // disable trusted platform module (tpm) boot entropy
+            ("Disabling Trusted Platform Module (TPM) boot entropy", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set tpmbootentropy ForceDisable"), null),
 
             // disable the virtual secure mode
             ("Disabling the Virtual Secure Mode (VSM)", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set vsmlaunchtype Off"), null),
@@ -82,10 +82,26 @@ public static class BcdStage
                 catch (Exception ex)
                 {
                     InstallPage.Info.Title = ex.Message;
-                    InstallPage.Progress.ShowError = true;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
+                    InstallPage.Progress.Foreground = ProcessActions.GetColor("LightError", "DarkError");
                     InstallPage.ProgressRingControl.Foreground = ProcessActions.GetColor("LightError", "DarkError");
-                    return;
+                    InstallPage.ProgressRingControl.Visibility = Visibility.Collapsed;
+                    InstallPage.ResumeButton.Visibility = Visibility.Visible;
+
+                    var tcs = new TaskCompletionSource<bool>();
+
+                    InstallPage.ResumeButton.Click += (sender, e) =>
+                    {
+                        tcs.TrySetResult(true);
+                        InstallPage.Info.Severity = InfoBarSeverity.Informational;
+                        InstallPage.Progress.Foreground = ProcessActions.GetColor("LightNormal", "DarkNormal");
+                        InstallPage.ProgressRingControl.Foreground = null;
+                        InstallPage.ProgressRingControl.Visibility = Visibility.Visible;
+                        InstallPage.ResumeButton.Visibility = Visibility.Collapsed;
+
+                    };
+
+                    await tcs.Task;
                 }
             }
 
