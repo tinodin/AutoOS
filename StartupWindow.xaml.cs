@@ -1,6 +1,6 @@
-﻿using AutoOS.Views.Startup.Actions;
-using AutoOS.Views.Startup.Stages;
+﻿using AutoOS.Views.Startup.Stages;
 using Microsoft.UI.Windowing;
+using Microsoft.UI.Xaml.Media;
 
 namespace AutoOS.Views
 {
@@ -39,7 +39,7 @@ namespace AutoOS.Views
             await StartupStage.Run();
 
             StartupWindow.Status.Text = "Done.";
-            StartupWindow.Progress.Foreground = StartupActions.GetColor("LightSuccess", "DarkSuccess");
+            StartupWindow.Progress.Foreground = (Brush)Application.Current.Resources["SystemFillColorSuccess"];
 
             await Task.Delay(700);
 
