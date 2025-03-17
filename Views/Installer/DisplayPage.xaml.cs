@@ -58,11 +58,14 @@ public sealed partial class DisplayPage : Page
         await Task.Delay(300);
 
         // launch file picker
-        var fileTypeFilter = new List<string> { ".exe" };
-        var picker = await FileAndFolderPickerHelper.PickSingleFileAsync(App.MainWindow, fileTypeFilter);
-        if (picker != null)
+        var picker = new FilePicker();
+        picker.ShowAllFilesOption = false;
+        picker.FileTypeChoices.Add("CRU profile", new List<string> { "*.exe" });
+        var file = await picker.PickSingleFileAsync(App.MainWindow);
+
+        if (file != null)
         {
-            var properties = await picker.GetBasicPropertiesAsync();
+            var properties = await file.GetBasicPropertiesAsync();
             ulong fileSizeInBytes = properties.Size;
             const ulong expectedSize = 53 * 1024;
 
@@ -74,13 +77,13 @@ public sealed partial class DisplayPage : Page
                 // set value
                 using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
                 {
-                    key?.SetValue("CruProfile", picker.Path, RegistryValueKind.String);
+                    key?.SetValue("CruProfile", file.Path, RegistryValueKind.String);
                 }
 
                 // add infobar
                 var infoBar = new InfoBar
                 {
-                    Title = $"{picker.Path}",
+                    Title = $"{file.Path}",
                     IsClosable = true,
                     IsOpen = true,
                     Severity = InfoBarSeverity.Success,

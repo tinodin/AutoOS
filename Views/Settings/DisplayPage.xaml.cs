@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using Microsoft.Win32;
+using System.Diagnostics;
 
 namespace AutoOS.Views.Settings;
 
@@ -28,11 +29,14 @@ public sealed partial class DisplayPage : Page
         await Task.Delay(300);
 
         // launch file picker
-        var fileTypeFilter = new List<string> { ".exe" };
-        var picker = await FileAndFolderPickerHelper.PickSingleFileAsync(App.MainWindow, fileTypeFilter);
-        if (picker != null)
+        var picker = new FilePicker();
+        picker.ShowAllFilesOption = false;
+        picker.FileTypeChoices.Add("CRU profile", new List<string> { "*.exe" });
+        var file = await picker.PickSingleFileAsync(App.MainWindow);
+
+        if (file != null)
         {
-            var properties = await picker.GetBasicPropertiesAsync();
+            var properties = await file.GetBasicPropertiesAsync();
             ulong fileSizeInBytes = properties.Size;
             const ulong expectedSize = 53 * 1024;
 
@@ -55,13 +59,19 @@ public sealed partial class DisplayPage : Page
                 await Task.Delay(300);
 
                 // import profile
-                await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = picker.Path, Arguments = "/i" })?.WaitForExit());
+                await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = file.Path, Arguments = "/i" })?.WaitForExit());
 
                 // restart driver
                 await Task.Run(() => Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "CRU", "restart64.exe")) { Arguments = "/q" })?.WaitForExit());
 
                 // apply profile
-                await Task.Run(() => Process.Start(new ProcessStartInfo(@"C:\Program Files (x86)\MSI Afterburner\MSIAfterburner.exe") { Arguments = "/Profile1 /q" })?.WaitForExit());
+                using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
+                {
+                    if (key?.GetValue("MsiProfile") != null)
+                    {
+                        await Task.Run(() => Process.Start(new ProcessStartInfo(@"C:\Program Files (x86)\MSI Afterburner\MSIAfterburner.exe") { Arguments = "/Profile1 /q" })?.WaitForExit());
+                    }
+                }
 
                 // remove infobar
                 CruInfo.Children.Clear();
@@ -175,7 +185,13 @@ public sealed partial class DisplayPage : Page
         Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "CRU", "restart64.exe")) { Arguments = "/q" }).WaitForExit();
 
         // apply profile
-        await Task.Run(() => Process.Start(new ProcessStartInfo(@"C:\Program Files (x86)\MSI Afterburner\MSIAfterburner.exe") { Arguments = "/Profile1 /q" })?.WaitForExit());
+        using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
+        {
+            if (key?.GetValue("MsiProfile") != null)
+            {
+                await Task.Run(() => Process.Start(new ProcessStartInfo(@"C:\Program Files (x86)\MSI Afterburner\MSIAfterburner.exe") { Arguments = "/Profile1 /q" })?.WaitForExit());
+            }
+        }
 
         // remove infobar
         CruInfo.Children.Clear();
@@ -219,7 +235,13 @@ public sealed partial class DisplayPage : Page
         Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "CRU", "restart64.exe")) { Arguments = "/q" }).WaitForExit();
 
         // apply profile
-        await Task.Run(() => Process.Start(new ProcessStartInfo(@"C:\Program Files (x86)\MSI Afterburner\MSIAfterburner.exe") { Arguments = "/Profile1 /q" })?.WaitForExit());
+        using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
+        {
+            if (key?.GetValue("MsiProfile") != null)
+            {
+                await Task.Run(() => Process.Start(new ProcessStartInfo(@"C:\Program Files (x86)\MSI Afterburner\MSIAfterburner.exe") { Arguments = "/Profile1 /q" })?.WaitForExit());
+            }
+        }
 
         // remove infobar
         CruInfo.Children.Clear();

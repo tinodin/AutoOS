@@ -70,18 +70,6 @@
                     </dev:SettingsCard>
                 </dev:SettingsGroup.Items>
             </dev:SettingsGroup>
-            <dev:SettingsGroup Header="StartAllBack" 
-                               HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/StartAllBack.png}"
-                               Margin="0,0,0,10">
-                <dev:SettingsGroup.Content>
-                    <ComboBox x:Name="StartAllBack" 
-                              SelectionChanged="StartAllBack_Changed">
-                        <ComboBoxItem Content="Always"/>
-                        <ComboBoxItem Content="Toggle with services"/>
-                        <ComboBoxItem Content="Never"/>
-                    </ComboBox>
-                </dev:SettingsGroup.Content>
-            </dev:SettingsGroup>
             <Border Height="25"
                     Background="Transparent"/>
         </StackPanel>

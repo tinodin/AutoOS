@@ -22,7 +22,7 @@ namespace AutoOS.Views
                 App.Current.NavService
                     .Initialize(NavView, NavFrame, NavigationPageMappingsInstaller.PageDictionary)
                     .ConfigureJsonFile("Assets/NavViewMenu/Installer.json")
-                    .ConfigureDefaultPage(typeof(Installer.HomeLandingPage))
+                    .ConfigureDefaultPage(typeof(Installer.InstallPage))
                     .ConfigureTitleBar(AppTitleBar, false)
                     .ConfigureBreadcrumbBar(BreadCrumbNav, BreadcrumbPageMappings.PageDictionary);
                 TitleBarName = "AutoOS Installer";

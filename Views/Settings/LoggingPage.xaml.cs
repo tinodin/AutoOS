@@ -37,16 +37,23 @@ public sealed partial class LoggingPage : Page
         });
 
         // toggle event trace sessions
-        var process = new Process
+        if (ETS.IsOn)
         {
-            StartInfo = new ProcessStartInfo
+            var process = new Process
             {
-                FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NSudo", "NSudoLC.exe"),
-                Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide regedit /s \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", ETS.IsOn ? "ets-enable.reg" : "ets-disable.reg")}\"",
-                CreateNoWindow = true,
-            }
-        };
-        process.Start();
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NSudo", "NSudoLC.exe"),
+                    Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide regedit /s \"{Path.Combine(PathHelper.GetAppDataFolderPath(), "EventTraceSessions", "ets-enable.reg")}\"",
+                    CreateNoWindow = true,
+                }
+            };
+            process.Start();
+        }
+        else
+        {
+            Registry.LocalMachine.DeleteSubKeyTree(@"SYSTEM\CurrentControlSet\Control\WMI\Autologger", false);
+        }
 
         // delay
         await Task.Delay(500);

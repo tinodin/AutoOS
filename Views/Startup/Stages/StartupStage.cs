@@ -1,4 +1,5 @@
 ﻿using AutoOS.Views.Startup.Actions;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using System.Diagnostics;
 
@@ -79,9 +80,10 @@ public static class StartupStage
             ("Cleaning temp directories", async () => await StartupActions.RunNsudo("CurrentUser", @"cmd /c rd /s /q %temp%"), null),
             ("Cleaning temp directories", async () => await StartupActions.RunNsudo("CurrentUser", @"cmd /c md %temp%"), null),
 
-            // clean event logs
-            ("Cleaning event logs", async () => await StartupActions.RunPowerShell(@"Get-EventLog -LogName * | ForEach-Object { Clear-EventLog $_.Log }"), null),
-            ("Cleaning event logs", async () => await StartupActions.RunNsudo("CurrentUser", @"sc stop TrustedInstaller"), null),
+            // clean logs
+            ("Cleaning logs", async () => await StartupActions.RunPowerShell(@"Get-EventLog -LogName * | ForEach-Object { Clear-EventLog $_.Log }"), null),
+            ("Cleaning logs", async () => await StartupActions.RunNsudo("TrustedInstaller", @"powershell -Command ""Get-ChildItem -Path ""$env:SystemRoot"" -Filter *.log -File -Recurse -Force | Remove-Item -Recurse -Force"""), null),
+            ("Cleaning logs", async () => await StartupActions.RunNsudo("CurrentUser", @"sc stop TrustedInstaller"), null),
         };
 
         var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();
@@ -109,7 +111,7 @@ public static class StartupStage
                 catch (Exception ex)
                 {
                     StartupWindow.Status.Text = ex.Message;
-                    StartupWindow.Progress.Foreground = StartupActions.GetColor("LightError", "DarkError");
+                    StartupWindow.Progress.Foreground = (Brush)Application.Current.Resources["SystemFillColorCriticalBrush"];
                 }
             }
 
@@ -117,5 +119,12 @@ public static class StartupStage
 
             previousTitle = title;
         }
+
+        StartupWindow.Status.Text = "Done.";
+        StartupWindow.Progress.Foreground = new SolidColorBrush((Windows.UI.Color)Application.Current.Resources["SystemFillColorSuccess"]);
+
+        await Task.Delay(700);
+
+        Application.Current.Exit();
     }
 }

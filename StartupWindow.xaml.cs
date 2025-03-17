@@ -1,6 +1,5 @@
 ﻿using AutoOS.Views.Startup.Stages;
 using Microsoft.UI.Windowing;
-using Microsoft.UI.Xaml.Media;
 
 namespace AutoOS.Views
 {
@@ -15,7 +14,7 @@ namespace AutoOS.Views
             AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
             AppWindow.IsShownInSwitchers = false;
             SetTitleBar(AppTitleBar);
-
+            
             var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
             var windowId = Win32Interop.GetWindowIdFromWindow(hwnd);
 
@@ -28,22 +27,14 @@ namespace AutoOS.Views
                 p.IsAlwaysOnTop = true;
             }
 
-            this.Activated += StartupWindow_Activated;
+            StartupWindow_Loaded();
         }
 
-        private async void StartupWindow_Activated(object sender, WindowActivatedEventArgs e)
+        private async void StartupWindow_Loaded()
         {
             Status = StatusText;
             Progress = ProgressBar;
-
             await StartupStage.Run();
-
-            StartupWindow.Status.Text = "Done.";
-            StartupWindow.Progress.Foreground = (Brush)Application.Current.Resources["SystemFillColorSuccess"];
-
-            await Task.Delay(700);
-
-            Application.Current.Exit();
         }
     }
 }

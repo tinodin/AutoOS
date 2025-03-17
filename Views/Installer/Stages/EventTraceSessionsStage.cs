@@ -1,5 +1,6 @@
 ﻿using AutoOS.Views.Installer.Actions;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.Win32;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -14,16 +15,19 @@ public static class EventTraceSessionsStage
 
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
-            // create toggle scripts
-            ("Create toggle scripts", async () => await ProcessActions.RunNsudo("TrustedInstaller", $"reg export \"HKLM\\SYSTEM\\CurrentControlSet\\Control\\WMI\\Autologger\" \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "ets-enable.reg")}\""), null),
-            ("Create toggle scripts", async () => await ProcessActions.Sleep(500), null),
+            // saving event trace session (ets) data
+            ("Saving Event Trace Session (ETS) data", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg export ""HKLM\SYSTEM\CurrentControlSet\Control\WMI\Autologger"" ""C:\ets-enable.reg"""), null),
+            ("Saving Event Trace Session (ETS) data", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Directory.CreateDirectory(Path.Combine(PathHelper.GetAppDataFolderPath(), "EventTraceSessions")))), null),
+            ("Saving Event Trace Session (ETS) data", async () => await ProcessActions.RunNsudo("TrustedInstaller", @$"cmd /c move ""C:\ets-enable.reg"" ""{Path.Combine(PathHelper.GetAppDataFolderPath(), "EventTraceSessions", "ets-enable.reg")}"""), null),
+            ("Saving Event Trace Session (ETS) data", async () => await ProcessActions.Sleep(500), null),
 
             // disable event trace sessions
-            ("Disabling Event Trace Sessions (ETS)", async () => await ProcessActions.RunNsudo("TrustedInstaller", $"cmd /c reg import \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "ets-disable.reg")}\""), null),
+            ("Disabling Event Trace Sessions (ETS)", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Registry.LocalMachine.DeleteSubKeyTree(@"SYSTEM\CurrentControlSet\Control\WMI\Autologger", false) )), null),
+            ("Disabling Event Trace Sessions (ETS)", async () => await ProcessActions.Sleep(500), null),
 
             // disable sleep study
-            ("Disabling sleep study.", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"cmd /c for %a in (""SleepStudy"" ""Kernel-Processor-Power"" ""UserModePowerService"") do (wevtutil sl Microsoft-Windows-%~a/Diagnostic /e:false)"), null),
-            ("Create toggle scripts", async () => await ProcessActions.Sleep(500), null),
+            ("Disabling sleep study", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"cmd /c for %a in (""SleepStudy"" ""Kernel-Processor-Power"" ""UserModePowerService"") do (wevtutil sl Microsoft-Windows-%~a/Diagnostic /e:false)"), null),
+            ("Disabling sleep study", async () => await ProcessActions.Sleep(500), null),
         };
 
         var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();
@@ -50,7 +54,7 @@ public static class EventTraceSessionsStage
                 }
                 catch (Exception ex)
                 {
-                    InstallPage.Info.Title = ex.Message;
+                    InstallPage.Info.Title = InstallPage.Info.Title + ": " + ex.Message;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
                     InstallPage.Progress.Foreground = (Brush)Application.Current.Resources["SystemFillColorCriticalBrush"];
                     InstallPage.ProgressRingControl.Foreground = (Brush)Application.Current.Resources["SystemFillColorCriticalBrush"];

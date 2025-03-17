@@ -83,7 +83,7 @@ public sealed partial class SecurityPage: Page
 
         if (value == null)
         {
-            key?.SetValue("WakeOnDataExecutionPreventionLan", 0, RegistryValueKind.DWord);
+            key?.SetValue("DataExecutionPrevention", 0, RegistryValueKind.DWord);
         }
         else
         {

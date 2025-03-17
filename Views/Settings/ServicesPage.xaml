@@ -56,13 +56,6 @@
                                   Padding="22,5,0,0"/>
                     </dev:SettingsCard>
                     <dev:SettingsCard ContentAlignment="Left">
-                        <CheckBox x:Name="StartMenu"
-                                  Click="StartMenu_Checked"
-                                  Content="Windows Start Menu support"
-                                  Margin="0,0,0,15"
-                                  Padding="22,5,0,0"/>
-                    </dev:SettingsCard>
-                    <dev:SettingsCard ContentAlignment="Left">
                         <CheckBox x:Name="TaskManager"
                                   Click="TaskManager_Checked"
                                   Content="Task Manager support"

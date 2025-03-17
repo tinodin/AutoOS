@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace AutoOS.Views.Installer;
+﻿namespace AutoOS.Views.Installer;
 
 public sealed partial class ServicesPage : Page
 {
@@ -8,44 +6,37 @@ public sealed partial class ServicesPage : Page
     private bool isInitializingBluetoothState = true;
     private bool isInitializingCameraState = true;
     private bool isInitializingSnippingState = true;
-    private bool isInitializingStartMenuState = true;
     private bool isInitializingTaskManagerState = true;
     private bool isInitializingLaptopState = true;
-    private bool isInitializingFACEITState = true;
     private bool isInitializingAMDVRRState = true;
-    private string list = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "lists.ini");
-    private string[] listContent = File.ReadAllLines(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "lists.ini"));
+    private string list = Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "lists.ini");
    
     public ServicesPage()
     {
         InitializeComponent();
+        if (!File.Exists(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "lists.ini")))
+        {
+            Directory.CreateDirectory(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder"));
+            File.Copy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "lists.ini"), Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "lists.ini"));
+        }
         GetWIFIState();
         GetBluetoothState();
         GetCameraState();
         GetSnippingState();
-        GetStartMenuState();
         GetTaskManagerState();
         GetLaptopState();
         GetAMDVRRState();
-
-        Process.Start(new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c takeown /f \"{list}\" & icacls \"{list}\" /grant Everyone:F /T /C /Q",
-            UseShellExecute = false,
-            CreateNoWindow = true
-        });
     }
 
     private void GetWIFIState()
     {
         // define services and drivers
-        var services = new[] { "WlanSvc", "Dhcp", "EventLog", "Netman", "NetSetupSvc", "NlaSvc", "Wcmsvc" };
+        var services = new[] { "WlanSvc", "Dhcp", "EventLog", "Netman", "NetSetupSvc", "NlaSvc", "Wcmsvc", "WinHttpAutoProxySvc" };
         var drivers = new[] { "# tdx", "# vwififlt", "# Netwtw10", "# Netwtw14" };
 
         // check state
-        WIFI.IsChecked = services.All(service => listContent.Any(line => line.Trim() == service))
-                         && drivers.All(driver => listContent.Any(line => line.Trim() == driver));
+        WIFI.IsChecked = services.All(service => File.ReadAllLines(list).Any(line => line.Trim() == service))
+                         && drivers.All(driver => File.ReadAllLines(list).Any(line => line.Trim() == driver));
 
         isInitializingWIFIState = false;
     }
@@ -58,7 +49,7 @@ public sealed partial class ServicesPage : Page
         var lines = await File.ReadAllLinesAsync(list);
 
         // define services and drivers
-        var services = new[] { "WlanSvc", "Dhcp", "EventLog", "Netman", "NetSetupSvc", "NlaSvc", "Wcmsvc" };
+        var services = new[] { "WlanSvc", "Dhcp", "EventLog", "Netman", "NetSetupSvc", "NlaSvc", "Wcmsvc", "WinHttpAutoProxySvc" };
         var drivers = new[] { "tdx", "vwififlt", "Netwtw10", "Netwtw14" };
 
         // make changes
@@ -82,8 +73,8 @@ public sealed partial class ServicesPage : Page
         var drivers = new[] { "# BthA2dp", "# BthEnum", "# BthHFAud", "# BthHFEnum", "# BthLEEnum", "# BthMini", "# BTHMODEM", "# BthPan", "# BTHPORT", "# BTHUSB", "# HidBth", "# ibtusb", "# Microsoft_Bluetooth_AvrcpTransport", "# RFCOMM" };
         
         // check state
-        Bluetooth.IsChecked = services.All(service => listContent.Any(line => line.Trim() == service))
-                         && drivers.All(driver => listContent.Any(line => line.Trim() == driver));
+        Bluetooth.IsChecked = services.All(service => File.ReadAllLines(list).Any(line => line.Trim() == service))
+                         && drivers.All(driver => File.ReadAllLines(list).Any(line => line.Trim() == driver));
 
         isInitializingBluetoothState = false;
     }
@@ -119,7 +110,7 @@ public sealed partial class ServicesPage : Page
         var drivers = new[] { "# swenum" };
 
         // check state
-        Camera.IsChecked = drivers.All(driver => listContent.Any(line => line.Trim() == driver));
+        Camera.IsChecked = drivers.All(driver => File.ReadAllLines(list).Any(line => line.Trim() == driver));
 
         isInitializingCameraState = false;
     }
@@ -152,7 +143,7 @@ public sealed partial class ServicesPage : Page
         var services = new[] { "cbdhsvc", "CaptureService" };
 
         // check state
-        Snipping.IsChecked = services.All(service => listContent.Any(line => line.Trim() == service));
+        Snipping.IsChecked = services.All(service => File.ReadAllLines(list).Any(line => line.Trim() == service));
 
         isInitializingSnippingState = false;
     }
@@ -178,58 +169,14 @@ public sealed partial class ServicesPage : Page
         // write changes
         await File.WriteAllLinesAsync(list, lines);
     }
-
-    private void GetStartMenuState()
-    {
-        // define services and drivers
-        var services = new[] { "UdkUserSvc" };
-        var binaries = new[] { "# \\Windows\\System32\\ctfmon.exe", "# \\Windows\\System32\\RuntimeBroker.exe", "# \\Windows\\SystemApps\\ShellExperienceHost_cw5n1h2txyewy\\ShellExperienceHost.exe", "# \\Windows\\SystemApps\\Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy\\StartMenuExperienceHost.exe" };
-
-        // check state
-        StartMenu.IsChecked = services.All(service => listContent.Any(line => line.Trim() == service))
-                         && binaries.All(driver => listContent.Any(line => line.Trim() == driver));
-
-        isInitializingStartMenuState = false;
-    }
-
-    private async void StartMenu_Checked(object sender, RoutedEventArgs e)
-    {
-        if (isInitializingStartMenuState) return;
-
-        // read list
-        var lines = await File.ReadAllLinesAsync(list);
-
-        // define services and binaries
-        var services = new[] { "UdkUserSvc" };
-        var binaries = new[]
-        {
-        "\\Windows\\System32\\ctfmon.exe",
-        "\\Windows\\System32\\RuntimeBroker.exe",
-        "\\Windows\\SystemApps\\ShellExperienceHost_cw5n1h2txyewy\\ShellExperienceHost.exe",
-        "\\Windows\\SystemApps\\Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy\\StartMenuExperienceHost.exe"
-    };
-
-        // make changes
-        bool isChecked = StartMenu.IsChecked == true;
-        for (int i = 0; i < lines.Length; i++)
-        {
-            if (services.Contains(lines[i].Trim().TrimStart('#', ' ')))
-                lines[i] = (isChecked ? lines[i].TrimStart('#', ' ') : "# " + lines[i].TrimStart('#', ' ')).Trim();
-            if (binaries.Contains(lines[i].Trim().TrimStart('#', ' ')))
-                lines[i] = (isChecked ? "# " + lines[i] : lines[i].TrimStart('#')).Trim();
-        }
-
-        // write changes
-        await File.WriteAllLinesAsync(list, lines);
-    }
-
+  
     private void GetTaskManagerState()
     {
         // define services and drivers
         var drivers = new[] { "# pcw" };
 
         // check state
-        TaskManager.IsChecked = drivers.All(driver => listContent.Any(line => line.Trim() == driver));
+        TaskManager.IsChecked = drivers.All(driver => File.ReadAllLines(list).Any(line => line.Trim() == driver));
 
         isInitializingTaskManagerState = false;
     }
@@ -262,7 +209,7 @@ public sealed partial class ServicesPage : Page
         var drivers = new[] { "# msisadrv" };
 
         // check state
-        Laptop.IsChecked = drivers.All(driver => listContent.Any(line => line.Trim() == driver));
+        Laptop.IsChecked = drivers.All(driver => File.ReadAllLines(list).Any(line => line.Trim() == driver));
 
         isInitializingLaptopState = false;
     }
@@ -295,7 +242,7 @@ public sealed partial class ServicesPage : Page
         var services = new[] { "AMD External Events Utility" };
 
         // check state
-        AMDVRR.IsChecked = services.All(service => listContent.Any(line => line.Trim() == service));
+        AMDVRR.IsChecked = services.All(service => File.ReadAllLines(list).Any(line => line.Trim() == service));
 
         isInitializingAMDVRRState = false;
     }

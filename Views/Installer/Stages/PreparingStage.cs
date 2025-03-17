@@ -1,8 +1,10 @@
 ﻿using AutoOS.Views.Installer.Actions;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using System.Diagnostics;
 using System.Management;
-using Microsoft.UI.Xaml.Media;
+using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -29,7 +31,6 @@ public static class PreparingStage
     public static bool? ShowMyTaskbarOnAllDisplays;
     public static bool? AlwaysShowTrayIcons;
     public static bool? TaskbarAlignment;
-    public static bool? StartAllBack;
 
     public static bool? AppleMusic;
     public static bool? WOL;
@@ -56,8 +57,11 @@ public static class PreparingStage
 
     public static bool? uBlock;
     public static bool? SponsorBlock;
+    public static bool? ReturnYouTubeDislike;
     public static bool? Cookies;
     public static bool? DarkReader;
+    public static bool? Violentmonkey;
+    public static bool? Tampermonkey;
     public static bool? Shazam;
     public static bool? iCloud;
     public static bool? Bitwarden;
@@ -70,11 +74,14 @@ public static class PreparingStage
     public static bool? WhatsApp;
     public static bool? Discord;
     public static bool? EpicGames;
+    public static bool? EpicGamesAccount;
+    public static bool? EpicGamesGames;
     public static bool? Steam;
 
     public static bool? Scheduling;
     public static bool? Hyperthreading;
     public static bool? Reserve;
+    public static bool? TimerResolution;
 
     public static async Task Run()
     {
@@ -127,7 +134,6 @@ public static class PreparingStage
                 ShowMyTaskbarOnAllDisplays = key?.GetValue("ShowMyTaskbarOnAllDisplays")?.ToString() == "1";
                 AlwaysShowTrayIcons = key?.GetValue("AlwaysShowTrayIcons")?.ToString() == "1";
                 TaskbarAlignment = key?.GetValue("TaskbarAlignment")?.ToString() == "Left";
-                StartAllBack = key?.GetValue("StartAllBack")?.ToString() == "Always";
                 AppleMusic = key?.GetValue("Music")?.ToString() == "Apple Music";
                 WOL = key?.GetValue("WakeOnLan")?.ToString() == "1";
                 HID = key?.GetValue("HumanInterfaceDevices")?.ToString() == "1";
@@ -146,8 +152,11 @@ public static class PreparingStage
                 Arc = key?.GetValue("Browser")?.ToString() == "Arc";
                 uBlock = key?.GetValue("Extensions")?.ToString()?.Contains("uBlock Origin");
                 SponsorBlock = key?.GetValue("Extensions")?.ToString()?.Contains("SponsorBlock");
+                ReturnYouTubeDislike = key?.GetValue("Extensions")?.ToString()?.Contains("Return YouTube Dislike");
                 Cookies = key?.GetValue("Extensions")?.ToString()?.Contains("I still don't care about cookies");
                 DarkReader = key?.GetValue("Extensions")?.ToString()?.Contains("Dark Reader");
+                Violentmonkey = key?.GetValue("Extensions")?.ToString()?.Contains("Violentmonkey");
+                Tampermonkey = key?.GetValue("Extensions")?.ToString()?.Contains("Tampermonkey");
                 Shazam = key?.GetValue("Extensions")?.ToString()?.Contains("Shazam");
                 iCloud = key?.GetValue("Extensions")?.ToString()?.Contains("iCloud Passwords");
                 Bitwarden = key?.GetValue("Extensions")?.ToString()?.Contains("Bitwarden");
@@ -160,7 +169,44 @@ public static class PreparingStage
                 EpicGames = key?.GetValue("Launchers")?.ToString().Contains("Epic Games");
                 Steam = key?.GetValue("Launchers")?.ToString().Contains("Steam");
                 Scheduling = key?.GetValue("Affinities")?.ToString() == "Automatic";
+                TimerResolution = key?.GetValue("TimerResolution")?.ToString() == "Automatic";
             }
+
+            EpicGamesAccount = DriveInfo.GetDrives()
+                .Where(d => d.DriveType == DriveType.Fixed && d.Name != @"C:\")
+                .SelectMany(d =>
+                {
+                    string usersPath = Path.Combine(d.Name, "Users");
+                    if (!Directory.Exists(usersPath)) return Array.Empty<string>();
+
+                    return Directory.GetDirectories(usersPath)
+                        .Select(userDir => Path.Combine(userDir, "AppData", "Local", "EpicGamesLauncher", "Saved", "Config", "Windows", "GameUserSettings.ini"))
+                        .Where(File.Exists);
+                })
+                .Select(path => new FileInfo(path))
+                .Any(file =>
+                {
+                    string configContent = File.ReadAllText(file.FullName);
+                    Match dataMatch = Regex.Match(configContent, @"Data=([^\r\n]+)");
+
+                    return dataMatch.Success && dataMatch.Groups[1].Value.Length >= 1000;
+                });
+
+            EpicGamesGames = DriveInfo.GetDrives()
+                .Where(d => d.DriveType == DriveType.Fixed && d.Name != @"C:\")
+                .Select(d => Path.Combine(d.Name, "ProgramData", "Epic", "UnrealEngineLauncher", "LauncherInstalled.dat"))
+                .Where(File.Exists)
+                .Select(path => new FileInfo(path))
+                .OrderByDescending(f => f.LastWriteTime)
+                .Select(async file =>
+                {
+                    string jsonContent = await File.ReadAllTextAsync(file.FullName);
+                    var jsonObject = JsonNode.Parse(jsonContent);
+                    var installationList = jsonObject?["InstallationList"] as JsonArray;
+                    return installationList != null && installationList.Count > 0;
+                })
+                .Select(t => t.Result)
+                .FirstOrDefault(false);
 
             Rename = "System Product Name".Equals(Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\BIOS", "SystemProductName", "")?.ToString(), StringComparison.Ordinal);
 

@@ -11,13 +11,13 @@
     </application>
   </compatibility>
 
-	<!--  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+	<trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
 	  <security>
 		  <requestedPrivileges>
 			  <requestedExecutionLevel level="requireAdministrator" uiAccess="false"/>
 		  </requestedPrivileges>
 	  </security>
-  </trustInfo> -->
+  </trustInfo>
 
 	<application xmlns="urn:schemas-microsoft-com:asm.v3">
     <windowsSettings>

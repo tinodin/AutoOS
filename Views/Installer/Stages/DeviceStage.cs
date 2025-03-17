@@ -42,6 +42,7 @@ public static class DeviceStage
             ("Disabling Human Interface Devices (HID)", async () => await ProcessActions.RunPowerShell("Get-PnpDevice -Class HIDClass | Where-Object { $_.FriendlyName -match 'HID-compliant (consumer control device|device|game controller|system controller|vendor-defined device)' -and $_.FriendlyName -notmatch 'Mouse|Keyboard'} | Disable-PnpDevice -Confirm:$false"), () => HID == false),
 
             // save xhci interrupt moderation (imod) data
+            ("Saving XHCI Interrupt Moderation (IMOD) data", async () => await ProcessActions.RunNsudo("CurrentUser", $@"cmd /c takeown /f ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}"" & icacls ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}"" /grant Everyone:F /T /C /Q"), null),
             ("Saving XHCI Interrupt Moderation (IMOD) data", async () => await ProcessActions.RunPowerShellScript("imod.ps1", $"-save \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}\""), null),
 
             // disable xhci interrupt moderation (imod)
@@ -84,7 +85,7 @@ public static class DeviceStage
                 }
                 catch (Exception ex)
                 {
-                    InstallPage.Info.Title = ex.Message;
+                    InstallPage.Info.Title = InstallPage.Info.Title + ": " + ex.Message;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
                     InstallPage.Progress.Foreground = (Brush)Application.Current.Resources["SystemFillColorCriticalBrush"];
                     InstallPage.ProgressRingControl.Foreground = (Brush)Application.Current.Resources["SystemFillColorCriticalBrush"];

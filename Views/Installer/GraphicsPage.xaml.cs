@@ -133,11 +133,14 @@ public sealed partial class GraphicsPage : Page
         await Task.Delay(300);
 
         // launch file picker
-        var fileTypeFilter = new List<string> { ".cfg" };
-        var picker = await FileAndFolderPickerHelper.PickSingleFileAsync(App.MainWindow, fileTypeFilter);
-        if (picker != null)
+        var picker = new FilePicker();
+        picker.ShowAllFilesOption = false;
+        picker.FileTypeChoices.Add("MSI Afterburner profile", new List<string> { "*.cfg" });
+        var file = await picker.PickSingleFileAsync(App.MainWindow);
+
+        if (file != null)
         {
-            string fileContent = await FileIO.ReadTextAsync(picker);
+            string fileContent = await FileIO.ReadTextAsync(file);
 
             if (fileContent.Contains("[Startup]"))
             {
@@ -147,13 +150,13 @@ public sealed partial class GraphicsPage : Page
                 // set value
                 using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
                 {
-                    key?.SetValue("MsiProfile", picker.Path, RegistryValueKind.String);
+                    key?.SetValue("MsiProfile", file.Path, RegistryValueKind.String);
                 }
 
                 // add infobar
                 var infoBar = new InfoBar
                 {
-                    Title = $"{picker.Path}",
+                    Title = $"{file.Path}",
                     IsClosable = true,
                     IsOpen = true,
                     Severity = InfoBarSeverity.Success,

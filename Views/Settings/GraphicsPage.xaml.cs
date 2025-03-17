@@ -1,6 +1,10 @@
-﻿using System.Diagnostics;
-using System.Text.RegularExpressions;
+﻿using AutoOS.Views.Installer.Actions;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.Win32;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Drawing;
+using System.Text.RegularExpressions;
 using Windows.Storage;
 
 namespace AutoOS.Views.Settings;
@@ -19,6 +23,8 @@ public sealed partial class GraphicsPage : Page
 
     private async void CheckDriverUpdate()
     {
+        updateCheck.ProgressBackground = ProcessActions.GetColor("LightNormal", "DarkNormal");
+
         // get current version
         var currentVersion = (await Task.Run(() => Process.Start(new ProcessStartInfo("nvidia-smi", "--query-gpu=driver_version --format=csv,noheader") { CreateNoWindow = true, RedirectStandardOutput = true })?.StandardOutput.ReadToEndAsync()))?.Trim();
         NvidiaCard.Description = "Current Version: " + currentVersion;
@@ -36,32 +42,31 @@ public sealed partial class GraphicsPage : Page
                 // delay
                 await Task.Delay(350);
 
-                // hide progress ring
-                updateCheckProgress.Visibility = Visibility.Collapsed;
-
                 // check if update is needed
                 if (string.Compare(newestVersion, currentVersion, StringComparison.Ordinal) > 0)
                 {
-                    updateCheckButton.Content = "Update to " + newestVersion;
+                    updateCheck.IsChecked = false;
+                    updateCheck.Content = "Update to " + newestVersion;
                 }
                 else if (string.Compare(newestVersion, currentVersion, StringComparison.Ordinal) == 0)
                 {
-                    updateCheckButton.Content = "No updates available";
-                    updateCheckButton.IsEnabled = false;
+                    updateCheck.IsChecked = false;
+                    updateCheck.Content = "No updates available";
+                    updateCheck.IsEnabled = false;
                 }
             }
         }
         catch
         {
-            // delay
-            await Task.Delay(800);
+            //// delay
+            //await Task.Delay(800);
 
-            // hide progress ring
-            updateCheckProgress.Visibility = Visibility.Collapsed;
+            //// hide progress ring
+            //updateCheckProgress.Visibility = Visibility.Collapsed;
 
-            // connection failed message
-            updateCheckButton.Content = "Update check failed";
-            updateCheckButton.IsEnabled = false;
+            //// connection failed message
+            //updateCheckButton.Content = "Update check failed";
+            //updateCheckButton.IsEnabled = false;
         }
     }
 
@@ -180,11 +185,14 @@ public sealed partial class GraphicsPage : Page
         await Task.Delay(300);
 
         // launch file picker
-        var fileTypeFilter = new List<string> { ".cfg" };
-        var picker = await FileAndFolderPickerHelper.PickSingleFileAsync(App.MainWindow, fileTypeFilter);
-        if (picker != null)
+        var picker = new FilePicker();
+        picker.ShowAllFilesOption = false;
+        picker.FileTypeChoices.Add("MSI Afterburner profile", new List<string> { "*.cfg" });
+        var file = await picker.PickSingleFileAsync(App.MainWindow);
+
+        if (file != null)
         {
-            string fileContent = await FileIO.ReadTextAsync(picker);
+            string fileContent = await FileIO.ReadTextAsync(file);
 
             if (fileContent.Contains("[Startup]"))
             {
@@ -211,7 +219,7 @@ public sealed partial class GraphicsPage : Page
                 .ForEach(File.Delete);
 
                 // import profile
-                File.Copy(picker.Path, Path.Combine(@"C:\Program Files (x86)\MSI Afterburner\Profiles", picker.Name), true);
+                File.Copy(file.Path, Path.Combine(@"C:\Program Files (x86)\MSI Afterburner\Profiles", file.Name), true);
 
                 // apply profile
                 await Task.Run(() => Process.Start(new ProcessStartInfo(@"C:\Program Files (x86)\MSI Afterburner\MSIAfterburner.exe") { Arguments = "/Profile1 /q" })?.WaitForExit());

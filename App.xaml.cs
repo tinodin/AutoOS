@@ -1,7 +1,6 @@
 ﻿using Microsoft.UI.Windowing;
 using Microsoft.Win32;
 using Microsoft.Windows.AppLifecycle;
-using System.Diagnostics;
 using Windows.Graphics;
 
 namespace AutoOS
@@ -36,7 +35,9 @@ namespace AutoOS
                     MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Installer";
 
                     ThemeService = new ThemeService(MainWindow);
-                    
+
+                    new ModernSystemMenu(MainWindow);
+
                     if (MainWindow.AppWindow.Presenter is OverlappedPresenter presenter)
                     {
                         presenter.Maximize();
@@ -56,6 +57,8 @@ namespace AutoOS
 
                         ThemeService = new ThemeService(MainWindow);
 
+                        new ModernSystemMenu(MainWindow);
+
                         Window window = MainWindow;
                         var monitor = DisplayMonitorHelper.GetMonitorInfo(window);
                         int X = (int)monitor.RectMonitor.Width;
@@ -66,9 +69,6 @@ namespace AutoOS
 
                         int posX = X - windowWidth - 10;
                         int posY = Y - windowHeight - 53;
-
-                        Debug.WriteLine(posX);
-                        Debug.WriteLine(posY);
 
                         MainWindow.AppWindow.MoveAndResize(new RectInt32(posX, posY, windowWidth, windowHeight));
 
@@ -82,6 +82,8 @@ namespace AutoOS
 
                         ThemeService = new ThemeService(MainWindow);
 
+                        new ModernSystemMenu(MainWindow);
+
                         if (MainWindow.AppWindow.Presenter is OverlappedPresenter presenter)
                         {
                             presenter.Maximize();
@@ -90,12 +92,13 @@ namespace AutoOS
                         MainWindow.Activate();
 
 
-
                         //MainWindow = new StartupWindow();
                         //MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
                         //MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Startup";
 
                         //ThemeService = new ThemeService(MainWindow);
+
+                        //new ModernSystemMenu(MainWindow);
 
                         //Window window = MainWindow;
                         //var monitor = DisplayMonitorHelper.GetMonitorInfo(window);
@@ -107,9 +110,6 @@ namespace AutoOS
 
                         //int posX = X - windowWidth - 10;
                         //int posY = Y - windowHeight - 53;
-
-                        //Debug.WriteLine(posX);
-                        //Debug.WriteLine(posY);
 
                         //MainWindow.AppWindow.MoveAndResize(new RectInt32(posX, posY, windowWidth, windowHeight));
 

@@ -23,16 +23,19 @@
                                Header="NVIDIA Driver" HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Nvidia.png}">
                 <dev:SettingsGroup.Content>
                     <StackPanel Orientation="Horizontal">
+                        <dev:ProgressButton x:Name="updateCheck" Content="Done" CheckedContent="Checking for updates..." ProgressForeground="#60FFFFFF" IsHitTestVisible="True" Foreground="Black" IsChecked="True" IsIndeterminate="True"></dev:ProgressButton>
                         <Button x:Name="updateCheckButton"
                                 Content="Checking for updates..." 
                                 Style="{StaticResource AccentButtonStyle}" 
-                                HorizontalAlignment="Left"/>
+                                HorizontalAlignment="Left"
+                                Visibility="Collapsed"/>
                         <ProgressRing x:Name="updateCheckProgress"
                                       IsActive="True" 
                                       Background="Transparent"
                                       Width="25"
                                       Height="25"
-                                      Margin="10,0,0,0"/>
+                                      Margin="10,0,0,0"
+                                      Visibility="Collapsed"/>
                     </StackPanel>
                 </dev:SettingsGroup.Content>
                 <dev:SettingsGroup.Items>

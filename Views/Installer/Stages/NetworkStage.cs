@@ -84,7 +84,7 @@ public static class NetworkStage
             ("Disabling security profiles", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"netsh int tcp set security profiles=disabled"), null),
             ("Setting initial RTO", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"netsh int tcp set global initialRto=2000"), null),
             ("Setting max SYN retransmissions", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"netsh int tcp set global maxsynretransmissions=2"), null),
-            ("Setting congestion provider to CTCP", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"netsh int tcp set supplemental internet congestionprovider=ctcp"), null),
+            ("Setting congestion provider to CTCP", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"netsh int tcp set supplemental internet congestionprovider=bbr2"), null),
             ("Disabling teredo", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"netsh interface teredo set state disabled"), null),
             ("Disabling ISATAP", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"netsh int isatap set state disabled"), null),
             ("Disabling 6to4", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"netsh interface 6to4 set state disabled"), null),
@@ -123,7 +123,7 @@ public static class NetworkStage
                 }
                 catch (Exception ex)
                 {
-                    InstallPage.Info.Title = ex.Message;
+                    InstallPage.Info.Title = InstallPage.Info.Title + ": " + ex.Message;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
                     InstallPage.Progress.Foreground = (Brush)Application.Current.Resources["SystemFillColorCriticalBrush"];
                     InstallPage.ProgressRingControl.Foreground = (Brush)Application.Current.Resources["SystemFillColorCriticalBrush"];

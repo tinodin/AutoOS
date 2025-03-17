@@ -71,9 +71,9 @@
     <ProjectCapability Include="Msix" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="DevWinUI" Version="8.0.0-Preview8" />
-    <PackageReference Include="DevWinUI.Controls" Version="8.0.0-Preview8" />
-    <PackageReference Include="Downloader" Version="3.3.3" />
+    <PackageReference Include="DevWinUI" Version="8.0.0-Preview9" />
+    <PackageReference Include="DevWinUI.Controls" Version="8.0.0-Preview9" />
+    <PackageReference Include="Downloader" Version="3.3.4" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250208002-preview1" />
     <PackageReference Include="nucs.JsonSettings" Version="2.0.2" />

@@ -1,10 +1,13 @@
 ﻿using Downloader;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using System.Diagnostics;
+using System.Management;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using Windows.Graphics;
 
 namespace AutoOS.Views.Installer.Actions;
 
@@ -366,7 +369,7 @@ public static class ProcessActions
 
     public static async Task DisableWiFiServicesAndDrivers()
     {
-        string[] services = { "WlanSvc", "Dhcp", "EventLog", "Wcmsvc", "WinHttpAutoProxySvc", "NlaSvc", "tdx", "vwififlt" };
+        string[] services = { "WlanSvc", "EventLog", "Wcmsvc", "WinHttpAutoProxySvc", "NlaSvc", "tdx", "vwififlt" };
 
         foreach (string service in services)
             Registry.SetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\{service}", "Start", 4, RegistryValueKind.DWord);
@@ -451,7 +454,7 @@ public static class ProcessActions
                 .ToList();
 
         string destinationPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "EpicGamesLauncher", "Saved", "Config", "Windows", "GameUserSettings.ini");
-        string? newestFilePath = null;
+        string newestFilePath = null;
 
         foreach (var file in foundFiles)
         {
@@ -472,33 +475,7 @@ public static class ProcessActions
             Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)!);
             File.Copy(newestFilePath, destinationPath, true);
             return;
-        }
-
-        InstallPage.Info.Title = "Please log in to your Epic Games Account...";
-
-        Process.Start(@"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win64\EpicGamesLauncher.exe");
-
-        while (true)
-        {
-            if (File.Exists(destinationPath))
-            {
-                string configContent = await File.ReadAllTextAsync(destinationPath);
-                Match dataMatch = Regex.Match(configContent, @"Data=([^\r\n]+)");
-
-                if (dataMatch.Success && dataMatch.Groups[1].Value.Length >= 1000)
-                {
-                    Debug.WriteLine("Valid GameUserSettings.ini found.");
-                    break;
-                }
-            }
-            await Task.Delay(500);
-        }
-
-        foreach (var process in Process.GetProcessesByName("EpicGamesLauncher"))
-        {
-            process.Kill();
-            process.WaitForExit();
-        }
+        }   
     }
 
 
@@ -624,6 +601,18 @@ public static class ProcessActions
         }
     }
 
+    public static async Task RefreshUI()
+    {
+        if (MainWindow.Instance.AppWindow.Presenter is OverlappedPresenter presenter)
+        {
+            MainWindow.Instance.AppWindow.Resize(new SizeInt32(MainWindow.Instance.AppWindow.Size.Width - 500, MainWindow.Instance.AppWindow.Size.Height - 500));
+
+            await Task.Delay(1);
+
+            presenter.Restore();
+            presenter.Maximize();
+        }
+    }
 
     public static SolidColorBrush GetColor(string lightKey, string darkKey)
     {

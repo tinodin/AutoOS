@@ -20,8 +20,8 @@ public static class BcdStage
             // force the legacy bootloader
             ("Forcing the legacy bootloader", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set bootmenupolicy legacy"), null),
 
-            // set the boot loader timeout to 5 seconds
-            ("Setting the bootloader timeout to 5 seconds", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /timeout 5"), null),
+            // set the boot loader timeout to 6 seconds
+            ("Setting the bootloader timeout to 6 seconds", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /timeout 6"), null),
 
             // disable automatic repair
             ("Disabling automatic repair", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set {current} recoveryenabled No"), null),
@@ -82,7 +82,7 @@ public static class BcdStage
                 }
                 catch (Exception ex)
                 {
-                    InstallPage.Info.Title = ex.Message;
+                    InstallPage.Info.Title = InstallPage.Info.Title + ": " + ex.Message;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
                     InstallPage.Progress.Foreground = (Brush)Application.Current.Resources["SystemFillColorCriticalBrush"];
                     InstallPage.ProgressRingControl.Foreground = (Brush)Application.Current.Resources["SystemFillColorCriticalBrush"];

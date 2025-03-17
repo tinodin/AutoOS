@@ -32,7 +32,7 @@
                         <ToggleSwitch x:Name="UAC"
                                       Toggled="UAC_Toggled"/>
                     </dev:SettingsCard>
-                    <dev:SettingsCard Description="Protection against malicious code execution in memory areas. A minority of anti-cheats require this to be enabled." 
+                    <dev:SettingsCard Description="Protection against malicious code execution in memory areas. A minority of anti-cheats require this to be enabled. Cannot be disabled when secure boot is enabled." 
                                       Header="Data Execution Prevention (DEP)">
                         <ToggleSwitch x:Name="DEP"
                                       Toggled="DEP_Toggled"/>

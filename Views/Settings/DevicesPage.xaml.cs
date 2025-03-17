@@ -252,16 +252,25 @@ public sealed partial class DevicesPage : Page
         IMOD.Visibility = Visibility.Collapsed;
 
         // check state
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = "cmd.exe",
+            Arguments = $"/c takeown /f \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}\" & icacls \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}\" /grant Everyone:F /T /C /Q",
+            UseShellExecute = false,
+            CreateNoWindow = true
+        });
+
         var process = new Process
         {
             StartInfo = new ProcessStartInfo
             {
                 FileName = "powershell.exe",
-                Arguments = $"-ExecutionPolicy Bypass -Command \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "imod.ps1")}\" -status \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}\"",
+                Arguments = $"-Command \"& '{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "imod.ps1")}' -status '{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}'\"",
                 CreateNoWindow = true,
                 RedirectStandardOutput = true
             }
         };
+
         process.Start();
 
         string output = await process.StandardOutput.ReadToEndAsync();
@@ -300,7 +309,7 @@ public sealed partial class DevicesPage : Page
                 Margin = new Thickness(5)
             });
         }
-
+        
         // hide progress ring
         imodProgress.Visibility = Visibility.Collapsed;
 
@@ -333,13 +342,15 @@ public sealed partial class DevicesPage : Page
             StartInfo = new ProcessStartInfo
             {
                 FileName = "powershell.exe",
-                Arguments = $"-ExecutionPolicy Bypass -Command \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "imod.ps1")}\" {(IMOD.IsOn ? "-enable" : "-disable")} \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}\"",
+                Arguments = $"-Command \"& '{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "imod.ps1")}' {(IMOD.IsOn ? "-enable" : "-disable")} '{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}'\"",
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true
             }
         };
+
         process.Start();
+
         string output = await process.StandardOutput.ReadToEndAsync();
         string error = await process.StandardError.ReadToEndAsync();
         await process.WaitForExitAsync();

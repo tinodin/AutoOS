@@ -11,7 +11,6 @@ public static class VisualStage
         bool? ShowMyTaskbarOnAllDisplays = PreparingStage.ShowMyTaskbarOnAllDisplays;
         bool? AlwaysShowTrayIcons = PreparingStage.AlwaysShowTrayIcons;
         bool? TaskbarAlignment = PreparingStage.TaskbarAlignment;
-        bool? StartAllBack = PreparingStage.StartAllBack;
 
         InstallPage.Status.Text = "Configuring Visuals...";
 
@@ -43,8 +42,7 @@ public static class VisualStage
             ("Removing Microsoft Edge shortcut from the desktop", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c del /f /q ""C:\Users\Public\Desktop\Microsoft Edge.lnk"""), null),
 
             // changing the search box
-            ("Hiding the searchbox", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search"" /v ""SearchboxTaskbarMode"" /t REG_DWORD /d 0 /f"), () => StartAllBack == true),
-            ("Changing the searchbox appearance", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search"" /v ""SearchboxTaskbarMode"" /t REG_DWORD /d 3 /f"), () => StartAllBack == false),
+            ("Hiding the searchbox", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search"" /v ""SearchboxTaskbarMode"" /t REG_DWORD /d 0 /f"), null),
 
             // enable the settings shortcut in the start menu
             ("Enabling the settings shortcut in the start menu", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Start"" /v ""VisiblePlaces"" /t REG_BINARY /d 86087352aa5143429f7b2776584659d4 /f"), null),
@@ -95,7 +93,7 @@ public static class VisualStage
                 }
                 catch (Exception ex)
                 {
-                    InstallPage.Info.Title = ex.Message;
+                    InstallPage.Info.Title = InstallPage.Info.Title + ": " + ex.Message;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
                     InstallPage.Progress.Foreground = (Brush)Application.Current.Resources["SystemFillColorCriticalBrush"];
                     InstallPage.ProgressRingControl.Foreground = (Brush)Application.Current.Resources["SystemFillColorCriticalBrush"];

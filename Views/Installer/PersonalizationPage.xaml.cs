@@ -10,7 +10,6 @@ public sealed partial class PersonalizationPage : Page
     private bool isInitializingContextMenuState = true;
     private bool isInitializingTrayIconsState = true;
     private bool isInitializingShowMyTaskbarOnAllDisplaysState = true;
-    private bool isInitializingStartAllBackState = true;
     private bool isInitializingTaskbarAlignmentState = true;
 
     public PersonalizationPage()
@@ -22,7 +21,6 @@ public sealed partial class PersonalizationPage : Page
         GetTaskbarAlignmentState();
         GetShowMyTaskbarOnAllDisplaysState();
         GetTrayIconsState();
-        GetStartAllBackState();
     }
 
     public class GridViewItem
@@ -193,46 +191,6 @@ public sealed partial class PersonalizationPage : Page
 
         // change header icon
         TaskbarIcon.HeaderIcon = new SymbolIcon(alignment == "Left" ? Symbol.AlignLeft : Symbol.AlignCenter);
-    }
-
-
-    private void GetStartAllBackState()
-    {
-        // get value
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        string value = key?.GetValue("StartAllBack") as string ?? "Always";
-
-        StartAllBack.SelectedIndex = value switch
-        {
-            "Always" => 0,
-            "Toggle with services" => 1,
-            "Never" => 2,
-            _ => 0
-        };
-
-        // default to left
-        if (key?.GetValue("StartAllBack") == null)
-        {
-            key?.SetValue("StartAllBack", "Always", RegistryValueKind.String);
-        }
-
-        isInitializingStartAllBackState = false;
-    }
-
-    private void StartAllBack_Changed(object sender, SelectionChangedEventArgs e)
-    {
-        if (isInitializingStartAllBackState) return;
-
-        // set value
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        string value = StartAllBack.SelectedIndex switch
-        {
-            0 => "Always",
-            1 => "Toggle with services",
-            2 => "Never",
-            _ => null
-        };
-        key?.SetValue("StartAllBack", value, RegistryValueKind.String);
     }
 }
 

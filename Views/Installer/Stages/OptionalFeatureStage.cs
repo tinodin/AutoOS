@@ -22,7 +22,7 @@ public static class OptionalFeatureStage
             ("Removing windows capabilities", async () => await ProcessActions.RemoveWindowsCapabilities(), null),
 
             // write stage
-            ("Removing windows capabilities", async () => await ProcessActions.RunCustom(async() => await Task.Run(() => Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", 2, RegistryValueKind.DWord))), null),
+            ("Removing windows capabilities", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", 2, RegistryValueKind.DWord))), null),
 
             // restart
             ("", async () => await ProcessActions.RunRestart(), null)
@@ -52,7 +52,7 @@ public static class OptionalFeatureStage
                 }
                 catch (Exception ex)
                 {
-                    InstallPage.Info.Title = ex.Message;
+                    InstallPage.Info.Title = InstallPage.Info.Title + ": " + ex.Message;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
                     InstallPage.Progress.Foreground = (Brush)Application.Current.Resources["SystemFillColorCriticalBrush"];
                     InstallPage.ProgressRingControl.Foreground = (Brush)Application.Current.Resources["SystemFillColorCriticalBrush"];

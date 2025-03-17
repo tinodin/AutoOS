@@ -11,6 +11,7 @@ public sealed partial class GamesPage : Page
     private bool isLaunchingFortnite = false;
     private bool isInitializingAccounts = true;
     private readonly string configFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\GameUserSettings.ini");
+    private string nsudoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NSudo", "NSudoLC.exe");
     public GamesPage()
     {
         InitializeComponent();
@@ -179,9 +180,94 @@ public sealed partial class GamesPage : Page
         watcher.Start();
     }
 
-    private void StopProcesses_Click(object sender, RoutedEventArgs e)
+    private async void StopProcesses_Click(object sender, RoutedEventArgs e)
     {
-        string[] serviceNames = { "StateRepository", "Appinfo", "AppXSvc", "CryptSvc", "TextInputManagementService", "netprofm", "nsi" };
+        // rename start menu binaries
+        await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $@"-U:T -P:E -Wait -ShowWindowMode:Hide ren ""C:\Windows\System32\ctfmon.exe"" ctfmon.exee & ren ""C:\Windows\System32\RuntimeBroker.exe"" RuntimeBroker.exee & ren ""C:\Windows\SystemApps\ShellExperienceHost_cw5n1h2txyewy\ShellExperienceHost.exe"" ShellExperienceHost.exee & ren ""C:\Windows\SystemApps\MicrosoftWindows.Client.CBS_cw5n1h2txyewy\SearchHost.exe"" SearchHost.exee & ren ""C:\Windows\SystemApps\Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy\StartMenuExperienceHost.exe"" StartMenuExperienceHost.exee", CreateNoWindow = true }).WaitForExitAsync();
+
+        foreach (var process in Process.GetProcessesByName("dllhost"))
+        {
+            try
+            {
+                using (var searcher = new ManagementObjectSearcher(
+                    $"SELECT ProcessId, CommandLine FROM Win32_Process WHERE Name = 'dllhost.exe'"))
+                {
+                    foreach (ManagementObject obj in searcher.Get())
+                    {
+                        string cmdLine = obj["CommandLine"]?.ToString() ?? "";
+                        int pid = Convert.ToInt32(obj["ProcessId"]);
+
+                        if (cmdLine.Contains("/PROCESSID", StringComparison.OrdinalIgnoreCase))
+                        {
+                            try
+                            {
+                                var proc = Process.GetProcessById(pid);
+                                proc.Kill();
+                                proc.WaitForExit();
+                            }
+                            catch { }
+                        }
+                    }
+                }
+            }
+            catch { }
+        }
+
+        // close executables
+        Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon", "AutoRestartShell", 0, RegistryValueKind.DWord);
+
+        string[] processNames = {
+            "ApplicationFrameHost",
+            "CrashReportClient",
+            "ctfmon",
+            "EasyAntiCheat_EOS",
+            "EpicGamesLauncher",
+            "explorer",
+            "FortniteClient-Win64-Shipping_EAC_EOS",
+            "RuntimeBroker",
+            "SearchHost",
+            "secd.exe",
+            "ShellExperienceHost",
+            "sppsvc",
+            "StartMenuExperienceHost",
+            "TrustedInstaller",
+            "useroobebroker",
+            "WMIADAP",
+            "WmiPrvSE",
+            "WUDFHost"
+        };
+
+        foreach (var name in processNames)
+        {
+            foreach (var process in Process.GetProcessesByName(name))
+            {
+                try { process.Kill(); process.WaitForExit(); } catch { }
+            }
+
+            foreach (var process in Process.GetProcessesByName(name))
+            {
+                try { process.Kill(); process.WaitForExit(); } catch { }
+            }
+        }
+
+        Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon", "AutoRestartShell", 1, RegistryValueKind.DWord);
+
+        // stop services
+        string[] serviceNames = {
+            "AudioEndpointBuilder",
+            "AppXSvc",
+            "Appinfo",
+            "camsvc",
+            "CryptSvc",
+            "gpsvc",
+            "netprofm",
+            "nsi",
+            "ProfSvc",
+            "StateRepository",
+            "TextInputManagementService",
+            "TrustedInstaller",
+            "UserManager"
+        };
 
         foreach (var serviceName in serviceNames)
         {
@@ -202,26 +288,43 @@ public sealed partial class GamesPage : Page
             }
             catch { }
         }
-        
-        Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon", "AutoRestartShell", 0, RegistryValueKind.DWord);
 
-        string[] processNames = { "ApplicationFrameHost", "explorer", "WmiPrvSE", "WMIADAP", "WUDFHost", "useroobebroker", "TrustedInstaller", "FortniteClient-Win64-Shipping_EAC_EOS", "EpicGamesLauncher", "EasyAntiCheat_EOS", "CrashReportClient", "sppsvc", "secd.exe" };
-
-        foreach (var name in processNames)
+        try
         {
-            foreach (var process in Process.GetProcessesByName(name))
+            var searcher = new ManagementObjectSearcher("SELECT Name, ProcessId FROM Win32_Service WHERE Name LIKE 'UdkUserSvc%'");
+            foreach (ManagementObject service in searcher.Get())
             {
-                try { process.Kill(); process.WaitForExit(); } catch { }
+                try
+                {
+                    int pid = Convert.ToInt32(service["ProcessId"]);
+                    var process = Process.GetProcessById(pid);
+                    process.Kill();
+                    process.WaitForExit();
+                }
+                catch { }
             }
         }
+        catch { }
 
         try { new ServiceController("Winmgmt").Stop(); } catch { }
-
-        Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon", "AutoRestartShell", 1, RegistryValueKind.DWord);
     }
 
-    private void LaunchExplorer_Click(object sender, RoutedEventArgs e)
+    private async void LaunchExplorer_Click(object sender, RoutedEventArgs e)
     {
+        // rename start menu binaries
+        await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $@"-U:T -P:E -Wait -ShowWindowMode:Hide ren ""C:\Windows\System32\ctfmon.exee"" ctfmon.exe & ren ""C:\Windows\System32\RuntimeBroker.exee"" RuntimeBroker.exe & ren ""C:\Windows\SystemApps\ShellExperienceHost_cw5n1h2txyewy\ShellExperienceHost.exee"" ShellExperienceHost.exe & ren ""C:\Windows\SystemApps\MicrosoftWindows.Client.CBS_cw5n1h2txyewy\SearchHost.exee"" SearchHost.exe & ren ""C:\Windows\SystemApps\Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy\StartMenuExperienceHost.exee"" StartMenuExperienceHost.exe", CreateNoWindow = true }).WaitForExitAsync();
+
+        // start audioendpoint builder
+        using (ServiceController service = new ServiceController("AudioEndpointBuilder"))
+        {
+            if (service.Status == ServiceControllerStatus.Stopped)
+            {
+                service.Start();
+            }
+        }
+        // launch ctfmon
+        Process.Start("ctfmon.exe");
+
         // launch explorer
         Process.Start("explorer.exe");
     }
