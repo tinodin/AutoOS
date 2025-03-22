@@ -3,11 +3,6 @@
 <h1 align="center">
     AutoOS
 </h1>
-<p align="center">
-  <a href="https://twitter.com/intent/follow?screen_name=windowsui">
-    <img src="https://img.shields.io/twitter/follow/windowsui.svg?label=Follow WinUI on X" alt="Follow @windowsui" />
-  </a>
-</p>
 
 <h3 align="center">
   <a href="https://aka.ms/windev">About AutoOS</a>
