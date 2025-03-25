@@ -34,7 +34,7 @@ AutoOS is currently only supported on AMD64 builds of Windows 11 23H2 `22631` an
 
 
 
-## 📝 License
+## 📜 License
 
 
 
