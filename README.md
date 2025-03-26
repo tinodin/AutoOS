@@ -13,7 +13,7 @@
 
 </div>
 
-AutoOS is a utility focused on easy automated installation, improving performance, privacy and compatibility. 
+AutoOS is an open-source utility focused on easy automated installation, improving performance, privacy and compatibility. 
 
 
 ## ✨ Features
