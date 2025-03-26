@@ -68,5 +68,5 @@ This project includes code from the following third-party repositories:
 6. **Service List Builder**
    - Licensed under the **GNU General Public License v3.0**.
    - Source: [valleyofdoom/service-list-builder](https://github.com/valleyofdoom/service-list-builder)
-   - Changes: Removed `shutdown /r /t 0` command from created lists, added `--output-dir` switch.
+   - Changes: Removed `shutdown /r /t 0` from created lists, added `--output-dir` switch.
 
