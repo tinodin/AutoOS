@@ -23,7 +23,7 @@ AutoOS is a utility focused on easy automated installation, improving performanc
 
 ## 💻 System Requirements
 
-AutoOS is currently only supported on AMD64 builds of Windows 11 23H2 `22631` and up.
+AutoOS is currently only supported on x64 builds of Windows 11 23H2 `22631` and up.
 
 ## 🚀 Getting Started
 
