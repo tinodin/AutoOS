@@ -68,3 +68,6 @@ This project includes code from the following third-party repositories:
    - Source: [valleyofdoom/service-list-builder](https://github.com/valleyofdoom/service-list-builder)
    - Changes: Removed `shutdown /r /t 0` from created lists, added `--output-dir` switch.
 
+7. **7-Zip**
+
+8. **Custom Resolution Utility (CRU)**
