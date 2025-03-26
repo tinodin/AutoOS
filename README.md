@@ -34,10 +34,6 @@ AutoOS is currently only supported on AMD64 builds of Windows 11 23H2 `22631` an
 2. 
 3. 
 
-## 📚 Documentation
-
-
-
 ## 📜 License
 
 This project is licensed under the **GNU General Public License v3.0**. See the `LICENSE` file for details.
