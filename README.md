@@ -71,10 +71,30 @@ This project includes code from the following third-party repositories:
 7. **7-Zip**
 
 8. **Custom Resolution Utility (CRU)**
+```
+Copyright (C) 2012-2022 ToastyX
+https://monitortests.com/custom-resolution-utility
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software the rights to use, copy, and/or distribute copies of the
+software subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies of the software.
+
+THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR
+OTHER LIABILITY IN CONNECTION WITH THE USE OF THE SOFTWARE.
+```
+- Source: [Custom Resolution Utility (CRU)](https://monitortests.com/custom-resolution-utility)
 
 9. **LowAudioLatency**
 
 10. **ServiWin**
+```
+This utility is released as freeware. You are allowed to freely distribute this utility via floppy disk, CD-ROM, Internet, or in any other way, as long as you don't charge anything for this. If you distribute this utility, you must include all files in the distribution package, without any modification !
+```
+- Source: [ServiWin](https://www.nirsoft.net/utils/serviwin.html)
 
 11. **RwEverything**
 
