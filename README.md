@@ -30,8 +30,8 @@ AutoOS is currently only supported on AMD64 builds of Windows 11 23H2 `22631` an
 > [!CAUTION]
 > AutoOS only supports fresh installations of windows.
 
-1. Download the latest Windows ISO [UUP dump](https://uupdump.net/known.php?q=category%3Aw11-23h2)
-2. 
+1. Download the latest `non Cumulative Update Preview` ISO (23H2) in x64 [UUP dump](https://uupdump.net/known.php?q=category%3Aw11-23h2), uncheck `Windows Home`, click next and check `Integrate .NET Framework 3.5 (Windows converter only)`.
+2. Download [Ventoy]([https://uupdump.net/known.php?q=category%3Aw11-23h2](https://sourceforge.net/projects/ventoy/files/latest/download)
 3. 
 
 ## 📜 License
