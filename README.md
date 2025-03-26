@@ -42,17 +42,17 @@ This project is licensed under the **GNU General Public License v3.0**. See the 
 
 This project includes code from the following third-party repositories:
 
-1. **DWMEnableMMCSS**
-   - Licensed under the **GNU General Public License v3.0**.
-   - Source: [Duckleeng/DWMEnableMMCSS](https://github.com/Duckleeng/DWMEnableMMCSS)
-
-2. **NSudo**
+1. **NSudo**
    - Licensed under the **MIT License**.
    - Source: [M2TeamArchived/NSudo](https://github.com/M2TeamArchived/NSudo)
 
-3. **nvidiaProfileInspector**
+2. **nvidiaProfileInspector**
    - Licensed under the **MIT License**.
    - Source: [Orbmu2k/nvidiaProfileInspector](https://github.com/Orbmu2k/nvidiaProfileInspector)
+
+3. **DWMEnableMMCSS**
+   - Licensed under the **GNU General Public License v3.0**.
+   - Source: [Duckleeng/DWMEnableMMCSS](https://github.com/Duckleeng/DWMEnableMMCSS)
 
 4. **TimerResolution**
    - Licensed under the **GNU General Public License v3.0**.
