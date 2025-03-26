@@ -71,3 +71,35 @@ This project includes code from the following third-party repositories:
 7. **7-Zip**
 
 8. **Custom Resolution Utility (CRU)**
+
+9. **LowAudioLatency**
+
+10. **ServiWin**
+
+11. **RwEverything**
+
+12. **DeviceCleanup**
+```
+Allowed:
+- usage in any environment, including commercial
+- include in software products, including commercial
+- include on CD/DVD of computer magazines
+
+Not allowed:
+- modify any of the files
+- offer for download by means of a "downloader" software
+```
+- Source: [DeviceCleanup](https://www.uwe-sieber.de/misc_tools.html#devicecleanup)
+
+13. **DriveCleanup**
+```
+Allowed:
+- usage in any environment, including commercial
+- include in software products, including commercial
+- include on CD/DVD of computer magazines
+
+Not allowed:
+- modify any of the files
+- offer for download by means of a "downloader" software
+```
+- Source: [DriveCleanup](https://www.uwe-sieber.de/drivetools.html#drivecleanup)
