@@ -38,9 +38,9 @@
                 </dev:HeaderTile>
                 <dev:HeaderTile Title="Donate" 
                                Description="Leave a sign of appreciation of my work." 
-                               Link="https://github.com/WinUICommunity/WinUICommunity">
+                               Link="https://www.paypal.com/donate/?hosted_button_id=GVEVUSHUWXEAG">
                     <dev:HeaderTile.Source>
-                        <Image Source="/Assets/Fluent/paypal.png"/>
+                        <Image Source="/Assets/Fluent/PayPal.png"/>
                     </dev:HeaderTile.Source>
                 </dev:HeaderTile>
             </StackPanel>

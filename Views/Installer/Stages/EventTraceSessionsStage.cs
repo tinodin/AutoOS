@@ -1,6 +1,5 @@
 ﻿using AutoOS.Views.Installer.Actions;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.Win32;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -22,7 +21,9 @@ public static class EventTraceSessionsStage
             ("Saving Event Trace Session (ETS) data", async () => await ProcessActions.Sleep(500), null),
 
             // disable event trace sessions
-            ("Disabling Event Trace Sessions (ETS)", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Registry.LocalMachine.DeleteSubKeyTree(@"SYSTEM\CurrentControlSet\Control\WMI\Autologger", false) )), null),
+            ("Disabling Event Trace Sessions (ETS)", async () => await ProcessActions.RunPowerShell(@"Get-EventLog -LogName * | ForEach-Object { Clear-EventLog $_.Log }"), null),
+            ("Disabling Event Trace Sessions (ETS)", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"powershell -Command ""Get-ChildItem -Path ""$env:SystemRoot"" -Filter *.log -File -Recurse -Force | Remove-Item -Recurse -Force"""), null),
+            ("Disabling Event Trace Sessions (ETS)", async () => await ProcessActions.RunNsudo("TrustedInstaller", $"cmd /c reg import \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "ets-disable.reg")}\""), null),
             ("Disabling Event Trace Sessions (ETS)", async () => await ProcessActions.Sleep(500), null),
 
             // disable sleep study

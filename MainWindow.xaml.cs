@@ -22,17 +22,19 @@ namespace AutoOS.Views
                 App.Current.NavService
                     .Initialize(NavView, NavFrame, NavigationPageMappingsInstaller.PageDictionary)
                     .ConfigureJsonFile("Assets/NavViewMenu/Installer.json")
-                    .ConfigureDefaultPage(typeof(Installer.InstallPage))
+                    .ConfigureDefaultPage(typeof(Installer.HomeLandingPage))
                     .ConfigureTitleBar(AppTitleBar, false)
                     .ConfigureBreadcrumbBar(BreadCrumbNav, BreadcrumbPageMappings.PageDictionary);
                 TitleBarName = "AutoOS Installer";
             }
             else if (stageObj is string stageStr && stageStr.Equals("Installed", StringComparison.OrdinalIgnoreCase))
             {
+                NavView.IsSettingsVisible = true;
                 App.Current.NavService
                     .Initialize(NavView, NavFrame, NavigationPageMappingsSettings.PageDictionary)
                     .ConfigureJsonFile("Assets/NavViewMenu/Settings.json")
                     .ConfigureDefaultPage(typeof(Settings.HomeLandingPage))
+                    .ConfigureSettingsPage(typeof(Settings.SettingsPage))
                     .ConfigureTitleBar(AppTitleBar, false)
                     .ConfigureBreadcrumbBar(BreadCrumbNav, BreadcrumbPageMappings.PageDictionary);
                 TitleBarName = "AutoOS Settings";

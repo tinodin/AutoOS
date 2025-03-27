@@ -1,9 +1,6 @@
 ﻿using AutoOS.Views.Installer.Actions;
-using Microsoft.UI.Xaml.Controls;
 using Microsoft.Win32;
-using System.ComponentModel;
 using System.Diagnostics;
-using System.Drawing;
 using System.Text.RegularExpressions;
 using Windows.Storage;
 
@@ -17,7 +14,7 @@ public sealed partial class GraphicsPage : Page
     public GraphicsPage()
     {
         InitializeComponent();
-        CheckDriverUpdate();
+        //CheckDriverUpdate();
         GetHDCPState();
     }
 

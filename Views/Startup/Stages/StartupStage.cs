@@ -9,11 +9,13 @@ public static class StartupStage
 {
     public static async Task Run()
     {
-        bool MSI = Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "MsiProfile", null) != null;
+        bool MSI = Directory.Exists(@"C:\Program Files (x86)\MSI Afterburner\Profiles\") &&
+           Directory.GetFiles(@"C:\Program Files (x86)\MSI Afterburner\Profiles\")
+           .Any(f => !f.EndsWith("MSIAfterburner.cfg", StringComparison.OrdinalIgnoreCase));
         bool HID = Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "HumanInterfaceDevices", "0")?.ToString() == "1"; 
         bool IMOD = Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciInterruptModeration", "0")?.ToString() == "1";
         bool WindowsUpdates = Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "PauseWindowsUpdates", "0")?.ToString() == "1";
-        bool Discord = Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Messaging", "")?.ToString().Contains("Discord") == true;
+        bool Discord = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Discord"));
 
         string discordVersion = "";
 
@@ -79,11 +81,7 @@ public static class StartupStage
             ("Cleaning temp directories", async () => await StartupActions.RunNsudo("CurrentUser", @"cmd /c del /s /f /q %temp%\*.*"), null),
             ("Cleaning temp directories", async () => await StartupActions.RunNsudo("CurrentUser", @"cmd /c rd /s /q %temp%"), null),
             ("Cleaning temp directories", async () => await StartupActions.RunNsudo("CurrentUser", @"cmd /c md %temp%"), null),
-
-            // clean logs
-            ("Cleaning logs", async () => await StartupActions.RunPowerShell(@"Get-EventLog -LogName * | ForEach-Object { Clear-EventLog $_.Log }"), null),
-            ("Cleaning logs", async () => await StartupActions.RunNsudo("TrustedInstaller", @"powershell -Command ""Get-ChildItem -Path ""$env:SystemRoot"" -Filter *.log -File -Recurse -Force | Remove-Item -Recurse -Force"""), null),
-            ("Cleaning logs", async () => await StartupActions.RunNsudo("CurrentUser", @"sc stop TrustedInstaller"), null),
+            ("Cleaning temp directories", async () => await StartupActions.RunNsudo("CurrentUser", @"sc stop TrustedInstaller"), null),
         };
 
         var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();

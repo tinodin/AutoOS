@@ -60,16 +60,16 @@ public sealed partial class InstallPage : Page
     private async void ExecuteFirstStage() 
     {
         await PreparingStage.Run();
-        await PowerStage.Run();
-        await RegistryStage.Run();
-        await VisualStage.Run();
+        //await PowerStage.Run();
+        //await RegistryStage.Run();
+        //await VisualStage.Run();
         await SecurityStage.Run();
-        await BcdStage.Run();
-        await FileSystemStage.Run();
-        await MemoryManagementStage.Run();
-        await EventTraceSessionsStage.Run();
-        await ScheduledTasksStage.Run();
-        await OptionalFeatureStage.Run();
+        //await BcdStage.Run();
+        //await FileSystemStage.Run();
+        //await MemoryManagementStage.Run();
+        //await EventTraceSessionsStage.Run();
+        //await ScheduledTasksStage.Run();
+        //await OptionalFeatureStage.Run();
     }
 
     private async void ExecuteSecondStage()

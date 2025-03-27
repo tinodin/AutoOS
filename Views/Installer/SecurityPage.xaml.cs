@@ -4,7 +4,6 @@ namespace AutoOS.Views.Installer;
 
 public sealed partial class SecurityPage: Page
 {
-    const string registryPath = @"SOFTWARE\AutoOS";
     private bool isInitializingWindowsDefenderState = true;
     private bool isInitializingUACState = true;
     private bool isInitializingDEPState = true;

@@ -61,6 +61,20 @@ public sealed partial class BrowserPage : Page
         isInitializingBrowsersState = false;        
     }
 
+    private void Browsers_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (isInitializingBrowsersState) return;
+
+        // set value
+        if (Browsers.SelectedItem is GridViewItem selectedItem)
+        {
+            using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
+            {
+                key?.SetValue("Browser", selectedItem.Text, RegistryValueKind.String);
+            }
+        }
+    }
+
     private void GetExtensions()
     {
         // get extensions
@@ -74,20 +88,6 @@ public sealed partial class BrowserPage : Page
         );
 
         isInitializingExtensionsState = false;
-    }
-
-    private void Browsers_Changed(object sender, SelectionChangedEventArgs e)
-    {
-        if (isInitializingBrowsersState) return;
-
-        // set value
-        if (Browsers.SelectedItem is GridViewItem selectedItem)
-        {
-            using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
-            {
-                key?.SetValue("Browser", selectedItem.Text, RegistryValueKind.String);
-            }
-        }
     }
 
     private void Extensions_Changed(object sender, SelectionChangedEventArgs e)

@@ -265,7 +265,7 @@ public sealed partial class DevicesPage : Page
             StartInfo = new ProcessStartInfo
             {
                 FileName = "powershell.exe",
-                Arguments = $"-Command \"& '{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "imod.ps1")}' -status '{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}'\"",
+                Arguments = $"-ExecutionPolicy Bypass -Command \"& '{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "imod.ps1")}' -status '{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}'\"",
                 CreateNoWindow = true,
                 RedirectStandardOutput = true
             }
@@ -342,7 +342,7 @@ public sealed partial class DevicesPage : Page
             StartInfo = new ProcessStartInfo
             {
                 FileName = "powershell.exe",
-                Arguments = $"-Command \"& '{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "imod.ps1")}' {(IMOD.IsOn ? "-enable" : "-disable")} '{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}'\"",
+                Arguments = $"-ExecutionPolicy Bypass -Command \"& '{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "imod.ps1")}' {(IMOD.IsOn ? "-enable" : "-disable")} '{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}'\"",
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true

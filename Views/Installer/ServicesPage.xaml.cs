@@ -9,7 +9,7 @@ public sealed partial class ServicesPage : Page
     private bool isInitializingTaskManagerState = true;
     private bool isInitializingLaptopState = true;
     private bool isInitializingAMDVRRState = true;
-    private string list = Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "lists.ini");
+    private readonly string list = Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "lists.ini");
    
     public ServicesPage()
     {

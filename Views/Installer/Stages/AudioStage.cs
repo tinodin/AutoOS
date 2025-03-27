@@ -22,7 +22,7 @@ public static class AudioStage
             ("Disabling system beeps", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Control Panel\Sound"" /v Beep /t REG_SZ /d no /f"), null),
 
             // set sound scheme none
-            ("Setting sound scheme to none", async () => await ProcessActions.RunPowerShell(@"$Path = 'HKCU:\\AppEvents\\Schemes'; $Keyname = '(Default)'; $SetValue = '.None'; if (-Not(Test-Path $Path)) { New-Item -Path $Path -Force }; if ((Get-ItemProperty -Path $Path -Name $Keyname -ErrorAction SilentlyContinue).$Keyname -ne $SetValue) { Set-ItemProperty -Path $Path -Name $Keyname -Value $SetValue -Force; Get-ChildItem -Path 'HKCU:\\AppEvents\\Schemes\\Apps' | Get-ChildItem | Get-ChildItem | Where-Object { $_.PSChildName -eq '.Current' } | Set-ItemProperty -Name '(Default)' -Value '' }"), null),
+            ("Setting sound scheme to none", async () => await ProcessActions.RunPowerShell(@"New-ItemProperty -Path 'HKCU:\AppEvents\Schemes' -Name '(Default)' -Value '.None' -Force; Get-ChildItem -Path 'HKCU:\AppEvents\Schemes\Apps' | Get-ChildItem | Get-ChildItem | Where-Object { $_.PSChildName -eq '.Current' } | Set-ItemProperty -Name '(Default)' -Value ''"), null),
 
             // set communications to do nothing
             ("Setting communications to do nothing", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Multimedia\Audio"" /v UserDuckingPreference /t REG_DWORD /d 3 /f"), null),
@@ -41,12 +41,6 @@ public static class AudioStage
             ("Splitting audio services", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c copy /y %windir%\System32\svchost.exe %windir%\System32\audiosvchost.exe"), null),
             ("Splitting audio services", async () => await ProcessActions.RunPowerShell(@"Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\Audiosrv' -Name 'ImagePath' -Value '%systemroot%\system32\audiosvchost.exe -k LocalServiceNetworkRestricted -p' -Type ExpandString"), null),
             ("Splitting audio services", async () => await ProcessActions.RunPowerShell(@"Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\AudioEndpointBuilder' -Name 'ImagePath' -Value '%systemroot%\system32\audiosvchost.exe -k LocalSystemNetworkRestricted -p' -Type ExpandString"), null),
-
-            // set speaker volume to 100
-            ("Setting Speakers volume to 100%", async () => await ProcessActions.RunApplication("SoundVolumeView", "SoundVolumeView.exe", "/SetVolume Speakers 100"), null),
-
-            // set microphone volume to 100
-            ("Setting Microphone volume to 100%", async () => await ProcessActions.RunApplication("SoundVolumeView", "SoundVolumeView.exe", "/SetVolume Microphone 100"), null),
         };
 
         var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();

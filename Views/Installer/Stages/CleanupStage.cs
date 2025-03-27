@@ -33,10 +33,6 @@ public static class CleanupStage
             ("Cleaning temp directories", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c rd /s /q %temp%"), null),
             ("Cleaning temp directories", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c md %temp%"), null),
 
-            // clean logs
-            ("Cleaning logs", async () => await ProcessActions.RunPowerShell(@"Get-EventLog -LogName * | ForEach-Object { Clear-EventLog $_.Log }"), null),
-            ("Cleaning logs", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"powershell -Command ""Get-ChildItem -Path ""$env:SystemRoot"" -Filter *.log -File -Recurse -Force | Remove-Item -Recurse -Force"""), null),
-
             // run disk cleanup
             ("Running disk cleanup", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Active Setup Temp Folders"" /v StateFlags0000 /t REG_DWORD /d 2 /f"), null),
             ("Running disk cleanup", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\BranchCache"" /v StateFlags0000 /t REG_DWORD /d 2 /f"), null),

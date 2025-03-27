@@ -7,15 +7,35 @@ namespace AutoOS.Views.Settings;
 public sealed partial class SchedulingPage : Page
 {
     private bool isInitializingAffinities = true;
+    private bool isHyperThreadingEnabled = false;
+
     public SchedulingPage()
     {
         InitializeComponent();
+        if (!File.Exists(Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini")))
+        {
+            Directory.CreateDirectory(Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity"));
+            File.Copy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "config.ini"), Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini"));
+        }
+
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = "cmd.exe",
+            Arguments = $"/c takeown /f \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "AutoGpuAffinity.exe")}\" & icacls \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "AutoGpuAffinity.exe")}\" /grant Everyone:F /T /C /Q",
+            UseShellExecute = false,
+            CreateNoWindow = true
+        });
         GetCpuCount(GPU, XHCI);
         GetAffinities();
     }
 
     private void GetCpuCount(params ComboBox[] comboBoxes)
     {
+        isHyperThreadingEnabled = new ManagementObjectSearcher("SELECT NumberOfCores, NumberOfLogicalProcessors FROM Win32_Processor")
+           .Get()
+           .Cast<ManagementObject>()
+           .Any(obj => Convert.ToInt32(obj["NumberOfLogicalProcessors"]) > Convert.ToInt32(obj["NumberOfCores"]));
+
         int processorCount = Environment.ProcessorCount;
 
         foreach (var comboBox in comboBoxes)
@@ -24,11 +44,15 @@ public sealed partial class SchedulingPage : Page
 
             for (int i = 0; i < processorCount; i++)
             {
-                comboBox.Items.Add(new ComboBoxItem { Content = $"CPU {i}" });
-            }
+                var item = new ComboBoxItem { Content = $"CPU {i}" };
 
-            if (comboBox.Items.Count > 0)
-                ((ComboBoxItem)comboBox.Items[0]).IsEnabled = false;
+                if (i == 0 || (isHyperThreadingEnabled && i % 2 == 1))
+                {
+                    item.IsEnabled = false;
+                }
+
+                comboBox.Items.Add(item);
+            }
         }
     }
 
@@ -153,6 +177,8 @@ public sealed partial class SchedulingPage : Page
         // add infobar
         if (processorCount >= 6)
         {
+            UpdateComboBoxState(GPU, XHCI);
+
             var infoBar = new InfoBar
             {
                 Title = "Successfully applied GPU Affinity to CPU " + GPU.SelectedIndex + " and reserved it.",
@@ -174,6 +200,8 @@ public sealed partial class SchedulingPage : Page
         }
         else
         {
+            UpdateComboBoxState(GPU, XHCI);
+
             var infoBar = new InfoBar
             {
                 Title = "Successfully applied GPU Affinity to CPU " + GPU.SelectedIndex + ".",
@@ -268,6 +296,8 @@ public sealed partial class SchedulingPage : Page
         // add infobar
         if (processorCount >= 6)
         {
+            UpdateComboBoxState(XHCI, GPU);
+
             var infoBar = new InfoBar
             {
                 Title = "Successfully applied XHCI Affinity to CPU " + XHCI.SelectedIndex + " and reserved it.",
@@ -289,6 +319,8 @@ public sealed partial class SchedulingPage : Page
         }
         else
         {
+            UpdateComboBoxState(XHCI, GPU);
+
             var infoBar = new InfoBar
             {
                 Title = "Successfully applied XHCI Affinity to CPU " + XHCI.SelectedIndex + ".",
@@ -304,6 +336,21 @@ public sealed partial class SchedulingPage : Page
 
             // remove infobar
             AffinityInfo.Children.Clear();
+        }
+    }
+
+    private void UpdateComboBoxState(ComboBox activeComboBox, ComboBox otherComboBox)
+    {
+        int selectedIndex = activeComboBox.SelectedIndex;
+
+        for (int i = 0; i < otherComboBox.Items.Count; i++)
+        {
+            var item = otherComboBox.Items[i] as ComboBoxItem;
+
+            if (item != null)
+            {
+                item.IsEnabled = i != selectedIndex && !(i == 0 || (isHyperThreadingEnabled && i % 2 == 1));
+            }
         }
     }
 

@@ -224,6 +224,7 @@ public sealed partial class GamesPage : Page
             "EpicGamesLauncher",
             "explorer",
             "FortniteClient-Win64-Shipping_EAC_EOS",
+            "rundll32",
             "RuntimeBroker",
             "SearchHost",
             "secd.exe",

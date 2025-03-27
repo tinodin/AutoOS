@@ -11,6 +11,11 @@ public sealed partial class SchedulingPage : Page
     public SchedulingPage()
     {
         InitializeComponent();
+        if (!File.Exists(Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini")))
+        {
+            Directory.CreateDirectory(Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity"));
+            File.Copy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "config.ini"), Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini"));
+        }
         GetCpuCount(GPU, XHCI);
         GetAffinities();
     }

@@ -336,6 +336,7 @@ public static class RegistryStage
             ("Reducing delay to end services on shutdown", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control"" /v WaitToKillServiceTimeout /t REG_SZ /d 1500 /f"), null),
 
             // disable telemetry
+            ("Disabling telemetry", async () => await ProcessActions.RunPowerShell(@"setx POWERSHELL_TELEMETRY_OPTOUT 1"), null),
             ("Disabling telemetry", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Environment"" /v POWERSHELL_TELEMETRY_OPTOUT /t REG_SZ /d 1 /f"), null),
             ("Disabling telemetry", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\DiagTrack"" /v Start /t REG_DWORD /d 4 /f"), null),
             ("Disabling telemetry", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DataCollection"" /v LimitDiagnosticLogCollection /t REG_DWORD /d 1 /f"), null),

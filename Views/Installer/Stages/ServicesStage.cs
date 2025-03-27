@@ -17,7 +17,7 @@ public static class ServicesStage
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
             // group services
-            ("Grouping services", async () => await ProcessActions.RunNsudo("TrustedInstaller", $@"powershell.exe -file ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "groupservices.ps1")}"""), null),  
+            ("Grouping services", async () => await ProcessActions.RunNsudo("TrustedInstaller", $@"powershell -ExecutionPolicy Bypass -file ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "groupservices.ps1")}"""), null),  
 
             // set failure actions
             ("Disabling failure actions", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform"" /v ""InactivityShutdownDelay"" /t REG_DWORD /d 4294967295 /f"), null),

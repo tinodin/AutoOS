@@ -29,8 +29,8 @@ public static class NetworkStage
             ("Waiting for internet connection to reestablish", async () => await ProcessActions.RunConnectionCheck(), null),
 
             // disable protocols
-            ("Disabling unnecessary protocols", async () => await ProcessActions.RunPowerShell(@"Get-NetAdapter | ForEach-Object { foreach ($item in $_ | Get-NetAdapterBinding -DisplayName '*') { if ($item.DisplayName -ne 'QoS Packet Scheduler' -and $item.DisplayName -ne 'Internet Protocol Version 4 (TCP/IPv4)') { Disable-NetAdapterBinding -Name $_.Name -ComponentID $item.ComponentID } } }"), () => AppleMusic == false),
-            ("Disabling unnecessary protocols", async () => await ProcessActions.RunPowerShell(@"Get-NetAdapter | ForEach-Object { foreach ($item in $_ | Get-NetAdapterBinding -DisplayName '*') { if ($item.DisplayName -ne 'QoS Packet Scheduler' -and $item.DisplayName -ne 'Internet Protocol Version 4 (TCP/IPv4)' -and $item.DisplayName -ne 'Internet Protocol Version 6 (TCP/IPv6)') { Disable-NetAdapterBinding -Name $_.Name -ComponentID $item.ComponentID } } }"), () => AppleMusic == true),
+            ("Disabling unnecessary protocols", async () => await ProcessActions.RunPowerShell(@"& { Get-NetAdapterBinding | Where-Object { $_.Enabled -eq $true -and $_.ComponentID -notin 'ms_tcpip', 'ms_pacer' } | ForEach-Object { Disable-NetAdapterBinding -Name $_.InterfaceAlias -ComponentID $_.ComponentID } }"), () => AppleMusic == false),
+            ("Disabling unnecessary protocols", async () => await ProcessActions.RunPowerShell(@"& { Get-NetAdapterBinding | Where-Object { $_.Enabled -eq $true -and $_.ComponentID -notin 'ms_tcpip', 'ms_tcpip6', 'ms_pacer' } | ForEach-Object { Disable-NetAdapterBinding -Name $_.InterfaceAlias -ComponentID $_.ComponentID } }"), () => AppleMusic == true),
 
             // disable netbios over tcp
             ("Disabling NetBIOS over TCP", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c for %a in (NetbiosOptions) do for /f ""delims="" %b in ('reg query HKLM\SYSTEM\CurrentControlSet\Services\NetBT\Parameters\Interfaces /s /f %a ^| findstr HKEY') do reg add ""%b"" /v %a /t REG_DWORD /d 2 /f"), null),
@@ -75,7 +75,7 @@ public static class NetworkStage
             ("Disabling MLD level", async () => await ProcessActions.RunNsudo(  "TrustedInstaller", @"netsh int ip set global mldlevel=none"), null),
             ("Enabling DCA", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"netsh int tcp set global dca=enabled"), null),
             ("Disabling ECN Capability", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"netsh int tcp set global ecncapability=disabled"), null),
-            ("Disabling NetDMA", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"netsh int tcp set global netdma=disabled"), null),
+            ("Disabling NetDMA", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"netsh int tcp set global netdma=enabled"), null),
             ("Disabling Non-SACK RTT resiliency", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"netsh int tcp set global nonsackrttresiliency=disabled"), null),
             ("Disabling TCP timestamps", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"netsh int tcp set global timestamps=disabled"), null),
             ("Disabling TCP heuristics", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"netsh int tcp set heuristics disabled"), null),

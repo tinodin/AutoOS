@@ -479,9 +479,23 @@ public sealed partial class SecurityPage: Page
             Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "FeatureSettingsOverrideMask", 3, RegistryValueKind.DWord);
             Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "FeatureSettingsOverride", 3, RegistryValueKind.DWord);
 
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:T -P:E -Wait -ShowWindowMode:Hide reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management"" /v ""MoveImages"" /t REG_DWORD /d 0 /f", CreateNoWindow = true }).WaitForExitAsync();
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:T -P:E -Wait -ShowWindowMode:Hide reg add """"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\kernel"""" /v """"DisableExceptionChainValidation"""" /t REG_DWORD /d 1 /f""", CreateNoWindow = true }).WaitForExitAsync();
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:T -P:E -Wait -ShowWindowMode:Hide reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\kernel"" /v ""DisableControlFlowGuardXfg"" /t REG_DWORD /d 1 /f", CreateNoWindow = true }).WaitForExitAsync();
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:T -P:E -Wait -ShowWindowMode:Hide reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\kernel"" /v ""DisableControlFlowGuardExportSuppression"" /t REG_DWORD /d 1 /f", CreateNoWindow = true }).WaitForExitAsync();
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:T -P:E -Wait -ShowWindowMode:Hide reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SCMConfig"" /v ""EnableSvchostMitigationsPolicy"" /t REG_DWORD /d 0 /f", CreateNoWindow = true }).WaitForExitAsync();
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:T -P:E -Wait -ShowWindowMode:Hide cmd /c for %a in (fontdrvhost.exe dwm.exe lsass.exe svchost.exe WmiPrvSE.exe winlogon.exe csrss.exe audiodg.exe ntoskrnl.exe services.exe) do reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\%a"" /v ""MitigationOptions"" /t REG_BINARY /d ""22222222222222222222222222222222"" /f && reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\%a"" /v ""MitigationAuditOptions"" /t REG_BINARY /d ""22222222222222222222222222222222"" /f", CreateNoWindow = true }).WaitForExitAsync();
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:T -P:E -Wait -ShowWindowMode:Hide ", CreateNoWindow = true }).WaitForExitAsync();
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:T -P:E -Wait -ShowWindowMode:Hide ", CreateNoWindow = true }).WaitForExitAsync();
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:T -P:E -Wait -ShowWindowMode:Hide ", CreateNoWindow = true }).WaitForExitAsync();
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:T -P:E -Wait -ShowWindowMode:Hide ", CreateNoWindow = true }).WaitForExitAsync();
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:T -P:E -Wait -ShowWindowMode:Hide ", CreateNoWindow = true }).WaitForExitAsync();
+            await Process.Start(new ProcessStartInfo("powershell.exe", $"-Command \"ForEach($v in (Get-Command -Name 'Set-ProcessMitigation').Parameters['Disable'].Attributes.ValidValues){{Set-ProcessMitigation -System -Disable $v.ToString().Replace(' ', '').Replace('`n', '') -ErrorAction SilentlyContinue}}\"") { CreateNoWindow = true, UseShellExecute = false })!.WaitForExitAsync();
+
+
             // rename to disable microcode updates
-            Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:T -P:E -Wait -ShowWindowMode:Hide cmd /c ren C:\Windows\System32\mcupdate_GenuineIntel.dll mcupdate_GenuineIntel.dlll", CreateNoWindow = true }).WaitForExit();
-            Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:T -P:E -Wait -ShowWindowMode:Hide cmd /c ren C:\Windows\System32\mcupdate_AuthenticAMD.dll mcupdate_AuthenticAMD.dlll", CreateNoWindow = true }).WaitForExit();
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:T -P:E -Wait -ShowWindowMode:Hide cmd /c ren C:\Windows\System32\mcupdate_GenuineIntel.dll mcupdate_GenuineIntel.dlll", CreateNoWindow = true }).WaitForExitAsync();
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:T -P:E -Wait -ShowWindowMode:Hide cmd /c ren C:\Windows\System32\mcupdate_AuthenticAMD.dll mcupdate_AuthenticAMD.dlll", CreateNoWindow = true }).WaitForExitAsync();
         }
 
         // delay
