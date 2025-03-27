@@ -59,15 +59,16 @@ This project is licensed under the **GNU General Public License v3.0**. See the 
 5. **AutoGpuAffinity**
    - Licensed under the **GNU General Public License v3.0**.
    - Source: [valleyofdoom/AutoGpuAffinity](https://github.com/valleyofdoom/AutoGpuAffinity)
-   - Changes: Added `--output-dir` switch.
+   - Changes: Added `--output-dir` switch because of MSIX restrictions.
 
 6. **Service List Builder**
    - Licensed under the **GNU General Public License v3.0**.
    - Source: [valleyofdoom/service-list-builder](https://github.com/valleyofdoom/service-list-builder)
-   - Changes: Removed `shutdown /r /t 0` from created lists, added `--output-dir` switch.
+   - Changes: Removed `shutdown /r /t 0` from created lists, added `--output-dir` switch because of MSIX restrictions.
 
 7. **LowAudioLatency**
-
+    - Explicit permission granted by [sppdl](https://github.com/spddl)
+    - Source: [sppdl/LowAudioLatency](https://github.com/spddl/LowAudioLatency)
 
 
 8. **7-Zip**
