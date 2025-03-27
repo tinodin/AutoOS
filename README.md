@@ -199,7 +199,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ---
 ```
-- Source: [7-Zip](www.7-zip.org)
+- Source: [7-Zip](https://www.7-zip.org)
  
 9. **Custom Resolution Utility (CRU)**
 ```
