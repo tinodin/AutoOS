@@ -40,8 +40,6 @@ This project is licensed under the **GNU General Public License v3.0**. See the 
 
 ### Third-Party Components
 
-This project includes code from the following third-party repositories:
-
 1. **NSudo**
    - Licensed under the **MIT License**.
    - Source: [M2TeamArchived/NSudo](https://github.com/M2TeamArchived/NSudo)
@@ -68,9 +66,14 @@ This project includes code from the following third-party repositories:
    - Source: [valleyofdoom/service-list-builder](https://github.com/valleyofdoom/service-list-builder)
    - Changes: Removed `shutdown /r /t 0` from created lists, added `--output-dir` switch.
 
-7. **7-Zip**
+7. **LowAudioLatency**
 
-8. **Custom Resolution Utility (CRU)**
+
+
+8. **7-Zip**
+
+
+9. **Custom Resolution Utility (CRU)**
 ```
 Copyright (C) 2012-2022 ToastyX
 https://monitortests.com/custom-resolution-utility
@@ -88,7 +91,6 @@ OTHER LIABILITY IN CONNECTION WITH THE USE OF THE SOFTWARE.
 ```
 - Source: [Custom Resolution Utility (CRU)](https://monitortests.com/custom-resolution-utility)
 
-9. **LowAudioLatency**
 
 10. **ServiWin**
 ```
@@ -96,9 +98,7 @@ This utility is released as freeware. You are allowed to freely distribute this 
 ```
 - Source: [ServiWin](https://www.nirsoft.net/utils/serviwin.html)
 
-11. **RwEverything**
-
-12. **DeviceCleanup**
+11. **DeviceCleanup**
 ```
 Allowed:
 - usage in any environment, including commercial
@@ -111,7 +111,7 @@ Not allowed:
 ```
 - Source: [DeviceCleanup](https://www.uwe-sieber.de/misc_tools.html#devicecleanup)
 
-13. **DriveCleanup**
+12. **DriveCleanup**
 ```
 Allowed:
 - usage in any environment, including commercial
@@ -123,3 +123,6 @@ Not allowed:
 - offer for download by means of a "downloader" software
 ```
 - Source: [DriveCleanup](https://www.uwe-sieber.de/drivetools.html#drivecleanup)
+
+13. **RwEverything**
+
