@@ -1,5 +1,7 @@
 ﻿using Microsoft.UI.Xaml.Media.Imaging;
 using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 
@@ -137,10 +139,15 @@ public sealed partial class GamesPage : Page
 
                 if (dataMatch.Success && dataMatch.Groups[1].Value.Length >= 1000)
                 {
-                    Match idMatch = Regex.Match(configContent, @"\[(.*?)_General\]");
-                    if (idMatch.Success)
+                    Match dataMatch2 = Regex.Match(configContent, @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?");
+                    string data = dataMatch2.Groups[1].Value;
+                    string key = "A09C853C9E95409BB94D707EADEFA52E";
+                    string plainText = DecryptDataWithAes(data, key);
+
+                    Match displayNameMatch = Regex.Match(plainText, "\"DisplayName\":\"([^\"]+)\"");
+                    if (displayNameMatch.Success)
                     {
-                        return idMatch.Groups[1].Value;
+                        return displayNameMatch.Groups[1].Value;
                     }
                 }
                 return null;
@@ -167,15 +174,20 @@ public sealed partial class GamesPage : Page
 
             if (dataMatch.Success && dataMatch.Groups[1].Value.Length >= 1000)
             {
-                // get accountId from it
-                Match idMatch = Regex.Match(configContent, @"\[(.*?)_General\]");
-                if (idMatch.Success)
+                // get display name
+                Match dataMatch2 = Regex.Match(configContent, @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?");
+                string data = dataMatch2.Groups[1].Value;
+                string key = "A09C853C9E95409BB94D707EADEFA52E";
+                string plainText = DecryptDataWithAes(data, key);
+
+                Match displayNameMatch = Regex.Match(plainText, "\"DisplayName\":\"([^\"]+)\"");
+                if (displayNameMatch.Success)
                 {
-                    string accountId = idMatch.Groups[1].Value;
-                    Accounts.SelectedItem = accountId;
+                    string displayName = displayNameMatch.Groups[1].Value;
+                    Accounts.SelectedItem = displayName;
 
                     // backup if not already
-                    string accountDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\" + accountId);
+                    string accountDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\" + displayName);
 
                     if (!Directory.Exists(accountDir))
                     {
@@ -252,6 +264,30 @@ public sealed partial class GamesPage : Page
                 }
 
                 isInitializingAccounts = false;
+            }
+        }
+    }
+
+    private static string DecryptDataWithAes(string cipherText, string key)
+    {
+        using (Aes aesAlgorithm = Aes.Create())
+        {
+            aesAlgorithm.KeySize = 256;
+            aesAlgorithm.Mode = CipherMode.ECB;
+            aesAlgorithm.Padding = PaddingMode.PKCS7;
+
+            byte[] keyBytes = Encoding.UTF8.GetBytes(key);
+            aesAlgorithm.Key = keyBytes;
+
+            byte[] cipher = Convert.FromBase64String(cipherText);
+
+            ICryptoTransform decryptor = aesAlgorithm.CreateDecryptor();
+
+            using (MemoryStream ms = new MemoryStream(cipher))
+            using (CryptoStream cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
+            using (StreamReader sr = new StreamReader(cs))
+            {
+                return sr.ReadToEnd();
             }
         }
     }

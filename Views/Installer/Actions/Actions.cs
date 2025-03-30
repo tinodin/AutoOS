@@ -3,6 +3,8 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
@@ -513,12 +515,48 @@ public static class ProcessActions
                         iniHelper.AddValue("NotificationsEnabled_Adverts", "False", section);
                     }
 
+                    Match dataMatch2 = Regex.Match(configContent, @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?");
+                    string data = dataMatch2.Groups[1].Value;
+                    string key = "A09C853C9E95409BB94D707EADEFA52E";
+                    string plainText = DecryptDataWithAes(data, key);
+
+                    // get displayname
+                    Match displayNameMatch = Regex.Match(plainText, "\"DisplayName\":\"([^\"]+)\"");
+                    string displayName = displayNameMatch.Groups[1].Value;
+
+                    // create directory and backup
+                    Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\" + displayName));
+                    File.Copy(destinationPath, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\" + displayName + "GameUserSettings.ini"));
+
                     return;
                 }
             }
         }
     }
 
+    private static string DecryptDataWithAes(string cipherText, string key)
+    {
+        using (Aes aesAlgorithm = Aes.Create())
+        {
+            aesAlgorithm.KeySize = 256;
+            aesAlgorithm.Mode = CipherMode.ECB;
+            aesAlgorithm.Padding = PaddingMode.PKCS7;
+
+            byte[] keyBytes = Encoding.UTF8.GetBytes(key);
+            aesAlgorithm.Key = keyBytes;
+
+            byte[] cipher = Convert.FromBase64String(cipherText);
+
+            ICryptoTransform decryptor = aesAlgorithm.CreateDecryptor();
+
+            using (MemoryStream ms = new MemoryStream(cipher))
+            using (CryptoStream cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
+            using (StreamReader sr = new StreamReader(cs))
+            {
+                return sr.ReadToEnd();
+            }
+        }
+    }
     public static async Task RunImportEpicGamesLauncherGames()
     {
         // get all install lists from other drives

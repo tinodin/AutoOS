@@ -244,7 +244,7 @@ public sealed partial class GamePanel : UserControl
             "rundll32",
             "RuntimeBroker",
             "SearchHost",
-            "secd.exe",
+            "secd",
             "ShellExperienceHost",
             "sppsvc",
             "StartMenuExperienceHost",
