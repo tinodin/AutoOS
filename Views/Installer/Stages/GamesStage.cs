@@ -14,7 +14,6 @@ public static class GamesStage
     public static async Task Run()
     {
         bool? Fortnite = ApplicationStage.Fortnite;
-        bool? NVIDIA = PreparingStage.NVIDIA;
 
         InstallPage.Status.Text = "Configuring Games...";
 
@@ -25,9 +24,6 @@ public static class GamesStage
 
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
-            // import nvidia profile
-            ("Importing Fortnite profile", async () => await ProcessActions.ImportProfile("Fortnite.nip"), () => NVIDIA == true && Fortnite == true),
-
             // import fortnite settings
             ("Importing Fortnite settings", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c mkdir ""%LocalAppData%\FortniteGame\Saved\Config\WindowsClient"""), () => Fortnite == true),
             ("Importing Fortnite settings", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c copy /Y """ + Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "GameUserSettings.ini") + @""" ""%LocalAppData%\FortniteGame\Saved\Config\WindowsClient\GameUserSettings.ini"""), () => Fortnite == true),

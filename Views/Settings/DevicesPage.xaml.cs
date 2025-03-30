@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;
 using System.Diagnostics;
 using System.Management;
+using System.ServiceProcess;
 
 namespace AutoOS.Views.Settings;
 
@@ -250,6 +251,16 @@ public sealed partial class DevicesPage : Page
     {
         // hide toggle switch
         IMOD.Visibility = Visibility.Collapsed;
+
+        // stop easy anti cheat driver when fortnite is not running
+        if (Process.GetProcessesByName("FortniteClient-Win64-Shipping").Length == 0)
+        {
+            ServiceController service = new ServiceController("EasyAntiCheat_EOSSys");
+            if (service.Status == ServiceControllerStatus.Running)
+            {
+                service.Stop();
+            }
+        }
 
         // check state
         Process.Start(new ProcessStartInfo

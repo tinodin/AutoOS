@@ -3,7 +3,6 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using System.Diagnostics;
-using System.Management;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
@@ -439,6 +438,7 @@ public static class ProcessActions
 
     public static async Task RunImportEpicGamesLauncherAccount()
     {
+        // get all configs from other drives
         var foundFiles = DriveInfo.GetDrives()
                 .Where(d => d.DriveType == DriveType.Fixed && d.Name != @"C:\")
                 .SelectMany(d =>
@@ -456,6 +456,7 @@ public static class ProcessActions
         string destinationPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "EpicGamesLauncher", "Saved", "Config", "Windows", "GameUserSettings.ini");
         string newestFilePath = null;
 
+        // check if files are valid
         foreach (var file in foundFiles)
         {
             string configContent = await File.ReadAllTextAsync(file.FullName);
@@ -463,24 +464,64 @@ public static class ProcessActions
 
             if (dataMatch.Success && dataMatch.Groups[1].Value.Length >= 1000)
             {
+                // use the latest one
                 if (newestFilePath == null || file.LastWriteTime > new FileInfo(newestFilePath).LastWriteTime)
                 {
                     newestFilePath = file.FullName;
+                    Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)!);
+                    File.Copy(newestFilePath, destinationPath, true);
+
+                    // disable tray and notifications
+                    Match match = Regex.Match(await File.ReadAllTextAsync(destinationPath), @"\[(.*?)_General\]");
+                    string section = match.Groups[1].Value + "_General";
+
+                    InIHelper iniHelper = new InIHelper(destinationPath);
+
+                    try
+                    {
+                        if (!iniHelper.IsKeyExists("MinimiseToSystemTray", section))
+                        {
+                            iniHelper.AddValue("MinimiseToSystemTray", "False", section);
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        iniHelper.AddValue("MinimiseToSystemTray", "False", section);
+                    }
+
+                    try
+                    {
+                        if (!iniHelper.IsKeyExists("NotificationsEnabled_FreeGame", section))
+                        {
+                            iniHelper.AddValue("NotificationsEnabled_FreeGame", "False", section);
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        iniHelper.AddValue("NotificationsEnabled_FreeGame", "False", section);
+                    }
+
+                    try
+                    {
+                        if (!iniHelper.IsKeyExists("NotificationsEnabled_Adverts", section))
+                        {
+                            iniHelper.AddValue("NotificationsEnabled_Adverts", "False", section);
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        iniHelper.AddValue("NotificationsEnabled_Adverts", "False", section);
+                    }
+
+                    return;
                 }
             }
         }
-
-        if (newestFilePath != null)
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)!);
-            File.Copy(newestFilePath, destinationPath, true);
-            return;
-        }   
     }
-
 
     public static async Task RunImportEpicGamesLauncherGames()
     {
+        // get all install lists from other drives
         var foundFiles = DriveInfo.GetDrives()
                 .Where(d => d.DriveType == DriveType.Fixed && d.Name != @"C:\")
                 .Select(d => Path.Combine(d.Name, "ProgramData", "Epic", "UnrealEngineLauncher", "LauncherInstalled.dat"))
@@ -489,28 +530,22 @@ public static class ProcessActions
                 .OrderByDescending(f => f.LastWriteTime)
                 .ToList();
 
-        if (foundFiles.Count == 0)
-        {
-            Debug.WriteLine("No LauncherInstalled.dat found.");
-            return;
-        }
-
         var jsonContent = await File.ReadAllTextAsync(foundFiles.First().FullName);
         var jsonObject = JsonNode.Parse(jsonContent);
         var installationList = jsonObject?["InstallationList"] as JsonArray;
 
+        // return if install list is empty
         if (installationList == null || installationList.Count == 0)
         {
-            Debug.WriteLine("InstallationList is empty. Nothing to import.");
             return;
         }
 
         FileInfo newestFile = foundFiles.First();
-        Debug.WriteLine($"Using newest LauncherInstalled.dat: {newestFile.FullName}");
 
         string destinationPath = @"C:\ProgramData\Epic\UnrealEngineLauncher\LauncherInstalled.dat";
         Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)!);
 
+        // set new game paths
         foreach (var game in installationList)
         {
             if (game is JsonObject gameObj && gameObj.ContainsKey("InstallLocation"))
@@ -525,7 +560,6 @@ public static class ProcessActions
                     if (Directory.Exists(testPath))
                     {
                         gameObj["InstallLocation"] = testPath;
-                        Debug.WriteLine($"Updated InstallLocation: {originalPath} → {testPath}");
                         break;
                     }
                 }
@@ -533,8 +567,8 @@ public static class ProcessActions
         }
 
         await File.WriteAllTextAsync(destinationPath, jsonObject.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
-        Debug.WriteLine($"Copied updated LauncherInstalled.dat to {destinationPath}");
 
+        // copy over the manifest folder
         string sourceManifestsFolder = Path.Combine(Path.GetPathRoot(newestFile.FullName)!, "ProgramData", "Epic", "EpicGamesLauncher", "Data", "Manifests");
         string destinationManifestsFolder = @"C:\ProgramData\Epic\EpicGamesLauncher\Data\Manifests";
 
@@ -554,16 +588,13 @@ public static class ProcessActions
                 File.Copy(file, destFilePath, true);
             }
 
-            Debug.WriteLine($"Copied entire {sourceManifestsFolder} folder to {destinationManifestsFolder}");
-
+            // set new game paths
             foreach (var file in Directory.GetFiles(destinationManifestsFolder, "*.item", SearchOption.AllDirectories))
             {
                 string fileName = Path.GetFileName(file);
                 string destFilePath = file;
-                Debug.WriteLine($"Processing {fileName} in {destinationManifestsFolder}");
 
-                string itemContent = await File.ReadAllTextAsync(destFilePath);
-                var itemJson = JsonNode.Parse(itemContent);
+                var itemJson = JsonNode.Parse(await File.ReadAllTextAsync(destFilePath));
 
                 if (itemJson is JsonObject itemObj)
                 {
@@ -584,20 +615,18 @@ public static class ProcessActions
                                 itemObj["ManifestLocation"] = itemObj["ManifestLocation"].ToString().Replace(originalDrive, newDrive);
                                 itemObj["StagingLocation"] = itemObj["StagingLocation"].ToString().Replace(originalDrive, newDrive);
 
-                                Debug.WriteLine($"Updated InstallLocation, ManifestLocation, and StagingLocation to {newDrive + relativePath}");
                                 break;
                             }
                         }
                     }
 
                     await File.WriteAllTextAsync(destFilePath, itemObj.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
-                    Debug.WriteLine($"Updated {fileName} with new paths.");
                 }
             }
         }
         else
         {
-            Debug.WriteLine("Manifests folder not found.");
+            return;
         }
     }
 

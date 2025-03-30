@@ -32,8 +32,6 @@ public static class ApplicationStage
         string previousTitle = string.Empty;
         int stagePercentage = 5;
 
-
-
         string icloudVersion = "";
         string bitwardenVersion = "";
         string onePasswordVersion = "";
@@ -259,6 +257,7 @@ public static class ApplicationStage
 
             // log in to epic games launcher account
             ("Please log in to your Epic Games Launcher account", async () => await ProcessActions.RunCustom(async () => await Task.Run(async () => { Process.Start(@"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win64\EpicGamesLauncher.exe"); string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "EpicGamesLauncher", "Saved", "Config", "Windows", "GameUserSettings.ini"); while (!File.Exists(path) || Regex.Match(await File.ReadAllTextAsync(path), @"Data=([^\r\n]+)").Groups[1].Value.Length < 1000) await Task.Delay(500); Process.GetProcessesByName("EpicGamesLauncher").ToList().ForEach(p => { p.Kill(); p.WaitForExit(); }); })), () => EpicGames == true && EpicGamesAccount == false),
+
 
             // disable epic games services
             ("Disabling Epic Games services", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\EpicOnlineServices"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => EpicGames == true),
