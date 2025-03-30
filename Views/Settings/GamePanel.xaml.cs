@@ -7,7 +7,6 @@ namespace AutoOS.Views.Settings;
 
 public sealed partial class GamePanel : UserControl
 {
-    private bool isLaunching = false;
     private bool isInitializingPresentationMode = true;
     private readonly string nsudoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NSudo", "NSudoLC.exe");
 
@@ -59,46 +58,43 @@ public sealed partial class GamePanel : UserControl
     public string AppName { get; set; }
     public string InstallLocation { get; set; }
     public string LaunchExecutable { get; set; }
-    public bool CanRunOffline { get; set; }
 
     public void CheckGameRunning()
     {
-        string executable = string.Empty;
+        string offlineExecutable = string.Empty;
+        string onlineExecutable = string.Empty;
 
-        if (CanRunOffline == true)
-        {
-            executable = Path.GetFileNameWithoutExtension(LaunchExecutable);
-        }
+        offlineExecutable = Path.GetFileNameWithoutExtension(LaunchExecutable);
 
         if (Title == "Fortnite")
         {
-            executable = "FortniteClient-Win64-Shipping";
+            onlineExecutable = "FortniteClient-Win64-Shipping";
         }
 
-        Debug.WriteLine(executable);
-
         // if running
-        if (Process.GetProcessesByName(executable).Length > 0)
+        if (Process.GetProcessesByName(Path.GetFileNameWithoutExtension(offlineExecutable)).Length > 0 || (!string.IsNullOrEmpty(onlineExecutable) && Process.GetProcessesByName(Path.GetFileNameWithoutExtension(onlineExecutable)).Length > 0))
         {
             // disable launch button
             Launch.IsEnabled = false;
 
-            // show stop processes button if not already
-            if (stopProcesses.Visibility == Visibility.Collapsed)
+            if (new ServiceController("Beep").Status == ServiceControllerStatus.Stopped)
             {
-                // show stop processes button
-                stopProcesses.Visibility = Visibility.Visible;
-            }
-
-            // show launch explorer button if not already
-            if (Process.GetProcessesByName("explorer").Length == 0)
-            {
-                if (launchExplorer.Visibility == Visibility.Collapsed)
+                // show stop processes button if not already
+                if (stopProcesses.Visibility == Visibility.Collapsed)
                 {
-                    launchExplorer.Visibility = Visibility.Visible;
+                    // show stop processes button
+                    stopProcesses.Visibility = Visibility.Visible;
+                }
+
+                // show launch explorer button if not already
+                if (Process.GetProcessesByName("explorer").Length == 0)
+                {
+                    if (launchExplorer.Visibility == Visibility.Collapsed)
+                    {
+                        launchExplorer.Visibility = Visibility.Visible;
+                    }
                 }
             }
-            isLaunching = false;
         }
 
         var synchronizationContext = SynchronizationContext.Current;
@@ -110,45 +106,46 @@ public sealed partial class GamePanel : UserControl
             {
                 synchronizationContext.Post(_ =>
                 {
-                    if (Process.GetProcessesByName(executable).Length > 0)
+                    if (Process.GetProcessesByName(Path.GetFileNameWithoutExtension(offlineExecutable)).Length > 0 || (!string.IsNullOrEmpty(onlineExecutable) && Process.GetProcessesByName(Path.GetFileNameWithoutExtension(onlineExecutable)).Length > 0))
                     {
                         // disable launch button
                         Launch.IsEnabled = false;
 
-                        // show stop processes button if not already
-                        if (stopProcesses.Visibility == Visibility.Collapsed)
+                        if (new ServiceController("Beep").Status == ServiceControllerStatus.Stopped)
                         {
-                            stopProcesses.Visibility = Visibility.Visible;
-                            isLaunching = false;
-                        }
-
-                        // show launch explorer button if not already
-                        if (Process.GetProcessesByName("explorer").Length == 0)
-                        {
-                            if (launchExplorer.Visibility == Visibility.Collapsed)
+                            // show stop processes button if not already
+                            if (stopProcesses.Visibility == Visibility.Collapsed)
                             {
-                                launchExplorer.Visibility = Visibility.Visible;
+                                stopProcesses.Visibility = Visibility.Visible;
                             }
-                        }
-                        else
-                        {
-                            // hide launch explorer button if explorer is running
-                            if (launchExplorer.Visibility == Visibility.Visible)
+
+                            // show launch explorer button if not already
+                            if (Process.GetProcessesByName("explorer").Length == 0)
                             {
-                                launchExplorer.Visibility = Visibility.Collapsed;
+                                if (launchExplorer.Visibility == Visibility.Collapsed)
+                                {
+                                    launchExplorer.Visibility = Visibility.Visible;
+                                }
+                            }
+                            else
+                            {
+                                // hide launch explorer button if explorer is running
+                                if (launchExplorer.Visibility == Visibility.Visible)
+                                {
+                                    launchExplorer.Visibility = Visibility.Collapsed;
+                                }
                             }
                         }
                     }
                     else
                     {
-                        if (isLaunching == false)
+                        if (Launch.IsEnabled == false)
                         {
-                            if (Launch.IsEnabled == false)
-                            {
-                                // enable launch button
-                                Launch.IsEnabled = true;
-                            }
-
+                            // enable launch button
+                            Launch.IsEnabled = true;
+                        }
+                        if (new ServiceController("Beep").Status == ServiceControllerStatus.Stopped)
+                        {
                             // hide stop processes button
                             if (stopProcesses.Visibility == Visibility.Visible)
                             {
@@ -159,12 +156,6 @@ public sealed partial class GamePanel : UserControl
                             if (launchExplorer.Visibility == Visibility.Visible)
                             {
                                 launchExplorer.Visibility = Visibility.Collapsed;
-                            }
-
-                            // launch explorer if not already
-                            if (Process.GetProcessesByName("explorer").Length == 0)
-                            {
-                                Process.Start("explorer.exe");
                             }
                         }
                     }
@@ -180,8 +171,6 @@ public sealed partial class GamePanel : UserControl
 
     private async void Launch_Click(object sender, RoutedEventArgs e)
     {
-        isLaunching = true;
-
         // check services state
         if (new ServiceController("Beep").Status == ServiceControllerStatus.Running)
         {
@@ -201,7 +190,6 @@ public sealed partial class GamePanel : UserControl
             // check result
             if (result == ContentDialogResult.Secondary)
             {
-                isLaunching = false;
                 return;
             }
         }

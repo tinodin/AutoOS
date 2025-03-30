@@ -21,7 +21,7 @@ public sealed partial class GamesPage : Page
     private async void LoadGames()
     {
         string manifestsFolder = @"C:\ProgramData\Epic\EpicGamesLauncher\Data\Manifests";
-        var gameList = new List<(string ImageUrl, string Title, string Developer, string CatalogNamespace, string CatalogItemId, string AppName, string InstallLocation, string LaunchExecutable, bool canRunOffline)>();
+        var gameList = new List<(string ImageUrl, string Title, string Developer, string CatalogNamespace, string CatalogItemId, string AppName, string InstallLocation, string LaunchExecutable)>();
 
         foreach (var file in Directory.GetFiles(manifestsFolder, "*.item", SearchOption.TopDirectoryOnly))
         {
@@ -35,7 +35,6 @@ public sealed partial class GamesPage : Page
                 string appName = itemJson["MainGameAppName"]?.GetValue<string>();
                 string installLocation = itemJson["InstallLocation"]?.GetValue<string>();
                 string launchExecutable = itemJson["LaunchExecutable"]?.GetValue<string>();
-                bool canRunOffline = itemJson["bCanRunOffline"]?.GetValue<bool>() ?? false;
 
                 if (!string.IsNullOrEmpty(catalogItemId))
                 {
@@ -56,10 +55,16 @@ public sealed partial class GamesPage : Page
                             {
                                 if (image?["type"]?.GetValue<string>() == "DieselGameBoxTall")
                                 {
-                                    string? imageUrl = image["url"]?.GetValue<string>();
+                                    string imageUrl = image["url"]?.GetValue<string>();
+
+                                    if (title == "Fortnite")
+                                    {
+                                        imageUrl = "https://cdn1.epicgames.com/item/fn/FNBR_34-00_C6S2_EGS_Launcher_KeyArt_FNlogo_Blade_1200x1600_1200x1600-0aa5c6ea35dab419ec28980fdb402e89";
+                                    }
+
                                     if (!string.IsNullOrEmpty(imageUrl))
                                     {
-                                        gameList.Add((imageUrl, title, developer, catalogNamespace, catalogItemId, appName, installLocation, launchExecutable, canRunOffline));
+                                        gameList.Add((imageUrl, title, developer, catalogNamespace, catalogItemId, appName, installLocation, launchExecutable));
                                     }
                                     break;
                                 }
@@ -78,7 +83,7 @@ public sealed partial class GamesPage : Page
 
         foreach (var game in sortedGames)
         {
-            AddGameToStackPanel(game.ImageUrl, game.Title, game.Developer, game.CatalogNamespace, game.CatalogItemId, game.AppName, game.InstallLocation, game.LaunchExecutable, game.canRunOffline);
+            AddGameToStackPanel(game.ImageUrl, game.Title, game.Developer, game.CatalogNamespace, game.CatalogItemId, game.AppName, game.InstallLocation, game.LaunchExecutable);
         }
 
         InstalledGames.HorizontalContentAlignment = HorizontalAlignment.Left;
@@ -86,7 +91,7 @@ public sealed partial class GamesPage : Page
         Games_ProgressRing.IsActive = false;
     }
 
-    private void AddGameToStackPanel(string imageUrl, string title, string developer, string catalogNamespace, string catalogItemId, string appName, string installLocation, string launchExecutable, bool canRunOffline)
+    private void AddGameToStackPanel(string imageUrl, string title, string developer, string catalogNamespace, string catalogItemId, string appName, string installLocation, string launchExecutable)
     {
         var gamePanel = new GamePanel
         {
@@ -100,8 +105,7 @@ public sealed partial class GamesPage : Page
             CatalogItemId = catalogItemId,
             AppName = appName,
             InstallLocation = installLocation,
-            LaunchExecutable = launchExecutable,
-            CanRunOffline = canRunOffline
+            LaunchExecutable = launchExecutable
         };
 
         if (games.HeaderContent == null)
@@ -218,7 +222,6 @@ public sealed partial class GamesPage : Page
             {
                 Accounts.Items.Add("Not logged in");
                 Accounts.SelectedItem = "Not logged in";
-                launchFortnite.IsEnabled = false;
                 removeButton.IsEnabled = false;
                 isInitializingAccounts = false;
                 return;

@@ -23,31 +23,34 @@
             <dev:SettingsGroup x:Name="InstalledGames"
                                Header="Installed Games"
                                HorizontalContentAlignment="Center">
-                <StackPanel>
+                <StackPanel Height="350">
                     <dev:SwitchPresenter Grid.Row="1"
                                          HorizontalAlignment="Center"
                                          TargetType="x:Boolean"
                                          Value="True"
-                                         x:Name="Games_SwitchPresenter">    
+                                         x:Name="Games_SwitchPresenter">
                         <dev:Case Value="True">
-                            <StackPanel HorizontalAlignment="Center"
-                                        Orientation="Vertical"
-                                        Spacing="8">
-                                <ProgressRing x:Name="Games_ProgressRing" IsActive="True" />
-                                <TextBlock HorizontalAlignment="Center"
-                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                           Style="{StaticResource CaptionTextBlockStyle}"
-                                           Text="Fetching data.." />
-                            </StackPanel>
+                            <Grid VerticalAlignment="Center" HorizontalAlignment="Stretch" Height="350">
+                                <StackPanel HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Orientation="Vertical"
+                                            Spacing="8">
+                                    <ProgressRing x:Name="Games_ProgressRing" IsActive="True" />
+                                    <TextBlock HorizontalAlignment="Center"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Text="Fetching data.." />
+                                </StackPanel>
+                            </Grid>
                         </dev:Case>
                         <dev:Case Value="False">
                              <views:GameGallery x:Name="games"
-                                                Grid.Row="1"
-                                                Margin="0,0,0,0"/>
+                                                Grid.Row="1"/>
                          </dev:Case>
                     </dev:SwitchPresenter>
                 </StackPanel>
             </dev:SettingsGroup>
+            <StackPanel x:Name="GameInfo"/>
             <dev:SettingsGroup Description="Select your Epic Games Account."
                                Header="Epic Games Account" HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Epicgames.png}">
                 <dev:SettingsGroup.Content>
@@ -67,102 +70,6 @@
                 </dev:SettingsGroup.Items>
             </dev:SettingsGroup>
             <StackPanel x:Name="AccountInfo"/>
-
-            <Grid Background="{ThemeResource AcrylicBackgroundFillColorDefaultBrush}"
-                  BorderBrush="{ThemeResource SurfaceStrokeColorFlyoutBrush}"
-                  CornerRadius="8"
-                  HorizontalAlignment="Center"
-                  Visibility="Collapsed"
-                  VerticalAlignment="Center"> 
-                <Grid.Resources>
-                    <ResourceDictionary>
-                        <ResourceDictionary.ThemeDictionaries>
-                            <ResourceDictionary x:Key="Light">
-                                <SolidColorBrush x:Key="HyperlinkButtonBorderBrush"
-                                     Color="{ThemeResource ControlStrokeColorDefault}" />
-                                <SolidColorBrush x:Key="HyperlinkButtonBorderBrushPointerOver"
-                                     Color="{ThemeResource ControlStrokeColorSecondary}" />
-                                <SolidColorBrush x:Key="HyperlinkButtonBorderBrushPressed"
-                                     Color="{ThemeResource ControlStrokeColorDefault}" />
-                                <SolidColorBrush x:Key="HyperlinkButtonBorderBrushDisabled"
-                                     Color="{ThemeResource ControlStrokeColorDefault}" />
-                            </ResourceDictionary>
-                            <ResourceDictionary x:Key="Default">
-                                <SolidColorBrush x:Key="HyperlinkButtonBorderBrush"
-                                     Color="{ThemeResource ControlStrokeColorDefault}" />
-                                <SolidColorBrush x:Key="HyperlinkButtonBorderBrushPointerOver"
-                                     Color="{ThemeResource ControlStrokeColorSecondary}" />
-                                <SolidColorBrush x:Key="HyperlinkButtonBorderBrushPressed"
-                                     Color="{ThemeResource ControlStrokeColorDefault}" />
-                                <SolidColorBrush x:Key="HyperlinkButtonBorderBrushDisabled"
-                                     Color="{ThemeResource ControlStrokeColorDefault}" />
-                            </ResourceDictionary>
-                            <ResourceDictionary x:Key="HighContrast">
-                                <SolidColorBrush x:Key="HyperlinkButtonBorderBrush"
-                                     Color="{ThemeResource SystemColorButtonTextColor}" />
-                                <SolidColorBrush x:Key="HyperlinkButtonBorderBrushPointerOver"
-                                     Color="{ThemeResource SystemColorButtonTextColor}" />
-                                <SolidColorBrush x:Key="HyperlinkButtonBorderBrushPressed"
-                                     Color="{ThemeResource SystemColorButtonTextColor}" />
-                                <SolidColorBrush x:Key="HyperlinkButtonBorderBrushDisabled"
-                                     Color="{ThemeResource SystemColorButtonTextColor}" />
-                            </ResourceDictionary>
-                        </ResourceDictionary.ThemeDictionaries>
-                    </ResourceDictionary>
-                </Grid.Resources>
-                <HyperlinkButton Padding="-1"
-                     HorizontalAlignment="Stretch"
-                     VerticalAlignment="Stretch"
-                     HorizontalContentAlignment="Stretch"
-                     VerticalContentAlignment="Stretch"
-                     AutomationProperties.LabeledBy="{Binding ElementName=TitleText}"
-                     CornerRadius="{StaticResource OverlayCornerRadius}">
-                    <Grid Padding="24"
-              VerticalAlignment="Stretch"
-              RowSpacing="16">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="256" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <ContentPresenter HorizontalAlignment="Center"
-                             VerticalAlignment="Center">
-                            <ContentPresenter.Content>
-                                <Image Source="ms-appx:///Assets/Fluent/Fortnite.jpeg" />
-                            </ContentPresenter.Content>
-                        </ContentPresenter>
-                        <StackPanel Grid.Row="1"
-                        Orientation="Vertical"
-                        Spacing="4">
-                            <TextBlock x:Name="TitleText"
-                           FontSize="18"
-                           Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                           Style="{StaticResource BodyTextBlockStyle}"
-                           Text="Fortnite" />
-                            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                           Style="{StaticResource CaptionTextBlockStyle}"
-                           Text="Description" />
-                            <dev:ElementGroup Margin="0,25,0,0" HorizontalAlignment="Center">
-                                <Button HorizontalAlignment="Stretch"
-                            Content="Launch"
-                            Style="{StaticResource AccentButtonStyle}"
-                            x:Name="launchFortnite"/>
-                                <Button HorizontalAlignment="Stretch"
-                            Content="Stop processes"
-                            x:Name="stopProcesses"
-                            ToolTipService.ToolTip="Click after loading into your first match."
-                            Visibility="Collapsed"/>
-                                <Button HorizontalAlignment="Stretch"
-                            Visibility="Collapsed"
-                            Content="Start explorer"
-                            x:Name="launchExplorer"/>
-                                <Button HorizontalAlignment="Stretch">
-                                    <FontIcon Glyph="&#xE713;" FontSize="19"/>
-                                </Button>
-                            </dev:ElementGroup>
-                        </StackPanel>
-                    </Grid>
-                </HyperlinkButton>
-            </Grid>
             <Border Height="95"
                     Background="Transparent"/>
         </StackPanel>
