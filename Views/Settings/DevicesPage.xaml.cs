@@ -255,8 +255,10 @@ public sealed partial class DevicesPage : Page
         // stop easy anti cheat driver when fortnite is not running
         if (Process.GetProcessesByName("FortniteClient-Win64-Shipping").Length == 0)
         {
-            ServiceController service = new ServiceController("EasyAntiCheat_EOSSys");
-            if (service.Status == ServiceControllerStatus.Running)
+            ServiceController[] services = ServiceController.GetServices();
+            ServiceController service = Array.Find(services, s => s.ServiceName == "EasyAntiCheat_EOSSys");
+
+            if (service != null && service.Status == ServiceControllerStatus.Running)
             {
                 service.Stop();
             }

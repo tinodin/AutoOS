@@ -47,8 +47,8 @@ public static class GamesStage
             ("Creating Fortnite QoS Policy", async () => await ProcessActions.RunPowerShell(@"New-NetQosPolicy -Name ""FortniteClient-Win64-Shipping.exe"" -AppPathNameMatchCondition ""FortniteClient-Win64-Shipping.exe"" -Precedence 127 -DSCPAction 46 -IPProtocol Both"), () => Fortnite == true),
         
             // create presentation mode entries
-            ("Creating presentation mode entries", async () => await ProcessActions.RunCustom(async () => await Task.Run(async () => { var p = Process.Start(fortnitePath + @"\FortniteGame\Binaries\Win64\FortniteClient-Win64-Shipping.exe"); if (p != null) { p.WaitForInputIdle(); await Task.Delay(1000); p.Kill(); } })), () => Fortnite == true),
-        
+            ("Creating presentation mode entries", async () => await ProcessActions.RunNsudo("CurrentUser", $"cmd /c \"{fortnitePath}\\FortniteGame\\Binaries\\Win64\\FortniteClient-Win64-Shipping.exe && timeout /t 1 && taskkill /F /IM FortniteClient-Win64-Shipping.exe\""), () => Fortnite == true),
+
             // disable fullscreen optimizations
             ("Disabling fullscreen optimizations", async () => await ProcessActions.RunNsudo("CurrentUser", $@"reg add ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers"" /v ""{fortnitePath}\FortniteGame\Binaries\Win64\FortniteClient-Win64-Shipping.exe"" /t REG_SZ /d ""~ DISABLEDXMAXIMIZEDWINDOWEDMODE HIGHDPIAWARE"" /f"), () => Fortnite == true),
         };

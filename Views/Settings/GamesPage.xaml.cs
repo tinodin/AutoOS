@@ -11,6 +11,7 @@ public sealed partial class GamesPage : Page
 {
     private bool isInitializingAccounts = true;
     private readonly string configFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\GameUserSettings.ini");
+    
     public GamesPage()
     {
         InitializeComponent();
@@ -40,7 +41,7 @@ public sealed partial class GamesPage : Page
 
                 if (!string.IsNullOrEmpty(catalogItemId))
                 {
-                    string url = $"https://raw.githubusercontent.com/nachoaldamav/items-tracker/main/database/items/{catalogItemId}.json";
+                    string url = $"https://api.egdata.app/items/{catalogItemId}";
 
                     try
                     {
@@ -58,11 +59,6 @@ public sealed partial class GamesPage : Page
                                 if (image?["type"]?.GetValue<string>() == "DieselGameBoxTall")
                                 {
                                     string imageUrl = image["url"]?.GetValue<string>();
-
-                                    if (title == "Fortnite")
-                                    {
-                                        imageUrl = "https://cdn1.epicgames.com/item/fn/FNBR_34-00_C6S2_EGS_Launcher_KeyArt_FNlogo_Blade_1200x1600_1200x1600-0aa5c6ea35dab419ec28980fdb402e89";
-                                    }
 
                                     if (!string.IsNullOrEmpty(imageUrl))
                                     {
@@ -88,7 +84,7 @@ public sealed partial class GamesPage : Page
             AddGameToStackPanel(game.ImageUrl, game.Title, game.Developer, game.CatalogNamespace, game.CatalogItemId, game.AppName, game.InstallLocation, game.LaunchExecutable);
         }
 
-        InstalledGames.HorizontalContentAlignment = HorizontalAlignment.Left;
+        Games_SwitchPresenter.HorizontalAlignment = HorizontalAlignment.Left;
         Games_SwitchPresenter.Value = false;
         Games_ProgressRing.IsActive = false;
     }
@@ -99,10 +95,7 @@ public sealed partial class GamesPage : Page
         {
             Title = title,
             Description = developer,
-            Source = new Image
-            {
-                Source = new BitmapImage(new Uri(imageUrl))
-            },
+            ImageSource = new BitmapImage(new Uri(imageUrl)),
             CatalogNamespace = catalogNamespace,
             CatalogItemId = catalogItemId,
             AppName = appName,
@@ -130,142 +123,104 @@ public sealed partial class GamesPage : Page
         // clear list
         Accounts.Items.Clear();
 
-        // search for all valid accounts
-        var accountData = Directory.GetFiles(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows"), "GameUserSettings.ini", SearchOption.AllDirectories)
-            .Select(file =>
-            {
-                string configContent = File.ReadAllText(file);
-                Match dataMatch = Regex.Match(configContent, @"Data=([^\r\n]+)");
+        // get all configs
+        List<string> accountList = new List<string>();
 
-                if (dataMatch.Success && dataMatch.Groups[1].Value.Length >= 1000)
-                {
-                    Match dataMatch2 = Regex.Match(configContent, @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?");
-                    string data = dataMatch2.Groups[1].Value;
-                    string key = "A09C853C9E95409BB94D707EADEFA52E";
-                    string plainText = DecryptDataWithAes(data, key);
-
-                    Match displayNameMatch = Regex.Match(plainText, "\"DisplayName\":\"([^\"]+)\"");
-                    if (displayNameMatch.Success)
-                    {
-                        return displayNameMatch.Groups[1].Value;
-                    }
-                }
-                return null;
-            })
-            .Where(accountIdInFile => accountIdInFile != null)
-            .Distinct()
-            .OrderBy(accountIdInFile => accountIdInFile)
-            .ToList();
-
-        // add all valid accounts to the Accounts combobox
-        foreach (var accountIdInFile in accountData)
+        foreach (var file in Directory.GetFiles(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows"), "GameUserSettings.ini", SearchOption.AllDirectories))
         {
-            if (!Accounts.Items.Contains(accountIdInFile))
-            {
-                Accounts.Items.Add(accountIdInFile);
-            }
-        }
+            // read config asynchronously
+            string configContent = await File.ReadAllTextAsync(file);
 
-        if (File.Exists(configFile))
-        {
-            // check if logged in
-            string configContent = await File.ReadAllTextAsync(configFile);
+            // check if data is valid
             Match dataMatch = Regex.Match(configContent, @"Data=([^\r\n]+)");
-
-            if (dataMatch.Success && dataMatch.Groups[1].Value.Length >= 1000)
+            if (dataMatch.Groups[1].Value.Length >= 1000)
             {
+                // get account id
+                string accountId = Regex.Match(configContent, @"\[(.*?)_General\]").Groups[1].Value;
+
+                // get data
+                string data = Regex.Match(configContent, @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?").Groups[1].Value;
+
+                // decrypt data
+                string decryptedData = DecryptDataWithAes(data, "A09C853C9E95409BB94D707EADEFA52E");
+
                 // get display name
-                Match dataMatch2 = Regex.Match(configContent, @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?");
-                string data = dataMatch2.Groups[1].Value;
-                string key = "A09C853C9E95409BB94D707EADEFA52E";
-                string plainText = DecryptDataWithAes(data, key);
+                string displayName = Regex.Match(decryptedData, "\"DisplayName\":\"([^\"]+)\"").Groups[1].Value;
 
-                Match displayNameMatch = Regex.Match(plainText, "\"DisplayName\":\"([^\"]+)\"");
-                if (displayNameMatch.Success)
+                // backup data
+                string accountDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\" + displayName);
+
+                // check if data exists with old display name
+                string existingDir = Directory.GetDirectories(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows"))
+                                              .FirstOrDefault(dir => Regex.Match(File.ReadAllText(Path.Combine(dir, "GameUserSettings.ini")), @"\[(.*?)_General\]").Groups[1].Value == accountId
+                                                                     && !dir.Contains(displayName));
+                if (existingDir != null)
                 {
-                    string displayName = displayNameMatch.Groups[1].Value;
-                    Accounts.SelectedItem = displayName;
+                    // rename folder
+                    Directory.Move(existingDir, Path.Combine(Path.GetDirectoryName(existingDir), displayName));
 
-                    // backup if not already
-                    string accountDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\" + displayName);
-
-                    if (!Directory.Exists(accountDir))
+                    // replace config
+                    File.Copy(configFile, Path.Combine(Path.GetDirectoryName(existingDir), displayName, "GameUserSettings.ini"), true);
+                }
+                else
+                {
+                    // update the backed up config
+                    if (Directory.Exists(accountDir))
                     {
+                        if (File.Exists(configFile))
+                        {
+                            if (Regex.Match(File.ReadAllText(configFile), @"\[(.*?)_General\]").Groups[1].Value == accountId)
+                            {
+                                File.Copy(configFile, Path.Combine(accountDir, "GameUserSettings.ini"), true);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // create folder
                         Directory.CreateDirectory(accountDir);
-                        File.Copy(configFile, Path.Combine(accountDir, "GameUserSettings.ini"));
-                    }
-                    isInitializingAccounts = false;
-                    return;
-                }
-            }
 
-            if (accountData.Any())
-            {
-                string selectedAccount = accountData.First();
-
-                // close epic games launcher
-                if (Process.GetProcessesByName("EpicGamesLauncher").Length > 0)
-                {
-                    foreach (var process in Process.GetProcessesByName("EpicGamesLauncher"))
-                    {
-                        process.Kill();
-                        process.WaitForExit();
+                        // copy config
+                        File.Copy(configFile, Path.Combine(accountDir, "GameUserSettings.ini"), true);
                     }
                 }
 
-                // replace the file
-                File.Copy(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows", selectedAccount, "GameUserSettings.ini"), configFile, true);
-                Accounts.SelectedItem = selectedAccount;
-
-                // backup if not already
-                string accountDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\" + selectedAccount);
-                if (!Directory.Exists(accountDir))
+                // add account to list
+                if (!accountList.Contains(displayName))
                 {
-                    Directory.CreateDirectory(accountDir);
-                    File.Copy(configFile, Path.Combine(accountDir, "GameUserSettings.ini"));
+                    accountList.Add(displayName);
                 }
-                isInitializingAccounts = false;
-            }
-        }
-        else
-        {
-            // show not logged in
-            if (!accountData.Any())
-            {
-                Accounts.Items.Add("Not logged in");
-                Accounts.SelectedItem = "Not logged in";
-                removeButton.IsEnabled = false;
-                isInitializingAccounts = false;
-                return;
+
+                // select active account
+                if (file == configFile)
+                {
+                    Accounts.SelectedItem = displayName;
+                }
             }
             else
             {
-                Accounts.SelectedItem = accountData.First();
-
-                // close epic games launcher
-                if (Process.GetProcessesByName("EpicGamesLauncher").Length > 0)
+                foreach (var dir in Directory.GetDirectories(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows")))
                 {
-                    foreach (var process in Process.GetProcessesByName("EpicGamesLauncher"))
+                    string backupAccountId = Regex.Match(File.ReadAllText(Path.Combine(dir, "GameUserSettings.ini")), @"\[(.*?)_General\]").Groups[1].Value;
+
+                    if (backupAccountId == Regex.Match(configContent, @"\[(.*?)_General\]").Groups[1].Value)
                     {
-                        process.Kill();
-                        process.WaitForExit();
+                        Directory.Delete(dir, true);
+                    }
+
+                    if (file == configFile)
+                    {
+                        File.Delete(configFile);
                     }
                 }
-
-                // replace the file with the selected account's data
-                File.Copy(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows", Accounts.SelectedItem?.ToString(), "GameUserSettings.ini"), configFile, true);
-
-                // backup if not already
-                string accountDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\" + Accounts.SelectedItem?.ToString());
-                if (!Directory.Exists(accountDir))
-                {
-                    Directory.CreateDirectory(accountDir);
-                    File.Copy(configFile, Path.Combine(accountDir, "GameUserSettings.ini"));
-                }
-
-                isInitializingAccounts = false;
             }
         }
+
+        // sort accounts
+        accountList.Sort();
+        Accounts.ItemsSource = accountList;
+
+        isInitializingAccounts = false;
     }
 
     private static string DecryptDataWithAes(string cipherText, string key)
@@ -307,7 +262,7 @@ public sealed partial class GamesPage : Page
         }
 
         // replace file
-        File.Copy(Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows", Accounts.SelectedItem?.ToString()), "GameUserSettings.ini"), configFile, true);
+        File.Copy(Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\", Accounts.SelectedItem.ToString()), "GameUserSettings.ini"), configFile, true);
     }
 
     private async void AddAccount_Click(object sender, RoutedEventArgs e)
@@ -490,4 +445,3 @@ public sealed partial class GamesPage : Page
         }
     }
 }
-

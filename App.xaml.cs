@@ -21,7 +21,7 @@ namespace AutoOS
 
         protected override void OnLaunched(LaunchActivatedEventArgs args)
         {
-            Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", "Installed", RegistryValueKind.String);
+            //Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", "Installed", RegistryValueKind.String);
             //Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", 2, RegistryValueKind.DWord);
 
             string stage = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS")?.GetValue("Stage") as string;
@@ -83,6 +83,8 @@ namespace AutoOS
                         ThemeService = new ThemeService(MainWindow);
 
                         new ModernSystemMenu(MainWindow);
+
+                        WindowHelper.ResizeAndCenterWindowToPercentageOfWorkArea(MainWindow, 90);
 
                         if (MainWindow.AppWindow.Presenter is OverlappedPresenter presenter)
                         {

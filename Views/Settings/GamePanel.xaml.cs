@@ -1,3 +1,5 @@
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using System.Diagnostics;
 using System.Management;
@@ -30,12 +32,6 @@ public sealed partial class GamePanel : UserControl
     public static readonly DependencyProperty DescriptionProperty =
         DependencyProperty.Register("Description", typeof(string), typeof(HeaderTile), new PropertyMetadata(null));
 
-    public object Source
-    {
-        get { return (object)GetValue(SourceProperty); }
-        set { SetValue(SourceProperty, value); }
-    }
-
     public static readonly DependencyProperty SourceProperty =
         DependencyProperty.Register("Source", typeof(object), typeof(HeaderTile), new PropertyMetadata(null));
 
@@ -47,6 +43,23 @@ public sealed partial class GamePanel : UserControl
 
     public static readonly DependencyProperty LinkProperty =
         DependencyProperty.Register("Link", typeof(string), typeof(HeaderTile), new PropertyMetadata(null));
+
+    private void AutoScrollHoverEffectView_PointerCanceled(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        AutoScrollHoverEffectView.IsPlaying = false;
+    }
+
+    private void AutoScrollHoverEffectView_PointerEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        AutoScrollHoverEffectView.IsPlaying = true;
+    }
+
+    private void AutoScrollHoverEffectView_PointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        AutoScrollHoverEffectView.IsPlaying = false;
+    }
+
+    public ImageSource ImageSource { get; set; }
 
     public GamePanel()
     {
@@ -76,6 +89,7 @@ public sealed partial class GamePanel : UserControl
         {
             // disable launch button
             Launch.IsEnabled = false;
+            Panel.Click -= Launch_Click;
 
             if (new ServiceController("Beep").Status == ServiceControllerStatus.Stopped)
             {
@@ -110,6 +124,7 @@ public sealed partial class GamePanel : UserControl
                     {
                         // disable launch button
                         Launch.IsEnabled = false;
+                        Panel.Click -= Launch_Click;
 
                         if (new ServiceController("Beep").Status == ServiceControllerStatus.Stopped)
                         {
@@ -143,6 +158,7 @@ public sealed partial class GamePanel : UserControl
                         {
                             // enable launch button
                             Launch.IsEnabled = true;
+                            Panel.Click += Launch_Click;
                         }
                         if (new ServiceController("Beep").Status == ServiceControllerStatus.Stopped)
                         {
@@ -388,7 +404,7 @@ public sealed partial class GamePanel : UserControl
             var presentationSettingsCard = new SettingsCard
             {
                 Header = "Presentation Mode",
-                Description = "Use Hardware: Independent Flip if you have black screen issues when tabbing out using Hardware: Legacy Flip.",
+                Description = "Use Hardware: Independent Flip if you have issues when tabbing out using Hardware: Legacy Flip.",
                 HeaderIcon = new FontIcon { Glyph = "\uE7F4" }
             };
 

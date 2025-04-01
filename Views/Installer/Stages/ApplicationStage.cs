@@ -200,7 +200,7 @@ public static class ApplicationStage
             // remove discord shortcut from the desktop
             ("Removing desktop shortcut", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c del /f /q ""%HOMEPATH%\Desktop\Discord.lnk"""), () => Discord == true),
 
-            //// remove startup entry
+            // remove startup entry
             ("Removing startup entry", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg delete ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run"" /v ""Discord"" /f"), () => Discord == true),
 
             // disable hardware acceleration

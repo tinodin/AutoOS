@@ -30,6 +30,8 @@ public static class GraphicsStage
         var match = Regex.Match(html, pattern);
         string version = match.Groups[1].Value;
 
+        Debug.WriteLine(version);
+
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
             // download the latest intel driver

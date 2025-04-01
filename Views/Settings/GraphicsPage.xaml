@@ -23,7 +23,13 @@
                                Header="NVIDIA Driver" HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Nvidia.png}">
                 <dev:SettingsGroup.Content>
                     <StackPanel Orientation="Horizontal">
-                        <dev:ProgressButton x:Name="updateCheck" Content="Done" CheckedContent="Checking for updates..." ProgressForeground="#60FFFFFF" ProgressBackground="Blue" IsChecked="True" IsIndeterminate="True"></dev:ProgressButton>
+                        <dev:ProgressButton x:Name="updateCheck" 
+                                            Click="updateCheck_Click" 
+                                            Content="Done" 
+                                            CheckedContent="Checking for updates..." 
+                                            ProgressForeground="#60FFFFFF" 
+                                            Foreground="Black" 
+                                            IsIndeterminate="True"/>
                         <Button x:Name="updateCheckButton"
                                 Content="Checking for updates..." 
                                 Style="{StaticResource AccentButtonStyle}" 
