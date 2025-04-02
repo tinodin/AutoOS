@@ -14,59 +14,13 @@ public sealed partial class GraphicsPage : Page
     public GraphicsPage()
     {
         InitializeComponent();
-        CheckDriverUpdate();
         GetHDCPState();
-    }
-
-    private async void CheckDriverUpdate()
-    {
-        updateCheck.IsChecked = true;
-
-        updateCheck.ProgressBackground = ProcessActions.GetColor("LightNormal", "DarkNormal");
-
-        // get current version
-        var currentVersion = (await Task.Run(() => Process.Start(new ProcessStartInfo("nvidia-smi", "--query-gpu=driver_version --format=csv,noheader") { CreateNoWindow = true, RedirectStandardOutput = true })?.StandardOutput.ReadToEndAsync()))?.Trim();
-        NvidiaCard.Description = "Current Version: " + currentVersion;
-
-        try
-        {
-            using (HttpClient client = new HttpClient())
-            {
-                // check for newest driver version
-                string html = await client.GetStringAsync("https://www.techspot.com/downloads/drivers/essentials/nvidia-geforce/");
-                string pattern = @"<title>.*?(\d+\.\d+).*?</title>";
-                var match = Regex.Match(html, pattern);
-                string newestVersion = match.Groups[1].Value;
-
-                // delay
-                await Task.Delay(350);
-
-                // check if update is needed
-                if (string.Compare(newestVersion, currentVersion, StringComparison.Ordinal) > 0)
-                {
-                    updateCheck.IsChecked = false;
-                    updateCheck.Content = "Update to " + newestVersion;
-                }
-                else if (string.Compare(newestVersion, currentVersion, StringComparison.Ordinal) == 0)
-                {
-                    updateCheck.IsChecked = false;
-                    updateCheck.Content = "No updates available";
-                }
-            }
-        }
-        catch
-        {
-            // delay
-            await Task.Delay(800);
-
-            // connection failed message
-            updateCheck.IsChecked = false;
-            updateCheck.Content = "Failed to check for updates";
-        }
     }
 
     private async void updateCheck_Click(object sender, RoutedEventArgs e)
     {
+        updateCheck.ProgressBackground = ProcessActions.GetColor("LightNormal", "DarkNormal");
+
         updateCheck.IsChecked = true;
 
         // get current version

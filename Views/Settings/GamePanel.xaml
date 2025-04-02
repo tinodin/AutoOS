@@ -11,7 +11,7 @@
           BorderBrush="{ThemeResource SurfaceStrokeColorFlyoutBrush}"
           CornerRadius="8"
           HorizontalAlignment="Center"
-          Width="220"
+          Width="240"
           VerticalAlignment="Center">
         <Grid.Resources>
             <ResourceDictionary>
@@ -63,10 +63,10 @@
                          Click="Launch_Click">
             <Grid Padding="24" VerticalAlignment="Stretch" RowSpacing="11">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="240" />
+                    <RowDefinition Height="*" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
-                <dev:ImageEx CornerRadius="8" Source="{x:Bind ImageSource, Mode=OneWay}" Stretch="Fill"/>
+                <dev:ImageEx x:Name="image" Width="192" Height="256" CornerRadius="8" Source="{x:Bind ImageSource, Mode=OneWay}" Stretch="Fill"/>
                     <StackPanel Grid.Row="1"
                             Orientation="Vertical"
                             Spacing="4">

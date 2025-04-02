@@ -68,30 +68,76 @@ public static class CleanupStage
         };
 
         var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();
-        var uniqueTitles = filteredActions.Select(a => a.Title).Distinct().ToList();
-        double incrementPerTitle = uniqueTitles.Count > 0 ? stagePercentage / (double)uniqueTitles.Count : 0;
+        int groupedTitleCount = 0;
 
-        foreach (var title in uniqueTitles)
+        List<Func<Task>> currentGroup = new();
+
+        for (int i = 0; i < filteredActions.Count; i++)
         {
-            if (previousTitle != string.Empty && previousTitle != title)
+            if (i == 0 || filteredActions[i].Title != filteredActions[i - 1].Title)
             {
+                groupedTitleCount++;
+            }
+        }
+
+        double incrementPerTitle = groupedTitleCount > 0 ? stagePercentage / (double)groupedTitleCount : 0;
+
+        foreach (var (title, action, condition) in filteredActions)
+        {
+            if (previousTitle != string.Empty && previousTitle != title && currentGroup.Count > 0)
+            {
+                foreach (var groupedAction in currentGroup)
+                {
+                    try
+                    {
+                        await groupedAction();
+                    }
+                    catch (Exception ex)
+                    {
+                        InstallPage.Info.Title += ": " + ex.Message;
+                        InstallPage.Info.Severity = InfoBarSeverity.Error;
+                        InstallPage.Progress.Foreground = (Brush)Application.Current.Resources["SystemFillColorCriticalBrush"];
+                        InstallPage.ProgressRingControl.Foreground = (Brush)Application.Current.Resources["SystemFillColorCriticalBrush"];
+                        InstallPage.ProgressRingControl.Visibility = Visibility.Collapsed;
+                        InstallPage.ResumeButton.Visibility = Visibility.Visible;
+
+                        var tcs = new TaskCompletionSource<bool>();
+
+                        InstallPage.ResumeButton.Click += (sender, e) =>
+                        {
+                            tcs.TrySetResult(true);
+                            InstallPage.Info.Severity = InfoBarSeverity.Informational;
+                            InstallPage.Progress.Foreground = ProcessActions.GetColor("LightNormal", "DarkNormal");
+                            InstallPage.ProgressRingControl.Foreground = null;
+                            InstallPage.ProgressRingControl.Visibility = Visibility.Visible;
+                            InstallPage.ResumeButton.Visibility = Visibility.Collapsed;
+                        };
+
+                        await tcs.Task;
+                    }
+                }
+
+                InstallPage.Progress.Value += incrementPerTitle;
                 await Task.Delay(150);
+                currentGroup.Clear();
             }
 
-            var actionsForTitle = filteredActions.Where(a => a.Title == title).ToList();
-            int actionsForTitleCount = actionsForTitle.Count;
+            InstallPage.Info.Title = title + "...";
+            currentGroup.Add(action);
+            previousTitle = title;
+        }
 
-            foreach (var (actionTitle, action, condition) in actionsForTitle)
+        if (currentGroup.Count > 0)
+        {
+            foreach (var groupedAction in currentGroup)
             {
-                InstallPage.Info.Title = actionTitle + "...";
-
                 try
                 {
-                    await action();
+                    await groupedAction();
                 }
                 catch (Exception ex)
                 {
-                    InstallPage.Info.Title = InstallPage.Info.Title + ": " + ex.Message;
+                    InstallPage.Info.Title += ": " + ex.Message;
                     InstallPage.Info.Severity = InfoBarSeverity.Error;
                     InstallPage.Progress.Foreground = (Brush)Application.Current.Resources["SystemFillColorCriticalBrush"];
                     InstallPage.ProgressRingControl.Foreground = (Brush)Application.Current.Resources["SystemFillColorCriticalBrush"];
@@ -108,7 +154,6 @@ public static class CleanupStage
                         InstallPage.ProgressRingControl.Foreground = null;
                         InstallPage.ProgressRingControl.Visibility = Visibility.Visible;
                         InstallPage.ResumeButton.Visibility = Visibility.Collapsed;
-
                     };
 
                     await tcs.Task;
@@ -116,8 +161,6 @@ public static class CleanupStage
             }
 
             InstallPage.Progress.Value += incrementPerTitle;
-
-            previousTitle = title;
         }
 
         InstallPage.Status.Text = "Installation finished.";

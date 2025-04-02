@@ -1,4 +1,5 @@
-﻿using AutoOS.Views.Startup.Actions;
+﻿using AutoOS.Views.Installer.Actions;
+using AutoOS.Views.Startup.Actions;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using System.Diagnostics;
@@ -34,7 +35,7 @@ public static class StartupStage
 
             // apply timer resolution
             ("Applying Timer Resolution " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "RequestedResolution", null)?.ToString(), async () => await StartupActions.RunApplication("TimerResolution", "SetTimerResolution.exe", "--resolution " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "RequestedResolution", null)?.ToString() + " --no-console"), null),
-            
+
             // launch dwmenablemmcss
             ("Launching DWMEnableMMCSS", async () => await StartupActions.RunApplication("DWMEnableMMCSS", "DWMEnableMMCSS.exe", "--no-console"), null),
 
@@ -85,26 +86,54 @@ public static class StartupStage
         };
 
         var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();
-        var uniqueTitles = filteredActions.Select(a => a.Title).Distinct().ToList();
-        double incrementPerTitle = uniqueTitles.Count > 0 ? stagePercentage / (double)uniqueTitles.Count : 0;
+        int groupedTitleCount = 0;
 
-        foreach (var title in uniqueTitles)
+        List<Func<Task>> currentGroup = new();
+
+        for (int i = 0; i < filteredActions.Count; i++)
         {
-            if (previousTitle != string.Empty && previousTitle != title)
+            if (i == 0 || filteredActions[i].Title != filteredActions[i - 1].Title)
             {
+                groupedTitleCount++;
+            }
+        }
+
+        double incrementPerTitle = groupedTitleCount > 0 ? stagePercentage / (double)groupedTitleCount : 0;
+
+        foreach (var (title, action, condition) in filteredActions)
+        {
+            if (previousTitle != string.Empty && previousTitle != title && currentGroup.Count > 0)
+            {
+                foreach (var groupedAction in currentGroup)
+                {
+                    try
+                    {
+                        await groupedAction();
+                    }
+                    catch (Exception ex)
+                    {
+                        StartupWindow.Status.Text = ex.Message;
+                        StartupWindow.Progress.Foreground = (Brush)Application.Current.Resources["SystemFillColorCriticalBrush"];
+                    }
+                }
+
+                StartupWindow.Progress.Value += incrementPerTitle;
                 await Task.Delay(150);
+                currentGroup.Clear();
             }
 
-            var actionsForTitle = filteredActions.Where(a => a.Title == title).ToList();
-            int actionsForTitleCount = actionsForTitle.Count;
+            StartupWindow.Status.Text = title + "...";
+            currentGroup.Add(action);
+            previousTitle = title;
+        }
 
-            foreach (var (actionTitle, action, condition) in actionsForTitle)
+        if (currentGroup.Count > 0)
+        {
+            foreach (var groupedAction in currentGroup)
             {
-                StartupWindow.Status.Text = actionTitle + "...";
-
                 try
                 {
-                    await action();
+                    await groupedAction();
                 }
                 catch (Exception ex)
                 {
@@ -112,10 +141,7 @@ public static class StartupStage
                     StartupWindow.Progress.Foreground = (Brush)Application.Current.Resources["SystemFillColorCriticalBrush"];
                 }
             }
-
             StartupWindow.Progress.Value += incrementPerTitle;
-
-            previousTitle = title;
         }
 
         StartupWindow.Status.Text = "Done.";
