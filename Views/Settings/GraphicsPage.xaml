@@ -19,8 +19,7 @@
                        FontSize="28"
                        FontWeight="SemiBold"
                        Margin="7,-11,0,57"/>
-            <dev:SettingsGroup x:Name="NvidiaCard"
-                               Header="NVIDIA Driver" HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Nvidia.png}">
+            <dev:SettingsGroup x:Name="GpuCard" Header="GPU Driver">
                 <dev:SettingsGroup.Content>
                     <StackPanel Orientation="Horizontal">
                         <dev:ProgressButton x:Name="updateCheck"

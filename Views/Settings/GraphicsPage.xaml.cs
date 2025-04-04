@@ -1,6 +1,7 @@
 ﻿using AutoOS.Views.Installer.Actions;
 using Microsoft.Win32;
 using System.Diagnostics;
+using System.Management;
 using System.Text.RegularExpressions;
 using Windows.Storage;
 
@@ -14,53 +15,109 @@ public sealed partial class GraphicsPage : Page
     public GraphicsPage()
     {
         InitializeComponent();
+        GetGPUState();
         GetHDCPState();
+    }
+    private async void GetGPUState()
+    {
+        updateCheck.ProgressBackground = ProcessActions.GetColor("LightNormal", "DarkNormal");
+        updateCheck.IsChecked = true;
+
+        using (var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_VideoController"))
+        {
+            foreach (var obj in searcher.Get())
+            {
+                string name = obj["Name"]?.ToString();
+                string version = obj["DriverVersion"]?.ToString();
+
+                if (name != null)
+                {
+                    if (name.Contains("NVIDIA", StringComparison.OrdinalIgnoreCase))
+                    {
+                        GpuCard.HeaderIcon = new BitmapIcon { UriSource = new Uri("ms-appx:///Assets/Fluent/Nvidia.png"), ShowAsMonochrome = false };
+                        GpuCard.Header = "NVIDIA Driver";
+                        GpuCard.Description = "Current Version: " + (await Task.Run(() => Process.Start(new ProcessStartInfo("nvidia-smi", "--query-gpu=driver_version --format=csv,noheader") { CreateNoWindow = true, RedirectStandardOutput = true })?.StandardOutput.ReadToEndAsync()))?.Trim();
+                    }
+                    if (name.Contains("AMD", StringComparison.OrdinalIgnoreCase) || name.Contains("Radeon", StringComparison.OrdinalIgnoreCase))
+                    {
+                        GpuCard.HeaderIcon = new BitmapIcon { UriSource = new Uri("ms-appx:///Assets/Fluent/Amd.png"), ShowAsMonochrome = false };
+                        GpuCard.Header = "AMD Driver";
+                    }
+                    if (name.Contains("Intel", StringComparison.OrdinalIgnoreCase))
+                    {
+                        GpuCard.HeaderIcon = new BitmapIcon { UriSource = new Uri("ms-appx:///Assets/Fluent/Intel.png"), ShowAsMonochrome = false };
+                        GpuCard.Header = "Intel Driver";
+                        GpuCard.Description = "Current Version: " + (version?.Split('.')[2] + "." + version?.Split('.')[3]);
+                    }
+                }
+            }
+        }
     }
 
     private async void updateCheck_Click(object sender, RoutedEventArgs e)
     {
-        updateCheck.ProgressBackground = ProcessActions.GetColor("LightNormal", "DarkNormal");
-
-        updateCheck.IsChecked = true;
-
-        // get current version
-        var currentVersion = (await Task.Run(() => Process.Start(new ProcessStartInfo("nvidia-smi", "--query-gpu=driver_version --format=csv,noheader") { CreateNoWindow = true, RedirectStandardOutput = true })?.StandardOutput.ReadToEndAsync()))?.Trim();
-        NvidiaCard.Description = "Current Version: " + currentVersion;
-
-        try
+        using (var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_VideoController"))
         {
-            using (HttpClient client = new HttpClient())
+            foreach (var obj in searcher.Get())
             {
-                // check for newest driver version
-                string html = await client.GetStringAsync("https://www.techspot.com/downloads/drivers/essentials/nvidia-geforce/");
-                string pattern = @"<title>.*?(\d+\.\d+).*?</title>";
-                var match = Regex.Match(html, pattern);
-                string newestVersion = match.Groups[1].Value;
+                string name = obj["Name"]?.ToString();
+                string version = obj["DriverVersion"]?.ToString();
 
-                // delay
-                await Task.Delay(350);
+                if (name != null)
+                {
+                    if (name.Contains("NVIDIA", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // get current version
+                        var currentVersion = (await Task.Run(() => Process.Start(new ProcessStartInfo("nvidia-smi", "--query-gpu=driver_version --format=csv,noheader") { CreateNoWindow = true, RedirectStandardOutput = true })?.StandardOutput.ReadToEndAsync()))?.Trim();
+                        
+                        GpuCard.Description = "Current Version: " + currentVersion;
+                        
+                        try
+                        {
+                            using (HttpClient client = new HttpClient())
+                            {
+                                // check for newest driver version
+                                string html = await client.GetStringAsync("https://www.techspot.com/downloads/drivers/essentials/nvidia-geforce/");
+                                string pattern = @"<title>.*?(\d+\.\d+).*?</title>";
+                                var match = Regex.Match(html, pattern);
+                                string newestVersion = match.Groups[1].Value;
 
-                // check if update is needed
-                if (string.Compare(newestVersion, currentVersion, StringComparison.Ordinal) > 0)
-                {
-                    updateCheck.IsChecked = false;
-                    updateCheck.Content = "Update to " + newestVersion;
-                }
-                else if (string.Compare(newestVersion, currentVersion, StringComparison.Ordinal) == 0)
-                {
-                    updateCheck.IsChecked = false;
-                    updateCheck.Content = "No updates available";
+                                // delay
+                                await Task.Delay(350);
+
+                                // check if update is needed
+                                if (string.Compare(newestVersion, currentVersion, StringComparison.Ordinal) > 0)
+                                {
+                                    updateCheck.IsChecked = false;
+                                    updateCheck.Content = "Update to " + newestVersion;
+                                }
+                                else if (string.Compare(newestVersion, currentVersion, StringComparison.Ordinal) == 0)
+                                {
+                                    updateCheck.IsChecked = false;
+                                    updateCheck.Content = "No updates available";
+                                }
+                            }
+                        }
+                        catch
+                        {
+                            // delay
+                            await Task.Delay(800);
+
+                            // connection failed message
+                            updateCheck.IsChecked = false;
+                            updateCheck.Content = "Failed to check for updates";
+                        }
+                    }
+                    if (name.Contains("AMD", StringComparison.OrdinalIgnoreCase) || name.Contains("Radeon", StringComparison.OrdinalIgnoreCase))
+                    {
+
+                    }
+                    if (name.Contains("Intel", StringComparison.OrdinalIgnoreCase))
+                    {
+
+                    }
                 }
             }
-        }
-        catch
-        {
-            // delay
-            await Task.Delay(800);
-
-            // connection failed message
-            updateCheck.IsChecked = false;
-            updateCheck.Content = "Failed to check for updates";
         }
     }
 

@@ -19,7 +19,7 @@
                        FontSize="28"
                        FontWeight="SemiBold"
                        Margin="7,-11,0,57"/>
-            <StackPanel Height="420">
+            <StackPanel x:Name="Games_StackPanel" Height="420">
                 <dev:SwitchPresenter Grid.Row="1"
                                      HorizontalAlignment="Center"
                                      TargetType="x:Boolean"

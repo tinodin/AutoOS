@@ -1,4 +1,6 @@
-﻿namespace AutoOS.Views.Installer;
+﻿using System.Management;
+
+namespace AutoOS.Views.Installer;
 
 public sealed partial class ServicesPage : Page
 {
@@ -205,6 +207,21 @@ public sealed partial class ServicesPage : Page
 
     private void GetLaptopState()
     {
+        bool isDesktop = new ManagementObjectSearcher("SELECT * FROM Win32_SystemEnclosure")
+       .Get()
+       .Cast<ManagementObject>()
+       .Any(obj => ((ushort[])obj["ChassisTypes"])?.Any(type => new ushort[] { 3, 4, 5, 6, 7, 15, 16, 17 }.Contains(type)) == true);
+
+        if (isDesktop)
+        {
+            Laptop_SettingsCard.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            isInitializingLaptopState = false;
+            Laptop.IsChecked = true;
+        }
+
         // define services and drivers
         var drivers = new[] { "# msisadrv" };
 

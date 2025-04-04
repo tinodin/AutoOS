@@ -22,8 +22,8 @@ public sealed partial class InternetPage : Page
         // declare services and drivers
         var groups = new[]
         {
-            (new[] { "WlanSvc", "Dhcp", "EventLog", "Wcmsvc", "WinHttpAutoProxySvc" }, 2),
-            (new[] { "NlaSvc" }, 3),
+            (new[] { "WlanSvc", "Dhcp", "EventLog", "Wcmsvc" }, 2),
+            (new[] { "NlaSvc", "WinHttpAutoProxySvc", "Netwtw10", "Netwtw14" }, 3),
             (new[] { "tdx", "vwififlt"}, 1)
         };
 
@@ -32,26 +32,19 @@ public sealed partial class InternetPage : Page
         {
             foreach (var service in group.Item1)
             {
-                if ((int?)Registry.GetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\{service}", "Start", -1) != group.Item2)
+                using (var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}"))
                 {
-                    isInitializingWIFIState = false;
-                    return;
+                    if (key == null) continue;
+
+                    var startValue = key.GetValue("Start");
+                    if (startValue == null || (int)startValue != group.Item2)
+                    {
+                        WiFi_SettingsGroup.Description = WiFi_SettingsGroup.Description + " " + service;
+                        isInitializingWIFIState = false;
+                        return;
+                    }
                 }
             }
-        }
-
-        // check for intel wifi driver
-        if (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netwtw10", "Start", null) is int value && value != 3)
-        {
-            isInitializingWIFIState = false;
-            return;
-        }
-
-        // check for intel wifi driver
-        if (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netwtw14", "Start", null) is int value2 && value2 != 3)
-        {
-            isInitializingWIFIState = false;
-            return;
         }
 
         // check for enabled wifi adapters
@@ -98,9 +91,9 @@ public sealed partial class InternetPage : Page
         // declare services and drivers
         var groups = new[]
         {
-            (new[] { "WlanSvc", "Dhcp", "EventLog", "Wcmsvc", "WinHttpAutoProxySvc"}, 2),
-            (new[] { "NlaSvc" }, 3),
-            (new[] { "tdx", "vwififlt" }, 1)
+            (new[] { "WlanSvc", "Dhcp", "EventLog", "Wcmsvc" }, 2),
+            (new[] { "NlaSvc", "WinHttpAutoProxySvc", "Netwtw10", "Netwtw14" }, 3),
+            (new[] { "tdx", "vwififlt"}, 1)
         };
 
         // set start values
@@ -108,20 +101,13 @@ public sealed partial class InternetPage : Page
         {
             foreach (var service in group.Item1)
             {
-                Registry.SetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\{service}", "Start", WiFi.IsOn ? group.Item2 : 4);
+                using (var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}", writable: true))
+                {
+                    if (key == null) continue;
+
+                    Registry.SetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\{service}", "Start", WiFi.IsOn ? group.Item2 : 4);
+                }
             }
-        }
-
-        // check for intel wifi driver
-        if (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netwtw10", "Start", null) != null)
-        {
-            Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netwtw10", "Start", WiFi.IsOn ? 3 : 4);
-        }
-
-        // check for intel wifi driver
-        if (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netwtw14", "Start", null) != null)
-        {
-            Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netwtw14", "Start", WiFi.IsOn ? 3 : 4);
         }
 
         // delay

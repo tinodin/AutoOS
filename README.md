@@ -219,16 +219,7 @@ OTHER LIABILITY IN CONNECTION WITH THE USE OF THE SOFTWARE.
 ```
 - Source: [Custom Resolution Utility (CRU)](https://monitortests.com/custom-resolution-utility)
 
-
-10. **ServiWin**
-```
-This utility is released as freeware.
-You are allowed to freely distribute this utility via floppy disk, CD-ROM, Internet, or in any other way, as long as you don't charge anything for this.
-If you distribute this utility, you must include all files in the distribution package, without any modification !
-```
-- Source: [ServiWin](https://www.nirsoft.net/utils/serviwin.html)
-
-11. **DeviceCleanup**
+10. **DeviceCleanup**
 ```
 Allowed:
 - usage in any environment, including commercial
@@ -241,7 +232,7 @@ Not allowed:
 ```
 - Source: [DeviceCleanup](https://www.uwe-sieber.de/misc_tools.html#devicecleanup)
 
-12. **DriveCleanup**
+11. **DriveCleanup**
 ```
 Allowed:
 - usage in any environment, including commercial
@@ -254,5 +245,5 @@ Not allowed:
 ```
 - Source: [DriveCleanup](https://www.uwe-sieber.de/drivetools.html#drivecleanup)
 
-13. **RwEverything**
+12. **RwEverything**
 - Have to ask for permission ._.

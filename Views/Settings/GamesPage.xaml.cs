@@ -23,65 +23,68 @@ public sealed partial class GamesPage : Page
 
     private async void LoadGames()
     {
-        string manifestsFolder = @"C:\ProgramData\Epic\EpicGamesLauncher\Data\Manifests";
-        var gameList = new List<(string ImageUrl, string Title, string Developer, string CatalogNamespace, string CatalogItemId, string AppName, string InstallLocation, string LaunchExecutable)>();
-
-        foreach (var file in Directory.GetFiles(manifestsFolder, "*.item", SearchOption.TopDirectoryOnly))
+        if (File.Exists(@"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win64\EpicGamesLauncher.exe"))
         {
-            var fileContent = await File.ReadAllTextAsync(file);
-            var itemJson = JsonNode.Parse(fileContent);
+            string manifestsFolder = @"C:\ProgramData\Epic\EpicGamesLauncher\Data\Manifests";
+            var gameList = new List<(string ImageUrl, string Title, string Developer, string CatalogNamespace, string CatalogItemId, string AppName, string InstallLocation, string LaunchExecutable)>();
 
-            if (itemJson?["bIsApplication"]?.GetValue<bool>() == true)
+            foreach (var file in Directory.GetFiles(manifestsFolder, "*.item", SearchOption.TopDirectoryOnly))
             {
-                string catalogNamespace = itemJson["MainGameCatalogNamespace"]?.GetValue<string>();
-                string catalogItemId = itemJson["MainGameCatalogItemId"]?.GetValue<string>();
-                string appName = itemJson["MainGameAppName"]?.GetValue<string>();
-                string installLocation = itemJson["InstallLocation"]?.GetValue<string>();
-                string launchExecutable = itemJson["LaunchExecutable"]?.GetValue<string>();
+                var fileContent = await File.ReadAllTextAsync(file);
+                var itemJson = JsonNode.Parse(fileContent);
 
-                if (!string.IsNullOrEmpty(catalogItemId))
+                if (itemJson?["bIsApplication"]?.GetValue<bool>() == true)
                 {
-                    string url = $"https://api.egdata.app/items/{catalogItemId}";
+                    string catalogNamespace = itemJson["MainGameCatalogNamespace"]?.GetValue<string>();
+                    string catalogItemId = itemJson["MainGameCatalogItemId"]?.GetValue<string>();
+                    string appName = itemJson["MainGameAppName"]?.GetValue<string>();
+                    string installLocation = itemJson["InstallLocation"]?.GetValue<string>();
+                    string launchExecutable = itemJson["LaunchExecutable"]?.GetValue<string>();
 
-                    try
+                    if (!string.IsNullOrEmpty(catalogItemId))
                     {
-                        string remoteJson = await httpClient.GetStringAsync(url);
-                        var remoteData = JsonNode.Parse(remoteJson);
+                        string url = $"https://api.egdata.app/items/{catalogItemId}";
 
-                        var keyImages = remoteData?["keyImages"]?.AsArray();
-                        var title = remoteData?["title"]?.GetValue<string>() ?? "Unknown Title";
-                        var developer = remoteData?["developer"]?.GetValue<string>() ?? "Unknown Developer";
-
-                        if (keyImages != null)
+                        try
                         {
-                            foreach (var image in keyImages)
-                            {
-                                if (image?["type"]?.GetValue<string>() == "DieselGameBoxTall")
-                                {
-                                    string imageUrl = image["url"]?.GetValue<string>();
+                            string remoteJson = await httpClient.GetStringAsync(url);
+                            var remoteData = JsonNode.Parse(remoteJson);
 
-                                    if (!string.IsNullOrEmpty(imageUrl))
+                            var keyImages = remoteData?["keyImages"]?.AsArray();
+                            var title = remoteData?["title"]?.GetValue<string>() ?? "Unknown Title";
+                            var developer = remoteData?["developer"]?.GetValue<string>() ?? "Unknown Developer";
+
+                            if (keyImages != null)
+                            {
+                                foreach (var image in keyImages)
+                                {
+                                    if (image?["type"]?.GetValue<string>() == "DieselGameBoxTall")
                                     {
-                                        gameList.Add((imageUrl, title, developer, catalogNamespace, catalogItemId, appName, installLocation, launchExecutable));
+                                        string imageUrl = image["url"]?.GetValue<string>();
+
+                                        if (!string.IsNullOrEmpty(imageUrl))
+                                        {
+                                            gameList.Add((imageUrl, title, developer, catalogNamespace, catalogItemId, appName, installLocation, launchExecutable));
+                                        }
+                                        break;
                                     }
-                                    break;
                                 }
                             }
                         }
-                    }
-                    catch (HttpRequestException ex)
-                    {
+                        catch (HttpRequestException ex)
+                        {
 
+                        }
                     }
                 }
             }
-        }
 
-        var sortedGames = gameList.OrderBy(g => g.Title).ToList();
+            var sortedGames = gameList.OrderBy(g => g.Title).ToList();
 
-        foreach (var game in sortedGames)
-        {
-            AddGameToStackPanel(game.ImageUrl, game.Title, game.Developer, game.CatalogNamespace, game.CatalogItemId, game.AppName, game.InstallLocation, game.LaunchExecutable);
+            foreach (var game in sortedGames)
+            {
+                AddGameToStackPanel(game.ImageUrl, game.Title, game.Developer, game.CatalogNamespace, game.CatalogItemId, game.AppName, game.InstallLocation, game.LaunchExecutable);
+            }
         }
 
         Games_SwitchPresenter.HorizontalAlignment = HorizontalAlignment.Left;
@@ -126,94 +129,101 @@ public sealed partial class GamesPage : Page
         // get all configs
         List<string> accountList = new List<string>();
 
-        foreach (var file in Directory.GetFiles(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows"), "GameUserSettings.ini", SearchOption.AllDirectories))
+        if (File.Exists(@"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win64\EpicGamesLauncher.exe"))
         {
-            // read config asynchronously
-            string configContent = await File.ReadAllTextAsync(file);
-
-            // check if data is valid
-            Match dataMatch = Regex.Match(configContent, @"Data=([^\r\n]+)");
-            if (dataMatch.Groups[1].Value.Length >= 1000)
+            foreach (var file in Directory.GetFiles(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows"), "GameUserSettings.ini", SearchOption.AllDirectories))
             {
-                // get account id
-                string accountId = Regex.Match(configContent, @"\[(.*?)_General\]").Groups[1].Value;
+                // read config
+                string configContent = await File.ReadAllTextAsync(file);
 
-                // get data
-                string data = Regex.Match(configContent, @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?").Groups[1].Value;
-
-                // decrypt data
-                string decryptedData = DecryptDataWithAes(data, "A09C853C9E95409BB94D707EADEFA52E");
-
-                // get display name
-                string displayName = Regex.Match(decryptedData, "\"DisplayName\":\"([^\"]+)\"").Groups[1].Value;
-
-                // backup data
-                string accountDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\" + displayName);
-
-                // check if data exists with old display name
-                string existingDir = Directory.GetDirectories(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows"))
-                                              .FirstOrDefault(dir => Regex.Match(File.ReadAllText(Path.Combine(dir, "GameUserSettings.ini")), @"\[(.*?)_General\]").Groups[1].Value == accountId
-                                                                     && !dir.Contains(displayName));
-                if (existingDir != null)
+                // check if data is valid
+                Match dataMatch = Regex.Match(configContent, @"Data=([^\r\n]+)");
+                if (dataMatch.Groups[1].Value.Length >= 1000)
                 {
-                    // rename folder
-                    Directory.Move(existingDir, Path.Combine(Path.GetDirectoryName(existingDir), displayName));
+                    // get account id
+                    string accountId = Regex.Match(configContent, @"\[(.*?)_General\]").Groups[1].Value;
 
-                    // replace config
-                    File.Copy(configFile, Path.Combine(Path.GetDirectoryName(existingDir), displayName, "GameUserSettings.ini"), true);
-                }
-                else
-                {
-                    // update the backed up config
-                    if (Directory.Exists(accountDir))
+                    // get data
+                    string data = Regex.Match(configContent, @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?").Groups[1].Value;
+
+                    // decrypt data
+                    string decryptedData = DecryptDataWithAes(data, "A09C853C9E95409BB94D707EADEFA52E");
+
+                    // get display name
+                    string displayName = Regex.Match(decryptedData, "\"DisplayName\":\"([^\"]+)\"").Groups[1].Value;
+
+                    // backup data
+                    string accountDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\" + displayName);
+
+                    // check if data exists with old display name
+                    string existingDir = Directory.GetDirectories(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows"))
+                                                  .FirstOrDefault(dir => Regex.Match(File.ReadAllText(Path.Combine(dir, "GameUserSettings.ini")), @"\[(.*?)_General\]").Groups[1].Value == accountId
+                                                                         && !dir.Contains(displayName));
+                    if (existingDir != null)
                     {
-                        if (File.Exists(configFile))
-                        {
-                            if (Regex.Match(File.ReadAllText(configFile), @"\[(.*?)_General\]").Groups[1].Value == accountId)
-                            {
-                                File.Copy(configFile, Path.Combine(accountDir, "GameUserSettings.ini"), true);
-                            }
-                        }
+                        // rename folder
+                        Directory.Move(existingDir, Path.Combine(Path.GetDirectoryName(existingDir), displayName));
+
+                        // replace config
+                        File.Copy(configFile, Path.Combine(Path.GetDirectoryName(existingDir), displayName, "GameUserSettings.ini"), true);
                     }
                     else
                     {
-                        // create folder
-                        Directory.CreateDirectory(accountDir);
+                        // update the backed up config
+                        if (Directory.Exists(accountDir))
+                        {
+                            if (File.Exists(configFile))
+                            {
+                                if (Regex.Match(File.ReadAllText(configFile), @"\[(.*?)_General\]").Groups[1].Value == accountId)
+                                {
+                                    File.Copy(configFile, Path.Combine(accountDir, "GameUserSettings.ini"), true);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // create folder
+                            Directory.CreateDirectory(accountDir);
 
-                        // copy config
-                        File.Copy(configFile, Path.Combine(accountDir, "GameUserSettings.ini"), true);
+                            // copy config
+                            File.Copy(configFile, Path.Combine(accountDir, "GameUserSettings.ini"), true);
+                        }
                     }
-                }
 
-                // add account to list
-                if (!accountList.Contains(displayName))
-                {
-                    accountList.Add(displayName);
-                }
-
-                // select active account
-                if (file == configFile)
-                {
-                    Accounts.SelectedItem = displayName;
-                }
-            }
-            else
-            {
-                foreach (var dir in Directory.GetDirectories(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows")))
-                {
-                    string backupAccountId = Regex.Match(File.ReadAllText(Path.Combine(dir, "GameUserSettings.ini")), @"\[(.*?)_General\]").Groups[1].Value;
-
-                    if (backupAccountId == Regex.Match(configContent, @"\[(.*?)_General\]").Groups[1].Value)
+                    // add account to list
+                    if (!accountList.Contains(displayName))
                     {
-                        Directory.Delete(dir, true);
+                        accountList.Add(displayName);
                     }
 
+                    // select active account
                     if (file == configFile)
                     {
-                        File.Delete(configFile);
+                        Accounts.SelectedItem = displayName;
+                    }
+                }
+                else
+                {
+                    foreach (var dir in Directory.GetDirectories(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows")))
+                    {
+                        string backupAccountId = Regex.Match(File.ReadAllText(Path.Combine(dir, "GameUserSettings.ini")), @"\[(.*?)_General\]").Groups[1].Value;
+
+                        if (backupAccountId == Regex.Match(configContent, @"\[(.*?)_General\]").Groups[1].Value)
+                        {
+                            Directory.Delete(dir, true);
+                        }
+
+                        if (file == configFile)
+                        {
+                            File.Delete(configFile);
+                        }
                     }
                 }
             }
+        }
+        else
+        {
+            Games_StackPanel.Height = 0;
         }
 
         // sort accounts

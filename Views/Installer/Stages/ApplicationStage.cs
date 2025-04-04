@@ -130,8 +130,8 @@ public static class ApplicationStage
             ("Installing Spotify", async () => await ProcessActions.RunNsudo("CurrentUser", $@"reg add ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Spotify"" /v ""Version"" /t REG_SZ /d ""{spotifyVersion}"" /f"), () => Spotify == true),
             ("Installing Spotify", async () => await ProcessActions.RunPowerShell(@"$Shell = New-Object -ComObject WScript.Shell; $Shortcut = $Shell.CreateShortcut([System.IO.Path]::Combine($env:APPDATA, 'Microsoft\Windows\Start Menu\Programs\Spotify.lnk')); $Shortcut.TargetPath = [System.IO.Path]::Combine($env:APPDATA, 'Spotify\Spotify.exe'); $Shortcut.Save()"), () => Spotify == true),
 
-            // disable hardware acceleration
-            ("Disabling hardware acceleration", async () => await ProcessActions.RunCustom(async () => await File.WriteAllTextAsync(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Spotify", "prefs"), "ui.hardware_acceleration=false")), () => Spotify == true),
+            // disable spotify hardware acceleration
+            ("Disabling Spotify hardware acceleration", async () => await ProcessActions.RunCustom(async () => await File.WriteAllTextAsync(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Spotify", "prefs"), "ui.hardware_acceleration=false")), () => Spotify == true),
 
             // download block the spot
             ("Downloading BlockTheSpot", async () => await ProcessActions.RunDownload("https://github.com/mrpond/BlockTheSpot/releases/latest/download/chrome_elf.zip", Path.GetTempPath(), "chrome-elf.zip"), () => Spotify == true),
@@ -144,8 +144,8 @@ public static class ApplicationStage
             ("Please log in to your Spotify account", async () => await ProcessActions.Sleep(1000), () => Spotify == true),
             ("Please log in to your Spotify account", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Spotify", "Spotify.exe"), WindowStyle = ProcessWindowStyle.Maximized }) !.WaitForExitAsync())), () => Spotify == true),
 
-            // remove startup entry
-            ("Disabling startup entry", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg delete ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"" /v ""Spotify"" /f"), () => Spotify == true),
+            // remove spotify startup entry
+            ("Disabling Spotify startup entry", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg delete ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"" /v ""Spotify"" /f"), () => Spotify == true),
 
             // download apple music
             ("Downloading Apple Music", async () => await ProcessActions.RunMicrosoftStoreDownload("AppleInc.AppleMusicWin_nzyj5cx40ttqa", "msixbundle", "", "AppleMusic.Msixbundle"), () => AppleMusic == true),
@@ -197,11 +197,11 @@ public static class ApplicationStage
             ("Installing Discord", async () => await ProcessActions.RunCustom(async () => { string filePath = Environment.ExpandEnvironmentVariables(@"%TEMP%\DiscordSetup.exe"); discordVersion = FileVersionInfo.GetVersionInfo(filePath).ProductVersion; }), () => Discord == true),
             ("Installing Discord", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => File.Copy(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Discord", "app-" + discordVersion, "installer.db"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Discord", "installer.db"), true))), () => Discord == true),
 
-            // remove discord shortcut from the desktop
-            ("Removing desktop shortcut", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c del /f /q ""%HOMEPATH%\Desktop\Discord.lnk"""), () => Discord == true),
+            // remove discord desktop shortcut 
+            ("Removing discord desktop shortcut", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c del /f /q ""%HOMEPATH%\Desktop\Discord.lnk"""), () => Discord == true),
 
-            // remove startup entry
-            ("Removing startup entry", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg delete ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run"" /v ""Discord"" /f"), () => Discord == true),
+            // remove discord startup entry
+            ("Removing discord startup entry", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg delete ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run"" /v ""Discord"" /f"), () => Discord == true),
 
             // disable hardware acceleration
             ("Disabling hardware acceleration", async () => await ProcessActions.RunCustom(async () => await File.WriteAllTextAsync(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Discord", "settings.json"), "{\"enableHardwareAcceleration\": false, \"OPEN_ON_STARTUP\": false, \"MINIMIZE_TO_TRAY\": false}")), () => Discord == true),
@@ -239,10 +239,10 @@ public static class ApplicationStage
             // install epic games launcher
             ("Installing Epic Games Launcher", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c ""%TEMP%\EpicGamesLauncherInstaller.msi"" /qn"), () => EpicGames == true),
 
-            // remove desktop shortcut
-            ("Removing desktop shortcut", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c del /f /q ""C:\Users\Public\Desktop\Epic Games Launcher.lnk"""), () => EpicGames == true),
+            // remove epic games launcher desktop shortcut
+            ("Removing Epic Games Launcher desktop shortcut", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c del /f /q ""C:\Users\Public\Desktop\Epic Games Launcher.lnk"""), () => EpicGames == true),
 
-            // download update
+            // update epic games launcher
             ("Updating Epic Games Launcher", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Path.Combine(@"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win32\EpicGamesLauncher.exe")})!.WaitForExitAsync())), () => EpicGames == true),
             ("Updating Epic Games Launcher", async () => await ProcessActions.RunCustom(async () => { while (true) { using (var searcher = new ManagementObjectSearcher($"SELECT ProcessId, CommandLine FROM Win32_Process WHERE Name = 'EpicGamesLauncher.exe'")) { foreach (ManagementObject obj in searcher.Get()) { string cmdLine = obj["CommandLine"]?.ToString() ?? ""; int pid = Convert.ToInt32(obj["ProcessId"]); if (cmdLine.Contains(@"""C:/Program Files (x86)/Epic Games/Launcher/Portal/Binaries/Win64/EpicGamesLauncher.exe""  -SaveToUserDir -Messaging", StringComparison.OrdinalIgnoreCase)) { try { Process.GetProcessById(pid).Kill(); return; } catch { } } } } await Task.Delay(100); } }), () => EpicGames == true),
 
@@ -258,11 +258,23 @@ public static class ApplicationStage
             // log in to epic games launcher account
             ("Please log in to your Epic Games Launcher account", async () => await ProcessActions.RunCustom(async () => await Task.Run(async () => { Process.Start(@"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win64\EpicGamesLauncher.exe"); string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "EpicGamesLauncher", "Saved", "Config", "Windows", "GameUserSettings.ini"); while (!File.Exists(path) || Regex.Match(await File.ReadAllTextAsync(path), @"Data=([^\r\n]+)").Groups[1].Value.Length < 1000) await Task.Delay(500); Process.GetProcessesByName("EpicGamesLauncher").ToList().ForEach(p => { p.Kill(); p.WaitForExit(); }); })), () => EpicGames == true && EpicGamesAccount == false),
 
-
             // disable epic games services
             ("Disabling Epic Games services", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\EpicOnlineServices"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => EpicGames == true),
             ("Disabling Epic Games services", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\AutorunsDisabled"" /v ""EpicGamesLauncher"" /t REG_SZ /d """"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win64\EpicGamesLauncher.exe"" -silent -launchcontext=boot"""" /f"), () => EpicGames == true),
             ("Disabling Epic Games services", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg delete ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"" /v ""EpicGamesLauncher"" /f"), () => EpicGames == true),
+        
+            // download steam
+            ("Downloading Steam", async () => await ProcessActions.RunDownload("https://cdn.cloudflare.steamstatic.com/client/installer/SteamSetup.exe", Path.GetTempPath(), "SteamSetup.exe"), () => Steam == true),
+
+            // install steam
+            ("Installing Steam", async () => await ProcessActions.RunNsudo("CurrentUser", @"""%TEMP%\SteamSetup.exe"" /S"), () => Steam == true),
+
+            // update steam
+            ("Updating Steam", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Path.Combine(@"C:\Program Files (x86)\Steam\Steam.exe")})!.WaitForExitAsync())), () => Steam == true),
+
+            // log in to steam
+            ("Please log in to your Steam account", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Path.Combine(@"C:\Program Files (x86)\Steam\Steam.exe")})!.WaitForExitAsync())), () => Steam == true),
+
         };
 
         var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();

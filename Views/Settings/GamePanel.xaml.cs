@@ -1,4 +1,3 @@
-using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using System.Diagnostics;
@@ -9,7 +8,6 @@ namespace AutoOS.Views.Settings;
 
 public sealed partial class GamePanel : UserControl
 {
-    private bool isInitializingPresentationMode = true;
     private readonly string nsudoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NSudo", "NSudoLC.exe");
 
     public event EventHandler<RoutedEventArgs> OnItemClick;
@@ -253,6 +251,7 @@ public sealed partial class GamePanel : UserControl
             "ApplicationFrameHost",
             "CrashReportClient",
             "ctfmon",
+            "DataExchangeHost",
             "EasyAntiCheat_EOS",
             "EpicGamesLauncher",
             "explorer",
@@ -365,87 +364,16 @@ public sealed partial class GamePanel : UserControl
 
     private async void Settings_Click(object sender, RoutedEventArgs e)
     {
-        var settingsCard = new SettingsCard
+        var gameSettings = new GameSettings
         {
-            Header = "Install Location",
-            Description = "Change the install location of " + Title + ".",
-            HeaderIcon = new FontIcon
-            {
-                Glyph = "\uE8B7"
-            }
+            Title = Title,
+            InstallLocation = InstallLocation
         };
-
-        var textBox = new Microsoft.UI.Xaml.Controls.TextBox
-        {
-            IsReadOnly = true,
-            IsTabStop = false,
-            IsHitTestVisible = false,
-            PlaceholderText = InstallLocation,
-            Width = 300
-        };
-
-        var button = new Button
-        {
-            Content = new FontIcon { Glyph = "\uE838" },
-            Margin = new Thickness(10, 0, 0, 0)
-        };
-
-        var stackPanel = new StackPanel { Orientation = Orientation.Horizontal };
-        stackPanel.Children.Add(textBox);
-        stackPanel.Children.Add(button);
-
-        settingsCard.Content = stackPanel;
-
-        var settingsStack = new StackPanel();
-        settingsStack.Children.Add(settingsCard);
-
-        if (Title == "Fortnite")
-        {
-            var presentationSettingsCard = new SettingsCard
-            {
-                Header = "Presentation Mode",
-                Description = "Use Hardware: Independent Flip if you have issues when tabbing out using Hardware: Legacy Flip.",
-                HeaderIcon = new FontIcon { Glyph = "\uE7F4" }
-            };
-
-            var comboBox = new ComboBox();
-            comboBox.SelectionChanged += PresentationMode_SelectionChanged;
-
-            comboBox.Items.Add(new ComboBoxItem { Content = "Hardware: Independent Flip" });
-            comboBox.Items.Add(new ComboBoxItem { Content = "Hardware: Legacy Flip" });
-
-            presentationSettingsCard.Content = comboBox;
-
-            settingsStack.Children.Add(presentationSettingsCard);
-
-            using (var key = Registry.CurrentUser.OpenSubKey(@"System\GameConfigStore\Children"))
-            {
-                foreach (var subKeyName in key.GetSubKeyNames())
-                using (var subKey = key.OpenSubKey(subKeyName))
-                {
-                    if (subKey.GetValueNames().Any(valueName => subKey.GetValue(valueName) is string strValue && strValue.Contains("Fortnite")))
-                    {
-                        int flags = Convert.ToInt32(subKey.GetValue("Flags"));
-                        if (flags == 0x211)
-                        {
-                            comboBox.SelectedIndex = 1;
-                            isInitializingPresentationMode = false;
-                            break;
-                        }
-                        else
-                        {
-                            comboBox.SelectedIndex = 0;
-                            isInitializingPresentationMode = false;
-                        }
-                    }
-                }
-            }
-        }
 
         var contentDialog = new ContentDialog
         {
             Title = Title,
-            Content = settingsStack,
+            Content = gameSettings,
             PrimaryButtonText = "Close",
             XamlRoot = this.XamlRoot,
         };
@@ -453,51 +381,5 @@ public sealed partial class GamePanel : UserControl
         contentDialog.Resources["ContentDialogMinWidth"] = 850;
 
         ContentDialogResult result = await contentDialog.ShowAsync();
-    }
-
-    private void PresentationMode_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (isInitializingPresentationMode) return;
-
-        var comboBox = sender as ComboBox;
-
-        using (var key = Registry.CurrentUser.OpenSubKey(@"System\GameConfigStore\Children", true))
-        {
-            foreach (var subKeyName in key.GetSubKeyNames())
-            {
-                using (var subKey = key.OpenSubKey(subKeyName, true))
-                {
-                    if (subKey.GetValueNames().Any(valueName => subKey.GetValue(valueName) is string strValue && strValue.Contains("Fortnite")))
-                    {
-                        string cmd = "";
-                        if (comboBox.SelectedIndex == 0)
-                        {
-                            cmd = "reg delete \"HKCU\\System\\GameConfigStore\\Children\\" + subKeyName + "\" /v Flags /f";
-                        }
-                        else if (comboBox.SelectedIndex == 1)
-                        {
-                            cmd = "reg add \"HKCU\\System\\GameConfigStore\\Children\\" + subKeyName + "\" /v Flags /t REG_DWORD /d 0x211 /f";
-                        }
-
-                        if (!string.IsNullOrEmpty(cmd))
-                        {
-                            var process = new Process
-                            {
-                                StartInfo = new ProcessStartInfo
-                                {
-                                    FileName = "cmd.exe",
-                                    Arguments = "/C " + cmd,
-                                    CreateNoWindow = true,
-                                }
-                            };
-                            process.Start();
-                            process.WaitForExit();
-                        }
-
-                        return;
-                    }
-                }
-            }
-        }
     }
 }

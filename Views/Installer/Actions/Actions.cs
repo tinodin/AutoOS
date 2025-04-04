@@ -370,24 +370,16 @@ public static class ProcessActions
 
     public static async Task DisableWiFiServicesAndDrivers()
     {
-        string[] services = { "WlanSvc", "EventLog", "Wcmsvc", "WinHttpAutoProxySvc", "NlaSvc", "tdx", "vwififlt" };
-
-        foreach (string service in services)
-            Registry.SetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\{service}", "Start", 4, RegistryValueKind.DWord);
-
-        using (RegistryKey key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\Netwtw10", writable: true))
+        // set start values
+        string[] services = { "WlanSvc", "EventLog", "Wcmsvc", "WinHttpAutoProxySvc", "NlaSvc", "tdx", "vwififlt", "Netwtw10", "Netwtw14" };
+        
+        foreach (var service in services)
         {
-            if (key != null)
+            using (var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}", writable: true))
             {
-                Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netwtw10", "Start", 4, RegistryValueKind.DWord);
-            }
-        }
+                if (key == null) continue;
 
-        using (RegistryKey key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\Netwtw14", writable: true))
-        {
-            if (key != null)
-            {
-                Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netwtw10", "Start", 4, RegistryValueKind.DWord);
+                Registry.SetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\{service}", "Start", 4);
             }
         }
 
@@ -396,18 +388,15 @@ public static class ProcessActions
 
     public static async Task DisableBluetoothServicesAndDrivers()
     {
-        string[] services = {
-            "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DevicesFlowUserSvc", "DsmSvc", "WFDSConMgrSvc", "BthA2dp", "BthEnum", "BthHFAud", "BthHFEnum", "BthLEEnum", "BTHMODEM", "BthMini", "BthPan", "BTHPORT", "BTHUSB", "HidBth", "Microsoft_Bluetooth_AvrcpTransport", "RFCOMM"
-        };
+        string[] services = { "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DevicesFlowUserSvc", "DsmSvc", "WFDSConMgrSvc", "BthA2dp", "BthEnum", "BthHFAud", "BthHFEnum", "BthLEEnum", "BTHMODEM", "BthMini", "BthPan", "BTHPORT", "BTHUSB", "HidBth", "Microsoft_Bluetooth_AvrcpTransport", "RFCOMM", "ibtusb" };
 
-        foreach (string service in services)
-            Registry.SetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\{service}", "Start", 4, RegistryValueKind.DWord);
-
-        using (RegistryKey key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\ibtusb", writable: true))
+        foreach (var service in services)
         {
-            if (key != null)
+            using (var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}", writable: true))
             {
-                Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netwtw10", "Start", 4, RegistryValueKind.DWord);
+                if (key == null) continue;
+
+                Registry.SetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\{service}", "Start", 4);
             }
         }
 
@@ -442,18 +431,18 @@ public static class ProcessActions
     {
         // get all configs from other drives
         var foundFiles = DriveInfo.GetDrives()
-                .Where(d => d.DriveType == DriveType.Fixed && d.Name != @"C:\")
-                .SelectMany(d =>
-                {
-                    string usersPath = Path.Combine(d.Name, "Users");
-                    if (!Directory.Exists(usersPath)) return Array.Empty<string>();
+            .Where(d => d.DriveType == DriveType.Fixed && d.Name != @"C:\")
+            .SelectMany(d =>
+            {
+                string usersPath = Path.Combine(d.Name, "Users");
+                if (!Directory.Exists(usersPath)) return Array.Empty<string>();
 
-                    return Directory.GetDirectories(usersPath)
-                        .Select(userDir => Path.Combine(userDir, "AppData", "Local", "EpicGamesLauncher", "Saved", "Config", "Windows", "GameUserSettings.ini"))
-                        .Where(File.Exists);
-                })
-                .Select(path => new FileInfo(path))
-                .ToList();
+                return Directory.GetDirectories(usersPath)
+                    .Select(userDir => Path.Combine(userDir, "AppData", "Local", "EpicGamesLauncher", "Saved", "Config", "Windows", "GameUserSettings.ini"))
+                    .Where(File.Exists);
+            })
+            .Select(path => new FileInfo(path))
+            .ToList();
 
         string destinationPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "EpicGamesLauncher", "Saved", "Config", "Windows", "GameUserSettings.ini");
         string newestFilePath = null;
@@ -561,12 +550,12 @@ public static class ProcessActions
     {
         // get all install lists from other drives
         var foundFiles = DriveInfo.GetDrives()
-                .Where(d => d.DriveType == DriveType.Fixed && d.Name != @"C:\")
-                .Select(d => Path.Combine(d.Name, "ProgramData", "Epic", "UnrealEngineLauncher", "LauncherInstalled.dat"))
-                .Where(File.Exists)
-                .Select(path => new FileInfo(path))
-                .OrderByDescending(f => f.LastWriteTime)
-                .ToList();
+            .Where(d => d.DriveType == DriveType.Fixed && d.Name != @"C:\")
+            .Select(d => Path.Combine(d.Name, "ProgramData", "Epic", "UnrealEngineLauncher", "LauncherInstalled.dat"))
+            .Where(File.Exists)
+            .Select(path => new FileInfo(path))
+            .OrderByDescending(f => f.LastWriteTime)
+            .ToList();
 
         var jsonContent = await File.ReadAllTextAsync(foundFiles.First().FullName);
         var jsonObject = JsonNode.Parse(jsonContent);

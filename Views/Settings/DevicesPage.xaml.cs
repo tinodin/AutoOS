@@ -25,7 +25,7 @@ public sealed partial class DevicesPage : Page
         // declare services and drivers
         var groups = new[]
         {
-            (new[] { "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DevicesFlowUserSvc", "DsmSvc", "WFDSConMgrSvc", "BthA2dp", "BthEnum", "BthHFAud", "BthHFEnum", "BthLEEnum", "BTHMODEM", "BthMini", "BthPan", "BTHPORT", "BTHUSB", "HidBth", "Microsoft_Bluetooth_AvrcpTransport", "RFCOMM" }, 3),
+            (new[] { "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DevicesFlowUserSvc", "DsmSvc", "WFDSConMgrSvc", "BthA2dp", "BthEnum", "BthHFAud", "BthHFEnum", "BthLEEnum", "BTHMODEM", "BthMini", "BthPan", "BTHPORT", "BTHUSB", "HidBth", "Microsoft_Bluetooth_AvrcpTransport", "RFCOMM", "ibtusb" }, 3),
             };
 
         // check if values match
@@ -33,19 +33,18 @@ public sealed partial class DevicesPage : Page
         {
             foreach (var service in group.Item1)
             {
-                if ((int?)Registry.GetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\{service}", "Start", -1) != group.Item2)
+                using (var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}"))
                 {
-                    isInitializingBluetoothState = false;
-                    return;
+                    if (key == null) continue;
+
+                    var startValue = key.GetValue("Start");
+                    if (startValue == null || (int)startValue != group.Item2)
+                    {
+                        isInitializingBluetoothState = false;
+                        return;
+                    }
                 }
             }
-        }
-
-        // check for intel bluetooth driver
-        if (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\ibtusb", "Start", null) is int value && value != 3)
-        {
-            isInitializingBluetoothState = false;
-            return;
         }
 
         // check for real hardware adapter
@@ -101,7 +100,7 @@ public sealed partial class DevicesPage : Page
         // declare services and drivers
         var groups = new[]
         {
-            (new[] { "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DevicesFlowUserSvc", "DsmSvc", "WFDSConMgrSvc", "BthA2dp", "BthEnum", "BthHFAud", "BthHFEnum", "BthLEEnum", "BTHMODEM", "BthMini", "BthPan", "BTHPORT", "BTHUSB", "HidBth", "Microsoft_Bluetooth_AvrcpTransport", "RFCOMM" }, 3),
+            (new[] { "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DevicesFlowUserSvc", "DsmSvc", "WFDSConMgrSvc", "BthA2dp", "BthEnum", "BthHFAud", "BthHFEnum", "BthLEEnum", "BTHMODEM", "BthMini", "BthPan", "BTHPORT", "BTHUSB", "HidBth", "Microsoft_Bluetooth_AvrcpTransport", "RFCOMM", "ibtusb" }, 3),
         };
 
         // set start values
@@ -109,14 +108,13 @@ public sealed partial class DevicesPage : Page
         {
             foreach (var service in group.Item1)
             {
-                Registry.SetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\{service}", "Start", Bluetooth.IsOn ? group.Item2 : 4);
-            }
-        }
+                using (var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}", writable: true))
+                {
+                    if (key == null) continue;
 
-        // check for intel bluetooth driver
-        if (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\ibtusb", "Start", null) != null)
-        {
-            Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\ibtusb", "Start", Bluetooth.IsOn ? 3 : 4);
+                    Registry.SetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\{service}", "Start", Bluetooth.IsOn ? group.Item2 : 4);
+                }
+            }
         }
 
         // delay
@@ -169,11 +167,11 @@ public sealed partial class DevicesPage : Page
                        .Cast<ManagementObject>()
                        .Any(device => device["Status"]?.ToString() == "OK" &&
                         new[] {
-                    "HID-compliant consumer control device",
-                    "HID-compliant device",
-                    "HID-compliant game controller",
-                    "HID-compliant system controller",
-                    "HID-compliant vendor-defined device"
+                            "HID-compliant consumer control device",
+                            "HID-compliant device",
+                            "HID-compliant game controller",
+                            "HID-compliant system controller",
+                            "HID-compliant vendor-defined device"
                         }.Contains(device["Description"]?.ToString()));
         });
 

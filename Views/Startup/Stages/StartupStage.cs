@@ -39,6 +39,9 @@ public static class StartupStage
             // launch dwmenablemmcss
             ("Launching DWMEnableMMCSS", async () => await StartupActions.RunApplication("DWMEnableMMCSS", "DWMEnableMMCSS.exe", "--no-console"), null),
 
+            // launch lowaudiolatency
+            ("Launching LowAudioLatency", async () => await StartupActions.RunApplication("LowAudioLatency", "low_audio_latency_no_console.exe", ""), null),
+
             // disable hid devices
             ("Disabling Human Interface Devices (HID)", async () => await StartupActions.RunPowerShell("Get-PnpDevice -Class HIDClass | Where-Object { $_.FriendlyName -match 'HID-compliant (consumer control device|device|game controller|system controller|vendor-defined device)' -and $_.FriendlyName -notmatch 'Mouse|Keyboard'} | Disable-PnpDevice -Confirm:$false"), () => HID == false),
 

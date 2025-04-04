@@ -1,5 +1,6 @@
-﻿using System.Diagnostics;
-using Microsoft.Win32;
+﻿using Microsoft.Win32;
+using System.Diagnostics;
+using System.Management;
 using System.ServiceProcess;
 
 namespace AutoOS.Views.Settings;
@@ -721,6 +722,16 @@ public sealed partial class ServicesPage : Page
 
     private void GetLaptopState()
     {
+        bool isDesktop = new ManagementObjectSearcher("SELECT * FROM Win32_SystemEnclosure")
+               .Get()
+               .Cast<ManagementObject>()
+               .Any(obj => ((ushort[])obj["ChassisTypes"])?.Any(type => new ushort[] { 3, 4, 5, 6, 7, 15, 16, 17 }.Contains(type)) == true);
+
+        if (isDesktop)
+        {
+            Laptop_SettingsCard.Visibility = Visibility.Collapsed;
+        }
+
         // define services and drivers
         var drivers = new[] { "# msisadrv" };
 
@@ -1053,46 +1064,5 @@ public sealed partial class ServicesPage : Page
             // remove infobar
             ServiceInfo.Children.Clear();
         }
-    }
-
-    private async void LaunchServiWin_Click(object sender, RoutedEventArgs e)
-    {
-        // remove infobar
-        ServiWinInfo.Children.Clear();
-
-        // add infobar
-        ServiWinInfo.Children.Add(new InfoBar
-        {
-            Title = "Launching ServiWin...",
-            IsClosable = false,
-            IsOpen = true,
-            Severity = InfoBarSeverity.Informational,
-            Margin = new Thickness(5)
-        });
-
-        // delay
-        await Task.Delay(300);
-
-        // launch
-        await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "ServiWin", "serviwin.exe"), WindowStyle = ProcessWindowStyle.Maximized }));
-
-        // remove infobar
-        ServiWinInfo.Children.Clear();
-
-        // add infobar
-        ServiWinInfo.Children.Add(new InfoBar
-        {
-            Title = "Successfully launched ServiWin.",
-            IsClosable = false,
-            IsOpen = true,
-            Severity = InfoBarSeverity.Success,
-            Margin = new Thickness(5)
-        });
-
-        // delay
-        await Task.Delay(2000);
-
-        // remove infobar
-        ServiWinInfo.Children.Clear();
     }
 }
