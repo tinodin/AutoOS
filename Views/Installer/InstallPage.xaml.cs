@@ -49,40 +49,29 @@ public sealed partial class InstallPage : Page
             {
                 ExecuteFirstStage();
             }
-            else if (stage == 2)
-            {
-                Progress.Value = 30;
-                ExecuteSecondStage();
-            }
         }
     }
 
     private async void ExecuteFirstStage() 
     {
         await PreparingStage.Run();
+        await TimeDateRegionStage.Run();
         await PowerStage.Run();
         await RegistryStage.Run();
-        await VisualStage.Run();
         await SecurityStage.Run();
         await BcdStage.Run();
         await FileSystemStage.Run();
         await MemoryManagementStage.Run();
         await EventTraceSessionsStage.Run();
-        await ScheduledTasksStage.Run();
-        await OptionalFeatureStage.Run();
-    }
-
-    private async void ExecuteSecondStage()
-    {
-        await PreparingStage.Run();
-        await DriverStage.Run();
+        await VisualStage.Run();
+        await ActivationStage.Run();
         await NetworkStage.Run();
         await AudioStage.Run();
         await GraphicsStage.Run();
         await DeviceStage.Run();
-        await TimeDateRegionStage.Run();
-        await ActivationStage.Run();
         await AppxStage.Run();
+        await ScheduledTasksStage.Run();
+        await OptionalFeatureStage.Run();
         await RuntimesStage.Run();
         await BrowserStage.Run();
         await ApplicationStage.Run();

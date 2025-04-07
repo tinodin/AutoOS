@@ -260,6 +260,7 @@ public static class ApplicationStage
 
             // disable epic games services
             ("Disabling Epic Games services", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\EpicOnlineServices"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => EpicGames == true),
+            ("Disabling Epic Games services", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\EpicGamesUpdater"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => EpicGames == true),
             ("Disabling Epic Games services", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\AutorunsDisabled"" /v ""EpicGamesLauncher"" /t REG_SZ /d """"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win64\EpicGamesLauncher.exe"" -silent -launchcontext=boot"""" /f"), () => EpicGames == true),
             ("Disabling Epic Games services", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg delete ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"" /v ""EpicGamesLauncher"" /f"), () => EpicGames == true),
         
@@ -275,6 +276,8 @@ public static class ApplicationStage
             // log in to steam
             ("Please log in to your Steam account", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Path.Combine(@"C:\Program Files (x86)\Steam\Steam.exe")})!.WaitForExitAsync())), () => Steam == true),
 
+            // remove steam desktop shortcut
+            ("Removing Steam desktop shortcut", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c del /f /q ""C:\Users\Public\Desktop\Steam.lnk"""), () => Steam == true),
         };
 
         var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();

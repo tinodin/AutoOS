@@ -1,7 +1,9 @@
-﻿using Microsoft.UI.Xaml.Media.Imaging;
+﻿using AutoOS.Views.Settings.Games;
+using Microsoft.UI.Xaml.Media.Imaging;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 
@@ -9,12 +11,15 @@ namespace AutoOS.Views.Settings;
 
 public sealed partial class GamesPage : Page
 {
+    public static GamesPage Instance { get; private set; }
+    public GameGallery Games => games;
     private bool isInitializingAccounts = true;
     private readonly string configFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\GameUserSettings.ini");
     
     public GamesPage()
     {
         InitializeComponent();
+        Instance = this;
         LoadGames();
         LoadEpicAccounts();
     }
@@ -23,103 +28,109 @@ public sealed partial class GamesPage : Page
 
     private async void LoadGames()
     {
+        // add epic games games
         if (File.Exists(@"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win64\EpicGamesLauncher.exe"))
         {
-            string manifestsFolder = @"C:\ProgramData\Epic\EpicGamesLauncher\Data\Manifests";
-            var gameList = new List<(string ImageUrl, string Title, string Developer, string CatalogNamespace, string CatalogItemId, string AppName, string InstallLocation, string LaunchExecutable)>();
-
-            foreach (var file in Directory.GetFiles(manifestsFolder, "*.item", SearchOption.TopDirectoryOnly))
+            foreach (var file in Directory.GetFiles(@"C:\ProgramData\Epic\EpicGamesLauncher\Data\Manifests", "*.item", SearchOption.TopDirectoryOnly))
             {
+                // read file
                 var fileContent = await File.ReadAllTextAsync(file);
                 var itemJson = JsonNode.Parse(fileContent);
 
+                // check if an game or addon
                 if (itemJson?["bIsApplication"]?.GetValue<bool>() == true)
                 {
-                    string catalogNamespace = itemJson["MainGameCatalogNamespace"]?.GetValue<string>();
-                    string catalogItemId = itemJson["MainGameCatalogItemId"]?.GetValue<string>();
-                    string appName = itemJson["MainGameAppName"]?.GetValue<string>();
-                    string installLocation = itemJson["InstallLocation"]?.GetValue<string>();
-                    string launchExecutable = itemJson["LaunchExecutable"]?.GetValue<string>();
+                    // get json data
+                    string url = $"https://api.egdata.app/items/{itemJson["MainGameCatalogItemId"]?.GetValue<string>()}";
 
-                    if (!string.IsNullOrEmpty(catalogItemId))
+                    try
                     {
-                        string url = $"https://api.egdata.app/items/{catalogItemId}";
+                        // read json data
+                        string remoteJson = await httpClient.GetStringAsync(url);
+                        var remoteData = JsonNode.Parse(remoteJson);
 
-                        try
+                        // search cover image
+                        foreach (var image in remoteData?["keyImages"]?.AsArray())
                         {
-                            string remoteJson = await httpClient.GetStringAsync(url);
-                            var remoteData = JsonNode.Parse(remoteJson);
-
-                            var keyImages = remoteData?["keyImages"]?.AsArray();
-                            var title = remoteData?["title"]?.GetValue<string>() ?? "Unknown Title";
-                            var developer = remoteData?["developer"]?.GetValue<string>() ?? "Unknown Developer";
-
-                            if (keyImages != null)
+                            if (image?["type"]?.GetValue<string>() == "DieselGameBoxTall")
                             {
-                                foreach (var image in keyImages)
+                                string imageUrl = image["url"]?.GetValue<string>();
+
+                                // add the game
+                                var gamePanel = new GamePanel
                                 {
-                                    if (image?["type"]?.GetValue<string>() == "DieselGameBoxTall")
-                                    {
-                                        string imageUrl = image["url"]?.GetValue<string>();
+                                    Launcher = "Epic Games",
+                                    Title = remoteData?["title"].GetValue<string>(),
+                                    Description = remoteData["developer"].GetValue<string>(),
+                                    ImageSource = new BitmapImage(new Uri(imageUrl)),
+                                    CatalogNamespace = itemJson["MainGameCatalogNamespace"]?.GetValue<string>(),
+                                    CatalogItemId = itemJson["MainGameCatalogItemId"]?.GetValue<string>(),
+                                    AppName = itemJson["MainGameAppName"]?.GetValue<string>(),
+                                    InstallLocation = itemJson["InstallLocation"]?.GetValue<string>(),
+                                    LaunchExecutable = itemJson["LaunchExecutable"]?.GetValue<string>()
+                                };
 
-                                        if (!string.IsNullOrEmpty(imageUrl))
-                                        {
-                                            gameList.Add((imageUrl, title, developer, catalogNamespace, catalogItemId, appName, installLocation, launchExecutable));
-                                        }
-                                        break;
-                                    }
-                                }
+                                ((StackPanel)games.HeaderContent).Children.Add(gamePanel);
+                                await gamePanel.CheckGameRunning();
+
+                                break;
                             }
-                        }
-                        catch (HttpRequestException ex)
-                        {
-
-                        }
+                            }
+                    }
+                    catch
+                    {
+                        await Task.Delay(500);
+                        break;
                     }
                 }
             }
+        }
 
-            var sortedGames = gameList.OrderBy(g => g.Title).ToList();
-
-            foreach (var game in sortedGames)
+        // add custom games
+        try
+        {
+            foreach (var file in Directory.GetFiles(Path.Combine(PathHelper.GetAppDataFolderPath(), "Games"), "*.json"))
             {
-                AddGameToStackPanel(game.ImageUrl, game.Title, game.Developer, game.CatalogNamespace, game.CatalogItemId, game.AppName, game.InstallLocation, game.LaunchExecutable);
+                string json = File.ReadAllText(file);
+                var game = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+
+                var panel = new GamePanel
+                {
+                    Launcher = game["Launcher"],
+                    LauncherLocation = game["LauncherLocation"],
+                    DataLocation = game["DataLocation"],
+                    GameLocation = game["GameLocation"],
+                    Title = game["GameName"],
+                    Description = game["GameDeveloper"],
+                    ImageSource = new BitmapImage(new Uri(game["GameCoverUrl"]))
+                };
+
+                ((StackPanel)games.HeaderContent).Children.Add(panel);
+                await panel.CheckGameRunning();
             }
+        }
+        catch
+        {
+            await Task.Delay(500);
+        }
+
+        // sort all entries
+        var sorted = ((StackPanel)games.HeaderContent).Children
+               .OfType<GamePanel>()
+               .OrderBy(g => g.Title, StringComparer.CurrentCultureIgnoreCase)
+               .ToList();
+
+        ((StackPanel)games.HeaderContent).Children.Clear();
+
+        foreach (var panel in sorted)
+        {
+            ((StackPanel)games.HeaderContent).Children.Add(panel);
         }
 
         Games_SwitchPresenter.HorizontalAlignment = HorizontalAlignment.Left;
         Games_SwitchPresenter.Value = false;
         Games_ProgressRing.IsActive = false;
     }
-
-    private void AddGameToStackPanel(string imageUrl, string title, string developer, string catalogNamespace, string catalogItemId, string appName, string installLocation, string launchExecutable)
-    {
-        var gamePanel = new GamePanel
-        {
-            Title = title,
-            Description = developer,
-            ImageSource = new BitmapImage(new Uri(imageUrl)),
-            CatalogNamespace = catalogNamespace,
-            CatalogItemId = catalogItemId,
-            AppName = appName,
-            InstallLocation = installLocation,
-            LaunchExecutable = launchExecutable
-        };
-
-        if (games.HeaderContent == null)
-        {
-            games.HeaderContent = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Margin = new Thickness(0, 0, 0, 0),
-                Spacing = 10
-            };
-        }
-
-        ((StackPanel)games.HeaderContent).Children.Add(gamePanel);
-        gamePanel.CheckGameRunning();
-    }
-
 
     private async void LoadEpicAccounts()
     {

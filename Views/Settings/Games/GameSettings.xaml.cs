@@ -1,7 +1,7 @@
 using Microsoft.Win32;
 using System.Diagnostics;
 
-namespace AutoOS.Views.Settings;
+namespace AutoOS.Views.Settings.Games;
 
 public sealed partial class GameSettings: Page
 {
@@ -43,7 +43,6 @@ public sealed partial class GameSettings: Page
                 if (subKey.GetValueNames().Any(valueName => subKey.GetValue(valueName) is string strValue && strValue.Contains("Fortnite")))
                 {
                     int flags = Convert.ToInt32(subKey.GetValue("Flags"));
-                    Debug.WriteLine($"SubKey: {subKeyName}, Flags: {flags}");
                     if (flags == 0x211)
                     {
                         PresentationMode.SelectedIndex = 1;

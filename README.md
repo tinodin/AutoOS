@@ -31,8 +31,10 @@ AutoOS is currently only supported on x64 builds of Windows 11 23H2 `22631` and 
 > AutoOS only supports fresh installations of windows.
 
 1. Download the latest `non Cumulative Update Preview` ISO (23H2) in x64 [UUP dump](https://uupdump.net/known.php?q=category%3Aw11-23h2), uncheck `Windows Home`, click next and check `Integrate .NET Framework 3.5 (Windows converter only)`.
-2. Download [Ventoy](https://sourceforge.net/projects/ventoy/files/latest/download)
-3. 
+2. Extract the downloaded ISO
+3. Shrink your Windows Partition so you have another partition with at least 64GB
+4. DISM /Apply-Image /ImageFile:<path\to\wim> /Index:1 /ApplyDir:<drive letter>
+5. Create <drive letter>\Windows\Panther folder and copy the unattend.xml file
 
 ## 📜 License
 

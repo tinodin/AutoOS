@@ -23,7 +23,7 @@
                                Margin="0,0,0,10">
                 <dev:SettingsGroup.Content>
                     <GridView x:Name="Brands"
-                              SelectionMode="Single"
+                              SelectionMode="Multiple"
                               SelectionChanged="Brand_Changed">
                         <GridView.ItemTemplate>
                             <DataTemplate>

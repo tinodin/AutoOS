@@ -10,7 +10,7 @@ public static class ServicesStage
         InstallPage.Status.Text = "Configuring Services and Drivers...";
 
         string previousTitle = string.Empty;
-        int stagePercentage = 2;
+        int stagePercentage = 3;
 
         string folderName = "";
 
@@ -42,7 +42,7 @@ public static class ServicesStage
             ("Building service lists", async () => await ProcessActions.RunCustom(async () => folderName = await Task.Run(() => Directory.GetDirectories(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last())), null),
 
             // disable services and drivers
-            ("Disabling services and drivers", async () => await ProcessActions.RunNsudo("TrustedInstaller", Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build", folderName, "Services-Disable.bat")), null),
+            //("Disabling services and drivers", async () => await ProcessActions.RunNsudo("TrustedInstaller", Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build", folderName, "Services-Disable.bat")), null),
         };
 
         var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();

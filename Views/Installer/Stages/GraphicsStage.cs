@@ -107,7 +107,7 @@ public static class GraphicsStage
 
             // install the nvidia driver
             ("Installing the NVIDIA driver", async () => await ProcessActions.RunNsudo("CurrentUser", @"""%TEMP%\driver\setup.exe"" /s"), () => NVIDIA == true),
-            ("Installing the NVIDIA driver", async () => await ProcessActions.Sleep(2000), () => NVIDIA == true),
+            ("Installing the NVIDIA driver", async () => await ProcessActions.Sleep(3000), () => NVIDIA == true),
             ("Installing the NVIDIA driver", async () => await ProcessActions.RefreshUI(), () => NVIDIA == true),
 
             // disable the nvidia tray icon

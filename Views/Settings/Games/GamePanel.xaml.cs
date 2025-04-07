@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Management;
 using System.ServiceProcess;
 
-namespace AutoOS.Views.Settings;
+namespace AutoOS.Views.Settings.Games;
 
 public sealed partial class GamePanel : UserControl
 {
@@ -44,17 +44,20 @@ public sealed partial class GamePanel : UserControl
 
     private void AutoScrollHoverEffectView_PointerCanceled(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
-        AutoScrollHoverEffectView.IsPlaying = false;
+        AutoScrollHoverEffectViewTitle.IsPlaying = false;
+        AutoScrollHoverEffectViewDescription.IsPlaying = false;
     }
 
     private void AutoScrollHoverEffectView_PointerEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
-        AutoScrollHoverEffectView.IsPlaying = true;
+        AutoScrollHoverEffectViewTitle.IsPlaying = true;
+        AutoScrollHoverEffectViewDescription.IsPlaying = true;
     }
 
     private void AutoScrollHoverEffectView_PointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
-        AutoScrollHoverEffectView.IsPlaying = false;
+        AutoScrollHoverEffectViewTitle.IsPlaying = false;
+        AutoScrollHoverEffectViewDescription.IsPlaying = false;
     }
 
     public ImageSource ImageSource { get; set; }
@@ -62,7 +65,14 @@ public sealed partial class GamePanel : UserControl
     public GamePanel()
     {
         this.InitializeComponent();
+        this.Unloaded += GamePanel_Unloaded;
     }
+
+    public string Launcher { get; set; }
+    public string LauncherLocation { get; set; }
+    public string DataLocation { get; set; }
+    public string GameLocation { get; set; }
+
 
     public string CatalogNamespace { get; set; }
     public string CatalogItemId { get; set; }
@@ -70,117 +80,103 @@ public sealed partial class GamePanel : UserControl
     public string InstallLocation { get; set; }
     public string LaunchExecutable { get; set; }
 
-    public void CheckGameRunning()
+    private DispatcherTimer gameWatcherTimer;
+    private HashSet<string> previousProcesses = new HashSet<string>(); // Cache for processes to reduce repeated queries.
+
+    private void GamePanel_Unloaded(object sender, RoutedEventArgs e)
     {
-        string offlineExecutable = string.Empty;
-        string onlineExecutable = string.Empty;
+        gameWatcherTimer?.Stop();
+    }
 
-        offlineExecutable = Path.GetFileNameWithoutExtension(LaunchExecutable);
-
-        if (Title == "Fortnite")
+    void StartGameWatcher(Func<bool> isGameRunning)
+    {
+        gameWatcherTimer = new DispatcherTimer
         {
-            onlineExecutable = "FortniteClient-Win64-Shipping";
-        }
+            Interval = TimeSpan.FromMilliseconds(750)
+        };
 
-        // if running
-        if (Process.GetProcessesByName(Path.GetFileNameWithoutExtension(offlineExecutable)).Length > 0 || (!string.IsNullOrEmpty(onlineExecutable) && Process.GetProcessesByName(Path.GetFileNameWithoutExtension(onlineExecutable)).Length > 0))
+        gameWatcherTimer.Tick += (s, e) =>
         {
-            // disable launch button
-            Launch.IsEnabled = false;
-            Panel.Click -= Launch_Click;
+            bool isRunning = isGameRunning();
 
-            if (new ServiceController("Beep").Status == ServiceControllerStatus.Stopped)
+            DispatcherQueue.TryEnqueue(() =>
             {
-                // show stop processes button if not already
-                if (stopProcesses.Visibility == Visibility.Collapsed)
+                // Only update the UI if the game running state has changed.
+                if (previousProcesses.Contains(isRunning.ToString())) return; // Prevent unnecessary updates.
+
+                Launch.IsEnabled = !isRunning;
+
+                if (isRunning)
                 {
-                    // show stop processes button
-                    stopProcesses.Visibility = Visibility.Visible;
+                    Panel.Click -= Launch_Click;
+
+                    if (stopProcesses.Visibility == Visibility.Collapsed)
+                        stopProcesses.Visibility = Visibility.Visible;
+
+                    if (Process.GetProcessesByName("explorer").Length == 0)
+                    {
+                        if (launchExplorer.Visibility == Visibility.Collapsed)
+                            launchExplorer.Visibility = Visibility.Visible;
+                    }
+                    else if (launchExplorer.Visibility == Visibility.Visible)
+                    {
+                        launchExplorer.Visibility = Visibility.Collapsed;
+                    }
+                }
+                else
+                {
+                    Panel.Click -= Launch_Click;
+                    Panel.Click += Launch_Click;
+
+                    if (stopProcesses.Visibility == Visibility.Visible)
+                        stopProcesses.Visibility = Visibility.Collapsed;
+
+                    if (launchExplorer.Visibility == Visibility.Visible)
+                        launchExplorer.Visibility = Visibility.Collapsed;
                 }
 
-                // show launch explorer button if not already
-                if (Process.GetProcessesByName("explorer").Length == 0)
-                {
-                    if (launchExplorer.Visibility == Visibility.Collapsed)
-                    {
-                        launchExplorer.Visibility = Visibility.Visible;
-                    }
-                }
-            }
-        }
+                // Cache the current state of the game process
+                previousProcesses.Clear();
+                previousProcesses.Add(isRunning.ToString());
+            });
+        };
 
-        var synchronizationContext = SynchronizationContext.Current;
+        gameWatcherTimer.Start(); // Start the timer
+    }
 
-        // watcher
-        var watcher = new Thread(() =>
+    public async Task CheckGameRunning()
+    {
+        if (Launcher == "Epic Games")
         {
-            while (true)
+            string offlineExecutable = Path.GetFileNameWithoutExtension(LaunchExecutable);
+            string onlineExecutable = Title switch
             {
-                synchronizationContext.Post(_ =>
+                "Fortnite" => "FortniteClient-Win64-Shipping",
+                "Fall Guys" => "FallGuys_client_game.exe",
+                _ => string.Empty
+            };
+            if (Title == "Fall Guys") offlineExecutable = "FallGuys_client.exe";
+
+            StartGameWatcher(() =>
+                Process.GetProcessesByName(Path.GetFileNameWithoutExtension(offlineExecutable)).Length > 0 ||
+                (!string.IsNullOrEmpty(onlineExecutable) &&
+                 Process.GetProcessesByName(Path.GetFileNameWithoutExtension(onlineExecutable)).Length > 0)
+            );
+        }
+        else if (Launcher == "Ryujinx")
+        {
+            StartGameWatcher(() =>
+            {
+                using var searcher = new ManagementObjectSearcher($"SELECT CommandLine FROM Win32_Process WHERE Name = '{Path.GetFileName(LauncherLocation)}'");
+                foreach (ManagementObject obj in searcher.Get())
                 {
-                    if (Process.GetProcessesByName(Path.GetFileNameWithoutExtension(offlineExecutable)).Length > 0 || (!string.IsNullOrEmpty(onlineExecutable) && Process.GetProcessesByName(Path.GetFileNameWithoutExtension(onlineExecutable)).Length > 0))
-                    {
-                        // disable launch button
-                        Launch.IsEnabled = false;
-                        Panel.Click -= Launch_Click;
-
-                        if (new ServiceController("Beep").Status == ServiceControllerStatus.Stopped)
-                        {
-                            // show stop processes button if not already
-                            if (stopProcesses.Visibility == Visibility.Collapsed)
-                            {
-                                stopProcesses.Visibility = Visibility.Visible;
-                            }
-
-                            // show launch explorer button if not already
-                            if (Process.GetProcessesByName("explorer").Length == 0)
-                            {
-                                if (launchExplorer.Visibility == Visibility.Collapsed)
-                                {
-                                    launchExplorer.Visibility = Visibility.Visible;
-                                }
-                            }
-                            else
-                            {
-                                // hide launch explorer button if explorer is running
-                                if (launchExplorer.Visibility == Visibility.Visible)
-                                {
-                                    launchExplorer.Visibility = Visibility.Collapsed;
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (Launch.IsEnabled == false)
-                        {
-                            // enable launch button
-                            Launch.IsEnabled = true;
-                            Panel.Click += Launch_Click;
-                        }
-                        if (new ServiceController("Beep").Status == ServiceControllerStatus.Stopped)
-                        {
-                            // hide stop processes button
-                            if (stopProcesses.Visibility == Visibility.Visible)
-                            {
-                                stopProcesses.Visibility = Visibility.Collapsed;
-                            }
-
-                            // hide launch explorer
-                            if (launchExplorer.Visibility == Visibility.Visible)
-                            {
-                                launchExplorer.Visibility = Visibility.Collapsed;
-                            }
-                        }
-                    }
-                }, null);
-
-                Thread.Sleep(500);
-            }
-        });
-
-        watcher.IsBackground = true;
-        watcher.Start();
+                    string cmdLine = obj["CommandLine"]?.ToString() ?? "";
+                    if (cmdLine.Contains($@"-r ""{DataLocation}"" -fullscreen ""{GameLocation}"""))
+                        return true;
+                }
+                return false;
+            });
+        }
     }
 
     private async void Launch_Click(object sender, RoutedEventArgs e)
@@ -193,7 +189,7 @@ public sealed partial class GamePanel : UserControl
                 Title = "Attention Required",
                 Content = "Are you sure that you want to launch " + Title + " in service enabled state?",
                 PrimaryButtonText = "Yes",
-                SecondaryButtonText = "No",
+                CloseButtonText = "No",
                 XamlRoot = this.XamlRoot
             };
 
@@ -202,13 +198,26 @@ public sealed partial class GamePanel : UserControl
             ContentDialogResult result = await contentDialog.ShowAsync();
 
             // check result
-            if (result == ContentDialogResult.Secondary)
+            if (result == ContentDialogResult.Primary)
             {
-                return;
+                if (Launcher == "Epic Games")
+                {
+                    Process.Start(new ProcessStartInfo($"com.epicgames.launcher://apps/{CatalogNamespace}%3A{CatalogItemId}%3A{AppName}?action=launch&silent=true") { UseShellExecute = true });
+
+                }
+                else if (Launcher == "Ryujinx")
+                {
+                    var startInfo = new ProcessStartInfo
+                    {
+                        FileName = LauncherLocation,
+                        Arguments = $@"-r ""{DataLocation}"" -fullscreen ""{GameLocation}""",
+                        CreateNoWindow = true,
+                    };
+
+                    Process.Start(startInfo);
+                }
             }
         }
-
-        Process.Start(new ProcessStartInfo($"com.epicgames.launcher://apps/{CatalogNamespace}%3A{CatalogItemId}%3A{AppName}?action=launch&silent=true") { UseShellExecute = true });
     }
 
     private async void StopProcesses_Click(object sender, RoutedEventArgs e)
