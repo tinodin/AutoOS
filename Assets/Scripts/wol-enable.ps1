@@ -17,6 +17,11 @@ Get-NetAdapter | Where-Object { $_.PhysicalMediaType -eq "802.3" } | ForEach-Obj
         Set-NetAdapterAdvancedProperty -Name $adapterName -DisplayName "Wake On Magic Packet From S5" -DisplayValue "Enabled"
     }
 
+    # Wake on magic packet when system is in the S0ix power state
+    if ($adapterProperties | Where-Object { $_.DisplayName -eq "Wake on magic packet when system is in the S0ix power state" }) {
+        Set-NetAdapterAdvancedProperty -Name $adapterName -DisplayName "Wake on magic packet when system is in the S0ix power state" -DisplayValue "Enabled"
+    }
+
     # Enable PME
     if ($adapterProperties | Where-Object { $_.DisplayName -eq "Enable PME" }) {
         Set-NetAdapterAdvancedProperty -Name $adapterName -DisplayName "Enable PME" -DisplayValue "Enabled"

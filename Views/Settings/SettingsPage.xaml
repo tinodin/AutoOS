@@ -8,6 +8,7 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:views="using:AutoOS.Views.Settings.Settings"
       dev:BreadcrumbNavigator.IsHeaderVisible="True"
+      dev:BreadcrumbNavigator.ClearNavigation="False"
       mc:Ignorable="d">
     <ScrollView Margin="{ThemeResource ContentPageMargin}"
                 Padding="{ThemeResource ContentPagePadding}"

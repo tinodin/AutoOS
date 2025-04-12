@@ -21,7 +21,8 @@
                        Margin="7,-11,0,57"/>
             <dev:SettingsGroup Description="Toggle functionality needed in service disabled state and toggle between service states."
                                Header="Service-list-builder"
-                               HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Services.png}">
+                               HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Services.png}"
+                               x:Name="Services_SettingsGroup">
                 <dev:SettingsGroup.Content>
                         <ToggleSwitch x:Name="Services"
                                       Toggled="Services_Toggled"/>
@@ -76,7 +77,7 @@
                                   Margin="0,0,0,15"
                                   Padding="22,5,0,0"/>
                     </dev:SettingsCard>
-                    <dev:SettingsCard ContentAlignment="Left">
+                    <dev:SettingsCard x:Name="AmdVrr_SettingsCard" ContentAlignment="Left">
                         <CheckBox x:Name="AMDVRR"
                                   Click="AMDVRR_Checked"
                                   Content="AMD Variable Refresh Rate (VRR) / FreeSync support"

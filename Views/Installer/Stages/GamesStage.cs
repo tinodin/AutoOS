@@ -21,8 +21,6 @@ public static class GamesStage
         string previousTitle = string.Empty;
         int stagePercentage = 2;
 
-        Fortnite = true;
-
         string fortnitePath = string.Empty;
 
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>

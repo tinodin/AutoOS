@@ -133,10 +133,10 @@ public sealed partial class GraphicsPage : Page
         await Task.Delay(300);
 
         // launch file picker
-        var picker = new FilePicker();
+        var picker = new FilePicker(App.MainWindow);
         picker.ShowAllFilesOption = false;
         picker.FileTypeChoices.Add("MSI Afterburner profile", new List<string> { "*.cfg" });
-        var file = await picker.PickSingleFileAsync(App.MainWindow);
+        var file = await picker.PickSingleFileAsync();
 
         if (file != null)
         {

@@ -22,6 +22,12 @@ Get-NetAdapter | Where-Object { $_.PhysicalMediaType -eq "802.3" } | ForEach-Obj
         $status = $false
     }
 
+    # check wake on magic packet when system is in the S0ix power state
+    $wakeFromS0ix2 = $adapterProperties | Where-Object { $_.DisplayName -eq "Wake on magic packet when system is in the S0ix power state" }
+    if ($wakeFromS0ix2 -and $wakeFromS0ix2.DisplayValue -ne "Enabled") {
+        $status = $false
+    }
+
     # check enable pme
     $enablePME = $adapterProperties | Where-Object { $_.DisplayName -eq "Enable PME" }
     if ($enablePME -and $enablePME.DisplayValue -ne "Enabled") {

@@ -72,20 +72,26 @@ $raw | Select-String $patternUrlAndText -AllMatches | ForEach-Object { $_.Matche
     }
 }
 
-$latestPackages = @()
-$packageList.GetEnumerator() | ForEach-Object { ($_.value).GetEnumerator() | Select-Object -Last 1 } | ForEach-Object {
-    $packagesByType = $_.value
-    $msixbundle = ($packagesByType | Where-Object { $_.type -match "^msixbundle$" })
-    $appxbundle = ($packagesByType | Where-Object { $_.type -match "^appxbundle$" })
-    $msix = ($packagesByType | Where-Object { ($_.type -match "^msix$") -And ($_.arch -match ('^' + [Regex]::Escape($architecture) + '$')) })
-    $appx = ($packagesByType | Where-Object { ($_.type -match "^appx$") -And ($_.arch -match ('^' + [Regex]::Escape($architecture) + '$')) })
-    
-    if ($filetype -eq "msixbundle" -and $msixbundle) { $latestPackages += $msixbundle }
-    elseif ($filetype -eq "appxbundle" -and $appxbundle) { $latestPackages += $appxbundle }
-    elseif ($filetype -eq "msix" -and $msix) { $latestPackages += $msix }
-    elseif ($filetype -eq "appx" -and $appx) { $latestPackages += $appx }
+$allPackages = @()
+
+$packageList.GetEnumerator() | ForEach-Object {
+    $_.Value.GetEnumerator() | ForEach-Object {
+        $packagesByType = $_.Value
+        $matches = @()
+
+        switch ($filetype) {
+            "msixbundle" { $matches = $packagesByType | Where-Object { $_.type -eq "msixbundle" } }
+            "appxbundle" { $matches = $packagesByType | Where-Object { $_.type -eq "appxbundle" } }
+            "msix"       { $matches = $packagesByType | Where-Object { $_.type -eq "msix" -and $_.arch -eq $architecture } }
+            "appx"       { $matches = $packagesByType | Where-Object { $_.type -eq "appx" -and $_.arch -eq $architecture } }
+        }
+
+        $allPackages += $matches
+    }
 }
 
-$latestPackages | ForEach-Object {
+$allPackages = $allPackages | Sort-Object { [version]$_.version } -Descending
+
+$allPackages | ForEach-Object {
     Write-Host "$($_.url)"
 }

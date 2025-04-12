@@ -44,6 +44,33 @@ public static class GraphicsStage
             ("Installing the Intel driver", async () => await ProcessActions.RunNsudo("CurrentUser", @"""%TEMP%\driver\Installer.exe"" /silent"), () => Intel10th == true),
             ("Installing the Intel driver", async () => await ProcessActions.RefreshUI(), () => Intel10th == true),
 
+            // download the latest nvidia driver                                                     
+            ("Downloading the latest NVIDIA Driver", async () => await ProcessActions.RunDownload($@"https://us.download.nvidia.com/Windows/{version}/{version}-desktop-win10-win11-64bit-international-dch-whql.exe", Path.GetTempPath(), "driver.exe"), () => NVIDIA == true),
+
+            // extract the driver
+            ("Extracting the NVIDIA driver", async () => await ProcessActions.RunExtract(Path.Combine(Path.GetTempPath(), "driver.exe"), Path.Combine(Path.GetTempPath(), "driver")), () => NVIDIA == true),
+
+            // strip the driver
+            ("Stripping the NVIDIA driver", async () => await ProcessActions.RunNvidiaStrip(), () => NVIDIA == true),
+
+            // install the nvidia driver
+            ("Installing the NVIDIA driver", async () => await ProcessActions.RunNsudo("CurrentUser", @"""%TEMP%\driver\setup.exe"" /s"), () => NVIDIA == true),
+            ("Installing the NVIDIA driver", async () => await ProcessActions.Sleep(2000), () => NVIDIA == true),
+            ("Installing the NVIDIA driver", async () => await ProcessActions.RefreshUI(), () => NVIDIA == true),
+
+            // intel 2nd
+            
+
+            // amd 
+
+
+            // apply custom resolution utility (cru) profile
+            ("Importing Custom Resolution Utility (CRU) profile", async () => await ProcessActions.Sleep(1000), () => CRU == true),
+            ("Importing Custom Resolution Utility (CRU) profile", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "CruProfile", null).ToString(), Arguments = "-i" })!.WaitForExitAsync())), () => CRU == true),
+            ("Applying Custom Resolution Utility (CRU) profile", async () => await ProcessActions.Sleep(1000), () => CRU == true),
+            ("Applying Custom Resolution Utility (CRU) profile", async () => await ProcessActions.RunApplication("CRU", "restart64.exe", "/q"), () => CRU == true),
+            ("Applying Custom Resolution Utility (CRU) profile", async () => await ProcessActions.RefreshUI(), () => CRU == true),
+
             // enable optimizations for windowed games
             ("Enabling optimizations for windowed games", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\DirectX\UserGpuPreferences"" /v ""DirectXUserGlobalSettings"" /t REG_SZ /d ""SwapEffectUpgradeEnable=1;"" /f"), () => Intel10th == true),
 
@@ -96,20 +123,6 @@ public static class GraphicsStage
             ("Disabling high-definition-content-protection (HDCP)", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\cphs"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => Intel10th == true),
             ("Disabling high-definition-content-protection (HDCP)", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\cplspcon"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => Intel10th == true),
 
-            // download the latest nvidia driver                                                     
-            ("Downloading the latest NVIDIA Driver", async () => await ProcessActions.RunDownload($@"https://us.download.nvidia.com/Windows/{version}/{version}-desktop-win10-win11-64bit-international-dch-whql.exe", Path.GetTempPath(), "driver.exe"), () => NVIDIA == true),
-
-            // extract the driver
-            ("Extracting the NVIDIA driver", async () => await ProcessActions.RunExtract(Path.Combine(Path.GetTempPath(), "driver.exe"), Path.Combine(Path.GetTempPath(), "driver")), () => NVIDIA == true),
-
-            // strip the driver
-            ("Stripping the NVIDIA driver", async () => await ProcessActions.RunNvidiaStrip(), () => NVIDIA == true),
-
-            // install the nvidia driver
-            ("Installing the NVIDIA driver", async () => await ProcessActions.RunNsudo("CurrentUser", @"""%TEMP%\driver\setup.exe"" /s"), () => NVIDIA == true),
-            ("Installing the NVIDIA driver", async () => await ProcessActions.Sleep(3000), () => NVIDIA == true),
-            ("Installing the NVIDIA driver", async () => await ProcessActions.RefreshUI(), () => NVIDIA == true),
-
             // disable the nvidia tray icon
             ("Disabling the NVIDIA tray icon", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\NVIDIA Corporation\NvTray"" /v StartOnLogin /t REG_DWORD /d 0 /f"), () => NVIDIA == true),
 
@@ -126,10 +139,10 @@ public static class GraphicsStage
             // use the advanced 3d image settings
             ("Using the advanced 3D image settings", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\SOFTWARE\NVIDIA Corporation\Global\NVTweak"" /v ""Gestalt"" /t REG_DWORD /d 515 /f"), () => NVIDIA == true),
 
-            // import profiles
+            // import the optimized profile
             ("Importing the optimized profile", async () => await ProcessActions.ImportProfile("BaseProfile.nip"), () => NVIDIA == true),
 
-            // use gpu for physx
+            // configure physx to use gpu
             ("Configuring PhysX to use GPU", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\ControlSet001\Services\nvlddmkm\Global\NVTweak"" /v ""NvCplPhysxAuto"" /t REG_DWORD /d 0 /f"), () => NVIDIA == true),
 
             // configure color settings
@@ -144,23 +157,6 @@ public static class GraphicsStage
 
             // disable dynamic p-state
             ("Disabling dynamic p-state", async () => await ProcessActions.RunPowerShellScript("pstate.ps1", ""), () => NVIDIA == true),
-
-            // disable audio enhancements
-            ("Disabling audio enhancements", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"powershell -Command ""$Keys = @('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Render'); foreach ($Key in $Keys) { Get-ChildItem $Key -Recurse | Where-Object { $_.PSPath -match '\\FxProperties$' } | ForEach-Object { Set-ItemProperty -Path $_.PSPath -Name '{1da5d803-d492-4edd-8c23-e0c0ffee7f0e},5' -Value 1 } }"""), null),
-            ("Disabling audio enhancements", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"powershell -Command ""$Keys = @('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Capture'); foreach ($Key in $Keys) { Get-ChildItem $Key -Recurse | Where-Object { $_.PSPath -match '\\FxProperties$' } | ForEach-Object { Set-ItemProperty -Path $_.PSPath -Name '{1da5d803-d492-4edd-8c23-e0c0ffee7f0e},5' -Value 1 } }"""), null),
-
-            // disable exclusive control
-            ("Disabling exclusive control", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"cmd /c for %k in (Capture Render) do for /f ""delims="" %a in ('reg query ""HKLM\Software\Microsoft\Windows\CurrentVersion\MMDevices\Audio\%k""') do reg add ""%a\Properties"" /v ""{b3f8fa53-0004-438e-9003-51a46e139bfc},3"" /t REG_DWORD /d 0 /f && reg add ""%a\Properties"" /v ""{b3f8fa53-0004-438e-9003-51a46e139bfc},4"" /t REG_DWORD /d 0 /f"), null),
-
-            // apply custom resolution utility (cru) profile
-            ("Importing Custom Resolution Utility (CRU) profile", async () => await ProcessActions.Sleep(1000), () => CRU == true),
-            ("Importing Custom Resolution Utility (CRU) profile", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "CruProfile", null).ToString(), Arguments = "-i" })!.WaitForExitAsync())), () => CRU == true),
-            ("Applying Custom Resolution Utility (CRU) profile", async () => await ProcessActions.Sleep(1000), () => CRU == true),
-            ("Applying Custom Resolution Utility (CRU) profile", async () => await ProcessActions.RunApplication("CRU", "restart64.exe", "/q"), () => CRU == true),
-            ("Applying Custom Resolution Utility (CRU) profile", async () => await ProcessActions.RefreshUI(), () => CRU == true),
-
-            // configure color settings (again)
-            ("Configuring color settings", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"cmd /c for /f ""delims="" %a in ('reg query HKLM\System\CurrentControlSet\Services\nvlddmkm\State\DisplayDatabase') do reg add ""%a"" /v ""ColorformatConfig"" /t REG_BINARY /d ""DB02000014000000000A00080000000003010000"" /f"), () => CRU == true && NVIDIA == true),
 
             // download msi afterburner
             ("Downloading MSI Afterburner", async () => await ProcessActions.RunDownload("https://www.dl.dropboxusercontent.com/scl/fi/6dvl62kgm3z38x49752bt/MSI-Afterburner.zip?rlkey=h2m2riyjisrb3ph0i8j0q4eu5&st=pw7u3mte&dl=0", Path.GetTempPath(), "MSI Afterburner.zip"), null),

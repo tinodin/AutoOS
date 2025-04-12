@@ -8,26 +8,26 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       mc:Ignorable="d">
     <dev:MainLandingPage x:Name="mainLandingPage" 
-                        HeaderImage="{ThemeResource HeaderCover}" 
-                        HeaderText="AutoOS Installer" 
-                        HeaderSubtitleText="Windows App SDK 1.7">
+                    HeaderImage="{ThemeResource HeaderCover}" 
+                    HeaderText="AutoOS Installer" 
+                    HeaderSubtitleText="Windows App SDK 1.7">
         <dev:MainLandingPage.HeaderContent>
             <StackPanel Orientation="Horizontal" 
-                        Margin="0,25,0,0" 
-                        Spacing="10">
-                <dev:HeaderTile Title="AutoOS Documentation" 
-                               Description="Learn how to use AutoOS." 
-                               Link="https://ghost1372.github.io/WinUICommunity/">
+                    Margin="0,25,0,0" 
+                    Spacing="10">
+                <dev:HeaderTile Title="Getting started" 
+                           Description="Get started with AutoOS." 
+                           Link="Explore the source code and report bugs.">
                     <dev:HeaderTile.Source>
                         <Image Source="/Assets/AppIcon.png"/>
                     </dev:HeaderTile.Source>
                 </dev:HeaderTile>
-                <dev:HeaderTile Title="Report a Bug" 
-                               Description="Found a bug? Please create an issue on the GitHub." 
-                               Link="https://github.com/tinodin/AutoOS">
+                <dev:HeaderTile Title="AutoOS on GitHub" 
+                           Description="Explore the source code and report bugs." 
+                           Link="https://github.com/tinodin/AutoOS">
                     <dev:HeaderTile.Source>
                         <PathIcon Data="{StaticResource GitHubIconPath}" 
-                                   Foreground="{ThemeResource TextFillColorPrimaryBrush}">
+                               Foreground="{ThemeResource TextFillColorPrimaryBrush}">
                             <PathIcon.RenderTransform>
                                 <CompositeTransform ScaleX="2.05" 
                                                     ScaleY="2.05" 
@@ -37,8 +37,8 @@
                     </dev:HeaderTile.Source>
                 </dev:HeaderTile>
                 <dev:HeaderTile Title="Donate" 
-                               Description="Leave a sign of appreciation of my work." 
-                               Link="https://www.paypal.com/donate/?hosted_button_id=GVEVUSHUWXEAG">
+                           Description="Leave a sign of appreciation of my work." 
+                           Link="https://www.paypal.com/donate/?hosted_button_id=GVEVUSHUWXEAG">
                     <dev:HeaderTile.Source>
                         <Image Source="/Assets/Fluent/PayPal.png"/>
                     </dev:HeaderTile.Source>
@@ -47,7 +47,7 @@
         </dev:MainLandingPage.HeaderContent>
         <dev:MainLandingPage.FooterContent>
             <StackPanel>
-               
+
             </StackPanel>
         </dev:MainLandingPage.FooterContent>
     </dev:MainLandingPage>

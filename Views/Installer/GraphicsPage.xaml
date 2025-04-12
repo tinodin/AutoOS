@@ -24,6 +24,7 @@
                 <dev:SettingsGroup.Content>
                     <GridView x:Name="Brands"
                               SelectionMode="Multiple"
+                              IsMultiSelectCheckBoxEnabled="False"
                               SelectionChanged="Brand_Changed">
                         <GridView.ItemTemplate>
                             <DataTemplate>

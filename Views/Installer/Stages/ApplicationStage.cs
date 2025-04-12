@@ -36,6 +36,7 @@ public static class ApplicationStage
         string bitwardenVersion = "";
         string onePasswordVersion = "";
         string spotifyVersion = "";
+        string dolbyAccessVersion = "";
         string appleMusicVersion = "";
         string amazonMusicVersion = "";
         string deezerMusicVersion = "";
@@ -45,13 +46,13 @@ public static class ApplicationStage
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
             // download icloud dependency
-            ("Downloading iCloud Dependency", async () => await ProcessActions.RunMicrosoftStoreDownload("AppleInc.iCloud_nzyj5cx40ttqa", "msix", "x64", "iCloudDependency.msix"), () => iCloud == true),
+            ("Downloading iCloud Dependency", async () => await ProcessActions.RunMicrosoftStoreDownload("AppleInc.iCloud_nzyj5cx40ttqa", "msix", "x64", "iCloudDependency.msix", 0), () => iCloud == true),
 
             // install icloud
             ("Installing iCloud Dependency", async () => await ProcessActions.RunPowerShell(@"Add-AppxPackage -Path ""$env:TEMP\iCloudDependency.msix"""), () => iCloud == true),
 
             // download icloud
-            ("Downloading iCloud", async () => await ProcessActions.RunMicrosoftStoreDownload("AppleInc.iCloud_nzyj5cx40ttqa", "appx", "x64", "iCloud.appx"), () => iCloud == true),
+            ("Downloading iCloud", async () => await ProcessActions.RunMicrosoftStoreDownload("AppleInc.iCloud_nzyj5cx40ttqa", "appx", "x64", "iCloud.appx", 0), () => iCloud == true),
 
             // install icloud
             ("Installing iCloud", async () => await ProcessActions.RunPowerShell(@"Add-AppxPackage -Path ""$env:TEMP\iCloud.appx"""), () => iCloud == true),
@@ -62,7 +63,7 @@ public static class ApplicationStage
             ("Please log in to your iCloud account", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Path.Combine(@"C:\Program Files\WindowsApps\AppleInc.iCloud_" + icloudVersion + "_x64__nzyj5cx40ttqa", "iCloud", "iCloudHome.exe"), WindowStyle = ProcessWindowStyle.Maximized }) !.WaitForExitAsync())), () => iCloud == true),
 
             // download bitwarden
-            ("Downloading Bitwarden", async () => await ProcessActions.RunMicrosoftStoreDownload("8bitSolutionsLLC.bitwardendesktop_h4e712dmw3xyy", "appx", "", "Bitwarden.appx"), () => Bitwarden == true),
+            ("Downloading Bitwarden", async () => await ProcessActions.RunMicrosoftStoreDownload("8bitSolutionsLLC.bitwardendesktop_h4e712dmw3xyy", "appx", "", "Bitwarden.appx", 0), () => Bitwarden == true),
 
             // install bitwarden
             ("Installing Bitwarden", async () => await ProcessActions.RunPowerShell(@"Add-AppxPackage -Path ""$env:TEMP\Bitwarden.appx"""), () => Bitwarden == true),
@@ -85,7 +86,7 @@ public static class ApplicationStage
             ("Please log in to your 1Password account", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "1Password", "app", onePasswordVersion, "1Password.exe"), WindowStyle = ProcessWindowStyle.Maximized }) !.WaitForExitAsync())), () => OnePassword == true),
 
             // download nanazip
-            ("Downloading NanaZip", async () => await ProcessActions.RunMicrosoftStoreDownload("40174MouriNaruto.NanaZip_gnj4mf6z9tkrc", "msixbundle", "", "NanaZip.Msixbundle"), null),
+            ("Downloading NanaZip", async () => await ProcessActions.RunMicrosoftStoreDownload("40174MouriNaruto.NanaZip_gnj4mf6z9tkrc", "msixbundle", "", "NanaZip.Msixbundle", 0), null),
 
             // install nanazip
             ("Installing NanaZip", async () => await ProcessActions.RunPowerShell(@"Add-AppxPackage -Path ""$env:TEMP\NanaZip.Msixbundle"""), null),
@@ -147,8 +148,19 @@ public static class ApplicationStage
             // remove spotify startup entry
             ("Disabling Spotify startup entry", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg delete ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"" /v ""Spotify"" /f"), () => Spotify == true),
 
+            // download dolby access
+            ("Downloading Dolby Access", async () => await ProcessActions.RunMicrosoftStoreDownload("DolbyLaboratories.DolbyAccess_rz1tebttyb220", "msixbundle", "", "DolbyAccess.Msixbundle", 1), () => AppleMusic == true),
+
+            // install dolby access
+            ("Installing Dolby Access", async () => await ProcessActions.RunPowerShell(@"Add-AppxPackage -Path ""$env:TEMP\DolbyAccess.Msixbundle"""), () => AppleMusic == true),
+            ("Installing Dolby Access", async () => await ProcessActions.RunCustom(async () => dolbyAccessVersion =(await Task.Run(() => { var process = new Process { StartInfo = new ProcessStartInfo("powershell.exe", "Get-AppxPackage -Name \"DolbyLaboratories.DolbyAccess\" | Select-Object -ExpandProperty Version") { RedirectStandardOutput = true, CreateNoWindow = true } }; process.Start(); return process.StandardOutput.ReadToEnd().Trim(); }))), () => AppleMusic == true),
+
+            // log in to dolby access
+            ("Please log in to your Dolby Access account", async () => await ProcessActions.Sleep(1000), () => AppleMusic == true),
+            ("Please log in to your Dolby Access account", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Path.Combine(@"C:\Program Files\WindowsApps\DolbyLaboratories.DolbyAccess_" + dolbyAccessVersion + "_x64__rz1tebttyb220", "DolbyAccess.exe"), WindowStyle = ProcessWindowStyle.Maximized })!.WaitForExitAsync())), () => AppleMusic == true),
+
             // download apple music
-            ("Downloading Apple Music", async () => await ProcessActions.RunMicrosoftStoreDownload("AppleInc.AppleMusicWin_nzyj5cx40ttqa", "msixbundle", "", "AppleMusic.Msixbundle"), () => AppleMusic == true),
+            ("Downloading Apple Music", async () => await ProcessActions.RunMicrosoftStoreDownload("AppleInc.AppleMusicWin_nzyj5cx40ttqa", "msixbundle", "", "AppleMusic.Msixbundle", 0), () => AppleMusic == true),
 
             // install apple music
             ("Installing Apple Music", async () => await ProcessActions.RunPowerShell(@"Add-AppxPackage -Path ""$env:TEMP\AppleMusic.Msixbundle"""), () => AppleMusic == true),
@@ -159,7 +171,7 @@ public static class ApplicationStage
             ("Please log in to your Apple Music account", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Path.Combine(@"C:\Program Files\WindowsApps\AppleInc.AppleMusicWin_" + appleMusicVersion + "_x64__nzyj5cx40ttqa", "AppleMusic.exe"), WindowStyle = ProcessWindowStyle.Maximized })!.WaitForExitAsync())), () => AppleMusic == true),
 
             // download amazon music
-            ("Downloading Amazon Music", async () => await ProcessActions.RunMicrosoftStoreDownload("AmazonMobileLLC.AmazonMusic_kc6t79cpj4tp0", "appx", "x86", "AmazonMusic.appx"), () => AmazonMusic == true),
+            ("Downloading Amazon Music", async () => await ProcessActions.RunMicrosoftStoreDownload("AmazonMobileLLC.AmazonMusic_kc6t79cpj4tp0", "appx", "x86", "AmazonMusic.appx", 0), () => AmazonMusic == true),
 
             // install amazon music
             ("Installing Amazon Music", async () => await ProcessActions.RunPowerShell(@"Add-AppxPackage -Path ""$env:TEMP\AmazonMusic.appx"""), () => AmazonMusic == true),
@@ -169,7 +181,7 @@ public static class ApplicationStage
             ("Please log in to your Amazon Music account", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Path.Combine(@"C:\Program Files\WindowsApps\AmazonMobileLLC.AmazonMusic_" + amazonMusicVersion + "_x86__kc6t79cpj4tp0", "Amazon Music.exe"), WindowStyle = ProcessWindowStyle.Maximized })!.WaitForExitAsync())), () => AmazonMusic == true),
 
             // download deezer music
-            ("Downloading Deezer Music", async () => await ProcessActions.RunMicrosoftStoreDownload("Deezer.62021768415AF_q7m17pa7q8kj0", "appxbundle", "", "DeezerMusic.appxbundle"), () => DeezerMusic == true),
+            ("Downloading Deezer Music", async () => await ProcessActions.RunMicrosoftStoreDownload("Deezer.62021768415AF_q7m17pa7q8kj0", "appxbundle", "", "DeezerMusic.appxbundle", 0), () => DeezerMusic == true),
 
             // install deezer music
             ("Installing Deezer Music", async () => await ProcessActions.RunPowerShell(@"Add-AppxPackage -Path ""$env:TEMP\DeezerMusic.appxbundle"""), () => DeezerMusic == true),
@@ -179,7 +191,7 @@ public static class ApplicationStage
             ("Please log in to your Deezer Music account", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Path.Combine(@"C:\Program Files\WindowsApps\Deezer.62021768415AF_" + deezerMusicVersion + @"_x86__q7m17pa7q8kj0\app", "Deezer.exe"), WindowStyle = ProcessWindowStyle.Maximized })!.WaitForExitAsync())), () => DeezerMusic == true),
 
             // download whatsapp
-            ("Downloading WhatsApp", async () => await ProcessActions.RunMicrosoftStoreDownload("5319275A.WhatsAppDesktop_cv1g1gvanyjgm", "msixbundle", "", "WhatsApp.Msixbundle"), () => WhatsApp == true),
+            ("Downloading WhatsApp", async () => await ProcessActions.RunMicrosoftStoreDownload("5319275A.WhatsAppDesktop_cv1g1gvanyjgm", "msixbundle", "", "WhatsApp.Msixbundle", 0), () => WhatsApp == true),
 
             // install whatsapp
             ("Installing WhatsApp", async () => await ProcessActions.RunPowerShell(@"Add-AppxPackage -Path ""$env:TEMP\WhatsApp.Msixbundle"""), () => WhatsApp == true),
@@ -254,6 +266,7 @@ public static class ApplicationStage
             ("Importing Epic Games Launcher Games", async () => await ProcessActions.RunImportEpicGamesLauncherGames(), () => EpicGames == true && EpicGamesGames == true),
             ("Importing Epic Games Launcher Games", async () => await ProcessActions.RunCustom(async () => Fortnite = File.Exists(@"C:\ProgramData\Epic\UnrealEngineLauncher\LauncherInstalled.dat") && (JsonNode.Parse(await File.ReadAllTextAsync(@"C:\ProgramData\Epic\UnrealEngineLauncher\LauncherInstalled.dat"))?["InstallationList"] is JsonArray installations) && installations.Any(entry => entry?["AppName"]?.ToString() == "Fortnite")) , () => EpicGames == true && EpicGamesGames == true),
             ("Importing Epic Games Launcher Games", async () => await ProcessActions.Sleep(1000), () => EpicGames == true && EpicGamesGames == true),
+            ("Importing Epic Games Launcher Games", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => { var process = Process.Start(@"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win64\EpicGamesLauncher.exe"); Task.Delay(5000).Wait(); process?.Kill(); })), () => EpicGames == true && EpicGamesAccount == true),
 
             // log in to epic games launcher account
             ("Please log in to your Epic Games Launcher account", async () => await ProcessActions.RunCustom(async () => await Task.Run(async () => { Process.Start(@"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win64\EpicGamesLauncher.exe"); string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "EpicGamesLauncher", "Saved", "Config", "Windows", "GameUserSettings.ini"); while (!File.Exists(path) || Regex.Match(await File.ReadAllTextAsync(path), @"Data=([^\r\n]+)").Groups[1].Value.Length < 1000) await Task.Delay(500); Process.GetProcessesByName("EpicGamesLauncher").ToList().ForEach(p => { p.Kill(); p.WaitForExit(); }); })), () => EpicGames == true && EpicGamesAccount == false),
@@ -261,8 +274,7 @@ public static class ApplicationStage
             // disable epic games services
             ("Disabling Epic Games services", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\EpicOnlineServices"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => EpicGames == true),
             ("Disabling Epic Games services", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\EpicGamesUpdater"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => EpicGames == true),
-            ("Disabling Epic Games services", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\AutorunsDisabled"" /v ""EpicGamesLauncher"" /t REG_SZ /d """"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win64\EpicGamesLauncher.exe"" -silent -launchcontext=boot"""" /f"), () => EpicGames == true),
-            ("Disabling Epic Games services", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg delete ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"" /v ""EpicGamesLauncher"" /f"), () => EpicGames == true),
+            ("Disabling Epic Games services", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"" /v ""EpicGamesLauncher"" /t REG_BINARY /d ""01"" /f"), () => EpicGames == true),
         
             // download steam
             ("Downloading Steam", async () => await ProcessActions.RunDownload("https://cdn.cloudflare.steamstatic.com/client/installer/SteamSetup.exe", Path.GetTempPath(), "SteamSetup.exe"), () => Steam == true),
@@ -278,6 +290,10 @@ public static class ApplicationStage
 
             // remove steam desktop shortcut
             ("Removing Steam desktop shortcut", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c del /f /q ""C:\Users\Public\Desktop\Steam.lnk"""), () => Steam == true),
+
+            // disable steam services
+            ("Disabling Steam services", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\Steam Client Service"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => Steam == true),
+            ("Disabling Steam services", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"" /v ""Steam"" /t REG_BINARY /d ""01"" /f"), () => Steam == true),
         };
 
         var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();

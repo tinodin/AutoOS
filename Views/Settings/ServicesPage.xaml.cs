@@ -956,6 +956,24 @@ public sealed partial class ServicesPage : Page
 
     private void GetAMDVRRState()
     {
+        // remove if no amd gpu
+        using (var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_VideoController"))
+        {
+            foreach (var obj in searcher.Get())
+            {
+                string name = obj["Name"]?.ToString();
+                string version = obj["DriverVersion"]?.ToString();
+
+                if (name != null)
+                {
+                    if (!name.Contains("AMD", StringComparison.OrdinalIgnoreCase) && !name.Contains("Radeon", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Services_SettingsGroup.Items.Remove(AmdVrr_SettingsCard);
+                    }
+                }
+            }
+        }
+
         // define services and drivers
         var services = new[] { "AMD External Events Utility" };
 

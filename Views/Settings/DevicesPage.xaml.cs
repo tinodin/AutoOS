@@ -261,6 +261,31 @@ public sealed partial class DevicesPage : Page
                 service.Stop();
             }
         }
+        else if (Process.GetProcessesByName("FortniteClient-Win64-Shipping").Length == 1)
+        {
+            // add infobar
+            DevicesInfo.Children.Add(new InfoBar
+            {
+                Title = "Failed to run RWEverything because it is already running or an anticheat is blocking the driver.",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Error,
+                Margin = new Thickness(5)
+            });
+
+            // disable the switch
+            IMOD.IsEnabled = false;
+
+            // hide progress ring
+            imodProgress.Visibility = Visibility.Collapsed;
+
+            // show toggle
+            IMOD.Visibility = Visibility.Visible;
+
+            isInitializingIMODState = false;
+
+            return;
+        }
 
         // check state
         Process.Start(new ProcessStartInfo

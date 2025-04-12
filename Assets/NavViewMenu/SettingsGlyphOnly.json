@@ -14,6 +14,7 @@
           "Title": "Home",
           "Subtitle": "Home Page",
           "ImagePath": "ms-appx:///Assets/Fluent/Home.png",
+          "IconGlyph": "E80F",
           "HideItem": true
         },
         {
@@ -21,6 +22,7 @@
           "Title": "Display",
           "Subtitle": "Manage your CRU profiles",
           "ImagePath": "ms-appx:///Assets/Fluent/Display.png",
+          "IconGlyph": "E7F4",
           "HideItem": true
         },
         {
@@ -28,6 +30,7 @@
           "Title": "Graphics Card",
           "Subtitle": "Graphics Card",
           "ImagePath": "ms-appx:///Assets/Fluent/Gpu.png",
+          "IconGlyph": "E964",
           "HideItem": true
         },
         {
@@ -35,6 +38,7 @@
           "Title": "Per-CPU Scheduling",
           "Subtitle": "Per-CPU Scheduling",
           "ImagePath": "ms-appx:///Assets/Fluent/Cpu.png",
+          "IconGlyph": "E950",
           "HideItem": true
         },
         {
@@ -42,6 +46,7 @@
           "Title": "Timer Resolution",
           "Subtitle": "Timer Resolution",
           "ImagePath": "ms-appx:///Assets/Fluent/Timer.png",
+          "IconGlyph": "E916",
           "HideItem": true
         },
         {
@@ -49,6 +54,7 @@
           "Title": "Bluetooth & Devices",
           "Subtitle": "Bluetooth & Devices",
           "ImagePath": "ms-appx:///Assets/Fluent/Bluetooth.png",
+          "IconGlyph": "E702",
           "HideItem": true
         },
         {
@@ -56,6 +62,7 @@
           "Title": "Network & Internet",
           "Subtitle": "Network & Internet",
           "ImagePath": "ms-appx:///Assets/Fluent/Internet.png",
+          "IconGlyph": "E701",
           "HideItem": true
         },
         {
@@ -63,6 +70,7 @@
           "Title": "Energy & Power",
           "Subtitle": "Energy & Power",
           "ImagePath": "ms-appx:///Assets/Fluent/Power.png",
+          "IconGlyph": "EC0A",
           "HideItem": true
         },
         {
@@ -70,6 +78,7 @@
           "Title": "Services & Drivers",
           "Subtitle": "Services & Drivers",
           "ImagePath": "ms-appx:///Assets/Fluent/Services.png",
+          "IconGlyph": "E9F5",
           "HideItem": true
         },
         {
@@ -77,6 +86,7 @@
           "Title": "Tracking & Logging",
           "Subtitle": "Tracking & Logging",
           "ImagePath": "ms-appx:///Assets/Fluent/Logging.png",
+          "IconGlyph": "E9F9",
           "HideItem": true
         },
         {
@@ -84,6 +94,7 @@
           "Title": "Windows Security",
           "Subtitle": "Windows Security",
           "ImagePath": "ms-appx:///Assets/Fluent/Security.png",
+          "IconGlyph": "EA18",
           "HideItem": true
         },
         {
@@ -91,6 +102,7 @@
           "Title": "Windows Update",
           "Subtitle": "Windows Update",
           "ImagePath": "ms-appx:///Assets/Fluent/Update.png",
+          "IconGlyph": "E895",
           "HideItem": true
         },
         {
@@ -98,6 +110,7 @@
           "Title": "Games",
           "Subtitle": "Games",
           "ImagePath": "ms-appx:///Assets/Fluent/Games.png",
+          "IconGlyph": "E7FC",
           "HideItem": true
         }
       ]

@@ -175,10 +175,6 @@ public sealed partial class PowerPage : Page
         {
             key.SetValue("Start", PowerService.IsOn ? 2 : 4, RegistryValueKind.DWord);
         }
-        if (PowerService.IsOn && new ServiceController("Power").Status != ServiceControllerStatus.Running)
-        {
-            new ServiceController("Power").Start();
-        }
 
         // remove infobar
         PowerInfo.Children.Clear();
@@ -197,7 +193,7 @@ public sealed partial class PowerPage : Page
         PowerInfo.Children.Add(infoBar);
 
         // add restart button
-        if (!PowerService.IsOn && isRunning)
+        if (PowerService.IsOn && !isRunning || !PowerService.IsOn && isRunning)
         {
             infoBar.Title += " A restart is required to apply the change.";
             infoBar.ActionButton = new Button
@@ -215,6 +211,8 @@ public sealed partial class PowerPage : Page
 
             // remove infobar
             PowerInfo.Children.Clear();
+
+            GetIdleState();
         }
     }
 }

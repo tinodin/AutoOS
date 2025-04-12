@@ -65,9 +65,9 @@ public sealed partial class InstallPage : Page
         await EventTraceSessionsStage.Run();
         await VisualStage.Run();
         await ActivationStage.Run();
+        await GraphicsStage.Run();
         await NetworkStage.Run();
         await AudioStage.Run();
-        await GraphicsStage.Run();
         await DeviceStage.Run();
         await AppxStage.Run();
         await ScheduledTasksStage.Run();

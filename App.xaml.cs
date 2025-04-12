@@ -28,7 +28,7 @@ namespace AutoOS
 
             if (stage != null)
             {
-                if (int.TryParse(stage, out int stageValue) && stageValue >= 1)
+                if (int.TryParse(stage, out int stageValue) && stageValue == 1)
                 {
                     MainWindow = new MainWindow();
                     MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
@@ -41,6 +41,8 @@ namespace AutoOS
                     if (MainWindow.AppWindow.Presenter is OverlappedPresenter presenter)
                     {
                         presenter.Maximize();
+                        presenter.PreferredMinimumWidth = 660;
+                        presenter.PreferredMinimumHeight = 715;
                     }
 
                     MainWindow.Activate();
@@ -89,6 +91,8 @@ namespace AutoOS
                         if (MainWindow.AppWindow.Presenter is OverlappedPresenter presenter)
                         {
                             presenter.Maximize();
+                            presenter.PreferredMinimumWidth = 660;
+                            presenter.PreferredMinimumHeight = 715;
                         }
 
                         MainWindow.Activate();
@@ -131,6 +135,8 @@ namespace AutoOS
                 if (MainWindow.AppWindow.Presenter is OverlappedPresenter presenter)
                 {
                     presenter.Maximize();
+                    presenter.PreferredMinimumWidth = 660;
+                    presenter.PreferredMinimumHeight = 715;
                 }
 
                 MainWindow.Activate();

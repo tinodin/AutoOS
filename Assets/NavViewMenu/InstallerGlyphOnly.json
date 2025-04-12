@@ -10,94 +10,120 @@
       "IsExpanded": false,
       "Items": [
         {
-          "UniqueId": "AutoOS.Views.Settings.HomeLandingPage",
+          "UniqueId": "AutoOS.Views.Installer.HomeLandingPage",
           "Title": "Home",
           "Subtitle": "Home Page",
           "ImagePath": "ms-appx:///Assets/Fluent/Home.png",
+          "IconGlyph": "E80F",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Settings.DisplayPage",
+          "UniqueId": "AutoOS.Views.Installer.PersonalizationPage",
+          "Title": "Personalization",
+          "Subtitle": "Personalization",
+          "ImagePath": "ms-appx:///Assets/Fluent/Personalization.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Installer.BrowserPage",
+          "Title": "Browser",
+          "Subtitle": "Browser",
+          "ImagePath": "ms-appx:///Assets/Fluent/Browser.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Installer.ApplicationsPage",
+          "Title": "Applications",
+          "Subtitle": "Applications",
+          "ImagePath": "ms-appx:///Assets/Fluent/Applications.png",
+          "HideItem": true
+        },
+        {
+          "UniqueId": "AutoOS.Views.Installer.DisplayPage",
           "Title": "Display",
           "Subtitle": "Manage your CRU profiles",
           "ImagePath": "ms-appx:///Assets/Fluent/Display.png",
+          "IconGlyph": "E7F4",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Settings.GraphicsPage",
+          "UniqueId": "AutoOS.Views.Installer.GraphicsPage",
           "Title": "Graphics Card",
           "Subtitle": "Graphics Card",
           "ImagePath": "ms-appx:///Assets/Fluent/Gpu.png",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Settings.SchedulingPage",
+          "UniqueId": "AutoOS.Views.Installer.SchedulingPage",
           "Title": "Per-CPU Scheduling",
           "Subtitle": "Per-CPU Scheduling",
           "ImagePath": "ms-appx:///Assets/Fluent/Cpu.png",
+          "IconGlyph": "E950",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Settings.TimerPage",
+          "UniqueId": "AutoOS.Views.Installer.TimerPage",
           "Title": "Timer Resolution",
           "Subtitle": "Timer Resolution",
           "ImagePath": "ms-appx:///Assets/Fluent/Timer.png",
+          "IconGlyph": "E916",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Settings.DevicesPage",
+          "UniqueId": "AutoOS.Views.Installer.DevicesPage",
           "Title": "Bluetooth & Devices",
           "Subtitle": "Bluetooth & Devices",
           "ImagePath": "ms-appx:///Assets/Fluent/Bluetooth.png",
+          "IconGlyph": "E702",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Settings.InternetPage",
+          "UniqueId": "AutoOS.Views.Installer.InternetPage",
           "Title": "Network & Internet",
           "Subtitle": "Network & Internet",
           "ImagePath": "ms-appx:///Assets/Fluent/Internet.png",
+          "IconGlyph": "E701",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Settings.PowerPage",
+          "UniqueId": "AutoOS.Views.Installer.PowerPage",
           "Title": "Energy & Power",
           "Subtitle": "Energy & Power",
           "ImagePath": "ms-appx:///Assets/Fluent/Power.png",
+          "IconGlyph": "EC0A",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Settings.ServicesPage",
+          "UniqueId": "AutoOS.Views.Installer.ServicesPage",
           "Title": "Services & Drivers",
           "Subtitle": "Services & Drivers",
           "ImagePath": "ms-appx:///Assets/Fluent/Services.png",
+          "IconGlyph": "E9F5",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Settings.LoggingPage",
-          "Title": "Tracking & Logging",
-          "Subtitle": "Tracking & Logging",
-          "ImagePath": "ms-appx:///Assets/Fluent/Logging.png",
-          "HideItem": true
-        },
-        {
-          "UniqueId": "AutoOS.Views.Settings.SecurityPage",
+          "UniqueId": "AutoOS.Views.Installer.SecurityPage",
           "Title": "Windows Security",
           "Subtitle": "Windows Security",
           "ImagePath": "ms-appx:///Assets/Fluent/Security.png",
+          "IconGlyph": "EA18",
           "HideItem": true
-        },
+        }
+      ]
+    },
+    {
+      "UniqueId": "FooterGroup",
+      "Title": "Install",
+      "IsFooterNavigationViewItem": true,
+      "IsSpecialSection": false,
+      "ShowItemsWithoutGroup": true,
+      "IsExpanded": false,
+      "Items": [
         {
-          "UniqueId": "AutoOS.Views.Settings.UpdatePage",
-          "Title": "Windows Update",
-          "Subtitle": "Windows Update",
-          "ImagePath": "ms-appx:///Assets/Fluent/Update.png",
-          "HideItem": true
-        },
-        {
-          "UniqueId": "AutoOS.Views.Settings.GamesPage",
-          "Title": "Games",
-          "Subtitle": "Games",
-          "ImagePath": "ms-appx:///Assets/Fluent/Games.png",
+          "UniqueId": "AutoOS.Views.Installer.InstallPage",
+          "Title": "Install AutoOS",
+          "Subtitle": "Install AutoOS",
+          "ImagePath": "ms-appx:///Assets/Fluent/Install.png",
           "HideItem": true
         }
       ]

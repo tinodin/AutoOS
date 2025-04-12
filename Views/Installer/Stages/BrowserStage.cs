@@ -50,18 +50,6 @@ public static class BrowserStage
             ("Installing Google Chrome", async () => await ProcessActions.RunCustom(async () => chromeVersion = await Task.Run(() => FileVersionInfo.GetVersionInfo(Environment.ExpandEnvironmentVariables(@"%TEMP%\ChromeSetup.exe")).ProductVersion)), () => Chrome == true),
             ("Installing Google Chrome", async () => await ProcessActions.RunCustom(async () => chromeVersion2 = await Task.Run(() => FileVersionInfo.GetVersionInfo(@"C:\Program Files\Google\Chrome\Application\chrome.exe").ProductVersion)), () => Chrome == true),
 
-            // disable google chrome services
-            ("Disabling Google Chrome services", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\GoogleChromeElevationService"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => Chrome == true),
-            ("Disabling Google Chrome services", async () => await ProcessActions.RunNsudo("TrustedInstaller", $@"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\GoogleUpdaterInternalService{chromeVersion}"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => Chrome == true),
-            ("Disabling Google Chrome services", async () => await ProcessActions.RunNsudo("TrustedInstaller", $@"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\GoogleUpdaterService{chromeVersion}"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => Chrome == true),
-            ("Disabling Google Chrome services", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\AutorunsDisabled\{8A69D345-D564-463c-AFF1-A69D9E530F96}"" /v """" /t REG_SZ /d ""Google Chrome"" /f"), () => Chrome == true),
-            ("Disabling Google Chrome services", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\AutorunsDisabled\{8A69D345-D564-463c-AFF1-A69D9E530F96}"" /v ""Localized Name"" /t REG_SZ /d ""Google Chrome"" /f"), () => Chrome == true),
-            ("Disabling Google Chrome services", async () => await ProcessActions.RunNsudo("TrustedInstaller", $@"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\AutorunsDisabled\{{8A69D345-D564-463c-AFF1-A69D9E530F96}}"" /v ""StubPath"" /t REG_SZ /d ""\""C:\\Program Files\\Google\\Chrome\\Application\\{chromeVersion2}\\Installer\\chrmstp.exe\"" --configure-user-settings --verbose-logging --system-level --channel=stable"" /f"), () => Chrome == true),
-            ("Disabling Google Chrome services", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\AutorunsDisabled\{8A69D345-D564-463c-AFF1-A69D9E530F96}"" /v ""Version"" /t REG_SZ /d ""43,0,0,0"" /f"), () => Chrome == true),
-            ("Disabling Google Chrome services", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\AutorunsDisabled\{8A69D345-D564-463c-AFF1-A69D9E530F96}"" /v ""IsInstalled"" /t REG_DWORD /d 1 /f"), () => Chrome == true),
-            ("Disabling Google Chrome services", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg delete ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\{8A69D345-D564-463c-AFF1-A69D9E530F96}"" /f"), () => Chrome == true),
-            ("Disabling Google Chrome services", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"cmd /c for /f ""tokens=2,* delims= "" %A in ('reg query ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Tasks"" /s /v URI ^| findstr /i ""\\GoogleSystem\\GoogleUpdater\\""') do schtasks /Change /TN ""%B"" /Disable"), () => Chrome == true),
-
             // install ublock origin extension
             ("Installing uBlock Origin Extension", async () => await ProcessActions.RunPowerShell(@"$BaseKey = 'HKLM:\SOFTWARE\Policies\Google\Chrome\ExtensionInstallForcelist'; $Index = (Get-Item $BaseKey).Property | Sort-Object {[int]$_} | Select-Object -Last 1; $NewIndex = [int]$Index + 1; reg add 'HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\ExtensionInstallForcelist' /v $NewIndex /t REG_SZ /d 'cjpalhdlnbpafiamejdnhcphjbkeiagm' /f"), () => Chrome == true && uBlock == true),
 
@@ -100,6 +88,18 @@ public static class BrowserStage
 
             // remove desktop shortcut
             ("Removing desktop shortcut", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c del /f /q ""C:\Users\Public\Desktop\Google Chrome.lnk"""), () => Chrome == true),
+
+            // disable google chrome services
+            ("Disabling Google Chrome services", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\GoogleChromeElevationService"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => Chrome == true),
+            ("Disabling Google Chrome services", async () => await ProcessActions.RunNsudo("TrustedInstaller", $@"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\GoogleUpdaterInternalService{chromeVersion}"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => Chrome == true),
+            ("Disabling Google Chrome services", async () => await ProcessActions.RunNsudo("TrustedInstaller", $@"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\GoogleUpdaterService{chromeVersion}"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => Chrome == true),
+            ("Disabling Google Chrome services", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\AutorunsDisabled\{8A69D345-D564-463c-AFF1-A69D9E530F96}"" /v """" /t REG_SZ /d ""Google Chrome"" /f"), () => Chrome == true),
+            ("Disabling Google Chrome services", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\AutorunsDisabled\{8A69D345-D564-463c-AFF1-A69D9E530F96}"" /v ""Localized Name"" /t REG_SZ /d ""Google Chrome"" /f"), () => Chrome == true),
+            ("Disabling Google Chrome services", async () => await ProcessActions.RunNsudo("TrustedInstaller", $@"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\AutorunsDisabled\{{8A69D345-D564-463c-AFF1-A69D9E530F96}}"" /v ""StubPath"" /t REG_SZ /d ""\""C:\\Program Files\\Google\\Chrome\\Application\\{chromeVersion2}\\Installer\\chrmstp.exe\"" --configure-user-settings --verbose-logging --system-level --channel=stable"" /f"), () => Chrome == true),
+            ("Disabling Google Chrome services", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\AutorunsDisabled\{8A69D345-D564-463c-AFF1-A69D9E530F96}"" /v ""Version"" /t REG_SZ /d ""43,0,0,0"" /f"), () => Chrome == true),
+            ("Disabling Google Chrome services", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\AutorunsDisabled\{8A69D345-D564-463c-AFF1-A69D9E530F96}"" /v ""IsInstalled"" /t REG_DWORD /d 1 /f"), () => Chrome == true),
+            ("Disabling Google Chrome services", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg delete ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\{8A69D345-D564-463c-AFF1-A69D9E530F96}"" /f"), () => Chrome == true),
+            ("Disabling Google Chrome services", async () => await ProcessActions.RunPowerShell(@"Get-ScheduledTask | Where-Object {$_.TaskName -like 'GoogleUpdaterTaskSystem*'} | Disable-ScheduledTask"), () => Chrome == true),
 
             // download brave
             ("Downloading Brave", async () => await ProcessActions.RunDownload("https://github.com/brave/brave-browser/releases/latest/download/BraveBrowserStandaloneSetup.exe", Path.GetTempPath(), "BraveBrowserStandaloneSetup.exe"), () => Brave == true),
@@ -286,7 +286,7 @@ public static class BrowserStage
             ("Installing Arc Dependency", async () => await ProcessActions.RunNsudo("CurrentUser", @"powershell -Command ""Add-AppxPackage -Path $env:TEMP\Microsoft.VCLibs.x64.14.00.Desktop.14.0.33728.0.appx"""), () => Arc == true),
 
             // download arc
-            ("Downloading Arc", async () => await ProcessActions.RunDownload("https://releases.arc.net/windows/prod/1.41.2.14578/Arc.x64.msix", Path.GetTempPath(), "Arc.x64.msix"), () => Arc == true),
+            ("Downloading Arc", async () => await ProcessActions.RunDownload("https://releases.arc.net/windows/prod/1.49.1.25816/Arc.x64.msix", Path.GetTempPath(), "Arc.x64.msix"), () => Arc == true),
 
             // install arc
             ("Installing Arc", async () => await ProcessActions.RunNsudo("CurrentUser", @"powershell -Command ""Add-AppxPackage -Path $env:TEMP\Arc.x64.msix"""), () => Arc == true),

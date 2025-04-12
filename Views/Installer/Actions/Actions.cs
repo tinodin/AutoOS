@@ -413,7 +413,7 @@ public static class ProcessActions
         await action();
     }
 
-    public static async Task RunMicrosoftStoreDownload(string productFamilyName, string fileType, string architecture, string fileName)
+    public static async Task RunMicrosoftStoreDownload(string productFamilyName, string fileType, string architecture, string fileName, int version)
     {
         var output = await Process.Start(new ProcessStartInfo("powershell.exe", $"-ExecutionPolicy Bypass -File \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "getmicrosoftstorelink.ps1")}\" \"{productFamilyName}\" \"{fileType}\" \"{architecture}\"")
         {
@@ -422,7 +422,8 @@ public static class ProcessActions
             RedirectStandardOutput = true
         })!.StandardOutput.ReadToEndAsync();
 
-        var url = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
+        var urls = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+        var url = urls.Length > version ? urls[version] : "";
 
         await RunDownload(url, Path.GetTempPath(), fileName);
     }
@@ -662,7 +663,7 @@ public static class ProcessActions
         {
             MainWindow.Instance.AppWindow.Resize(new SizeInt32(MainWindow.Instance.AppWindow.Size.Width - 500, MainWindow.Instance.AppWindow.Size.Height - 500));
 
-            await Task.Delay(1);
+            await Task.Delay(10);
 
             presenter.Restore();
             presenter.Maximize();

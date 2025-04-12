@@ -46,10 +46,10 @@ public sealed partial class GameAdd: Page
 
     private async void LauncherLocation_Click(object sender, RoutedEventArgs e)
     {
-        var picker = new FilePicker();
+        var picker = new FilePicker(App.MainWindow);
         picker.ShowAllFilesOption = false;
         picker.FileTypeChoices.Add("Ryujinx executable", new List<string> { "*.exe" });
-        var file = await picker.PickSingleFileAsync(App.MainWindow);
+        var file = await picker.PickSingleFileAsync();
 
         if (file != null)
         {
@@ -60,9 +60,9 @@ public sealed partial class GameAdd: Page
 
     private async void DataLocation_Click(object sender, RoutedEventArgs e)
     {
-        var picker = new FolderPicker();
+        var picker = new FolderPicker(App.MainWindow);
 
-        var folder = await picker.PickSingleFolderAsync(App.MainWindow);
+        var folder = await picker.PickSingleFolderAsync();
 
         if (folder != null)
         {
@@ -190,10 +190,10 @@ public sealed partial class GameAdd: Page
 
     private async void GameLocation_Click(object sender, RoutedEventArgs e)
     {
-        var picker = new FilePicker();
+        var picker = new FilePicker(App.MainWindow);
         picker.ShowAllFilesOption = false;
         picker.FileTypeChoices.Add("Switch Rom", new List<string> { "*.nsp", "*.xci" });
-        var file = await picker.PickSingleFileAsync(App.MainWindow);
+        var file = await picker.PickSingleFileAsync();
 
         if (file != null)
         {

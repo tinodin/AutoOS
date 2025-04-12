@@ -1,9 +1,11 @@
 ﻿using Microsoft.Win32;
+using System.Diagnostics;
 
 namespace AutoOS.Views.Settings;
 
 public sealed partial class TimerPage : Page
 {
+    private bool isInitializingTimerResolutionState = true;
     public TimerPage()
     {
         InitializeComponent();
@@ -26,14 +28,32 @@ public sealed partial class TimerPage : Page
         {
             Resolution.SelectedIndex = 14;
         }
+
+        isInitializingTimerResolutionState = false;
     }
 
     private void Resolution_Changed(object sender, SelectionChangedEventArgs e)
     {
+        if (isInitializingTimerResolutionState) return;
+
         if (Resolution.SelectedItem is ComboBoxItem selectedItem)
         {
             int selectedResolution = int.Parse(selectedItem.Content.ToString());
             Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "RequestedResolution", selectedResolution);
+
+            var processes = Process.GetProcessesByName("SetTimerResolution");
+            if (processes.Length == 1)
+            {
+                processes[0].Kill();
+            }
+
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "TimerResolution", "SetTimerResolution.exe"),
+                Arguments = $"--resolution {selectedResolution} --no-console",
+                UseShellExecute = false,
+                CreateNoWindow = true
+            });
         }
     }
 }

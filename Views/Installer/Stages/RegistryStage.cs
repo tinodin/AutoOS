@@ -1,5 +1,6 @@
 ﻿using AutoOS.Views.Installer.Actions;
 using Microsoft.UI.Xaml.Media;
+using System.Diagnostics;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -15,6 +16,8 @@ public static class RegistryStage
 
         string previousTitle = string.Empty;
         int stagePercentage = 10;
+
+        string edgeVersion = "";
 
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
@@ -177,6 +180,8 @@ public static class RegistryStage
             //("Pausing Windows Updates", async () => await ProcessActions.RunPowerShellScript("pausewindowsupdates.ps1", ""), null),
 
             // disable automatic driver installation
+            ("Disabling automatic driver installation", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate"" /v ExcludeWUDriversInQualityUpdate /t REG_DWORD /d 1 /f"), null),
+            ("Disabling automatic driver installation", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsUpdate\UpdatePolicy\PolicyState"" /v ExcludeWUDrivers /t REG_DWORD /d 1 /f"), null),
             //("Disabling automatic driver installation", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU"" /v AUOptions /t REG_DWORD /d 1 /f"), null),
             //("Disabling automatic driver installation", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate"" /v ExcludeWUDriversInQualityUpdate /t REG_DWORD /d 1 /f"), null),
             //("Disabling automatic driver installation", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU"" /v NoAutoUpdate /t REG_DWORD /d 1 /f"), null),
@@ -622,7 +627,7 @@ public static class RegistryStage
             ("Disabling timer serialization", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\kernel"" /v SerializeTimerExpiration /t REG_DWORD /d 2 /f"), null),
 
             // disable vulnerable driver blocklist
-            ("Disabling the vulnerable driver blocklist", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\CI\Config"" /v ""VulnerableDriverBlocklistEnable"" /t REG_DWORD /d 0 /f"), null),
+            //("Disabling the vulnerable driver blocklist", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\CI\Config"" /v ""VulnerableDriverBlocklistEnable"" /t REG_DWORD /d 0 /f"), null),
 
             // reserve 10% of CPU resources to low-priority tasks instead of 20%
             ("Reserving 10% of CPU resources to low-priority tasks instead of 20%", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"" /v SystemResponsiveness /t REG_DWORD /d 10 /f"), null),
@@ -658,12 +663,10 @@ public static class RegistryStage
             ("Disabling Autorun entries", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg delete ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SafeBoot"" /v ""AlternateShell"" /f"), null),
             ("Disabling Autorun entries", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SafeBoot\AutorunsDisabled"" /v ""AlternateShell"" /t REG_SZ /d ""cmd.exe"" /f"), null),
 
-            ("Disabling Autorun entries", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\AutorunsDisabled"" /v ""OneDrive"" /t REG_SZ /d """"C:\Users\user\AppData\Local\Microsoft\OneDrive\OneDrive.exe"" /background"""" /f"), null),
-            ("Disabling Autorun entries", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg delete ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"" /v ""OneDrive"" /f"), null),
-
+            ("Disabling Autorun entries", async () => await ProcessActions.RunCustom(async () => edgeVersion = await Task.Run(() => FileVersionInfo.GetVersionInfo(Environment.ExpandEnvironmentVariables(@"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe")).ProductVersion)), null),
             ("Disabling Autorun entries", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\AutorunsDisabled\{9459C573-B17A-45AE-9F64-1857B5D58CEE}"" /v """" /t REG_SZ /d ""Microsoft Edge"" /f"), null),
             ("Disabling Autorun entries", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\AutorunsDisabled\{9459C573-B17A-45AE-9F64-1857B5D58CEE}"" /v ""Localized Name"" /t REG_SZ /d ""Microsoft Edge"" /f"), null),
-            ("Disabling Autorun entries", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\AutorunsDisabled\{9459C573-B17A-45AE-9F64-1857B5D58CEE}"" /v ""StubPath"" /t REG_SZ /d ""\""C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\100.0.1185.36\\Installer\\setup.exe\"" --configure-user-settings --verbose-logging --system-level --msedge --channel=stable"" /f"), null),
+            ("Disabling Autorun entries", async () => await ProcessActions.RunNsudo("TrustedInstaller", $@"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\AutorunsDisabled\{{9459C573-B17A-45AE-9F64-1857B5D58CEE}}"" /v ""StubPath"" /t REG_SZ /d ""\""C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\{edgeVersion}\\Installer\\setup.exe\"" --configure-user-settings --verbose-logging --system-level --msedge --channel=stable"" /f"), null),
             ("Disabling Autorun entries", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\AutorunsDisabled\{9459C573-B17A-45AE-9F64-1857B5D58CEE}"" /v ""Version"" /t REG_SZ /d ""43,0,0,0"" /f"), null),
             ("Disabling Autorun entries", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\AutorunsDisabled\{9459C573-B17A-45AE-9F64-1857B5D58CEE}"" /v ""IsInstalled"" /t REG_DWORD /d 1 /f"), null),
             ("Disabling Autorun entries", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg delete ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\{9459C573-B17A-45AE-9F64-1857B5D58CEE}"" /f"), null),
@@ -689,6 +692,8 @@ public static class RegistryStage
             ("Disabling Autorun entries", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\Browser Helper Objects\AutorunsDisabled\{1FD49718-1D00-4B19-AF5F-070AF6D5D54C}"" /v """" /t REG_SZ /d ""IEToEdge BHO"" /f"), null),
             ("Disabling Autorun entries", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\Browser Helper Objects\AutorunsDisabled\{1FD49718-1D00-4B19-AF5F-070AF6D5D54C}"" /v ""NoExplorer"" /t REG_DWORD /d 1 /f"), null),
             ("Disabling Autorun entries", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg delete ""HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\Browser Helper Objects\{1FD49718-1D00-4B19-AF5F-070AF6D5D54C}"" /f"), null),
+
+            ("Disabling Autorun entries", async () => await ProcessActions.RunPowerShell(@"Get-ScheduledTask | Where-Object {$_.TaskName -like 'UnlockStartLayout*'} | Unregister-ScheduledTask -Confirm:$false"), null),
 
             // disable potentially unwanted windows programs
             ("Disabling potentially unwanted windows programs", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\AggregatorHost.exe"" /v Debugger /t REG_SZ /d ""%windir%\System32\taskkill.exe"" /f"), null),

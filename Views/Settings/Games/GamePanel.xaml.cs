@@ -81,7 +81,9 @@ public sealed partial class GamePanel : UserControl
     public string LaunchExecutable { get; set; }
 
     private DispatcherTimer gameWatcherTimer;
-    private HashSet<string> previousProcesses = new HashSet<string>(); // Cache for processes to reduce repeated queries.
+    private bool? previousGameState = null;
+    private bool? previousExplorerState = null;
+    private bool servicesState = false;
 
     private void GamePanel_Unloaded(object sender, RoutedEventArgs e)
     {
@@ -95,53 +97,51 @@ public sealed partial class GamePanel : UserControl
             Interval = TimeSpan.FromMilliseconds(750)
         };
 
-        gameWatcherTimer.Tick += (s, e) =>
+        // check services state
+        servicesState = new ServiceController("Beep").Status == ServiceControllerStatus.Running;
+
+        void TickHandler()
         {
             bool isRunning = isGameRunning();
+            bool explorerRunning = Process.GetProcessesByName("explorer").Length > 0;
 
             DispatcherQueue.TryEnqueue(() =>
             {
-                // Only update the UI if the game running state has changed.
-                if (previousProcesses.Contains(isRunning.ToString())) return; // Prevent unnecessary updates.
-
-                Launch.IsEnabled = !isRunning;
-
-                if (isRunning)
+                if (previousGameState != isRunning)
                 {
-                    Panel.Click -= Launch_Click;
+                    Launch.IsEnabled = !isRunning;
 
-                    if (stopProcesses.Visibility == Visibility.Collapsed)
-                        stopProcesses.Visibility = Visibility.Visible;
-
-                    if (Process.GetProcessesByName("explorer").Length == 0)
+                    if (isRunning)
                     {
-                        if (launchExplorer.Visibility == Visibility.Collapsed)
-                            launchExplorer.Visibility = Visibility.Visible;
+                        Panel.Click -= Launch_Click;
+
+                        if (!servicesState && stopProcesses.Visibility == Visibility.Collapsed)
+                            stopProcesses.Visibility = Visibility.Visible;
                     }
-                    else if (launchExplorer.Visibility == Visibility.Visible)
+                    else
                     {
-                        launchExplorer.Visibility = Visibility.Collapsed;
+                        Panel.Click -= Launch_Click;
+                        Panel.Click += Launch_Click;
+
+                        if (!servicesState && stopProcesses.Visibility == Visibility.Visible)
+                            stopProcesses.Visibility = Visibility.Collapsed;
                     }
-                }
-                else
-                {
-                    Panel.Click -= Launch_Click;
-                    Panel.Click += Launch_Click;
 
-                    if (stopProcesses.Visibility == Visibility.Visible)
-                        stopProcesses.Visibility = Visibility.Collapsed;
-
-                    if (launchExplorer.Visibility == Visibility.Visible)
-                        launchExplorer.Visibility = Visibility.Collapsed;
+                    previousGameState = isRunning;
                 }
 
-                // Cache the current state of the game process
-                previousProcesses.Clear();
-                previousProcesses.Add(isRunning.ToString());
+                if (!servicesState && previousExplorerState != (isRunning && !explorerRunning))
+                {
+                    launchExplorer.Visibility = (isRunning && !explorerRunning) ? Visibility.Visible : Visibility.Collapsed;
+                    previousExplorerState = isRunning && !explorerRunning;
+                }
             });
-        };
+        }
 
-        gameWatcherTimer.Start(); // Start the timer
+        gameWatcherTimer.Tick += (s, e) => TickHandler();
+
+        TickHandler(); // Run once immediately
+        gameWatcherTimer.Start();
     }
 
     public async Task CheckGameRunning()
@@ -202,6 +202,7 @@ public sealed partial class GamePanel : UserControl
             {
                 if (Launcher == "Epic Games")
                 {
+                    // start game silently
                     Process.Start(new ProcessStartInfo($"com.epicgames.launcher://apps/{CatalogNamespace}%3A{CatalogItemId}%3A{AppName}?action=launch&silent=true") { UseShellExecute = true });
 
                 }
@@ -216,6 +217,26 @@ public sealed partial class GamePanel : UserControl
 
                     Process.Start(startInfo);
                 }
+            }
+        }
+        else
+        {
+            if (Launcher == "Epic Games")
+            {
+                // start game silently
+                Process.Start(new ProcessStartInfo($"com.epicgames.launcher://apps/{CatalogNamespace}%3A{CatalogItemId}%3A{AppName}?action=launch&silent=true") { UseShellExecute = true });
+
+            }
+            else if (Launcher == "Ryujinx")
+            {
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = LauncherLocation,
+                    Arguments = $@"-r ""{DataLocation}"" -fullscreen ""{GameLocation}""",
+                    CreateNoWindow = true,
+                };
+
+                Process.Start(startInfo);
             }
         }
     }
@@ -364,6 +385,7 @@ public sealed partial class GamePanel : UserControl
                 service.Start();
             }
         }
+
         // launch ctfmon
         Process.Start("ctfmon.exe");
 

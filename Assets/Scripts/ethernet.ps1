@@ -47,6 +47,11 @@ Get-NetAdapter | Where-Object { $_.PhysicalMediaType -eq "802.3" } | ForEach-Obj
         Set-NetAdapterAdvancedProperty -Name $adapterName -DisplayName "Wake On Magic Packet From S5" -DisplayValue "Disabled"
     }
 
+    # Wake on magic packet when system is in the S0ix power state
+    if ($adapterProperties | Where-Object { $_.DisplayName -eq "Wake on magic packet when system is in the S0ix power state" }) {
+        Set-NetAdapterAdvancedProperty -Name $adapterName -DisplayName "Wake on magic packet when system is in the S0ix power state" -DisplayValue "Disabled"
+    }
+
     # Maximum Number of RSS Queues
     if ($adapterProperties | Where-Object { $_.DisplayName -eq "Maximum Number of RSS Queues" }) {
         Set-NetAdapterAdvancedProperty -Name $adapterName -DisplayName "Maximum Number of RSS Queues" -DisplayValue "4 Queues"
@@ -143,9 +148,34 @@ Get-NetAdapter | Where-Object { $_.PhysicalMediaType -eq "802.3" } | ForEach-Obj
         Set-NetAdapterAdvancedProperty -Name $adapterName -DisplayName "DMA Coalescing" -DisplayValue "Disabled"
     }
 
-    # Energy Efficient Ethernet
-    if ($adapterProperties | Where-Object { $_.DisplayName -eq "Energy Efficient Ethernet" }) {
-        Set-NetAdapterAdvancedProperty -Name $adapterName -DisplayName "Energy Efficient Ethernet" -DisplayValue "Off"
+    # Energy-Efficient Ethernet
+    if ($adapterProperties | Where-Object { $_.DisplayName -eq "Energy-Efficient Ethernet" }) {
+        Set-NetAdapterAdvancedProperty -Name $adapterName -DisplayName "Energy-Efficient Ethernet" -DisplayValue "Disabled"
+    }
+
+    # Advanced EEE
+    if ($adapterProperties | Where-Object { $_.DisplayName -eq "Advanced EEE" }) {
+        Set-NetAdapterAdvancedProperty -Name $adapterName -DisplayName "Advanced EEE" -DisplayValue "Disabled"
+    }
+
+    # Auto Disable Gigabit
+    if ($adapterProperties | Where-Object { $_.DisplayName -eq "Auto Disable Gigabit" }) {
+        Set-NetAdapterAdvancedProperty -Name $adapterName -DisplayName "Auto Disable Gigabit" -DisplayValue "Disabled"
+    }
+
+    # Green Ethernet
+    if ($adapterProperties | Where-Object { $_.DisplayName -eq "Green Ethernet" }) {
+        Set-NetAdapterAdvancedProperty -Name $adapterName -DisplayName "Green Ethernet" -DisplayValue "Disabled"
+    }
+
+    # Gigabit Lite
+    if ($adapterProperties | Where-Object { $_.DisplayName -eq "Gigabit Lite" }) {
+        Set-NetAdapterAdvancedProperty -Name $adapterName -DisplayName "Gigabit Lite" -DisplayValue "Disabled"
+    }
+
+    # Power Saving Mode
+    if ($adapterProperties | Where-Object { $_.DisplayName -eq "Power Saving Mode" }) {
+        Set-NetAdapterAdvancedProperty -Name $adapterName -DisplayName "Power Saving Mode" -DisplayValue "Disabled"
     }
 
     # Enable PME
