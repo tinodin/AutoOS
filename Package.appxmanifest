@@ -11,7 +11,7 @@
   <Identity
     Name="AutoOS"
     Publisher="CN=user"
-    Version="1.2.25.0" />
+    Version="1.2.34.0" />
 
   <mp:PhoneIdentity PhoneProductId="81be9a4c-5599-4f16-b2df-5df99b34cec2" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 

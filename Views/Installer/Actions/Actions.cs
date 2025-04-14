@@ -69,7 +69,7 @@ public static class ProcessActions
                     if (response.IsSuccessStatusCode)
                     {
                         InstallPage.Info.Severity = InfoBarSeverity.Informational;
-                        InstallPage.Progress.Foreground = ProcessActions.GetColor("LightNormal", "DarkNormal");
+                        InstallPage.Progress.Foreground = (Brush)Application.Current.Resources["AccentForegroundBrush"];
                         InstallPage.ProgressRingControl.Foreground = null;
                         InstallPage.Info.Title = "Internet connection successfully established...";
                         await Task.Delay(500);
@@ -163,7 +163,7 @@ public static class ProcessActions
                     uiContext?.Post(_ =>
                     {
                         InstallPage.Info.Severity = InfoBarSeverity.Informational;
-                        InstallPage.Progress.Foreground = ProcessActions.GetColor("LightNormal", "DarkNormal");
+                        InstallPage.Progress.Foreground = (Brush)Application.Current.Resources["AccentForegroundBrush"];
                         InstallPage.ProgressRingControl.Foreground = null;
                         InstallPage.Info.Title = $"{title} ({speedMB:F1} MB/s - {receivedMB:F2} MB of {totalMB:F2} MB)";
                     }, null);
@@ -372,7 +372,7 @@ public static class ProcessActions
     {
         // set start values
         string[] services = { "WlanSvc", "EventLog", "Wcmsvc", "WinHttpAutoProxySvc", "NlaSvc", "tdx", "vwififlt", "Netwtw10", "Netwtw14" };
-        
+
         foreach (var service in services)
         {
             using (var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}", writable: true))
@@ -510,6 +510,9 @@ public static class ProcessActions
                     string key = "A09C853C9E95409BB94D707EADEFA52E";
                     string plainText = DecryptDataWithAes(data, key);
 
+                    // get account id
+                    string accountId = Regex.Match(configContent, @"\[(.*?)_General\]").Groups[1].Value;
+
                     // get displayname
                     Match displayNameMatch = Regex.Match(plainText, "\"DisplayName\":\"([^\"]+)\"");
                     string displayName = displayNameMatch.Groups[1].Value;
@@ -517,6 +520,10 @@ public static class ProcessActions
                     // create directory and backup
                     Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\" + displayName));
                     File.Copy(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\GameUserSettings.ini"), Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\", displayName), "GameUserSettings.ini"), true);
+
+                    // create reg file
+                    File.WriteAllText(Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\" + displayName), "accountId.reg"), $"Windows Registry Editor Version 5.00\r\n\r\n[HKEY_CURRENT_USER\\Software\\Epic Games\\Unreal Engine\\Identifiers]\r\n\"AccountId\"=\"{accountId}\"");
+
                     return;
                 }
             }
@@ -668,11 +675,6 @@ public static class ProcessActions
             presenter.Restore();
             presenter.Maximize();
         }
-    }
-
-    public static SolidColorBrush GetColor(string lightKey, string darkKey)
-    {
-        return (SolidColorBrush)Application.Current.Resources[App.Theme?.IsDarkTheme() == true ? darkKey : lightKey];
     }
 }
 

@@ -223,7 +223,7 @@ public sealed partial class SchedulingPage : Page
     private async void Xhci_Changed(object sender, SelectionChangedEventArgs e)
     {
         if (isInitializingAffinities) return;
-        
+
         int processorCount = Environment.ProcessorCount;
 
         // remove infobar

@@ -9,9 +9,9 @@ namespace AutoOS.Views.Installer.Stages;
 
 public static class GamesStage
 {
-    [DllImport("user32.dll")] static extern IntPtr GetDC(IntPtr hwnd);
-    [DllImport("gdi32.dll")] static extern int GetDeviceCaps(IntPtr hdc, int nIndex);
-    [DllImport("user32.dll")] static extern int ReleaseDC(IntPtr hwnd, IntPtr hdc);
+    //[DllImport("user32.dll")] static extern IntPtr GetDC(IntPtr hwnd);
+    //[DllImport("gdi32.dll")] static extern int GetDeviceCaps(IntPtr hdc, int nIndex);
+    //[DllImport("user32.dll")] static extern int ReleaseDC(IntPtr hwnd, IntPtr hdc);
     public static async Task Run()
     {
         bool? Fortnite = ApplicationStage.Fortnite;
@@ -47,9 +47,9 @@ public static class GamesStage
             ("Creating Fortnite QoS Policy", async () => await ProcessActions.RunPowerShell(@"New-NetQosPolicy -Name ""FortniteClient-Win64-Shipping.exe"" -AppPathNameMatchCondition ""FortniteClient-Win64-Shipping.exe"" -Precedence 127 -DSCPAction 46 -IPProtocol Both"), () => Fortnite == true),
         
             // create presentation mode entries
-            ("Creating presentation mode entries", async () => await ProcessActions.RunCustom(async () => Process.Start(new ProcessStartInfo("cmd", $"/c \"{fortnitePath}\\FortniteGame\\Binaries\\Win64\\FortniteClient-Win64-Shipping.exe\"") { CreateNoWindow = true })), () => Fortnite == true),
+            ("Creating presentation mode entries", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo("cmd", $"/c \"{fortnitePath}\\FortniteGame\\Binaries\\Win64\\FortniteClient-Win64-Shipping.exe\"") { CreateNoWindow = true }))), () => Fortnite == true),
             ("Creating presentation mode entries", async () => await ProcessActions.Sleep(100), () => Fortnite == true),
-            ("Creating presentation mode entries", async () => await ProcessActions.RunCustom(async () => Process.GetProcessesByName("FortniteClient-Win64-Shipping")[0].Kill()), () => Fortnite == true),
+            ("Creating presentation mode entries", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.GetProcessesByName("FortniteClient-Win64-Shipping")[0].Kill())), () => Fortnite == true),
 
             // set the presentation mode to hardware: legacy flip
             ("Setting the presentation mode to Hardware: Legacy Flip", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Registry.CurrentUser.OpenSubKey(@"System\GameConfigStore\Children", true)?.GetSubKeyNames().ToList().ForEach(async name => { using var sub = Registry.CurrentUser.OpenSubKey($@"System\GameConfigStore\Children\{name}", true); if (sub?.GetValueNames().Any(v => sub.GetValue(v) is string s && s.Contains("Fortnite")) == true) { var p = Process.Start(new ProcessStartInfo { FileName = "cmd.exe", Arguments = $@"/c reg add ""HKCU\System\GameConfigStore\Children\{name}"" /v Flags /t REG_DWORD /d 0x211 /f", CreateNoWindow = true }); if (p != null) await p.WaitForExitAsync(); return; } }))), () => Fortnite == true),
@@ -98,7 +98,7 @@ public static class GamesStage
                         {
                             tcs.TrySetResult(true);
                             InstallPage.Info.Severity = InfoBarSeverity.Informational;
-                            InstallPage.Progress.Foreground = ProcessActions.GetColor("LightNormal", "DarkNormal");
+                            InstallPage.Progress.Foreground = (Brush)Application.Current.Resources["AccentForegroundBrush"];
                             InstallPage.ProgressRingControl.Foreground = null;
                             InstallPage.ProgressRingControl.Visibility = Visibility.Visible;
                             InstallPage.ResumeButton.Visibility = Visibility.Collapsed;
@@ -141,7 +141,7 @@ public static class GamesStage
                     {
                         tcs.TrySetResult(true);
                         InstallPage.Info.Severity = InfoBarSeverity.Informational;
-                        InstallPage.Progress.Foreground = ProcessActions.GetColor("LightNormal", "DarkNormal");
+                        InstallPage.Progress.Foreground = (Brush)Application.Current.Resources["AccentForegroundBrush"];
                         InstallPage.ProgressRingControl.Foreground = null;
                         InstallPage.ProgressRingControl.Visibility = Visibility.Visible;
                         InstallPage.ResumeButton.Visibility = Visibility.Collapsed;

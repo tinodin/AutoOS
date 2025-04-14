@@ -60,7 +60,7 @@ public sealed partial class PowerPage : Page
     {
         // toggle power service state
         using (var key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\Power"))
-        PowerService.IsOn = (int?)key?.GetValue("Start") == 2;
+            PowerService.IsOn = (int?)key?.GetValue("Start") == 2;
 
         // enable idle state toggle if running
         var serviceController = new ServiceController("Power");

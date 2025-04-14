@@ -12,7 +12,7 @@ public sealed partial class ServicesPage : Page
     private bool isInitializingLaptopState = true;
     private bool isInitializingAMDVRRState = true;
     private readonly string list = Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "lists.ini");
-   
+
     public ServicesPage()
     {
         InitializeComponent();
@@ -73,7 +73,7 @@ public sealed partial class ServicesPage : Page
         // define services and drivers
         var services = new[] { "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DevicesFlowUserSvc", "DsmSvc", "NcbService", "SystemEventsBroker", "WFDSConMgrSvc" };
         var drivers = new[] { "# BthA2dp", "# BthEnum", "# BthHFAud", "# BthHFEnum", "# BthLEEnum", "# BthMini", "# BTHMODEM", "# BthPan", "# BTHPORT", "# BTHUSB", "# HidBth", "# ibtusb", "# Microsoft_Bluetooth_AvrcpTransport", "# RFCOMM" };
-        
+
         // check state
         Bluetooth.IsChecked = services.All(service => File.ReadAllLines(list).Any(line => line.Trim() == service))
                          && drivers.All(driver => File.ReadAllLines(list).Any(line => line.Trim() == driver));
@@ -171,7 +171,7 @@ public sealed partial class ServicesPage : Page
         // write changes
         await File.WriteAllLinesAsync(list, lines);
     }
-  
+
     private void GetTaskManagerState()
     {
         // define services and drivers

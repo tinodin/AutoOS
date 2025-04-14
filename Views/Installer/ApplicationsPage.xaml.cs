@@ -55,7 +55,12 @@ public sealed partial class ApplicationsPage : Page
         using var key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS");
         var selectedMusic = key?.GetValue("Music") as string;
         var musicItems = Music.ItemsSource as List<GridViewItem>;
-        Music.SelectedItem = musicItems?.FirstOrDefault(b => b.Text == selectedMusic);
+        Music.SelectedItems.AddRange(
+            selectedMusic?.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(e => musicItems?.FirstOrDefault(ext => ext.Text == e))
+            .Where(ext => ext != null) ?? Enumerable.Empty<GridViewItem>()
+        );
+
 
         isInitializingMusicState = false;
     }
@@ -95,12 +100,14 @@ public sealed partial class ApplicationsPage : Page
         if (isInitializingMusicState) return;
 
         // set value
-        if (Music.SelectedItem is GridViewItem selectedItem)
+        var selectedMusic = Music.SelectedItems
+            .Cast<GridViewItem>()
+            .Select(item => item.Text)
+            .ToArray();
+
+        using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
         {
-            using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
-            {
-                key?.SetValue("Music", selectedItem.Text, RegistryValueKind.String);
-            }
+            key?.SetValue("Music", string.Join(", ", selectedMusic), RegistryValueKind.String);
         }
     }
 

@@ -83,7 +83,7 @@ public static class AudioStage
                         {
                             tcs.TrySetResult(true);
                             InstallPage.Info.Severity = InfoBarSeverity.Informational;
-                            InstallPage.Progress.Foreground = ProcessActions.GetColor("LightNormal", "DarkNormal");
+                            InstallPage.Progress.Foreground = (Brush)Application.Current.Resources["AccentForegroundBrush"];
                             InstallPage.ProgressRingControl.Foreground = null;
                             InstallPage.ProgressRingControl.Visibility = Visibility.Visible;
                             InstallPage.ResumeButton.Visibility = Visibility.Collapsed;
@@ -126,7 +126,7 @@ public static class AudioStage
                     {
                         tcs.TrySetResult(true);
                         InstallPage.Info.Severity = InfoBarSeverity.Informational;
-                        InstallPage.Progress.Foreground = ProcessActions.GetColor("LightNormal", "DarkNormal");
+                        InstallPage.Progress.Foreground = (Brush)Application.Current.Resources["AccentForegroundBrush"];
                         InstallPage.ProgressRingControl.Foreground = null;
                         InstallPage.ProgressRingControl.Visibility = Visibility.Visible;
                         InstallPage.ResumeButton.Visibility = Visibility.Collapsed;

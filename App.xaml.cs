@@ -15,7 +15,7 @@ namespace AutoOS
 
         public App()
         {
-            this.InitializeComponent();
+            InitializeComponent();
             NavService = new JsonNavigationService();
         }
 
@@ -49,7 +49,7 @@ namespace AutoOS
                 }
                 else if (stage.Equals("Installed", StringComparison.OrdinalIgnoreCase))
                 {
-                    AppActivationArguments appActivationArguments = Microsoft.Windows.AppLifecycle.AppInstance.GetCurrent().GetActivatedEventArgs();
+                    AppActivationArguments appActivationArguments = AppInstance.GetCurrent().GetActivatedEventArgs();
 
                     if (appActivationArguments.Kind is ExtendedActivationKind.StartupTask)
                     {
@@ -96,7 +96,6 @@ namespace AutoOS
                         }
 
                         MainWindow.Activate();
-
 
                         //MainWindow = new StartupWindow();
                         //MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");

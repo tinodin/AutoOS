@@ -1,5 +1,4 @@
-﻿using AutoOS.Views.Installer.Actions;
-using Microsoft.UI.Xaml.Media;
+﻿using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using System.Diagnostics;
 using System.Management;
@@ -82,6 +81,8 @@ public static class PreparingStage
     public static bool? Hyperthreading;
     public static bool? Reserve;
     public static bool? TimerResolution;
+    
+    public static bool? SecureBoot;
 
     public static async Task Run()
     {
@@ -172,6 +173,11 @@ public static class PreparingStage
                 TimerResolution = key?.GetValue("TimerResolution")?.ToString() == "Automatic";
             }
 
+            using (var key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\SecureBoot\State"))
+            {
+                SecureBoot = key?.GetValue("UEFISecureBootEnabled")?.ToString() == "1";
+            }
+
             EpicGamesAccount = DriveInfo.GetDrives()
                 .Where(d => d.DriveType == DriveType.Fixed && d.Name != @"C:\")
                 .SelectMany(d =>
@@ -257,7 +263,7 @@ public static class PreparingStage
         });
 
         InstallPage.Info.Severity = InfoBarSeverity.Informational;
-        InstallPage.Progress.Foreground = ProcessActions.GetColor("LightNormal", "DarkNormal");
+        InstallPage.Progress.Foreground = (Brush)Application.Current.Resources["AccentForegroundBrush"];
         InstallPage.ProgressRingControl.Foreground = null;
     }
 }

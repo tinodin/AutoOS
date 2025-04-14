@@ -1,32 +1,34 @@
-<UserControl x:Class="AutoOS.Views.Settings.Games.GameGallery"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d">
+<UserControl
+    x:Class="AutoOS.Views.Settings.Games.GameGallery"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
     <Grid>
-        <ScrollViewer x:Name="scroller"
-                      HorizontalScrollBarVisibility="Hidden"
-                      HorizontalScrollMode="Enabled"
-                      SizeChanged="scroller_SizeChanged"
-                      VerticalScrollMode="Disabled"
-                      ViewChanging="scroller_ViewChanging">
-            <Grid x:Name="ContentGrid"
-                  Margin="0,0,12,0">
+        <ScrollViewer
+            x:Name="scroller"
+            HorizontalScrollBarVisibility="Hidden"
+            HorizontalScrollMode="Enabled"
+            SizeChanged="scroller_SizeChanged"
+            VerticalScrollMode="Disabled"
+            ViewChanging="scroller_ViewChanging">
+            <Grid x:Name="ContentGrid" Margin="0,0,12,0">
                 <ContentPresenter>
                     <ContentPresenter.Content>
-                        <StackPanel Orientation="Horizontal" 
-                                    HorizontalAlignment="Center" 
-                                    VerticalAlignment="Center"
-                                    Spacing="50">
-                            <ContentPresenter Content="{x:Bind HeaderContent, Mode=OneWay}" 
-                                              VerticalAlignment="Center"/>
-                            <Button Width="60" 
-                                    Height="60" 
-                                    Background="{ThemeResource SettingsCardBackground}" 
-                                    BorderBrush="{ThemeResource SurfaceStrokeColorFlyoutBrush}"
-                                    CornerRadius="30"
-                                    Click="AddCustomGame_Click">
+                        <StackPanel
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Orientation="Horizontal"
+                            Spacing="50">
+                            <ContentPresenter VerticalAlignment="Center" Content="{x:Bind HeaderContent, Mode=OneWay}" />
+                            <Button
+                                Width="60"
+                                Height="60"
+                                Background="{ThemeResource SettingsCardBackground}"
+                                BorderBrush="{ThemeResource SurfaceStrokeColorFlyoutBrush}"
+                                Click="AddCustomGame_Click"
+                                CornerRadius="30">
                                 <Button.Content>
                                     <SymbolIcon Symbol="Add" />
                                 </Button.Content>
@@ -36,31 +38,31 @@
                 </ContentPresenter>
             </Grid>
         </ScrollViewer>
-        <Button x:Name="ScrollBackBtn"
-                Width="16"
-                Height="38"
-                Margin="8,-16,0,0"
-                AutomationProperties.Name="Scroll left"
-                Click="ScrollBackBtn_Click"
-                FontFamily="{ThemeResource ContentControlThemeFontFamily}"
-                Style="{StaticResource ScrollButtonStyle}"
-                ToolTipService.ToolTip="Scroll left"
-                Visibility="Collapsed">
-            <FontIcon FontSize="{ThemeResource FlipViewButtonFontSize}"
-                      Glyph="&#xedd9;" />
+        <Button
+            x:Name="ScrollBackBtn"
+            Width="16"
+            Height="38"
+            Margin="8,-16,0,0"
+            AutomationProperties.Name="Scroll left"
+            Click="ScrollBackBtn_Click"
+            FontFamily="{ThemeResource ContentControlThemeFontFamily}"
+            Style="{StaticResource ScrollButtonStyle}"
+            ToolTipService.ToolTip="Scroll left"
+            Visibility="Collapsed">
+            <FontIcon FontSize="{ThemeResource FlipViewButtonFontSize}" Glyph="&#xedd9;" />
         </Button>
-        <Button x:Name="ScrollForwardBtn"
-                Width="16"
-                Height="38"
-                Margin="0,-16,8,0"
-                HorizontalAlignment="Right"
-                AutomationProperties.Name="Scroll right"
-                Click="ScrollForwardBtn_Click"
-                FontFamily="{ThemeResource ContentControlThemeFontFamily}"
-                Style="{StaticResource ScrollButtonStyle}"
-                ToolTipService.ToolTip="Scroll right">
-            <FontIcon FontSize="{ThemeResource FlipViewButtonFontSize}"
-                      Glyph="&#xEDDA;" />
+        <Button
+            x:Name="ScrollForwardBtn"
+            Width="16"
+            Height="38"
+            Margin="0,-16,8,0"
+            HorizontalAlignment="Right"
+            AutomationProperties.Name="Scroll right"
+            Click="ScrollForwardBtn_Click"
+            FontFamily="{ThemeResource ContentControlThemeFontFamily}"
+            Style="{StaticResource ScrollButtonStyle}"
+            ToolTipService.ToolTip="Scroll right">
+            <FontIcon FontSize="{ThemeResource FlipViewButtonFontSize}" Glyph="&#xEDDA;" />
         </Button>
     </Grid>
 </UserControl>

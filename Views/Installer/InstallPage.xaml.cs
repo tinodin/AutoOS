@@ -9,7 +9,7 @@ public sealed partial class InstallPage : Page
     public static ProgressBar Progress { get; private set; }
     public static InfoBar Info { get; private set; }
     public static Microsoft.UI.Xaml.Controls.ProgressRing ProgressRingControl { get; private set; }
-    public static Button ResumeButton{ get; private set; }
+    public static Button ResumeButton { get; private set; }
 
     public InstallPage()
     {
@@ -52,7 +52,7 @@ public sealed partial class InstallPage : Page
         }
     }
 
-    private async void ExecuteFirstStage() 
+    private async void ExecuteFirstStage()
     {
         await PreparingStage.Run();
         await TimeDateRegionStage.Run();

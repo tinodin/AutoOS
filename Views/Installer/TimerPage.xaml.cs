@@ -14,7 +14,7 @@ public sealed partial class TimerPage : Page
     {
         int start = 5000, step = 5;
         for (int i = start; i <= 5200; i += step)
-        Resolution.Items.Add(new ComboBoxItem { Content = i.ToString() });
+            Resolution.Items.Add(new ComboBoxItem { Content = i.ToString() });
 
         using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
         {

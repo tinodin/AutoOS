@@ -7,6 +7,7 @@ namespace AutoOS.Views
     {
         public string TitleBarName { get; set; }
         internal static MainWindow Instance { get; set; }
+
         public MainWindow()
         {
             Instance = this;

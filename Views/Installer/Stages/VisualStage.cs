@@ -45,7 +45,7 @@ public static class VisualStage
             //("Hiding the searchbox", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search"" /v ""SearchboxTaskbarMode"" /t REG_DWORD /d 0 /f"), null),
 
             // enable the settings shortcut in the start menu
-            ("Enabling the settings shortcut in the start menu", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Start"" /v ""VisiblePlaces"" /t REG_BINARY /d 86087352aa5143429f7b2776584659d4 /f"), null),
+            //("Enabling the settings shortcut in the start menu", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Start"" /v ""VisiblePlaces"" /t REG_BINARY /d 86087352aa5143429f7b2776584659d4 /f"), null),
 
             // hide the task view button
             //("Hiding the task view button", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"" /v ""ShowTaskViewButton"" /t REG_DWORD /d 0 /f"), null),
@@ -57,10 +57,10 @@ public static class VisualStage
             ("Hiding the chat button", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"" /v ""TaskbarMn"" /t REG_DWORD /d 0 /f"), null),
 
             // hide the bluetooth tray icon
-            ("Hiding the bluetooth tray icon", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Control Panel\Bluetooth"" /v ""Notification Area Icon"" /t REG_DWORD /d 0 /f"), null),
+            //("Hiding the bluetooth tray icon", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Control Panel\Bluetooth"" /v ""Notification Area Icon"" /t REG_DWORD /d 0 /f"), null),
 
             // hide the security and maintenance tray icon
-            ("Hiding the security and maintenance tray icon", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\Explorer"" /v ""HideSCAHealth"" /t REG_DWORD /d 1 /f"), null),
+            //("Hiding the security and maintenance tray icon", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\Explorer"" /v ""HideSCAHealth"" /t REG_DWORD /d 1 /f"), null),
 
             // hide the windows update tray icon
             ("Hiding the windows update tray icon", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings"" /v ""TrayIconVisibility"" /t REG_DWORD /d 0 /f"), null),
@@ -109,7 +109,7 @@ public static class VisualStage
                         {
                             tcs.TrySetResult(true);
                             InstallPage.Info.Severity = InfoBarSeverity.Informational;
-                            InstallPage.Progress.Foreground = ProcessActions.GetColor("LightNormal", "DarkNormal");
+                            InstallPage.Progress.Foreground = (Brush)Application.Current.Resources["AccentForegroundBrush"];
                             InstallPage.ProgressRingControl.Foreground = null;
                             InstallPage.ProgressRingControl.Visibility = Visibility.Visible;
                             InstallPage.ResumeButton.Visibility = Visibility.Collapsed;
@@ -152,7 +152,7 @@ public static class VisualStage
                     {
                         tcs.TrySetResult(true);
                         InstallPage.Info.Severity = InfoBarSeverity.Informational;
-                        InstallPage.Progress.Foreground = ProcessActions.GetColor("LightNormal", "DarkNormal");
+                        InstallPage.Progress.Foreground = (Brush)Application.Current.Resources["AccentForegroundBrush"];
                         InstallPage.ProgressRingControl.Foreground = null;
                         InstallPage.ProgressRingControl.Visibility = Visibility.Visible;
                         InstallPage.ResumeButton.Visibility = Visibility.Collapsed;

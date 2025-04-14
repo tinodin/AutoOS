@@ -25,7 +25,7 @@ public static class StartupActions
 
     public static async Task RunConnectionCheck()
     {
-        StartupWindow.Progress.Foreground = StartupActions.GetColor("LightPause", "DarkPause");
+        StartupWindow.Progress.Foreground = (Brush)Application.Current.Resources["AccentForegroundBrush"];
 
         await Task.Delay(1000);
 
@@ -38,7 +38,7 @@ public static class StartupActions
                     var response = await httpClient.GetAsync("http://www.google.com");
                     if (response.IsSuccessStatusCode)
                     {
-                        StartupWindow.Progress.Foreground = StartupActions.GetColor("LightNormal", "DarkNormal");
+                        StartupWindow.Progress.Foreground = (Brush)Application.Current.Resources["AccentForegroundBrush"];
                         await Task.Delay(500);
                         break;
                     }
@@ -125,7 +125,7 @@ public static class StartupActions
                     isPaused = false;
                     uiContext?.Post(_ =>
                     {
-                        StartupWindow.Progress.Foreground = StartupActions.GetColor("LightNormal", "DarkNormal");
+                        StartupWindow.Progress.Foreground = (Brush)Application.Current.Resources["AccentForegroundBrush"];
                         StartupWindow.Status.Text = $"{title} ({speedMB:F1} MB/s - {receivedMB:F2} MB of {totalMB:F2} MB)";
                     }, null);
                 }
@@ -137,7 +137,7 @@ public static class StartupActions
                     isPaused = true;
                     uiContext?.Post(_ =>
                     {
-                        StartupWindow.Progress.Foreground = StartupActions.GetColor("LightPause", "DarkPause");
+                        StartupWindow.Progress.Foreground = (Brush)Application.Current.Resources["AccentForegroundBrush"];
                         StartupWindow.Status.Text = $"{title} ({speedMB:F1} MB/s - {receivedMB:F2} MB of {totalMB:F2} MB - Waiting for internet connection to reestablish...)";
                     }, null);
                 }
@@ -159,11 +159,6 @@ public static class StartupActions
     public static async Task RunCustom(Func<Task> action)
     {
         await action();
-    }
-
-    public static SolidColorBrush GetColor(string lightKey, string darkKey)
-    {
-        return (SolidColorBrush)Application.Current.Resources[App.Theme?.IsDarkTheme() == true ? darkKey : lightKey];
     }
 }
 

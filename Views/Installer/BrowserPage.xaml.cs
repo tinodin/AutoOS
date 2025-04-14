@@ -56,9 +56,13 @@ public sealed partial class BrowserPage : Page
         using var key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS");
         var selectedBrowser = key?.GetValue("Browser") as string;
         var browserItems = Browsers.ItemsSource as List<GridViewItem>;
-        Browsers.SelectedItem = browserItems?.FirstOrDefault(b => b.Text == selectedBrowser);
+        Browsers.SelectedItems.AddRange(
+            selectedBrowser?.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(e => browserItems?.FirstOrDefault(ext => ext.Text == e))
+            .Where(ext => ext != null) ?? Enumerable.Empty<GridViewItem>()
+        );
 
-        isInitializingBrowsersState = false;        
+        isInitializingBrowsersState = false;
     }
 
     private void Browsers_Changed(object sender, SelectionChangedEventArgs e)
@@ -66,12 +70,14 @@ public sealed partial class BrowserPage : Page
         if (isInitializingBrowsersState) return;
 
         // set value
-        if (Browsers.SelectedItem is GridViewItem selectedItem)
+        var selectedBrowser = Browsers.SelectedItems
+            .Cast<GridViewItem>()
+            .Select(item => item.Text)
+            .ToArray();
+
+        using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
         {
-            using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
-            {
-                key?.SetValue("Browser", selectedItem.Text, RegistryValueKind.String);
-            }
+            key?.SetValue("Browser", string.Join(", ", selectedBrowser), RegistryValueKind.String);
         }
     }
 

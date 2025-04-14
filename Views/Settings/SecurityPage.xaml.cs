@@ -5,7 +5,7 @@ using System.ServiceProcess;
 
 namespace AutoOS.Views.Settings;
 
-public sealed partial class SecurityPage: Page
+public sealed partial class SecurityPage : Page
 {
     private string nsudoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NSudo", "NSudoLC.exe");
     private bool initialUACState = false;
@@ -330,7 +330,7 @@ public sealed partial class SecurityPage: Page
         });
 
         // toggle dep
-        var output = Process.Start(new ProcessStartInfo("cmd.exe", $"/c {(DEP.IsOn ? "bcdedit /set nx OptIn" : "bcdedit /set nx AlwaysOff")}"  ) { CreateNoWindow = true, RedirectStandardOutput = true }).StandardOutput.ReadToEnd();
+        var output = Process.Start(new ProcessStartInfo("cmd.exe", $"/c {(DEP.IsOn ? "bcdedit /set nx OptIn" : "bcdedit /set nx AlwaysOff")}") { CreateNoWindow = true, RedirectStandardOutput = true }).StandardOutput.ReadToEnd();
 
         if (output.Contains("error"))
         {
@@ -400,7 +400,7 @@ public sealed partial class SecurityPage: Page
                 // remove infobar
                 WindowsDefenderInfo.Children.Clear();
             }
-        }  
+        }
     }
 
     private void GetSpectreMeltdownState()

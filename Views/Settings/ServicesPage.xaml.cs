@@ -90,7 +90,7 @@ public sealed partial class ServicesPage : Page
             Severity = InfoBarSeverity.Informational,
             Margin = new Thickness(5)
         });
-        
+
         try
         {
             // get latest build
@@ -144,7 +144,7 @@ public sealed partial class ServicesPage : Page
         {
             // delay
             await Task.Delay(2000);
-            
+
             // remove infobar
             ServiceInfo.Children.Clear();
         }

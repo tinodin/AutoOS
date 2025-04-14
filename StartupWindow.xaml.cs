@@ -14,7 +14,7 @@ namespace AutoOS.Views
             AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
             AppWindow.IsShownInSwitchers = false;
             SetTitleBar(AppTitleBar);
-            
+
             var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
             var windowId = Win32Interop.GetWindowIdFromWindow(hwnd);
 

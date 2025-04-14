@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 
 namespace AutoOS.Views.Settings.Games;
 
-public sealed partial class GameAdd: Page
+public sealed partial class GameAdd : Page
 {
     public string Launcher => (LauncherValue.SelectedItem as ComboBoxItem)?.Content.ToString() ?? string.Empty;
     public string LauncherLocation => LauncherLocationValue.Text;
@@ -53,8 +53,8 @@ public sealed partial class GameAdd: Page
 
         if (file != null)
         {
-             LauncherLocationValue.Text = file.Path;
-             LauncherLocationValue.Width = double.NaN;
+            LauncherLocationValue.Text = file.Path;
+            LauncherLocationValue.Width = double.NaN;
         }
     }
 
@@ -88,7 +88,7 @@ public sealed partial class GameAdd: Page
         {
             GameCover.Source = new BitmapImage(new Uri(result["url"]));
             GameCoverUrl = result["url"];
-            GameDeveloper = result.ContainsKey("developers") ? result["developers"] : "Unknown"; 
+            GameDeveloper = result.ContainsKey("developers") ? result["developers"] : "Unknown";
         }
         else
         {
@@ -98,7 +98,7 @@ public sealed partial class GameAdd: Page
         }
     }
 
-    private async Task<Dictionary<string, string>?> SearchCovers(string name)
+    private async Task<Dictionary<string, string>> SearchCovers(string name)
     {
         string Clean(string input) => Regex.Replace(input.ToLower(), @"\s+", ".");
         string GetSearchBucket(string input)

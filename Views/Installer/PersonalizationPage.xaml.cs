@@ -62,7 +62,7 @@ public sealed partial class PersonalizationPage : Page
 
         // change theme
         await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:P -P:E -Wait -ShowWindowMode:Hide cmd /c start \"\" \"{theme}\"", CreateNoWindow = true }).WaitForExit());
-            
+
         await Task.Delay(1000);
 
         // rename settings back

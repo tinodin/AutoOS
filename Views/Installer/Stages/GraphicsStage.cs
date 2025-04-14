@@ -44,6 +44,28 @@ public static class GraphicsStage
             ("Installing the Intel driver", async () => await ProcessActions.RunNsudo("CurrentUser", @"""%TEMP%\driver\Installer.exe"" /silent"), () => Intel10th == true),
             ("Installing the Intel driver", async () => await ProcessActions.RefreshUI(), () => Intel10th == true),
 
+            // download the latest intel driver
+            ("Downloading the latest Intel Driver", async () => await ProcessActions.RunDownload("https://downloadmirror.intel.com/851966/gfx_win_101.6734.exe", Path.GetTempPath(), "driver.exe"), () => Intel11th == true),
+
+            // extract the driver
+            ("Extracting the Intel driver", async () => await ProcessActions.RunExtract(Path.Combine(Path.GetTempPath(), "driver.exe"), Path.Combine(Path.GetTempPath(), "driver")), () => Intel11th == true),
+
+            // install the driver
+            ("Installing the Intel driver", async () => await ProcessActions.RunNsudo("CurrentUser", @"""%TEMP%\driver\Installer.exe"" /silent"), () => Intel11th == true),
+            ("Installing the Intel driver", async () => await ProcessActions.RefreshUI(), () => Intel11th == true),
+
+            // download the latest amd driver
+
+
+            // extract the driver
+
+            
+            // strip the driver
+
+
+            // install the driver
+
+
             // download the latest nvidia driver                                                     
             ("Downloading the latest NVIDIA Driver", async () => await ProcessActions.RunDownload($@"https://us.download.nvidia.com/Windows/{version}/{version}-desktop-win10-win11-64bit-international-dch-whql.exe", Path.GetTempPath(), "driver.exe"), () => NVIDIA == true),
 
@@ -55,20 +77,14 @@ public static class GraphicsStage
 
             // install the nvidia driver
             ("Installing the NVIDIA driver", async () => await ProcessActions.RunNsudo("CurrentUser", @"""%TEMP%\driver\setup.exe"" /s"), () => NVIDIA == true),
-            ("Installing the NVIDIA driver", async () => await ProcessActions.Sleep(2000), () => NVIDIA == true),
+            ("Installing the NVIDIA driver", async () => await ProcessActions.Sleep(4000), () => NVIDIA == true),
             ("Installing the NVIDIA driver", async () => await ProcessActions.RefreshUI(), () => NVIDIA == true),
-
-            // intel 2nd
-            
-
-            // amd 
-
 
             // apply custom resolution utility (cru) profile
             ("Importing Custom Resolution Utility (CRU) profile", async () => await ProcessActions.Sleep(1000), () => CRU == true),
             ("Importing Custom Resolution Utility (CRU) profile", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "CruProfile", null).ToString(), Arguments = "-i" })!.WaitForExitAsync())), () => CRU == true),
-            ("Applying Custom Resolution Utility (CRU) profile", async () => await ProcessActions.Sleep(1000), () => CRU == true),
             ("Applying Custom Resolution Utility (CRU) profile", async () => await ProcessActions.RunApplication("CRU", "restart64.exe", "/q"), () => CRU == true),
+            ("Applying Custom Resolution Utility (CRU) profile", async () => await ProcessActions.Sleep(4000), () => CRU == true),
             ("Applying Custom Resolution Utility (CRU) profile", async () => await ProcessActions.RefreshUI(), () => CRU == true),
 
             // enable optimizations for windowed games
@@ -219,7 +235,7 @@ public static class GraphicsStage
                         {
                             tcs.TrySetResult(true);
                             InstallPage.Info.Severity = InfoBarSeverity.Informational;
-                            InstallPage.Progress.Foreground = ProcessActions.GetColor("LightNormal", "DarkNormal");
+                            InstallPage.Progress.Foreground = (Brush)Application.Current.Resources["AccentForegroundBrush"];
                             InstallPage.ProgressRingControl.Foreground = null;
                             InstallPage.ProgressRingControl.Visibility = Visibility.Visible;
                             InstallPage.ResumeButton.Visibility = Visibility.Collapsed;
@@ -262,7 +278,7 @@ public static class GraphicsStage
                     {
                         tcs.TrySetResult(true);
                         InstallPage.Info.Severity = InfoBarSeverity.Informational;
-                        InstallPage.Progress.Foreground = ProcessActions.GetColor("LightNormal", "DarkNormal");
+                        InstallPage.Progress.Foreground = (Brush)Application.Current.Resources["AccentForegroundBrush"];
                         InstallPage.ProgressRingControl.Foreground = null;
                         InstallPage.ProgressRingControl.Visibility = Visibility.Visible;
                         InstallPage.ResumeButton.Visibility = Visibility.Collapsed;

@@ -1,54 +1,58 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<Page x:Class="AutoOS.Views.Installer.HomeLandingPage"
-      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-      xmlns:dev="using:DevWinUI"
-      xmlns:local="using:AutoOS"
-      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-      mc:Ignorable="d">
-    <dev:MainLandingPage x:Name="mainLandingPage" 
-                    HeaderImage="{ThemeResource HeaderCover}" 
-                    HeaderText="AutoOS Installer" 
-                    HeaderSubtitleText="Windows App SDK 1.7">
+<Page
+    x:Class="AutoOS.Views.Installer.HomeLandingPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:dev="using:DevWinUI"
+    xmlns:local="using:AutoOS"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+    <dev:MainLandingPage
+        x:Name="mainLandingPage"
+        HeaderImage="{ThemeResource HeaderCover}"
+        HeaderSubtitleText="Windows App SDK 1.7"
+        HeaderText="AutoOS Installer">
         <dev:MainLandingPage.HeaderContent>
-            <StackPanel Orientation="Horizontal" 
-                    Margin="0,25,0,0" 
-                    Spacing="10">
-                <dev:HeaderTile Title="Getting started" 
-                           Description="Get started with AutoOS." 
-                           Link="Explore the source code and report bugs.">
+            <StackPanel
+                Margin="0,25,0,0"
+                Orientation="Horizontal"
+                Spacing="10">
+                <dev:HeaderTile
+                    Title="Getting started"
+                    Description="Get started with AutoOS."
+                    Link="Explore the source code and report bugs.">
                     <dev:HeaderTile.Source>
-                        <Image Source="/Assets/AppIcon.png"/>
+                        <Image Source="/Assets/AppIcon.png" />
                     </dev:HeaderTile.Source>
                 </dev:HeaderTile>
-                <dev:HeaderTile Title="AutoOS on GitHub" 
-                           Description="Explore the source code and report bugs." 
-                           Link="https://github.com/tinodin/AutoOS">
+                <dev:HeaderTile
+                    Title="AutoOS on GitHub"
+                    Description="Explore the source code and report bugs."
+                    Link="https://github.com/tinodin/AutoOS">
                     <dev:HeaderTile.Source>
-                        <PathIcon Data="{StaticResource GitHubIconPath}" 
-                               Foreground="{ThemeResource TextFillColorPrimaryBrush}">
+                        <PathIcon Data="{StaticResource GitHubIconPath}" Foreground="{ThemeResource TextFillColorPrimaryBrush}">
                             <PathIcon.RenderTransform>
-                                <CompositeTransform ScaleX="2.05" 
-                                                    ScaleY="2.05" 
-                                                    TranslateX="-20"/>
+                                <CompositeTransform
+                                    ScaleX="2.05"
+                                    ScaleY="2.05"
+                                    TranslateX="-20" />
                             </PathIcon.RenderTransform>
                         </PathIcon>
                     </dev:HeaderTile.Source>
                 </dev:HeaderTile>
-                <dev:HeaderTile Title="Donate" 
-                           Description="Leave a sign of appreciation of my work." 
-                           Link="https://www.paypal.com/donate/?hosted_button_id=GVEVUSHUWXEAG">
+                <dev:HeaderTile
+                    Title="Donate"
+                    Description="Leave a sign of appreciation of my work."
+                    Link="https://www.paypal.com/donate/?hosted_button_id=GVEVUSHUWXEAG">
                     <dev:HeaderTile.Source>
-                        <Image Source="/Assets/Fluent/PayPal.png"/>
+                        <Image Source="/Assets/Fluent/PayPal.png" />
                     </dev:HeaderTile.Source>
                 </dev:HeaderTile>
             </StackPanel>
         </dev:MainLandingPage.HeaderContent>
         <dev:MainLandingPage.FooterContent>
-            <StackPanel>
-
-            </StackPanel>
+            <StackPanel />
         </dev:MainLandingPage.FooterContent>
     </dev:MainLandingPage>
 </Page>

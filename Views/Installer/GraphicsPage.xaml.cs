@@ -41,7 +41,11 @@ public sealed partial class GraphicsPage : Page
         using var key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS");
         var selectedBrand = key?.GetValue("GpuBrand") as string;
         var brandItems = Brands.ItemsSource as List<GridViewItem>;
-        Brands.SelectedItem = brandItems?.FirstOrDefault(b => b.Text == selectedBrand);
+        Brands.SelectedItems.AddRange(
+            selectedBrand?.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(e => brandItems?.FirstOrDefault(ext => ext.Text == e))
+            .Where(ext => ext != null) ?? Enumerable.Empty<GridViewItem>()
+        );
 
         isInitializingBrandsState = false;
     }
@@ -51,12 +55,14 @@ public sealed partial class GraphicsPage : Page
         if (isInitializingBrandsState) return;
 
         // set value
-        if (Brands.SelectedItem is GridViewItem selectedItem)
+        var selectedBrand = Brands.SelectedItems
+            .Cast<GridViewItem>()
+            .Select(item => item.Text)
+            .ToArray();
+
+        using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
         {
-            using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
-            {
-                key?.SetValue("GpuBrand", selectedItem.Text, RegistryValueKind.String);
-            }
+            key?.SetValue("GpuBrand", string.Join(", ", selectedBrand), RegistryValueKind.String);
         }
     }
 

@@ -1,5 +1,4 @@
 ﻿using AutoOS.Views.Installer.Actions;
-using Microsoft.Win32;
 using Microsoft.UI.Xaml.Media;
 
 namespace AutoOS.Views.Installer.Stages;
@@ -20,12 +19,6 @@ public static class OptionalFeatureStage
 
             // remove windows capabilities
             ("Removing windows capabilities", async () => await ProcessActions.RemoveWindowsCapabilities(), null),
-
-            // write stage
-            //("Removing windows capabilities", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", 2, RegistryValueKind.DWord))), null),
-
-            // restart
-            //("", async () => await ProcessActions.RunRestart(), null)
         };
 
         var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();
@@ -68,7 +61,7 @@ public static class OptionalFeatureStage
                         {
                             tcs.TrySetResult(true);
                             InstallPage.Info.Severity = InfoBarSeverity.Informational;
-                            InstallPage.Progress.Foreground = ProcessActions.GetColor("LightNormal", "DarkNormal");
+                            InstallPage.Progress.Foreground = (Brush)Application.Current.Resources["AccentForegroundBrush"];
                             InstallPage.ProgressRingControl.Foreground = null;
                             InstallPage.ProgressRingControl.Visibility = Visibility.Visible;
                             InstallPage.ResumeButton.Visibility = Visibility.Collapsed;
@@ -111,7 +104,7 @@ public static class OptionalFeatureStage
                     {
                         tcs.TrySetResult(true);
                         InstallPage.Info.Severity = InfoBarSeverity.Informational;
-                        InstallPage.Progress.Foreground = ProcessActions.GetColor("LightNormal", "DarkNormal");
+                        InstallPage.Progress.Foreground = (Brush)Application.Current.Resources["AccentForegroundBrush"];
                         InstallPage.ProgressRingControl.Foreground = null;
                         InstallPage.ProgressRingControl.Visibility = Visibility.Visible;
                         InstallPage.ResumeButton.Visibility = Visibility.Collapsed;

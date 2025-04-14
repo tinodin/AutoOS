@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace AutoOS.Views.Settings.Games;
 
-public sealed partial class GameSettings: Page
+public sealed partial class GameSettings : Page
 {
     private bool isInitializingPresentationMode = true;
     public GameSettings()
@@ -38,24 +38,24 @@ public sealed partial class GameSettings: Page
         using (var key = Registry.CurrentUser.OpenSubKey(@"System\GameConfigStore\Children"))
         {
             foreach (var subKeyName in key.GetSubKeyNames())
-            using (var subKey = key.OpenSubKey(subKeyName))
-            {
-                if (subKey.GetValueNames().Any(valueName => subKey.GetValue(valueName) is string strValue && strValue.Contains("Fortnite")))
+                using (var subKey = key.OpenSubKey(subKeyName))
                 {
-                    int flags = Convert.ToInt32(subKey.GetValue("Flags"));
-                    if (flags == 0x211)
+                    if (subKey.GetValueNames().Any(valueName => subKey.GetValue(valueName) is string strValue && strValue.Contains("Fortnite")))
                     {
-                        PresentationMode.SelectedIndex = 1;
-                        isInitializingPresentationMode = false;
-                        return;
-                    }
-                    else
-                    {
-                        PresentationMode.SelectedIndex = 0;
-                        isInitializingPresentationMode = false;
+                        int flags = Convert.ToInt32(subKey.GetValue("Flags"));
+                        if (flags == 0x211)
+                        {
+                            PresentationMode.SelectedIndex = 1;
+                            isInitializingPresentationMode = false;
+                            return;
+                        }
+                        else
+                        {
+                            PresentationMode.SelectedIndex = 0;
+                            isInitializingPresentationMode = false;
+                        }
                     }
                 }
-            }
         }
     }
 

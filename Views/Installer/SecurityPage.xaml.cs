@@ -2,7 +2,7 @@
 
 namespace AutoOS.Views.Installer;
 
-public sealed partial class SecurityPage: Page
+public sealed partial class SecurityPage : Page
 {
     private bool isInitializingWindowsDefenderState = true;
     private bool isInitializingUACState = true;
@@ -82,7 +82,18 @@ public sealed partial class SecurityPage: Page
 
         if (value == null)
         {
-            key?.SetValue("DataExecutionPrevention", 0, RegistryValueKind.DWord);
+            using var secureBootKey = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\SecureBoot\State");
+            var secureBootValue = secureBootKey?.GetValue("UEFISecureBootEnabled");
+
+            if (secureBootValue != null && (int)secureBootValue == 1)
+            {
+                DEP.IsOn = true;
+                key?.SetValue("DataExecutionPrevention", 1, RegistryValueKind.DWord);
+            }
+            else
+            {
+                key?.SetValue("DataExecutionPrevention", 0, RegistryValueKind.DWord);
+            }
         }
         else
         {
@@ -118,7 +129,7 @@ public sealed partial class SecurityPage: Page
             {
                 key?.SetValue("SpectreMeltdownMitigations", 1, RegistryValueKind.DWord);
                 SpectreMeltdown.IsOn = true;
-            }   
+            }
         }
         else
         {

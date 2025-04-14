@@ -20,7 +20,6 @@ public sealed partial class GraphicsPage : Page
     }
     private async void GetGPUState()
     {
-        updateCheck.ProgressBackground = ProcessActions.GetColor("LightNormal", "DarkNormal");
         updateCheck.IsChecked = true;
 
         using (var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_VideoController"))
@@ -69,9 +68,9 @@ public sealed partial class GraphicsPage : Page
                     {
                         // get current version
                         var currentVersion = (await Task.Run(() => Process.Start(new ProcessStartInfo("nvidia-smi", "--query-gpu=driver_version --format=csv,noheader") { CreateNoWindow = true, RedirectStandardOutput = true })?.StandardOutput.ReadToEndAsync()))?.Trim();
-                        
+
                         GpuCard.Description = "Current Version: " + currentVersion;
-                        
+
                         try
                         {
                             using (HttpClient client = new HttpClient())

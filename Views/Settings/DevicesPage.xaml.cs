@@ -237,7 +237,7 @@ public sealed partial class DevicesPage : Page
             Severity = InfoBarSeverity.Success,
             Margin = new Thickness(5)
         });
-       
+
         // delay
         await Task.Delay(2000);
 
@@ -345,7 +345,7 @@ public sealed partial class DevicesPage : Page
                 Margin = new Thickness(5)
             });
         }
-        
+
         // hide progress ring
         imodProgress.Visibility = Visibility.Collapsed;
 

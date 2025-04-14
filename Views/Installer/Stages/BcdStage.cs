@@ -7,6 +7,8 @@ public static class BcdStage
 {
     public static async Task Run()
     {
+        bool? SecureBoot = PreparingStage.SecureBoot;
+
         InstallPage.Status.Text = "Configuring the BCD Store...";
 
         string previousTitle = string.Empty;
@@ -37,7 +39,7 @@ public static class BcdStage
             ("Setting TSC Sync Policy to enhanced", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set tscsyncpolicy enhanced"), null),
 
             // disable kernel debugging
-            ("Disabling kernel debugging", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set debug No"), null),
+            ("Disabling kernel debugging", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set debug No"), () => SecureBoot == false),
 
             // disabling isolated context
             ("Disabling isolated context", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set isolatedcontext No"), null),
@@ -56,6 +58,15 @@ public static class BcdStage
 
             // disable windows virtualization features
             ("Disabling windows virtualization features", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set vm No"), null),
+
+            //// allow to use the first megabyte of memory
+            //("Allowing to use the first megabyte of memory", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set firstmegabytepolicy UseAll"), null),
+
+            //// reserve memory below 128mb
+            //("Reserving memory below 128MB", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set avoidlowmemory 0x8000000"), null),
+
+            //// disable use of the upper 57-bit virtual address space
+            //("Disabling use of the upper 57-bit virtual address space", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set linearaddress57 OptOut"), null),
         };
 
         var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();
@@ -98,7 +109,7 @@ public static class BcdStage
                         {
                             tcs.TrySetResult(true);
                             InstallPage.Info.Severity = InfoBarSeverity.Informational;
-                            InstallPage.Progress.Foreground = ProcessActions.GetColor("LightNormal", "DarkNormal");
+                            InstallPage.Progress.Foreground = (Brush)Application.Current.Resources["AccentForegroundBrush"];
                             InstallPage.ProgressRingControl.Foreground = null;
                             InstallPage.ProgressRingControl.Visibility = Visibility.Visible;
                             InstallPage.ResumeButton.Visibility = Visibility.Collapsed;
@@ -141,7 +152,7 @@ public static class BcdStage
                     {
                         tcs.TrySetResult(true);
                         InstallPage.Info.Severity = InfoBarSeverity.Informational;
-                        InstallPage.Progress.Foreground = ProcessActions.GetColor("LightNormal", "DarkNormal");
+                        InstallPage.Progress.Foreground = (Brush)Application.Current.Resources["AccentForegroundBrush"];
                         InstallPage.ProgressRingControl.Foreground = null;
                         InstallPage.ProgressRingControl.Visibility = Visibility.Visible;
                         InstallPage.ResumeButton.Visibility = Visibility.Collapsed;
