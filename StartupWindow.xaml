@@ -15,7 +15,7 @@
         </Grid.RowDefinitions>
         <TitleBar
             x:Name="AppTitleBar"
-            Title="AutoOS Startup"
+            Title="{x:Bind TitleBarName}"
             IconSource="{dev:BitmapIconSource Source=ms-appx:///Assets/AppIcon.png}"
             IsBackButtonVisible="False"
             IsPaneToggleButtonVisible="False"
@@ -29,4 +29,7 @@
             <ProgressBar x:Name="ProgressBar" Margin="0,15,0,0" />
         </StackPanel>
     </Grid>
+    <Window.SystemBackdrop>
+        <MicaBackdrop />
+    </Window.SystemBackdrop>
 </Window>

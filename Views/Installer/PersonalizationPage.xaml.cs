@@ -9,7 +9,6 @@ public sealed partial class PersonalizationPage : Page
     private bool isInitializingThemeState = true;
     private bool isInitializingContextMenuState = true;
     private bool isInitializingTrayIconsState = true;
-    private bool isInitializingShowMyTaskbarOnAllDisplaysState = true;
     private bool isInitializingTaskbarAlignmentState = true;
 
     public PersonalizationPage()
@@ -19,7 +18,6 @@ public sealed partial class PersonalizationPage : Page
         GetTheme();
         GetContextMenuState();
         GetTaskbarAlignmentState();
-        GetShowMyTaskbarOnAllDisplaysState();
         GetTrayIconsState();
     }
 
@@ -125,34 +123,6 @@ public sealed partial class PersonalizationPage : Page
         // set value
         using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
         key?.SetValue("AlwaysShowTrayIcons", TrayIcons.IsChecked ?? false ? 1 : 0, RegistryValueKind.DWord);
-    }
-
-    private void GetShowMyTaskbarOnAllDisplaysState()
-    {
-        // get state
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        var value = key?.GetValue("ShowMyTaskbarOnAllDisplays");
-
-        if (value == null)
-        {
-            key?.SetValue("ShowMyTaskbarOnAllDisplays", 1, RegistryValueKind.DWord);
-            ShowMyTaskbarOnAllDisplays.IsChecked = true;
-        }
-        else
-        {
-            ShowMyTaskbarOnAllDisplays.IsChecked = (int)value == 1;
-        }
-
-        isInitializingShowMyTaskbarOnAllDisplaysState = false;
-    }
-
-    private void ShowMyTaskbarOnAllDisplays_Click(object sender, RoutedEventArgs e)
-    {
-        if (isInitializingShowMyTaskbarOnAllDisplaysState) return;
-
-        // set value
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        key?.SetValue("ShowMyTaskbarOnAllDisplays", ShowMyTaskbarOnAllDisplays.IsChecked ?? false ? 1 : 0, RegistryValueKind.DWord);
     }
 
     private void GetTaskbarAlignmentState()

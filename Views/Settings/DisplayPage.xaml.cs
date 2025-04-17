@@ -12,6 +12,10 @@ public sealed partial class DisplayPage : Page
 
     private async void BrowseCru_Click(object sender, RoutedEventArgs e)
     {
+        // disable the button to avoid double-clicking
+        var senderButton = sender as Button;
+        senderButton.IsEnabled = false;
+
         // remove infobar
         CruInfo.Children.Clear();
 
@@ -94,6 +98,9 @@ public sealed partial class DisplayPage : Page
             }
             else
             {
+                // re-enable the button
+                senderButton.IsEnabled = true;
+
                 // remove infobar
                 CruInfo.Children.Clear();
 
@@ -116,6 +123,9 @@ public sealed partial class DisplayPage : Page
         }
         else
         {
+            // re-enable the button
+            senderButton.IsEnabled = true;
+
             // remove infobar
             CruInfo.Children.Clear();
         }

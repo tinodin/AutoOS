@@ -1,5 +1,4 @@
 ﻿using Microsoft.UI.Windowing;
-using Microsoft.Win32;
 
 namespace AutoOS.Views
 {
@@ -16,26 +15,14 @@ namespace AutoOS.Views
             AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
             SetTitleBar(AppTitleBar);
 
-            object stageObj = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS")?.GetValue("Stage");
-
-            if (stageObj is int stageValue && stageValue >= 1)
-            {
-                App.Current.NavService
-                    .Initialize(NavView, NavFrame, NavigationPageMappingsInstaller.PageDictionary)
-                    .ConfigureJsonFile("Assets/NavViewMenu/Installer.json")
-                    .ConfigureDefaultPage(typeof(Installer.HomeLandingPage))
-                    .ConfigureTitleBar(AppTitleBar, false)
-                    .ConfigureBreadcrumbBar(BreadCrumbNav, BreadcrumbPageMappings.PageDictionary);
-                TitleBarName = "AutoOS Installer";
-            }
-            else if (stageObj is string stageStr && stageStr.Equals("Installed", StringComparison.OrdinalIgnoreCase))
+            if (App.IsInstalled)
             {
                 NavView.IsSettingsVisible = true;
                 App.Current.NavService
                     .Initialize(NavView, NavFrame, NavigationPageMappingsSettings.PageDictionary)
                     .ConfigureJsonFile("Assets/NavViewMenu/Settings.json")
                     .ConfigureDefaultPage(typeof(Settings.HomeLandingPage))
-                    .ConfigureSettingsPage(typeof(Settings.SettingsPage))
+                    .ConfigureSettingsPage(typeof(SettingsPage))
                     .ConfigureTitleBar(AppTitleBar, false)
                     .ConfigureBreadcrumbBar(BreadCrumbNav, BreadcrumbPageMappings.PageDictionary);
                 TitleBarName = "AutoOS Settings";

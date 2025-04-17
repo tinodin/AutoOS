@@ -464,57 +464,25 @@ public static class ProcessActions
                     File.Copy(newestFilePath, destinationPath, true);
 
                     // disable tray and notifications
-                    Match match = Regex.Match(await File.ReadAllTextAsync(destinationPath), @"\[(.*?)_General\]");
-                    string section = match.Groups[1].Value + "_General";
+                    string generalSection = Regex.Match(await File.ReadAllTextAsync(destinationPath), @"\[(.*?)_General\]").Groups[1].Value + "_General";
 
                     InIHelper iniHelper = new InIHelper(destinationPath);
 
-                    try
-                    {
-                        if (!iniHelper.IsKeyExists("MinimiseToSystemTray", section))
-                        {
-                            iniHelper.AddValue("MinimiseToSystemTray", "False", section);
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        iniHelper.AddValue("MinimiseToSystemTray", "False", section);
-                    }
+                    iniHelper.AddValue("MinimiseToSystemTray", "False", generalSection);
+                    iniHelper.AddValue("NotificationsEnabled_FreeGame", "False", generalSection);
+                    iniHelper.AddValue("NotificationsEnabled_Adverts", "False", generalSection);
 
-                    try
-                    {
-                        if (!iniHelper.IsKeyExists("NotificationsEnabled_FreeGame", section))
-                        {
-                            iniHelper.AddValue("NotificationsEnabled_FreeGame", "False", section);
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        iniHelper.AddValue("NotificationsEnabled_FreeGame", "False", section);
-                    }
+                    // get data
+                    string data = Regex.Match(await File.ReadAllTextAsync(configContent), @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?").Groups[1].Value;
 
-                    try
-                    {
-                        if (!iniHelper.IsKeyExists("NotificationsEnabled_Adverts", section))
-                        {
-                            iniHelper.AddValue("NotificationsEnabled_Adverts", "False", section);
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        iniHelper.AddValue("NotificationsEnabled_Adverts", "False", section);
-                    }
-
-                    Match dataMatch2 = Regex.Match(configContent, @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?");
-                    string data = dataMatch2.Groups[1].Value;
-                    string key = "A09C853C9E95409BB94D707EADEFA52E";
-                    string plainText = DecryptDataWithAes(data, key);
+                    // decrypt data
+                    string decryptedData = DecryptDataWithAes(data, "A09C853C9E95409BB94D707EADEFA52E");
 
                     // get account id
                     string accountId = Regex.Match(configContent, @"\[(.*?)_General\]").Groups[1].Value;
 
                     // get displayname
-                    Match displayNameMatch = Regex.Match(plainText, "\"DisplayName\":\"([^\"]+)\"");
+                    Match displayNameMatch = Regex.Match(decryptedData, "\"DisplayName\":\"([^\"]+)\"");
                     string displayName = displayNameMatch.Groups[1].Value;
 
                     // create directory and backup
@@ -523,6 +491,10 @@ public static class ProcessActions
 
                     // create reg file
                     File.WriteAllText(Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\" + displayName), "accountId.reg"), $"Windows Registry Editor Version 5.00\r\n\r\n[HKEY_CURRENT_USER\\Software\\Epic Games\\Unreal Engine\\Identifiers]\r\n\"AccountId\"=\"{accountId}\"");
+
+                    InstallPage.Info.Title = "Succesfully logged in as " + displayName + " ...";
+
+                    await Task.Delay(500);
 
                     return;
                 }

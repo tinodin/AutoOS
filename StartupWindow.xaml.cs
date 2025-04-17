@@ -1,10 +1,12 @@
 ﻿using AutoOS.Views.Startup.Stages;
+using AutoOS.Views.Updater.Stages;
 using Microsoft.UI.Windowing;
 
 namespace AutoOS.Views
 {
     public sealed partial class StartupWindow : Window
     {
+        public string TitleBarName { get; set; }
         public static TextBlock Status { get; private set; }
         public static ProgressBar Progress { get; private set; }
         public StartupWindow()
@@ -34,7 +36,17 @@ namespace AutoOS.Views
         {
             Status = StatusText;
             Progress = ProgressBar;
-            await StartupStage.Run();
+
+            if (!Directory.Exists(@"C:\Program Files\Windhawk"))
+            {
+                TitleBarName = "AutoOS Updater";
+                await UpdaterStage.Run();
+            }
+            else
+            {
+                TitleBarName = "AutoOS Startup";
+                await StartupStage.Run();
+            }
         }
     }
 }

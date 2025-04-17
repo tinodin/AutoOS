@@ -71,11 +71,11 @@
     <ProjectCapability Include="Msix" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="DevWinUI" Version="8.1.0" />
-    <PackageReference Include="DevWinUI.Controls" Version="8.1.0" />
+    <PackageReference Include="DevWinUI" Version="8.2.0" />
+    <PackageReference Include="DevWinUI.Controls" Version="8.2.0" />
     <PackageReference Include="Downloader" Version="3.3.4" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250401001" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.250410001-experimental1" />
     <PackageReference Include="nucs.JsonSettings" Version="2.0.2" />
     <PackageReference Include="nucs.JsonSettings.AutoSaveGenerator" Version="2.0.4" />
     <PackageReference Include="System.Management" Version="10.0.0-preview.3.25171.5" />

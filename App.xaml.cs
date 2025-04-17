@@ -12,52 +12,54 @@ namespace AutoOS
         public JsonNavigationService NavService { get; set; }
         public IThemeService ThemeService { get; set; }
         public static IThemeService Theme => (App.Current as App)?.ThemeService;
+        internal static bool IsInstalled { get; private set; }
 
         public App()
         {
+            //Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", "Installed", RegistryValueKind.String);
+            //Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS", true)?.DeleteValue("Stage", false);
+
+            IsInstalled = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS")?.GetValue("Stage") as string == "Installed";
             InitializeComponent();
             NavService = new JsonNavigationService();
         }
 
         protected override void OnLaunched(LaunchActivatedEventArgs args)
         {
-            //Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", "Installed", RegistryValueKind.String);
-            //Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", 1, RegistryValueKind.DWord);
-
-            string stage = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS")?.GetValue("Stage") as string;
-
-            if (stage != null)
+            if (IsInstalled)
             {
-                if (int.TryParse(stage, out int stageValue) && stageValue == 1)
-                {
-                    MainWindow = new MainWindow();
-                    MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
-                    MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Installer";
+                AppActivationArguments appActivationArguments = AppInstance.GetCurrent().GetActivatedEventArgs();
 
-                    ThemeService = new ThemeService(MainWindow);
+                if (appActivationArguments.Kind is ExtendedActivationKind.StartupTask)
+                {
+                    MainWindow = new StartupWindow();
+                    MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
+                    MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Startup";
 
                     new ModernSystemMenu(MainWindow);
 
-                    if (MainWindow.AppWindow.Presenter is OverlappedPresenter presenter)
-                    {
-                        presenter.Maximize();
-                        presenter.PreferredMinimumWidth = 660;
-                        presenter.PreferredMinimumHeight = 715;
-                    }
+                    Window window = MainWindow;
+                    var monitor = DisplayMonitorHelper.GetMonitorInfo(window);
+                    int X = (int)monitor.RectMonitor.Width;
+                    int Y = (int)monitor.RectMonitor.Height;
+
+                    int windowWidth = 340;
+                    int windowHeight = 130;
+
+                    int posX = X - windowWidth - 10;
+                    int posY = Y - windowHeight - 53;
+
+                    MainWindow.AppWindow.MoveAndResize(new RectInt32(posX, posY, windowWidth, windowHeight));
 
                     MainWindow.Activate();
                 }
-                else if (stage.Equals("Installed", StringComparison.OrdinalIgnoreCase))
+                else
                 {
-                    AppActivationArguments appActivationArguments = AppInstance.GetCurrent().GetActivatedEventArgs();
-
-                    if (appActivationArguments.Kind is ExtendedActivationKind.StartupTask)
+                    if (!Directory.Exists(@"C:\Program Files\Windhawk"))
                     {
                         MainWindow = new StartupWindow();
                         MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
-                        MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Startup";
-
-                        ThemeService = new ThemeService(MainWindow);
+                        MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Updater";
 
                         new ModernSystemMenu(MainWindow);
 
@@ -76,50 +78,26 @@ namespace AutoOS
 
                         MainWindow.Activate();
                     }
-                    else
+                    
+                    MainWindow = new MainWindow();
+                    MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
+                    MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Settings";
+
+                    ThemeService = new ThemeService(MainWindow);
+                    ThemeService.AutoInitialize(MainWindow).ConfigureTintColor();
+
+                    new ModernSystemMenu(MainWindow);
+
+                    WindowHelper.ResizeAndCenterWindowToPercentageOfWorkArea(MainWindow, 90);
+
+                    if (MainWindow.AppWindow.Presenter is OverlappedPresenter presenter)
                     {
-                        MainWindow = new MainWindow();
-                        MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
-                        MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Settings";
-
-                        ThemeService = new ThemeService(MainWindow);
-
-                        new ModernSystemMenu(MainWindow);
-
-                        WindowHelper.ResizeAndCenterWindowToPercentageOfWorkArea(MainWindow, 90);
-
-                        if (MainWindow.AppWindow.Presenter is OverlappedPresenter presenter)
-                        {
-                            presenter.Maximize();
-                            presenter.PreferredMinimumWidth = 660;
-                            presenter.PreferredMinimumHeight = 715;
-                        }
-
-                        MainWindow.Activate();
-
-                        //MainWindow = new StartupWindow();
-                        //MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
-                        //MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Startup";
-
-                        //ThemeService = new ThemeService(MainWindow);
-
-                        //new ModernSystemMenu(MainWindow);
-
-                        //Window window = MainWindow;
-                        //var monitor = DisplayMonitorHelper.GetMonitorInfo(window);
-                        //int X = (int)monitor.RectMonitor.Width;
-                        //int Y = (int)monitor.RectMonitor.Height;
-
-                        //int windowWidth = 340;
-                        //int windowHeight = 130;
-
-                        //int posX = X - windowWidth - 10;
-                        //int posY = Y - windowHeight - 53;
-
-                        //MainWindow.AppWindow.MoveAndResize(new RectInt32(posX, posY, windowWidth, windowHeight));
-
-                        //MainWindow.Activate();
+                        presenter.Maximize();
+                        presenter.PreferredMinimumWidth = 660;
+                        presenter.PreferredMinimumHeight = 715;
                     }
+
+                    MainWindow.Activate();
                 }
             }
             else
@@ -129,6 +107,7 @@ namespace AutoOS
                 MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Installer";
 
                 ThemeService = new ThemeService(MainWindow);
+                ThemeService.AutoInitialize(MainWindow).ConfigureTintColor();
                 ThemeService.SetBackdropType(BackdropType.Mica);
 
                 if (MainWindow.AppWindow.Presenter is OverlappedPresenter presenter)

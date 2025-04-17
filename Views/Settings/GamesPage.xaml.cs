@@ -6,6 +6,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using Windows.Gaming.Input;
+using Windows.Storage;
 
 namespace AutoOS.Views.Settings;
 
@@ -26,6 +28,160 @@ public sealed partial class GamesPage : Page
 
     private static readonly HttpClient httpClient = new HttpClient();
 
+    private string currentSortKey = "Title";
+    private bool ascending = true;
+
+    private void SortByName_Click(object sender, RoutedEventArgs e)
+    {
+        currentSortKey = "Title";
+        UpdateSortIcons();
+        ApplySort();
+        SaveSortSettings();
+    }
+
+    private void SortByLauncher_Click(object sender, RoutedEventArgs e)
+    {
+        currentSortKey = "Launcher";
+        UpdateSortIcons();
+        ApplySort();
+        SaveSortSettings();
+    }
+
+    private void SortAscending_Click(object sender, RoutedEventArgs e)
+    {
+        ascending = true;
+        UpdateSortIcons();
+        ApplySort();
+        SaveSortSettings();
+    }
+
+    private void SortDescending_Click(object sender, RoutedEventArgs e)
+    {
+        ascending = false;
+        UpdateSortIcons();
+        ApplySort();
+        SaveSortSettings();
+    }
+
+    private void UpdateSortIcons()
+    {
+        SortByName.Icon = currentSortKey == "Title" ? new FontIcon { Glyph = "\uE915" } : null;
+        SortByLauncher.Icon = currentSortKey == "Launcher" ? new FontIcon { Glyph = "\uE915" } : null;
+
+        SortAscending.Icon = ascending ? new FontIcon { Glyph = "\uE915" } : null;
+        SortDescending.Icon = !ascending ? new FontIcon { Glyph = "\uE915" } : null;
+    }
+
+    private void ApplySort()
+    {
+        var container = games.HeaderContent as StackPanel;
+        if (container == null) return;
+
+        var panels = container.Children
+            .OfType<GamePanel>()
+            .Where(g => g != null)
+            .ToList();
+
+        if (panels.Count == 0) return;
+
+        IEnumerable<GamePanel> result;
+
+        if (currentSortKey == "Title")
+            result = panels.OrderBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase);
+        else
+            result = panels.OrderBy(g => g.Launcher ?? "", StringComparer.CurrentCultureIgnoreCase);
+
+        if (!ascending)
+            result = result.Reverse();
+
+        container.Children.Clear();
+        foreach (var panel in result)
+            container.Children.Add(panel);
+    }
+
+    private void SaveSortSettings()
+    {
+        var settings = ApplicationData.Current.LocalSettings.Values;
+        settings["SortKey"] = currentSortKey;
+        settings["SortAscending"] = ascending;
+    }
+
+    private void LoadSortSettings()
+    {
+        var settings = ApplicationData.Current.LocalSettings.Values;
+        currentSortKey = settings["SortKey"] as string ?? "Title";
+        ascending = settings["SortAscending"] is bool b && b;
+
+        UpdateSortIcons();
+        ApplySort();
+    }
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        WriteIndented = true
+    };
+
+    private async void AddCustomGame_Click(object sender, RoutedEventArgs e)
+    {
+
+        var contentDialog = new ContentDialog
+        {
+            Title = "Add Game",
+            Content = new GameAdd(),
+            PrimaryButtonText = "Add",
+            CloseButtonText = "Cancel",
+            PrimaryButtonStyle = (Style)Resources["AccentButtonStyle"],
+            XamlRoot = this.XamlRoot,
+        };
+
+        contentDialog.Resources["ContentDialogMinWidth"] = 850;
+
+        ContentDialogResult result = await contentDialog.ShowAsync();
+
+        if (result == ContentDialogResult.Primary)
+        {
+            // get gameadd data
+            var gameAddPage = (GameAdd)contentDialog.Content;
+
+            // add game
+            var gamePanel = new GamePanel
+            {
+                Launcher = gameAddPage.Launcher,
+                LauncherLocation = gameAddPage.LauncherLocation,
+                DataLocation = gameAddPage.DataLocation,
+                InstallLocation = gameAddPage.GameLocation,
+                Title = gameAddPage.GameName,
+                Description = gameAddPage.GameDeveloper,
+                ImageSource = new BitmapImage(new Uri(gameAddPage.GameCoverUrl))
+            };
+
+            var stackPanel = (StackPanel)GamesPage.Instance?.Games.HeaderContent;
+            stackPanel.Children.Add(gamePanel);
+
+            // save game data
+            var gameInfo = new
+            {
+                gameAddPage.Launcher,
+                gameAddPage.LauncherLocation,
+                gameAddPage.DataLocation,
+                gameAddPage.GameLocation,
+                gameAddPage.GameName,
+                gameAddPage.GameDeveloper,
+                gameAddPage.GameCoverUrl
+            };
+
+            string sanitizedTitle = string.Concat(gamePanel.Title.Split(Path.GetInvalidFileNameChars()));
+            string filePath = Path.Combine(PathHelper.GetAppDataFolderPath(), "Games", $"{sanitizedTitle}.json");
+
+            string json = JsonSerializer.Serialize(gameInfo, JsonOptions);
+            File.WriteAllText(filePath, json);
+
+            LoadSortSettings();
+
+            await gamePanel.CheckGameRunning();
+        }
+    }
+
     private async void LoadGames()
     {
         // add epic games games
@@ -42,6 +198,12 @@ public sealed partial class GamesPage : Page
                 {
                     // get json data
                     string url = $"https://api.egdata.app/items/{itemJson["MainGameCatalogItemId"]?.GetValue<string>()}";
+
+                    // more up to date than the item id
+                    if (itemJson["AppName"]?.GetValue<string>() == "Fortnite")
+                    {
+                        url = $"https://api.egdata.app/offers/d69e49517f0f4e49a39253f7b106dc27";
+                    }
 
                     try
                     {
@@ -61,7 +223,7 @@ public sealed partial class GamesPage : Page
                                 {
                                     Launcher = "Epic Games",
                                     Title = remoteData?["title"].GetValue<string>(),
-                                    Description = remoteData["developer"].GetValue<string>(),
+                                    Description = (remoteData["developer"]?.GetValue<string>()) ?? remoteData["developerDisplayName"]?.GetValue<string>(),
                                     ImageSource = new BitmapImage(new Uri(imageUrl)),
                                     CatalogNamespace = itemJson["MainGameCatalogNamespace"]?.GetValue<string>(),
                                     CatalogItemId = itemJson["MainGameCatalogItemId"]?.GetValue<string>(),
@@ -85,9 +247,73 @@ public sealed partial class GamesPage : Page
                 }
             }
         }
-        else
+
+        // add steam games
+        if (File.Exists(@"C:\Program Files (x86)\Steam\steam.exe"))
         {
-            Games_StackPanel.Height = 0;
+            string steam = @"C:\Program Files (x86)\Steam";
+            string vdf = Path.Combine(steam, @"steamapps\libraryfolders.vdf");
+            if (!File.Exists(vdf)) return;
+
+            var http = new HttpClient();
+            var pathRegex = new Regex(@"""path""\s+""(.+?)""");
+            var nameRegex = new Regex(@"""name""\s+""(.+?)""");
+            var dirRegex = new Regex(@"""installdir""\s+""(.+?)""");
+
+            foreach (var line in File.ReadAllLines(vdf))
+            {
+                var match = pathRegex.Match(line);
+                if (!match.Success) continue;
+
+                string lib = match.Groups[1].Value.Replace(@"\\", @"\");
+                string steamapps = Path.Combine(lib, "steamapps");
+                if (!Directory.Exists(steamapps)) continue;
+
+                foreach (var manifest in Directory.GetFiles(steamapps, "appmanifest_*.acf"))
+                {
+                    string[] lines = File.ReadAllLines(manifest);
+                    string name = lines.Select(l => nameRegex.Match(l)).FirstOrDefault(m => m.Success)?.Groups[1].Value;
+                    string dir = lines.Select(l => dirRegex.Match(l)).FirstOrDefault(m => m.Success)?.Groups[1].Value;
+                    if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(dir)) continue;
+
+                    string gameId = Path.GetFileNameWithoutExtension(manifest).Replace("appmanifest_", "");
+
+                    if (gameId == "228980")
+                    {
+                        continue;
+                    }
+
+                    string imagePath = Path.Combine(steam, $@"appcache\librarycache\{gameId}\library_600x900.jpg");
+
+                    string dev = "Unknown";
+                    try
+                    {
+                        string url = $"https://store.steampowered.com/api/appdetails?appids={gameId}";
+                        var json = await http.GetStringAsync(url);
+                        using var doc = JsonDocument.Parse(json);
+                        var data = doc.RootElement.GetProperty(gameId);
+                        if (data.GetProperty("success").GetBoolean())
+                        {
+                            var devs = data.GetProperty("data").GetProperty("developers");
+                            dev = string.Join(", ", devs.EnumerateArray().Select(d => d.GetString()).Where(s => !string.IsNullOrWhiteSpace(s)));
+                        }
+                    }
+                    catch { }
+
+                    var gamePanel = new GamePanel
+                    {
+                        Launcher = "Steam",
+                        Title = name,
+                        Description = dev,
+                        GameID = gameId,
+                        ImageSource = new BitmapImage(new Uri(imagePath)),
+                        InstallLocation = Path.Combine(lib, "steamapps", "common", dir),
+                    };
+
+                    ((StackPanel)games.HeaderContent).Children.Add(gamePanel);
+                    await gamePanel.CheckGameRunning();
+                }
+            }
         }
 
         // add custom games
@@ -103,7 +329,7 @@ public sealed partial class GamesPage : Page
                     Launcher = game["Launcher"],
                     LauncherLocation = game["LauncherLocation"],
                     DataLocation = game["DataLocation"],
-                    GameLocation = game["GameLocation"],
+                    InstallLocation = game["GameLocation"],
                     Title = game["GameName"],
                     Description = game["GameDeveloper"],
                     ImageSource = new BitmapImage(new Uri(game["GameCoverUrl"]))
@@ -118,18 +344,7 @@ public sealed partial class GamesPage : Page
             await Task.Delay(500);
         }
 
-        // sort all entries
-        var sorted = ((StackPanel)games.HeaderContent).Children
-               .OfType<GamePanel>()
-               .OrderBy(g => g.Title, StringComparer.CurrentCultureIgnoreCase)
-               .ToList();
-
-        ((StackPanel)games.HeaderContent).Children.Clear();
-
-        foreach (var panel in sorted)
-        {
-            ((StackPanel)games.HeaderContent).Children.Add(panel);
-        }
+        LoadSortSettings();
 
         Games_SwitchPresenter.HorizontalAlignment = HorizontalAlignment.Left;
         Games_SwitchPresenter.Value = false;
@@ -350,6 +565,15 @@ public sealed partial class GamesPage : Page
                 }
             }
 
+            // disable tray and notifications
+            string generalSection = Regex.Match(await File.ReadAllTextAsync(configFile), @"\[(.*?)_General\]").Groups[1].Value + "_General";
+
+            InIHelper iniHelper = new InIHelper(configFile);
+
+            iniHelper.AddValue("MinimiseToSystemTray", "False", generalSection);
+            iniHelper.AddValue("NotificationsEnabled_FreeGame", "False", generalSection);
+            iniHelper.AddValue("NotificationsEnabled_Adverts", "False", generalSection);
+
             // get data
             string data = Regex.Match(await File.ReadAllTextAsync(configFile), @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?").Groups[1].Value;
 
@@ -388,18 +612,14 @@ public sealed partial class GamesPage : Page
         // making sure an account is selected
         if (Accounts.SelectedItem != null)
         {
-            // get accountid
-            string accountId = Regex.Match(File.ReadAllText(configFile), @"\[(.*?)_General\]").Groups[1].Value;
-
             // add content dialog
             var contentDialog = new ContentDialog
             {
                 Title = "Remove Account",
-                Content = "Are you sure that you want to remove " + accountId + "?",
+                Content = "Are you sure that you want to remove " + Accounts.SelectedItem + "?",
                 PrimaryButtonText = "Yes",
                 CloseButtonText = "No",
                 XamlRoot = this.XamlRoot,
-                DefaultButton = ContentDialogButton.Primary
             };
             ContentDialogResult result = await contentDialog.ShowAsync();
 
@@ -409,7 +629,7 @@ public sealed partial class GamesPage : Page
                 // add infobar
                 AccountInfo.Children.Add(new InfoBar
                 {
-                    Title = "Removing " + accountId + "...",
+                    Title = "Removing " + Accounts.SelectedItem + "...",
                     IsClosable = false,
                     IsOpen = true,
                     Severity = InfoBarSeverity.Informational,
@@ -441,7 +661,7 @@ public sealed partial class GamesPage : Page
                 // add infobar
                 AccountInfo.Children.Add(new InfoBar
                 {
-                    Title = "Successfully removed " + accountId + ".",
+                    Title = "Successfully removed " + Accounts.SelectedItem + ".",
                     IsClosable = false,
                     IsOpen = true,
                     Severity = InfoBarSeverity.Success,

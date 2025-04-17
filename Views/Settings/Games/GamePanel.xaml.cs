@@ -80,6 +80,8 @@ public sealed partial class GamePanel : UserControl
     public string InstallLocation { get; set; }
     public string LaunchExecutable { get; set; }
 
+    public string GameID { get; set; }
+
     private DispatcherTimer gameWatcherTimer;
     private bool? previousGameState = null;
     private bool? previousExplorerState = null;
@@ -163,6 +165,19 @@ public sealed partial class GamePanel : UserControl
                  Process.GetProcessesByName(Path.GetFileNameWithoutExtension(onlineExecutable)).Length > 0)
             );
         }
+        else if (Launcher == "Steam")
+        {
+            var exeNames = Directory.GetFiles(InstallLocation, "*.exe")
+                    .Select(f => Path.GetFileNameWithoutExtension(f))
+                    .ToList();
+
+            if (exeNames.Count == 0) return;
+
+            StartGameWatcher(() =>
+                exeNames.Any(name =>
+                    Process.GetProcessesByName(name).Length > 0)
+            );
+        }
         else if (Launcher == "Ryujinx")
         {
             StartGameWatcher(() =>
@@ -189,7 +204,7 @@ public sealed partial class GamePanel : UserControl
                 Title = "Attention Required",
                 Content = "Are you sure that you want to launch " + Title + " in service enabled state?",
                 PrimaryButtonText = "Yes",
-                CloseButtonText = "No",
+                SecondaryButtonText = "No",
                 XamlRoot = this.XamlRoot
             };
 
@@ -198,46 +213,32 @@ public sealed partial class GamePanel : UserControl
             ContentDialogResult result = await contentDialog.ShowAsync();
 
             // check result
-            if (result == ContentDialogResult.Primary)
+            if (result == ContentDialogResult.Secondary)
             {
-                if (Launcher == "Epic Games")
-                {
-                    // start game silently
-                    Process.Start(new ProcessStartInfo($"com.epicgames.launcher://apps/{CatalogNamespace}%3A{CatalogItemId}%3A{AppName}?action=launch&silent=true") { UseShellExecute = true });
-
-                }
-                else if (Launcher == "Ryujinx")
-                {
-                    var startInfo = new ProcessStartInfo
-                    {
-                        FileName = LauncherLocation,
-                        Arguments = $@"-r ""{DataLocation}"" -fullscreen ""{GameLocation}""",
-                        CreateNoWindow = true,
-                    };
-
-                    Process.Start(startInfo);
-                }
+                return;
             }
         }
-        else
+
+        if (Launcher == "Epic Games")
         {
-            if (Launcher == "Epic Games")
-            {
-                // start game silently
-                Process.Start(new ProcessStartInfo($"com.epicgames.launcher://apps/{CatalogNamespace}%3A{CatalogItemId}%3A{AppName}?action=launch&silent=true") { UseShellExecute = true });
+            // start game silently
+            Process.Start(new ProcessStartInfo($"com.epicgames.launcher://apps/{CatalogNamespace}%3A{CatalogItemId}%3A{AppName}?action=launch&silent=true") { UseShellExecute = true });
 
-            }
-            else if (Launcher == "Ryujinx")
+        }
+        else if (Launcher == "Steam")
+        {
+            Process.Start(new ProcessStartInfo { FileName = @"C:\Program Files (x86)\Steam\steam.exe", Arguments = $"-applaunch {GameID} -silent" });
+        }
+        else if (Launcher == "Ryujinx")
+        {
+            var startInfo = new ProcessStartInfo
             {
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = LauncherLocation,
-                    Arguments = $@"-r ""{DataLocation}"" -fullscreen ""{GameLocation}""",
-                    CreateNoWindow = true,
-                };
+                FileName = LauncherLocation,
+                Arguments = $@"-r ""{DataLocation}"" -fullscreen ""{GameLocation}""",
+                CreateNoWindow = true,
+            };
 
-                Process.Start(startInfo);
-            }
+            Process.Start(startInfo);
         }
     }
 
@@ -330,7 +331,8 @@ public sealed partial class GamePanel : UserControl
             "StateRepository",
             "TextInputManagementService",
             "TrustedInstaller",
-            "UserManager"
+            "UserManager",
+            "Windhawk"
         };
 
         foreach (var serviceName in serviceNames)
@@ -377,6 +379,15 @@ public sealed partial class GamePanel : UserControl
     {
         // rename start menu binaries
         await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $@"-U:T -P:E -Wait -ShowWindowMode:Hide ren ""C:\Windows\System32\ctfmon.exee"" ctfmon.exe & ren ""C:\Windows\System32\RuntimeBroker.exee"" RuntimeBroker.exe & ren ""C:\Windows\SystemApps\ShellExperienceHost_cw5n1h2txyewy\ShellExperienceHost.exee"" ShellExperienceHost.exe & ren ""C:\Windows\SystemApps\MicrosoftWindows.Client.CBS_cw5n1h2txyewy\SearchHost.exee"" SearchHost.exe & ren ""C:\Windows\SystemApps\Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy\StartMenuExperienceHost.exee"" StartMenuExperienceHost.exe", CreateNoWindow = true }).WaitForExitAsync();
+
+        // start windhawk service
+        using (ServiceController service = new ServiceController("Windhawk"))
+        {
+            if (service.Status == ServiceControllerStatus.Stopped)
+            {
+                service.Start();
+            }
+        }
 
         // start audioendpoint builder
         using (ServiceController service = new ServiceController("AudioEndpointBuilder"))

@@ -23,7 +23,7 @@
                 FontSize="28"
                 FontWeight="SemiBold"
                 Text="Games" />
-            <StackPanel x:Name="Games_StackPanel" Height="420">
+            <StackPanel x:Name="Games_StackPanel" Height="460">
                 <dev:SwitchPresenter
                     x:Name="Games_SwitchPresenter"
                     Grid.Row="1"
@@ -50,11 +50,57 @@
                         </Grid>
                     </dev:Case>
                     <dev:Case Value="False">
-                        <views:GameGallery x:Name="games" Grid.Row="1">
-                            <views:GameGallery.HeaderContent>
-                                <StackPanel Orientation="Horizontal" Spacing="10" />
-                            </views:GameGallery.HeaderContent>
-                        </views:GameGallery>
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel
+                                Margin="0,0,0,10"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Top"
+                                Orientation="Horizontal"
+                                Spacing="10">
+                                <Button Click="AddCustomGame_Click">
+                                    <Button.Content>
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <FontIcon Glyph="&#xE710;" />
+                                            <TextBlock Text="Add new" />
+                                        </StackPanel>
+                                    </Button.Content>
+                                </Button>
+                                <DropDownButton HorizontalAlignment="Right" VerticalAlignment="Top">
+                                    <DropDownButton.Content>
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <FontIcon Glyph="&#xE8CB;" />
+                                            <TextBlock Text="Sort" />
+                                        </StackPanel>
+                                    </DropDownButton.Content>
+                                    <DropDownButton.Flyout>
+                                        <MenuFlyout Placement="Bottom">
+                                            <MenuFlyoutItem
+                                                x:Name="SortByName"
+                                                Click="SortByName_Click"
+                                                Text="Name" />
+                                            <MenuFlyoutItem
+                                                x:Name="SortByLauncher"
+                                                Click="SortByLauncher_Click"
+                                                Text="Launcher" />
+                                            <MenuFlyoutSeparator Margin="-12" />
+                                            <MenuFlyoutItem
+                                                x:Name="SortAscending"
+                                                Click="SortAscending_Click"
+                                                Text="Ascending" />
+                                            <MenuFlyoutItem
+                                                x:Name="SortDescending"
+                                                Click="SortDescending_Click"
+                                                Text="Descending" />
+                                        </MenuFlyout>
+                                    </DropDownButton.Flyout>
+                                </DropDownButton>
+                            </StackPanel>
+                            <views:GameGallery x:Name="games">
+                                <views:GameGallery.HeaderContent>
+                                    <StackPanel Orientation="Horizontal" Spacing="10" />
+                                </views:GameGallery.HeaderContent>
+                            </views:GameGallery>
+                        </StackPanel>
                     </dev:Case>
                 </dev:SwitchPresenter>
             </StackPanel>

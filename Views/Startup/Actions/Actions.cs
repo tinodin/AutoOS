@@ -18,6 +18,26 @@ public static class StartupActions
         await Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NSudo", "NSudoLC.exe"), arguments) { CreateNoWindow = true })!.WaitForExitAsync();
     }
 
+    public static async Task RunRestart()
+    {
+        StartupWindow.Status.Text = "Restarting in 3...";
+        await Task.Delay(1000);
+        StartupWindow.Status.Text = "Restarting in 2...";
+        await Task.Delay(1000);
+        StartupWindow.Status.Text = "Restarting in 1...";
+        await Task.Delay(1000);
+        StartupWindow.Status.Text = "Restarting...";
+        await Task.Delay(750);
+        ProcessStartInfo processStartInfo = new ProcessStartInfo
+        {
+            FileName = "cmd.exe",
+            Arguments = $"/c shutdown /r /t 0",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+        };
+        Process.Start(processStartInfo);
+    }
+
     public static async Task RunPowerShell(string command)
     {
         await Process.Start(new ProcessStartInfo("powershell.exe", $"-Command \"{command}\"") { CreateNoWindow = true, UseShellExecute = false })!.WaitForExitAsync();
@@ -68,7 +88,7 @@ public static class StartupActions
 
     public static async Task RunDownload(string url, string path, string file)
     {
-        string title = InstallPage.Info.Title;
+        string title = StartupWindow.Status.Text;
 
         var uiContext = SynchronizationContext.Current;
 

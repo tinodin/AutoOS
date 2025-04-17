@@ -26,11 +26,8 @@ public static class VisualStage
             // restore legacy context menu
             ("Restoring legacy context menu", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32"" /ve /t REG_SZ /d """" /f"), () => LegacyContextMenu == true),
 
-            // only show my taskbar on the main display
-            ("Showing the taskbar only on the main display", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"" /v ""MMTaskbarEnabled"" /t REG_DWORD /d 0 /f"), () => ShowMyTaskbarOnAllDisplays == false),
-
             // show all tray icons 
-            ("Showing all tray icons", async () => await ProcessActions.RunPowerShell(@"Set-ItemProperty -Path 'HKCU:\Control Panel\NotifyIconSettings\*' -Name 'IsPromoted' -Value 1"), () => AlwaysShowTrayIcons == true),
+            //("Showing all tray icons", async () => await ProcessActions.RunPowerShell(@"Set-ItemProperty -Path 'HKCU:\Control Panel\NotifyIconSettings\*' -Name 'IsPromoted' -Value 1"), () => AlwaysShowTrayIcons == true),
 
             // aligning the taskbar
             ("Aligning the taskbar to the left", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"" /v ""TaskbarAl"" /t REG_DWORD /d 0 /f"), () => TaskbarAlignment == true),

@@ -218,6 +218,10 @@ public sealed partial class GraphicsPage : Page
 
     private async void BrowseMsi_Click(object sender, RoutedEventArgs e)
     {
+        // disable the button to avoid double-clicking
+        var senderButton = sender as Button;
+        senderButton.IsEnabled = false;
+
         // remove infobar
         MsiAfterburnerInfo.Children.Clear();
 
@@ -295,6 +299,9 @@ public sealed partial class GraphicsPage : Page
             }
             else
             {
+                // re-enable the button
+                senderButton.IsEnabled = true;
+
                 // remove infobar
                 MsiAfterburnerInfo.Children.Clear();
 
@@ -317,6 +324,9 @@ public sealed partial class GraphicsPage : Page
         }
         else
         {
+            // re-enable the button
+            senderButton.IsEnabled = true;
+
             // remove infobar
             MsiAfterburnerInfo.Children.Clear();
         }

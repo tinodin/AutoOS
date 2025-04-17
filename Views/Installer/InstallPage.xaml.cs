@@ -1,5 +1,4 @@
 ﻿using AutoOS.Views.Installer.Stages;
-using Microsoft.Win32;
 
 namespace AutoOS.Views.Installer;
 
@@ -17,7 +16,7 @@ public sealed partial class InstallPage : Page
         Loaded += InstallPage_Loaded;
     }
 
-    private void InstallPage_Loaded(object sender, RoutedEventArgs e)
+    private async void InstallPage_Loaded(object sender, RoutedEventArgs e)
     {
         // get navview
         var navView = MainWindow.Instance.GetNavView();
@@ -40,20 +39,6 @@ public sealed partial class InstallPage : Page
         ProgressRingControl = ProgressRingItem;
         ResumeButton = ResumeButtonItem;
 
-        using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
-        {
-            var stageValue = key?.GetValue("Stage");
-            int stage = stageValue == null ? 1 : (int)stageValue;
-
-            if (stage == 1)
-            {
-                ExecuteFirstStage();
-            }
-        }
-    }
-
-    private async void ExecuteFirstStage()
-    {
         await PreparingStage.Run();
         await TimeDateRegionStage.Run();
         await PowerStage.Run();

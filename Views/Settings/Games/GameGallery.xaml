@@ -13,29 +13,8 @@
             SizeChanged="scroller_SizeChanged"
             VerticalScrollMode="Disabled"
             ViewChanging="scroller_ViewChanging">
-            <Grid x:Name="ContentGrid" Margin="0,0,12,0">
-                <ContentPresenter>
-                    <ContentPresenter.Content>
-                        <StackPanel
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Orientation="Horizontal"
-                            Spacing="50">
-                            <ContentPresenter VerticalAlignment="Center" Content="{x:Bind HeaderContent, Mode=OneWay}" />
-                            <Button
-                                Width="60"
-                                Height="60"
-                                Background="{ThemeResource SettingsCardBackground}"
-                                BorderBrush="{ThemeResource SurfaceStrokeColorFlyoutBrush}"
-                                Click="AddCustomGame_Click"
-                                CornerRadius="30">
-                                <Button.Content>
-                                    <SymbolIcon Symbol="Add" />
-                                </Button.Content>
-                            </Button>
-                        </StackPanel>
-                    </ContentPresenter.Content>
-                </ContentPresenter>
+            <Grid x:Name="ContentGrid">
+                <ContentPresenter Content="{x:Bind HeaderContent, Mode=OneWay}" />
             </Grid>
         </ScrollViewer>
         <Button

@@ -31,11 +31,9 @@
                             CheckedContent="Checking for updates..."
                             Click="updateCheck_Click"
                             Content="Done"
-                            Foreground="Black"
                             IsIndeterminate="True"
                             Loaded="updateCheck_Click"
-                            ProgressBackground="{ThemeResource AccentForegroundBrush}"
-                            ProgressForeground="#60FFFFFF" />
+                            Style="{ThemeResource AccentProgressButtonStyle}" />
                         <Button
                             x:Name="updateCheckButton"
                             HorizontalAlignment="Left"

@@ -10,7 +10,7 @@
     xmlns:views="using:AutoOS.Views"
     mc:Ignorable="d">
     <ScrollViewer Margin="10,0,-25,0" Padding="{ThemeResource ContentPagePadding}">
-        <StackPanel dev:PanelAttach.ChildrenTransitions="SettingsCardTransition">
+        <StackPanel dev:PanelAttach.ChildrenTransitions="None">
             <dev:SimpleSettingsGroup Header="Launcher">
                 <dev:SettingsCard Header="Launcher">
                     <ComboBox x:Name="LauncherValue" SelectedIndex="0">

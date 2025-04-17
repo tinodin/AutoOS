@@ -9,6 +9,7 @@ public sealed partial class GameSettings : Page
     public GameSettings()
     {
         InitializeComponent();
+
         GetPresentationMode();
     }
 

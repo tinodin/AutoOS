@@ -11,7 +11,7 @@
     <dev:MainLandingPage
         x:Name="mainLandingPage"
         HeaderImage="{ThemeResource HeaderCover}"
-        HeaderSubtitleText="Windows App SDK 1.7"
+        HeaderSubtitleText="Windows App SDK 1.8"
         HeaderText="AutoOS Settings">
         <dev:MainLandingPage.HeaderContent>
             <StackPanel
