@@ -21,9 +21,6 @@ jobs:
       with:
         dotnet-version: 9.x.x
 
-    # - name: Restore
-    #   run: dotnet restore
-
     - name: Decode Signing Certificate
       run: |
         echo "${{ secrets.SIGNING_CERTIFICATE_BASE_64_CONTENT }}" > cert.asc
@@ -38,16 +35,17 @@ jobs:
       with: 
         name: Build
         path:
-            ./bin/x64/Release/net9.0-windows10.0.26100.0/win-x64/AppPackages/**/*.msix
-            ./bin/x64/Release/net9.0-windows10.0.26100.0/win-x64/AppPackages/**/*.cer
+            ./bin/Release/net9.0-windows10.0.26100.0/win-x64/publish/AppPackages/**/*.msix
+            ./bin/Release/net9.0-windows10.0.26100.0/win-x64/publish/AppPackages/**/*.cer
         
         
         
         
         
         
-        
-        
+        #             ./bin/x64/Release/net9.0-windows10.0.26100.0/win-x64/AppPackages/**/*.msix
+
+        # ./bin/x64/Release/net9.0-windows10.0.26100.0/win-x64/AppPackages/**/*.cer
         
         
         # - name: Extract Version
