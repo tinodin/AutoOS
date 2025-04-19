@@ -1,89 +1,75 @@
-﻿name: Deploy
+﻿# This workflow will build, sign, and package a WinUI 3 MSIX desktop application
+# built on .NET.
+
+name: WinUI 3 MSIX app
 
 on:
   push:
-    branches:
-      - master
-
-permissions:
-  contents: write
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
+
   build:
-    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        configuration: [Release]
+        platform: [x64]
+
+    runs-on: windows-latest  # For a list of available runner types, refer to
+                             # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
+
+    env:
+      Solution_Name: AutoOS.sln                       # Replace with your solution name, i.e. App1.sln.
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
-    - uses: actions/setup-dotnet@v4
+    # Install the .NET Core workload
+    - name: Install .NET Core
+      uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 9.x.x
+        dotnet-version: 9.0.x
 
-    - name: Decode Signing Certificate
+    # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
+    - name: Setup MSBuild.exe
+      uses: microsoft/setup-msbuild@v1.0.2
+
+    # Restore the application to populate the obj folder with RuntimeIdentifiers
+    - name: Restore the application
+      run: msbuild $env:Solution_Name /t:Restore /p:Configuration=$env:Configuration
+      env:
+        Configuration: ${{ matrix.configuration }}
+
+    # Decode the base 64 encoded pfx and save the Signing_Certificate
+    - name: Decode the pfx
       run: |
-        echo "${{ secrets.SIGNING_CERTIFICATE_BASE_64_CONTENT }}" > cert.asc
-        certutil -decode cert.asc cert.pfx
+        $pfx_cert_byte = [System.Convert]::FromBase64String("${{ secrets.BASE64_ENCODED_PFX }}")
+        $certificatePath = "GitHubActionsWorkflow.pfx"
+        [IO.File]::WriteAllBytes("$certificatePath", $pfx_cert_byte)
 
-    - name: Install Signing Certficiate
-      run: certutil -user -p ${{ secrets.SIGNING_CERTIFICATE_PASSWORD }} -Silent -importpfx cert.pfx NoRoot
+    # Create the app package by building and packaging the project
+    - name: Create the app package
+      run: msbuild $env:Solution_Name /p:Configuration=$env:Configuration /p:Platform=$env:Platform /p:UapAppxPackageBuildMode=$env:Appx_Package_Build_Mode /p:AppxBundle=$env:Appx_Bundle /p:PackageCertificateKeyFile=GitHubActionsWorkflow.pfx /p:AppxPackageDir="$env:Appx_Package_Dir" /p:GenerateAppxPackageOnBuild=true
+      env:
+        Appx_Bundle: Never
+        Appx_Package_Build_Mode: SideloadOnly
+        Appx_Package_Dir: Packages\
+        Configuration: ${{ matrix.configuration }}
+        Platform: ${{ matrix.platform }}
 
-    - run: dotnet publish AutoOS.csproj -c Release -r win-x64 -f:net9.0-windows10.0.26100.0 --self-contained true /p:AppxPackageSigningEnabled=true /p:PackageCertificateThumbprint=${{ secrets.SIGNING_CERTIFICATE_THUMBPRINT }}
+    # Remove the pfx
+    - name: Remove the pfx
+      run: Remove-Item -path GitHubActionsWorkflow.pfx
 
-    - name: Show full directory tree
-      run: Get-ChildItem -Recurse | ForEach-Object { $_.FullName }
-      shell: pwsh
-
-    - uses: actions/upload-artifact@v4
-      with: 
-        name: Build
-        path: ./AppPackages/**/*.{msix,cer}
-        
-        
-        
-        
-#     ./bin/Release/net9.0-windows10.0.26100.0/win-x64/AppPackages/**/*.msix
-# ./bin/Release/net9.0-windows10.0.26100.0/win-x64/AppPackages/**/*.cer    
-        
-        #             ./bin/x64/Release/net9.0-windows10.0.26100.0/win-x64/AppPackages/**/*.msix
-
-        # ./bin/x64/Release/net9.0-windows10.0.26100.0/win-x64/AppPackages/**/*.cer
-        
-        
-        # - name: Extract Version
-    #   id: extractVersion
-    #   shell: pwsh
-    #   run: |
-    #     $xml = [Xml] (Get-Content ./ContinuousDeployment/ContinuousDeployment.csproj)
-    #     [string] $version = [Version] $xml.Project.PropertyGroup.ApplicationDisplayVersion
-    #     echo "version=$($version)" >> $env:GITHUB_OUTPUT
-
-    # - name: Create Tag
-    #   uses: actions/github-script@v5
-    #   with:
-    #     github-token: ${{ secrets.GITHUB_TOKEN }}
-    #     script: |
-    #       github.rest.git.createRef({
-    #         owner: context.repo.owner,
-    #         repo: context.repo.repo,
-    #         sha: context.sha,
-    #         ref: 'refs/tags/v${{ steps.extractVersion.outputs.version }}'
-    #       })
-
-    # - name: Rename Auto-Update Installer
-    #   shell: pwsh
-    #   run: Rename-Item ./ContinuousDeployment/bin/Release/net8.0-windows10.0.19041.0/win10-x64/AppPackages/ContinuousDeployment_${{ steps.extractVersion.outputs.version }}.0_Test/ContinuousDeployment_${{ steps.extractVersion.outputs.version }}.0_x64.msix AutoUpdate.msix
-
-    # - name: Rename Certificate
-    #   shell: pwsh
-    #   run: Rename-Item ./ContinuousDeployment/bin/Release/net8.0-windows10.0.19041.0/win10-x64/AppPackages/ContinuousDeployment_${{ steps.extractVersion.outputs.version }}.0_Test/ContinuousDeployment_${{ steps.extractVersion.outputs.version }}.0_x64.cer ContinuousDeployment.cer
-
-    # - name: Create Release
-    #   uses: softprops/action-gh-release@v1
-    #   with:
-    #     tag_name: v${{ steps.extractVersion.outputs.version }}
-    #     files: | 
-    #       ./ContinuousDeployment/ContinuousDeployment.appinstaller
-    #       ./ContinuousDeployment/bin/Release/net8.0-windows10.0.19041.0/win10-x64/AppPackages/ContinuousDeployment_${{ steps.extractVersion.outputs.version }}.0_Test/AutoUpdate.msix
-    #       ./ContinuousDeployment/bin/Release/net8.0-windows10.0.19041.0/win10-x64/AppPackages/ContinuousDeployment_${{ steps.extractVersion.outputs.version }}.0_Test/ContinuousDeployment.cer
+    # Upload the MSIX package: https://github.com/marketplace/actions/upload-a-build-artifact
+    - name: Upload MSIX package
+      uses: actions/upload-artifact@v2
+      with:
+        name: MSIX Package
+        path: ${{ env.Solution_Name }}\\Packages
