@@ -26,8 +26,6 @@ jobs:
     - name: Restore
       run: dotnet restore
 
-    - run: dotnet publish AutoOS.csproj -c Release -r win-x64 --self-contained true -p:PublishTrimmed=true
-
     - name: Decode Signing Certificate
       run: |
         echo "${{ secrets.SIGNING_CERTIFICATE_BASE_64_CONTENT }}" > cert.asc
@@ -36,43 +34,57 @@ jobs:
     - name: Install Signing Certficiate
       run: certutil -user -p ${{ secrets.SIGNING_CERTIFICATE_PASSWORD }} -Silent -importpfx cert.pfx NoRoot
 
-    - name: Publish
-      run: dotnet publish -c Release -f:net8.0-windows10.0.19041.0 /p:GenerateAppxPackageOnBuild=true /p:AppxPackageSigningEnabled=true /p:PackageCertificateThumbprint=${{ secrets.SIGNING_CERTIFICATE_THUMBPRINT }}
-      working-directory: ./ContinuousDeployment
+    - run: dotnet publish AutoOS.csproj -c Release -r win-x64 -f:net9.0-windows10.0.26100.0 --self-contained true -p:PublishTrimmed=true /p:AppxPackageSigningEnabled=true /p:PackageCertificateThumbprint=${{ secrets.SIGNING_CERTIFICATE_THUMBPRINT }}
 
-    - name: Extract Version
-      id: extractVersion
-      shell: pwsh
-      run: |
-        $xml = [Xml] (Get-Content ./ContinuousDeployment/ContinuousDeployment.csproj)
-        [string] $version = [Version] $xml.Project.PropertyGroup.ApplicationDisplayVersion
-        echo "version=$($version)" >> $env:GITHUB_OUTPUT
+    - uses: actions/upload-artifact@v4
+      with: 
+        name: Build
+        path:
+            ./bin\x64\Release\net9.0-windows10.0.26100.0\win-x64\AppPackages/**/*.msix
+            ./bin\x64\Release\net9.0-windows10.0.26100.0\win-x64\AppPackages/**/*.cer
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        # - name: Extract Version
+    #   id: extractVersion
+    #   shell: pwsh
+    #   run: |
+    #     $xml = [Xml] (Get-Content ./ContinuousDeployment/ContinuousDeployment.csproj)
+    #     [string] $version = [Version] $xml.Project.PropertyGroup.ApplicationDisplayVersion
+    #     echo "version=$($version)" >> $env:GITHUB_OUTPUT
 
-    - name: Create Tag
-      uses: actions/github-script@v5
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          github.rest.git.createRef({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            sha: context.sha,
-            ref: 'refs/tags/v${{ steps.extractVersion.outputs.version }}'
-          })
+    # - name: Create Tag
+    #   uses: actions/github-script@v5
+    #   with:
+    #     github-token: ${{ secrets.GITHUB_TOKEN }}
+    #     script: |
+    #       github.rest.git.createRef({
+    #         owner: context.repo.owner,
+    #         repo: context.repo.repo,
+    #         sha: context.sha,
+    #         ref: 'refs/tags/v${{ steps.extractVersion.outputs.version }}'
+    #       })
 
-    - name: Rename Auto-Update Installer
-      shell: pwsh
-      run: Rename-Item ./ContinuousDeployment/bin/Release/net8.0-windows10.0.19041.0/win10-x64/AppPackages/ContinuousDeployment_${{ steps.extractVersion.outputs.version }}.0_Test/ContinuousDeployment_${{ steps.extractVersion.outputs.version }}.0_x64.msix AutoUpdate.msix
+    # - name: Rename Auto-Update Installer
+    #   shell: pwsh
+    #   run: Rename-Item ./ContinuousDeployment/bin/Release/net8.0-windows10.0.19041.0/win10-x64/AppPackages/ContinuousDeployment_${{ steps.extractVersion.outputs.version }}.0_Test/ContinuousDeployment_${{ steps.extractVersion.outputs.version }}.0_x64.msix AutoUpdate.msix
 
-    - name: Rename Certificate
-      shell: pwsh
-      run: Rename-Item ./ContinuousDeployment/bin/Release/net8.0-windows10.0.19041.0/win10-x64/AppPackages/ContinuousDeployment_${{ steps.extractVersion.outputs.version }}.0_Test/ContinuousDeployment_${{ steps.extractVersion.outputs.version }}.0_x64.cer ContinuousDeployment.cer
+    # - name: Rename Certificate
+    #   shell: pwsh
+    #   run: Rename-Item ./ContinuousDeployment/bin/Release/net8.0-windows10.0.19041.0/win10-x64/AppPackages/ContinuousDeployment_${{ steps.extractVersion.outputs.version }}.0_Test/ContinuousDeployment_${{ steps.extractVersion.outputs.version }}.0_x64.cer ContinuousDeployment.cer
 
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: v${{ steps.extractVersion.outputs.version }}
-        files: | 
-          ./ContinuousDeployment/ContinuousDeployment.appinstaller
-          ./ContinuousDeployment/bin/Release/net8.0-windows10.0.19041.0/win10-x64/AppPackages/ContinuousDeployment_${{ steps.extractVersion.outputs.version }}.0_Test/AutoUpdate.msix
-          ./ContinuousDeployment/bin/Release/net8.0-windows10.0.19041.0/win10-x64/AppPackages/ContinuousDeployment_${{ steps.extractVersion.outputs.version }}.0_Test/ContinuousDeployment.cer
+    # - name: Create Release
+    #   uses: softprops/action-gh-release@v1
+    #   with:
+    #     tag_name: v${{ steps.extractVersion.outputs.version }}
+    #     files: | 
+    #       ./ContinuousDeployment/ContinuousDeployment.appinstaller
+    #       ./ContinuousDeployment/bin/Release/net8.0-windows10.0.19041.0/win10-x64/AppPackages/ContinuousDeployment_${{ steps.extractVersion.outputs.version }}.0_Test/AutoUpdate.msix
+    #       ./ContinuousDeployment/bin/Release/net8.0-windows10.0.19041.0/win10-x64/AppPackages/ContinuousDeployment_${{ steps.extractVersion.outputs.version }}.0_Test/ContinuousDeployment.cer
