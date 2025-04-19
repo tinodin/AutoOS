@@ -1,7 +1,4 @@
-﻿# This workflow will build, sign, and package a WinUI 3 MSIX desktop application
-# built on .NET.
-
-name: WinUI 3 MSIX app
+﻿name: WinUI 3 MSIX app
 
 on:
   push:
