@@ -29,7 +29,7 @@ jobs:
     - name: Install Signing Certficiate
       run: certutil -user -p ${{ secrets.SIGNING_CERTIFICATE_PASSWORD }} -Silent -importpfx cert.pfx NoRoot
 
-    - run: msbuild publish AutoOS.csproj -c Release -r win-x64 -f:net9.0-windows10.0.26100.0 --self-contained true /p:AppxPackageSigningEnabled=true /p:PackageCertificateThumbprint=${{ secrets.SIGNING_CERTIFICATE_THUMBPRINT }}
+    - run: dotnet publish AutoOS.csproj -c Release -r win-x64 -f:net9.0-windows10.0.26100.0 --self-contained true /p:AppxPackageSigningEnabled=true /p:PackageCertificateThumbprint=${{ secrets.SIGNING_CERTIFICATE_THUMBPRINT }}
 
     - name: Show full directory tree
       run: Get-ChildItem -Recurse | ForEach-Object { $_.FullName }
