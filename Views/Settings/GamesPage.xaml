@@ -40,7 +40,7 @@
                                 VerticalAlignment="Center"
                                 Orientation="Vertical"
                                 Spacing="8">
-                                <ProgressRing x:Name="Games_ProgressRing" IsActive="True" />
+                                <ProgressRing IsActive="True" />
                                 <TextBlock
                                     HorizontalAlignment="Center"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -82,7 +82,7 @@
                                                 x:Name="SortByLauncher"
                                                 Click="SortByLauncher_Click"
                                                 Text="Launcher" />
-                                            <MenuFlyoutSeparator Margin="-12" />
+                                            <MenuFlyoutSeparator />
                                             <MenuFlyoutItem
                                                 x:Name="SortAscending"
                                                 Click="SortAscending_Click"

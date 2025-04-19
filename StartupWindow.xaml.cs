@@ -1,14 +1,18 @@
 ﻿using AutoOS.Views.Startup.Stages;
 using AutoOS.Views.Updater.Stages;
 using Microsoft.UI.Windowing;
+using System.Runtime.InteropServices;
 
 namespace AutoOS.Views
 {
     public sealed partial class StartupWindow : Window
     {
+        [DllImport("user32.dll")]
+        static extern uint GetDpiForWindow(IntPtr hWnd);
         public string TitleBarName { get; set; }
         public static TextBlock Status { get; private set; }
         public static ProgressBar Progress { get; private set; }
+       
         public StartupWindow()
         {
             InitializeComponent();
@@ -36,6 +40,12 @@ namespace AutoOS.Views
         {
             Status = StatusText;
             Progress = ProgressBar;
+
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+            uint dpi = GetDpiForWindow(hwnd);
+            int scalingPercent = (int)(dpi * 100 / 96);
+
+            App.Scaling = dpi / 96.0;
 
             if (!Directory.Exists(@"C:\Program Files\Windhawk"))
             {

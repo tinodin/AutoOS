@@ -1,3 +1,4 @@
+using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using System.Diagnostics;
 
@@ -9,7 +10,6 @@ public sealed partial class GameSettings : Page
     public GameSettings()
     {
         InitializeComponent();
-
         GetPresentationMode();
     }
 
@@ -26,7 +26,9 @@ public sealed partial class GameSettings : Page
 
     public static readonly DependencyProperty InstallLocationProperty =
     DependencyProperty.Register(nameof(InstallLocation), typeof(string), typeof(GameSettings), new PropertyMetadata(string.Empty));
-
+    
+    public ImageSource ImageSource { get; set; }
+    
     public string InstallLocation
     {
         get => (string)GetValue(InstallLocationProperty);

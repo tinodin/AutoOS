@@ -52,7 +52,8 @@
             <dev:SettingsExpander
                 Description="Add tint to your window to make your experience more personalized."
                 Header="TintColor"
-                HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Tint.png}">
+                HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Tint.png}"
+                IsExpanded="True">
                 <Button Padding="0">
                     <StackPanel Orientation="Horizontal">
                         <Border

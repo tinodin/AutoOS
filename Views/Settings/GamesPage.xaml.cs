@@ -6,27 +6,28 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
-using Windows.Gaming.Input;
 using Windows.Storage;
 
 namespace AutoOS.Views.Settings;
 
 public sealed partial class GamesPage : Page
 {
-    public static GamesPage Instance { get; private set; }
-    public GameGallery Games => games;
     private bool isInitializingAccounts = true;
     private readonly string configFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\GameUserSettings.ini");
 
     public GamesPage()
     {
         InitializeComponent();
-        Instance = this;
         LoadGames();
         LoadEpicAccounts();
     }
 
     private static readonly HttpClient httpClient = new HttpClient();
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        WriteIndented = true
+    };
 
     private string currentSortKey = "Title";
     private bool ascending = true;
@@ -87,50 +88,52 @@ public sealed partial class GamesPage : Page
         IEnumerable<GamePanel> result;
 
         if (currentSortKey == "Title")
+        {
             result = panels.OrderBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase);
+        }
         else
+        {
             result = panels.OrderBy(g => g.Launcher ?? "", StringComparer.CurrentCultureIgnoreCase);
+        }
 
         if (!ascending)
             result = result.Reverse();
 
         container.Children.Clear();
         foreach (var panel in result)
+        {
             container.Children.Add(panel);
+        }
     }
 
     private void SaveSortSettings()
     {
-        var settings = ApplicationData.Current.LocalSettings.Values;
-        settings["SortKey"] = currentSortKey;
-        settings["SortAscending"] = ascending;
+        ApplicationData.Current.LocalSettings.Values["SortKey"] = currentSortKey;
+        ApplicationData.Current.LocalSettings.Values["SortAscending"] = ascending;
     }
 
     private void LoadSortSettings()
     {
-        var settings = ApplicationData.Current.LocalSettings.Values;
-        currentSortKey = settings["SortKey"] as string ?? "Title";
-        ascending = settings["SortAscending"] is bool b && b;
+        var savedSortKey = ApplicationData.Current.LocalSettings.Values["SortKey"];
+        var savedAscending = ApplicationData.Current.LocalSettings.Values["SortAscending"];
+
+        currentSortKey = savedSortKey as string ?? "Title";
+        ascending = savedAscending is bool b ? b : true;
 
         UpdateSortIcons();
         ApplySort();
     }
 
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = true
-    };
-
     private async void AddCustomGame_Click(object sender, RoutedEventArgs e)
     {
-
+        // show content dialog
         var contentDialog = new ContentDialog
         {
             Title = "Add Game",
             Content = new GameAdd(),
             PrimaryButtonText = "Add",
             CloseButtonText = "Cancel",
-            PrimaryButtonStyle = (Style)Resources["AccentButtonStyle"],
+            DefaultButton = ContentDialogButton.Primary,
             XamlRoot = this.XamlRoot,
         };
 
@@ -140,7 +143,7 @@ public sealed partial class GamesPage : Page
 
         if (result == ContentDialogResult.Primary)
         {
-            // get gameadd data
+            // get data from gameadd
             var gameAddPage = (GameAdd)contentDialog.Content;
 
             // add game
@@ -155,8 +158,7 @@ public sealed partial class GamesPage : Page
                 ImageSource = new BitmapImage(new Uri(gameAddPage.GameCoverUrl))
             };
 
-            var stackPanel = (StackPanel)GamesPage.Instance?.Games.HeaderContent;
-            stackPanel.Children.Add(gamePanel);
+            ((StackPanel)games.HeaderContent).Children.Add(gamePanel);
 
             // save game data
             var gameInfo = new
@@ -170,28 +172,26 @@ public sealed partial class GamesPage : Page
                 gameAddPage.GameCoverUrl
             };
 
-            string sanitizedTitle = string.Concat(gamePanel.Title.Split(Path.GetInvalidFileNameChars()));
-            string filePath = Path.Combine(PathHelper.GetAppDataFolderPath(), "Games", $"{sanitizedTitle}.json");
+            File.WriteAllText(Path.Combine(PathHelper.GetAppDataFolderPath(), "Games", $"{string.Concat(gamePanel.Title.Split(Path.GetInvalidFileNameChars()))}.json"), JsonSerializer.Serialize(gameInfo, JsonOptions));
 
-            string json = JsonSerializer.Serialize(gameInfo, JsonOptions);
-            File.WriteAllText(filePath, json);
-
+            // sort games
             LoadSortSettings();
 
-            await gamePanel.CheckGameRunning();
+            // start watcher
+            gamePanel.CheckGameRunning();
         }
     }
 
     private async void LoadGames()
     {
-        // add epic games games
+        // epic games
         if (File.Exists(@"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win32\EpicGamesLauncher.exe"))
         {
+            // for each manifest
             foreach (var file in Directory.GetFiles(@"C:\ProgramData\Epic\EpicGamesLauncher\Data\Manifests", "*.item", SearchOption.TopDirectoryOnly))
             {
                 // read file
-                var fileContent = await File.ReadAllTextAsync(file);
-                var itemJson = JsonNode.Parse(fileContent);
+                var itemJson = JsonNode.Parse(await File.ReadAllTextAsync(file));
 
                 // check if an game or addon
                 if (itemJson?["bIsApplication"]?.GetValue<bool>() == true)
@@ -199,7 +199,7 @@ public sealed partial class GamesPage : Page
                     // get json data
                     string url = $"https://api.egdata.app/items/{itemJson["MainGameCatalogItemId"]?.GetValue<string>()}";
 
-                    // more up to date than the item id
+                    // more up to date than the fortnite item id
                     if (itemJson["AppName"]?.GetValue<string>() == "Fortnite")
                     {
                         url = $"https://api.egdata.app/offers/d69e49517f0f4e49a39253f7b106dc27";
@@ -208,23 +208,20 @@ public sealed partial class GamesPage : Page
                     try
                     {
                         // read json data
-                        string remoteJson = await httpClient.GetStringAsync(url);
-                        var remoteData = JsonNode.Parse(remoteJson);
+                        var remoteData = JsonNode.Parse(await httpClient.GetStringAsync(url));
 
                         // search cover image
                         foreach (var image in remoteData?["keyImages"]?.AsArray())
                         {
                             if (image?["type"]?.GetValue<string>() == "DieselGameBoxTall")
                             {
-                                string imageUrl = image["url"]?.GetValue<string>();
-
-                                // add the game
+                                // add game panel
                                 var gamePanel = new GamePanel
                                 {
                                     Launcher = "Epic Games",
                                     Title = remoteData?["title"].GetValue<string>(),
                                     Description = (remoteData["developer"]?.GetValue<string>()) ?? remoteData["developerDisplayName"]?.GetValue<string>(),
-                                    ImageSource = new BitmapImage(new Uri(imageUrl)),
+                                    ImageSource = new BitmapImage(new Uri(image["url"]?.GetValue<string>())),
                                     CatalogNamespace = itemJson["MainGameCatalogNamespace"]?.GetValue<string>(),
                                     CatalogItemId = itemJson["MainGameCatalogItemId"]?.GetValue<string>(),
                                     AppName = itemJson["MainGameAppName"]?.GetValue<string>(),
@@ -233,29 +230,27 @@ public sealed partial class GamesPage : Page
                                 };
 
                                 ((StackPanel)games.HeaderContent).Children.Add(gamePanel);
-                                await gamePanel.CheckGameRunning();
 
-                                break;
+                                // start watcher
+                                gamePanel.CheckGameRunning();
                             }
                         }
                     }
                     catch
                     {
-                        await Task.Delay(500);
                         break;
                     }
                 }
             }
         }
 
-        // add steam games
+        // steam
         if (File.Exists(@"C:\Program Files (x86)\Steam\steam.exe"))
         {
             string steam = @"C:\Program Files (x86)\Steam";
             string vdf = Path.Combine(steam, @"steamapps\libraryfolders.vdf");
             if (!File.Exists(vdf)) return;
 
-            var http = new HttpClient();
             var pathRegex = new Regex(@"""path""\s+""(.+?)""");
             var nameRegex = new Regex(@"""name""\s+""(.+?)""");
             var dirRegex = new Regex(@"""installdir""\s+""(.+?)""");
@@ -278,53 +273,57 @@ public sealed partial class GamesPage : Page
 
                     string gameId = Path.GetFileNameWithoutExtension(manifest).Replace("appmanifest_", "");
 
+                    // skip steam tools
                     if (gameId == "228980")
                     {
                         continue;
                     }
 
-                    string imagePath = Path.Combine(steam, $@"appcache\librarycache\{gameId}\library_600x900.jpg");
+                    // get developer
+                    string developer = "Unknown";
 
-                    string dev = "Unknown";
                     try
                     {
-                        string url = $"https://store.steampowered.com/api/appdetails?appids={gameId}";
-                        var json = await http.GetStringAsync(url);
-                        using var doc = JsonDocument.Parse(json);
-                        var data = doc.RootElement.GetProperty(gameId);
+                        var data = JsonDocument.Parse(await httpClient.GetStringAsync($"https://store.steampowered.com/api/appdetails?appids={gameId}")).RootElement.GetProperty(gameId);
                         if (data.GetProperty("success").GetBoolean())
                         {
-                            var devs = data.GetProperty("data").GetProperty("developers");
-                            dev = string.Join(", ", devs.EnumerateArray().Select(d => d.GetString()).Where(s => !string.IsNullOrWhiteSpace(s)));
+                            developer = string.Join(", ", data.GetProperty("data").GetProperty("developers").EnumerateArray().Select(d => d.GetString()).Where(s => !string.IsNullOrWhiteSpace(s)));
                         }
                     }
-                    catch { }
+                    catch
+                    {
+                        break;
+                    }
 
+                    // add game panel
                     var gamePanel = new GamePanel
                     {
                         Launcher = "Steam",
                         Title = name,
-                        Description = dev,
+                        Description = developer,
                         GameID = gameId,
-                        ImageSource = new BitmapImage(new Uri(imagePath)),
+                        ImageSource = new BitmapImage(new Uri(Path.Combine(steam, $@"appcache\librarycache\{gameId}\library_600x900.jpg"))),
                         InstallLocation = Path.Combine(lib, "steamapps", "common", dir),
                     };
 
                     ((StackPanel)games.HeaderContent).Children.Add(gamePanel);
-                    await gamePanel.CheckGameRunning();
+
+                    // start watcher
+                    gamePanel.CheckGameRunning();
                 }
             }
         }
 
         // add custom games
-        try
+        if (Directory.Exists(Path.Combine(PathHelper.GetAppDataFolderPath(), "Games")))
         {
             foreach (var file in Directory.GetFiles(Path.Combine(PathHelper.GetAppDataFolderPath(), "Games"), "*.json"))
             {
-                string json = File.ReadAllText(file);
-                var game = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+                // read game json
+                var game = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(file));
 
-                var panel = new GamePanel
+                // add game panel
+                var gamePanel = new GamePanel
                 {
                     Launcher = game["Launcher"],
                     LauncherLocation = game["LauncherLocation"],
@@ -335,23 +334,24 @@ public sealed partial class GamesPage : Page
                     ImageSource = new BitmapImage(new Uri(game["GameCoverUrl"]))
                 };
 
-                ((StackPanel)games.HeaderContent).Children.Add(panel);
-                await panel.CheckGameRunning();
+                ((StackPanel)games.HeaderContent).Children.Add(gamePanel);
+
+                // start watcher
+                gamePanel.CheckGameRunning();
             }
         }
-        catch
-        {
-            await Task.Delay(500);
-        }
 
+        // sort games
         LoadSortSettings();
 
+        // align games left
         Games_SwitchPresenter.HorizontalAlignment = HorizontalAlignment.Left;
+        
+        // show game gallery
         Games_SwitchPresenter.Value = false;
-        Games_ProgressRing.IsActive = false;
     }
 
-    private async void LoadEpicAccounts()
+    public async void LoadEpicAccounts()
     {
         // clear list
         Accounts.ItemsSource = null;
@@ -479,11 +479,159 @@ public sealed partial class GamesPage : Page
         // replace accountId in registry
         Process.Start("regedit.exe", $"/s \"{Path.Combine(Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\", Accounts.SelectedItem.ToString()), "accountId.reg"))}\"");
 
-        // launch epic games launcher
-        await Task.Run(() => { var p = Process.Start(new ProcessStartInfo(@"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win64\EpicGamesLauncher.exe") { WindowStyle = ProcessWindowStyle.Hidden }); p?.WaitForInputIdle(); Thread.Sleep(6000); p?.Kill(); });
+        // get current data
+        string rawData = Regex.Match(await File.ReadAllTextAsync(configFile), @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?").Groups[1].Value;
+        string decrypted = DecryptDataWithAes(rawData, "A09C853C9E95409BB94D707EADEFA52E");
 
+        await Task.Run(() => Process.Start(new ProcessStartInfo(@"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win64\EpicGamesLauncher.exe") { WindowStyle = ProcessWindowStyle.Hidden }));
+
+        string lastRaw = rawData;
+
+        while (true)
+        {
+            await Task.Delay(100);
+            string newRaw = Regex.Match(await File.ReadAllTextAsync(configFile), @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?").Groups[1].Value;
+
+            if (newRaw == lastRaw) continue;
+            lastRaw = newRaw;
+
+            string decryptedNew = DecryptDataWithAes(newRaw, "A09C853C9E95409BB94D707EADEFA52E");
+            if (decryptedNew.Length < 1000)
+            {
+                UpdateInvalidEpicGamesToken();
+                return;
+            }
+
+            string cleaned = decryptedNew.Trim().TrimEnd('\0');
+            using var doc = JsonDocument.Parse(cleaned);
+            int tokenUse = doc.RootElement[0].GetProperty("TokenUseCount").GetInt32();
+
+            if (tokenUse == 1) break;
+        }
+
+        while (true)
+        {
+            await Task.Delay(100);
+            string newRaw = Regex.Match(await File.ReadAllTextAsync(configFile), @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?").Groups[1].Value;
+
+            if (newRaw == lastRaw) continue;
+            lastRaw = newRaw;
+
+            string decryptedNew = DecryptDataWithAes(newRaw, "A09C853C9E95409BB94D707EADEFA52E");
+            if (decryptedNew.Length < 1000)
+            {
+                UpdateInvalidEpicGamesToken();
+                return;
+            }
+
+            string cleaned = decryptedNew.Trim().TrimEnd('\0');
+            using var doc = JsonDocument.Parse(cleaned);
+            int tokenUse = doc.RootElement[0].GetProperty("TokenUseCount").GetInt32();
+
+            if (tokenUse == 0) break;
+        }
+
+        Process.GetProcessesByName("EpicGamesLauncher").ToList().ForEach(p =>
+        {
+            p.Kill();
+            p.WaitForExit();
+        });
+
+        // load accounts again to update the new login data
         isInitializingAccounts = true;
+        LoadEpicAccounts();
+    }
 
+    private async void UpdateInvalidEpicGamesToken()
+    {
+        // remove infobar
+        AccountInfo.Children.Clear();
+
+        // add infobar
+        AccountInfo.Children.Add(new InfoBar
+        {
+            Title = "The login token is no longer valid. Please reenter your password...",
+            IsClosable = false,
+            IsOpen = true,
+            Severity = InfoBarSeverity.Error,
+            Margin = new Thickness(5)
+        });
+
+        // close epic games launcher
+        if (Process.GetProcessesByName("EpicGamesLauncher").Length > 0)
+        {
+            foreach (var process in Process.GetProcessesByName("EpicGamesLauncher"))
+            {
+                process.Kill();
+                process.WaitForExit();
+            }
+        }
+
+        // delay
+        await Task.Delay(500);
+
+        // launch epic games launcher
+        Process.Start(@"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win32\EpicGamesLauncher.exe");
+
+        // check when logged in
+        while (true)
+        {
+            if (File.Exists(configFile))
+            {
+                Match dataMatch = Regex.Match(File.ReadAllText(configFile), @"Data=([^\r\n]+)");
+
+                if (dataMatch.Success && dataMatch.Groups[1].Value.Length >= 1000)
+                {
+                    break;
+                }
+            }
+
+            await Task.Delay(500);
+        }
+
+        // close epic games launcher
+        if (Process.GetProcessesByName("EpicGamesLauncher").Length > 0)
+        {
+            foreach (var process in Process.GetProcessesByName("EpicGamesLauncher"))
+            {
+                process.Kill();
+                process.WaitForExit();
+            }
+        }
+
+        // disable tray and notifications
+        string generalSection = Regex.Match(await File.ReadAllTextAsync(configFile), @"\[(.*?)_General\]").Groups[1].Value + "_General";
+
+        InIHelper iniHelper = new InIHelper(configFile);
+
+        iniHelper.AddValue("MinimiseToSystemTray", "False", generalSection);
+        iniHelper.AddValue("NotificationsEnabled_FreeGame", "False", generalSection);
+        iniHelper.AddValue("NotificationsEnabled_Adverts", "False", generalSection);
+
+        // get data
+        string data = Regex.Match(await File.ReadAllTextAsync(configFile), @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?").Groups[1].Value;
+
+        // decrypt data
+        string decryptedData = DecryptDataWithAes(data, "A09C853C9E95409BB94D707EADEFA52E");
+
+        // get display name
+        string displayName = Regex.Match(decryptedData, "\"DisplayName\":\"([^\"]+)\"").Groups[1].Value;
+
+        // remove infobar
+        AccountInfo.Children.Clear();
+
+        // add infobar
+        AccountInfo.Children.Add(new InfoBar
+        {
+            Title = $"Successfully logged in as {displayName}",
+            IsClosable = false,
+            IsOpen = true,
+            Severity = InfoBarSeverity.Success,
+            Margin = new Thickness(5)
+        });
+
+        // refresh combobox
+        isInitializingAccounts = true;
         LoadEpicAccounts();
     }
 

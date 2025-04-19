@@ -1,16 +1,16 @@
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.Win32;
 using System.Diagnostics;
 using System.Management;
 using System.ServiceProcess;
+using System.Text.Json.Nodes;
 
 namespace AutoOS.Views.Settings.Games;
 
 public sealed partial class GamePanel : UserControl
 {
     private readonly string nsudoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NSudo", "NSudoLC.exe");
-
-    public event EventHandler<RoutedEventArgs> OnItemClick;
 
     public string Title
     {
@@ -72,14 +72,11 @@ public sealed partial class GamePanel : UserControl
     public string LauncherLocation { get; set; }
     public string DataLocation { get; set; }
     public string GameLocation { get; set; }
-
-
     public string CatalogNamespace { get; set; }
     public string CatalogItemId { get; set; }
     public string AppName { get; set; }
     public string InstallLocation { get; set; }
     public string LaunchExecutable { get; set; }
-
     public string GameID { get; set; }
 
     private DispatcherTimer gameWatcherTimer;
@@ -89,11 +86,13 @@ public sealed partial class GamePanel : UserControl
 
     private void GamePanel_Unloaded(object sender, RoutedEventArgs e)
     {
+        // stop watchers when navigation to another page
         gameWatcherTimer?.Stop();
     }
 
     void StartGameWatcher(Func<bool> isGameRunning)
     {
+        // define check rate
         gameWatcherTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromMilliseconds(750)
@@ -142,11 +141,11 @@ public sealed partial class GamePanel : UserControl
 
         gameWatcherTimer.Tick += (s, e) => TickHandler();
 
-        TickHandler(); // Run once immediately
+        TickHandler();
         gameWatcherTimer.Start();
     }
 
-    public async Task CheckGameRunning()
+    public void CheckGameRunning()
     {
         if (Launcher == "Epic Games")
         {
@@ -186,7 +185,7 @@ public sealed partial class GamePanel : UserControl
                 foreach (ManagementObject obj in searcher.Get())
                 {
                     string cmdLine = obj["CommandLine"]?.ToString() ?? "";
-                    if (cmdLine.Contains($@"-r ""{DataLocation}"" -fullscreen ""{GameLocation}"""))
+                    if (cmdLine.Contains($@"-r ""{DataLocation}"" -fullscreen ""{InstallLocation}"""))
                         return true;
                 }
                 return false;
@@ -223,7 +222,6 @@ public sealed partial class GamePanel : UserControl
         {
             // start game silently
             Process.Start(new ProcessStartInfo($"com.epicgames.launcher://apps/{CatalogNamespace}%3A{CatalogItemId}%3A{AppName}?action=launch&silent=true") { UseShellExecute = true });
-
         }
         else if (Launcher == "Steam")
         {
@@ -234,7 +232,7 @@ public sealed partial class GamePanel : UserControl
             var startInfo = new ProcessStartInfo
             {
                 FileName = LauncherLocation,
-                Arguments = $@"-r ""{DataLocation}"" -fullscreen ""{GameLocation}""",
+                Arguments = $@"-r ""{DataLocation}"" -fullscreen ""{InstallLocation}""",
                 CreateNoWindow = true,
             };
 
@@ -405,23 +403,70 @@ public sealed partial class GamePanel : UserControl
         Process.Start("explorer.exe");
     }
 
+    private static readonly HttpClient httpClient = new HttpClient();
+
     private async void Settings_Click(object sender, RoutedEventArgs e)
     {
+        BitmapImage imageSource = null;
+
+        // epic games
+        if (Launcher == "Epic Games")
+        {
+            // get json data
+            string url = $"https://api.egdata.app/items/{CatalogItemId}";
+
+            // more up to date than the fortnite item id
+            if (Title == "Fortnite")
+            {
+                url = $"https://api.egdata.app/offers/d69e49517f0f4e49a39253f7b106dc27";
+            }
+
+            try
+            {
+                // read json data
+                var remoteData = JsonNode.Parse(await httpClient.GetStringAsync(url));
+
+                // search cover image
+                foreach (var image in remoteData?["keyImages"]?.AsArray())
+                {
+                    if (image?["type"]?.GetValue<string>() == "DieselGameBox")
+                    {
+                        imageSource = new BitmapImage(new Uri(image["url"]?.GetValue<string>()));
+                    }
+                }
+            }
+            catch
+            {
+
+            }
+        }
+        else if (Launcher == "Steam")
+        {
+            imageSource = new BitmapImage(new Uri(Path.Combine(@"C:\Program Files (x86)\Steam", $@"appcache\librarycache\{GameID}\library_hero.jpg")));
+        }
+        else if (Launcher == "Ryujinx")
+        {
+            
+        }
+
         var gameSettings = new GameSettings
         {
             Title = Title,
+            ImageSource = imageSource,
             InstallLocation = InstallLocation
         };
 
         var contentDialog = new ContentDialog
         {
-            Title = Title,
             Content = gameSettings,
             PrimaryButtonText = "Close",
             XamlRoot = this.XamlRoot,
         };
 
-        contentDialog.Resources["ContentDialogMinWidth"] = 850;
+        contentDialog.Resources["ContentDialogMinWidth"] = 600;
+        contentDialog.Resources["ContentDialogMaxWidth"] = 850;
+        contentDialog.Resources["ContentDialogMinHeight"] = 250;
+        contentDialog.Resources["ContentDialogMaxHeight"] = 850;
 
         ContentDialogResult result = await contentDialog.ShowAsync();
     }

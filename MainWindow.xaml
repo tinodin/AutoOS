@@ -18,7 +18,7 @@
             Title="{x:Bind TitleBarName}"
             IconSource="{dev:BitmapIconSource Source=ms-appx:///Assets/AppIcon.png}"
             IsBackButtonVisible="False"
-            IsPaneToggleButtonVisible="False"/>
+            IsPaneToggleButtonVisible="False" />
         <NavigationView
             x:Name="NavView"
             Grid.Row="1"

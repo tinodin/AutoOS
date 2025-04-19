@@ -38,16 +38,10 @@
                 Header="Devices"
                 HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Devices.png}">
                 <dev:SettingsGroup.Items>
-                    <dev:SettingsCard
-                        
-                        Description="Disabling HID devices breaks the detection of devices in control software and media controls."
-                        Header="Human Interface Devices (HID)">
+                    <dev:SettingsCard Description="Disabling HID devices breaks the detection of devices in control software and media controls." Header="Human Interface Devices (HID)">
                         <ToggleSwitch x:Name="HID" Toggled="HID_Toggled" />
                     </dev:SettingsCard>
-                    <dev:SettingsCard
-                        
-                        Description="Disabling IMOD fixes data loss when creating too many interrupts. Recommended to disable on higher polling rate mice/keyboards."
-                        Header="XHCI Interrupt Moderation (IMOD)">
+                    <dev:SettingsCard Description="Disabling IMOD fixes data loss when creating too many interrupts. Recommended to disable on higher polling rate mice/keyboards." Header="XHCI Interrupt Moderation (IMOD)">
                         <StackPanel Orientation="Horizontal">
                             <ToggleSwitch x:Name="IMOD" Toggled="IMOD_Toggled" />
                             <ProgressRing

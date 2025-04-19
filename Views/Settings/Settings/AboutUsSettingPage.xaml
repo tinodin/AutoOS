@@ -19,11 +19,10 @@
             dev:PanelAttach.ChildrenTransitions="Default"
             Spacing="5">
             <dev:SettingsExpander
-                Description="Description"
+                Description="tinodin"
                 Header="AutoOS"
                 HeaderIcon="{dev:BitmapIcon Source=Assets/AppIcon.png}"
                 IsExpanded="True">
-
                 <TextBlock
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     IsTextSelectionEnabled="True"
@@ -32,8 +31,8 @@
                     <dev:SettingsCard HorizontalContentAlignment="Left" ContentAlignment="Left">
                         <StackPanel Orientation="Vertical" Spacing="5">
                             <TextBlock Text="Related Links" />
-                            <HyperlinkButton Content="Source Code" NavigateUri="https://github.com/Ghost1372/DevWinUI" />
-                            <HyperlinkButton Content="Release Notes" NavigateUri="https://github.com/Ghost1372/DevWinUI/releases" />
+                            <HyperlinkButton Content="Source Code" NavigateUri="https://github.com/tinodin/AutoOS" />
+                            <HyperlinkButton Content="Release Notes" NavigateUri="https://github.com/tinodin/AutoOS/releases" />
                         </StackPanel>
                     </dev:SettingsCard>
                 </dev:SettingsExpander.Items>

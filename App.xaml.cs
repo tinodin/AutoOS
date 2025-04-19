@@ -11,8 +11,8 @@ namespace AutoOS
         public static Window MainWindow = Window.Current;
         public JsonNavigationService NavService { get; set; }
         public IThemeService ThemeService { get; set; }
-        public static IThemeService Theme => (App.Current as App)?.ThemeService;
         internal static bool IsInstalled { get; private set; }
+        internal static double Scaling { get; set; }
 
         public App()
         {
@@ -20,8 +20,13 @@ namespace AutoOS
             //Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS", true)?.DeleteValue("Stage", false);
 
             IsInstalled = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS")?.GetValue("Stage") as string == "Installed";
+
             InitializeComponent();
             NavService = new JsonNavigationService();
+
+            // Enables Multicore JIT with the specified profile
+            System.Runtime.ProfileOptimization.SetProfileRoot(Constants.RootDirectoryPath);
+            System.Runtime.ProfileOptimization.StartProfile("Startup.Profile");
         }
 
         protected override void OnLaunched(LaunchActivatedEventArgs args)
@@ -43,11 +48,11 @@ namespace AutoOS
                     int X = (int)monitor.RectMonitor.Width;
                     int Y = (int)monitor.RectMonitor.Height;
 
-                    int windowWidth = 340;
-                    int windowHeight = 130;
+                    int windowWidth = (int)(340 * Scaling);
+                    int windowHeight = (int)(130 * Scaling);
 
-                    int posX = X - windowWidth - 10;
-                    int posY = Y - windowHeight - 53;
+                    int posX = X - windowWidth - (int)(10 * Scaling);
+                    int posY = Y - windowHeight - (int)(53 * Scaling);
 
                     MainWindow.AppWindow.MoveAndResize(new RectInt32(posX, posY, windowWidth, windowHeight));
 
@@ -59,7 +64,7 @@ namespace AutoOS
                     {
                         MainWindow = new StartupWindow();
                         MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
-                        MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Updater";
+                        MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Startup";
 
                         new ModernSystemMenu(MainWindow);
 
@@ -68,17 +73,17 @@ namespace AutoOS
                         int X = (int)monitor.RectMonitor.Width;
                         int Y = (int)monitor.RectMonitor.Height;
 
-                        int windowWidth = 340;
-                        int windowHeight = 130;
+                        int windowWidth = (int)(450 * Scaling);
+                        int windowHeight = (int)(130 * Scaling);
 
-                        int posX = X - windowWidth - 10;
-                        int posY = Y - windowHeight - 53;
+                        int posX = X - windowWidth - (int)(10 * Scaling);
+                        int posY = Y - windowHeight - (int)(53 * Scaling);
 
                         MainWindow.AppWindow.MoveAndResize(new RectInt32(posX, posY, windowWidth, windowHeight));
 
                         MainWindow.Activate();
                     }
-                    
+
                     MainWindow = new MainWindow();
                     MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
                     MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Settings";
@@ -88,11 +93,11 @@ namespace AutoOS
 
                     new ModernSystemMenu(MainWindow);
 
-                    WindowHelper.ResizeAndCenterWindowToPercentageOfWorkArea(MainWindow, 90);
+                    WindowHelper.ResizeAndCenterWindowToPercentageOfWorkArea(MainWindow, 92);
 
                     if (MainWindow.AppWindow.Presenter is OverlappedPresenter presenter)
                     {
-                        presenter.Maximize();
+                        //presenter.Maximize();
                         presenter.PreferredMinimumWidth = 660;
                         presenter.PreferredMinimumHeight = 715;
                     }

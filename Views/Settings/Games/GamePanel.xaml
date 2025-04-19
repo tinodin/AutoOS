@@ -64,7 +64,7 @@
                     Width="192"
                     Height="256"
                     CornerRadius="8"
-                    Source="{x:Bind ImageSource, Mode=OneWay}"
+                    Source="{x:Bind ImageSource}"
                     Stretch="Fill" />
                 <StackPanel
                     Grid.Row="1"

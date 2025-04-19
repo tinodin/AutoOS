@@ -18,8 +18,7 @@
             Title="{x:Bind TitleBarName}"
             IconSource="{dev:BitmapIconSource Source=ms-appx:///Assets/AppIcon.png}"
             IsBackButtonVisible="False"
-            IsPaneToggleButtonVisible="False"
-            Subtitle="{x:Bind dev:ProcessInfoHelper.Version}" />
+            IsPaneToggleButtonVisible="False" />
         <StackPanel Grid.Row="1" Margin="15,0,15,0">
             <TextBlock
                 x:Name="StatusText"

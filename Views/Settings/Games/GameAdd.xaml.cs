@@ -2,6 +2,7 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using System.Diagnostics;
 
 namespace AutoOS.Views.Settings.Games;
 
@@ -138,6 +139,7 @@ public sealed partial class GameAdd : Page
                 try
                 {
                     var json = await http.GetStringAsync($"{dbUrl}/games/{id}.json");
+                    Debug.WriteLine($"{dbUrl}/games/{id}.json");
                     var game = JsonNode.Parse(json)?.AsObject();
                     if (game == null) continue;
 

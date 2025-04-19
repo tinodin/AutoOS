@@ -9,8 +9,8 @@ namespace AutoOS.Views
 
         public MainWindow()
         {
-            Instance = this;
             InitializeComponent();
+            Instance = this;
             ExtendsContentIntoTitleBar = true;
             AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
             SetTitleBar(AppTitleBar);
@@ -20,9 +20,9 @@ namespace AutoOS.Views
                 NavView.IsSettingsVisible = true;
                 App.Current.NavService
                     .Initialize(NavView, NavFrame, NavigationPageMappingsSettings.PageDictionary)
-                    .ConfigureJsonFile("Assets/NavViewMenu/Settings.json")
                     .ConfigureDefaultPage(typeof(Settings.HomeLandingPage))
                     .ConfigureSettingsPage(typeof(SettingsPage))
+                    .ConfigureJsonFile("Assets/NavViewMenu/Settings.json")
                     .ConfigureTitleBar(AppTitleBar, false)
                     .ConfigureBreadcrumbBar(BreadCrumbNav, BreadcrumbPageMappings.PageDictionary);
                 TitleBarName = "AutoOS Settings";
