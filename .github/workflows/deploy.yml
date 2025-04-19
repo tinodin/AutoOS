@@ -29,19 +29,22 @@ jobs:
     - name: Install Signing Certficiate
       run: certutil -user -p ${{ secrets.SIGNING_CERTIFICATE_PASSWORD }} -Silent -importpfx cert.pfx NoRoot
 
-    - run: dotnet publish AutoOS.csproj -c Release -r win-x64 -f:net9.0-windows10.0.26100.0 --self-contained true /p:AppxPackageSigningEnabled=true /p:PackageCertificateThumbprint=${{ secrets.SIGNING_CERTIFICATE_THUMBPRINT }}
+    - run: msbuild publish AutoOS.csproj -c Release -r win-x64 -f:net9.0-windows10.0.26100.0 --self-contained true /p:AppxPackageSigningEnabled=true /p:PackageCertificateThumbprint=${{ secrets.SIGNING_CERTIFICATE_THUMBPRINT }}
+
+    - name: Show full directory tree
+      run: Get-ChildItem -Recurse | ForEach-Object { $_.FullName }
+      shell: pwsh
 
     - uses: actions/upload-artifact@v4
       with: 
         name: Build
-        path:
-            ./bin/Release/net9.0-windows10.0.26100.0/win-x64/AppPackages/**/*.msix
-            ./bin/Release/net9.0-windows10.0.26100.0/win-x64/AppPackages/**/*.cer
+        path: ./AppPackages/**/*.{msix,cer}
         
         
         
         
-        
+#     ./bin/Release/net9.0-windows10.0.26100.0/win-x64/AppPackages/**/*.msix
+# ./bin/Release/net9.0-windows10.0.26100.0/win-x64/AppPackages/**/*.cer    
         
         #             ./bin/x64/Release/net9.0-windows10.0.26100.0/win-x64/AppPackages/**/*.msix
 
