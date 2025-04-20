@@ -197,7 +197,7 @@ jobs:
       - run: auto-changelog --tag-pattern .+ --commit-limit false --starting-version v${{ env.APP_VERSION }} --ending-version v${{ env.APP_VERSION }} --hide-credit  
       
       - name: Show full directory tree
-        run: find /home/runner/work/AutoOS/AutoOS/Packages -type f
+        run: find /home/runner/work/AutoOS/AutoOS -type f
 
        # Creating a Release in GitHub
       - uses: ncipollo/release-action@v1
