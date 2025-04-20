@@ -113,6 +113,11 @@ jobs:
       env:
         Platform: ${{ matrix.platform }}
 
+
+    - name: Copy .appinstaller file to output folder
+      run: Copy-Item -Path "${{ env.APP_NAME }}.appinstaller" -Destination "Packages/${{ env.APP_NAME }}_${{ env.APP_VERSION }}_x64_Test"
+      shell: pwsh
+
     # Optional: show where the MSIX file ended up
     - name: Show full directory tree
       run: Get-ChildItem -Recurse | ForEach-Object { $_.FullName }
@@ -209,7 +214,7 @@ jobs:
       - uses: ncipollo/release-action@v1
         with:
           artifacts: |
-            ${{ env.APP_NAME }}_x64.appinstaller
+            ${{ env.APP_NAME }}_${{ env.APP_VERSION }}_x64_Test/AutoOS.appinstaller
             ${{ env.APP_NAME }}_${{ env.APP_VERSION }}_x64_Test/AutoOS.msix
             ${{ env.APP_NAME }}_${{ env.APP_VERSION }}_x64_Test/AutoOS.cer
           bodyFile: "CHANGELOG.md"
