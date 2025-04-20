@@ -1,4 +1,4 @@
-![WinUI hero image](header.png)
+![AutoOS Hero Image](https://github.com/user-attachments/assets/65a294c9-603d-40ad-8fb2-20af203478e1)
 
 <h1 align="center">
     AutoOS
@@ -13,7 +13,7 @@
 
 </div>
 
-AutoOS is a modern open-source application focused on easy automated installation to improving performance, privacy while ensuring compatibility.
+AutoOS is a WinUI3 application focused on automation to improve performance while ensuring privacy and compatibility.
 
 
 ## ✨ Features
