@@ -96,10 +96,34 @@ jobs:
         echo "APP_VERSION_PREFIX=${{ env.APP_VERSION_PREFIX }}"
         echo "APP_VERSION_SUFFIX=${{ env.APP_VERSION_SUFFIX }}"
 
-    # Building with configured commands
-    - run: |
-        $runtimeIdentifier = "${{ matrix.platform }}"
-        dotnet publish ${{ env.AUTOOS_PROJECT_PATH }} -c Release -r win-$($runtimeIdentifier.ToLower()) /p:GITHUB_ACTIONS=true -p:Platform=${{ matrix.platform }} --self-contained ${{ env.PUBLISH_SELF_CONTAINED }} -p:PublishSingleFile=${{ env.PUBLISH_SINGLE_FILE }} -p:PublishReadyToRun=${{ env.PUBLISH_READY_TO_RUN }} -p:PublishTrimmed=${{ env.PUBLISH_TRIMMED }} -p:TrimMode=${{ env.PUBLISH_TRIM_MODE }} -p:PublishAot=${{ env.PUBLISH_AOT }} --output ${{ env.PUBLISH_OUTPUT_FOLDER }}/${{ matrix.platform }}
+    # Restore the application to populate the obj folder with RuntimeIdentifiers
+    - name: Restore the application
+      run: msbuild $env:AUTOOS_PROJECT_PATH /t:Restore /p:Configuration=Release
+      env:
+        Configuration: Release
+
+    # Decode the base64-encoded signing certificate
+    - name: Decode the pfx
+      run: |
+        $pfx_cert_byte = [System.Convert]::FromBase64String("${{ secrets.BASE64_ENCODED_PFX }}")
+        [IO.File]::WriteAllBytes("GitHubActionsWorkflow.pfx", $pfx_cert_byte)
+      shell: pwsh
+
+    # Build and package the MSIX
+    - name: Create the MSIX package
+      run: msbuild $env:AUTOOS_PROJECT_PATH /p:Configuration=Release /p:Platform=${{ matrix.platform }} /p:UapAppxPackageBuildMode=SideloadOnly /p:AppxBundle=Never /p:PackageCertificateKeyFile=GitHubActionsWorkflow.pfx /p:AppxPackageDir=Packages\ /p:GenerateAppxPackageOnBuild=true
+      env:
+        Platform: ${{ matrix.platform }}
+
+    # Optional: show where the MSIX file ended up
+    - name: Show full directory tree
+      run: Get-ChildItem -Recurse | ForEach-Object { $_.FullName }
+      shell: pwsh
+
+    # Clean up the certificate
+    - name: Remove the pfx
+      run: Remove-Item -path GitHubActionsWorkflow.pfx
+      shell: pwsh
 
     # Zipping folder and all files
     - uses: vimtor/action-zip@v1.2
@@ -111,8 +135,8 @@ jobs:
     # Uploading all zip files to access them in the 'release' job
     - uses: actions/upload-artifact@v4
       with:
-        name: artifacts-${{ matrix.platform }}
-        path: ${{ env.APP_NAME }}-v${{ env.APP_VERSION }}-${{ matrix.platform }}.zip
+        name: msix-package-${{ matrix.platform }}
+        path: Packages\
 
     # Checking version suffix for words like [alpha, beta, preview, and experiment]. Marking the release as a pre-release if any exists.
     - run: |
