@@ -283,3 +283,6 @@ Not allowed:
 
 12. **RwEverything**
 - Have to ask for permission ._.
+```
+This utility should not be bundled (in any form) in commercial or consumer products.
+```
