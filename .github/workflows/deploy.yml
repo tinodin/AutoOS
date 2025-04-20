@@ -54,9 +54,7 @@ jobs:
 
     - uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: |
-            8.x.x
-            9.x.x
+        dotnet-version: 9.x.x
 
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v2
@@ -198,10 +196,12 @@ jobs:
       - run: npm install -g auto-changelog  
       - run: auto-changelog --tag-pattern .+ --commit-limit false --starting-version v${{ env.APP_VERSION }} --ending-version v${{ env.APP_VERSION }} --hide-credit  
       
-      # Creating a Release in GitHub
+       # Creating a Release in GitHub
       - uses: ncipollo/release-action@v1
         with:
-          artifacts: "${{ env.APP_NAME }}-v${{ env.APP_VERSION }}-*.zip"
+          artifacts: |
+            Packages/**/*.msix
+            Packages/**/*.cer
           bodyFile: "CHANGELOG.md"
           name: v${{ env.APP_VERSION }}
           tag: v${{ env.APP_VERSION }}
