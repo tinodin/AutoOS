@@ -196,12 +196,15 @@ jobs:
       - run: npm install -g auto-changelog  
       - run: auto-changelog --tag-pattern .+ --commit-limit false --starting-version v${{ env.APP_VERSION }} --ending-version v${{ env.APP_VERSION }} --hide-credit  
       
+      - name: Show full directory tree
+        run: find /home/runner/work/AutoOS/AutoOS/Packages -type f
+
        # Creating a Release in GitHub
       - uses: ncipollo/release-action@v1
         with:
           artifacts: |
-            Packages/${{ env.APP_NAME }}_${{ env.APP_VERSION }}_x64_Test/*.msix
-            Packages/${{ env.APP_NAME }}_${{ env.APP_VERSION }}_x64_Test/*.cer
+            ${{ env.APP_NAME }}_${{ env.APP_VERSION }}_x64_Test/*.msix
+            ${{ env.APP_NAME }}_${{ env.APP_VERSION }}_x64_Test/*.cer
           bodyFile: "CHANGELOG.md"
           name: v${{ env.APP_VERSION }}
           tag: v${{ env.APP_VERSION }}
@@ -210,4 +213,3 @@ jobs:
           makeLatest: ${{ env.MAKE_LATEST }}
           allowUpdates: ${{ env.ALLOW_UPDATES }}
           artifactErrorsFailBuild: ${{ env.ARTIFACT_ERRORS_FAIL_BUILD }}
-
