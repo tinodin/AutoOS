@@ -118,12 +118,6 @@ jobs:
       run: Get-ChildItem -Recurse | ForEach-Object { $_.FullName }
       shell: pwsh
 
-      # Move appnstaller to output directory
-    - name: Copy .appinstaller file to output folder
-      run: |
-        Copy-Item -Path "Packages/${{ env.APP_NAME }}_x64.appinstaller" -Destination "Packages/${{ env.APP_NAME }}_${{ env.APP_VERSION }}_x64_Test"
-      shell: pwsh
-
     # Clean up the certificate
     - name: Remove the pfx
       run: Remove-Item -path GitHubActionsWorkflow.pfx
@@ -215,6 +209,7 @@ jobs:
       - uses: ncipollo/release-action@v1
         with:
           artifacts: |
+            ${{ env.APP_NAME }}_x64.appinstaller
             ${{ env.APP_NAME }}_${{ env.APP_VERSION }}_x64_Test/AutoOS.msix
             ${{ env.APP_NAME }}_${{ env.APP_VERSION }}_x64_Test/AutoOS.cer
           bodyFile: "CHANGELOG.md"
