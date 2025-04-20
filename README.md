@@ -13,7 +13,7 @@
 
 </div>
 
-AutoOS is a modern WinUI3 application focused on automation to improve performance while ensuring privacy and compatibility.
+AutoOS is a WinUI3 application focused on automation to improve performance while ensuring privacy and compatibility.
 
 
 ## ✨ Features
