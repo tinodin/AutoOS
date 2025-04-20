@@ -54,7 +54,7 @@ jobs:
 
     - uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 9.x.x
+        dotnet-version: 8.x.x
 
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v2
@@ -112,7 +112,6 @@ jobs:
       run: msbuild $env:AUTOOS_PROJECT_PATH /p:Configuration=Release /p:Platform=${{ matrix.platform }} /p:UapAppxPackageBuildMode=SideloadOnly /p:AppxBundle=Never /p:PackageCertificateKeyFile=GitHubActionsWorkflow.pfx /p:AppxPackageDir=Packages\ /p:GenerateAppxPackageOnBuild=true
       env:
         Platform: ${{ matrix.platform }}
-
 
     - name: Copy .appinstaller file to output folder
       run: Copy-Item -Path "${{ env.APP_NAME }}.appinstaller" -Destination "Packages/${{ env.APP_NAME }}_${{ env.APP_VERSION }}_x64_Test"
@@ -201,9 +200,6 @@ jobs:
       - run: npm install -g auto-changelog  
       - run: auto-changelog --tag-pattern .+ --commit-limit false --starting-version v${{ env.APP_VERSION }} --ending-version v${{ env.APP_VERSION }} --hide-credit  
       
-      - name: Show full directory tree
-        run: find /home/runner/work/AutoOS/AutoOS -type f
-
       - name: Rename output files
         run: |
           folder="${{ env.APP_NAME }}_${{ env.APP_VERSION }}_x64_Test"
