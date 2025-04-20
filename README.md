@@ -8,18 +8,19 @@
 
 [![Releases](https://img.shields.io/github/v/release/tinodin/AutoOS.svg?label=Release)](https://github.com/tinodin/AutoOS/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/tinodin/AutoOS/total?label=Total%20downloads)](https://github.com/tinodin/AutoOS/releases)
-[![AutoOS Discord](https://img.shields.io/discord/1148987246746279977?label=AutoOS%20Discord&logo=discord)](https://discord.gg/ammDNveHzh)
+[![Discord](https://img.shields.io/discord/1148987246746279977?label=AutoOS%20Discord&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTciIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNyAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTExLjEwMiAxQzguODkyODYgMSA3LjEwMiAyLjc5MDg2IDcuMTAyIDVDNy4xMDIgNS4zMTI3OSA3LjEzOCA1LjYxNzcxIDcuMjA2MjIgNS45MTA2MUwyLjE1NTM4IDExLjE0NTNDMS4zNDI5OSAxMS45ODcyIDEuNDMwODggMTMuMzQ1NSAyLjM0NSAxNC4wNzU3QzMuMTM5MDMgMTQuNzEwMSA0LjI4MzgzIDE0LjY0MjUgNC45OTc3NyAxMy45MTkyTDEwLjAwNDMgOC44NDczNkMxMC4zNTM1IDguOTQ2ODQgMTAuNzIxOSA5IDExLjEwMiA5QzEzLjMxMTEgOSAxNS4xMDIgNy4yMDkxNCAxNS4xMDIgNUMxNS4xMDIgNC44MTg3OSAxNS4wODk5IDQuNjQwMTQgMTUuMDY2NSA0LjQ2NDg3QzE1LjA0MTIgNC4yNzYzNyAxNC45MTEyIDQuMTE4NSAxNC43MzExIDQuMDU3NTdDMTQuNTUwOSAzLjk5NjYzIDE0LjM1MTggNC4wNDMxOCAxNC4yMTczIDQuMTc3NjZMMTIuMTAyMiA2LjI5Mjg0TDkuODA5MzMgNC4wMDAwNkwxMS45MjQ2IDEuODg0NzFDMTIuMDU5MSAxLjc1MDIzIDEyLjEwNTYgMS41NTExMSAxMi4wNDQ3IDEuMzcwOTdDMTEuOTgzOCAxLjE5MDgyIDExLjgyNTkgMS4wNjA4MyAxMS42Mzc0IDEuMDM1NThDMTEuNDYyMSAxLjAxMjEgMTEuMjgzMyAxIDExLjEwMiAxWiIgZmlsbD0idXJsKCNwYWludDBfbGluZWFyXzE0OTUyXzU3KSIvPgo8cGF0aCBkPSJNNi4xMDIyMyA0LjVDNi4xMDIyMyA1Ljg4MDcxIDUuMTAyMjMgNyAzLjYwMjIzIDdDMi4yMjE1MiA3IDEuMTAyMjMgNS44ODA3MSAxLjEwMjIzIDQuNUMxLjEwMjIzIDMgMi4yMjE1MiAyIDMuNjAyMjMgMkM0Ljk4Mjk1IDIgNi4xMDIyMyAzLjExOTI5IDYuMTAyMjMgNC41WiIgZmlsbD0idXJsKCNwYWludDFfbGluZWFyXzE0OTUyXzU3KSIvPgo8cGF0aCBkPSJNMTEuNjAyMiAxMEwxMi4yMDA5IDEwLjQ2MTFMMTIuOTUzOCAxMC4zOTY5TDEzLjIwODIgMTEuMTA4NEwxMy44NzYzIDExLjQ2MTVMMTMuNzA1NiAxMi4xOTc2TDE0LjA3NjggMTIuODU1OEwxMy41MzUyIDEzLjM4MjhMMTMuNDkxNiAxNC4xMzcyTDEyLjc1MTEgMTQuMjg3N0wxMi4zMDY2IDE0Ljg5ODdMMTEuNjAyMiAxNC42MjVMMTAuODk3OSAxNC44OTg3TDEwLjQ1MzQgMTQuMjg3N0w5LjcxMjg2IDE0LjEzNzJMOS42NjkyNyAxMy4zODI4TDkuMTI3NjggMTIuODU1OEw5LjQ5ODg2IDEyLjE5NzZMOS4zMjgxNSAxMS40NjE1TDkuOTk2MjcgMTEuMTA4NEwxMC4yNTA2IDEwLjM5NjlMMTEuMDAzNiAxMC40NjExTDExLjYwMjIgMTBaIiBmaWxsPSIjRDlEOUQ5Ii8+CjxwYXRoIGQ9Ik0xMS42MDIyIDEwTDEyLjIwMDkgMTAuNDYxMUwxMi45NTM4IDEwLjM5NjlMMTMuMjA4MiAxMS4xMDg0TDEzLjg3NjMgMTEuNDYxNUwxMy43MDU2IDEyLjE5NzZMMTQuMDc2OCAxMi44NTU4TDEzLjUzNTIgMTMuMzgyOEwxMy40OTE2IDE0LjEzNzJMMTIuNzUxMSAxNC4yODc3TDEyLjMwNjYgMTQuODk4N0wxMS42MDIyIDE0LjYyNUwxMC44OTc5IDE0Ljg5ODdMMTAuNDUzNCAxNC4yODc3TDkuNzEyODYgMTQuMTM3Mkw5LjY2OTI3IDEzLjM4MjhMOS4xMjc2OCAxMi44NTU4TDkuNDk4ODYgMTIuMTk3Nkw5LjMyODE1IDExLjQ2MTVMOS45OTYyNyAxMS4xMDg0TDEwLjI1MDYgMTAuMzk2OUwxMS4wMDM2IDEwLjQ2MTFMMTEuNjAyMiAxMFoiIGZpbGw9InVybCgjcGFpbnQyX2xpbmVhcl8xNDk1Ml81NykiLz4KPGRlZnM+CjxsaW5lYXJHcmFkaWVudCBpZD0icGFpbnQwX2xpbmVhcl8xNDk1Ml81NyIgeDE9IjcuMDg2NTQiIHkxPSIxLjg0MzcxIiB4Mj0iOS40OTU4NCIgeTI9IjE0Ljk4NTgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KPHN0b3Agc3RvcC1jb2xvcj0iIzJCREFCRSIvPgo8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMwMDY3QkYiLz4KPC9saW5lYXJHcmFkaWVudD4KPGxpbmVhckdyYWRpZW50IGlkPSJwYWludDFfbGluZWFyXzE0OTUyXzU3IiB4MT0iNi4xMDE1NSIgeTE9IjcuMTExNDciIHgyPSIwLjc1MDI4MiIgeTI9IjIuMjc4MTciIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KPHN0b3Agc3RvcC1jb2xvcj0iIzMwQzBDMSIvPgo8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM4NEM2NkQiLz4KPC9saW5lYXJHcmFkaWVudD4KPGxpbmVhckdyYWRpZW50IGlkPSJwYWludDJfbGluZWFyXzE0OTUyXzU3IiB4MT0iMTQuMTAxNiIgeTE9IjE1LjExMTUiIHgyPSI4Ljc1MDI4IiB5Mj0iMTAuMjc4MiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjRkY2RjQ3Ii8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0ZGQ0QwRiIvPgo8L2xpbmVhckdyYWRpZW50Pgo8L2RlZnM+Cjwvc3ZnPgo=)](https://discord.gg/ammDNveHzh)
 [![PayPal](https://img.shields.io/badge/Donate-PayPal-003087?logo=paypal&logoColor=fff)](https://www.paypal.com/donate/?hosted_button_id=GVEVUSHUWXEAG)
 
 </div>
 
-AutoOS is an open-source utility focused on easy automated installation, improving performance, privacy and compatibility. 
+AutoOS is a modern open-source application focused on easy automated installation to improving performance, privacy while ensuring compatibility.
 
 
 ## ✨ Features
-- 
-- 
-
+- Easily toggle between service states with configured compatibility for ensuring best performance and compatibility while gaming
+- Automatic benchmarking to apply the best affinities for GPU and XHCI Controller
+- Toggle XHCI Interrupt Moderation without having to restart
+- Custom Game Launcher supporting (Epic Games, Steam, Ryujinx)
 
 ## 💻 System Requirements
 
@@ -28,13 +29,46 @@ AutoOS is currently only supported on x64 builds of Windows 11 23H2 `22631` and 
 ## 🚀 Getting Started
 
 > [!CAUTION]
-> AutoOS only supports fresh installations of windows.
+> AutoOS should only be installed on fresh installations of windows.
 
-1. Download the latest `non Cumulative Update Preview` ISO (23H2) in x64 [UUP dump](https://uupdump.net/known.php?q=category%3Aw11-23h2), uncheck `Windows Home`, click next and check `Integrate .NET Framework 3.5 (Windows converter only)`.
-2. Extract the downloaded ISO
-3. Shrink your Windows Partition so you have another partition with at least 64GB
-4. DISM /Apply-Image /ImageFile:<path\to\wim> /Index:1 /ApplyDir:<drive letter>
-5. Create <drive letter>\Windows\Panther folder and copy the unattend.xml file
+#### Step 1: Download the latest Windows ISO (23H2) in x64 from [UUP dump](https://uupdump.net/known.php?q=category%3Aw11-23h2) with these options:
+<p float="left">
+  <img src="https://github.com/user-attachments/assets/9d017452-218f-44c8-9585-946bc41199e3" width="300" />
+  <img src="https://github.com/user-attachments/assets/ee109c47-842c-4af0-a003-ea00879e2b14" width="300" />
+  <img src="https://github.com/user-attachments/assets/1e774691-8cc7-457f-91e0-e5993ffc9839" width="300" />
+</p>
+
+**Step 2:** Extract the downloaded package and run `uup_download_windows.cmd`
+
+**Step 3:** Once completed extract the downloaded ISO
+
+**Step 4:** Shrink your Windows Partition so you have another partition with at least 64GB
+
+**Step 5:** Apply `install.wim` to the newly created partition
+
+
+```bat
+DISM /Apply-Image /ImageFile:<path\to\wim> /Index:1 /ApplyDir:<drive letter>
+```
+
+**Step 6:** Create Panther directory and open it in Explorer, then copy `unattend.xml`
+
+```bat
+mkdir <drive letter>\Windows\Panther && explorer <drive letter>:\Windows\Panther
+```
+
+**Step 7:** Install drivers (Ethernet, WiFi, Bluetooth, etc.)
+
+```bat
+DISM /Image:<drive letter>\ /Add-Driver /Driver:<driver folder> /Recurse
+```
+
+**Step 8:** Create boot entry
+
+```bat
+bcdboot <drive letter>\Windows
+```
+
 
 ## 📜 License
 
@@ -69,7 +103,7 @@ This project is licensed under the **GNU General Public License v3.0**. See the 
    - Changes: Removed `shutdown /r /t 0` from created lists, added `--output-dir` switch because of MSIX restrictions.
 
 7. **LowAudioLatency**
-    - Explicit permission granted by [sppdl](https://github.com/spddl)
+    - Have to ask for explicit permission from [sppdl](https://github.com/spddl)
     - Source: [sppdl/LowAudioLatency](https://github.com/spddl/LowAudioLatency)
 
 
@@ -249,3 +283,6 @@ Not allowed:
 
 12. **RwEverything**
 - Have to ask for permission ._.
+```
+This utility should not be bundled (in any form) in commercial or consumer products.
+```
