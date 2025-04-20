@@ -199,12 +199,18 @@ jobs:
       - name: Show full directory tree
         run: find /home/runner/work/AutoOS/AutoOS -type f
 
+      - name: Rename output files
+        run: |
+          folder="Packages/${{ env.APP_NAME }}_${{ env.APP_VERSION }}_x64_Test"
+          mv "$folder"/*.msix "$folder/AutoOS.msix"
+          mv "$folder"/*.cer "$folder/AutoOS.cer"
+
        # Creating a Release in GitHub
       - uses: ncipollo/release-action@v1
         with:
           artifacts: |
-            ${{ env.APP_NAME }}_${{ env.APP_VERSION }}_x64_Test/*.msix
-            ${{ env.APP_NAME }}_${{ env.APP_VERSION }}_x64_Test/*.cer
+            ${{ env.APP_NAME }}_${{ env.APP_VERSION }}_x64_Test/AutoOS.msix
+            ${{ env.APP_NAME }}_${{ env.APP_VERSION }}_x64_Test/AutoOS.cer
           bodyFile: "CHANGELOG.md"
           name: v${{ env.APP_VERSION }}
           tag: v${{ env.APP_VERSION }}
