@@ -13,13 +13,14 @@
 
 </div>
 
-AutoOS is an open-source utility focused on easy automated installation, improving performance, privacy and compatibility. 
+AutoOS is a modern open-source application focused on easy automated installation to improving performance, privacy while ensuring compatibility.
 
 
 ## ✨ Features
-- 
-- 
-
+- Easily toggle between service states with configured compatibility for ensuring best performance and compatibility while gaming
+- Automatic benchmarking to apply the best affinities for GPU and XHCI Controller
+- Toggle XHCI Interrupt Moderation without having to restart
+- Custom Game Launcher supporting (Epic Games, Steam, Ryujinx)
 
 ## 💻 System Requirements
 
@@ -28,13 +29,46 @@ AutoOS is currently only supported on x64 builds of Windows 11 23H2 `22631` and 
 ## 🚀 Getting Started
 
 > [!CAUTION]
-> AutoOS only supports fresh installations of windows.
+> AutoOS should only be installed on fresh installations of windows.
 
-1. Download the latest `non Cumulative Update Preview` ISO (23H2) in x64 [UUP dump](https://uupdump.net/known.php?q=category%3Aw11-23h2), uncheck `Windows Home`, click next and check `Integrate .NET Framework 3.5 (Windows converter only)`.
-2. Extract the downloaded ISO
-3. Shrink your Windows Partition so you have another partition with at least 64GB
-4. DISM /Apply-Image /ImageFile:<path\to\wim> /Index:1 /ApplyDir:<drive letter>
-5. Create <drive letter>\Windows\Panther folder and copy the unattend.xml file
+#### Step 1: Download the latest Windows ISO (23H2) in x64 from [UUP dump](https://uupdump.net/known.php?q=category%3Aw11-23h2) with these options:
+<p float="left">
+  <img src="https://github.com/user-attachments/assets/9d017452-218f-44c8-9585-946bc41199e3" width="300" />
+  <img src="https://github.com/user-attachments/assets/ee109c47-842c-4af0-a003-ea00879e2b14" width="300" />
+  <img src="https://github.com/user-attachments/assets/1e774691-8cc7-457f-91e0-e5993ffc9839" width="300" />
+</p>
+
+**Step 2:** Extract the downloaded package and run `uup_download_windows.cmd`
+
+**Step 3:** Once completed extract the downloaded ISO
+
+**Step 4:** Shrink your Windows Partition so you have another partition with at least 64GB
+
+**Step 5:** Apply `install.wim` to the newly created partition
+
+
+```bat
+DISM /Apply-Image /ImageFile:<path\to\wim> /Index:1 /ApplyDir:<drive letter>
+```
+
+**Step 6:** Create Panther directory and open it in Explorer, then copy `unattend.xml`
+
+```bat
+mkdir <drive letter>\Windows\Panther && explorer <drive letter>:\Windows\Panther
+```
+
+**Step 7:** Install drivers (Ethernet, WiFi, Bluetooth, etc.)
+
+```bat
+DISM /Image:<drive letter>\ /Add-Driver /Driver:<driver folder> /Recurse
+```
+
+**Step 8:** Create boot entry
+
+```bat
+bcdboot <drive letter>\Windows
+```
+
 
 ## 📜 License
 
@@ -69,7 +103,7 @@ This project is licensed under the **GNU General Public License v3.0**. See the 
    - Changes: Removed `shutdown /r /t 0` from created lists, added `--output-dir` switch because of MSIX restrictions.
 
 7. **LowAudioLatency**
-    - Explicit permission granted by [sppdl](https://github.com/spddl)
+    - Have to ask for explicit permission from [sppdl](https://github.com/spddl)
     - Source: [sppdl/LowAudioLatency](https://github.com/spddl/LowAudioLatency)
 
 
