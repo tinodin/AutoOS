@@ -97,4 +97,7 @@
     <!-- Check if TextTransform.exe exists before running -->
     <Exec Command="if exist &quot;$(DevEnvDir)TextTransform.exe&quot; &quot;$(DevEnvDir)TextTransform.exe&quot; &quot;%(T4Template.FullPath)&quot;" Condition="Exists('$(DevEnvDir)TextTransform.exe')" />
   </Target>
+	<Target Name="GetVersion">
+		<Message Importance="High" Text="$(Version)" />
+	</Target>
 </Project>
