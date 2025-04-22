@@ -415,15 +415,28 @@ public static class ProcessActions
 
     public static async Task RunMicrosoftStoreDownload(string productFamilyName, string fileType, string architecture, string fileName, int version)
     {
-        var output = await Process.Start(new ProcessStartInfo("powershell.exe", $"-ExecutionPolicy Bypass -File \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "getmicrosoftstorelink.ps1")}\" \"{productFamilyName}\" \"{fileType}\" \"{architecture}\"")
-        {
-            CreateNoWindow = true,
-            UseShellExecute = false,
-            RedirectStandardOutput = true
-        })!.StandardOutput.ReadToEndAsync();
+        string[] urls = Array.Empty<string>();
+        string url = "";
 
-        var urls = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-        var url = urls.Length > version ? urls[version] : "";
+        for (int attempt = 0; attempt < 2; attempt++)
+        {
+            string output = await Process.Start(new ProcessStartInfo("powershell.exe", $"-ExecutionPolicy Bypass -File \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "getmicrosoftstorelink.ps1")}\" \"{productFamilyName}\" \"{fileType}\" \"{architecture}\"")
+            {
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                RedirectStandardOutput = true
+            })!.StandardOutput.ReadToEndAsync();
+
+            urls = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            if (urls.Length > version)
+            {
+                url = urls[version];
+                break;
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(url))
+            throw new Exception("Failed to get download link for " + productFamilyName);
 
         await RunDownload(url, Path.GetTempPath(), fileName);
     }
