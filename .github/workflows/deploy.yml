@@ -13,7 +13,7 @@ env:
   # Configuring Project
   AUTOOS_PROJECT_PATH: AutoOS.csproj
   APP_NAME: AutoOS
-  APP_VERSION: '1.1.1.0'
+  APP_VERSION: '1.0.0.0'
   APP_VERSION_SUFFIX: ''
   APP_VERSION_PREFIX: ''
 
@@ -54,7 +54,7 @@ jobs:
 
     - uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.x.x
+        dotnet-version: 9.x.x
 
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v2
@@ -109,12 +109,14 @@ jobs:
 
     # Build and package the MSIX
     - name: Create the MSIX package
-      run: msbuild $env:AUTOOS_PROJECT_PATH /p:Configuration=Release /p:Platform=${{ matrix.platform }} /p:UapAppxPackageBuildMode=SideloadOnly /p:AppxBundle=Never /p:PackageCertificateKeyFile=GitHubActionsWorkflow.pfx /p:AppxPackageDir=Packages\ /p:GenerateAppxPackageOnBuild=true
+      run: msbuild $env:AUTOOS_PROJECT_PATH /p:Configuration=Release /p:Platform=${{ matrix.platform }} /p:SelfContained=${{ env.PUBLISH_SELF_CONTAINED }} /p:PublishAot=${{ env.PUBLISH_AOT }} /p:PublishTrimmed=${{ env.PUBLISH_TRIMMED }} /p:TrimmerDefaultAction=${{ env.PUBLISH_TRIM_MODE }} /p:UapAppxPackageBuildMode=SideloadOnly /p:AppxBundle=Never /p:PackageCertificateKeyFile=GitHubActionsWorkflow.pfx /p:AppxPackageDir=Packages\ /p:GenerateAppxPackageOnBuild=true
       env:
         Platform: ${{ matrix.platform }}
-
-    - name: Copy .appinstaller file to output folder
-      run: Copy-Item -Path "${{ env.APP_NAME }}.appinstaller" -Destination "Packages/${{ env.APP_NAME }}_${{ env.APP_VERSION }}_x64_Test"
+    
+    - name: Copy appinstaller and unattend to output folder
+      run: |
+        $dest = "Packages/${{ env.APP_NAME }}_${{ env.APP_VERSION }}_x64_Test"
+        Copy-Item -Path "${{ env.APP_NAME }}.appinstaller", "unattend.xml" -Destination $dest
       shell: pwsh
 
     # Optional: show where the MSIX file ended up
@@ -210,6 +212,7 @@ jobs:
       - uses: ncipollo/release-action@v1
         with:
           artifacts: |
+            ${{ env.APP_NAME }}_${{ env.APP_VERSION }}_x64_Test/unattend.xml
             ${{ env.APP_NAME }}_${{ env.APP_VERSION }}_x64_Test/AutoOS.appinstaller
             ${{ env.APP_NAME }}_${{ env.APP_VERSION }}_x64_Test/AutoOS.msix
             ${{ env.APP_NAME }}_${{ env.APP_VERSION }}_x64_Test/AutoOS.cer
