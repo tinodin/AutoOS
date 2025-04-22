@@ -51,7 +51,7 @@ AutoOS is currently only supported on x64 builds of Windows 11 23H2 `22631` and 
 DISM /Apply-Image /ImageFile:<path\to\wim> /Index:1 /ApplyDir:<drive letter>
 ```
 
-**Step 6:** Create Panther directory and copy the `unattend.xml` from releases
+**Step 6:** Create Panther directory and copy the [`unattend.xml`](https://github.com/tinodin/AutoOS/releases/latest/download/unattend.xml) into it.
 
 ```bat
 mkdir <drive letter>\Windows\Panther && explorer <drive letter>:\Windows\Panther
