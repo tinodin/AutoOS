@@ -75,6 +75,9 @@ public sealed partial class DisplayPage : Page
 
             if (fileSizeInBytes == expectedSize)
             {
+                // re-enable the button
+                senderButton.IsEnabled = true;
+
                 // remove infobar
                 CruInfo.Children.Clear();
 
@@ -106,6 +109,9 @@ public sealed partial class DisplayPage : Page
             }
             else
             {
+                // re-enable the button
+                senderButton.IsEnabled = true;
+
                 // remove infobar
                 CruInfo.Children.Clear();
 
