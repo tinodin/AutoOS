@@ -704,7 +704,6 @@ public static class RegistryStage
             ("Disabling potentially unwanted windows programs", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\DeviceCensus.exe"" /v Debugger /t REG_SZ /d ""%windir%\System32\taskkill.exe"" /f"), null),
             ("Disabling potentially unwanted windows programs", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\FeatureLoader.exe"" /v Debugger /t REG_SZ /d ""%windir%\System32\taskkill.exe"" /f"), null),
             ("Disabling potentially unwanted windows programs", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"cmd /c ren C:\Windows\HelpPane.exe HelpPane.exee"), null),
-            ("Disabling potentially unwanted windows programs", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c rmdir /s /q ""%APPDATA%\Adobe"""), null),
 
             // disable unnecessary services
             ("Disabling unnecessary services", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\dam"" /v Start /t REG_DWORD /d 4 /f"), null),

@@ -172,6 +172,7 @@ public sealed partial class GamesPage : Page
                 gameAddPage.GameCoverUrl
             };
 
+            Directory.CreateDirectory(Path.Combine(PathHelper.GetAppDataFolderPath(), "Games"));
             File.WriteAllText(Path.Combine(PathHelper.GetAppDataFolderPath(), "Games", $"{string.Concat(gamePanel.Title.Split(Path.GetInvalidFileNameChars()))}.json"), JsonSerializer.Serialize(gameInfo, JsonOptions));
 
             // sort games

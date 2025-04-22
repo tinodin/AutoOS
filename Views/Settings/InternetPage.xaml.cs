@@ -39,7 +39,6 @@ public sealed partial class InternetPage : Page
                     var startValue = key.GetValue("Start");
                     if (startValue == null || (int)startValue != group.Item2)
                     {
-                        WiFi_SettingsGroup.Description = WiFi_SettingsGroup.Description + " " + service;
                         isInitializingWIFIState = false;
                         return;
                     }

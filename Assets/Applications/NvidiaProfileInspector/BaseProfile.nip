@@ -145,7 +145,7 @@
       <ProfileSetting>
         <SettingNameInfo />
         <SettingID>14566042</SettingID>
-        <SettingValue>0</SettingValue>
+        <SettingValue>1</SettingValue>
         <ValueType>Dword</ValueType>
       </ProfileSetting>
       <ProfileSetting>
@@ -403,7 +403,7 @@
       <ProfileSetting>
         <SettingNameInfo />
         <SettingID>549198379</SettingID>
-        <SettingValue>0</SettingValue>
+        <SettingValue>1</SettingValue>
         <ValueType>Dword</ValueType>
       </ProfileSetting>
       <ProfileSetting>
