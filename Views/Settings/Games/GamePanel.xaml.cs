@@ -290,6 +290,7 @@ public sealed partial class GamePanel : UserControl
             "SearchHost",
             "secd",
             "ShellExperienceHost",
+            "SpatialAudioLicenseSrv",
             "sppsvc",
             "StartMenuExperienceHost",
             "SystemSettingsBroker",
