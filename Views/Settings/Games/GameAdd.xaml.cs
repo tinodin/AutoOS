@@ -210,6 +210,7 @@ public sealed partial class GameAdd : Page
             }
 
             GameNameValue.Text = fileName;
+            GameName_Changed(null, null);
         }
     }
 }
