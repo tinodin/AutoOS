@@ -32,11 +32,11 @@ AutoOS is currently only supported on x64 builds of Windows 11 23H2 `22631` and 
 > AutoOS should only be installed on fresh installations of windows.
 
 #### Step 1: Download the latest Windows ISO (23H2) in x64 from [UUP dump](https://uupdump.net/known.php?q=category%3Aw11-23h2) with these options:
-<p float="left">
-  <img src="https://github.com/user-attachments/assets/9d017452-218f-44c8-9585-946bc41199e3" width="300" />
-  <img src="https://github.com/user-attachments/assets/ee109c47-842c-4af0-a003-ea00879e2b14" width="300" />
-  <img src="https://github.com/user-attachments/assets/1e774691-8cc7-457f-91e0-e5993ffc9839" width="300" />
-</p>
+<img src="https://github.com/user-attachments/assets/9d017452-218f-44c8-9585-946bc41199e3" width="450" />
+<br />
+<img src="https://github.com/user-attachments/assets/ee109c47-842c-4af0-a003-ea00879e2b14" width="450" />
+<br />
+<img src="https://github.com/user-attachments/assets/1e774691-8cc7-457f-91e0-e5993ffc9839" width="450" />
 
 **Step 2:** Extract the downloaded package and run `uup_download_windows.cmd`
 
@@ -51,7 +51,7 @@ AutoOS is currently only supported on x64 builds of Windows 11 23H2 `22631` and 
 DISM /Apply-Image /ImageFile:<path\to\wim> /Index:1 /ApplyDir:<drive letter>
 ```
 
-**Step 6:** Create Panther directory and open it in Explorer, then copy `unattend.xml`
+**Step 6:** Create Panther directory and copy the `unattend.xml` from releases
 
 ```bat
 mkdir <drive letter>\Windows\Panther && explorer <drive letter>:\Windows\Panther
