@@ -69,6 +69,9 @@ DISM /Image:<drive letter>\ /Add-Driver /Driver:<driver folder> /Recurse
 bcdboot <drive letter>\Windows
 ```
 
+## Credits
+
+AMIT, Valleyofdoom, Duckleeng, Revi Team, Imribiy, Calpyto, Spddl
 
 ## 📜 License
 
@@ -101,6 +104,7 @@ This project is licensed under the **GNU General Public License v3.0**. See the 
    - Licensed under the **GNU General Public License v3.0**.
    - Source: [valleyofdoom/service-list-builder](https://github.com/valleyofdoom/service-list-builder)
    - Changes: Removed `shutdown /r /t 0` from created lists, added `--output-dir` switch because of MSIX restrictions.
+   - Fork: [tinodin/service-list-builder](https://github.com/tinodin/service-list-builder)
 
 7. **LowAudioLatency**
     - Have to ask for explicit permission from [sppdl](https://github.com/spddl)
