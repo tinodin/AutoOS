@@ -2,6 +2,7 @@
 using Microsoft.Win32;
 using System.Diagnostics;
 using Microsoft.UI.Xaml.Media;
+
 namespace AutoOS.Views.Installer.Stages;
 
 public static class TimerStage
@@ -17,12 +18,6 @@ public static class TimerStage
 
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
-            // run benchmark
-
-
-            // determine best timer resolution
-
-
             // apply manually
             ("Applying Timer Resolution " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "RequestedResolution", null)?.ToString(), async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "TimerResolution", "SetTimerResolution.exe"), Arguments = "--resolution " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "RequestedResolution", null)?.ToString() + " --no-console", CreateNoWindow = true }))), () => TimerResolution == false),
         };

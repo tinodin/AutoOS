@@ -383,41 +383,53 @@ public sealed partial class GamesPage : Page
                     // get display name
                     string displayName = Regex.Match(decryptedData, "\"DisplayName\":\"([^\"]+)\"").Groups[1].Value;
 
+                    // sanitize display name for folder usage
+                    string sanitizedDisplayName = new string(displayName.Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray()).TrimEnd('.', ' ');
+
+                    string configPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows");
+
                     // check if data exists with old display name
-                    string existingDir = Directory.GetDirectories(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows"))
-                                                  .FirstOrDefault(dir => Regex.Match(File.ReadAllText(Path.Combine(dir, "GameUserSettings.ini")), @"\[(.*?)_General\]").Groups[1].Value == accountId && !dir.Contains(displayName));
+                    string existingDir = Directory.GetDirectories(configPath)
+                                                  .FirstOrDefault(dir =>
+                                                  {
+                                                      string filePath = Path.Combine(dir, "GameUserSettings.ini");
+                                                      return File.Exists(filePath) &&
+                                                          Regex.Match(File.ReadAllText(filePath), @"\[(.*?)_General\]").Groups[1].Value == accountId &&
+                                                          !dir.EndsWith(sanitizedDisplayName);
+                                                  });
 
                     if (existingDir != null)
                     {
                         // rename folder
-                        Directory.Move(existingDir, Path.Combine(Path.GetDirectoryName(existingDir), displayName));
+                        Directory.Move(existingDir, Path.Combine(Path.GetDirectoryName(existingDir), sanitizedDisplayName));
 
                         // replace config
-                        File.Copy(configFile, Path.Combine(Path.GetDirectoryName(existingDir), displayName, "GameUserSettings.ini"), true);
+                        File.Copy(configFile, Path.Combine(Path.GetDirectoryName(existingDir), sanitizedDisplayName, "GameUserSettings.ini"), true);
                     }
                     else
                     {
-                        // update the backed up config
-                        if (Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\" + displayName)))
+                        string newDir = Path.Combine(configPath, sanitizedDisplayName);
+
+                        if (Directory.Exists(newDir))
                         {
                             if (File.Exists(configFile))
                             {
                                 if (Regex.Match(File.ReadAllText(configFile), @"\[(.*?)_General\]").Groups[1].Value == accountId)
                                 {
-                                    File.Copy(configFile, Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\" + displayName), "GameUserSettings.ini"), true);
+                                    File.Copy(configFile, Path.Combine(newDir, "GameUserSettings.ini"), true);
                                 }
                             }
                         }
                         else
                         {
                             // create folder
-                            Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\" + displayName));
+                            Directory.CreateDirectory(newDir);
 
                             // copy config
-                            File.Copy(configFile, Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\" + displayName), "GameUserSettings.ini"), true);
+                            File.Copy(configFile, Path.Combine(newDir, "GameUserSettings.ini"), true);
 
                             // create reg file
-                            File.WriteAllText(Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\" + displayName), "accountId.reg"), $"Windows Registry Editor Version 5.00\r\n\r\n[HKEY_CURRENT_USER\\Software\\Epic Games\\Unreal Engine\\Identifiers]\r\n\"AccountId\"=\"{accountId}\"");
+                            File.WriteAllText(Path.Combine(newDir, "accountId.reg"), $"Windows Registry Editor Version 5.00\r\n\r\n[HKEY_CURRENT_USER\\Software\\Epic Games\\Unreal Engine\\Identifiers]\r\n\"AccountId\"=\"{accountId}\"");
                         }
                     }
 
