@@ -257,6 +257,7 @@ public static class RegistryStage
             ("Disabling the GameBar Presence Writer", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter"" /v ActivationType /t REG_DWORD /d 0 /f"), null),
 
             // configure presentation modes
+            ("Configuring presentation modes", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_CURRENT_USER\SYSTEM\GameConfigStore"" /v ""GameDVR_HonorUserFSEBehaviorMode"" /t REG_DWORD /d 1 /f"), null),
             ("Configuring presentation modes", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_CURRENT_USER\SYSTEM\GameConfigStore"" /v ""GameDVR_DXGIHonorFSEWindowsCompatible"" /t REG_DWORD /d 1 /f"), null),
             ("Configuring presentation modes", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_CURRENT_USER\SYSTEM\GameConfigStore"" /v ""GameDVR_FSEBehavior"" /t REG_DWORD /d 2 /f"), null),
             ("Confiugring presentation modes", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\Dwm"" /v ""OverlayTestMode"" /t REG_DWORD /d 5 /f"), null),
@@ -343,6 +344,12 @@ public static class RegistryStage
 
             // disable telemetry
             ("Disabling telemetry", async () => await ProcessActions.RunPowerShell(@"setx POWERSHELL_TELEMETRY_OPTOUT 1"), null),
+            ("Disabling telemetry", async () => await ProcessActions.RunPowerShell(@"setx DOTNET_TRY_CLI_TELEMETRY_OPTOUT 1   "), null),
+            ("Disabling telemetry", async () => await ProcessActions.RunPowerShell(@"setx CLOUDSDK_CORE_DISABLE_PROMPTS 1"), null),
+            ("Disabling telemetry", async () => await ProcessActions.RunPowerShell(@"setx DOTNET_CLI_TELEMETRY_OPTOUT 1"), null),
+            ("Disabling telemetry", async () => await ProcessActions.RunPowerShell(@"setx DOCKER_CLI_TELEMETRY_OPTOUT 1"), null),
+            ("Disabling telemetry", async () => await ProcessActions.RunPowerShell(@"setx VS_TELEMETRY_OPT_OUT 1"), null),
+            ("Disabling telemetry", async () => await ProcessActions.RunPowerShell(@"setx npm_config_loglevel silent   "), null),
             ("Disabling telemetry", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Environment"" /v POWERSHELL_TELEMETRY_OPTOUT /t REG_SZ /d 1 /f"), null),
             ("Disabling telemetry", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\DiagTrack"" /v Start /t REG_DWORD /d 4 /f"), null),
             ("Disabling telemetry", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DataCollection"" /v LimitDiagnosticLogCollection /t REG_DWORD /d 1 /f"), null),
@@ -624,7 +631,7 @@ public static class RegistryStage
             //("Restoring old timer resolution behavior", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\kernel"" /v GlobalTimerResolutionRequests /t REG_DWORD /d 1 /f"), null),
 
             // disable timer serialization
-            ("Disabling timer serialization", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\kernel"" /v SerializeTimerExpiration /t REG_DWORD /d 2 /f"), null),
+            //("Disabling timer serialization", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\kernel"" /v SerializeTimerExpiration /t REG_DWORD /d 2 /f"), null),
 
             // disable vulnerable driver blocklist
             //("Disabling the vulnerable driver blocklist", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\CI\Config"" /v ""VulnerableDriverBlocklistEnable"" /t REG_DWORD /d 0 /f"), null),
@@ -738,7 +745,7 @@ public static class RegistryStage
             ("Renaming device", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion"" /v RegisteredOrganization /t REG_SZ /d ""AutoOS"" /f"), null),
             ("Renaming device", async () => await ProcessActions.RunPowerShell(@"Rename-Computer -NewName ""PC"""), () => Desktop == true),
             ("Renaming device", async () => await ProcessActions.RunPowerShell(@"Rename-Computer -NewName ""LAPTOP"""), () => Desktop == false),
-            ("Renaming device", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"label C: AutoOS"), null),
+            //("Renaming device", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"label C: AutoOS"), null),
         };
 
         var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();

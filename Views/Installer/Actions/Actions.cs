@@ -1,5 +1,4 @@
-﻿using AutoOS.Views.Settings;
-using Downloader;
+﻿using Downloader;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;

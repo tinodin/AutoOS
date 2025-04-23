@@ -33,7 +33,7 @@ public static class BcdStage
 
             // force the use of the platform clock as system timer
             ("Forcing the use of the platform clock as system timer", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /deletevalue useplatformclock"), null),
-            ("Forcing the use of the platform clock as system timer", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set useplatformtick yes"), null),
+            ("Forcing the use of the platform clock as system timer", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set useplatformtick no"), null),
 
             // set tsc sync policy to enhanced
             ("Setting TSC Sync Policy to enhanced", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set tscsyncpolicy enhanced"), null),

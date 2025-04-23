@@ -43,7 +43,7 @@ public static class BrowserStage
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
             // download google chrome
-            ("Downloading Google Chrome", async () => await ProcessActions.RunDownload("https://www.dl.dropboxusercontent.com/scl/fi/y67wfy3bqlj107deqb1xe/ChromeSetup.exe?rlkey=7deesr6vavgkaatmg2tmrdodk&st=ljimeprm&dl=0", Path.GetTempPath(), "ChromeSetup.exe"), () => Chrome == true),
+            ("Downloading Google Chrome", async () => await ProcessActions.RunDownload("http://dl.google.com/chrome/install/375.126/chrome_installer.exe", Path.GetTempPath(), "ChromeSetup.exe"), () => Chrome == true),
 
             // install google chrome
             ("Installing Google Chrome", async () => await ProcessActions.RunNsudo("CurrentUser", @"""%TEMP%\ChromeSetup.exe"" /silent /install"), () => Chrome == true),
