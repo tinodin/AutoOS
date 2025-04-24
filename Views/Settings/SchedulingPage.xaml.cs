@@ -14,20 +14,6 @@ public sealed partial class SchedulingPage : Page
     public SchedulingPage()
     {
         InitializeComponent();
-        if (!File.Exists(Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini")))
-        {
-            Directory.CreateDirectory(Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity"));
-            File.Copy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "config.ini"), Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini"));
-        }
-
-        Process.Start(new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c takeown /f \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "AutoGpuAffinity.exe")}\" & icacls \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "AutoGpuAffinity.exe")}\" /grant Everyone:F /T /C /Q",
-            UseShellExecute = false,
-            CreateNoWindow = true
-        });
-
         GetCpuCount(GPU, XHCI);
         GetAffinities();
     }
@@ -54,6 +40,22 @@ public sealed partial class SchedulingPage : Page
 
                 comboBox.Items.Add(item);
             }
+        }
+
+        // copy autogpuaffinity to localstate because of permissions
+        string sourcePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity");
+        string destinationPath = Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity");
+
+        foreach (var directory in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
+        {
+            string subDirPath = directory.Replace(sourcePath, destinationPath);
+            Directory.CreateDirectory(subDirPath);
+        }
+
+        foreach (var file in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
+        {
+            string destFilePath = file.Replace(sourcePath, destinationPath);
+            File.Copy(file, destFilePath, true);
         }
 
         // configure config
@@ -195,8 +197,8 @@ public sealed partial class SchedulingPage : Page
         {
             StartInfo = new ProcessStartInfo
             {
-                FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NSudo", "NSudoLC.exe"),
-                Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide cmd /c \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "AutoGpuAffinity.exe")}\" --apply-affinity {GPU.SelectedIndex}",
+                FileName = "cmd.exe",
+                Arguments = $@"/c {Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "AutoGpuAffinity.exe")} --apply-affinity {GPU.SelectedIndex}",
                 CreateNoWindow = true
             }
         };
@@ -420,7 +422,7 @@ public sealed partial class SchedulingPage : Page
 
     private void Benchmark_Unchecked(object sender, RoutedEventArgs e)
     {
-        foreach (var name in new[] { "AutoGpuAffinity", "restart64" })
+        foreach (var name in new[] { "AutoGpuAffinity", "restart64", "lava-triangle" })
         {
             Process.GetProcessesByName(name).ToList().ForEach(p =>
             {
@@ -437,7 +439,7 @@ public sealed partial class SchedulingPage : Page
             StartInfo = new ProcessStartInfo
             {
                 FileName = "cmd.exe",
-                Arguments = $@"/c {Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "AutoGpuAffinity.exe")} --config {Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini")} --output-dir {Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity")}",
+                Arguments = $@"/c {Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "AutoGpuAffinity.exe")}",
                 CreateNoWindow = true,
                 RedirectStandardOutput = true
             }

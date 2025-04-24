@@ -729,7 +729,7 @@ public static class ProcessActions
             StartInfo = new ProcessStartInfo
             {
                 FileName = "cmd.exe",
-                Arguments = $@"/c {Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "AutoGpuAffinity.exe")} --config {Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini")} --output-dir {Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity")}",
+                Arguments = $@"/c {Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "AutoGpuAffinity.exe")}",
                 CreateNoWindow = true,
                 RedirectStandardOutput = true
             }
@@ -742,8 +742,8 @@ public static class ProcessActions
 
         if (match.Success)
         {
-            Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GpuAffinity", int.Parse(match.Groups[1].Value));
-            Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciAffinity", int.Parse(match.Groups[2].Value));
+            Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GpuAffinity", int.Parse(match.Groups[1].Value), RegistryValueKind.DWord);
+            Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciAffinity", int.Parse(match.Groups[2].Value), RegistryValueKind.DWord);
         }
     }
 

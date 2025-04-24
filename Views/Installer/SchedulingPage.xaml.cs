@@ -44,6 +44,61 @@ public sealed partial class SchedulingPage : Page
                 comboBox.Items.Add(item);
             }
         }
+
+        // copy autogpuaffinity to localstate because of permissions
+        string sourcePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity");
+        string destinationPath = Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity");
+
+        foreach (var directory in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
+        {
+            string subDirPath = directory.Replace(sourcePath, destinationPath);
+            Directory.CreateDirectory(subDirPath);
+        }
+
+        foreach (var file in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
+        {
+            string destFilePath = file.Replace(sourcePath, destinationPath);
+            File.Copy(file, destFilePath, true);
+        }
+
+        // configure config
+        string configPath = Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini");
+        string[] lines = File.ReadAllLines(configPath);
+
+        if (processorCount > 2)
+        {
+            if (isHyperThreadingEnabled)
+            {
+                lines = lines.Select(line =>
+                {
+                    if (line.StartsWith("custom_cpus="))
+                    {
+                        var cores = Enumerable.Range(2, processorCount - 2).Where(i => i % 2 == 0);
+                        return $"custom_cpus=[{string.Join(",", cores)}]";
+                    }
+                    return line;
+                }).ToArray();
+            }
+            else
+            {
+                lines = lines.Select(line =>
+                {
+                    if (line.StartsWith("custom_cpus="))
+                        return $"custom_cpus=[1..{processorCount - 1}]";
+                    return line;
+                }).ToArray();
+            }
+        }
+
+        if (Directory.Exists(@"C:\Program Files (x86)\MSI Afterburner\Profiles\") &&
+            Directory.GetFiles(@"C:\Program Files (x86)\MSI Afterburner\Profiles\")
+                     .Any(f => !f.EndsWith("MSIAfterburner.cfg", StringComparison.OrdinalIgnoreCase)))
+        {
+            lines = lines.Select(line =>
+                line.StartsWith("profile=") ? "profile=1" : line).ToArray();
+        }
+
+        File.WriteAllLines(configPath, lines);
     }
 
     private void GetAffinities()
