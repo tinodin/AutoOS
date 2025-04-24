@@ -2,6 +2,7 @@
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using System.Management;
+using System.Diagnostics;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -15,6 +16,8 @@ public static class SchedulingStage
         bool? MSI = PreparingStage.MSI;
         bool? Reserve = PreparingStage.Reserve;
 
+        Debug.WriteLine("Scheduling " + Scheduling);
+
         InstallPage.Status.Text = "Configuring Affinities...";
 
         string previousTitle = string.Empty;
@@ -23,6 +26,8 @@ public static class SchedulingStage
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
             // configure autogpuaffinity
+            ("Configuring AutoGpuAffinity", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Directory.CreateDirectory(Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity")))), null),
+            ("Configuring AutoGpuAffinity", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => File.Copy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "config.ini"), Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini"), true))), null),
             ("Configuring AutoGpuAffinity", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => File.WriteAllLines(Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini"), File.ReadAllLines(Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini")).Select(line => line.StartsWith("custom_cpus=") ? $"custom_cpus=[{string.Join(",", Enumerable.Range(2, Environment.ProcessorCount - 1).Where(i => i % 2 == 0 && i < Environment.ProcessorCount))}]" : line)))), () => Hyperthreading == true && CoreCount > 2),
             ("Configuring AutoGpuAffinity", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => File.WriteAllLines(Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini"), File.ReadAllLines(Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini")).Select(line => line.StartsWith("custom_cpus=") ? $"custom_cpus=[1..{Environment.ProcessorCount - 1}]" : line)))), () => Hyperthreading == false && CoreCount > 2),
             ("Configuring AutoGpuAffinity", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => File.WriteAllLines(Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini"), File.ReadAllLines(Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini")).Select(line => line.StartsWith("profile=") ? "profile=1" : line)))), () => MSI == true),
@@ -42,7 +47,7 @@ public static class SchedulingStage
             // reserve cpus
             ("Reserving CPU " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GpuAffinity", null)?.ToString() + " and " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciAffinity", null)?.ToString(), async () => await ProcessActions.Sleep(500), () => Scheduling == false),
             ("Reserving CPU " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GpuAffinity", null)?.ToString() + " and " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciAffinity", null)?.ToString(), async () => await ProcessActions.RunCustom(async () => await Task.Run(() => { using (var key = Registry.LocalMachine.OpenSubKey("SYSTEM\\CurrentControlSet\\Control\\Session Manager\\kernel", true)) key.SetValue("ReservedCpuSets", BitConverter.GetBytes((long)(1 << (int)Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GpuAffinity", 0)) | (long)(1 << (int)Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciAffinity", 0))).Concat(new byte[8 - BitConverter.GetBytes((long)(1 << (int)Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GpuAffinity", 0)) | (long)(1 << (int)Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciAffinity", 0))).Length]).ToArray(), RegistryValueKind.Binary); })), () => Reserve == true),
-        };
+        }; 
 
         var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();
         int groupedTitleCount = 0;

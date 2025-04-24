@@ -53,6 +53,8 @@ public sealed partial class SchedulingPage : Page
             var affinityValue = key.GetValue("Affinities") as string;
             if (string.IsNullOrEmpty(affinityValue) || affinityValue == "Automatic")
             {
+                key.SetValue("Affinities", "Automatic", RegistryValueKind.String);
+
                 Affinities.SelectedIndex = 0;
                 GpuSettings.IsEnabled = false;
                 XhciSettings.IsEnabled = false;
