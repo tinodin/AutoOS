@@ -418,14 +418,26 @@ public sealed partial class SchedulingPage : Page
         }
     }
 
-    private async void Benchmark_Click(object sender, RoutedEventArgs e)
+    private void Benchmark_Unchecked(object sender, RoutedEventArgs e)
+    {
+        foreach (var name in new[] { "AutoGpuAffinity", "restart64" })
+        {
+            Process.GetProcessesByName(name).ToList().ForEach(p =>
+            {
+                p.Kill();
+                p.WaitForExit();
+            });
+        }
+    }
+
+    private async void Benchmark_Checked(object sender, RoutedEventArgs e)
     {
         var process = new Process
         {
             StartInfo = new ProcessStartInfo
             {
                 FileName = "cmd.exe",
-                Arguments = $@"/c {Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "AutoGpuAffinity.exe")} --output-dir {Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity")}",
+                Arguments = $@"/c {Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "AutoGpuAffinity.exe")} --config {Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini")} --output-dir {Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity")}",
                 CreateNoWindow = true,
                 RedirectStandardOutput = true
             }
@@ -436,13 +448,18 @@ public sealed partial class SchedulingPage : Page
 
         var match = Regex.Match(output, @"First:\s*(\d+)\s*Second:\s*(\d+)");
 
-        isInitializingAffinities = true;
-        GPU.SelectedIndex = int.Parse(match.Groups[1].Value);
-        XHCI.SelectedIndex = int.Parse(match.Groups[2].Value);
-        isInitializingAffinities = false;
+        if (match.Success)
+        {
+            isInitializingAffinities = true;
+            GPU.SelectedIndex = int.Parse(match.Groups[1].Value);
+            XHCI.SelectedIndex = int.Parse(match.Groups[2].Value);
+            isInitializingAffinities = false;
 
-        await ApplyGpuAffinity(null, null);
-        await ApplyXhciAffinity(null, null);
+            await ApplyGpuAffinity(null, null);
+            await ApplyXhciAffinity(null, null);
+        }
+
+        Benchmark.IsChecked = false;
     }
 }
 

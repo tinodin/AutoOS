@@ -28,11 +28,15 @@
                 Header="Per-CPU Scheduling"
                 HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Cpu.png}">
                 <dev:SettingsGroup.Content>
-                    <Button
+                    <dev:ProgressButton
+                        x:Name="Benchmark"
                         HorizontalAlignment="Left"
-                        Click="Benchmark_Click"
+                        Checked="Benchmark_Checked"
+                        CheckedContent="Benchmarking..."
                         Content="Benchmark"
-                        Style="{StaticResource AccentButtonStyle}" />
+                        IsIndeterminate="True"
+                        Style="{ThemeResource AccentProgressButtonStyle}"
+                        Unchecked="Benchmark_Unchecked" />
                 </dev:SettingsGroup.Content>
                 <dev:SettingsGroup.Items>
                     <dev:SettingsCard Header="GPU Affinity">

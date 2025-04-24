@@ -729,7 +729,7 @@ public static class ProcessActions
             StartInfo = new ProcessStartInfo
             {
                 FileName = "cmd.exe",
-                Arguments = $@"/c {Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "AutoGpuAffinity.exe")} --output-dir {Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity")}",
+                Arguments = $@"/c {Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "AutoGpuAffinity.exe")} --config {Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini")} --output-dir {Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity")}",
                 CreateNoWindow = true,
                 RedirectStandardOutput = true
             }
