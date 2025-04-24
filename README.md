@@ -98,7 +98,8 @@ This project is licensed under the **GNU General Public License v3.0**. See the 
 5. **AutoGpuAffinity**
    - Licensed under the **GNU General Public License v3.0**.
    - Source: [valleyofdoom/AutoGpuAffinity](https://github.com/valleyofdoom/AutoGpuAffinity)
-   - Changes: Added `--output-dir` switch because of MSIX restrictions.
+   - Changes: Added functionality to also apply the affinity to the parent of the GPU
+   - Fork: [tinodin/AutoGpuAffinity](https://github.com/tinodin/AutoGpuAffinity)
 
 6. **Service List Builder**
    - Licensed under the **GNU General Public License v3.0**.
