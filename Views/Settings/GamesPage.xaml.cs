@@ -477,13 +477,13 @@ public sealed partial class GamesPage : Page
         if (isInitializingAccounts) return;
 
         // close epic games launcher
-        if (Process.GetProcessesByName("EpicGamesLauncher").Length > 0)
+        foreach (var name in new[] { "EpicGamesLauncher", "EpicWebHelper" })
         {
-            foreach (var process in Process.GetProcessesByName("EpicGamesLauncher"))
+            Process.GetProcessesByName(name).ToList().ForEach(p =>
             {
-                process.Kill();
-                process.WaitForExit();
-            }
+                p.Kill();
+                p.WaitForExit();
+            });
         }
 
         // replace file
@@ -544,11 +544,14 @@ public sealed partial class GamesPage : Page
             if (tokenUse == 0) break;
         }
 
-        Process.GetProcessesByName("EpicGamesLauncher").ToList().ForEach(p =>
+        foreach (var name in new[] { "EpicGamesLauncher", "EpicWebHelper" })
         {
-            p.Kill();
-            p.WaitForExit();
-        });
+            Process.GetProcessesByName(name).ToList().ForEach(p =>
+            {
+                p.Kill();
+                p.WaitForExit();
+            });
+        }
 
         // load accounts again to update the new login data
         isInitializingAccounts = true;
@@ -571,13 +574,13 @@ public sealed partial class GamesPage : Page
         });
 
         // close epic games launcher
-        if (Process.GetProcessesByName("EpicGamesLauncher").Length > 0)
+        foreach (var name in new[] { "EpicGamesLauncher", "EpicWebHelper" })
         {
-            foreach (var process in Process.GetProcessesByName("EpicGamesLauncher"))
+            Process.GetProcessesByName(name).ToList().ForEach(p =>
             {
-                process.Kill();
-                process.WaitForExit();
-            }
+                p.Kill();
+                p.WaitForExit();
+            });
         }
 
         // delay
@@ -603,13 +606,13 @@ public sealed partial class GamesPage : Page
         }
 
         // close epic games launcher
-        if (Process.GetProcessesByName("EpicGamesLauncher").Length > 0)
+        foreach (var name in new[] { "EpicGamesLauncher", "EpicWebHelper" })
         {
-            foreach (var process in Process.GetProcessesByName("EpicGamesLauncher"))
+            Process.GetProcessesByName(name).ToList().ForEach(p =>
             {
-                process.Kill();
-                process.WaitForExit();
-            }
+                p.Kill();
+                p.WaitForExit();
+            });
         }
 
         // disable tray and notifications
@@ -679,13 +682,13 @@ public sealed partial class GamesPage : Page
             });
 
             // close epic games launcher
-            if (Process.GetProcessesByName("EpicGamesLauncher").Length > 0)
+            foreach (var name in new[] { "EpicGamesLauncher", "EpicWebHelper" })
             {
-                foreach (var process in Process.GetProcessesByName("EpicGamesLauncher"))
+                Process.GetProcessesByName(name).ToList().ForEach(p =>
                 {
-                    process.Kill();
-                    process.WaitForExit();
-                }
+                    p.Kill();
+                    p.WaitForExit();
+                });
             }
 
             // delete gameusersettings.ini
@@ -717,13 +720,13 @@ public sealed partial class GamesPage : Page
             }
 
             // close epic games launcher
-            if (Process.GetProcessesByName("EpicGamesLauncher").Length > 0)
+            foreach (var name in new[] { "EpicGamesLauncher", "EpicWebHelper" })
             {
-                foreach (var process in Process.GetProcessesByName("EpicGamesLauncher"))
+                Process.GetProcessesByName(name).ToList().ForEach(p =>
                 {
-                    process.Kill();
-                    process.WaitForExit();
-                }
+                    p.Kill();
+                    p.WaitForExit();
+                });
             }
 
             // disable tray and notifications
@@ -798,13 +801,13 @@ public sealed partial class GamesPage : Page
                 });
 
                 // close epic games launcher
-                if (Process.GetProcessesByName("EpicGamesLauncher").Length > 0)
+                foreach (var name in new[] { "EpicGamesLauncher", "EpicWebHelper" })
                 {
-                    foreach (var process in Process.GetProcessesByName("EpicGamesLauncher"))
+                    Process.GetProcessesByName(name).ToList().ForEach(p =>
                     {
-                        process.Kill();
-                        process.WaitForExit();
-                    }
+                        p.Kill();
+                        p.WaitForExit();
+                    });
                 }
 
                 // delete gameusersettings.ini

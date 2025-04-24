@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;
 using System.Diagnostics;
 using System.Management;
+using System.Text.RegularExpressions;
 
 namespace AutoOS.Views.Settings;
 
@@ -8,6 +9,7 @@ public sealed partial class SchedulingPage : Page
 {
     private bool isInitializingAffinities = true;
     private bool isHyperThreadingEnabled = false;
+    private readonly int processorCount = Environment.ProcessorCount;
 
     public SchedulingPage()
     {
@@ -25,6 +27,7 @@ public sealed partial class SchedulingPage : Page
             UseShellExecute = false,
             CreateNoWindow = true
         });
+
         GetCpuCount(GPU, XHCI);
         GetAffinities();
     }
@@ -36,8 +39,6 @@ public sealed partial class SchedulingPage : Page
            .Cast<ManagementObject>()
            .Any(obj => Convert.ToInt32(obj["NumberOfLogicalProcessors"]) > Convert.ToInt32(obj["NumberOfCores"]));
 
-        int processorCount = Environment.ProcessorCount;
-
         foreach (var comboBox in comboBoxes)
         {
             comboBox.Items.Clear();
@@ -46,7 +47,7 @@ public sealed partial class SchedulingPage : Page
             {
                 var item = new ComboBoxItem { Content = $"CPU {i}" };
 
-                if (i == 0 || (isHyperThreadingEnabled && i % 2 == 1))
+                if ((processorCount > 2 && (i == 0 || (isHyperThreadingEnabled && i % 2 == 1))))
                 {
                     item.IsEnabled = false;
                 }
@@ -54,6 +55,45 @@ public sealed partial class SchedulingPage : Page
                 comboBox.Items.Add(item);
             }
         }
+
+        // configure config
+        string configPath = Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini");
+        string[] lines = File.ReadAllLines(configPath);
+
+        if (processorCount > 2)
+        {
+            if (isHyperThreadingEnabled)
+            {
+                lines = lines.Select(line =>
+                {
+                    if (line.StartsWith("custom_cpus="))
+                    {
+                        var cores = Enumerable.Range(2, processorCount - 2).Where(i => i % 2 == 0);
+                        return $"custom_cpus=[{string.Join(",", cores)}]";
+                    }
+                    return line;
+                }).ToArray();
+            }
+            else
+            {
+                lines = lines.Select(line =>
+                {
+                    if (line.StartsWith("custom_cpus="))
+                        return $"custom_cpus=[1..{processorCount - 1}]";
+                    return line;
+                }).ToArray();
+            }
+        }
+
+        if (Directory.Exists(@"C:\Program Files (x86)\MSI Afterburner\Profiles\") &&
+            Directory.GetFiles(@"C:\Program Files (x86)\MSI Afterburner\Profiles\")
+                     .Any(f => !f.EndsWith("MSIAfterburner.cfg", StringComparison.OrdinalIgnoreCase)))
+        {
+            lines = lines.Select(line =>
+                line.StartsWith("profile=") ? "profile=1" : line).ToArray();
+        }
+
+        File.WriteAllLines(configPath, lines);
     }
 
     private void GetAffinities()
@@ -110,6 +150,11 @@ public sealed partial class SchedulingPage : Page
     }
 
     private async void Gpu_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        await ApplyGpuAffinity(sender, e);
+    }
+
+    private async Task ApplyGpuAffinity(object sender, SelectionChangedEventArgs e)
     {
         if (isInitializingAffinities) return;
 
@@ -221,6 +266,11 @@ public sealed partial class SchedulingPage : Page
     }
 
     private async void Xhci_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        await ApplyXhciAffinity(sender, e);
+    }
+
+    private async Task ApplyXhciAffinity(object sender, SelectionChangedEventArgs e)
     {
         if (isInitializingAffinities) return;
 
@@ -343,28 +393,39 @@ public sealed partial class SchedulingPage : Page
     {
         int selectedIndex = activeComboBox.SelectedIndex;
 
-        for (int i = 0; i < otherComboBox.Items.Count; i++)
+        if (processorCount > 2)
         {
-            var item = otherComboBox.Items[i] as ComboBoxItem;
-
-            if (item != null)
+            for (int i = 0; i < otherComboBox.Items.Count; i++)
             {
-                item.IsEnabled = i != selectedIndex && !(i == 0 || (isHyperThreadingEnabled && i % 2 == 1));
+                var item = otherComboBox.Items[i] as ComboBoxItem;
+                if (item != null)
+                {
+                    item.IsEnabled = i != selectedIndex && !(i == 0 || (isHyperThreadingEnabled && i % 2 == 1));
+                }
+            }
+        }
+        else
+        {
+            // swap indexes
+            if (otherComboBox.SelectedIndex == selectedIndex)
+            {
+                int swapIndex = otherComboBox.SelectedIndex == 0 ? 1 : 0;
+                if (swapIndex < otherComboBox.Items.Count)
+                {
+                    otherComboBox.SelectedIndex = swapIndex;
+                }
             }
         }
     }
 
     private async void Benchmark_Click(object sender, RoutedEventArgs e)
     {
-        //Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NSudo", "NSudoLC.exe"), $"-U:T -P:E -Wait -ShowWindowMode:Hide cmd /c \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "AutoGpuAffinity.exe")}\" --analyze \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "captures", "AutoGpuAffinity-010325220526", "CSVs")}\"") { CreateNoWindow = true  });
-
-
         var process = new Process
         {
             StartInfo = new ProcessStartInfo
             {
-                FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NSudo", "NSudoLC.exe"),
-                Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide cmd /c \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "AutoGpuAffinity.exe")}\" --analyze \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "captures", "AutoGpuAffinity-010325221604", "CSVs")}\"",
+                FileName = "cmd.exe",
+                Arguments = $@"/c {Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "AutoGpuAffinity.exe")} --output-dir {Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity")}",
                 CreateNoWindow = true,
                 RedirectStandardOutput = true
             }
@@ -373,7 +434,15 @@ public sealed partial class SchedulingPage : Page
 
         string output = await process.StandardOutput.ReadToEndAsync();
 
-        Debug.WriteLine(output);
+        var match = Regex.Match(output, @"First:\s*(\d+)\s*Second:\s*(\d+)");
+
+        isInitializingAffinities = true;
+        GPU.SelectedIndex = int.Parse(match.Groups[1].Value);
+        XHCI.SelectedIndex = int.Parse(match.Groups[2].Value);
+        isInitializingAffinities = false;
+
+        await ApplyGpuAffinity(null, null);
+        await ApplyXhciAffinity(null, null);
     }
 }
 

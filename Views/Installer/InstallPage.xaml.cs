@@ -44,7 +44,6 @@ public sealed partial class InstallPage : Page
         await PowerStage.Run();
         await RegistryStage.Run();
         await SecurityStage.Run();
-        //await BcdStage.Run();
         await FileSystemStage.Run();
         await MemoryManagementStage.Run();
         await EventTraceSessionsStage.Run();

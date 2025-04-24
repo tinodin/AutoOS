@@ -486,7 +486,7 @@ public static class ProcessActions
                     iniHelper.AddValue("NotificationsEnabled_Adverts", "False", generalSection);
 
                     // get data
-                    string data = Regex.Match(await File.ReadAllTextAsync(configContent), @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?").Groups[1].Value;
+                    string data = Regex.Match(configContent, @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?").Groups[1].Value;
 
                     // decrypt data
                     string decryptedData = DecryptDataWithAes(data, "A09C853C9E95409BB94D707EADEFA52E");
@@ -695,11 +695,14 @@ public static class ProcessActions
                 if (tokenUse == 0) break;
             }
 
-            Process.GetProcessesByName("EpicGamesLauncher").ToList().ForEach(p =>
+            foreach (var name in new[] { "EpicGamesLauncher", "EpicWebHelper" })
             {
-                p.Kill();
-                p.WaitForExit();
-            });
+                Process.GetProcessesByName(name).ToList().ForEach(p =>
+                {
+                    p.Kill();
+                    p.WaitForExit();
+                });
+            }
 
             // get data
             string data = Regex.Match(await File.ReadAllTextAsync(configFile), @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?").Groups[1].Value;
@@ -716,6 +719,31 @@ public static class ProcessActions
         else
         {
             return;
+        }
+    }
+
+    public static async Task RunAutoGpuAffinity()
+    {
+        var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = $@"/c {Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "AutoGpuAffinity.exe")} --output-dir {Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity")}",
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            }
+        };
+        process.Start();
+
+        string output = await process.StandardOutput.ReadToEndAsync();
+
+        var match = Regex.Match(output, @"First:\s*(\d+)\s*Second:\s*(\d+)");
+
+        if (match.Success)
+        {
+            Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GpuAffinity", int.Parse(match.Groups[1].Value));
+            Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciAffinity", int.Parse(match.Groups[2].Value));
         }
     }
 

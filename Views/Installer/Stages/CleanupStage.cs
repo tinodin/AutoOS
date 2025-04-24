@@ -16,6 +16,12 @@ public static class CleanupStage
 
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
+            // clean up devices
+            ("Cleaning up devices", async () => await ProcessActions.RunApplication("DeviceCleanup", "DeviceCleanupCmd.exe", "/s *"), null),
+
+            // clean up drives
+            ("Cleaning up drives", async () => await ProcessActions.RunApplication("DriveCleanup", "DriveCleanup.exe", ""), null),
+
             // clean the winsxs folder
             ("Cleaning the WinSxS folder", async () => await ProcessActions.RunNsudo("CurrentUser", @"DISM /Online /Cleanup-Image /StartComponentCleanup /ResetBase"), null),
 

@@ -7,6 +7,7 @@ public sealed partial class SchedulingPage : Page
 {
     private bool isInitializingAffinities = true;
     private bool isHyperThreadingEnabled = false;
+    private readonly int processorCount = Environment.ProcessorCount;
 
     public SchedulingPage()
     {
@@ -27,8 +28,6 @@ public sealed partial class SchedulingPage : Page
            .Cast<ManagementObject>()
            .Any(obj => Convert.ToInt32(obj["NumberOfLogicalProcessors"]) > Convert.ToInt32(obj["NumberOfCores"]));
 
-        int processorCount = Environment.ProcessorCount;
-
         foreach (var comboBox in comboBoxes)
         {
             comboBox.Items.Clear();
@@ -37,7 +36,7 @@ public sealed partial class SchedulingPage : Page
             {
                 var item = new ComboBoxItem { Content = $"CPU {i}" };
 
-                if (i == 0 || (isHyperThreadingEnabled && i % 2 == 1))
+                if ((processorCount > 2 && (i == 0 || (isHyperThreadingEnabled && i % 2 == 1))))
                 {
                     item.IsEnabled = false;
                 }
@@ -159,13 +158,27 @@ public sealed partial class SchedulingPage : Page
     {
         int selectedIndex = activeComboBox.SelectedIndex;
 
-        for (int i = 0; i < otherComboBox.Items.Count; i++)
+        if (processorCount > 2)
         {
-            var item = otherComboBox.Items[i] as ComboBoxItem;
-
-            if (item != null)
+            for (int i = 0; i < otherComboBox.Items.Count; i++)
             {
-                item.IsEnabled = i != selectedIndex && !(i == 0 || (isHyperThreadingEnabled && i % 2 == 1));
+                var item = otherComboBox.Items[i] as ComboBoxItem;
+                if (item != null)
+                {
+                    item.IsEnabled = i != selectedIndex && !(i == 0 || (isHyperThreadingEnabled && i % 2 == 1));
+                }
+            }
+        }
+        else
+        {
+            // swap indexes
+            if (otherComboBox.SelectedIndex == selectedIndex)
+            {
+                int swapIndex = otherComboBox.SelectedIndex == 0 ? 1 : 0;
+                if (swapIndex < otherComboBox.Items.Count)
+                {
+                    otherComboBox.SelectedIndex = swapIndex;
+                }
             }
         }
     }

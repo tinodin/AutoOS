@@ -1,7 +1,7 @@
 ﻿using AutoOS.Views.Installer.Actions;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using System.Management;
-using Microsoft.UI.Xaml.Media;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -10,6 +10,7 @@ public static class SchedulingStage
     public static async Task Run()
     {
         bool? Scheduling = PreparingStage.Scheduling;
+        int? CoreCount = PreparingStage.CoreCount;
         bool? Hyperthreading = PreparingStage.Hyperthreading;
         bool? MSI = PreparingStage.MSI;
         bool? Reserve = PreparingStage.Reserve;
@@ -21,34 +22,22 @@ public static class SchedulingStage
 
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
-            // download windows adk
-            ("Downloading Windows ADK", async () => await ProcessActions.RunDownload("https://go.microsoft.com/fwlink/?linkid=2289980", Path.GetTempPath(), "adksetup.exe"), null),
-
-            // install windows performance toolkit
-            ("Installing Windows Performance Toolkit", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c ""%TEMP%\adksetup.exe"" /features OptionId.WindowsPerformanceToolkit /quiet"), null),
-
             // configure autogpuaffinity
-            ("Configuring AutoGpuAffinity", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => File.WriteAllLines(Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini"), File.ReadAllLines(Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini")).Select(line => line.StartsWith("custom_cpus=") ? $"custom_cpus=[{string.Join(",", Enumerable.Range(2, Environment.ProcessorCount - 1).Where(i => i % 2 == 0 && i < Environment.ProcessorCount))}]" : line)))), () => Hyperthreading == true),
-            ("Configuring AutoGpuAffinity", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => File.WriteAllLines(Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini"), File.ReadAllLines(Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini")).Select(line => line.StartsWith("custom_cpus=") ? $"custom_cpus=[1..{Environment.ProcessorCount - 1}]" : line)))), () => Hyperthreading == false),
+            ("Configuring AutoGpuAffinity", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => File.WriteAllLines(Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini"), File.ReadAllLines(Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini")).Select(line => line.StartsWith("custom_cpus=") ? $"custom_cpus=[{string.Join(",", Enumerable.Range(2, Environment.ProcessorCount - 1).Where(i => i % 2 == 0 && i < Environment.ProcessorCount))}]" : line)))), () => Hyperthreading == true && CoreCount > 2),
+            ("Configuring AutoGpuAffinity", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => File.WriteAllLines(Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini"), File.ReadAllLines(Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini")).Select(line => line.StartsWith("custom_cpus=") ? $"custom_cpus=[1..{Environment.ProcessorCount - 1}]" : line)))), () => Hyperthreading == false && CoreCount > 2),
             ("Configuring AutoGpuAffinity", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => File.WriteAllLines(Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini"), File.ReadAllLines(Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini")).Select(line => line.StartsWith("profile=") ? "profile=1" : line)))), () => MSI == true),
             ("Configuring AutoGpuAffinity", async () => await ProcessActions.RunNsudo("CurrentUser", $"cmd /c takeown /f \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "AutoGpuAffinity.exe")}\" & icacls \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "AutoGpuAffinity.exe")}\" /grant Everyone:F /T /C /Q"), null),
             
             // run autogpuaffinity
-
-
-            // determine best gpu cpu
-
-
-            // determine best xhci cpu
-
+            ("Running AutoGpuAffinity", async () => await ProcessActions.RunAutoGpuAffinity(), () => Scheduling == true),
 
             // apply gpu affinity manually
-            ("Applying GPU Affinity to CPU " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GpuAffinity", null)?.ToString(), async () => await ProcessActions.Sleep(500), () => Scheduling == false),
-            ("Applying GPU Affinity to CPU " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GpuAffinity", null)?.ToString(), async () => await ProcessActions.RunNsudo("TrustedInstaller", $"cmd /c \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "AutoGpuAffinity.exe")}\" --apply-affinity {Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GpuAffinity", null)?.ToString()}"), () => Scheduling == false),
+            ("Applying GPU Affinity to CPU " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GpuAffinity", null)?.ToString(), async () => await ProcessActions.Sleep(500), null),
+            ("Applying GPU Affinity to CPU " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GpuAffinity", null)?.ToString(), async () => await ProcessActions.RunNsudo("TrustedInstaller", $"cmd /c \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "AutoGpuAffinity.exe")}\" --apply-affinity {Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GpuAffinity", null)?.ToString()}"), null),
 
             // apply xhci affinity manually
             ("Applying XHCI Affinity to CPU " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciAffinity", null)?.ToString(), async () => await ProcessActions.Sleep(500), () => Scheduling == false),
-            ("Applying XHCI Affinity to CPU " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciAffinity", null)?.ToString(), async () => await ProcessActions.RunCustom(async () => await Task.Run(() => { var query = "SELECT PNPDeviceID FROM Win32_USBController"; foreach (ManagementObject obj in new ManagementObjectSearcher(query).Get()) if (obj["PNPDeviceID"]?.ToString()?.StartsWith("PCI\\VEN_") == true) using (var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Enum\{obj["PNPDeviceID"]}\Device Parameters\Interrupt Management\Affinity Policy", true)) if (key != null && Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciAffinity", null) is int i && i >= 0) { key.SetValue("AssignmentSetOverride", new byte[(i / 8) + 1].Select((_, idx) => (byte)(idx == i / 8 ? 1 << (i % 8) : 0)).ToArray(), RegistryValueKind.Binary); key.SetValue("DevicePolicy", 4, RegistryValueKind.DWord); } })), () => Scheduling == false),
+            ("Applying XHCI Affinity to CPU " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciAffinity", null)?.ToString(), async () => await ProcessActions.RunCustom(async () => await Task.Run(() => { var query = "SELECT PNPDeviceID FROM Win32_USBController"; foreach (ManagementObject obj in new ManagementObjectSearcher(query).Get()) if (obj["PNPDeviceID"]?.ToString()?.StartsWith("PCI\\VEN_") == true) using (var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Enum\{obj["PNPDeviceID"]}\Device Parameters\Interrupt Management\Affinity Policy", true)) if (key != null && Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciAffinity", null) is int i && i >= 0) { key.SetValue("AssignmentSetOverride", new byte[(i / 8) + 1].Select((_, idx) => (byte)(idx == i / 8 ? 1 << (i % 8) : 0)).ToArray(), RegistryValueKind.Binary); key.SetValue("DevicePolicy", 4, RegistryValueKind.DWord); } })), null),
 
             // reserve cpus
             ("Reserving CPU " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GpuAffinity", null)?.ToString() + " and " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciAffinity", null)?.ToString(), async () => await ProcessActions.Sleep(500), () => Scheduling == false),
