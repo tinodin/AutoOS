@@ -343,13 +343,13 @@ public static class RegistryStage
             ("Reducing delay to end services on shutdown", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control"" /v WaitToKillServiceTimeout /t REG_SZ /d 1500 /f"), null),
 
             // disable telemetry
-            ("Disabling telemetry", async () => await ProcessActions.RunPowerShell(@"setx POWERSHELL_TELEMETRY_OPTOUT 1"), null),
-            ("Disabling telemetry", async () => await ProcessActions.RunPowerShell(@"setx DOTNET_TRY_CLI_TELEMETRY_OPTOUT 1   "), null),
-            ("Disabling telemetry", async () => await ProcessActions.RunPowerShell(@"setx CLOUDSDK_CORE_DISABLE_PROMPTS 1"), null),
-            ("Disabling telemetry", async () => await ProcessActions.RunPowerShell(@"setx DOTNET_CLI_TELEMETRY_OPTOUT 1"), null),
-            ("Disabling telemetry", async () => await ProcessActions.RunPowerShell(@"setx DOCKER_CLI_TELEMETRY_OPTOUT 1"), null),
-            ("Disabling telemetry", async () => await ProcessActions.RunPowerShell(@"setx VS_TELEMETRY_OPT_OUT 1"), null),
-            ("Disabling telemetry", async () => await ProcessActions.RunPowerShell(@"setx npm_config_loglevel silent   "), null),
+            ("Disabling telemetry", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"setx POWERSHELL_TELEMETRY_OPTOUT 1"), null),
+            ("Disabling telemetry", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"setx DOTNET_TRY_CLI_TELEMETRY_OPTOUT 1   "), null),
+            ("Disabling telemetry", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"setx CLOUDSDK_CORE_DISABLE_PROMPTS 1"), null),
+            ("Disabling telemetry", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"setx DOTNET_CLI_TELEMETRY_OPTOUT 1"), null),
+            ("Disabling telemetry", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"setx DOCKER_CLI_TELEMETRY_OPTOUT 1"), null),
+            ("Disabling telemetry", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"setx VS_TELEMETRY_OPT_OUT 1"), null),
+            ("Disabling telemetry", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"setx npm_config_loglevel silent   "), null),
             ("Disabling telemetry", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Environment"" /v POWERSHELL_TELEMETRY_OPTOUT /t REG_SZ /d 1 /f"), null),
             ("Disabling telemetry", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\DiagTrack"" /v Start /t REG_DWORD /d 4 /f"), null),
             ("Disabling telemetry", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DataCollection"" /v LimitDiagnosticLogCollection /t REG_DWORD /d 1 /f"), null),
@@ -743,8 +743,8 @@ public static class RegistryStage
             ("Renaming device", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion"" /v EditionSubstring /t REG_SZ /d ""AutoOS"" /f"), null),
             ("Renaming device", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion"" /v EditionSubVersion /t REG_SZ /d ""AutoOS"" /f"), null),
             ("Renaming device", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion"" /v RegisteredOrganization /t REG_SZ /d ""AutoOS"" /f"), null),
-            ("Renaming device", async () => await ProcessActions.RunPowerShell(@"Rename-Computer -NewName ""PC"""), () => Desktop == true),
-            ("Renaming device", async () => await ProcessActions.RunPowerShell(@"Rename-Computer -NewName ""LAPTOP"""), () => Desktop == false),
+            //("Renaming device", async () => await ProcessActions.RunPowerShell(@"Rename-Computer -NewName ""PC"""), () => Desktop == true),
+            //("Renaming device", async () => await ProcessActions.RunPowerShell(@"Rename-Computer -NewName ""LAPTOP"""), () => Desktop == false),
             //("Renaming device", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"label C: AutoOS"), null),
         };
 

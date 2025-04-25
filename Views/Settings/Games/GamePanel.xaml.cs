@@ -285,6 +285,8 @@ public sealed partial class GamePanel : UserControl
             "EpicGamesLauncher",
             "explorer",
             "FortniteClient-Win64-Shipping_EAC_EOS",
+            "GameBar",
+            "GameBarFTServer",
             "rundll32",
             "RuntimeBroker",
             "SearchHost",
