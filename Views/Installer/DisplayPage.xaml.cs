@@ -134,6 +134,9 @@ public sealed partial class DisplayPage : Page
         }
         else
         {
+            // re-enable the button
+            senderButton.IsEnabled = true;
+
             // remove infobar
             CruInfo.Children.Clear();
 
