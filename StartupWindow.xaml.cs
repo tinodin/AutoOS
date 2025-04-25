@@ -1,5 +1,4 @@
 ﻿using AutoOS.Views.Startup.Stages;
-using AutoOS.Views.Updater.Stages;
 using Microsoft.UI.Windowing;
 using System.Runtime.InteropServices;
 
@@ -12,26 +11,27 @@ namespace AutoOS.Views
         public string TitleBarName { get; set; }
         public static TextBlock Status { get; private set; }
         public static ProgressBar Progress { get; private set; }
-       
+
         public StartupWindow()
         {
             InitializeComponent();
             ExtendsContentIntoTitleBar = true;
+            SetTitleBar(AppTitleBar);
             AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
             AppWindow.IsShownInSwitchers = false;
-            SetTitleBar(AppTitleBar);
+            new ModernSystemMenu(this);
 
             var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
-            var windowId = Win32Interop.GetWindowIdFromWindow(hwnd);
+            uint dpi = GetDpiForWindow(hwnd);
+            int scalingPercent = (int)(dpi * 100 / 96);
 
-            var appWindow = AppWindow.GetFromWindowId(windowId);
+            App.Scaling = dpi / 96.0;
 
-            if (appWindow.Presenter is OverlappedPresenter p)
-            {
-                p.SetBorderAndTitleBar(true, false);
-                p.IsResizable = false;
-                p.IsAlwaysOnTop = true;
-            }
+            ((OverlappedPresenter)AppWindow.Presenter).PreferredMaximumWidth = (int)(340 * App.Scaling);
+            ((OverlappedPresenter)AppWindow.Presenter).PreferredMaximumHeight = (int)(130 * App.Scaling);
+            ((OverlappedPresenter)AppWindow.Presenter).IsResizable = false;
+            ((OverlappedPresenter)AppWindow.Presenter).IsAlwaysOnTop = true;
+            ((OverlappedPresenter)AppWindow.Presenter).SetBorderAndTitleBar(true, false);
 
             StartupWindow_Loaded();
         }
@@ -40,23 +40,9 @@ namespace AutoOS.Views
         {
             Status = StatusText;
             Progress = ProgressBar;
-
-            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
-            uint dpi = GetDpiForWindow(hwnd);
-            int scalingPercent = (int)(dpi * 100 / 96);
-
-            App.Scaling = dpi / 96.0;
-
-            if (!Directory.Exists(@"C:\Program Files\Windhawk"))
-            {
-                TitleBarName = "AutoOS Updater";
-                await UpdaterStage.Run();
-            }
-            else
-            {
-                TitleBarName = "AutoOS Startup";
-                await StartupStage.Run();
-            }
+            TitleBarName = "AutoOS Startup";
+            
+            await StartupStage.Run();
         }
     }
 }

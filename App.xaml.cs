@@ -1,5 +1,4 @@
-﻿using Microsoft.UI.Windowing;
-using Microsoft.Win32;
+﻿using Microsoft.Win32;
 using Microsoft.Windows.AppLifecycle;
 using Windows.Graphics;
 
@@ -19,10 +18,10 @@ namespace AutoOS
             //Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "Stage", "Installed", RegistryValueKind.String);
             //Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS", true)?.DeleteValue("Stage", false);
 
-            IsInstalled = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS")?.GetValue("Stage") as string == "Installed";
-
             InitializeComponent();
             NavService = new JsonNavigationService();
+
+            IsInstalled = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS")?.GetValue("Stage") as string == "Installed";
 
             // Enables Multicore JIT with the specified profile
             System.Runtime.ProfileOptimization.SetProfileRoot(Constants.RootDirectoryPath);
@@ -38,10 +37,8 @@ namespace AutoOS
                 if (appActivationArguments.Kind is ExtendedActivationKind.StartupTask)
                 {
                     MainWindow = new StartupWindow();
-                    MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
                     MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Startup";
-
-                    new ModernSystemMenu(MainWindow);
+                    MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
 
                     Window window = MainWindow;
                     var monitor = DisplayMonitorHelper.GetMonitorInfo(window);
@@ -60,47 +57,14 @@ namespace AutoOS
                 }
                 else
                 {
-                    if (!Directory.Exists(@"C:\Program Files\Windhawk"))
-                    {
-                        MainWindow = new StartupWindow();
-                        MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
-                        MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Startup";
-
-                        new ModernSystemMenu(MainWindow);
-
-                        Window window = MainWindow;
-                        var monitor = DisplayMonitorHelper.GetMonitorInfo(window);
-                        int X = (int)monitor.RectMonitor.Width;
-                        int Y = (int)monitor.RectMonitor.Height;
-
-                        int windowWidth = (int)(450 * Scaling);
-                        int windowHeight = (int)(130 * Scaling);
-
-                        int posX = X - windowWidth - (int)(10 * Scaling);
-                        int posY = Y - windowHeight - (int)(53 * Scaling);
-
-                        MainWindow.AppWindow.MoveAndResize(new RectInt32(posX, posY, windowWidth, windowHeight));
-
-                        MainWindow.Activate();
-                    }
-
                     MainWindow = new MainWindow();
-                    MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
                     MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Settings";
+                    MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
 
                     ThemeService = new ThemeService(MainWindow);
                     ThemeService.AutoInitialize(MainWindow).ConfigureTintColor();
 
-                    new ModernSystemMenu(MainWindow);
-
                     WindowHelper.ResizeAndCenterWindowToPercentageOfWorkArea(MainWindow, 92);
-
-                    if (MainWindow.AppWindow.Presenter is OverlappedPresenter presenter)
-                    {
-                        //presenter.Maximize();
-                        presenter.PreferredMinimumWidth = 660;
-                        presenter.PreferredMinimumHeight = 715;
-                    }
 
                     MainWindow.Activate();
                 }
@@ -108,19 +72,11 @@ namespace AutoOS
             else
             {
                 MainWindow = new MainWindow();
-                MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
                 MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Installer";
-
+                MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
+                
                 ThemeService = new ThemeService(MainWindow);
                 ThemeService.AutoInitialize(MainWindow).ConfigureTintColor();
-                ThemeService.SetBackdropType(BackdropType.Mica);
-
-                if (MainWindow.AppWindow.Presenter is OverlappedPresenter presenter)
-                {
-                    presenter.Maximize();
-                    presenter.PreferredMinimumWidth = 660;
-                    presenter.PreferredMinimumHeight = 715;
-                }
 
                 MainWindow.Activate();
             }

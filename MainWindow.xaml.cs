@@ -9,15 +9,18 @@ namespace AutoOS.Views
 
         public MainWindow()
         {
-            InitializeComponent();
             Instance = this;
+            InitializeComponent();
             ExtendsContentIntoTitleBar = true;
-            AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
             SetTitleBar(AppTitleBar);
+            AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
+            new ModernSystemMenu(this);
+
+            ((OverlappedPresenter)AppWindow.Presenter).PreferredMinimumWidth = 660;
+            ((OverlappedPresenter)AppWindow.Presenter).PreferredMinimumHeight = 715;
 
             if (App.IsInstalled)
             {
-                NavView.IsSettingsVisible = true;
                 App.Current.NavService
                     .Initialize(NavView, NavFrame, NavigationPageMappingsSettings.PageDictionary)
                     .ConfigureDefaultPage(typeof(Settings.HomeLandingPage))
@@ -26,6 +29,8 @@ namespace AutoOS.Views
                     .ConfigureTitleBar(AppTitleBar, false)
                     .ConfigureBreadcrumbBar(BreadCrumbNav, BreadcrumbPageMappings.PageDictionary);
                 TitleBarName = "AutoOS Settings";
+
+                NavView.IsSettingsVisible = true;
             }
             else
             {
@@ -36,6 +41,8 @@ namespace AutoOS.Views
                     .ConfigureTitleBar(AppTitleBar, false)
                     .ConfigureBreadcrumbBar(BreadCrumbNav, BreadcrumbPageMappings.PageDictionary);
                 TitleBarName = "AutoOS Installer";
+
+                ((OverlappedPresenter)AppWindow.Presenter).Maximize();
             }
         }
 
