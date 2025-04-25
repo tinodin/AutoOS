@@ -15,7 +15,7 @@ public static class RegistryStage
         InstallPage.Status.Text = "Configuring Registry...";
 
         string previousTitle = string.Empty;
-        int stagePercentage = 10;
+        int stagePercentage = 15;
 
         string edgeVersion = "";
 
