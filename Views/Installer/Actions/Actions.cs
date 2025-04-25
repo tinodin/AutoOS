@@ -504,6 +504,8 @@ public static class ProcessActions
 
                     // create reg file
                     File.WriteAllText(Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\" + displayName), "accountId.reg"), $"Windows Registry Editor Version 5.00\r\n\r\n[HKEY_CURRENT_USER\\Software\\Epic Games\\Unreal Engine\\Identifiers]\r\n\"AccountId\"=\"{accountId}\"");
+                    
+                    await Task.Delay(500);
 
                     InstallPage.Info.Title = "Succesfully logged in as " + displayName + " ...";
 
