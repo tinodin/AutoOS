@@ -92,7 +92,7 @@ public static class ApplicationStage
             ("Installing NanaZip", async () => await ProcessActions.RunPowerShell(@"Add-AppxPackage -Path ""$env:TEMP\NanaZip.Msixbundle"""), null),
 
             // download windhawk
-            ("Downloading Windhawk", async () => await ProcessActions.RunDownload("https://www.dl.dropboxusercontent.com/scl/fi/noz9y3dr10fotn5h11c3r/Windhawk.zip?rlkey=bbfictfl61u7avj7fjjjirj88&st=sg31s8q8&dl=0", Path.GetTempPath(), "Windhawk.zip"), null),
+            ("Downloading Windhawk", async () => await ProcessActions.RunDownload("https://www.dl.dropboxusercontent.com/scl/fi/11kr2znr49gcna1gfzwbo/Windhawk.zip?rlkey=0lsjjor8m84ewq85eixzrg1xm&st=7k835rgn&dl=0", Path.GetTempPath(), "Windhawk.zip"), null),
         
             // install windhawk
             ("Installing Windhawk", async () => await ProcessActions.RunExtract(Path.Combine(Path.GetTempPath(), "Windhawk.zip"), @"C:\Program Files\Windhawk"), null),

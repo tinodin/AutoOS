@@ -27,7 +27,7 @@
                     </dev:HeaderTile.Source>
                 </dev:HeaderTile>
                 <dev:HeaderTile
-                    Title="AutoOS on GitHub"
+                    Title="GitHub"
                     Description="Explore the source code and report bugs."
                     Link="https://github.com/tinodin/AutoOS">
                     <dev:HeaderTile.Source>

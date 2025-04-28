@@ -31,7 +31,7 @@ public static class VisualStage
 
             // aligning the taskbar
             ("Aligning the taskbar to the left", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"" /v ""TaskbarAl"" /t REG_DWORD /d 0 /f"), () => TaskbarAlignment == true),
-            
+
             // unpin copilot, microsoft edge and microsoft store
             //("Unpinning Copilot, Microsoft Edge, and Microsoft Store", async () => await ProcessActions.RunPowerShell(@"function DoUnpin([string]$appname) { $ErrorActionPreference = 'silentlycontinue'; ((New-Object -Com Shell.Application).NameSpace('shell:::{4234d49b-0245-4df3-b780-3893943456e1}').Items() | Where-Object { $_.Name -eq $appname }).Verbs() | Where-Object { $_.Name.replace('&', '') -match 'Unpin from taskbar' } | ForEach-Object { $_.DoIt(); }; $ErrorActionPreference = 'continue' }; DoUnpin 'Copilot'; DoUnpin 'Microsoft Edge'; DoUnpin 'Microsoft Store'"), null),
 

@@ -113,7 +113,6 @@ public static class ProcessActions
             .Build();
 
         DateTime lastLoggedTime = DateTime.MinValue;
-        bool isPaused = false;
 
         var downloadTask = download.StartAsync();
 
@@ -155,34 +154,6 @@ public static class ProcessActions
                 }, null);
             };
 
-            if (NetworkHelper.IsNetworkAvailable())
-            {
-                if (isPaused)
-                {
-                    isPaused = false;
-                    uiContext?.Post(_ =>
-                    {
-                        InstallPage.Info.Severity = InfoBarSeverity.Informational;
-                        InstallPage.Progress.Foreground = (Brush)Application.Current.Resources["AccentForegroundBrush"];
-                        InstallPage.ProgressRingControl.Foreground = null;
-                        InstallPage.Info.Title = $"{title} ({speedMB:F1} MB/s - {receivedMB:F2} MB of {totalMB:F2} MB)";
-                    }, null);
-                }
-            }
-            else
-            {
-                if (!isPaused)
-                {
-                    isPaused = true;
-                    uiContext?.Post(_ =>
-                    {
-                        InstallPage.Info.Severity = InfoBarSeverity.Warning;
-                        InstallPage.Progress.Foreground = (Brush)Application.Current.Resources["SystemFillColorCautionBrush"];
-                        InstallPage.ProgressRingControl.Foreground = (Brush)Application.Current.Resources["SystemFillColorCautionBrush"];
-                        InstallPage.Info.Title = $"{title} ({speedMB:F1} MB/s - {receivedMB:F2} MB of {totalMB:F2} MB - Waiting for internet connection to reestablish...)";
-                    }, null);
-                }
-            }
             await Task.Delay(800);
         }
     }
@@ -504,8 +475,83 @@ public static class ProcessActions
 
                     // create reg file
                     File.WriteAllText(Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\" + displayName), "accountId.reg"), $"Windows Registry Editor Version 5.00\r\n\r\n[HKEY_CURRENT_USER\\Software\\Epic Games\\Unreal Engine\\Identifiers]\r\n\"AccountId\"=\"{accountId}\"");
-                    
-                    await Task.Delay(500);
+
+                    // launching epic games silently so games get initialized and update the token for later swapping
+                    string configFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\GameUserSettings.ini");
+
+                    string rawData = Regex.Match(await File.ReadAllTextAsync(configFile), @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?").Groups[1].Value;
+                    string decrypted = DecryptDataWithAes(rawData, "A09C853C9E95409BB94D707EADEFA52E");
+
+                    await Task.Run(() => Process.Start(new ProcessStartInfo(@"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win64\EpicGamesLauncher.exe") { WindowStyle = ProcessWindowStyle.Hidden }));
+
+                    string lastRaw = rawData;
+
+                    while (true)
+                    {
+                        await Task.Delay(100);
+                        string newRaw = Regex.Match(await File.ReadAllTextAsync(configFile), @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?").Groups[1].Value;
+
+                        if (newRaw == lastRaw) continue;
+                        lastRaw = newRaw;
+
+                        string decryptedNew = DecryptDataWithAes(newRaw, "A09C853C9E95409BB94D707EADEFA52E");
+                        if (decryptedNew.Length < 1000)
+                        {
+
+                            return;
+                        }
+
+                        string cleaned = decryptedNew.Trim().TrimEnd('\0');
+                        using var doc = JsonDocument.Parse(cleaned);
+                        int tokenUse = doc.RootElement[0].GetProperty("TokenUseCount").GetInt32();
+
+                        if (tokenUse == 1) break;
+                    }
+
+                    while (true)
+                    {
+                        await Task.Delay(100);
+                        string newRaw = Regex.Match(await File.ReadAllTextAsync(configFile), @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?").Groups[1].Value;
+
+                        if (newRaw == lastRaw) continue;
+                        lastRaw = newRaw;
+
+                        string decryptedNew = DecryptDataWithAes(newRaw, "A09C853C9E95409BB94D707EADEFA52E");
+                        if (decryptedNew.Length < 1000)
+                        {
+
+                            return;
+                        }
+
+                        string cleaned = decryptedNew.Trim().TrimEnd('\0');
+                        using var doc = JsonDocument.Parse(cleaned);
+                        int tokenUse = doc.RootElement[0].GetProperty("TokenUseCount").GetInt32();
+
+                        if (tokenUse == 0) break;
+                    }
+
+                    foreach (var name in new[] { "EpicGamesLauncher", "EpicWebHelper" })
+                    {
+                        Process.GetProcessesByName(name).ToList().ForEach(p =>
+                        {
+                            p.Kill();
+                            p.WaitForExit();
+                        });
+                    }
+
+                    // get data
+                    data = Regex.Match(await File.ReadAllTextAsync(configFile), @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?").Groups[1].Value;
+
+                    // decrypt data
+                    decryptedData = DecryptDataWithAes(data, "A09C853C9E95409BB94D707EADEFA52E");
+
+                    // get display name
+                    displayName = Regex.Match(decryptedData, "\"DisplayName\":\"([^\"]+)\"").Groups[1].Value;
+
+                    // update the backed up config
+                    File.Copy(configFile, Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\" + displayName), "GameUserSettings.ini"), true);
+
+                    await Task.Delay(1000);
 
                     InstallPage.Info.Title = "Succesfully logged in as " + displayName + " ...";
 
@@ -540,6 +586,76 @@ public static class ProcessActions
             }
         }
     }
+
+    public static async Task UpdateInvalidEpicGamesToken()
+    {
+        InstallPage.Info.Title = "The login token is no longer valid. Please reenter your password...";
+
+        // close epic games launcher
+        foreach (var name in new[] { "EpicGamesLauncher", "EpicWebHelper" })
+        {
+            Process.GetProcessesByName(name).ToList().ForEach(p =>
+            {
+                p.Kill();
+                p.WaitForExit();
+            });
+        }
+
+        // delay
+        await Task.Delay(500);
+
+        // launch epic games launcher
+        Process.Start(@"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win32\EpicGamesLauncher.exe");
+
+        // check when logged in
+        string configFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\GameUserSettings.ini");
+
+        while (true)
+        {
+            if (File.Exists(configFile))
+            {
+                Match dataMatch = Regex.Match(File.ReadAllText(configFile), @"Data=([^\r\n]+)");
+
+                if (dataMatch.Success && dataMatch.Groups[1].Value.Length >= 1000)
+                {
+                    break;
+                }
+            }
+
+            await Task.Delay(500);
+        }
+
+        // close epic games launcher
+        foreach (var name in new[] { "EpicGamesLauncher", "EpicWebHelper" })
+        {
+            Process.GetProcessesByName(name).ToList().ForEach(p =>
+            {
+                p.Kill();
+                p.WaitForExit();
+            });
+        }
+
+        // disable tray and notifications
+        string generalSection = Regex.Match(await File.ReadAllTextAsync(configFile), @"\[(.*?)_General\]").Groups[1].Value + "_General";
+
+        InIHelper iniHelper = new InIHelper(configFile);
+
+        iniHelper.AddValue("MinimiseToSystemTray", "False", generalSection);
+        iniHelper.AddValue("NotificationsEnabled_FreeGame", "False", generalSection);
+        iniHelper.AddValue("NotificationsEnabled_Adverts", "False", generalSection);
+
+        // get data
+        string data = Regex.Match(await File.ReadAllTextAsync(configFile), @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?").Groups[1].Value;
+
+        // decrypt data
+        string decryptedData = DecryptDataWithAes(data, "A09C853C9E95409BB94D707EADEFA52E");
+
+        // get display name
+        string displayName = Regex.Match(decryptedData, "\"DisplayName\":\"([^\"]+)\"").Groups[1].Value;
+
+        InstallPage.Info.Title = "Succesfully logged in as " + displayName + " ...";
+    }
+
     public static async Task RunImportEpicGamesLauncherGames()
     {
         // get all install lists from other drives

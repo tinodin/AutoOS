@@ -12,7 +12,5 @@ public partial class AppConfig : NotifiyingJsonSettings, IVersionable
 
     public string fileName { get; set; } = Constants.AppConfigPath;
 
-    private string lastUpdateCheck { get; set; }
-
     // Docs: https://github.com/Nucs/JsonSettings
 }

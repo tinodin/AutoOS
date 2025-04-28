@@ -64,7 +64,6 @@
                     Width="192"
                     Height="256"
                     CornerRadius="8"
-                    EnableLazyLoading="True"
                     Source="{x:Bind ImageSource}"
                     Stretch="Fill" />
                 <StackPanel

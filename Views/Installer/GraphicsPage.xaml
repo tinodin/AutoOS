@@ -23,7 +23,7 @@
                 FontSize="28"
                 FontWeight="SemiBold"
                 Text="Graphics Card" />
-            <dev:SettingsGroup Margin="0,0,0,10" Header="Brands">
+            <dev:SettingsGroup Margin="0,0,0,10" Header="Manufacturer">
                 <dev:SettingsGroup.Content>
                     <GridView
                         x:Name="Brands"
