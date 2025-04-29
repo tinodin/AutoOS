@@ -3,6 +3,7 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -14,6 +15,71 @@ namespace AutoOS.Views.Installer.Actions;
 
 public static class ProcessActions
 {
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    public struct DEVMODE
+    {
+        private const int CCHDEVICENAME = 32;
+        private const int CCHFORMNAME = 32;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = CCHDEVICENAME)]
+        public string dmDeviceName;
+        public ushort dmSpecVersion;
+        public ushort dmDriverVersion;
+        public ushort dmSize;
+        public ushort dmDriverExtra;
+        public uint dmFields;
+        public int dmPositionX;
+        public int dmPositionY;
+        public uint dmDisplayOrientation;
+        public uint dmDisplayFixedOutput;
+        public short dmColor;
+        public short dmDuplex;
+        public short dmYResolution;
+        public short dmTTOption;
+        public short dmCollate;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = CCHFORMNAME)]
+        public string dmFormName;
+        public ushort dmLogPixels;
+        public uint dmBitsPerPel;
+        public uint dmPelsWidth;
+        public uint dmPelsHeight;
+        public uint dmDisplayFlags;
+        public uint dmDisplayFrequency;
+        public uint dmICMMethod;
+        public uint dmICMIntent;
+        public uint dmMediaType;
+        public uint dmDitherType;
+        public uint dmReserved1;
+        public uint dmReserved2;
+        public uint dmPanningWidth;
+        public uint dmPanningHeight;
+    }
+
+    [DllImport("user32.dll", CharSet = CharSet.Ansi)]
+    static extern bool EnumDisplaySettings(string deviceName, int modeNum, ref DEVMODE devMode);
+
+    [DllImport("user32.dll")]
+    static extern bool EnumDisplayDevices(string lpDevice, uint iDevNum, ref DISPLAY_DEVICE lpDisplayDevice, uint dwFlags);
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    public struct DISPLAY_DEVICE
+    {
+        public int cb;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        public string DeviceName;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+        public string DeviceString;
+        public int StateFlags;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+        public string DeviceID;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+        public string DeviceKey;
+    }
+
+    private const int ENUM_CURRENT_SETTINGS = -1;
+
+    [DllImport("user32.dll")]
+    static extern int ChangeDisplaySettingsEx(string lpszDeviceName, ref DEVMODE lpDevMode, IntPtr hwnd, uint dwflags, IntPtr lParam);
+
     public static async Task RunNsudo(string user, string command)
     {
         string arguments = user switch
@@ -209,6 +275,41 @@ public static class ProcessActions
 
             await File.WriteAllLinesAsync(presentationsCfgPath, newLines);
         }
+    }
+
+    public static async Task SetHighestRefreshRates()
+    {
+        DISPLAY_DEVICE display = new DISPLAY_DEVICE { cb = Marshal.SizeOf<DISPLAY_DEVICE>() };
+        uint i = 0;
+
+        while (EnumDisplayDevices(null, i++, ref display, 0))
+        {
+            DEVMODE current = new DEVMODE { dmSize = (ushort)Marshal.SizeOf<DEVMODE>() };
+            if (!EnumDisplaySettings(display.DeviceName, -1, ref current)) continue;
+
+            DEVMODE best = current;
+            for (int j = 0; ; j++)
+            {
+                DEVMODE test = new DEVMODE { dmSize = (ushort)Marshal.SizeOf<DEVMODE>() };
+                if (!EnumDisplaySettings(display.DeviceName, j, ref test)) break;
+
+                if (test.dmPelsWidth == current.dmPelsWidth &&
+                    test.dmPelsHeight == current.dmPelsHeight &&
+                    test.dmDisplayFrequency > best.dmDisplayFrequency)
+                {
+                    best = test;
+                }
+            }
+
+            if (best.dmDisplayFrequency > current.dmDisplayFrequency)
+            {
+                int r = ChangeDisplaySettingsEx(display.DeviceName, ref best, IntPtr.Zero, 0, IntPtr.Zero);
+            }
+
+            display = new DISPLAY_DEVICE { cb = Marshal.SizeOf<DISPLAY_DEVICE>() };
+        }
+
+        await Task.Delay(2000);
     }
 
     public static async Task ImportProfile(string file)

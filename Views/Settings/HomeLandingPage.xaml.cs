@@ -4,7 +4,7 @@
     {
         public HomeLandingPage()
         {
-            this.InitializeComponent();
+            InitializeComponent();
         }
     }
 }

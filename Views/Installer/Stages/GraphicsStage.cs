@@ -87,6 +87,10 @@ public static class GraphicsStage
             ("Applying Custom Resolution Utility (CRU) profile", async () => await ProcessActions.Sleep(4000), () => CRU == true),
             ("Applying Custom Resolution Utility (CRU) profile", async () => await ProcessActions.RefreshUI(), () => CRU == true),
 
+            // set the highest supported refresh rate for every monitor
+            ("Setting the highest supported refresh rate for every monitor", async () => await ProcessActions.Sleep(1000), null),
+            ("Setting the highest supported refresh rate for every monitor", async () => await ProcessActions.SetHighestRefreshRates(), null),
+
             // enable optimizations for windowed games
             ("Enabling optimizations for windowed games", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\DirectX\UserGpuPreferences"" /v ""DirectXUserGlobalSettings"" /t REG_SZ /d ""SwapEffectUpgradeEnable=1;"" /f"), () => Intel10th == true),
 
