@@ -77,14 +77,14 @@ public static class GraphicsStage
 
             // install the nvidia driver
             ("Installing the NVIDIA driver", async () => await ProcessActions.RunNsudo("CurrentUser", @"""%TEMP%\driver\setup.exe"" /s"), () => NVIDIA == true),
-            ("Installing the NVIDIA driver", async () => await ProcessActions.Sleep(4000), () => NVIDIA == true),
+            ("Installing the NVIDIA driver", async () => await ProcessActions.Sleep(2500), () => NVIDIA == true),
             ("Installing the NVIDIA driver", async () => await ProcessActions.RefreshUI(), () => NVIDIA == true),
 
             // apply custom resolution utility (cru) profile
             ("Importing Custom Resolution Utility (CRU) profile", async () => await ProcessActions.Sleep(1000), () => CRU == true),
             ("Importing Custom Resolution Utility (CRU) profile", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "CruProfile", null).ToString(), Arguments = "-i" })!.WaitForExitAsync())), () => CRU == true),
             ("Applying Custom Resolution Utility (CRU) profile", async () => await ProcessActions.RunApplication("CRU", "restart64.exe", "/q"), () => CRU == true),
-            ("Applying Custom Resolution Utility (CRU) profile", async () => await ProcessActions.Sleep(4000), () => CRU == true),
+            ("Applying Custom Resolution Utility (CRU) profile", async () => await ProcessActions.Sleep(2500), () => CRU == true),
             ("Applying Custom Resolution Utility (CRU) profile", async () => await ProcessActions.RefreshUI(), () => CRU == true),
 
             // set the highest supported refresh rate for every monitor
