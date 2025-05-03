@@ -1,8 +1,7 @@
-﻿using AutoOS.Views.Installer.Actions;
+﻿using AutoOS.Helpers;
 using Microsoft.Win32;
 using System.Diagnostics;
 using System.Management;
-using System.Text.RegularExpressions;
 using Windows.Storage;
 
 namespace AutoOS.Views.Settings;
@@ -20,8 +19,6 @@ public sealed partial class GraphicsPage : Page
     }
     private async void GetGPUState()
     {
-        updateCheck.IsChecked = true;
-
         using (var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_VideoController"))
         {
             foreach (var obj in searcher.Get())
@@ -51,73 +48,77 @@ public sealed partial class GraphicsPage : Page
                 }
             }
         }
+
+        UpdateCheck.IsChecked = true;
     }
 
-    private async void updateCheck_Click(object sender, RoutedEventArgs e)
+    private async void UpdateCheck_Checked(object sender, RoutedEventArgs e)
     {
-        using (var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_VideoController"))
+        if (UpdateCheck.Content.ToString().Contains("Update to"))
         {
-            foreach (var obj in searcher.Get())
+            //UpdateCheck.CheckedContent = "Downloading the latest NVIDIA driver...";
+
+            //var (_, newestVersion, newestDownloadUrl) = await NvidiaHelper.CheckUpdate();
+
+            //await Task.Delay(500);
+
+            //UpdateCheck.CheckedContent = "Extracting the NVIDIA driver...";
+        }
+        else
+        {
+            UpdateCheck.CheckedContent = "Checking for updates...";
+
+            using (var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_VideoController"))
             {
-                string name = obj["Name"]?.ToString();
-                string version = obj["DriverVersion"]?.ToString();
-
-                if (name != null)
+                foreach (var obj in searcher.Get())
                 {
-                    if (name.Contains("NVIDIA", StringComparison.OrdinalIgnoreCase))
+                    string name = obj["Name"]?.ToString();
+
+                    if (name != null)
                     {
-                        // get current version
-                        var currentVersion = (await Task.Run(() => Process.Start(new ProcessStartInfo("nvidia-smi", "--query-gpu=driver_version --format=csv,noheader") { CreateNoWindow = true, RedirectStandardOutput = true })?.StandardOutput.ReadToEndAsync()))?.Trim();
-
-                        GpuCard.Description = "Current Version: " + currentVersion;
-
-                        try
+                        if (name.Contains("NVIDIA", StringComparison.OrdinalIgnoreCase))
                         {
-                            using (HttpClient client = new HttpClient())
+                            try
                             {
-                                // check for newest driver version
-                                string html = await client.GetStringAsync("https://www.techspot.com/downloads/drivers/essentials/nvidia-geforce/");
-                                string pattern = @"<title>.*?(\d+\.\d+).*?</title>";
-                                var match = Regex.Match(html, pattern);
-                                string newestVersion = match.Groups[1].Value;
+                                var (currentVersion, newestVersion, newestDownloadUrl) = await NvidiaHelper.CheckUpdate();
 
                                 // delay
-                                await Task.Delay(350);
+                                await Task.Delay(800);
 
                                 // check if update is needed
                                 if (string.Compare(newestVersion, currentVersion, StringComparison.Ordinal) > 0)
                                 {
-                                    updateCheck.IsChecked = false;
-                                    updateCheck.Content = "Update to " + newestVersion;
+                                    UpdateCheck.IsChecked = false;
+                                    UpdateCheck.Content = "Update to " + newestVersion;
                                 }
                                 else if (string.Compare(newestVersion, currentVersion, StringComparison.Ordinal) == 0)
                                 {
-                                    updateCheck.IsChecked = false;
-                                    updateCheck.Content = "No updates available";
+                                    UpdateCheck.IsChecked = false;
+                                    UpdateCheck.Content = "No updates available";
                                 }
                             }
+                            catch
+                            {
+                                // delay
+                                await Task.Delay(800);
+
+                                // connection failed message
+                                UpdateCheck.IsChecked = false;
+                                UpdateCheck.Content = "Failed to check for updates";
+                            }
                         }
-                        catch
+                        if (name.Contains("AMD", StringComparison.OrdinalIgnoreCase) || name.Contains("Radeon", StringComparison.OrdinalIgnoreCase))
                         {
-                            // delay
-                            await Task.Delay(800);
 
-                            // connection failed message
-                            updateCheck.IsChecked = false;
-                            updateCheck.Content = "Failed to check for updates";
                         }
-                    }
-                    if (name.Contains("AMD", StringComparison.OrdinalIgnoreCase) || name.Contains("Radeon", StringComparison.OrdinalIgnoreCase))
-                    {
+                        if (name.Contains("Intel", StringComparison.OrdinalIgnoreCase))
+                        {
 
-                    }
-                    if (name.Contains("Intel", StringComparison.OrdinalIgnoreCase))
-                    {
-
+                        }
                     }
                 }
             }
-        }
+        }  
     }
 
     private void GetHDCPState()
@@ -369,5 +370,6 @@ public sealed partial class GraphicsPage : Page
         // remove infobar
         MsiAfterburnerInfo.Children.Clear();
     }
+
 }
 

@@ -80,6 +80,7 @@
     <PackageReference Include="nucs.JsonSettings.AutoSaveGenerator" Version="2.0.4" />
     <PackageReference Include="System.Management" Version="10.0.0-preview.3.25171.5" />
     <PackageReference Include="System.ServiceProcess.ServiceController" Version="10.0.0-preview.3.25171.5" />
+    <PackageReference Include="ValveKeyValue" Version="0.13.1.398" />
   </ItemGroup>
   <!-- 
     Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution 

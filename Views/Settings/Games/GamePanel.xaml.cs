@@ -464,7 +464,7 @@ public sealed partial class GamePanel : UserControl
         var contentDialog = new ContentDialog
         {
             Content = gameSettings,
-            PrimaryButtonText = "Close",
+            CloseButtonText = "Close",
             XamlRoot = this.XamlRoot,
         };
 

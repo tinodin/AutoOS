@@ -33,7 +33,7 @@
                 HeaderIcon="{dev:FontIcon FontFamily={StaticResource SymbolThemeFontFamily},
                                           Glyph=&#xE8B7;}">
                 <dev:TextBox
-                    MaxWidth="300"
+                    MaxWidth="400"
                     IsReadOnly="True"
                     IsTabStop="False"
                     Text="{x:Bind InstallLocation}">

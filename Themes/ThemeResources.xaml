@@ -93,7 +93,9 @@
                             Padding="{TemplateBinding Padding}"
                             HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                             VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                            Foreground="{ThemeResource ToggleButtonForegroundChecked}" />
+                            Foreground="{ThemeResource ToggleButtonForegroundChecked}"
+                            Text="{Binding CheckedContent, RelativeSource={RelativeSource TemplatedParent}}"
+                            Visibility="Collapsed" />
                         <VisualStateManager.VisualStateGroups>
                             <VisualStateGroup x:Name="CommonStates">
                                 <VisualState x:Name="Normal" />
@@ -158,9 +160,9 @@
                                         </ObjectAnimationUsingKeyFrames>
                                         <ObjectAnimationUsingKeyFrames
                                             Storyboard.TargetName="CheckedText"
-                                            Storyboard.TargetProperty="Text"
+                                            Storyboard.TargetProperty="Visibility"
                                             Duration="0">
-                                            <DiscreteObjectKeyFrame KeyTime="0" Value="{Binding CheckedContent, RelativeSource={RelativeSource TemplatedParent}}" />
+                                            <DiscreteObjectKeyFrame KeyTime="0" Value="Visible" />
                                         </ObjectAnimationUsingKeyFrames>
 
                                         <ObjectAnimationUsingKeyFrames
@@ -198,9 +200,9 @@
                                         </ObjectAnimationUsingKeyFrames>
                                         <ObjectAnimationUsingKeyFrames
                                             Storyboard.TargetName="CheckedText"
-                                            Storyboard.TargetProperty="Text"
+                                            Storyboard.TargetProperty="Visibility"
                                             Duration="0">
-                                            <DiscreteObjectKeyFrame KeyTime="0" Value="{Binding CheckedContent, RelativeSource={RelativeSource TemplatedParent}}" />
+                                            <DiscreteObjectKeyFrame KeyTime="0" Value="Visible" />
                                         </ObjectAnimationUsingKeyFrames>
                                         <ObjectAnimationUsingKeyFrames
                                             Storyboard.TargetName="PART_ProgressBar"
@@ -236,9 +238,9 @@
                                         </ObjectAnimationUsingKeyFrames>
                                         <ObjectAnimationUsingKeyFrames
                                             Storyboard.TargetName="CheckedText"
-                                            Storyboard.TargetProperty="Text"
+                                            Storyboard.TargetProperty="Visibility"
                                             Duration="0">
-                                            <DiscreteObjectKeyFrame KeyTime="0" Value="{Binding CheckedContent, RelativeSource={RelativeSource TemplatedParent}}" />
+                                            <DiscreteObjectKeyFrame KeyTime="0" Value="Visible" />
                                         </ObjectAnimationUsingKeyFrames>
                                         <ObjectAnimationUsingKeyFrames
                                             Storyboard.TargetName="PART_ProgressBar"
@@ -270,9 +272,9 @@
                                         </ObjectAnimationUsingKeyFrames>
                                         <ObjectAnimationUsingKeyFrames
                                             Storyboard.TargetName="CheckedText"
-                                            Storyboard.TargetProperty="Text"
+                                            Storyboard.TargetProperty="Visibility"
                                             Duration="0">
-                                            <DiscreteObjectKeyFrame KeyTime="0" Value="{Binding CheckedContent, RelativeSource={RelativeSource TemplatedParent}}" />
+                                            <DiscreteObjectKeyFrame KeyTime="0" Value="Visible" />
                                         </ObjectAnimationUsingKeyFrames>
                                         <ObjectAnimationUsingKeyFrames
                                             Storyboard.TargetName="PART_ProgressBar"

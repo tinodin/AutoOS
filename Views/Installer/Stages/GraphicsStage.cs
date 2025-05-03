@@ -178,6 +178,10 @@ public static class GraphicsStage
             // disable dynamic p-state
             ("Disabling dynamic p-state", async () => await ProcessActions.RunPowerShellScript("pstate.ps1", ""), () => NVIDIA == true),
 
+            //
+
+
+
             // download msi afterburner
             ("Downloading MSI Afterburner", async () => await ProcessActions.RunDownload("https://www.dl.dropboxusercontent.com/scl/fi/6dvl62kgm3z38x49752bt/MSI-Afterburner.zip?rlkey=h2m2riyjisrb3ph0i8j0q4eu5&st=pw7u3mte&dl=0", Path.GetTempPath(), "MSI Afterburner.zip"), null),
 

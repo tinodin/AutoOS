@@ -1,11 +1,8 @@
 ﻿using AutoOS.Views.Settings.Games;
+using AutoOS.Helpers;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System.Diagnostics;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
 using Windows.Storage;
 
 namespace AutoOS.Views.Settings;
@@ -13,10 +10,11 @@ namespace AutoOS.Views.Settings;
 public sealed partial class GamesPage : Page
 {
     private bool isInitializingAccounts = true;
-    private readonly string configFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\GameUserSettings.ini");
-
+    public static GamesPage Instance { get; private set; }
+    public GameGallery Games => games;
     public GamesPage()
     {
+        Instance = this;
         InitializeComponent();
         LoadGames();
         LoadEpicAccounts();
@@ -124,6 +122,27 @@ public sealed partial class GamesPage : Page
         ApplySort();
     }
 
+    private async void LoadGames()
+    {
+        // epic games
+        await EpicGamesHelper.LoadGames();
+
+        // steam
+        await SteamHelper.LoadGames();
+
+        // add custom games
+        CustomGameHelper.LoadGames();
+
+        // sort games
+        LoadSortSettings();
+
+        // align games left
+        Games_SwitchPresenter.HorizontalAlignment = HorizontalAlignment.Left;
+
+        // show game gallery
+        Games_SwitchPresenter.Value = false;
+    }
+
     private async void AddCustomGame_Click(object sender, RoutedEventArgs e)
     {
         // show content dialog
@@ -183,176 +202,7 @@ public sealed partial class GamesPage : Page
         }
     }
 
-    private async void LoadGames()
-    {
-        // epic games
-        if (File.Exists(@"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win32\EpicGamesLauncher.exe"))
-        {
-            // for each manifest
-            foreach (var file in Directory.GetFiles(@"C:\ProgramData\Epic\EpicGamesLauncher\Data\Manifests", "*.item", SearchOption.TopDirectoryOnly))
-            {
-                // read file
-                var itemJson = JsonNode.Parse(await File.ReadAllTextAsync(file));
-
-                // check if an game or addon
-                if (itemJson?["bIsApplication"]?.GetValue<bool>() == true)
-                {
-                    // get json data
-                    string url = $"https://api.egdata.app/items/{itemJson["MainGameCatalogItemId"]?.GetValue<string>()}";
-
-                    // more up to date than the fortnite item id
-                    if (itemJson["AppName"]?.GetValue<string>() == "Fortnite")
-                    {
-                        url = $"https://api.egdata.app/offers/d69e49517f0f4e49a39253f7b106dc27";
-                    }
-
-                    try
-                    {
-                        // read json data
-                        var remoteData = JsonNode.Parse(await httpClient.GetStringAsync(url));
-
-                        // search cover image
-                        foreach (var image in remoteData?["keyImages"]?.AsArray())
-                        {
-                            if (image?["type"]?.GetValue<string>() == "DieselGameBoxTall")
-                            {
-                                // add game panel
-                                var gamePanel = new GamePanel
-                                {
-                                    Launcher = "Epic Games",
-                                    Title = remoteData?["title"].GetValue<string>(),
-                                    Description = (remoteData["developer"]?.GetValue<string>()) ?? remoteData["developerDisplayName"]?.GetValue<string>(),
-                                    ImageSource = new BitmapImage(new Uri(image["url"]?.GetValue<string>())),
-                                    CatalogNamespace = itemJson["MainGameCatalogNamespace"]?.GetValue<string>(),
-                                    CatalogItemId = itemJson["MainGameCatalogItemId"]?.GetValue<string>(),
-                                    AppName = itemJson["MainGameAppName"]?.GetValue<string>(),
-                                    InstallLocation = itemJson["InstallLocation"]?.GetValue<string>(),
-                                    LaunchExecutable = itemJson["LaunchExecutable"]?.GetValue<string>()
-                                };
-
-                                ((StackPanel)games.HeaderContent).Children.Add(gamePanel);
-
-                                // start watcher
-                                gamePanel.CheckGameRunning();
-                            }
-                        }
-                    }
-                    catch
-                    {
-                        break;
-                    }
-                }
-            }
-        }
-
-        // steam
-        if (File.Exists(@"C:\Program Files (x86)\Steam\steam.exe"))
-        {
-            string steam = @"C:\Program Files (x86)\Steam";
-            string vdf = Path.Combine(steam, @"steamapps\libraryfolders.vdf");
-            if (!File.Exists(vdf)) return;
-
-            var pathRegex = new Regex(@"""path""\s+""(.+?)""");
-            var nameRegex = new Regex(@"""name""\s+""(.+?)""");
-            var dirRegex = new Regex(@"""installdir""\s+""(.+?)""");
-
-            foreach (var line in File.ReadAllLines(vdf))
-            {
-                var match = pathRegex.Match(line);
-                if (!match.Success) continue;
-
-                string lib = match.Groups[1].Value.Replace(@"\\", @"\");
-                string steamapps = Path.Combine(lib, "steamapps");
-                if (!Directory.Exists(steamapps)) continue;
-
-                foreach (var manifest in Directory.GetFiles(steamapps, "appmanifest_*.acf"))
-                {
-                    string[] lines = File.ReadAllLines(manifest);
-                    string name = lines.Select(l => nameRegex.Match(l)).FirstOrDefault(m => m.Success)?.Groups[1].Value;
-                    string dir = lines.Select(l => dirRegex.Match(l)).FirstOrDefault(m => m.Success)?.Groups[1].Value;
-                    if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(dir)) continue;
-
-                    string gameId = Path.GetFileNameWithoutExtension(manifest).Replace("appmanifest_", "");
-
-                    // skip steam tools
-                    if (gameId == "228980")
-                    {
-                        continue;
-                    }
-
-                    // get developer
-                    string developer = "Unknown";
-
-                    try
-                    {
-                        var data = JsonDocument.Parse(await httpClient.GetStringAsync($"https://store.steampowered.com/api/appdetails?appids={gameId}")).RootElement.GetProperty(gameId);
-                        if (data.GetProperty("success").GetBoolean())
-                        {
-                            developer = string.Join(", ", data.GetProperty("data").GetProperty("developers").EnumerateArray().Select(d => d.GetString()).Where(s => !string.IsNullOrWhiteSpace(s)));
-                        }
-                    }
-                    catch
-                    {
-                        break;
-                    }
-
-                    // add game panel
-                    var gamePanel = new GamePanel
-                    {
-                        Launcher = "Steam",
-                        Title = name,
-                        Description = developer,
-                        GameID = gameId,
-                        ImageSource = new BitmapImage(new Uri(Path.Combine(steam, $@"appcache\librarycache\{gameId}\library_600x900.jpg"))),
-                        InstallLocation = Path.Combine(lib, "steamapps", "common", dir),
-                    };
-
-                    ((StackPanel)games.HeaderContent).Children.Add(gamePanel);
-
-                    // start watcher
-                    gamePanel.CheckGameRunning();
-                }
-            }
-        }
-
-        // add custom games
-        if (Directory.Exists(Path.Combine(PathHelper.GetAppDataFolderPath(), "Games")))
-        {
-            foreach (var file in Directory.GetFiles(Path.Combine(PathHelper.GetAppDataFolderPath(), "Games"), "*.json"))
-            {
-                // read game json
-                var game = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(file));
-
-                // add game panel
-                var gamePanel = new GamePanel
-                {
-                    Launcher = game["Launcher"],
-                    LauncherLocation = game["LauncherLocation"],
-                    DataLocation = game["DataLocation"],
-                    InstallLocation = game["GameLocation"],
-                    Title = game["GameName"],
-                    Description = game["GameDeveloper"],
-                    ImageSource = new BitmapImage(new Uri(game["GameCoverUrl"]))
-                };
-
-                ((StackPanel)games.HeaderContent).Children.Add(gamePanel);
-
-                // start watcher
-                gamePanel.CheckGameRunning();
-            }
-        }
-
-        // sort games
-        LoadSortSettings();
-
-        // align games left
-        Games_SwitchPresenter.HorizontalAlignment = HorizontalAlignment.Left;
-        
-        // show game gallery
-        Games_SwitchPresenter.Value = false;
-    }
-
-    public async void LoadEpicAccounts()
+    public void LoadEpicAccounts()
     {
         // clear list
         Accounts.ItemsSource = null;
@@ -360,107 +210,53 @@ public sealed partial class GamesPage : Page
         // get all configs
         List<string> accountList = new List<string>();
 
-        if (File.Exists(@"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win32\EpicGamesLauncher.exe"))
+        if (File.Exists(EpicGamesHelper.EpicGamesPath))
         {
-            foreach (var file in Directory.GetFiles(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows"), "GameUserSettings.ini", SearchOption.AllDirectories))
+            foreach (var file in Directory.GetFiles(EpicGamesHelper.EpicGamesAccountDir, "GameUserSettings.ini", SearchOption.AllDirectories))
             {
-                // read config
-                string configContent = await File.ReadAllTextAsync(file);
-
                 // check if data is valid
-                Match dataMatch = Regex.Match(configContent, @"Data=([^\r\n]+)");
-                if (dataMatch.Groups[1].Value.Length >= 1000)
+                if (EpicGamesHelper.ValidateData(file))
                 {
-                    // get account id
-                    string accountId = Regex.Match(configContent, @"\[(.*?)_General\]").Groups[1].Value;
-
-                    // get data
-                    string data = Regex.Match(configContent, @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?").Groups[1].Value;
-
-                    // decrypt data
-                    string decryptedData = DecryptDataWithAes(data, "A09C853C9E95409BB94D707EADEFA52E");
-
-                    // get display name
-                    string displayName = Regex.Match(decryptedData, "\"DisplayName\":\"([^\"]+)\"").Groups[1].Value;
-
-                    // sanitize display name for folder usage
-                    string sanitizedDisplayName = new string(displayName.Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray()).TrimEnd('.', ' ');
-
-                    string configPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows");
-
-                    // check if data exists with old display name
-                    string existingDir = Directory.GetDirectories(configPath)
-                                                  .FirstOrDefault(dir =>
-                                                  {
-                                                      string filePath = Path.Combine(dir, "GameUserSettings.ini");
-                                                      return File.Exists(filePath) &&
-                                                          Regex.Match(File.ReadAllText(filePath), @"\[(.*?)_General\]").Groups[1].Value == accountId &&
-                                                          !dir.EndsWith(sanitizedDisplayName);
-                                                  });
-
-                    if (existingDir != null)
+                    // update config if accountids match
+                    if (Directory.Exists(Path.Combine(EpicGamesHelper.EpicGamesAccountDir, EpicGamesHelper.SanitizeDisplayName(file))))
                     {
-                        // rename folder
-                        Directory.Move(existingDir, Path.Combine(Path.GetDirectoryName(existingDir), sanitizedDisplayName));
-
-                        // replace config
-                        File.Copy(configFile, Path.Combine(Path.GetDirectoryName(existingDir), sanitizedDisplayName, "GameUserSettings.ini"), true);
-                    }
-                    else
-                    {
-                        string newDir = Path.Combine(configPath, sanitizedDisplayName);
-
-                        if (Directory.Exists(newDir))
+                        if (File.Exists(EpicGamesHelper.ActiveEpicGamesAccountPath))
                         {
-                            if (File.Exists(configFile))
+                            if (EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath).AccountId == EpicGamesHelper.GetAccountData(file).AccountId)
                             {
-                                if (Regex.Match(File.ReadAllText(configFile), @"\[(.*?)_General\]").Groups[1].Value == accountId)
-                                {
-                                    File.Copy(configFile, Path.Combine(newDir, "GameUserSettings.ini"), true);
-                                }
+                                File.Copy(EpicGamesHelper.ActiveEpicGamesAccountPath, Path.Combine(EpicGamesHelper.EpicGamesAccountDir, EpicGamesHelper.SanitizeDisplayName(file), "GameUserSettings.ini"), true);
                             }
                         }
-                        else
-                        {
-                            // create folder
-                            Directory.CreateDirectory(newDir);
+                    }
+                    // backup config if not already
+                    else
+                    {
+                        // create folder
+                        Directory.CreateDirectory(Path.Combine(EpicGamesHelper.EpicGamesAccountDir, EpicGamesHelper.SanitizeDisplayName(file)));
 
-                            // copy config
-                            File.Copy(configFile, Path.Combine(newDir, "GameUserSettings.ini"), true);
+                        // copy config
+                        File.Copy(EpicGamesHelper.ActiveEpicGamesAccountPath, Path.Combine(EpicGamesHelper.EpicGamesAccountDir, EpicGamesHelper.SanitizeDisplayName(file), "GameUserSettings.ini"), true);
 
-                            // create reg file
-                            File.WriteAllText(Path.Combine(newDir, "accountId.reg"), $"Windows Registry Editor Version 5.00\r\n\r\n[HKEY_CURRENT_USER\\Software\\Epic Games\\Unreal Engine\\Identifiers]\r\n\"AccountId\"=\"{accountId}\"");
-                        }
+                        // create reg file
+                        File.WriteAllText(Path.Combine(Path.Combine(EpicGamesHelper.EpicGamesAccountDir, EpicGamesHelper.SanitizeDisplayName(file)), "accountId.reg"), $"Windows Registry Editor Version 5.00\r\n\r\n[HKEY_CURRENT_USER\\Software\\Epic Games\\Unreal Engine\\Identifiers]\r\n\"AccountId\"=\"{EpicGamesHelper.GetAccountData(file).AccountId}\"");
                     }
 
                     // add account to list
-                    if (!accountList.Contains(displayName))
+                    if (!accountList.Contains(EpicGamesHelper.GetAccountData(file).DisplayName))
                     {
-                        accountList.Add(displayName);
+                        accountList.Add(EpicGamesHelper.GetAccountData(file).DisplayName);
                     }
 
                     // select active account
-                    if (file == configFile)
+                    if (file == EpicGamesHelper.ActiveEpicGamesAccountPath)
                     {
-                        Accounts.SelectedItem = displayName;
+                        Accounts.SelectedItem = EpicGamesHelper.GetAccountData(file).DisplayName;
                     }
                 }
+                // if not logged in or invalid data
                 else
                 {
-                    //foreach (var dir in Directory.GetDirectories(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows")))
-                    //{
-                    //    string backupAccountId = Regex.Match(File.ReadAllText(Path.Combine(dir, "GameUserSettings.ini")), @"\[(.*?)_General\]").Groups[1].Value;
 
-                    //    if (backupAccountId == Regex.Match(configContent, @"\[(.*?)_General\]").Groups[1].Value)
-                    //    {
-                    //        Directory.Delete(dir, true);
-                    //    }
-
-                    //    if (file == configFile)
-                    //    {
-                    //        File.Delete(configFile);
-                    //    }
-                    //}
                 }
             }
         }
@@ -472,86 +268,55 @@ public sealed partial class GamesPage : Page
         isInitializingAccounts = false;
     }
 
+
     private async void Accounts_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (isInitializingAccounts) return;
 
         // close epic games launcher
-        foreach (var name in new[] { "EpicGamesLauncher", "EpicWebHelper" })
-        {
-            Process.GetProcessesByName(name).ToList().ForEach(p =>
-            {
-                p.Kill();
-                p.WaitForExit();
-            });
-        }
+        EpicGamesHelper.CloseEpicGames();
 
         // replace file
-        File.Copy(Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\", Accounts.SelectedItem.ToString()), "GameUserSettings.ini"), configFile, true);
+        File.Copy(Path.Combine(EpicGamesHelper.EpicGamesAccountDir, Accounts.SelectedItem.ToString(), "GameUserSettings.ini"), EpicGamesHelper.ActiveEpicGamesAccountPath, true);
 
-        // replace accountId in registry
-        Process.Start("regedit.exe", $"/s \"{Path.Combine(Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EpicGamesLauncher\Saved\Config\Windows\", Accounts.SelectedItem.ToString()), "accountId.reg"))}\"");
+        // replace accountid
+        Process.Start("regedit.exe", $"/s \"{Path.Combine(EpicGamesHelper.EpicGamesAccountDir, Accounts.SelectedItem.ToString(), Accounts.SelectedItem.ToString(), "accountId.reg")}\"");
 
-        // get current data
-        string rawData = Regex.Match(await File.ReadAllTextAsync(configFile), @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?").Groups[1].Value;
-        string decrypted = DecryptDataWithAes(rawData, "A09C853C9E95409BB94D707EADEFA52E");
+        // launch epic games to get new token
+        await Task.Run(() => Process.Start(new ProcessStartInfo(EpicGamesHelper.EpicGamesPath) { WindowStyle = ProcessWindowStyle.Hidden }));
 
-        await Task.Run(() => Process.Start(new ProcessStartInfo(@"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win64\EpicGamesLauncher.exe") { WindowStyle = ProcessWindowStyle.Hidden }));
-
-        string lastRaw = rawData;
-
+        // wait for token to get used
         while (true)
         {
             await Task.Delay(100);
-            string newRaw = Regex.Match(await File.ReadAllTextAsync(configFile), @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?").Groups[1].Value;
 
-            if (newRaw == lastRaw) continue;
-            lastRaw = newRaw;
-
-            string decryptedNew = DecryptDataWithAes(newRaw, "A09C853C9E95409BB94D707EADEFA52E");
-            if (decryptedNew.Length < 1000)
+            if (!EpicGamesHelper.ValidateData(EpicGamesHelper.ActiveEpicGamesAccountPath))
             {
                 UpdateInvalidEpicGamesToken();
                 return;
             }
 
-            string cleaned = decryptedNew.Trim().TrimEnd('\0');
-            using var doc = JsonDocument.Parse(cleaned);
-            int tokenUse = doc.RootElement[0].GetProperty("TokenUseCount").GetInt32();
-
-            if (tokenUse == 1) break;
+            if ((EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath)).TokenUseCount == 1)
+                break;
         }
 
+        // wait for new token
         while (true)
         {
             await Task.Delay(100);
-            string newRaw = Regex.Match(await File.ReadAllTextAsync(configFile), @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?").Groups[1].Value;
 
-            if (newRaw == lastRaw) continue;
-            lastRaw = newRaw;
-
-            string decryptedNew = DecryptDataWithAes(newRaw, "A09C853C9E95409BB94D707EADEFA52E");
-            if (decryptedNew.Length < 1000)
+            if (!EpicGamesHelper.ValidateData(EpicGamesHelper.ActiveEpicGamesAccountPath))
             {
                 UpdateInvalidEpicGamesToken();
                 return;
             }
 
-            string cleaned = decryptedNew.Trim().TrimEnd('\0');
-            using var doc = JsonDocument.Parse(cleaned);
-            int tokenUse = doc.RootElement[0].GetProperty("TokenUseCount").GetInt32();
-
-            if (tokenUse == 0) break;
+            if ((EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath)).TokenUseCount == 0)
+                break;
         }
 
-        foreach (var name in new[] { "EpicGamesLauncher", "EpicWebHelper" })
-        {
-            Process.GetProcessesByName(name).ToList().ForEach(p =>
-            {
-                p.Kill();
-                p.WaitForExit();
-            });
-        }
+        // close epic games launcher
+        EpicGamesHelper.CloseEpicGames();
 
         // load accounts again to update the new login data
         isInitializingAccounts = true;
@@ -566,7 +331,7 @@ public sealed partial class GamesPage : Page
         // add infobar
         AccountInfo.Children.Add(new InfoBar
         {
-            Title = "The login token is no longer valid. Please reenter your password...",
+            Title = "The login token is no longer valid. Please enter your password again...",
             IsClosable = false,
             IsOpen = true,
             Severity = InfoBarSeverity.Error,
@@ -574,29 +339,20 @@ public sealed partial class GamesPage : Page
         });
 
         // close epic games launcher
-        foreach (var name in new[] { "EpicGamesLauncher", "EpicWebHelper" })
-        {
-            Process.GetProcessesByName(name).ToList().ForEach(p =>
-            {
-                p.Kill();
-                p.WaitForExit();
-            });
-        }
+        EpicGamesHelper.CloseEpicGames();
 
         // delay
         await Task.Delay(500);
 
         // launch epic games launcher
-        Process.Start(@"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win32\EpicGamesLauncher.exe");
+        Process.Start(EpicGamesHelper.EpicGamesPath);
 
         // check when logged in
         while (true)
         {
-            if (File.Exists(configFile))
+            if (File.Exists(EpicGamesHelper.ActiveEpicGamesAccountPath))
             {
-                Match dataMatch = Regex.Match(File.ReadAllText(configFile), @"Data=([^\r\n]+)");
-
-                if (dataMatch.Success && dataMatch.Groups[1].Value.Length >= 1000)
+                if (EpicGamesHelper.ValidateData(EpicGamesHelper.ActiveEpicGamesAccountPath))
                 {
                     break;
                 }
@@ -606,32 +362,11 @@ public sealed partial class GamesPage : Page
         }
 
         // close epic games launcher
-        foreach (var name in new[] { "EpicGamesLauncher", "EpicWebHelper" })
-        {
-            Process.GetProcessesByName(name).ToList().ForEach(p =>
-            {
-                p.Kill();
-                p.WaitForExit();
-            });
-        }
+        EpicGamesHelper.CloseEpicGames();
 
         // disable tray and notifications
-        string generalSection = Regex.Match(await File.ReadAllTextAsync(configFile), @"\[(.*?)_General\]").Groups[1].Value + "_General";
-
-        InIHelper iniHelper = new InIHelper(configFile);
-
-        iniHelper.AddValue("MinimiseToSystemTray", "False", generalSection);
-        iniHelper.AddValue("NotificationsEnabled_FreeGame", "False", generalSection);
-        iniHelper.AddValue("NotificationsEnabled_Adverts", "False", generalSection);
-
-        // get data
-        string data = Regex.Match(await File.ReadAllTextAsync(configFile), @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?").Groups[1].Value;
-
-        // decrypt data
-        string decryptedData = DecryptDataWithAes(data, "A09C853C9E95409BB94D707EADEFA52E");
-
-        // get display name
-        string displayName = Regex.Match(decryptedData, "\"DisplayName\":\"([^\"]+)\"").Groups[1].Value;
+        EpicGamesHelper.DisableMinimizeToTray(EpicGamesHelper.ActiveEpicGamesAccountPath);
+        EpicGamesHelper.DisableNotifications(EpicGamesHelper.ActiveEpicGamesAccountPath);
 
         // remove infobar
         AccountInfo.Children.Clear();
@@ -639,7 +374,7 @@ public sealed partial class GamesPage : Page
         // add infobar
         AccountInfo.Children.Add(new InfoBar
         {
-            Title = $"Successfully logged in as {displayName}",
+            Title = $"Successfully logged in as {EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath).DisplayName}",
             IsClosable = false,
             IsOpen = true,
             Severity = InfoBarSeverity.Success,
@@ -649,6 +384,12 @@ public sealed partial class GamesPage : Page
         // refresh combobox
         isInitializingAccounts = true;
         LoadEpicAccounts();
+
+        // delay
+        await Task.Delay(2000);
+
+        // remove infobar
+        AccountInfo.Children.Clear();
     }
 
     private async void AddAccount_Click(object sender, RoutedEventArgs e)
@@ -682,37 +423,31 @@ public sealed partial class GamesPage : Page
             });
 
             // close epic games launcher
-            foreach (var name in new[] { "EpicGamesLauncher", "EpicWebHelper" })
-            {
-                Process.GetProcessesByName(name).ToList().ForEach(p =>
-                {
-                    p.Kill();
-                    p.WaitForExit();
-                });
-            }
+            EpicGamesHelper.CloseEpicGames();
 
             // delete gameusersettings.ini
-            if (File.Exists(configFile))
+            if (File.Exists(EpicGamesHelper.ActiveEpicGamesAccountPath))
             {
-                File.Delete(configFile);
+                File.Delete(EpicGamesHelper.ActiveEpicGamesAccountPath);
             }
 
             // delay
             await Task.Delay(500);
 
             // launch epic games launcher
-            Process.Start(@"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win32\EpicGamesLauncher.exe");
+            Process.Start(EpicGamesHelper.EpicGamesPath);
 
             // check when logged in
             while (true)
             {
-                if (File.Exists(configFile))
+                if (File.Exists(EpicGamesHelper.ActiveEpicGamesAccountPath))
                 {
-                    Match dataMatch = Regex.Match(File.ReadAllText(configFile), @"Data=([^\r\n]+)");
-
-                    if (dataMatch.Success && dataMatch.Groups[1].Value.Length >= 1000)
+                    if (File.Exists(EpicGamesHelper.ActiveEpicGamesAccountPath))
                     {
-                        break;
+                        if (EpicGamesHelper.ValidateData(EpicGamesHelper.ActiveEpicGamesAccountPath))
+                        {
+                            break;
+                        }
                     }
                 }
 
@@ -720,40 +455,19 @@ public sealed partial class GamesPage : Page
             }
 
             // close epic games launcher
-            foreach (var name in new[] { "EpicGamesLauncher", "EpicWebHelper" })
-            {
-                Process.GetProcessesByName(name).ToList().ForEach(p =>
-                {
-                    p.Kill();
-                    p.WaitForExit();
-                });
-            }
+            EpicGamesHelper.CloseEpicGames();
 
             // disable tray and notifications
-            string generalSection = Regex.Match(await File.ReadAllTextAsync(configFile), @"\[(.*?)_General\]").Groups[1].Value + "_General";
-
-            InIHelper iniHelper = new InIHelper(configFile);
-
-            iniHelper.AddValue("MinimiseToSystemTray", "False", generalSection);
-            iniHelper.AddValue("NotificationsEnabled_FreeGame", "False", generalSection);
-            iniHelper.AddValue("NotificationsEnabled_Adverts", "False", generalSection);
-
-            // get data
-            string data = Regex.Match(await File.ReadAllTextAsync(configFile), @"\[RememberMe\][^\[]*?Data=""?([^\r\n""]+)""?").Groups[1].Value;
-
-            // decrypt data
-            string decryptedData = DecryptDataWithAes(data, "A09C853C9E95409BB94D707EADEFA52E");
-
-            // get display name
-            string displayName = Regex.Match(decryptedData, "\"DisplayName\":\"([^\"]+)\"").Groups[1].Value;
-
+            EpicGamesHelper.DisableMinimizeToTray(EpicGamesHelper.ActiveEpicGamesAccountPath);
+            EpicGamesHelper.DisableNotifications(EpicGamesHelper.ActiveEpicGamesAccountPath);
+            
             // remove infobar
             AccountInfo.Children.Clear();
 
             // add infobar
             AccountInfo.Children.Add(new InfoBar
             {
-                Title = $"Successfully logged in as {displayName}",
+                Title = $"Successfully logged in as {EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath).DisplayName}",
                 IsClosable = false,
                 IsOpen = true,
                 Severity = InfoBarSeverity.Success,
@@ -801,17 +515,10 @@ public sealed partial class GamesPage : Page
                 });
 
                 // close epic games launcher
-                foreach (var name in new[] { "EpicGamesLauncher", "EpicWebHelper" })
-                {
-                    Process.GetProcessesByName(name).ToList().ForEach(p =>
-                    {
-                        p.Kill();
-                        p.WaitForExit();
-                    });
-                }
+                EpicGamesHelper.CloseEpicGames();
 
                 // delete gameusersettings.ini
-                File.Delete(configFile);
+                File.Delete(EpicGamesHelper.ActiveEpicGamesAccountPath);
 
                 // delay
                 await Task.Delay(500);
@@ -837,30 +544,6 @@ public sealed partial class GamesPage : Page
 
                 // remove infobar
                 AccountInfo.Children.Clear();
-            }
-        }
-    }
-
-    private static string DecryptDataWithAes(string cipherText, string key)
-    {
-        using (Aes aesAlgorithm = Aes.Create())
-        {
-            aesAlgorithm.KeySize = 256;
-            aesAlgorithm.Mode = CipherMode.ECB;
-            aesAlgorithm.Padding = PaddingMode.PKCS7;
-
-            byte[] keyBytes = Encoding.UTF8.GetBytes(key);
-            aesAlgorithm.Key = keyBytes;
-
-            byte[] cipher = Convert.FromBase64String(cipherText);
-
-            ICryptoTransform decryptor = aesAlgorithm.CreateDecryptor();
-
-            using (MemoryStream ms = new MemoryStream(cipher))
-            using (CryptoStream cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
-            using (StreamReader sr = new StreamReader(cs))
-            {
-                return sr.ReadToEnd();
             }
         }
     }

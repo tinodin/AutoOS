@@ -104,7 +104,7 @@
                     Description="tinodin"
                     Header="AutoOS"
                     HeaderIcon="{dev:BitmapIcon Source=Assets/AppIcon.png}"
-                    IsExpanded="True">
+                    IsExpanded="False">
                     <TextBlock
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         IsTextSelectionEnabled="True"

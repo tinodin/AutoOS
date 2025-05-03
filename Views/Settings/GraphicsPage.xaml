@@ -27,12 +27,12 @@
                 <dev:SettingsGroup.Content>
                     <StackPanel Orientation="Horizontal">
                         <dev:ProgressButton
-                            x:Name="updateCheck"
+                            x:Name="UpdateCheck"
+                            Checked="UpdateCheck_Checked"
                             CheckedContent="Checking for updates..."
-                            Click="updateCheck_Click"
                             Content="Done"
                             IsIndeterminate="True"
-                            Loaded="updateCheck_Click"
+                            Loaded="UpdateCheck_Checked"
                             Style="{ThemeResource AccentProgressButtonStyle}" />
                         <Button
                             x:Name="updateCheckButton"
