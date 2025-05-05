@@ -94,20 +94,17 @@ jobs:
         echo "APP_VERSION_PREFIX=${{ env.APP_VERSION_PREFIX }}"
         echo "APP_VERSION_SUFFIX=${{ env.APP_VERSION_SUFFIX }}"
 
-    # Restore the application to populate the obj folder with RuntimeIdentifiers
     - name: Restore the application
       run: msbuild $env:AUTOOS_PROJECT_PATH /t:Restore /p:Configuration=Release
       env:
         Configuration: Release
 
-    # Decode the base64-encoded signing certificate
     - name: Decode the pfx
       run: |
         $pfx_cert_byte = [System.Convert]::FromBase64String("${{ secrets.BASE64_ENCODED_PFX }}")
         [IO.File]::WriteAllBytes("GitHubActionsWorkflow.pfx", $pfx_cert_byte)
       shell: pwsh
 
-    # Build and package the MSIX
     - name: Create the MSIX package
       run: msbuild $env:AUTOOS_PROJECT_PATH /p:Configuration=Release /p:Platform=${{ matrix.platform }} /p:SelfContained=${{ env.PUBLISH_SELF_CONTAINED }} /p:PublishAot=${{ env.PUBLISH_AOT }} /p:PublishTrimmed=${{ env.PUBLISH_TRIMMED }} /p:TrimmerDefaultAction=${{ env.PUBLISH_TRIM_MODE }} /p:UapAppxPackageBuildMode=SideloadOnly /p:AppxBundle=Never /p:PackageCertificateKeyFile=GitHubActionsWorkflow.pfx /p:AppxPackageDir=Packages\ /p:GenerateAppxPackageOnBuild=true
       env:
@@ -119,12 +116,6 @@ jobs:
         Copy-Item -Path "${{ env.APP_NAME }}.appinstaller", "unattend.xml" -Destination $dest
       shell: pwsh
 
-    # Optional: show where the MSIX file ended up
-    - name: Show full directory tree
-      run: Get-ChildItem -Recurse | ForEach-Object { $_.FullName }
-      shell: pwsh
-
-    # Clean up the certificate
     - name: Remove the pfx
       run: Remove-Item -path GitHubActionsWorkflow.pfx
       shell: pwsh
