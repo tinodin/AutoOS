@@ -18,7 +18,7 @@ public static class SecurityStage
         InstallPage.Status.Text = "Configuring Security...";
 
         string previousTitle = string.Empty;
-        int stagePercentage = 5;
+        int stagePercentage = 4;
 
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {

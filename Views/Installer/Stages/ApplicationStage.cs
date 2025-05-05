@@ -30,7 +30,7 @@ public static class ApplicationStage
         InstallPage.Status.Text = "Configuring Applications...";
 
         string previousTitle = string.Empty;
-        int stagePercentage = 5;
+        int stagePercentage = 10;
 
         string icloudVersion = "";
         string bitwardenVersion = "";

@@ -1,16 +1,18 @@
 ﻿using AutoOS.Views.Installer.Actions;
 using Microsoft.UI.Xaml.Media;
-using System.Diagnostics;
-using System.Text.Json;
 using Microsoft.Win32;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Text.Json;
 
 namespace AutoOS.Views.Installer.Stages;
 
 public static class GamesStage
 {
-    //[DllImport("user32.dll")] static extern IntPtr GetDC(IntPtr hwnd);
-    //[DllImport("gdi32.dll")] static extern int GetDeviceCaps(IntPtr hdc, int nIndex);
-    //[DllImport("user32.dll")] static extern int ReleaseDC(IntPtr hwnd, IntPtr hdc);
+    [DllImport("user32.dll")] static extern IntPtr GetDC(IntPtr hwnd);
+    [DllImport("gdi32.dll")] static extern int GetDeviceCaps(IntPtr hdc, int nIndex);
+    [DllImport("user32.dll")] static extern int ReleaseDC(IntPtr hwnd, IntPtr hdc);
+
     public static async Task Run()
     {
         bool? Fortnite = ApplicationStage.Fortnite;
@@ -27,6 +29,7 @@ public static class GamesStage
             // import fortnite settings
             ("Importing Fortnite settings", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c mkdir ""%LocalAppData%\FortniteGame\Saved\Config\WindowsClient"""), () => Fortnite == true),
             ("Importing Fortnite settings", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c copy /Y """ + Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "GameUserSettings.ini") + @""" ""%LocalAppData%\FortniteGame\Saved\Config\WindowsClient\GameUserSettings.ini"""), () => Fortnite == true),
+            ("Importing Fortnite settings", async () => await ProcessActions.RunNsudo("CurrentUser", @$"powershell -Command ""$content = Get-Content (Join-Path $env:LOCALAPPDATA 'FortniteGame\Saved\Config\WindowsClient\GameUserSettings.ini') -Raw; $content = $content.Replace('FrameRateLimit=', 'FrameRateLimit=' + '{GetDeviceCaps(GetDC(IntPtr.Zero), 116)}' + '.000000'); Set-Content -Path (Join-Path $env:LOCALAPPDATA 'FortniteGame\Saved\Config\WindowsClient\GameUserSettings.ini') -Value $content"""), () => Fortnite == true),
 
             // set gpu preference to high performance for fortnite
             ("Setting GPU Preference to high performance for Fortnite", async () => await ProcessActions.RunCustom(async () => fortnitePath = await Task.Run(() => JsonDocument.Parse(File.ReadAllText(@"C:\ProgramData\Epic\UnrealEngineLauncher\LauncherInstalled.dat")).RootElement.GetProperty("InstallationList").EnumerateArray().FirstOrDefault(e => e.GetProperty("AppName").GetString() == "Fortnite").GetProperty("InstallLocation").GetString())), () => Fortnite == true),

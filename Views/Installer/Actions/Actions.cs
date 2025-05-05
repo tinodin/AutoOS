@@ -661,11 +661,15 @@ public static class ProcessActions
             .ToList();
 
         var jsonContent = await File.ReadAllTextAsync(foundFiles.First().FullName);
+
+        if (string.IsNullOrWhiteSpace(jsonContent))
+            return;
+
         var jsonObject = JsonNode.Parse(jsonContent);
         var installationList = jsonObject?["InstallationList"] as JsonArray;
 
         // return if install list is empty
-        if (installationList == null || installationList.Count == 0)
+        if (foundFiles.Count == 0 || installationList == null || installationList.Count == 0)
         {
             return;
         }

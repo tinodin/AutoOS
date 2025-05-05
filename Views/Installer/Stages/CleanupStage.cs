@@ -12,7 +12,7 @@ public static class CleanupStage
         InstallPage.Status.Text = "Cleaning up...";
 
         string previousTitle = string.Empty;
-        int stagePercentage = 5;
+        int stagePercentage = 2;
 
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {

@@ -10,7 +10,7 @@ public static class ServicesStage
         InstallPage.Status.Text = "Configuring Services and Drivers...";
 
         string previousTitle = string.Empty;
-        int stagePercentage = 3;
+        int stagePercentage = 2;
 
         //string folderName = "";
 

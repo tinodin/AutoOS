@@ -18,7 +18,7 @@ public static class SchedulingStage
         InstallPage.Status.Text = "Configuring Affinities...";
 
         string previousTitle = string.Empty;
-        int stagePercentage = 5;
+        int stagePercentage = 10;
 
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
