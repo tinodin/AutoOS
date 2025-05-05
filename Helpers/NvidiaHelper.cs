@@ -12,7 +12,7 @@ namespace AutoOS.Helpers
         public static async Task<(string currentVersion, string newestVersion, string newestDownloadUrl)> CheckUpdate()
         {
             bool isNotebook = false;
-            string gpuId = string.Empty;
+            string gpuId = "1066";
 
             string currentVersion = string.Empty;
             string newestVersion = string.Empty;

@@ -1,8 +1,9 @@
-﻿using AutoOS.Views.Installer.Actions;
+﻿using AutoOS.Helpers;
+using AutoOS.Views.Installer.Actions;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
-using Microsoft.UI.Xaml.Media;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -23,6 +24,8 @@ public static class GraphicsStage
 
         string previousTitle = string.Empty;
         int stagePercentage = 5;
+
+        var (_, _, newestDownloadUrl) = await NvidiaHelper.CheckUpdate();
 
         using var client = new HttpClient();
         string html = client.GetStringAsync("https://www.techspot.com/downloads/drivers/essentials/nvidia-geforce/").Result;
@@ -67,7 +70,7 @@ public static class GraphicsStage
 
 
             // download the latest nvidia driver                                                     
-            ("Downloading the latest NVIDIA Driver", async () => await ProcessActions.RunDownload($@"https://us.download.nvidia.com/Windows/{version}/{version}-desktop-win10-win11-64bit-international-dch-whql.exe", Path.GetTempPath(), "driver.exe"), () => NVIDIA == true),
+            ("Downloading the latest NVIDIA Driver", async () => await ProcessActions.RunDownload(newestDownloadUrl, Path.GetTempPath(), "driver.exe"), () => NVIDIA == true),
 
             // extract the driver
             ("Extracting the NVIDIA driver", async () => await ProcessActions.RunExtract(Path.Combine(Path.GetTempPath(), "driver.exe"), Path.Combine(Path.GetTempPath(), "driver")), () => NVIDIA == true),
