@@ -18,7 +18,7 @@
                 Source="{x:Bind ImageSource}"
                 Stretch="Uniform" />
             <TextBlock
-                Margin="0,0,0,8"
+                Margin="0,0,0,18"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
                 FontFamily="{StaticResource ContentControlThemeFontFamily}"
@@ -27,7 +27,6 @@
                 IsTabStop="False"
                 Text="{x:Bind Title, Mode=OneWay}" />
             <dev:SettingsCard
-                Margin="0,10,0,5"
                 Description="{x:Bind InstallLocationDescription, Mode=OneWay}"
                 Header="Install Location"
                 HeaderIcon="{dev:FontIcon FontFamily={StaticResource SymbolThemeFontFamily},
@@ -38,7 +37,7 @@
                     IsTabStop="False"
                     Text="{x:Bind InstallLocation}">
                     <dev:TextBox.Content>
-                        <Button Content="&#xE838;" />
+                        <Button Click="OpenInstallLocation_Click" Content="&#xE838;" />
                     </dev:TextBox.Content>
                 </dev:TextBox>
             </dev:SettingsCard>

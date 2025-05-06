@@ -20,8 +20,6 @@ public sealed partial class GamesPage : Page
         LoadEpicAccounts();
     }
 
-    private static readonly HttpClient httpClient = new HttpClient();
-
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true
@@ -157,6 +155,9 @@ public sealed partial class GamesPage : Page
         };
 
         contentDialog.Resources["ContentDialogMinWidth"] = 850;
+        contentDialog.Resources["ContentDialogMaxWidth"] = 850;
+        contentDialog.Resources["ContentDialogMinHeight"] = 250;
+        contentDialog.Resources["ContentDialogMaxHeight"] = 850;
 
         ContentDialogResult result = await contentDialog.ShowAsync();
 
@@ -177,7 +178,16 @@ public sealed partial class GamesPage : Page
                 ImageSource = new BitmapImage(new Uri(gameAddPage.GameCoverUrl))
             };
 
-            ((StackPanel)games.HeaderContent).Children.Add(gamePanel);
+            var stackPanel = (StackPanel)games.HeaderContent;
+
+            bool exists = stackPanel.Children
+                .OfType<GamePanel>()
+                .Any(g => g.Title == gamePanel.Title);
+
+            if (!exists)
+            {
+                stackPanel.Children.Add(gamePanel);
+            }
 
             // save game data
             var gameInfo = new

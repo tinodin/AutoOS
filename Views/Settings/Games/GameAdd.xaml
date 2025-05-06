@@ -5,63 +5,85 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:dev="using:DevWinUI"
-    xmlns:local="using:AutoOS"
+    xmlns:local="using:AutoOS.Views"
+    xmlns:local1="using:AutoOS.Views.Settings.Games"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:views="using:AutoOS.Views"
     mc:Ignorable="d">
-    <ScrollViewer Margin="10,0,-25,0" Padding="{ThemeResource ContentPagePadding}">
-        <StackPanel dev:PanelAttach.ChildrenTransitions="None">
-            <dev:SimpleSettingsGroup Header="Launcher">
-                <dev:SettingsCard Header="Launcher">
-                    <ComboBox x:Name="LauncherValue" SelectedIndex="0">
-                        <ComboBoxItem>Ryujinx</ComboBoxItem>
-                    </ComboBox>
-                </dev:SettingsCard>
-                <dev:SettingsCard Header="Launcher Location">
-                    <dev:TextBox
-                        x:Name="LauncherLocationValue"
-                        Width="300"
-                        IsReadOnly="True"
-                        PlaceholderText="Launcher Location...">
-                        <dev:TextBox.Content>
-                            <Button Click="LauncherLocation_Click" Content="&#xE838;" />
-                        </dev:TextBox.Content>
-                    </dev:TextBox>
-                </dev:SettingsCard>
-                <dev:SettingsCard Header="Data Location">
-                    <dev:TextBox
-                        x:Name="DataLocationValue"
-                        IsReadOnly="True"
-                        PlaceholderText="Data Location...">
-                        <dev:TextBox.Content>
-                            <Button Click="DataLocation_Click" Content="&#xE838;" />
-                        </dev:TextBox.Content>
-                    </dev:TextBox>
-                </dev:SettingsCard>
-            </dev:SimpleSettingsGroup>
-            <dev:SimpleSettingsGroup Header="Game">
-                <dev:SettingsCard Header="Game Name">
-                    <TextBox
-                        x:Name="GameNameValue"
-                        Width="300"
-                        PlaceholderText="Game Name..."
-                        SelectionChanged="GameName_Changed" />
-                </dev:SettingsCard>
-                <dev:SettingsCard Header="Game Location">
-                    <dev:TextBox
-                        x:Name="GameLocationValue"
-                        Width="300"
-                        IsReadOnly="True"
-                        PlaceholderText="Game Location...">
-                        <dev:TextBox.Content>
-                            <Button Click="GameLocation_Click" Content="&#xE838;" />
-                        </dev:TextBox.Content>
-                    </dev:TextBox>
-                </dev:SettingsCard>
-                <dev:SettingsCard Header="Game Cover">
-                    <dev:ImageEx x:Name="GameCover" Width="60" />
-                </dev:SettingsCard>
-            </dev:SimpleSettingsGroup>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <ScrollViewer
+            Grid.Column="0"
+            Margin="0,0,-25,0"
+            Padding="0,0,25,0">
+            <StackPanel dev:PanelAttach.ChildrenTransitions="None">
+                <dev:SimpleSettingsGroup Header="Launcher">
+                    <dev:SettingsCard Header="Launcher">
+                        <ComboBox x:Name="LauncherValue" SelectedIndex="0">
+                            <ComboBoxItem>Ryujinx</ComboBoxItem>
+                        </ComboBox>
+                    </dev:SettingsCard>
+                    <dev:SettingsCard Header="Launcher Location">
+                        <dev:TextBox
+                            x:Name="LauncherLocationValue"
+                            MinWidth="200"
+                            MaxWidth="350"
+                            IsReadOnly="True"
+                            PlaceholderText="Launcher Location...">
+                            <dev:TextBox.Content>
+                                <Button Click="LauncherLocation_Click" Content="&#xE838;" />
+                            </dev:TextBox.Content>
+                        </dev:TextBox>
+                    </dev:SettingsCard>
+                    <dev:SettingsCard Header="Launcher Data Location">
+                        <dev:TextBox
+                            x:Name="DataLocationValue"
+                            IsReadOnly="True"
+                            PlaceholderText="Launcher Data Location...">
+                            <dev:TextBox.Content>
+                                <Button Click="DataLocation_Click" Content="&#xE838;" />
+                            </dev:TextBox.Content>
+                        </dev:TextBox>
+                    </dev:SettingsCard>
+                </dev:SimpleSettingsGroup>
+                <dev:SimpleSettingsGroup Header="Game">
+                    <dev:SettingsCard Header="Game Name">
+                        <TextBox
+                            x:Name="GameNameValue"
+                            MinWidth="200"
+                            MaxWidth="350"
+                            PlaceholderText="Game Name..."
+                            SelectionChanged="GameName_Changed" />
+                    </dev:SettingsCard>
+                    <dev:SettingsCard Header="Game Location">
+                        <dev:TextBox
+                            x:Name="GameLocationValue"
+                            MinWidth="200"
+                            MaxWidth="350"
+                            IsReadOnly="True"
+                            PlaceholderText="Game Location...">
+                            <dev:TextBox.Content>
+                                <Button Click="GameLocation_Click" Content="&#xE838;" />
+                            </dev:TextBox.Content>
+                        </dev:TextBox>
+                    </dev:SettingsCard>
+                </dev:SimpleSettingsGroup>
+            </StackPanel>
+        </ScrollViewer>
+        <StackPanel
+            x:Name="GameStackPanel"
+            Grid.Column="1"
+            Margin="25,0,0,0"
+            VerticalAlignment="Bottom"
+            Orientation="Horizontal">
+            <local1:GamePanel
+                x:Name="GamePanel"
+                Title="Game Name"
+                Grid.Column="1"
+                Description="Game Developers" />
         </StackPanel>
-    </ScrollViewer>
+    </Grid>
 </Page>

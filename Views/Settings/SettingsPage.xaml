@@ -8,7 +8,6 @@
     xmlns:local="using:AutoOS"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:views="using:AutoOS.Views.Settings"
-    dev:BreadcrumbNavigator.IsHeaderVisible="True"
     mc:Ignorable="d">
     <ScrollView
         Margin="{ThemeResource ContentPageMargin}"
@@ -19,6 +18,11 @@
             Margin="10"
             dev:PanelAttach.ChildrenTransitions="Default"
             Spacing="5">
+            <TextBlock
+                Margin="7,-11,0,57"
+                FontSize="28"
+                FontWeight="SemiBold"
+                Text="Settings" />
             <dev:SimpleSettingsGroup Header="Appearance &amp; behavior">
                 <dev:SettingsCard
                     Description="Select the theme that suits your mood and preference. You can choose from dark, light, or system themes."

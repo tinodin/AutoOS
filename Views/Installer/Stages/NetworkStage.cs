@@ -94,6 +94,9 @@ public static class NetworkStage
 
             // enable qos policies outside of domain networks
             ("Enabling QoS Policies outside of domain networks", async () => await ProcessActions.RunNsudo( "TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpip\QoS"" /v ""Do not use NLA"" /t REG_SZ /d 1 /f"), null),
+            
+            // disable lmhosts lookup
+            ("Disabling LMHOSTS lookup", async () => await ProcessActions.RunNsudo( "TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\NetBT\Parameters"" /v ""EnableLMHOSTS"" /t REG_DWORD /d 0 /f"), null),
 
             // disable wifi services and drivers
             ("Disabling Wi-Fi services and drivers", async () => await ProcessActions.DisableWiFiServicesAndDrivers(), () => Wifi == false),

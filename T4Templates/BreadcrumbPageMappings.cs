@@ -13,6 +13,5 @@ public partial class BreadcrumbPageMappings
 {
     public static Dictionary<Type, BreadcrumbPageConfig> PageDictionary = new()
     {
-        {typeof(AutoOS.Views.Settings.SettingsPage), new BreadcrumbPageConfig { PageTitle = null, IsHeaderVisible = true, ClearNavigation = false}},
     };
 }

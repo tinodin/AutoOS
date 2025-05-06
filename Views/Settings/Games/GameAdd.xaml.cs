@@ -77,9 +77,6 @@ public sealed partial class GameAdd : Page
 
         if (string.IsNullOrWhiteSpace(name))
         {
-            GameCover.Source = null;
-            GameCoverUrl = "";
-            GameDeveloper = "Unknown";
             return;
         }
 
@@ -87,15 +84,23 @@ public sealed partial class GameAdd : Page
 
         if (result != null && result.ContainsKey("url") && Uri.IsWellFormedUriString(result["url"], UriKind.Absolute))
         {
-            GameCover.Source = new BitmapImage(new Uri(result["url"]));
-            GameCoverUrl = result["url"];
             GameDeveloper = result.ContainsKey("developers") ? result["developers"] : "Unknown";
-        }
-        else
-        {
-            GameCover.Source = null;
-            GameCoverUrl = "";
-            GameDeveloper = "Unknown";
+            GameCoverUrl = result["url"];
+
+            // add game
+            var gamePanel = new GamePanel
+            {
+                Launcher = Launcher,
+                LauncherLocation = LauncherLocation,
+                DataLocation = DataLocation,
+                InstallLocation = GameLocation,
+                Title = GameName,
+                Description = GameDeveloper,
+                ImageSource = new BitmapImage(new Uri(GameCoverUrl))
+            };
+
+            GameStackPanel.Children.Clear();
+            GameStackPanel.Children.Add(gamePanel);
         }
     }
 

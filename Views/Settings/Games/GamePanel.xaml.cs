@@ -114,6 +114,7 @@ public sealed partial class GamePanel : UserControl
 
                     if (isRunning)
                     {
+                        Debug.WriteLine("is running");
                         Panel.Click -= Launch_Click;
 
                         if (!servicesState && stopProcesses.Visibility == Visibility.Collapsed)

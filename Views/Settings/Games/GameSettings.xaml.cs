@@ -22,16 +22,26 @@ public sealed partial class GameSettings : Page
     public static readonly DependencyProperty TitleProperty =
         DependencyProperty.Register("Title", typeof(string), typeof(HeaderTile), new PropertyMetadata(null));
 
-    public string InstallLocationDescription => $"Change the install location of {Title}";
+    public string InstallLocationDescription => $"Open the install location of {Title}";
 
     public static readonly DependencyProperty InstallLocationProperty =
     DependencyProperty.Register(nameof(InstallLocation), typeof(string), typeof(GameSettings), new PropertyMetadata(string.Empty));
     
     public ImageSource ImageSource { get; set; }
-    
+
     public string InstallLocation
     {
-        get => (string)GetValue(InstallLocationProperty);
+        get
+        {
+            var path = (string)GetValue(InstallLocationProperty);
+            if (string.IsNullOrWhiteSpace(path))
+                return null;
+
+            if (File.Exists(path))
+                return Path.GetDirectoryName(path);
+
+            return path;
+        }
         set => SetValue(InstallLocationProperty, value);
     }
 
@@ -103,6 +113,19 @@ public sealed partial class GameSettings : Page
                     }
                 }
             }
+        }
+    }
+
+    private void OpenInstallLocation_Click(object sender, RoutedEventArgs e)
+    {
+        if (!string.IsNullOrWhiteSpace(InstallLocation) && Directory.Exists(InstallLocation))
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "explorer.exe",
+                Arguments = $"\"{InstallLocation}\"",
+                UseShellExecute = true
+            });
         }
     }
 }

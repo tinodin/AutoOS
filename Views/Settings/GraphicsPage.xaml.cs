@@ -251,6 +251,9 @@ public sealed partial class GraphicsPage : Page
 
             if (fileContent.Contains("[Startup]"))
             {
+                // re-enable the button
+                senderButton.IsEnabled = true;
+
                 // remove infobar
                 MsiAfterburnerInfo.Children.Clear();
 

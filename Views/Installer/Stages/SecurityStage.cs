@@ -91,8 +91,8 @@ public static class SecurityStage
             // set execution policy to unrestricted
             ("Setting execution policy to unrestricted", async () => await ProcessActions.RunPowerShell("Set-ExecutionPolicy Unrestricted -Force"), null),
 
-            // disable uac
-            ("Disabling user account control (UAC)", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"" /v EnableLUA /t REG_DWORD /d 0 /f"), () => UserAccountControl == false),
+            // enable uac
+            ("Enabling user account control (UAC)", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"" /v EnableLUA /t REG_DWORD /d 1 /f"), () => UserAccountControl == true),
 
             // disable data execution prevention (dep)
             ("Disabling data execution prevention (DEP)", async () => await ProcessActions.RunNsudo("TrustedInstaller", "bcdedit /set nx AlwaysOff"), () => DEP == false),
