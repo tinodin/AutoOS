@@ -9,38 +9,41 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:views="using:AutoOS.Views"
     mc:Ignorable="d">
-    <ScrollView
-        Margin="{ThemeResource ContentPageMargin}"
-        Padding="{ThemeResource ContentPagePadding}"
-        HorizontalAlignment="Stretch"
-        VerticalScrollBarVisibility="Auto">
-        <StackPanel
-            Margin="10"
-            dev:PanelAttach.ChildrenTransitions="Default"
-            Spacing="5">
-            <TextBlock
-                Margin="7,-11,0,57"
-                FontSize="28"
-                FontWeight="SemiBold"
-                Text="Timer Resolution" />
-            <dev:SettingsGroup
-                Margin="0,0,0,10"
-                Description="Let AutoOS benchmark your Clock Interrupt Frequency (Timer Resolution) or set it manually."
-                Header="Clock Interrupt Frequency (Timer Resolution)"
-                HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Timer.png}">
-                <dev:SettingsGroup.Content>
-                    <ComboBox x:Name="TimerResolution" SelectionChanged="TimerResolution_Changed">
-                        <ComboBoxItem Content="Automatic" />
-                        <ComboBoxItem Content="Manual" />
-                    </ComboBox>
-                </dev:SettingsGroup.Content>
-                <dev:SettingsGroup.Items>
-                    <dev:SettingsCard x:Name="ResolutionSettings" Header="Timer Resolution">
-                        <ComboBox x:Name="Resolution" SelectionChanged="Resolution_Changed" />
-                    </dev:SettingsCard>
-                </dev:SettingsGroup.Items>
-            </dev:SettingsGroup>
-            <Border Height="25" Background="Transparent" />
-        </StackPanel>
-    </ScrollView>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <TextBlock
+            Margin="36,24,36,0"
+            Style="{StaticResource TitleTextBlockStyle}"
+            Text="Timer Resolution" />
+        <ScrollViewer
+            Grid.Row="1"
+            Margin="{ThemeResource ContentPageMargin}"
+            Padding="{ThemeResource ContentPagePadding}"
+            VerticalScrollBarVisibility="Auto"
+            VerticalScrollMode="Auto">
+            <StackPanel dev:PanelAttach.ChildrenTransitions="Default" Spacing="8">
+                <dev:SettingsGroup
+                    Margin="0,0,0,10"
+                    Description="Let AutoOS benchmark your Clock Interrupt Frequency (Timer Resolution) or set it manually."
+                    Header="Clock Interrupt Frequency (Timer Resolution)"
+                    HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Timer.png}">
+                    <dev:SettingsGroup.Content>
+                        <ComboBox x:Name="TimerResolution" SelectionChanged="TimerResolution_Changed">
+                            <ComboBoxItem Content="Automatic" />
+                            <ComboBoxItem Content="Manual" />
+                        </ComboBox>
+                    </dev:SettingsGroup.Content>
+                    <dev:SettingsGroup.Items>
+                        <dev:SettingsCard x:Name="ResolutionSettings" Header="Timer Resolution">
+                            <ComboBox x:Name="Resolution" SelectionChanged="Resolution_Changed" />
+                        </dev:SettingsCard>
+                    </dev:SettingsGroup.Items>
+                </dev:SettingsGroup>
+                <Border Height="25" Background="Transparent" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </Page>

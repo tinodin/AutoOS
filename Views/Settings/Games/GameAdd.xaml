@@ -15,11 +15,8 @@
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
-        <ScrollViewer
-            Grid.Column="0"
-            Margin="0,0,-25,0"
-            Padding="0,0,25,0">
-            <StackPanel dev:PanelAttach.ChildrenTransitions="None">
+        <ScrollViewer>
+            <StackPanel>
                 <dev:SimpleSettingsGroup Header="Launcher">
                     <dev:SettingsCard Header="Launcher">
                         <ComboBox x:Name="LauncherValue" SelectedIndex="0">
@@ -49,7 +46,7 @@
                         </dev:TextBox>
                     </dev:SettingsCard>
                 </dev:SimpleSettingsGroup>
-                <dev:SimpleSettingsGroup Header="Game">
+                <dev:SimpleSettingsGroup Margin="0,-12,0,0" Header="Game">
                     <dev:SettingsCard Header="Game Name">
                         <TextBox
                             x:Name="GameNameValue"
@@ -76,13 +73,12 @@
         <StackPanel
             x:Name="GameStackPanel"
             Grid.Column="1"
-            Margin="25,0,0,0"
+            Margin="24,0,0,0"
             VerticalAlignment="Bottom"
             Orientation="Horizontal">
             <local1:GamePanel
                 x:Name="GamePanel"
                 Title="Game Name"
-                Grid.Column="1"
                 Description="Game Developers" />
         </StackPanel>
     </Grid>

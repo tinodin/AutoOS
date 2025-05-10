@@ -9,49 +9,57 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:views="using:AutoOS.Views"
     mc:Ignorable="d">
-    <ScrollViewer Margin="0,0,-25,0" Padding="0,0,25,0">
-        <StackPanel>
-            <dev:ImageEx
-                Margin="0,0,0,12"
-                CornerRadius="8"
-                EnableLazyLoading="True"
-                Source="{x:Bind ImageSource}"
-                Stretch="Uniform" />
-            <TextBlock
-                Margin="0,0,0,18"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Top"
-                FontFamily="{StaticResource ContentControlThemeFontFamily}"
-                FontSize="20"
-                FontWeight="SemiBold"
-                IsTabStop="False"
-                Text="{x:Bind Title, Mode=OneWay}" />
-            <dev:SettingsCard
-                Description="{x:Bind InstallLocationDescription, Mode=OneWay}"
-                Header="Install Location"
-                HeaderIcon="{dev:FontIcon FontFamily={StaticResource SymbolThemeFontFamily},
-                                          Glyph=&#xE8B7;}">
-                <dev:TextBox
-                    MaxWidth="400"
-                    IsReadOnly="True"
-                    IsTabStop="False"
-                    Text="{x:Bind InstallLocation}">
-                    <dev:TextBox.Content>
-                        <Button Click="OpenInstallLocation_Click" Content="&#xE838;" />
-                    </dev:TextBox.Content>
-                </dev:TextBox>
-            </dev:SettingsCard>
-            <dev:SettingsCard
-                Description="Use Hardware: Independent Flip if you have issues when tabbing out."
-                Header="Presentation Mode"
-                HeaderIcon="{dev:FontIcon FontFamily={StaticResource SymbolThemeFontFamily},
-                                          Glyph=&#xE7F4;}"
-                Visibility="{x:Bind IsFortnite, Mode=OneWay}">
-                <ComboBox x:Name="PresentationMode" SelectionChanged="PresentationMode_SelectionChanged">
-                    <ComboBoxItem Content="Hardware: Independent Flip" />
-                    <ComboBoxItem Content="Hardware: Legacy Flip" />
-                </ComboBox>
-            </dev:SettingsCard>
-        </StackPanel>
-    </ScrollViewer>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <dev:ImageEx
+            Grid.Row="0"
+            CornerRadius="{ThemeResource OverlayCornerRadius}"
+            EnableLazyLoading="True"
+            Source="{x:Bind ImageSource}"
+            Stretch="Uniform" />
+        <TextBlock
+            Grid.Row="1"
+            Margin="0,10,0,24"
+            HorizontalAlignment="Left"
+            FontFamily="{StaticResource ContentControlThemeFontFamily}"
+            FontSize="20"
+            FontWeight="SemiBold"
+            Text="{x:Bind Title, Mode=OneWay}" />
+        <ScrollViewer
+            Grid.Row="2"
+            Margin="0,54,0,0"
+            VerticalScrollBarVisibility="Auto"
+            VerticalScrollMode="Auto">
+            <StackPanel>
+                <dev:SettingsCard
+                    Description="{x:Bind InstallLocationDescription, Mode=OneWay}"
+                    Header="Install Location"
+                    HeaderIcon="{dev:FontIcon FontFamily={StaticResource SymbolThemeFontFamily},
+                                              Glyph=&#xE8B7;}">
+                    <dev:TextBox
+                        MaxWidth="400"
+                        IsReadOnly="True"
+                        Text="{x:Bind InstallLocation}">
+                        <dev:TextBox.Content>
+                            <Button Click="OpenInstallLocation_Click" Content="&#xE838;" />
+                        </dev:TextBox.Content>
+                    </dev:TextBox>
+                </dev:SettingsCard>
+                <dev:SettingsCard
+                    Description="Use Hardware: Independent Flip if you have issues when tabbing out."
+                    Header="Presentation Mode"
+                    HeaderIcon="{dev:FontIcon FontFamily={StaticResource SymbolThemeFontFamily},
+                                              Glyph=&#xE7F4;}"
+                    Visibility="{x:Bind IsFortnite, Mode=OneWay}">
+                    <ComboBox x:Name="PresentationMode" SelectionChanged="PresentationMode_SelectionChanged">
+                        <ComboBoxItem Content="Hardware: Independent Flip" />
+                        <ComboBoxItem Content="Hardware: Legacy Flip" />
+                    </ComboBox>
+                </dev:SettingsCard>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </Page>

@@ -9,62 +9,65 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:views="using:AutoOS.Views"
     mc:Ignorable="d">
-    <ScrollView
-        Margin="{ThemeResource ContentPageMargin}"
-        Padding="{ThemeResource ContentPagePadding}"
-        HorizontalAlignment="Stretch"
-        VerticalScrollBarVisibility="Auto">
-        <StackPanel
-            Margin="10"
-            dev:PanelAttach.ChildrenTransitions="Default"
-            Spacing="5">
-            <TextBlock
-                Margin="7,-11,0,57"
-                FontSize="28"
-                FontWeight="SemiBold"
-                Text="Personalization" />
-            <dev:SettingsGroup Margin="0,0,0,10" Header="Theme">
-                <dev:SettingsGroup.Content>
-                    <GridView
-                        x:Name="Themes"
-                        SelectionChanged="Theme_Changed"
-                        SelectionMode="Single">
-                        <GridView.ItemTemplate>
-                            <DataTemplate>
-                                <Image
-                                    Width="190"
-                                    Height="130"
-                                    Source="{Binding ImageSource}"
-                                    Stretch="UniformToFill" />
-                            </DataTemplate>
-                        </GridView.ItemTemplate>
-                    </GridView>
-                </dev:SettingsGroup.Content>
-                <dev:SettingsGroup.Items>
-                    <dev:SettingsCard Header="Legacy Context Menu" HeaderIcon="{dev:FontIcon FontFamily={StaticResource SymbolThemeFontFamily}, Glyph=&#xEDE3;}">
-                        <ToggleSwitch x:Name="ContextMenu" Toggled="ContextMenu_Toggled" />
-                    </dev:SettingsCard>
-                </dev:SettingsGroup.Items>
-            </dev:SettingsGroup>
-            <dev:SettingsGroup Margin="0,0,0,10" Header="Taskbar">
-                <dev:SettingsGroup.Items>
-                    <dev:SettingsCard x:Name="TaskbarIcon" Header="Taskbar alignment">
-                        <ComboBox x:Name="TaskbarAlignment" SelectionChanged="TaskbarAlignment_SelectionChanged">
-                            <ComboBoxItem Content="Left" />
-                            <ComboBoxItem Content="Center" />
-                        </ComboBox>
-                    </dev:SettingsCard>
-                    <dev:SettingsCard ContentAlignment="Left">
-                        <CheckBox
-                            x:Name="TrayIcons"
-                            Margin="0,0,0,15"
-                            Padding="22,5,0,0"
-                            Click="TrayIcons_Click"
-                            Content="Always show all tray icons in the notification area" />
-                    </dev:SettingsCard>
-                </dev:SettingsGroup.Items>
-            </dev:SettingsGroup>
-            <Border Height="25" Background="Transparent" />
-        </StackPanel>
-    </ScrollView>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <TextBlock
+            Margin="36,24,36,0"
+            Style="{StaticResource TitleTextBlockStyle}"
+            Text="Personalization" />
+        <ScrollViewer
+            Grid.Row="1"
+            Margin="{ThemeResource ContentPageMargin}"
+            Padding="{ThemeResource ContentPagePadding}"
+            VerticalScrollBarVisibility="Auto"
+            VerticalScrollMode="Auto">
+            <StackPanel dev:PanelAttach.ChildrenTransitions="Default" Spacing="8">
+                <dev:SettingsGroup Margin="0,0,0,10" Header="Theme">
+                    <dev:SettingsGroup.Content>
+                        <GridView
+                            x:Name="Themes"
+                            SelectionChanged="Theme_Changed"
+                            SelectionMode="Single">
+                            <GridView.ItemTemplate>
+                                <DataTemplate>
+                                    <Image
+                                        Width="190"
+                                        Height="130"
+                                        Source="{Binding ImageSource}"
+                                        Stretch="UniformToFill" />
+                                </DataTemplate>
+                            </GridView.ItemTemplate>
+                        </GridView>
+                    </dev:SettingsGroup.Content>
+                    <dev:SettingsGroup.Items>
+                        <dev:SettingsCard Header="Legacy Context Menu" HeaderIcon="{dev:FontIcon FontFamily={StaticResource SymbolThemeFontFamily}, Glyph=&#xEDE3;}">
+                            <ToggleSwitch x:Name="ContextMenu" Toggled="ContextMenu_Toggled" />
+                        </dev:SettingsCard>
+                    </dev:SettingsGroup.Items>
+                </dev:SettingsGroup>
+                <dev:SettingsGroup Margin="0,0,0,10" Header="Taskbar">
+                    <dev:SettingsGroup.Items>
+                        <dev:SettingsCard x:Name="TaskbarIcon" Header="Taskbar alignment">
+                            <ComboBox x:Name="TaskbarAlignment" SelectionChanged="TaskbarAlignment_SelectionChanged">
+                                <ComboBoxItem Content="Left" />
+                                <ComboBoxItem Content="Center" />
+                            </ComboBox>
+                        </dev:SettingsCard>
+                        <dev:SettingsCard ContentAlignment="Left">
+                            <CheckBox
+                                x:Name="TrayIcons"
+                                Margin="0,0,0,15"
+                                Padding="22,5,0,0"
+                                Click="TrayIcons_Click"
+                                Content="Always show all tray icons in the notification area" />
+                        </dev:SettingsCard>
+                    </dev:SettingsGroup.Items>
+                </dev:SettingsGroup>
+                <Border Height="25" Background="Transparent" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </Page>

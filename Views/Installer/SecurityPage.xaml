@@ -9,44 +9,47 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:views="using:AutoOS.Views"
     mc:Ignorable="d">
-    <ScrollView
-        Margin="{ThemeResource ContentPageMargin}"
-        Padding="{ThemeResource ContentPagePadding}"
-        HorizontalAlignment="Stretch"
-        VerticalScrollBarVisibility="Auto">
-        <StackPanel
-            Margin="10"
-            dev:PanelAttach.ChildrenTransitions="Default"
-            Spacing="5">
-            <TextBlock
-                Margin="7,-11,0,57"
-                FontSize="28"
-                FontWeight="SemiBold"
-                Text="Windows Security" />
-            <dev:SettingsGroup
-                Margin="0,0,0,10"
-                Description="Toggle Windows Defender and other security settings."
-                Header="Windows Defender"
-                HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Defender.png}">
-                <dev:SettingsGroup.Content>
-                    <ToggleSwitch x:Name="WindowsDefender" Toggled="WindowsDefender_Toggled" />
-                </dev:SettingsGroup.Content>
-                <dev:SettingsGroup.Items>
-                    <dev:SettingsCard Description="Limits applications to standard user privileges until an administrator authorizes an elevation." Header="User Account Control (UAC)">
-                        <ToggleSwitch x:Name="UAC" Toggled="UAC_Toggled" />
-                    </dev:SettingsCard>
-                    <dev:SettingsCard Description="Protection against malicious code execution in memory areas. Some anti-cheats require this to be enabled. Can't be disabled when secure boot is enabled." Header="Data Execution Prevention (DEP)">
-                        <ToggleSwitch x:Name="DEP" Toggled="DEP_Toggled" />
-                    </dev:SettingsCard>
-                    <dev:SettingsCard Description="Patches to enable mitigation against CPU vulnerabilities. Increases performance especially on older Intel CPUs. Recommended to keep enabled on AMD CPUs." Header="Spectre &amp; Meltdown Mitigations">
-                        <ToggleSwitch x:Name="SpectreMeltdown" Toggled="SpectreMeltdown_Toggled" />
-                    </dev:SettingsCard>
-                    <dev:SettingsCard Description="Process-level mitigations to enhance security." Header="Process Mitigations">
-                        <ToggleSwitch x:Name="ProcessMitigations" Toggled="ProcessMitigations_Toggled" />
-                    </dev:SettingsCard>
-                </dev:SettingsGroup.Items>
-            </dev:SettingsGroup>
-            <Border Height="25" Background="Transparent" />
-        </StackPanel>
-    </ScrollView>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <TextBlock
+            Margin="36,24,36,0"
+            Style="{StaticResource TitleTextBlockStyle}"
+            Text="Windows Security" />
+        <ScrollViewer
+            Grid.Row="1"
+            Margin="{ThemeResource ContentPageMargin}"
+            Padding="{ThemeResource ContentPagePadding}"
+            VerticalScrollBarVisibility="Auto"
+            VerticalScrollMode="Auto">
+            <StackPanel dev:PanelAttach.ChildrenTransitions="Default" Spacing="8">
+                <dev:SettingsGroup
+                    Margin="0,0,0,10"
+                    Description="Toggle Windows Defender and other security settings."
+                    Header="Windows Defender"
+                    HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Defender.png}">
+                    <dev:SettingsGroup.Content>
+                        <ToggleSwitch x:Name="WindowsDefender" Toggled="WindowsDefender_Toggled" />
+                    </dev:SettingsGroup.Content>
+                    <dev:SettingsGroup.Items>
+                        <dev:SettingsCard Description="Limits applications to standard user privileges until an administrator authorizes an elevation." Header="User Account Control (UAC)">
+                            <ToggleSwitch x:Name="UAC" Toggled="UAC_Toggled" />
+                        </dev:SettingsCard>
+                        <dev:SettingsCard Description="Protection against malicious code execution in memory areas. Some anti-cheats require this to be enabled. Can't be disabled when secure boot is enabled." Header="Data Execution Prevention (DEP)">
+                            <ToggleSwitch x:Name="DEP" Toggled="DEP_Toggled" />
+                        </dev:SettingsCard>
+                        <dev:SettingsCard Description="Patches to enable mitigation against CPU vulnerabilities. Increases performance especially on older Intel CPUs. Recommended to keep enabled on AMD CPUs." Header="Spectre &amp; Meltdown Mitigations">
+                            <ToggleSwitch x:Name="SpectreMeltdown" Toggled="SpectreMeltdown_Toggled" />
+                        </dev:SettingsCard>
+                        <dev:SettingsCard Description="Process-level mitigations to enhance security." Header="Process Mitigations">
+                            <ToggleSwitch x:Name="ProcessMitigations" Toggled="ProcessMitigations_Toggled" />
+                        </dev:SettingsCard>
+                    </dev:SettingsGroup.Items>
+                </dev:SettingsGroup>
+                <Border Height="25" Background="Transparent" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </Page>

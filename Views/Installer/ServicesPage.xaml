@@ -9,85 +9,88 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:views="using:AutoOS.Views"
     mc:Ignorable="d">
-    <ScrollView
-        Margin="{ThemeResource ContentPageMargin}"
-        Padding="{ThemeResource ContentPagePadding}"
-        HorizontalAlignment="Stretch"
-        VerticalScrollBarVisibility="Auto">
-        <StackPanel
-            Margin="10"
-            dev:PanelAttach.ChildrenTransitions="Default"
-            Spacing="5">
-            <TextBlock
-                Margin="7,-11,0,57"
-                FontSize="28"
-                FontWeight="SemiBold"
-                Text="Services &amp; Drivers" />
-            <dev:SettingsGroup
-                Description="Toggle functionality needed in service disabled state."
-                Header="Service-list-builder"
-                HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Services.png}">
-                <dev:SettingsGroup.Items>
-                    <dev:SettingsCard ContentAlignment="Left">
-                        <CheckBox
-                            x:Name="WIFI"
-                            Margin="0,0,0,15"
-                            Padding="22,5,0,0"
-                            Click="WIFI_Checked"
-                            Content="WiFi support" />
-                    </dev:SettingsCard>
-                    <dev:SettingsCard ContentAlignment="Left">
-                        <CheckBox
-                            x:Name="Bluetooth"
-                            Margin="0,0,0,15"
-                            Padding="22,5,0,0"
-                            Click="Bluetooth_Checked"
-                            Content="Bluetooth support" />
-                    </dev:SettingsCard>
-                    <dev:SettingsCard ContentAlignment="Left">
-                        <CheckBox
-                            x:Name="Camera"
-                            Margin="0,0,0,15"
-                            Padding="22,5,0,0"
-                            Click="Camera_Checked"
-                            Content="Camera support" />
-                    </dev:SettingsCard>
-                    <dev:SettingsCard ContentAlignment="Left">
-                        <CheckBox
-                            x:Name="Snipping"
-                            Margin="0,0,0,15"
-                            Padding="22,5,0,0"
-                            Click="Snipping_Checked"
-                            Content="Snipping tool support" />
-                    </dev:SettingsCard>
-                    <dev:SettingsCard ContentAlignment="Left">
-                        <CheckBox
-                            x:Name="TaskManager"
-                            Margin="0,0,0,15"
-                            Padding="22,5,0,0"
-                            Click="TaskManager_Checked"
-                            Content="Task Manager support" />
-                    </dev:SettingsCard>
-                    <dev:SettingsCard x:Name="Laptop_SettingsCard" ContentAlignment="Left">
-                        <CheckBox
-                            x:Name="Laptop"
-                            Margin="0,0,0,15"
-                            Padding="22,5,0,0"
-                            Click="Laptop_Checked"
-                            Content="Laptop Keyboard support" />
-                    </dev:SettingsCard>
-                    <dev:SettingsCard ContentAlignment="Left">
-                        <CheckBox
-                            x:Name="AMDVRR"
-                            Margin="0,0,0,15"
-                            Padding="22,5,0,0"
-                            Click="AMDVRR_Checked"
-                            Content="AMD Variable Refresh Rate (VRR) / FreeSync support" />
-                    </dev:SettingsCard>
-                </dev:SettingsGroup.Items>
-            </dev:SettingsGroup>
-            <StackPanel x:Name="ServiceInfo" />
-            <Border Height="25" Background="Transparent" />
-        </StackPanel>
-    </ScrollView>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <TextBlock
+            Margin="36,24,36,0"
+            Style="{StaticResource TitleTextBlockStyle}"
+            Text="Services &amp; Drivers" />
+        <ScrollViewer
+            Grid.Row="1"
+            Margin="{ThemeResource ContentPageMargin}"
+            Padding="{ThemeResource ContentPagePadding}"
+            VerticalScrollBarVisibility="Auto"
+            VerticalScrollMode="Auto">
+            <StackPanel dev:PanelAttach.ChildrenTransitions="Default" Spacing="8">
+                <dev:SettingsGroup
+                    Description="Toggle functionality needed in service disabled state."
+                    Header="Service-list-builder"
+                    HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Services.png}">
+                    <dev:SettingsGroup.Items>
+                        <dev:SettingsCard ContentAlignment="Left">
+                            <CheckBox
+                                x:Name="WIFI"
+                                Margin="0,0,0,15"
+                                Padding="22,5,0,0"
+                                Click="WIFI_Checked"
+                                Content="WiFi support" />
+                        </dev:SettingsCard>
+                        <dev:SettingsCard ContentAlignment="Left">
+                            <CheckBox
+                                x:Name="Bluetooth"
+                                Margin="0,0,0,15"
+                                Padding="22,5,0,0"
+                                Click="Bluetooth_Checked"
+                                Content="Bluetooth support" />
+                        </dev:SettingsCard>
+                        <dev:SettingsCard ContentAlignment="Left">
+                            <CheckBox
+                                x:Name="Camera"
+                                Margin="0,0,0,15"
+                                Padding="22,5,0,0"
+                                Click="Camera_Checked"
+                                Content="Camera support" />
+                        </dev:SettingsCard>
+                        <dev:SettingsCard ContentAlignment="Left">
+                            <CheckBox
+                                x:Name="Snipping"
+                                Margin="0,0,0,15"
+                                Padding="22,5,0,0"
+                                Click="Snipping_Checked"
+                                Content="Snipping tool support" />
+                        </dev:SettingsCard>
+                        <dev:SettingsCard ContentAlignment="Left">
+                            <CheckBox
+                                x:Name="TaskManager"
+                                Margin="0,0,0,15"
+                                Padding="22,5,0,0"
+                                Click="TaskManager_Checked"
+                                Content="Task Manager support" />
+                        </dev:SettingsCard>
+                        <dev:SettingsCard x:Name="Laptop_SettingsCard" ContentAlignment="Left">
+                            <CheckBox
+                                x:Name="Laptop"
+                                Margin="0,0,0,15"
+                                Padding="22,5,0,0"
+                                Click="Laptop_Checked"
+                                Content="Laptop Keyboard support" />
+                        </dev:SettingsCard>
+                        <dev:SettingsCard ContentAlignment="Left">
+                            <CheckBox
+                                x:Name="AMDVRR"
+                                Margin="0,0,0,15"
+                                Padding="22,5,0,0"
+                                Click="AMDVRR_Checked"
+                                Content="AMD Variable Refresh Rate (VRR) / FreeSync support" />
+                        </dev:SettingsCard>
+                    </dev:SettingsGroup.Items>
+                </dev:SettingsGroup>
+                <StackPanel x:Name="ServiceInfo" />
+                <Border Height="25" Background="Transparent" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </Page>

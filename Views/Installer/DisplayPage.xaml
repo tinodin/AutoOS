@@ -9,34 +9,37 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:views="using:AutoOS.Views"
     mc:Ignorable="d">
-    <ScrollView
-        Margin="{ThemeResource ContentPageMargin}"
-        Padding="{ThemeResource ContentPagePadding}"
-        HorizontalAlignment="Stretch"
-        VerticalScrollBarVisibility="Auto">
-        <StackPanel
-            Margin="10"
-            dev:PanelAttach.ChildrenTransitions="Default"
-            Spacing="5">
-            <TextBlock
-                Margin="7,-11,0,57"
-                FontSize="28"
-                FontWeight="SemiBold"
-                Text="Display" />
-            <dev:SettingsGroup
-                Description="Import your Custom Resolution Utility (CRU) profile here."
-                Header="Custom Resolution Utility (CRU)"
-                HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/CRU.png}">
-                <dev:SettingsGroup.Content>
-                    <Button
-                        HorizontalAlignment="Left"
-                        Click="BrowseCru_Click"
-                        Content="Import profile"
-                        Style="{StaticResource AccentButtonStyle}" />
-                </dev:SettingsGroup.Content>
-            </dev:SettingsGroup>
-            <StackPanel x:Name="CruInfo" />
-            <Border Height="25" Background="Transparent" />
-        </StackPanel>
-    </ScrollView>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <TextBlock
+            Margin="36,24,36,0"
+            Style="{StaticResource TitleTextBlockStyle}"
+            Text="Display" />
+        <ScrollViewer
+            Grid.Row="1"
+            Margin="{ThemeResource ContentPageMargin}"
+            Padding="{ThemeResource ContentPagePadding}"
+            VerticalScrollBarVisibility="Auto"
+            VerticalScrollMode="Auto">
+            <StackPanel dev:PanelAttach.ChildrenTransitions="Default" Spacing="8">
+                <dev:SettingsGroup
+                    Description="Import your Custom Resolution Utility (CRU) profile here."
+                    Header="Custom Resolution Utility (CRU)"
+                    HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/CRU.png}">
+                    <dev:SettingsGroup.Content>
+                        <Button
+                            HorizontalAlignment="Left"
+                            Click="BrowseCru_Click"
+                            Content="Import profile"
+                            Style="{StaticResource AccentButtonStyle}" />
+                    </dev:SettingsGroup.Content>
+                </dev:SettingsGroup>
+                <StackPanel x:Name="CruInfo" />
+                <Border Height="25" Background="Transparent" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </Page>

@@ -9,81 +9,84 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:views="using:AutoOS.Views"
     mc:Ignorable="d">
-    <ScrollView
-        Margin="{ThemeResource ContentPageMargin}"
-        Padding="{ThemeResource ContentPagePadding}"
-        HorizontalAlignment="Stretch"
-        VerticalScrollBarVisibility="Auto">
-        <StackPanel
-            Margin="10"
-            dev:PanelAttach.ChildrenTransitions="Default"
-            Spacing="5">
-            <TextBlock
-                Margin="7,-11,0,57"
-                FontSize="28"
-                FontWeight="SemiBold"
-                Text="Graphics Card" />
-            <dev:SettingsGroup Margin="0,0,0,10" Header="Manufacturer">
-                <dev:SettingsGroup.Content>
-                    <GridView
-                        x:Name="Brands"
-                        IsMultiSelectCheckBoxEnabled="False"
-                        SelectionChanged="Brand_Changed"
-                        SelectionMode="Multiple">
-                        <GridView.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel
-                                    Margin="10"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    Orientation="Vertical">
-                                    <Image
-                                        Width="40"
-                                        Height="40"
-                                        Margin="0,5,0,10"
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <TextBlock
+            Margin="36,24,36,0"
+            Style="{StaticResource TitleTextBlockStyle}"
+            Text="Graphics Card" />
+        <ScrollViewer
+            Grid.Row="1"
+            Margin="{ThemeResource ContentPageMargin}"
+            Padding="{ThemeResource ContentPagePadding}"
+            VerticalScrollBarVisibility="Auto"
+            VerticalScrollMode="Auto">
+            <StackPanel dev:PanelAttach.ChildrenTransitions="Default" Spacing="8">
+                <dev:SettingsGroup Margin="0,0,0,10" Header="Manufacturer">
+                    <dev:SettingsGroup.Content>
+                        <GridView
+                            x:Name="Brands"
+                            IsMultiSelectCheckBoxEnabled="False"
+                            SelectionChanged="Brand_Changed"
+                            SelectionMode="Multiple">
+                            <GridView.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel
+                                        Margin="10"
                                         HorizontalAlignment="Center"
-                                        Source="{Binding ImageSource}" />
-                                    <TextBlock
-                                        HorizontalAlignment="Center"
-                                        FontSize="14"
-                                        Text="{Binding Text}"
-                                        TextAlignment="Center"
-                                        TextTrimming="CharacterEllipsis"
-                                        TextWrapping="Wrap" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </GridView.ItemTemplate>
-                        <GridView.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapGrid
-                                    ItemHeight="150"
-                                    ItemWidth="180"
-                                    Orientation="Horizontal" />
-                            </ItemsPanelTemplate>
-                        </GridView.ItemsPanel>
-                    </GridView>
-                </dev:SettingsGroup.Content>
-                <dev:SettingsGroup.Items>
-                    <dev:SettingsCard Description="Disabling HDCP breaks Netflix and other protected video streaming services." Header="High-Bandwidth Digital Content Protection (HDCP)">
-                        <ToggleSwitch x:Name="HDCP" Toggled="HDCP_Toggled" />
-                    </dev:SettingsCard>
-                </dev:SettingsGroup.Items>
-            </dev:SettingsGroup>
-            <dev:SettingsGroup
-                Margin="0,0,0,10"
-                Description="Import your MSI Afterburner profile here."
-                Header="MSI Afterburner"
-                HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/MsiAfterburner.png}">
-                <dev:SettingsGroup.Content>
-                    <Button
-                        HorizontalAlignment="Left"
-                        Click="BrowseMsi_Click"
-                        Content="Import profile"
-                        Style="{StaticResource AccentButtonStyle}" />
-                </dev:SettingsGroup.Content>
-            </dev:SettingsGroup>
-            <StackPanel x:Name="MsiAfterburnerInfo" />
-            <Border Height="25" Background="Transparent" />
-        </StackPanel>
-    </ScrollView>
+                                        VerticalAlignment="Center"
+                                        Orientation="Vertical">
+                                        <Image
+                                            Width="40"
+                                            Height="40"
+                                            Margin="0,5,0,10"
+                                            HorizontalAlignment="Center"
+                                            Source="{Binding ImageSource}" />
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            FontSize="14"
+                                            Text="{Binding Text}"
+                                            TextAlignment="Center"
+                                            TextTrimming="CharacterEllipsis"
+                                            TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </GridView.ItemTemplate>
+                            <GridView.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapGrid
+                                        ItemHeight="150"
+                                        ItemWidth="180"
+                                        Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </GridView.ItemsPanel>
+                        </GridView>
+                    </dev:SettingsGroup.Content>
+                    <dev:SettingsGroup.Items>
+                        <dev:SettingsCard Description="Disabling HDCP breaks Netflix and other protected video streaming services." Header="High-Bandwidth Digital Content Protection (HDCP)">
+                            <ToggleSwitch x:Name="HDCP" Toggled="HDCP_Toggled" />
+                        </dev:SettingsCard>
+                    </dev:SettingsGroup.Items>
+                </dev:SettingsGroup>
+                <dev:SettingsGroup
+                    Margin="0,0,0,10"
+                    Description="Import your MSI Afterburner profile here."
+                    Header="MSI Afterburner"
+                    HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/MsiAfterburner.png}">
+                    <dev:SettingsGroup.Content>
+                        <Button
+                            HorizontalAlignment="Left"
+                            Click="BrowseMsi_Click"
+                            Content="Import profile"
+                            Style="{StaticResource AccentButtonStyle}" />
+                    </dev:SettingsGroup.Content>
+                </dev:SettingsGroup>
+                <StackPanel x:Name="MsiAfterburnerInfo" />
+                <Border Height="25" Background="Transparent" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </Page>

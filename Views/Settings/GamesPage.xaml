@@ -9,123 +9,123 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:views="using:AutoOS.Views.Settings.Games"
     mc:Ignorable="d">
-    <ScrollViewer
-        Margin="{ThemeResource ContentPageMargin}"
-        Padding="{ThemeResource ContentPagePadding}"
-        HorizontalAlignment="Stretch"
-        VerticalScrollBarVisibility="Auto">
-        <StackPanel
-            Margin="10"
-            dev:PanelAttach.ChildrenTransitions="Default"
-            Spacing="5">
-            <TextBlock
-                Margin="7,-11,0,57"
-                FontSize="28"
-                FontWeight="SemiBold"
-                Text="Games" />
-            <StackPanel x:Name="Games_StackPanel" Height="460">
-                <dev:SwitchPresenter
-                    x:Name="Games_SwitchPresenter"
-                    Grid.Row="1"
-                    HorizontalAlignment="Center"
-                    TargetType="x:Boolean"
-                    Value="True">
-                    <dev:Case Value="True">
-                        <Grid
-                            Height="350"
-                            HorizontalAlignment="Stretch"
-                            VerticalAlignment="Center">
-                            <StackPanel
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                Orientation="Vertical"
-                                Spacing="8">
-                                <ProgressRing IsActive="True" />
-                                <TextBlock
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <TextBlock
+            Margin="36,24,36,0"
+            Style="{StaticResource TitleTextBlockStyle}"
+            Text="Games" />
+        <ScrollViewer
+            Grid.Row="1"
+            Margin="{ThemeResource ContentPageMargin}"
+            Padding="{ThemeResource ContentPagePadding}"
+            VerticalScrollBarVisibility="Auto"
+            VerticalScrollMode="Auto">
+            <StackPanel dev:PanelAttach.ChildrenTransitions="Default" Spacing="16">
+                <StackPanel x:Name="Games_StackPanel" Height="437">
+                    <dev:SwitchPresenter
+                        x:Name="Games_SwitchPresenter"
+                        HorizontalAlignment="Center"
+                        TargetType="x:Boolean"
+                        Value="True">
+                        <dev:Case Value="True">
+                            <Grid
+                                Height="430"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Center">
+                                <StackPanel
                                     HorizontalAlignment="Center"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Style="{StaticResource CaptionTextBlockStyle}"
-                                    Text="Fetching data.." />
+                                    VerticalAlignment="Center"
+                                    Orientation="Vertical"
+                                    Spacing="8">
+                                    <ProgressRing IsActive="True" />
+                                    <TextBlock
+                                        HorizontalAlignment="Center"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Style="{StaticResource CaptionTextBlockStyle}"
+                                        Text="Fetching data.." />
+                                </StackPanel>
+                            </Grid>
+                        </dev:Case>
+                        <dev:Case Value="False">
+                            <StackPanel Orientation="Vertical">
+                                <StackPanel
+                                    Margin="0,0,0,12"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Top"
+                                    Orientation="Horizontal"
+                                    Spacing="12">
+                                    <Button Click="AddCustomGame_Click">
+                                        <Button.Content>
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <FontIcon Glyph="&#xE710;" />
+                                                <TextBlock Text="Add new" />
+                                            </StackPanel>
+                                        </Button.Content>
+                                    </Button>
+                                    <DropDownButton HorizontalAlignment="Right" VerticalAlignment="Top">
+                                        <DropDownButton.Content>
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <FontIcon Glyph="&#xE8CB;" />
+                                                <TextBlock Text="Sort" />
+                                            </StackPanel>
+                                        </DropDownButton.Content>
+                                        <DropDownButton.Flyout>
+                                            <MenuFlyout Placement="Bottom">
+                                                <MenuFlyoutItem
+                                                    x:Name="SortByName"
+                                                    Click="SortByName_Click"
+                                                    Text="Name" />
+                                                <MenuFlyoutItem
+                                                    x:Name="SortByLauncher"
+                                                    Click="SortByLauncher_Click"
+                                                    Text="Launcher" />
+                                                <MenuFlyoutSeparator />
+                                                <MenuFlyoutItem
+                                                    x:Name="SortAscending"
+                                                    Click="SortAscending_Click"
+                                                    Text="Ascending" />
+                                                <MenuFlyoutItem
+                                                    x:Name="SortDescending"
+                                                    Click="SortDescending_Click"
+                                                    Text="Descending" />
+                                            </MenuFlyout>
+                                        </DropDownButton.Flyout>
+                                    </DropDownButton>
+                                </StackPanel>
+                                <views:GameGallery x:Name="games">
+                                    <views:GameGallery.HeaderContent>
+                                        <StackPanel Orientation="Horizontal" Spacing="16" />
+                                    </views:GameGallery.HeaderContent>
+                                </views:GameGallery>
                             </StackPanel>
-                        </Grid>
-                    </dev:Case>
-                    <dev:Case Value="False">
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel
-                                Margin="0,0,0,10"
-                                HorizontalAlignment="Right"
-                                VerticalAlignment="Top"
-                                Orientation="Horizontal"
-                                Spacing="10">
-                                <Button Click="AddCustomGame_Click">
-                                    <Button.Content>
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <FontIcon Glyph="&#xE710;" />
-                                            <TextBlock Text="Add new" />
-                                        </StackPanel>
-                                    </Button.Content>
-                                </Button>
-                                <DropDownButton HorizontalAlignment="Right" VerticalAlignment="Top">
-                                    <DropDownButton.Content>
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <FontIcon Glyph="&#xE8CB;" />
-                                            <TextBlock Text="Sort" />
-                                        </StackPanel>
-                                    </DropDownButton.Content>
-                                    <DropDownButton.Flyout>
-                                        <MenuFlyout Placement="Bottom">
-                                            <MenuFlyoutItem
-                                                x:Name="SortByName"
-                                                Click="SortByName_Click"
-                                                Text="Name" />
-                                            <MenuFlyoutItem
-                                                x:Name="SortByLauncher"
-                                                Click="SortByLauncher_Click"
-                                                Text="Launcher" />
-                                            <MenuFlyoutSeparator />
-                                            <MenuFlyoutItem
-                                                x:Name="SortAscending"
-                                                Click="SortAscending_Click"
-                                                Text="Ascending" />
-                                            <MenuFlyoutItem
-                                                x:Name="SortDescending"
-                                                Click="SortDescending_Click"
-                                                Text="Descending" />
-                                        </MenuFlyout>
-                                    </DropDownButton.Flyout>
-                                </DropDownButton>
-                            </StackPanel>
-                            <views:GameGallery x:Name="games">
-                                <views:GameGallery.HeaderContent>
-                                    <StackPanel Orientation="Horizontal" Spacing="10" />
-                                </views:GameGallery.HeaderContent>
-                            </views:GameGallery>
-                        </StackPanel>
-                    </dev:Case>
-                </dev:SwitchPresenter>
+                        </dev:Case>
+                    </dev:SwitchPresenter>
+                </StackPanel>
+                <dev:SettingsGroup
+                    Description="Select your Epic Games Account."
+                    Header="Epic Games Account"
+                    HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Epicgames.png}">
+                    <dev:SettingsGroup.Content>
+                        <ComboBox x:Name="Accounts" SelectionChanged="Accounts_SelectionChanged" />
+                    </dev:SettingsGroup.Content>
+                    <dev:SettingsGroup.Items>
+                        <dev:SettingsCard Header="Add a new Account">
+                            <Button Click="AddAccount_Click" Content="Add" />
+                        </dev:SettingsCard>
+                        <dev:SettingsCard Header="Remove Account">
+                            <Button
+                                x:Name="removeButton"
+                                Click="RemoveAccount_Click"
+                                Content="Remove" />
+                        </dev:SettingsCard>
+                    </dev:SettingsGroup.Items>
+                </dev:SettingsGroup>
+                <StackPanel x:Name="AccountInfo" />
             </StackPanel>
-            <StackPanel x:Name="GameInfo" />
-            <dev:SettingsGroup
-                Description="Select your Epic Games Account."
-                Header="Epic Games Account"
-                HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Epicgames.png}">
-                <dev:SettingsGroup.Content>
-                    <ComboBox x:Name="Accounts" SelectionChanged="Accounts_SelectionChanged" />
-                </dev:SettingsGroup.Content>
-                <dev:SettingsGroup.Items>
-                    <dev:SettingsCard Header="Add a new Account">
-                        <Button Click="AddAccount_Click" Content="Add" />
-                    </dev:SettingsCard>
-                    <dev:SettingsCard Header="Remove Account">
-                        <Button
-                            x:Name="removeButton"
-                            Click="RemoveAccount_Click"
-                            Content="Remove" />
-                    </dev:SettingsCard>
-                </dev:SettingsGroup.Items>
-            </dev:SettingsGroup>
-            <StackPanel x:Name="AccountInfo" />
-            <Border Height="95" Background="Transparent" />
-        </StackPanel>
-    </ScrollViewer>
+        </ScrollViewer>
+    </Grid>
 </Page>

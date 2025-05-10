@@ -9,144 +9,147 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:views="using:AutoOS.Views"
     mc:Ignorable="d">
-    <ScrollView
-        Margin="{ThemeResource ContentPageMargin}"
-        Padding="{ThemeResource ContentPagePadding}"
-        HorizontalAlignment="Stretch"
-        VerticalScrollBarVisibility="Auto">
-        <StackPanel
-            Margin="10"
-            dev:PanelAttach.ChildrenTransitions="Default"
-            Spacing="5">
-            <TextBlock
-                Margin="7,-11,0,57"
-                FontSize="28"
-                FontWeight="SemiBold"
-                Text="Applications" />
-            <dev:SettingsGroup Margin="0,0,0,10" Header="Music">
-                <dev:SettingsGroup.Content>
-                    <GridView
-                        x:Name="Music"
-                        IsMultiSelectCheckBoxEnabled="False"
-                        SelectionChanged="Music_Changed"
-                        SelectionMode="Multiple">
-                        <GridView.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel
-                                    Margin="10"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    Orientation="Vertical">
-                                    <Image
-                                        Width="40"
-                                        Height="40"
-                                        Margin="0,5,0,10"
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <TextBlock
+            Margin="36,24,36,0"
+            Style="{StaticResource TitleTextBlockStyle}"
+            Text="Applications" />
+        <ScrollViewer
+            Grid.Row="1"
+            Margin="{ThemeResource ContentPageMargin}"
+            Padding="{ThemeResource ContentPagePadding}"
+            VerticalScrollBarVisibility="Auto"
+            VerticalScrollMode="Auto">
+            <StackPanel dev:PanelAttach.ChildrenTransitions="Default" Spacing="8">
+                <dev:SettingsGroup Margin="0,0,0,10" Header="Music">
+                    <dev:SettingsGroup.Content>
+                        <GridView
+                            x:Name="Music"
+                            IsMultiSelectCheckBoxEnabled="False"
+                            SelectionChanged="Music_Changed"
+                            SelectionMode="Multiple">
+                            <GridView.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel
+                                        Margin="10"
                                         HorizontalAlignment="Center"
-                                        Source="{Binding ImageSource}" />
-                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        Orientation="Vertical">
+                                        <Image
+                                            Width="40"
+                                            Height="40"
+                                            Margin="0,5,0,10"
+                                            HorizontalAlignment="Center"
+                                            Source="{Binding ImageSource}" />
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            FontSize="14"
+                                            Text="{Binding Text}"
+                                            TextAlignment="Center"
+                                            TextTrimming="CharacterEllipsis"
+                                            TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </GridView.ItemTemplate>
+                            <GridView.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapGrid
+                                        ItemHeight="150"
+                                        ItemWidth="180"
+                                        Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </GridView.ItemsPanel>
+                        </GridView>
+                    </dev:SettingsGroup.Content>
+                </dev:SettingsGroup>
+                <dev:SettingsGroup Margin="0,0,0,10" Header="Messaging">
+                    <dev:SettingsGroup.Content>
+                        <GridView
+                            x:Name="Messaging"
+                            IsMultiSelectCheckBoxEnabled="False"
+                            SelectionChanged="Messaging_Changed"
+                            SelectionMode="Multiple">
+                            <GridView.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel
+                                        Margin="10"
                                         HorizontalAlignment="Center"
-                                        FontSize="14"
-                                        Text="{Binding Text}"
-                                        TextAlignment="Center"
-                                        TextTrimming="CharacterEllipsis"
-                                        TextWrapping="Wrap" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </GridView.ItemTemplate>
-                        <GridView.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapGrid
-                                    ItemHeight="150"
-                                    ItemWidth="180"
-                                    Orientation="Horizontal" />
-                            </ItemsPanelTemplate>
-                        </GridView.ItemsPanel>
-                    </GridView>
-                </dev:SettingsGroup.Content>
-            </dev:SettingsGroup>
-            <dev:SettingsGroup Margin="0,0,0,10" Header="Messaging">
-                <dev:SettingsGroup.Content>
-                    <GridView
-                        x:Name="Messaging"
-                        IsMultiSelectCheckBoxEnabled="False"
-                        SelectionChanged="Messaging_Changed"
-                        SelectionMode="Multiple">
-                        <GridView.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel
-                                    Margin="10"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    Orientation="Vertical">
-                                    <Image
-                                        Width="40"
-                                        Height="40"
-                                        Margin="0,5,0,10"
+                                        VerticalAlignment="Center"
+                                        Orientation="Vertical">
+                                        <Image
+                                            Width="40"
+                                            Height="40"
+                                            Margin="0,5,0,10"
+                                            HorizontalAlignment="Center"
+                                            Source="{Binding ImageSource}" />
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            FontSize="14"
+                                            Text="{Binding Text}"
+                                            TextAlignment="Center"
+                                            TextTrimming="CharacterEllipsis"
+                                            TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </GridView.ItemTemplate>
+                            <GridView.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapGrid
+                                        ItemHeight="150"
+                                        ItemWidth="180"
+                                        Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </GridView.ItemsPanel>
+                        </GridView>
+                    </dev:SettingsGroup.Content>
+                </dev:SettingsGroup>
+                <dev:SettingsGroup Margin="0,0,0,10" Header="Launchers">
+                    <dev:SettingsGroup.Content>
+                        <GridView
+                            x:Name="Launchers"
+                            IsMultiSelectCheckBoxEnabled="False"
+                            SelectionChanged="Launchers_Changed"
+                            SelectionMode="Multiple">
+                            <GridView.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel
+                                        Margin="10"
                                         HorizontalAlignment="Center"
-                                        Source="{Binding ImageSource}" />
-                                    <TextBlock
-                                        HorizontalAlignment="Center"
-                                        FontSize="14"
-                                        Text="{Binding Text}"
-                                        TextAlignment="Center"
-                                        TextTrimming="CharacterEllipsis"
-                                        TextWrapping="Wrap" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </GridView.ItemTemplate>
-                        <GridView.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapGrid
-                                    ItemHeight="150"
-                                    ItemWidth="180"
-                                    Orientation="Horizontal" />
-                            </ItemsPanelTemplate>
-                        </GridView.ItemsPanel>
-                    </GridView>
-                </dev:SettingsGroup.Content>
-            </dev:SettingsGroup>
-            <dev:SettingsGroup Margin="0,0,0,10" Header="Launchers">
-                <dev:SettingsGroup.Content>
-                    <GridView
-                        x:Name="Launchers"
-                        IsMultiSelectCheckBoxEnabled="False"
-                        SelectionChanged="Launchers_Changed"
-                        SelectionMode="Multiple">
-                        <GridView.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel
-                                    Margin="10"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    Orientation="Vertical">
-                                    <Image
-                                        Width="40"
-                                        Height="40"
-                                        Margin="0,5,0,10"
-                                        HorizontalAlignment="Center"
-                                        Source="{Binding ImageSource}" />
-                                    <TextBlock
-                                        HorizontalAlignment="Center"
-                                        FontSize="14"
-                                        Text="{Binding Text}"
-                                        TextAlignment="Center"
-                                        TextTrimming="CharacterEllipsis"
-                                        TextWrapping="Wrap" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </GridView.ItemTemplate>
-                        <GridView.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapGrid
-                                    ItemHeight="150"
-                                    ItemWidth="180"
-                                    Orientation="Horizontal" />
-                            </ItemsPanelTemplate>
-                        </GridView.ItemsPanel>
-                    </GridView>
-                </dev:SettingsGroup.Content>
-            </dev:SettingsGroup>
-            <Border Height="25" Background="Transparent" />
-        </StackPanel>
-    </ScrollView>
+                                        VerticalAlignment="Center"
+                                        Orientation="Vertical">
+                                        <Image
+                                            Width="40"
+                                            Height="40"
+                                            Margin="0,5,0,10"
+                                            HorizontalAlignment="Center"
+                                            Source="{Binding ImageSource}" />
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            FontSize="14"
+                                            Text="{Binding Text}"
+                                            TextAlignment="Center"
+                                            TextTrimming="CharacterEllipsis"
+                                            TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </GridView.ItemTemplate>
+                            <GridView.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapGrid
+                                        ItemHeight="150"
+                                        ItemWidth="180"
+                                        Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </GridView.ItemsPanel>
+                        </GridView>
+                    </dev:SettingsGroup.Content>
+                </dev:SettingsGroup>
+                <Border Height="25" Background="Transparent" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </Page>

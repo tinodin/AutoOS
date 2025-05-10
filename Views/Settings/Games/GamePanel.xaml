@@ -9,11 +9,11 @@
     xmlns:views="using:AutoOS.Views"
     mc:Ignorable="d">
     <Grid
-        Width="241"
+        Width="224"
         HorizontalAlignment="Center"
         VerticalAlignment="Center"
         Background="{ThemeResource SettingsCardBackground}"
-        CornerRadius="8">
+        CornerRadius="{StaticResource OverlayCornerRadius}">
         <Grid.Resources>
             <ResourceDictionary>
                 <ResourceDictionary.ThemeDictionaries>
@@ -52,18 +52,17 @@
             PointerEntered="AutoScrollHoverEffectView_PointerEntered"
             PointerExited="AutoScrollHoverEffectView_PointerExited">
             <Grid
-                Padding="24"
+                Padding="16"
                 VerticalAlignment="Stretch"
-                RowSpacing="11">
+                RowSpacing="12">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
                 <dev:ImageEx
-                    x:Name="image"
                     Width="192"
                     Height="256"
-                    CornerRadius="8"
+                    CornerRadius="{StaticResource OverlayCornerRadius}"
                     Source="{x:Bind ImageSource}"
                     Stretch="Fill" />
                 <StackPanel
@@ -76,7 +75,7 @@
                         ScrollingPixelsPreSecond="50">
                         <TextBlock
                             x:Name="TitleText"
-                            FontSize="18"
+                            FontSize="16"
                             Foreground="{ThemeResource TextFillColorPrimaryBrush}"
                             Style="{StaticResource BodyTextBlockStyle}"
                             Text="{x:Bind Title, Mode=OneWay}"
@@ -94,7 +93,7 @@
                             TextTrimming="CharacterEllipsis"
                             TextWrapping="NoWrap" />
                     </dev:AutoScrollView>
-                    <dev:ElementGroup Margin="0,15,0,0" HorizontalAlignment="Center">
+                    <dev:ElementGroup Margin="0,12,0,0" HorizontalAlignment="Center">
                         <Button
                             x:Name="Launch"
                             HorizontalAlignment="Stretch"

@@ -9,73 +9,75 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:views="using:AutoOS.Views"
     mc:Ignorable="d">
-    <ScrollView
-        Margin="{ThemeResource ContentPageMargin}"
-        Padding="{ThemeResource ContentPagePadding}"
-        HorizontalAlignment="Stretch"
-        VerticalScrollBarVisibility="Auto">
-        <StackPanel
-            Margin="10"
-            dev:PanelAttach.ChildrenTransitions="Default"
-            Spacing="5">
-            <TextBlock
-                Margin="7,-11,0,57"
-                FontSize="28"
-                FontWeight="SemiBold"
-                Text="Graphics Card" />
-            <dev:SettingsGroup x:Name="GpuCard" Header="GPU Driver">
-                <dev:SettingsGroup.Content>
-                    <StackPanel Orientation="Horizontal">
-                        <dev:ProgressButton
-                            x:Name="UpdateCheck"
-                            Checked="UpdateCheck_Checked"
-                            CheckedContent="Checking for updates..."
-                            Content="Done"
-                            IsIndeterminate="True"
-                            Loaded="UpdateCheck_Checked"
-                            Style="{ThemeResource AccentProgressButtonStyle}" />
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <TextBlock
+            Margin="36,24,36,0"
+            Style="{StaticResource TitleTextBlockStyle}"
+            Text="Graphics Card" />
+        <ScrollViewer
+            Grid.Row="1"
+            Margin="{ThemeResource ContentPageMargin}"
+            Padding="{ThemeResource ContentPagePadding}"
+            VerticalScrollBarVisibility="Auto"
+            VerticalScrollMode="Auto">
+            <StackPanel dev:PanelAttach.ChildrenTransitions="Default" Spacing="8">
+                <dev:SettingsGroup x:Name="GpuCard" Header="GPU Driver">
+                    <dev:SettingsGroup.Content>
+                        <StackPanel Orientation="Horizontal">
+                            <dev:ProgressButton
+                                x:Name="UpdateCheck"
+                                Checked="UpdateCheck_Checked"
+                                CheckedContent="Checking for updates..."
+                                Content="Done"
+                                IsIndeterminate="True"
+                                Loaded="UpdateCheck_Checked"
+                                Style="{ThemeResource AccentProgressButtonStyle}" />
+                            <Button
+                                x:Name="updateCheckButton"
+                                HorizontalAlignment="Left"
+                                Content="Checking for updates..."
+                                Style="{StaticResource AccentButtonStyle}"
+                                Visibility="Collapsed" />
+                            <ProgressRing
+                                x:Name="updateCheckProgress"
+                                Width="25"
+                                Height="25"
+                                Margin="10,0,0,0"
+                                Background="Transparent"
+                                IsActive="True"
+                                Visibility="Collapsed" />
+                        </StackPanel>
+                    </dev:SettingsGroup.Content>
+                    <dev:SettingsGroup.Items>
+                        <dev:SettingsCard Description="Disabling HDCP breaks Netflix and other protected video streaming services." Header="High-Bandwidth Digital Content Protection (HDCP)">
+                            <ToggleSwitch x:Name="HDCP" Toggled="HDCP_Toggled" />
+                        </dev:SettingsCard>
+                    </dev:SettingsGroup.Items>
+                </dev:SettingsGroup>
+                <StackPanel x:Name="NvidiaInfo" />
+                <dev:SettingsGroup
+                    Description="Overclock your graphics card, remove power limits, set custom fan curves, and more."
+                    Header="MSI Afterburner"
+                    HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/MsiAfterburner.png}">
+                    <dev:SettingsGroup.Content>
                         <Button
-                            x:Name="updateCheckButton"
                             HorizontalAlignment="Left"
-                            Content="Checking for updates..."
-                            Style="{StaticResource AccentButtonStyle}"
-                            Visibility="Collapsed" />
-                        <ProgressRing
-                            x:Name="updateCheckProgress"
-                            Width="25"
-                            Height="25"
-                            Margin="10,0,0,0"
-                            Background="Transparent"
-                            IsActive="True"
-                            Visibility="Collapsed" />
-                    </StackPanel>
-                </dev:SettingsGroup.Content>
-                <dev:SettingsGroup.Items>
-                    <dev:SettingsCard Description="Disabling HDCP breaks Netflix and other protected video streaming services." Header="High-Bandwidth Digital Content Protection (HDCP)">
-                        <ToggleSwitch x:Name="HDCP" Toggled="HDCP_Toggled" />
-                    </dev:SettingsCard>
-                </dev:SettingsGroup.Items>
-            </dev:SettingsGroup>
-            <StackPanel x:Name="NvidiaInfo" />
-            <dev:SettingsGroup
-                Description="Overclock your graphics card, remove power limits, set custom fan curves, and more."
-                Header="MSI Afterburner"
-                HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/MsiAfterburner.png}">
-                <dev:SettingsGroup.Content>
-                    <Button
-                        HorizontalAlignment="Left"
-                        Click="BrowseMsi_Click"
-                        Content="Import profile"
-                        Style="{StaticResource AccentButtonStyle}" />
-                </dev:SettingsGroup.Content>
-                <dev:SettingsGroup.Items>
-                    <dev:SettingsCard Header="Create an overclock" IsClickEnabled="False">
-                        <Button Click="LaunchMsi_Click" Content="Launch" />
-                    </dev:SettingsCard>
-                </dev:SettingsGroup.Items>
-            </dev:SettingsGroup>
-            <StackPanel x:Name="MsiAfterburnerInfo" />
-            <Border Height="95" Background="Transparent" />
-        </StackPanel>
-    </ScrollView>
+                            Click="BrowseMsi_Click"
+                            Content="Import profile"
+                            Style="{StaticResource AccentButtonStyle}" />
+                    </dev:SettingsGroup.Content>
+                    <dev:SettingsGroup.Items>
+                        <dev:SettingsCard Header="Create an overclock" IsClickEnabled="False">
+                            <Button Click="LaunchMsi_Click" Content="Launch" />
+                        </dev:SettingsCard>
+                    </dev:SettingsGroup.Items>
+                </dev:SettingsGroup>
+                <StackPanel x:Name="MsiAfterburnerInfo" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </Page>
