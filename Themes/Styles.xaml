@@ -3,7 +3,7 @@
 
     <x:Double x:Key="TitleBarCompactHeight">48</x:Double>
 
-    <Thickness x:Key="ContentPageMargin">36,30,0,0</Thickness>
+    <Thickness x:Key="ContentPageMargin">36,48,0,0</Thickness>
 
     <Thickness x:Key="ContentPagePadding">0,0,36,0</Thickness>
 
