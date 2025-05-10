@@ -42,6 +42,7 @@
                     <dev:TextBox
                         MaxWidth="400"
                         IsReadOnly="True"
+                        IsTabStop="False"
                         Text="{x:Bind InstallLocation}">
                         <dev:TextBox.Content>
                             <Button Click="OpenInstallLocation_Click" Content="&#xE838;" />
