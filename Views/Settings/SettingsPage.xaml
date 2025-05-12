@@ -15,17 +15,19 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <TextBlock
-            Margin="36,24,36,0"
+            Margin="36,24,0,0"
             Style="{StaticResource TitleTextBlockStyle}"
             Text="Settings" />
         <ScrollViewer
             Grid.Row="1"
-            Margin="{ThemeResource ContentPageMargin}"
-            Padding="{ThemeResource ContentPagePadding}"
             VerticalScrollBarVisibility="Auto"
             VerticalScrollMode="Auto">
-            <StackPanel dev:PanelAttach.ChildrenTransitions="Default" Spacing="12">
-                <dev:SimpleSettingsGroup Margin="0,-36,0,0" Header="Appearance &amp; behavior">
+            <StackPanel
+                Margin="{ThemeResource ContentPageMargin}"
+                Padding="{ThemeResource ContentPagePadding}"
+                dev:PanelAttach.ChildrenTransitions="Default"
+                Spacing="12">
+                <dev:SimpleSettingsGroup Margin="0,-48,0,0" Header="Appearance &amp; behavior">
                     <dev:SettingsCard
                         Description="Select the theme that suits your mood and preference. You can choose from dark, light, or system themes."
                         Header="App theme"

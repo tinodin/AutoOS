@@ -15,16 +15,18 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <TextBlock
-            Margin="36,24,36,0"
+            Margin="36,24,0,0"
             Style="{StaticResource TitleTextBlockStyle}"
             Text="Timer Resolution" />
         <ScrollViewer
             Grid.Row="1"
-            Margin="{ThemeResource ContentPageMargin}"
-            Padding="{ThemeResource ContentPagePadding}"
             VerticalScrollBarVisibility="Auto"
             VerticalScrollMode="Auto">
-            <StackPanel dev:PanelAttach.ChildrenTransitions="Default" Spacing="8">
+            <StackPanel
+                Margin="{ThemeResource ContentPageMargin}"
+                Padding="{ThemeResource ContentPagePadding}"
+                dev:PanelAttach.ChildrenTransitions="Default"
+                Spacing="8">
                 <dev:SettingsGroup
                     Margin="0,0,0,10"
                     Description="Let AutoOS benchmark your Clock Interrupt Frequency (Timer Resolution) or set it manually."

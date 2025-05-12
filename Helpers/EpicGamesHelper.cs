@@ -169,7 +169,7 @@ namespace AutoOS.Helpers
                         }
                         catch
                         {
-                            break;
+                            return;
                         }
                     }
                 }

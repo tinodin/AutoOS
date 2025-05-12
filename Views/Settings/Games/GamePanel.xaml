@@ -54,7 +54,7 @@
             <Grid
                 Padding="16"
                 VerticalAlignment="Stretch"
-                RowSpacing="12">
+                RowSpacing="10">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
                     <RowDefinition Height="*" />

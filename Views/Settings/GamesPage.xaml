@@ -15,17 +15,19 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <TextBlock
-            Margin="36,24,36,0"
+            Margin="36,24,0,0"
             Style="{StaticResource TitleTextBlockStyle}"
             Text="Games" />
         <ScrollViewer
             Grid.Row="1"
-            Margin="{ThemeResource ContentPageMargin}"
-            Padding="{ThemeResource ContentPagePadding}"
             VerticalScrollBarVisibility="Auto"
             VerticalScrollMode="Auto">
-            <StackPanel dev:PanelAttach.ChildrenTransitions="Default" Spacing="16">
-                <StackPanel x:Name="Games_StackPanel" Height="437">
+            <StackPanel
+                Margin="{ThemeResource ContentPageMargin}"
+                Padding="{ThemeResource ContentPagePadding}"
+                dev:PanelAttach.ChildrenTransitions="Default"
+                Spacing="16">
+                <StackPanel x:Name="Games_StackPanel" Height="433">
                     <dev:SwitchPresenter
                         x:Name="Games_SwitchPresenter"
                         HorizontalAlignment="Center"
@@ -33,7 +35,7 @@
                         Value="True">
                         <dev:Case Value="True">
                             <Grid
-                                Height="430"
+                                Height="433"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Center">
                                 <StackPanel

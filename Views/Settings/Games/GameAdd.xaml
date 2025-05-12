@@ -46,7 +46,7 @@
                         </dev:TextBox>
                     </dev:SettingsCard>
                 </dev:SimpleSettingsGroup>
-                <dev:SimpleSettingsGroup Margin="0,-12,0,0" Header="Game">
+                <dev:SimpleSettingsGroup Margin="0,-17,0,0" Header="Game">
                     <dev:SettingsCard Header="Game Name">
                         <TextBox
                             x:Name="GameNameValue"

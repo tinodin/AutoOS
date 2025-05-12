@@ -60,7 +60,7 @@ namespace AutoOS.Helpers
                     }
                     catch
                     {
-                        break;
+                        return;
                     }
 
                     // add game panel
