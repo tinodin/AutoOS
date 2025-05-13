@@ -41,8 +41,8 @@ public static class StartupStage
             // launch lowaudiolatency
             ("Launching LowAudioLatency", async () => await StartupActions.RunApplication("LowAudioLatency", "low_audio_latency_no_console.exe", ""), null),
 
-            // disable device power management settings
-            ("Disabling device power management settings", async () => await StartupActions.RunPowerShellScript("devicepowermanagement.ps1", ""), null),
+            // disable device power management
+            ("Disabling device power management", async () => await StartupActions.RunPowerShellScript("devicepowermanagement.ps1", ""), null),
 
             // disable hid devices
             ("Disabling Human Interface Devices (HID)", async () => await StartupActions.RunPowerShell("Get-PnpDevice -Class HIDClass | Where-Object { $_.FriendlyName -match 'HID-compliant (consumer control device|device|game controller|system controller|vendor-defined device)' -and $_.FriendlyName -notmatch 'Mouse|Keyboard'} | Disable-PnpDevice -Confirm:$false"), () => HID == false),

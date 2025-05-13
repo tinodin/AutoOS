@@ -37,11 +37,21 @@ public static class GraphicsStage
 
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
+            //// download the latest intel driver
+            //("Downloading the latest Intel Driver", async () => await ProcessActions.RunDownload("https://downloadmirror.intel.com/764512/gfx_win_101.2115.zip", Path.GetTempPath(), "driver.zip"), () => Intel10th == true),
+
+            //// extract the driver
+            //("Extracting the Intel driver", async () => await ProcessActions.RunExtract(Path.Combine(Path.GetTempPath(), "driver.zip"), Path.Combine(Path.GetTempPath(), "driver")), () => Intel10th == true),
+
+            //// install the driver
+            //("Installing the Intel driver", async () => await ProcessActions.RunNsudo("CurrentUser", @"""%TEMP%\driver\Installer.exe"" /silent"), () => Intel10th == true),
+            //("Installing the Intel driver", async () => await ProcessActions.RefreshUI(), () => Intel10th == true),
+           
             // download the latest intel driver
-            ("Downloading the latest Intel Driver", async () => await ProcessActions.RunDownload("https://downloadmirror.intel.com/764512/gfx_win_101.2115.zip", Path.GetTempPath(), "driver.zip"), () => Intel10th == true),
+            ("Downloading the latest Intel Driver", async () => await ProcessActions.RunDownload("https://downloadmirror.intel.com/850983/gfx_win_101.2135.exe", Path.GetTempPath(), "driver.exe"), () => Intel10th == true),
 
             // extract the driver
-            ("Extracting the Intel driver", async () => await ProcessActions.RunExtract(Path.Combine(Path.GetTempPath(), "driver.zip"), Path.Combine(Path.GetTempPath(), "driver")), () => Intel10th == true),
+            ("Extracting the Intel driver", async () => await ProcessActions.RunExtract(Path.Combine(Path.GetTempPath(), "driver.exe"), Path.Combine(Path.GetTempPath(), "driver")), () => Intel10th == true),
 
             // install the driver
             ("Installing the Intel driver", async () => await ProcessActions.RunNsudo("CurrentUser", @"""%TEMP%\driver\Installer.exe"" /silent"), () => Intel10th == true),

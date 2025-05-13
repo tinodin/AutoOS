@@ -29,8 +29,8 @@ public static class DeviceStage
             // disable dma remapping
             ("Disabling DMA remapping", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"cmd /c for %a in (DmaRemappingCompatible) do for /f ""delims="" %b in ('reg query ""HKLM\SYSTEM\CurrentControlSet\Services"" /s /f ""%a"" ^| findstr ""HKEY""') do reg.exe add ""%b"" /v ""%a"" /t REG_DWORD /d 0 /f "), null),
 
-            // disable device power management settings
-            ("Disabling device power management settings", async () => await ProcessActions.RunPowerShellScript("devicepowermanagement.ps1", ""), null),
+            // disable device power management
+            ("Disabling device power management", async () => await ProcessActions.RunPowerShellScript("devicepowermanagement.ps1", ""), null),
 
             // enable msi mode for all devices
             ("Enabling MSI mode for all devices", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"cmd /c for /f ""tokens=*"" %i in ('reg query ""HKLM\SYSTEM\CurrentControlSet\Enum\PCI""^| findstr ""HKEY""') do for /f ""tokens=*"" %a in ('reg query ""%i""^| findstr ""HKEY""') do reg add ""%a\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties"" /v ""MSISupported"" /t REG_DWORD /d 1 /f"), null),
