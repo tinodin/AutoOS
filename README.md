@@ -17,14 +17,14 @@ AutoOS is a WinUI3 application focused on automation to improve performance whil
 
 
 ## ✨ Features
-- Easily toggle between service states with configured compatibility for ensuring best performance and compatibility while gaming
+- Easily toggle between service states with configured functionality for ensuring best performance and compatibility
 - Automatic benchmarking to apply the best affinities for GPU and XHCI Controller
-- Toggle XHCI Interrupt Moderation without having to restart
+- Toggle XHCI Interrupt Moderation without having to restart your PC
 - Custom Game Launcher supporting (Epic Games, Steam, Ryujinx)
 
 ## 💻 System Requirements
 
-AutoOS is currently only supported on x64 builds of Windows 11 23H2 `22631` and up.
+AutoOS is currently only supported on x64 builds of Windows 11 23H2 `22631`.
 
 ## 🚀 Getting Started
 
@@ -44,29 +44,42 @@ AutoOS is currently only supported on x64 builds of Windows 11 23H2 `22631` and 
 
 **Step 4:** Shrink your Windows Partition so you have another partition with at least 64GB
 
-**Step 5:** Apply `install.wim` to the newly created partition
-
+**Step 5:** Define varibales
 
 ```bat
-DISM /Apply-Image /ImageFile:<path\to\wim> /Index:1 /ApplyDir:<drive letter>
+set EXTRACTED_ISO=
 ```
 
-**Step 6:** Create Panther directory and copy the [`unattend.xml`](https://github.com/tinodin/AutoOS/releases/latest/download/unattend.xml) into it.
-
 ```bat
-mkdir <drive letter>\Windows\Panther && explorer <drive letter>:\Windows\Panther
+set TARGETDRIVE=
 ```
 
-**Step 7:** Install drivers (Ethernet, WiFi, Bluetooth, etc.)
-
 ```bat
-DISM /Image:<drive letter>\ /Add-Driver /Driver:<driver folder> /Recurse
+set DRIVERDIR=
 ```
 
-**Step 8:** Create boot entry
+**Step 6:** Apply `install.wim` to the newly created partition
 
 ```bat
-bcdboot <drive letter>\Windows
+DISM /Apply-Image /ImageFile:%EXTRACTED_ISO%\sources\install.wim /Index:1 /ApplyDir:%TARGETDRIVE%
+```
+
+**Step 7:** Create Panther directory and copy the [`unattend.xml`](https://github.com/tinodin/AutoOS/releases/latest/download/unattend.xml) into it.
+
+```bat
+mkdir %TARGETDRIVE%\Windows\Panther && explorer %TARGETDRIVE%\Windows\Panther
+```
+
+**Step 8:** Install drivers (Ethernet, WiFi, Bluetooth, etc.)
+
+```bat
+DISM /Image:%TARGETDRIVE%\ /Add-Driver /Driver:%DRIVERDIR% /Recurse
+```
+
+**Step 9:** Create boot entry
+
+```bat
+bcdboot %TARGETDRIVE%\Windows
 ```
 
 ## Credits
@@ -110,7 +123,6 @@ This project is licensed under the **GNU General Public License v3.0**. See the 
 7. **LowAudioLatency**
     - Have to ask for explicit permission from [sppdl](https://github.com/spddl)
     - Source: [sppdl/LowAudioLatency](https://github.com/spddl/LowAudioLatency)
-
 
 8. **7-Zip**
 ```
