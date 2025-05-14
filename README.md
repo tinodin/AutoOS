@@ -17,7 +17,7 @@ AutoOS is a WinUI3 application focused on automation to improve performance whil
 
 
 ## ✨ Features
-- Easily toggle between service states with configured functionality for ensuring best performance and compatibility
+- Toggle between service states with configured functionality for ensuring best performance and compatibility
 - Automatic benchmarking to apply the best affinities for GPU and XHCI Controller
 - Toggle XHCI Interrupt Moderation without having to restart your PC
 - Custom Game Launcher supporting (Epic Games, Steam, Ryujinx)
