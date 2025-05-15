@@ -53,9 +53,9 @@ public sealed partial class InstallPage : Page
         await NetworkStage.Run();
         await AudioStage.Run();
         await DeviceStage.Run();
-        await AppxStage.Run();
         await ScheduledTasksStage.Run();
         await OptionalFeatureStage.Run();
+        await AppxStage.Run();
         await RuntimesStage.Run();
         await BrowserStage.Run();
         await ApplicationStage.Run();
