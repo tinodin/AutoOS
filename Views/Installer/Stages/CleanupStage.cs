@@ -23,7 +23,7 @@ public static class CleanupStage
             ("Cleaning up drives", async () => await ProcessActions.RunApplication("DriveCleanup", "DriveCleanup.exe", ""), null),
 
             // clean the winsxs folder
-            ("Cleaning the WinSxS folder", async () => await ProcessActions.RunNsudo("CurrentUser", @"DISM /Online /Cleanup-Image /StartComponentCleanup /ResetBase"), null),
+            //("Cleaning the WinSxS folder", async () => await ProcessActions.RunNsudo("CurrentUser", @"DISM /Online /Cleanup-Image /StartComponentCleanup /ResetBase"), null),
 
             // clean temp directories
             ("Cleaning temp directories", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"cmd /c del /s /f /q ""C:\Windows\Logs"""), null),

@@ -602,7 +602,7 @@ public static class ProcessActions
 
                     await Task.Delay(1000);
 
-                    InstallPage.Info.Title = "Succesfully logged in as " + EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath).DisplayName + " ...";
+                    InstallPage.Info.Title = "Succesfully logged in as " + EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath).DisplayName + "...";
 
                     await Task.Delay(500);
 
