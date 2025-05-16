@@ -26,25 +26,20 @@ AutoOS is a WinUI3 application focused on automation to improve performance whil
 
 AutoOS is currently only supported on x64 builds of Windows 11 23H2 `22631`.
 
+have another partition with at least 64GB
+
 ## 🚀 Getting Started
 
 > [!CAUTION]
 > AutoOS should only be installed on fresh installations of windows.
 
-#### Step 1: Download the latest Windows ISO (23H2) in x64 from [UUP dump](https://uupdump.net/known.php?q=category%3Aw11-23h2) with these options:
-<img src="https://github.com/user-attachments/assets/9d017452-218f-44c8-9585-946bc41199e3" width="450" />
-<br />
-<img src="https://github.com/user-attachments/assets/ee109c47-842c-4af0-a003-ea00879e2b14" width="450" />
-<br />
-<img src="https://github.com/user-attachments/assets/1e774691-8cc7-457f-91e0-e5993ffc9839" width="450" />
+**Step 1:** Download the latest Windows ISO from the latest action artifact [here](https://github.com/tinodin/uup-dump-get-windows-iso/actions)
 
-**Step 2:** Extract the downloaded package and run `uup_download_windows.cmd`
+**Step 2:** Extract the downloaded zip file
 
-**Step 3:** Once completed extract the downloaded ISO
+**Step 3:** Extract the ISO file
 
-**Step 4:** Shrink your Windows Partition so you have another partition with at least 64GB
-
-**Step 5:** Define varibales
+**Step 4:** Define variables
 
 ```bat
 set EXTRACTED_ISO=
@@ -58,25 +53,25 @@ set TARGETDRIVE=
 set DRIVERDIR=
 ```
 
-**Step 6:** Apply `install.wim` to the newly created partition
+**Step 5:** Apply `install.wim` to the newly created partition
 
 ```bat
 DISM /Apply-Image /ImageFile:%EXTRACTED_ISO%\sources\install.wim /Index:1 /ApplyDir:%TARGETDRIVE%
 ```
 
-**Step 7:** Create Panther directory and copy the [`unattend.xml`](https://github.com/tinodin/AutoOS/releases/latest/download/unattend.xml) into it.
+**Step 6:** Create Panther directory and copy the [`unattend.xml`](https://github.com/tinodin/AutoOS/releases/latest/download/unattend.xml) into it.
 
 ```bat
 mkdir %TARGETDRIVE%\Windows\Panther && explorer %TARGETDRIVE%\Windows\Panther
 ```
 
-**Step 8:** Install drivers (Ethernet, WiFi, Bluetooth, etc.)
+**Step 7:** Install drivers (Ethernet, WiFi, Bluetooth, etc.)
 
 ```bat
 DISM /Image:%TARGETDRIVE%\ /Add-Driver /Driver:%DRIVERDIR% /Recurse
 ```
 
-**Step 9:** Create boot entry
+**Step 8:** Create boot entry
 
 ```bat
 bcdboot %TARGETDRIVE%\Windows
