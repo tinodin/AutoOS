@@ -41,6 +41,17 @@ public static class AudioStage
             ("Splitting audio services", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c copy /y %windir%\System32\svchost.exe %windir%\System32\audiosvchost.exe"), null),
             ("Splitting audio services", async () => await ProcessActions.RunPowerShell(@"Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\Audiosrv' -Name 'ImagePath' -Value '%systemroot%\system32\audiosvchost.exe -k LocalServiceNetworkRestricted -p' -Type ExpandString"), null),
             ("Splitting audio services", async () => await ProcessActions.RunPowerShell(@"Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\AudioEndpointBuilder' -Name 'ImagePath' -Value '%systemroot%\system32\audiosvchost.exe -k LocalSystemNetworkRestricted -p' -Type ExpandString"), null),
+        
+            //// download microsoft dolby digital atmos pack
+            //("Downloading Microsoft Dolby Digital Atmos Pack", async () => await ProcessActions.RunDownload("https://www.dl.dropboxusercontent.com/scl/fi/l847exz5nsvox9xnmbs7g/MicrosoftDolbyDigitalAtmosPack.zip?rlkey=ttaek3wm0z31r3dws808409q1&st=mrkaozqv&dl=0", Path.GetTempPath(), "MicrosoftDolbyDigitalAtmosPack.zip"), null),
+
+            //// install microsoft dolby digital atmos pack
+            //("Installing Microsoft Dolby Digital Atmos Pack", async () => await ProcessActions.RunExtract(Path.Combine(Path.GetTempPath(), "MicrosoftDolbyDigitalAtmosPack.zip"), Path.Combine(Path.GetTempPath(), "MicrosoftDolbyDigitalAtmosPack")), null),
+            //("Installing Microsoft Dolby Digital Atmos Pack", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c xcopy %TEMP%\MicrosoftDolbyDigitalAtmosPack\System32\* ""C:\Windows\System32"" /s /e /y"), null),
+            //("Installing Microsoft Dolby Digital Atmos Pack", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c xcopy %TEMP%\MicrosoftDolbyDigitalAtmosPack\SysWOW64\* ""C:\Windows\SysWOW64"" /s /e /y"), null),
+            //("Installing Microsoft Dolby Digital Atmos Pack", async () => await ProcessActions.RunNsudo("CurrentUser", @$"cmd /c reg import %TEMP%\MicrosoftDolbyDigitalAtmosPack\AC3DS.reg"), null),
+            //("Installing Microsoft Dolby Digital Atmos Pack", async () => await ProcessActions.RunNsudo("CurrentUser", @$"cmd /c reg import %TEMP%\MicrosoftDolbyDigitalAtmosPack\AC3EncMft.reg"), null),
+            //("Installing Microsoft Dolby Digital Atmos Pack", async () => await ProcessActions.RunNsudo("CurrentUser", @$"cmd /c reg import %TEMP%\MicrosoftDolbyDigitalAtmosPack\AC3Mft.reg"), null),
         };
 
         var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();
