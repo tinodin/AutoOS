@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <AppInstaller xmlns="http://schemas.microsoft.com/appx/appinstaller/2018"
-              Version="1.0.0.14" Uri="https://github.com/tinodin/AutoOS/releases/latest/download/AutoOS.appinstaller">
+              Version="1.0.0.15" Uri="https://github.com/tinodin/AutoOS/releases/latest/download/AutoOS.appinstaller">
 	<MainPackage Name="AutoOS"
-				 Publisher="CN=tinodin" Version="1.0.0.14"
+				 Publisher="CN=tinodin" Version="1.0.0.15"
 				 ProcessorArchitecture="x64"
 				 Uri="https://github.com/tinodin/AutoOS/releases/latest/download/AutoOS.msix" />
 	<UpdateSettings>
