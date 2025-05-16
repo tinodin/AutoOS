@@ -17,16 +17,16 @@ AutoOS is a WinUI3 application focused on automation to improve performance whil
 
 
 ## ✨ Features
-- Toggle between service states with configured functionality for ensuring best performance and compatibility
+- Automatically set every monitor to their highest supported refresh rate
 - Automatic benchmarking to apply the best affinities for GPU and XHCI Controller
 - Toggle XHCI Interrupt Moderation without having to restart your PC
+- Toggle between service states with configured functionality for ensuring best performance and compatibility
 - Custom Game Launcher supporting (Epic Games, Steam, Ryujinx)
 
 ## 💻 System Requirements
 
-AutoOS is currently only supported on x64 builds of Windows 11 23H2 `22631`.
-
-have another partition with at least 64GB
+- AutoOS is currently only supported on x64 builds of Windows 11 23H2 `22631`.
+- Another partition with at least 64GB
 
 ## 🚀 Getting Started
 
