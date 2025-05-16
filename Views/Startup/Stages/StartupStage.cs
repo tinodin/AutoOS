@@ -35,9 +35,6 @@ public static class StartupStage
             // apply timer resolution
             ("Applying Timer Resolution " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "RequestedResolution", null)?.ToString(), async () => await StartupActions.RunApplication("TimerResolution", "SetTimerResolution.exe", "--resolution " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "RequestedResolution", null)?.ToString() + " --no-console"), null),
 
-            // launch dwmenablemmcss
-            ("Launching DWMEnableMMCSS", async () => await StartupActions.RunApplication("DWMEnableMMCSS", "DWMEnableMMCSS.exe", "--no-console"), null),
-
             // launch lowaudiolatency
             ("Launching LowAudioLatency", async () => await StartupActions.RunApplication("LowAudioLatency", "low_audio_latency_no_console.exe", ""), null),
 
