@@ -25,7 +25,7 @@ AutoOS is a WinUI3 application focused on automation to improve performance whil
 
 ## 💻 System Requirements
 
-- AutoOS is currently only supported on x64 builds of Windows 11 23H2 `22631`.
+- AutoOS is currently only supported on x64 builds of Windows 11 23H2 `22631`
 - Another partition with at least 64GB
 
 ## 🚀 Getting Started
