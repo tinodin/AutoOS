@@ -20,9 +20,10 @@ public static class TimerStage
         {
             // apply manually
             ("Applying Timer Resolution " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "RequestedResolution", null)?.ToString(), async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "TimerResolution", "SetTimerResolution.exe"), Arguments = "--resolution " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "RequestedResolution", null)?.ToString() + " --no-console", CreateNoWindow = true }))), null),
+            ("Launching DWMEnableMMCSS", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "DWMEnableMMCSS", "DWMEnableMMCSS.exe"), Arguments = " --no-console", CreateNoWindow = true }))), null),
         
             // launch dwmenablemmcss
-            ("Launching DWMEnableMMCSS", async () => await ProcessActions.RunApplication("DWMEnableMMCSS", "DWMEnableMMCSS.exe", "--no-console"), null),
+            ("Launching DWMEnableMMCSS", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "DWMEnableMMCSS", "DWMEnableMMCSS.exe"), Arguments = " --no-console", CreateNoWindow = true }))), null),
         };
 
         var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();

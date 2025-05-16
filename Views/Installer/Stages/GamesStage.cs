@@ -35,6 +35,10 @@ public static class GamesStage
             ("Setting GPU Preference to high performance for Fortnite", async () => await ProcessActions.RunCustom(async () => fortnitePath = await Task.Run(() => JsonDocument.Parse(File.ReadAllText(@"C:\ProgramData\Epic\UnrealEngineLauncher\LauncherInstalled.dat")).RootElement.GetProperty("InstallationList").EnumerateArray().FirstOrDefault(e => e.GetProperty("AppName").GetString() == "Fortnite").GetProperty("InstallLocation").GetString())), () => Fortnite == true),
             ("Setting GPU Preference to high performance for Fortnite", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\DirectX\UserGpuPreferences"" /v """ + fortnitePath + @"\FortniteGame\Binaries\Win64\FortniteClient-Win64-Shipping.exe"" /t REG_SZ /d ""SwapEffectUpgradeEnable=1;GpuPreference=2;"" /f"), () => Fortnite == true),
 
+            // install easyanticheat
+            ("Installing EasyAntiCheat", async () => await ProcessActions.RunNsudo("CurrentUser", $@"""{fortnitePath}\FortniteGame\Binaries\Win64\EasyAntiCheat\EasyAntiCheat_EOS_Setup.exe"" install 4fe75bbc5a674f4f9b356b5c90567da5"), () => Fortnite == true),
+            ("Disabling EasyAntiCheat startup entry", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\EasyAntiCheat_EOS"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => Fortnite == true),
+
             // create fortnite qos policy
             ("Creating Fortnite QoS Policy", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\QoS\FortniteClient-Win64-Shipping.exe"" /v ""Application Name"" /t REG_SZ /d ""FortniteClient-Win64-Shipping.exe"" /f"), () => Fortnite == true),
             ("Creating Fortnite QoS Policy", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\QoS\FortniteClient-Win64-Shipping.exe"" /v ""Version"" /t REG_SZ /d ""1.0"" /f"), () => Fortnite == true),
@@ -49,8 +53,8 @@ public static class GamesStage
             ("Creating Fortnite QoS Policy", async () => await ProcessActions.RunPowerShell(@"New-NetQosPolicy -Name ""FortniteClient-Win64-Shipping.exe"" -AppPathNameMatchCondition ""FortniteClient-Win64-Shipping.exe"" -Precedence 127 -DSCPAction 46 -IPProtocol Both"), () => Fortnite == true),
         
             // create presentation mode entries
-            ("Creating presentation mode entries", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo("cmd", $"/c \"{fortnitePath}\\FortniteGame\\Binaries\\Win64\\FortniteClient-Win64-Shipping.exe\"") { CreateNoWindow = true }))), () => Fortnite == true),
-            ("Creating presentation mode entries", async () => await ProcessActions.Sleep(100), () => Fortnite == true),
+            ("Creating presentation mode entries", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo("cmd", $@"/c ""{fortnitePath}\FortniteGame\Binaries\Win64\FortniteClient-Win64-Shipping.exe""") { CreateNoWindow = true }))), () => Fortnite == true),
+            ("Creating presentation mode entries", async () => await ProcessActions.Sleep(200), () => Fortnite == true),
             ("Creating presentation mode entries", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.GetProcessesByName("FortniteClient-Win64-Shipping")[0].Kill())), () => Fortnite == true),
 
             // set the presentation mode to hardware: legacy flip
