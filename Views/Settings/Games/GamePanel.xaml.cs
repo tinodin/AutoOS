@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.Win32;
 using System.Diagnostics;
 using System.Management;
+using System.Runtime.InteropServices;
 using System.ServiceProcess;
 using System.Text.Json.Nodes;
 
@@ -10,6 +11,9 @@ namespace AutoOS.Views.Settings.Games;
 
 public sealed partial class GamePanel : UserControl
 {
+    [DllImport("kernel32.dll")]
+    static extern bool SetProcessWorkingSetSize(IntPtr process, int min, int max);
+
     private readonly string nsudoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NSudo", "NSudoLC.exe");
 
     public string Title
@@ -377,6 +381,15 @@ public sealed partial class GamePanel : UserControl
         catch { }
 
         try { new ServiceController("Winmgmt").Stop(); } catch { }
+
+        foreach (var process in Process.GetProcesses())
+        {
+            try
+            {
+                SetProcessWorkingSetSize(process.Handle, -1, -1);
+            }
+            catch { }
+        }
     }
 
     private async void LaunchExplorer_Click(object sender, RoutedEventArgs e)
