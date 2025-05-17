@@ -15,7 +15,7 @@ public static class FileSystemStage
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
             // disable the use of extended characters in short file names
-            ("Disabling the use of extended characters in short file names", async () => await ProcessActions.RunNsudo( "TrustedInstaller", @"fsutil behavior set allowextchar 0"), null),
+            ("Disabling the use of extended characters in short file names", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"fsutil behavior set allowextchar 0"), null),
 
             // disable automatic system crash when corruption is detected
             ("Disabling automatic system crash when corruption is detected", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"fsutil behavior set Bugcheckoncorrupt 0"), null),

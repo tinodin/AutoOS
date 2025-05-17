@@ -12,8 +12,6 @@ public static class ServicesStage
         string previousTitle = string.Empty;
         int stagePercentage = 2;
 
-        //string folderName = "";
-
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
             // group services
@@ -39,10 +37,6 @@ public static class ServicesStage
 
             // build service lists
             ("Building service lists", async () => await ProcessActions.RunNsudo("TrustedInstaller", $@"""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "service-list-builder.exe")}"" --config ""{Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "lists.ini")}"" --disable-service-warning --output-dir ""{Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")}"), null),
-            //("Building service lists", async () => await ProcessActions.RunCustom(async () => folderName = await Task.Run(() => Directory.GetDirectories(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last())), null),
-
-            // disable services and drivers
-            //("Disabling services and drivers", async () => await ProcessActions.RunNsudo("TrustedInstaller", Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build", folderName, "Services-Disable.bat")), null),
         };
 
         var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();

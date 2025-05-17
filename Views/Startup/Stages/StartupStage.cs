@@ -24,7 +24,7 @@ public static class StartupStage
 
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
-            // sync the time
+            // sync time
             ("Syncing time", async () => await StartupActions.RunNsudo("CurrentUser", "net start w32time"), null),
             ("Syncing time", async () => await StartupActions.RunNsudo("CurrentUser", "w32tm /resync"), null),
             ("Syncing time", async () => await StartupActions.RunNsudo("CurrentUser", "net stop w32time"), null),

@@ -33,7 +33,7 @@ public static class TimeDateRegionStage
             // set regional format automatically
             ($"Setting regional format to en-{countryCode}", async () => await ProcessActions.RunNsudo("CurrentUser", $@"powershell -Command ""Set-Culture en-{countryCode}"""), null),
 
-            // sync the time
+            // sync time
             ("Syncing time", async () => await ProcessActions.RunNsudo("CurrentUser", "net start w32time"), null),
             ("Syncing time", async () => await ProcessActions.RunNsudo("CurrentUser", "w32tm /resync"), null),
             ("Syncing time", async () => await ProcessActions.RunNsudo("CurrentUser", "net stop w32time"), null),

@@ -21,24 +21,6 @@ public static class RegistryStage
 
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
-            // notifications
-            //("Disabling notification sounds", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings"" /v ""NOC_GLOBAL_SETTING_ALLOW_NOTIFICATION_SOUND"" /t REG_DWORD /d 0 /f"), null),
-            //("Disabling notifications on the lock screen", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings"" /v ""NOC_GLOBAL_SETTING_ALLOW_TOASTS_ABOVE_LOCK"" /t REG_DWORD /d 0 /f"), null),
-            //("Disabling notifications on the lock screen", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\PushNotifications"" /v ""LockScreenToastEnabled"" /t REG_DWORD /d 0 /f"), null),
-            //("Disabling reminders and incoming VoIP calls on the lock screen", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings"" /v ""NOC_GLOBAL_SETTING_ALLOW_CRITICAL_TOASTS_ABOVE_LOCK"" /t REG_DWORD /d 0 /f"), null),
-            //(@"Disabling ""Let's finish setting up your device"" message", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement"" /v ""ScoobeSystemSettingEnabled"" /t REG_DWORD /d 0 /f"), null),
-            //(@"Disabling ""Let's finish setting up your device"" message", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"" /v SubscribedContent-310093Enabled /t REG_DWORD /d 0 /f"), null),
-            //("Enabling notifications for Snipping Tool", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings\Microsoft.ScreenSketch_8wekyb3d8bbwe!App"" /v ""Enabled"" /t REG_DWORD /d 1 /f"), null),
-            //("Disabling notifications for Settings", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings\windows.immersivecontrolpanel_cw5n1h2txyewy!microsoft.windows.immersivecontrolpanel"" /v ""Enabled"" /t REG_DWORD /d 0 /f"), null),
-            //("Disabling notifications for Microsoft Store", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings\Microsoft.WindowsStore_8wekyb3d8bbwe!App"" /v ""Enabled"" /t REG_DWORD /d 0 /f"), null),
-            //("Disabling suggested notifications", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings\Windows.SystemToast.Suggested"" /v ""Enabled"" /t REG_DWORD /d 0 /f"), null),
-            //("Disabling pc is out of support message", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\EOSNotify"" /v DiscontinueEOS /t REG_DWORD /d 1 /f"), null),
-            //("Disabling security and maintenance notifications", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Notifications\Settings\Windows.SystemToast.SecurityAndMaintenance"" /v Enabled /t REG_DWORD /d 0 /f"), null),
-            //("Disabling startup app notifications", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings\Windows.SystemToast.StartupApp"" /v Enabled /t REG_DWORD /d 0 /f"), null),
-            //("Disabling pin notifications", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings\Windows.SystemToast.PinConsent"" /v Enabled /t REG_DWORD /d 0 /f"), null),
-            //("Disabling notifications network usage", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\CurrentVersion\PushNotifications"" /v NoCloudApplicationNotification /t REG_DWORD /d 1 /f"), null),
-            //("Enabling highly detailed status messages", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"" /v verbosestatus /t REG_DWORD /d 1 /f"), null),
-
             // general privacy
             ("Disabling website access to language list", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Control Panel\International\User Profile"" /v ""HttpAcceptLanguageOptOut"" /t REG_DWORD /d 1 /f"), null),
             ("Disabling app launch tracking", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"" /v ""Start_TrackProgs"" /t REG_DWORD /d 0 /f"), null),
@@ -176,22 +158,9 @@ public static class RegistryStage
             ("Disabling app access to the file system", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\broadFileSystemAccess"" /v ""Value"" /t REG_SZ /d ""Deny"" /f"), null),
             ("Disabling app access to the file system", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\broadFileSystemAccess"" /v ""Value"" /t REG_SZ /d ""Deny"" /f"), null),
 
-            // pause windows update
-            //("Pausing Windows Updates", async () => await ProcessActions.RunPowerShellScript("pausewindowsupdates.ps1", ""), null),
-
             // disable automatic driver installation
             ("Disabling automatic driver installation", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate"" /v ExcludeWUDriversInQualityUpdate /t REG_DWORD /d 1 /f"), null),
             ("Disabling automatic driver installation", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsUpdate\UpdatePolicy\PolicyState"" /v ExcludeWUDrivers /t REG_DWORD /d 1 /f"), null),
-            //("Disabling automatic driver installation", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU"" /v AUOptions /t REG_DWORD /d 1 /f"), null),
-            //("Disabling automatic driver installation", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate"" /v ExcludeWUDriversInQualityUpdate /t REG_DWORD /d 1 /f"), null),
-            //("Disabling automatic driver installation", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU"" /v NoAutoUpdate /t REG_DWORD /d 1 /f"), null),
-            //("Disabling automatic driver installation", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\SOFTWARE\Policies\Microsoft\Windows\DriverSearching"" /v DontPromptForWindowsUpdate /t REG_DWORD /d 1 /f"), null),
-            //("Disabling automatic driver installation", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\DriverSearching"" /v DontPromptForWindowsUpdate /t REG_DWORD /d 1 /f"), null),
-            //("Disabling automatic driver installation", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DriverSearching"" /v SearchOrderConfig /t REG_DWORD /d 0 /f"), null),
-            //("Disabling automatic driver installation", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\DriverSearching"" /v SearchOrderConfig /t REG_DWORD /d 0 /f"), null),                             
-            //("Disabling automatic driver installation", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Device Metadata"" /v PreventDeviceMetadataFromNetwork /t REG_DWORD /d 1 /f"), null),
-            //("Disabling automatic driver installation", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Device Metadata"" /v PreventDeviceMetadataFromNetwork /t REG_DWORD /d 1 /f"), null),
-            //("Disabling automatic driver installation", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Device Installer"" /v DisableCoInstallers /t REG_DWORD /d 1 /f"), null),
 
             // disable sign-in and lock last interactive user after a restart
             ("Disabling the automatic sign-in and locking of the last interactive user after a restart", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"" /v DisableAutomaticRestartSignOn /t REG_DWORD /d 1 /f"), null),
@@ -276,9 +245,6 @@ public static class RegistryStage
             // disable jpeg wallpaper compression
             ("Disabling jpeg wallpaper compression", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Control Panel\Desktop"" /v JPEGImportQuality /t REG_DWORD /d 100 /f"), null),
 
-            // launch to this pc by default
-            //("Launch to This PC by default", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced"" /v LaunchTo /t REG_DWORD /d 1 /f"), null),
-
             // disable tracking recent files
             ("Disabling tracking of recent files", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced"" /v Start_TrackDocs /t REG_DWORD /d 0 /f"), null),
 
@@ -294,12 +260,6 @@ public static class RegistryStage
             // disable shortcut tracking
             ("Disabling shortcut tracking", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer"" /v LinkResolveIgnoreLinkInfo /t REG_DWORD /d 1 /f"), null),
             ("Disabling shortcut tracking", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer"" /v NoResolveTrack /t REG_DWORD /d 1 /f"), null),
-
-            // enable show file name extensions
-            //("Enabling show file extensions", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced"" /v HideFileExt /t REG_DWORD /d 0 /f"), null),
-
-            // show hidden files
-            //("Enabling show hidden files", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"" /v Hidden /t REG_DWORD /d 1 /f"), null),
 
             // show more details in copy dialog
             ("Show more details in copy dialog", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\OperationStatusManager"" /v EnthusiastMode /t REG_DWORD /d 1 /f"), null),
@@ -371,97 +331,8 @@ public static class RegistryStage
             ("Disabling WiFi telemetry", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\PolicyManager\default\WiFi\AllowWiFiHotSpotReporting"" /v value /t REG_DWORD /d 0 /f"), null),
             ("Disabling WiFi telemetry", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\PolicyManager\default\WiFi\AllowAutoConnectToWiFiSenseHotspots"" /v value /t REG_DWORD /d 0 /f"), null),
 
-            // disable cloud content
-            //("Disabling cloud content", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\CloudContent"" /v ConfigureWindowsSpotlight /t REG_DWORD /d 2 /f"), null),
-            //("Disabling cloud content", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\CloudContent"" /v IncludeEnterpriseSpotlight /t REG_DWORD /d 0 /f"), null),
-            //("Disabling cloud content", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\CloudContent"" /v DisableThirdPartySuggestions /t REG_DWORD /d 1 /f"), null),
-            //("Disabling cloud content", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\CloudContent"" /v DisableTailoredExperiencesWithDiagnosticData /t REG_DWORD /d 1 /f"), null),
-            //("Disabling cloud content", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\CloudContent"" /v DisableWindowsSpotlightWindowsWelcomeExperience /t REG_DWORD /d 1 /f"), null),
-            //("Disabling cloud content", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\CloudContent"" /v DisableWindowsSpotlightOnActionCenter /t REG_DWORD /d 1 /f"), null),
-            //("Disabling cloud content", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\CloudContent"" /v DisableWindowsSpotlightOnSettings /t REG_DWORD /d 1 /f"), null),
-            //("Disabling cloud content", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\CloudContent"" /v DisableConsumerAccountStateContent /t REG_DWORD /d 1 /f"), null),
-            //("Disabling cloud content", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\CloudContent"" /v DisableSoftLanding /t REG_DWORD /d 1 /f"), null),
-            //("Disabling cloud content", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\CloudContent"" /v DisableWindowsConsumerFeatures /t REG_DWORD /d 1 /f"), null),
-
-            // disable web results and suggestions in search box and start menu
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"" /v ShowCortanaButton /t REG_DWORD /d 0 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"" /v ShowCopilotButton /t REG_DWORD /d 0 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"" /v Start_IrisRecommendations /t REG_DWORD /d 0 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"" /v Start_AccountNotifications /t REG_DWORD /d 0 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search"" /v AllowCortana /t REG_DWORD /d 0 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search"" /v AllowCortana /t REG_DWORD /d 0 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search"" /v AllowCortanaAboveLock /t REG_DWORD /d 0 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search"" /v AllowCortanaAboveLock /t REG_DWORD /d 0 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search"" /v AllowCortanaInAAD /t REG_DWORD /d 0 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search"" /v AllowCortanaInAAD /t REG_DWORD /d 0 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search"" /v AllowCortanaInAADPathOOBE /t REG_DWORD /d 0 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search"" /v AllowCortanaInAADPathOOBE /t REG_DWORD /d 0 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search"" /v AllowCloudSearch /t REG_DWORD /d 0 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search"" /v AllowCloudSearch /t REG_DWORD /d 0 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search"" /v EnableDynamicContentInWSB /t REG_DWORD /d 0 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search"" /v EnableDynamicContentInWSB /t REG_DWORD /d 0 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search"" /v ConnectedSearchUseWeb /t REG_DWORD /d 0 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search"" /v ConnectedSearchUseWeb /t REG_DWORD /d 0 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search"" /v ConnectedSearchPrivacy /t REG_DWORD /d 3 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search"" /v ConnectedSearchPrivacy /t REG_DWORD /d 3 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search"" /v ConnectedSearchUseWebOverMeteredConnections /t REG_DWORD /d 0 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search"" /v ConnectedSearchUseWebOverMeteredConnections /t REG_DWORD /d 0 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search"" /v DisableWebSearch /t REG_DWORD /d 1 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search"" /v DisableWebSearch /t REG_DWORD /d 1 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search"" /v ConnectedSearchSafeSearch /t REG_DWORD /d 3 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search"" /v ConnectedSearchSafeSearch /t REG_DWORD /d 3 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search"" /v AllowSearchToUseLocation /t REG_DWORD /d 0 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search"" /v AllowSearchToUseLocation /t REG_DWORD /d 0 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\SearchSettings"" /v IsDynamicSearchBoxEnabled /t REG_DWORD /d 0 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\SOFTWARE\Policies\Microsoft\Windows\Explorer"" /v DisableSearchBoxSuggestions /t REG_DWORD /d 1 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Explorer"" /v DisableSearchBoxSuggestions /t REG_DWORD /d 1 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech_OneCore\Preferences"" /v ModelDownloadAllowed /t REG_DWORD /d 0 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech_OneCore\Preferences"" /v VoiceActivationEnableAboveLockscreen /t REG_DWORD /d 0 /f"), null),
-            //("Disabling web results and suggestions in search box and start menu", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\SearchSettings"" /v \IsDeviceSearchHistoryEnabled /t REG_DWORD /d 0 /f"), null),
-
-            // disable widgets
-            //("Disabling widgets", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Dsh"" /v AllowNewsAndInterests /t REG_DWORD /d 0 /f"), null),
-            //("Disabling widgets", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Feeds"" /v EnableFeeds /t REG_DWORD /d 0 /f"), null),
-
             // make microsoft account optional for microsoft store
             ("Making Microsoft Account optional for Microsoft Store", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System"" /v MSAOptional /t REG_DWORD /d 1 /f"), null),
-
-            // disable automatic microsoft store updates
-            //("Disabling automatic Microsoft Store updates", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\WindowsStore"" /v AutoDownload /t REG_DWORD /d 4 /f"), null),
-            //("Disabling automatic Microsoft Store updates", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\PushToInstall"" /v DisablePushToInstall /t REG_DWORD /d 1 /f"), null),
-
-            // disable automatic installation of apps
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Communications"" /v ConfigureChatAutoInstall /t REG_DWORD /d 0 /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Orchestrator\UScheduler\CrossDeviceUpdate"" /v workCompleted /t REG_DWORD /d 1 /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg delete ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsUpdate\Orchestrator\UScheduler_Oobe\CrossDeviceUpdate"" /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Orchestrator\UScheduler\DevHomeUpdate"" /v workCompleted /t REG_DWORD /d 1 /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg delete ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsUpdate\Orchestrator\UScheduler_Oobe\DevHomeUpdate"" /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Orchestrator\UScheduler\EdgeUpdate"" /v workCompleted /t REG_DWORD /d 1 /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg delete ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsUpdate\Orchestrator\UScheduler_Oobe\EdgeUpdate"" /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Orchestrator\UScheduler\OutlookUpdate"" /v workCompleted /t REG_DWORD /d 1 /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg delete ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsUpdate\Orchestrator\UScheduler_Oobe\OutlookUpdate"" /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Orchestrator\UScheduler\PCManagerUpdate"" /v workCompleted /t REG_DWORD /d 1 /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg delete ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsUpdate\Orchestrator\UScheduler_Oobe\PCManagerUpdate"" /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Orchestrator\UScheduler\TFLUpdate"" /v workCompleted /t REG_DWORD /d 1 /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg delete ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsUpdate\Orchestrator\UScheduler_Oobe\TFLUpdate"" /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"" /v ContentDeliveryAllowed /t REG_DWORD /d 0 /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"" /v FeatureManagementEnabled /t REG_DWORD /d 0 /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"" /v OEMPreInstalledAppsEnabled /t REG_DWORD /d 0 /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"" /v PreInstalledAppsEnabled /t REG_DWORD /d 0 /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"" /v PreInstalledAppsEverEnabled /t REG_DWORD /d 0 /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"" /v SilentInstalledAppsEnabled /t REG_DWORD /d 0 /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"" /v SoftLandingEnabled /t REG_DWORD /d 0 /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"" /v SubscribedContentEnabled /t REG_DWORD /d 0 /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"" /v SubscribedContent-338387Enabled /t REG_DWORD /d 0 /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"" /v SubscribedContent-338388Enabled /t REG_DWORD /d 0 /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"" /v SubscribedContent-338389Enabled /t REG_DWORD /d 0 /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"" /v SubscribedContent-353698Enabled /t REG_DWORD /d 0 /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"" /v SystemPaneSuggestionsEnabled /t REG_DWORD /d 0 /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg delete ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager\Subscriptions"" /f"), null),
-            //("Disabling automatic installation of apps", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg delete ""HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager\SuggestedApps"" /f"), null),
-
-            // disable microsoft edge first launch experience
-            //("Disabling Microsoft Edge first run experience", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge"" /v HideFirstRunExperience /t REG_DWORD /d 1 /f"), null),
 
             // optimize microsoft edge settings
             ("Optimizing Microsoft Edge settings", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge"" /v UserFeedbackAllowed /t REG_DWORD /d 0 /f"), null),
@@ -627,15 +498,6 @@ public static class RegistryStage
             // disable cpu power saving features
             ("Disabling CPU power saving features", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Power"" /v ""CoalescingTimerInterval"" /t REG_DWORD /d 0 /f"), null),
 
-            // restore old timer resolution behaviour
-            //("Restoring old timer resolution behavior", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\kernel"" /v GlobalTimerResolutionRequests /t REG_DWORD /d 1 /f"), null),
-
-            // disable timer serialization
-            //("Disabling timer serialization", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\kernel"" /v SerializeTimerExpiration /t REG_DWORD /d 2 /f"), null),
-
-            // disable vulnerable driver blocklist
-            //("Disabling the vulnerable driver blocklist", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\CI\Config"" /v ""VulnerableDriverBlocklistEnable"" /t REG_DWORD /d 0 /f"), null),
-
             // reserve 10% of CPU resources to low-priority tasks instead of 20%
             ("Reserving 10% of CPU resources to low-priority tasks instead of 20%", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"" /v SystemResponsiveness /t REG_DWORD /d 10 /f"), null),
 
@@ -743,9 +605,6 @@ public static class RegistryStage
             ("Renaming device", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion"" /v EditionSubstring /t REG_SZ /d ""AutoOS"" /f"), null),
             ("Renaming device", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion"" /v EditionSubVersion /t REG_SZ /d ""AutoOS"" /f"), null),
             ("Renaming device", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion"" /v RegisteredOrganization /t REG_SZ /d ""AutoOS"" /f"), null),
-            //("Renaming device", async () => await ProcessActions.RunPowerShell(@"Rename-Computer -NewName ""PC"""), () => Desktop == true),
-            //("Renaming device", async () => await ProcessActions.RunPowerShell(@"Rename-Computer -NewName ""LAPTOP"""), () => Desktop == false),
-            //("Renaming device", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"label C: AutoOS"), null),
         };
 
         var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();
