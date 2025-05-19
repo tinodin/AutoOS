@@ -15,7 +15,7 @@ public static class ApplicationStage
         bool? iCloud = PreparingStage.iCloud;
         bool? Bitwarden = PreparingStage.Bitwarden;
         bool? OnePassword = PreparingStage.OnePassword;
-        bool? TaskbarAlignment = PreparingStage.TaskbarAlignment;
+        bool? AlwaysShowTrayIcons = PreparingStage.AlwaysShowTrayIcons;
         bool? Spotify = PreparingStage.Spotify;
         bool? AppleMusic = PreparingStage.AppleMusic;
         bool? AmazonMusic = PreparingStage.AmazonMusic;
@@ -98,6 +98,7 @@ public static class ApplicationStage
             ("Installing Windhawk", async () => await ProcessActions.RunExtract(Path.Combine(Path.GetTempPath(), "Windhawk.zip"), @"C:\Program Files\Windhawk"), null),
             ("Installing Windhawk", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"cmd /c move ""C:\Program Files\Windhawk\Windhawk"" ""%ProgramData%\Windhawk"""), null),
             ("Installing Windhawk", async () => await ProcessActions.RunNsudo("CurrentUser", $"cmd /c reg import \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "windhawk.reg")}\""), null),
+            ("Installing Windhawk", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\taskbar-notification-icons-show-all"" /v Disabled /t REG_DWORD /d 1 /f"), () => AlwaysShowTrayIcons == false),
             ("Installing Windhawk", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"sc create Windhawk binPath= ""\""C:\Program Files\Windhawk\windhawk.exe\"" -service"" start= auto"), null),
             ("Installing Windhawk", async () => await ProcessActions.RunPowerShell(@"$s=New-Object -ComObject WScript.Shell;$sc=$s.CreateShortcut([IO.Path]::Combine($env:APPDATA,'Microsoft\Windows\Start Menu\Programs\Windhawk.lnk'));$sc.TargetPath='C:\Program Files\Windhawk\windhawk.exe';$sc.Save()"), null),
             ("Installing Windhawk", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"sc start Windhawk"), null),

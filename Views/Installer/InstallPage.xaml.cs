@@ -47,7 +47,6 @@ public sealed partial class InstallPage : Page
         await FileSystemStage.Run();
         await MemoryManagementStage.Run();
         await EventTraceSessionsStage.Run();
-        await VisualStage.Run();
         await ActivationStage.Run();
         await GraphicsStage.Run();
         await NetworkStage.Run();

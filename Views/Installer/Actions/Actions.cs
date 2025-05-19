@@ -74,8 +74,6 @@ public static class ProcessActions
         public string DeviceKey;
     }
 
-    //private const int ENUM_CURRENT_SETTINGS = -1;
-
     [DllImport("user32.dll")]
     static extern int ChangeDisplaySettingsEx(string lpszDeviceName, ref DEVMODE lpDevMode, IntPtr hwnd, uint dwflags, IntPtr lParam);
 

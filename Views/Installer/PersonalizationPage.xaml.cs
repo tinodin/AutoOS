@@ -68,16 +68,16 @@ public sealed partial class PersonalizationPage : Page
     }
 
 
-    private void GetContextMenuState()
+    private async void GetContextMenuState()
     {
         // get state
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
+        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32");
         var value = key?.GetValue("LegacyContextMenu");
 
         if (value == null)
         {
-            key?.SetValue("LegacyContextMenu", 1, RegistryValueKind.DWord);
             ContextMenu.IsOn = true;
+            await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:P -P:E -Wait -ShowWindowMode:Hide cmd /c reg add ""HKEY_CURRENT_USER\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32"" /ve /t REG_SZ /d """" /f", CreateNoWindow = true }).WaitForExit());
         }
         else
         {
@@ -87,15 +87,20 @@ public sealed partial class PersonalizationPage : Page
         isInitializingContextMenuState = false;
     }
 
-    private void ContextMenu_Toggled(object sender, RoutedEventArgs e)
+    private async void ContextMenu_Toggled(object sender, RoutedEventArgs e)
     {
         if (isInitializingContextMenuState) return;
 
         // set value
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        key?.SetValue("LegacyContextMenu", ContextMenu.IsOn ? 1 : 0, RegistryValueKind.DWord);
+        if (ContextMenu.IsOn)
+        {
+            await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:P -P:E -Wait -ShowWindowMode:Hide cmd /c reg add ""HKEY_CURRENT_USER\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32"" /ve /t REG_SZ /d """" /f", CreateNoWindow = true }).WaitForExit());
+        }
+        else
+        {
+            await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:P -P:E -Wait -ShowWindowMode:Hide cmd /c reg delete ""HKEY_CURRENT_USER\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}"" /f", CreateNoWindow = true }).WaitForExit());
+        }
     }
-
 
     private void GetTrayIconsState()
     {
@@ -128,39 +133,43 @@ public sealed partial class PersonalizationPage : Page
     private void GetTaskbarAlignmentState()
     {
         // get state
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        string value = key?.GetValue("TaskbarAlignment") as string ?? "Center";
+        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced");
+        var obj = key?.GetValue("TaskbarAl");
+        int alignment = obj is int i ? i : 1;
 
-        TaskbarAlignment.SelectedIndex = value switch
+        TaskbarAlignment.SelectedIndex = alignment switch
         {
-            "Left" => 0,
-            "Center" => 1,
+            0 => 0,
+            1 => 1,
             _ => 1
         };
 
         // change header icon
-        TaskbarIcon.HeaderIcon = value switch
+        TaskbarIcon.HeaderIcon = alignment switch
         {
-            "Left" => new SymbolIcon(Symbol.AlignLeft),
-            "Center" => new SymbolIcon(Symbol.AlignCenter),
-            _ => new SymbolIcon(Symbol.AlignCenter)
+            0 => new SymbolIcon(Symbol.AlignLeft),
+            1 => new SymbolIcon(Symbol.AlignCenter),
+            _ => null
         };
 
         isInitializingTaskbarAlignmentState = false;
     }
 
 
-    private void TaskbarAlignment_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private async void TaskbarAlignment_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (isInitializingTaskbarAlignmentState) return;
 
         // set value
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        string alignment = TaskbarAlignment.SelectedIndex == 0 ? "Left" : "Center";
-        key?.SetValue("TaskbarAlignment", alignment, RegistryValueKind.String);
-
-        // change header icon
-        TaskbarIcon.HeaderIcon = new SymbolIcon(alignment == "Left" ? Symbol.AlignLeft : Symbol.AlignCenter);
+        if (TaskbarAlignment.SelectedIndex == 0)
+        {
+            await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:P -P:E -Wait -ShowWindowMode:Hide reg add ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced"" /v TaskbarAl /t REG_DWORD /d 0 /f", CreateNoWindow = true }).WaitForExit());
+            TaskbarIcon.HeaderIcon = new SymbolIcon(Symbol.AlignLeft);
+        }
+        else
+        {
+            await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:P -P:E -Wait -ShowWindowMode:Hide reg add ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced"" /v TaskbarAl /t REG_DWORD /d 1 /f", CreateNoWindow = true }).WaitForExit());
+            TaskbarIcon.HeaderIcon = new SymbolIcon(Symbol.AlignCenter);
+        }
     }
 }
-
