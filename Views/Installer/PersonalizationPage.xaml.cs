@@ -31,8 +31,8 @@ public sealed partial class PersonalizationPage : Page
         // add theme items
         Themes.ItemsSource = new List<GridViewItem>
         {
-            new GridViewItem { ImageSource = "ms-appx:///Assets/Fluent/Light.jpg" },
-            new GridViewItem { ImageSource = "ms-appx:///Assets/Fluent/Dark.jpg" }
+            new GridViewItem { ImageSource = @"C:\Windows\Web\Wallpaper\Windows\img0.jpg" },
+            new GridViewItem { ImageSource = @"C:\Windows\Web\Wallpaper\Windows\img19.jpg" }
         };
     }
 
