@@ -1,10 +1,3 @@
-# Disable allow the computer to turn off this device to save power
-$adapters = Get-NetAdapter | Where-Object { $_.PhysicalMediaType -eq "802.3" -or $_.PhysicalMediaType -eq "Native 802.11" } | Get-NetAdapterPowerManagement
-foreach ($adapter in $adapters) {
-    $adapter.AllowComputerToTurnOffDevice = 'Disabled'
-    $adapter | Set-NetAdapterPowerManagement
-}
-
 # Disable allow the computer to turn off this device to save power for hid devices including bluetooth
 $deviceWakeEnable = Get-WmiObject -Namespace "root\wmi" -Class MSPower_DeviceEnable
 Get-WmiObject -Class Win32_PnPEntity | Where-Object { $_.PNPDeviceID -like "USB*" } | ForEach-Object {

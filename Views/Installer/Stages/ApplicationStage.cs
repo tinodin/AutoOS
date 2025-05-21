@@ -91,6 +91,20 @@ public static class ApplicationStage
             // install nanazip
             ("Installing NanaZip", async () => await ProcessActions.RunPowerShell(@"Add-AppxPackage -Path ""$env:TEMP\NanaZip.Msixbundle"""), null),
 
+            //// download files
+            //("Downloading Files", async () => await ProcessActions.RunDownload("https://files.community/appinstallers/Files.stable.appinstaller", Path.GetTempPath(), "Files.stable.appinstaller"), null),
+
+            //// install files
+            //("Installing Files", async () => await ProcessActions.RunPowerShell(@"Add-AppxPackage -AppInstallerFile ""$env:TEMP\Files.stable.appinstaller"""), null),
+            //("Installing Files", async () => await ProcessActions.RunDownload("https://www.dl.dropboxusercontent.com/scl/fi/u2hcpijo21p8i0u6lj6qm/Files.zip?rlkey=e5pq2cbj4sevh5lf5jfmvv5hc&st=8o8frer3&dl=0", Path.GetTempPath(), "Files.zip"), null),
+            //("Installing Files", async () => await ProcessActions.RunExtract(Path.Combine(Path.GetTempPath(), "Files.zip"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "Files_1y0xx7n9077q4", "LocalState")), null),
+            //("Installing Files", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Classes\Folder\shell\open\command"" /ve /t REG_EXPAND_SZ /d ""\""%LOCALAPPDATA%\\Files\\Files.App.Launcher.exe\"" \""%1\"""" /f"), null),
+            //("Installing Files", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Classes\Folder\shell\open\command"" /v ""DelegateExecute"" /t REG_SZ /d ""2"" /f"), null),
+            //("Installing Files", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Classes\Folder\shell\explore\command"" /ve /t REG_EXPAND_SZ /d ""\""%LOCALAPPDATA%\\Files\\Files.App.Launcher.exe\"" \""%1\"""" /f"), null),
+            //("Installing Files", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Classes\Folder\shell\explore\command"" /v ""DelegateExecute"" /t REG_SZ /d ""2"" /f"), null),
+            //("Installing Files", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Classes\CLSID\{52205fd8-5dfb-447d-801a-d0b52f2e83e1}\shell\opennewwindow\command"" /ve /t REG_EXPAND_SZ /d ""\""%LOCALAPPDATA%\\Files\\Files.App.Launcher.exe\"""" /f"), null),
+            //("Installing Files", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Classes\CLSID\{52205fd8-5dfb-447d-801a-d0b52f2e83e1}\shell\opennewwindow\command"" /v ""DelegateExecute"" /t REG_SZ /d ""2"" /f"), null),
+
             // download windhawk
             ("Downloading Windhawk", async () => await ProcessActions.RunDownload("https://www.dl.dropboxusercontent.com/scl/fi/11kr2znr49gcna1gfzwbo/Windhawk.zip?rlkey=0lsjjor8m84ewq85eixzrg1xm&st=7k835rgn&dl=0", Path.GetTempPath(), "Windhawk.zip"), null),
         

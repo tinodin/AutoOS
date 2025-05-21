@@ -289,6 +289,7 @@ public sealed partial class GamePanel : UserControl
             "EasyAntiCheat_EOS",
             "EpicGamesLauncher",
             "explorer",
+            //"Files",
             "FortniteClient-Win64-Shipping_EAC_EOS",
             "GameBar",
             "GameBarFTServer",

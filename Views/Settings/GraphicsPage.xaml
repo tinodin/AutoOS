@@ -37,7 +37,7 @@
                                 Content="Done"
                                 IsIndeterminate="True"
                                 Loaded="UpdateCheck_Checked"
-                                Style="{ThemeResource AccentProgressButtonStyle}" />
+                                Style="{StaticResource AccentProgressButtonStyle}" />
                             <Button
                                 x:Name="updateCheckButton"
                                 HorizontalAlignment="Left"

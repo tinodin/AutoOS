@@ -62,7 +62,7 @@ namespace AutoOS
                     MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
 
                     ThemeService = new ThemeService(MainWindow);
-                    ThemeService.AutoInitialize(MainWindow).ConfigureTintColor();
+                    ThemeService.AutoInitialize(MainWindow).ConfigureTintColor().AutoUpdateTitleBarCaptionButtonsColor();
 
                     WindowHelper.ResizeAndCenterWindowToPercentageOfWorkArea(MainWindow, 92);
 
@@ -76,7 +76,7 @@ namespace AutoOS
                 MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
                 
                 ThemeService = new ThemeService(MainWindow);
-                ThemeService.AutoInitialize(MainWindow).ConfigureTintColor();
+                ThemeService.AutoInitialize(MainWindow).ConfigureTintColor().AutoUpdateTitleBarCaptionButtonsColor();
 
                 MainWindow.Activate();
             }
