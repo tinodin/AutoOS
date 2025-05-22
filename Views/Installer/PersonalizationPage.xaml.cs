@@ -55,16 +55,17 @@ public sealed partial class PersonalizationPage : Page
         // declare theme
         string theme = Themes.SelectedIndex == 0 ? @"C:\Windows\Resources\Themes\aero.theme" : @"C:\Windows\Resources\Themes\dark.theme";
 
-        // rename settings
-        await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:T -P:E -Wait -ShowWindowMode:Hide cmd /c taskkill /f /im SystemSettings.exe & ren C:\\Windows\\ImmersiveControlPanel\\SystemSettings.exe SystemSettings.exee", CreateNoWindow = true }).WaitForExit());
-
-        // change theme
-        await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:P -P:E -Wait -ShowWindowMode:Hide cmd /c start \"\" \"{theme}\"", CreateNoWindow = true }).WaitForExit());
-
-        await Task.Delay(1000);
-
-        // rename settings back
-        await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:T -P:E -Wait -ShowWindowMode:Hide cmd /c taskkill /f /im SystemSettings.exe & ren C:\\Windows\\ImmersiveControlPanel\\SystemSettings.exee SystemSettings.exe", CreateNoWindow = true }).WaitForExit());
+        // apply theme
+        await Task.Run(() =>
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "ThemeTool", "ThemeTool.exe"),
+                Arguments = $"ChangeTheme {theme}",
+                UseShellExecute = false,
+                CreateNoWindow = true
+            });
+        });
     }
 
 
