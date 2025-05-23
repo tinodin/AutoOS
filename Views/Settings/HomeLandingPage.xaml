@@ -9,10 +9,11 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
     <dev:MainLandingPage
-        x:Name="mainLandingPage"
         HeaderImage="{ThemeResource HeaderCover}"
+        HeaderOverlayImage="{ThemeResource HeaderCover}"
         HeaderSubtitleText="{x:Bind dev:ProcessInfoHelper.Version}"
-        HeaderText="AutoOS Settings">
+        HeaderText="AutoOS Settings"
+        JsonNavigationService="{x:Bind local:App.Current.NavService}">
         <dev:MainLandingPage.HeaderContent>
             <StackPanel
                 Margin="0,25,0,0"
