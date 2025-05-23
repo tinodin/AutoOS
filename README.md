@@ -79,7 +79,7 @@ bcdboot %TARGETDRIVE%\Windows
 
 ## Credits
 
-AMIT, Valleyofdoom, Duckleeng, Revi Team, Imribiy, Calpyto, Spddl
+AMIT, Valleyofdoom, Revi Team, Imribiy, Calpyto, Spddl, djdallmann
 
 ## 📜 License
 
