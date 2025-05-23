@@ -18,7 +18,7 @@ AutoOS is a WinUI3 application focused on automation to improve performance whil
 
 ## ✨ Features
 - Automatically set every monitor to their highest supported refresh rate
-- Automatic benchmarking to apply the best affinities for GPU and XHCI Controller
+- Automatically benchmark and apply GPU and XHCI Controller affinities
 - Toggle XHCI Interrupt Moderation without having to restart your PC
 - Toggle between service states with configured functionality for ensuring best performance and compatibility
 - Custom Game Launcher supporting (Epic Games, Steam, Ryujinx)
@@ -79,7 +79,7 @@ bcdboot %TARGETDRIVE%\Windows
 
 ## Credits
 
-AMIT, Valleyofdoom, Duckleeng, Revi Team, Imribiy, Calpyto, Spddl
+AMIT, Valleyofdoom, Revi Team, Imribiy, Calpyto, Spddl, djdallmann
 
 ## 📜 License
 
