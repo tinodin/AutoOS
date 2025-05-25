@@ -66,6 +66,9 @@ public static class PreparingStage
     public static bool? Bitwarden;
     public static bool? OnePassword;
 
+    public static string LightTime;
+    public static string DarkTime;
+
     public static bool? Spotify;
     public static bool? AmazonMusic;
     public static bool? DeezerMusic;
@@ -81,8 +84,6 @@ public static class PreparingStage
     public static bool? Hyperthreading;
     public static bool? Reserve;
     public static bool? TimerResolution;
-    
-    public static bool? SecureBoot;
 
     public static async Task Run()
     {
@@ -161,6 +162,8 @@ public static class PreparingStage
                 iCloud = key?.GetValue("Extensions")?.ToString()?.Contains("iCloud Passwords");
                 Bitwarden = key?.GetValue("Extensions")?.ToString()?.Contains("Bitwarden");
                 OnePassword = key?.GetValue("Extensions")?.ToString()?.Contains("1Password");
+                LightTime = key?.GetValue("LightTime")?.ToString();
+                DarkTime = key?.GetValue("DarkTime")?.ToString();
                 Spotify = key?.GetValue("Music")?.ToString().Contains("Spotify");
                 AppleMusic = key?.GetValue("Music")?.ToString().Contains("Apple Music");
                 AmazonMusic = key?.GetValue("Music")?.ToString().Contains("Amazon Music");
@@ -171,11 +174,6 @@ public static class PreparingStage
                 Steam = key?.GetValue("Launchers")?.ToString().Contains("Steam");
                 Scheduling = key?.GetValue("Affinities")?.ToString() == "Automatic";
                 TimerResolution = key?.GetValue("TimerResolution")?.ToString() == "Automatic";
-            }
-
-            using (var key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\SecureBoot\State"))
-            {
-                SecureBoot = key?.GetValue("UEFISecureBootEnabled")?.ToString() == "1";
             }
 
             EpicGamesAccount = DriveInfo.GetDrives()

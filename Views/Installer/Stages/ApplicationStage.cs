@@ -12,6 +12,9 @@ public static class ApplicationStage
     public static bool? Fortnite;
     public static async Task Run()
     {
+        string LightTime = PreparingStage.LightTime;
+        string DarkTime = PreparingStage.DarkTime;
+
         bool? iCloud = PreparingStage.iCloud;
         bool? Bitwarden = PreparingStage.Bitwarden;
         bool? OnePassword = PreparingStage.OnePassword;
@@ -106,12 +109,16 @@ public static class ApplicationStage
             //("Installing Files", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\Software\Classes\CLSID\{52205fd8-5dfb-447d-801a-d0b52f2e83e1}\shell\opennewwindow\command"" /v ""DelegateExecute"" /t REG_SZ /d ""2"" /f"), null),
 
             // download windhawk
-            ("Downloading Windhawk", async () => await ProcessActions.RunDownload("https://www.dl.dropboxusercontent.com/scl/fi/11kr2znr49gcna1gfzwbo/Windhawk.zip?rlkey=0lsjjor8m84ewq85eixzrg1xm&st=7k835rgn&dl=0", Path.GetTempPath(), "Windhawk.zip"), null),
+            ("Downloading Windhawk", async () => await ProcessActions.RunDownload("https://www.dl.dropboxusercontent.com/scl/fi/omk2gg29v8yguskw4jhng/Windhawk.zip?rlkey=tljvtfus2tq57d3y5mzdt8ges&st=dkafnbi9&dl=0", Path.GetTempPath(), "Windhawk.zip"), null),
         
             // install windhawk
             ("Installing Windhawk", async () => await ProcessActions.RunExtract(Path.Combine(Path.GetTempPath(), "Windhawk.zip"), @"C:\Program Files\Windhawk"), null),
             ("Installing Windhawk", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"cmd /c move ""C:\Program Files\Windhawk\Windhawk"" ""%ProgramData%\Windhawk"""), null),
             ("Installing Windhawk", async () => await ProcessActions.RunNsudo("CurrentUser", $"cmd /c reg import \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "windhawk.reg")}\""), null),
+            ("Installing Windhawk", async () => await ProcessActions.RunNsudo("TrustedInstaller", $@"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\auto-theme-switcher\Settings"" /v Light /t REG_SZ /d {LightTime} /f"), null),
+            ("Installing Windhawk", async () => await ProcessActions.RunNsudo("TrustedInstaller", $@"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\auto-theme-switcher\Settings"" /v Dark /t REG_SZ /d {DarkTime} /f"), null),
+            //("Installing Windhawk", async () => await ProcessActions.RunNsudo("TrustedInstaller", $@"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\auto-theme-switcher\Settings"" /v LightThemePath /t REG_SZ /d {LightThemePath}  /f"), null),
+            //("Installing Windhawk", async () => await ProcessActions.RunNsudo("TrustedInstaller", $@"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\auto-theme-switcher\Settings"" /v DarkThemePath /t REG_SZ /d {DarkThemePath} /f"), null),
             ("Installing Windhawk", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\taskbar-notification-icons-show-all"" /v Disabled /t REG_DWORD /d 1 /f"), () => AlwaysShowTrayIcons == false),
             ("Installing Windhawk", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"sc create Windhawk binPath= ""\""C:\Program Files\Windhawk\windhawk.exe\"" -service"" start= auto"), null),
             ("Installing Windhawk", async () => await ProcessActions.RunPowerShell(@"$s=New-Object -ComObject WScript.Shell;$sc=$s.CreateShortcut([IO.Path]::Combine($env:APPDATA,'Microsoft\Windows\Start Menu\Programs\Windhawk.lnk'));$sc.TargetPath='C:\Program Files\Windhawk\windhawk.exe';$sc.Save()"), null),

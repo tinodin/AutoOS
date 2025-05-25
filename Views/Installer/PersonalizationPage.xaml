@@ -35,17 +35,36 @@
                             SelectionMode="Single">
                             <GridView.ItemTemplate>
                                 <DataTemplate>
-                                    <Image
-                                        Width="190"
-                                        Height="130"
-                                        Source="{Binding ImageSource}"
-                                        Stretch="UniformToFill" />
+                                    <StackPanel Orientation="Horizontal" Spacing="0">
+                                        <Image
+                                            Width="200"
+                                            Height="130"
+                                            Source="{Binding ImageSource1}"
+                                            Stretch="UniformToFill" />
+                                        <Image
+                                            Width="200"
+                                            Height="130"
+                                            Source="{Binding ImageSource2}"
+                                            Stretch="UniformToFill" />
+                                    </StackPanel>
                                 </DataTemplate>
                             </GridView.ItemTemplate>
                         </GridView>
                     </dev:SettingsGroup.Content>
                     <dev:SettingsGroup.Items>
-                        <dev:SettingsCard Header="Legacy Context Menu" HeaderIcon="{dev:FontIcon FontFamily={StaticResource SymbolThemeFontFamily}, Glyph=&#xEDE3;}">
+                        <dev:SettingsCard Header="Light mode time" HeaderIcon="{dev:FontIcon FontFamily={StaticResource SymbolThemeFontFamily}, Glyph=&#xE706;}">
+                            <TimePicker
+                                x:Name="LightTime"
+                                ClockIdentifier="24HourClock"
+                                TimeChanged="LightMode_TimeChanged" />
+                        </dev:SettingsCard>
+                        <dev:SettingsCard Header="Dark mode time" HeaderIcon="{dev:FontIcon FontFamily={StaticResource SymbolThemeFontFamily}, Glyph=&#xE708;}">
+                            <TimePicker
+                                x:Name="DarkTime"
+                                ClockIdentifier="24HourClock"
+                                TimeChanged="DarkMode_TimeChanged" />
+                        </dev:SettingsCard>
+                        <dev:SettingsCard Header="Legacy context menu" HeaderIcon="{dev:FontIcon FontFamily={StaticResource SymbolThemeFontFamily}, Glyph=&#xEDE3;}">
                             <ToggleSwitch x:Name="ContextMenu" Toggled="ContextMenu_Toggled" />
                         </dev:SettingsCard>
                     </dev:SettingsGroup.Items>

@@ -1,5 +1,5 @@
-﻿using System.Diagnostics;
-using Microsoft.Win32;
+﻿using Microsoft.Win32;
+using System.Diagnostics;
 
 namespace AutoOS.Views.Installer;
 
@@ -7,6 +7,7 @@ public sealed partial class PersonalizationPage : Page
 {
     private string nsudoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NSudo", "NSudoLC.exe");
     private bool isInitializingThemeState = true;
+    private bool isInitializingSchedule = true;
     private bool isInitializingContextMenuState = true;
     private bool isInitializingTrayIconsState = true;
     private bool isInitializingTaskbarAlignmentState = true;
@@ -16,6 +17,7 @@ public sealed partial class PersonalizationPage : Page
         InitializeComponent();
         GetItems();
         GetTheme();
+        GetSchedule();
         GetContextMenuState();
         GetTaskbarAlignmentState();
         GetTrayIconsState();
@@ -26,48 +28,98 @@ public sealed partial class PersonalizationPage : Page
         public string ImageSource { get; set; }
     }
 
+    public class ThemeItem
+    {
+        public string ImageSource1 { get; set; }
+        public string ImageSource2 { get; set; }
+    }
+
     private void GetItems()
     {
         // add theme items
-        Themes.ItemsSource = new List<GridViewItem>
+        Themes.ItemsSource = new List<ThemeItem>
         {
-            new GridViewItem { ImageSource = @"C:\Windows\Web\Wallpaper\Windows\img0.jpg" },
-            new GridViewItem { ImageSource = @"C:\Windows\Web\Wallpaper\Windows\img19.jpg" }
+            new ThemeItem { ImageSource1 = @"C:\Windows\Web\Wallpaper\Windows\img0.jpg", ImageSource2 = @"C:\Windows\Web\Wallpaper\Windows\img19.jpg" }
         };
     }
 
     private void GetTheme()
     {
-        using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
-        int systemUsesLightTheme = (int?)key?.GetValue("SystemUsesLightTheme", 1) ?? 1;
+        using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes");
+        string currentTheme = key?.GetValue("CurrentTheme") as string ?? string.Empty;
 
-        // select the theme
-        Themes.SelectedIndex = systemUsesLightTheme == 1 ? 0 : 1;
+        if (currentTheme == @"C:\Windows\resources\Themes\aero.theme" || currentTheme == @"C:\Windows\resources\Themes\dark.theme")
+        {
+            Themes.SelectedIndex = 0;
+        }
 
         isInitializingThemeState = false;
     }
-
 
     private async void Theme_Changed(object sender, RoutedEventArgs e)
     {
         if (isInitializingThemeState) return;
 
-        // declare theme
-        string theme = Themes.SelectedIndex == 0 ? @"C:\Windows\Resources\Themes\aero.theme" : @"C:\Windows\Resources\Themes\dark.theme";
+        //// declare theme
+        //string theme = Themes.SelectedIndex == 0 ? @"C:\Windows\Resources\Themes\aero.theme" : @"C:\Windows\Resources\Themes\dark.theme";
 
-        // apply theme
-        await Task.Run(() =>
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "ThemeTool", "ThemeTool.exe"),
-                Arguments = $"ChangeTheme {theme}",
-                UseShellExecute = false,
-                CreateNoWindow = true
-            });
-        });
+        //// apply theme
+        //await Task.Run(() =>
+        //{
+        //    Process.Start(new ProcessStartInfo
+        //    {
+        //        FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "ThemeTool", "ThemeTool.exe"),
+        //        Arguments = $"ChangeTheme {theme}",
+        //        UseShellExecute = false,
+        //        CreateNoWindow = true
+        //    });
+        //});
     }
 
+    private void GetSchedule()
+    {
+        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
+
+        if (key.GetValue("LightTime") is string lightTimeStr && TimeSpan.TryParse(lightTimeStr, out var lightTime))
+        {
+            LightTime.Time = lightTime;
+        }
+        else
+        {
+            key.SetValue("LightTime", "07:00", RegistryValueKind.String);
+            LightTime.Time = TimeSpan.Parse("07:00");
+        }
+
+        if (key.GetValue("DarkTime") is string darkTimeStr && TimeSpan.TryParse(darkTimeStr, out var darkTime))
+        {
+            DarkTime.Time = darkTime;
+        }
+        else
+        {
+            key.SetValue("DarkTime", "19:00", RegistryValueKind.String);
+            DarkTime.Time = TimeSpan.Parse("19:00");
+        }
+
+        isInitializingSchedule = false;
+    }
+
+    private void LightMode_TimeChanged(object sender, TimePickerValueChangedEventArgs e)
+    {
+        if (isInitializingSchedule) return;
+
+        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
+        string timeString = e.NewTime.ToString(@"hh\:mm");
+        key.SetValue("LightTime", timeString, RegistryValueKind.String);
+    }
+
+    private void DarkMode_TimeChanged(object sender, TimePickerValueChangedEventArgs e)
+    {
+        if (isInitializingSchedule) return;
+
+        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
+        string timeString = e.NewTime.ToString(@"hh\:mm");
+        key.SetValue("DarkTime", timeString, RegistryValueKind.String);
+    }
 
     private async void GetContextMenuState()
     {

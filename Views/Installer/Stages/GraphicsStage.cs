@@ -68,16 +68,13 @@ public static class GraphicsStage
             ("Installing the Intel driver", async () => await ProcessActions.RefreshUI(), () => Intel11th == true),
 
             // download the latest amd driver
-
+            ("Downloading the latest AMD Driver", async () => await ProcessActions.RunDownload("https://www.dl.dropboxusercontent.com/scl/fi/pa7ifyh2d1y9fifhp95w3/AMD-Driver.zip?rlkey=65b49zip2e8i7m26eqw8uaxcx&st=9vhf0xo6&dl=0", Path.GetTempPath(), "driver.zip"), () => AMD == true),
 
             // extract the driver
-
-            
-            // strip the driver
-
+            ("Extracting the AMD driver", async () => await ProcessActions.RunExtract(Path.Combine(Path.GetTempPath(), "driver.zip"), Path.Combine(Path.GetTempPath(), "driver")), () => AMD == true),
 
             // install the driver
-
+            ("Installing the AMD driver", async () => await ProcessActions.RunNsudo("CurrentUser", @"""%TEMP%\driver\Setup.exe"" -install"), () => AMD == true),
 
             // download the latest nvidia driver                                                     
             ("Downloading the latest NVIDIA Driver", async () => await ProcessActions.RunDownload(newestDownloadUrl, Path.GetTempPath(), "driver.exe"), () => NVIDIA == true),
@@ -157,6 +154,13 @@ public static class GraphicsStage
             ("Disabling high-definition-content-protection (HDCP)", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\cphs"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => Intel10th == true),
             ("Disabling high-definition-content-protection (HDCP)", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\cplspcon"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => Intel10th == true),
 
+
+
+            // configure settings
+            ("Configuring settings", async () => await ProcessActions.RunPowerShellScript("amdsettings.ps1", ""), () => AMD == true),
+
+
+
             // disable the nvidia tray icon
             ("Disabling the NVIDIA tray icon", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\NVIDIA Corporation\NvTray"" /v StartOnLogin /t REG_DWORD /d 0 /f"), () => NVIDIA == true),
 
@@ -191,10 +195,6 @@ public static class GraphicsStage
 
             // disable dynamic p-state
             ("Disabling dynamic p-state", async () => await ProcessActions.RunPowerShellScript("pstate.ps1", ""), () => NVIDIA == true),
-
-            //
-
-
 
             // download msi afterburner
             ("Downloading MSI Afterburner", async () => await ProcessActions.RunDownload("https://www.dl.dropboxusercontent.com/scl/fi/6dvl62kgm3z38x49752bt/MSI-Afterburner.zip?rlkey=h2m2riyjisrb3ph0i8j0q4eu5&st=pw7u3mte&dl=0", Path.GetTempPath(), "MSI Afterburner.zip"), null),
