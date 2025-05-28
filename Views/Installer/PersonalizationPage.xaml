@@ -37,12 +37,12 @@
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" Spacing="0">
                                         <Image
-                                            Width="200"
+                                            Width="190"
                                             Height="130"
                                             Source="{Binding ImageSource1}"
                                             Stretch="UniformToFill" />
                                         <Image
-                                            Width="200"
+                                            Width="190"
                                             Height="130"
                                             Source="{Binding ImageSource2}"
                                             Stretch="UniformToFill" />

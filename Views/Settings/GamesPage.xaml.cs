@@ -85,15 +85,25 @@ public sealed partial class GamesPage : Page
 
         if (currentSortKey == "Title")
         {
-            result = panels.OrderBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase);
+            result = ascending
+                ? panels.OrderBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase)
+                : panels.OrderByDescending(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase);
         }
         else
         {
-            result = panels.OrderBy(g => g.Launcher ?? "", StringComparer.CurrentCultureIgnoreCase);
+            if (ascending)
+            {
+                result = panels
+                    .OrderBy(g => g.Launcher ?? "", StringComparer.CurrentCultureIgnoreCase)
+                    .ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase);
+            }
+            else
+            {
+                result = panels
+                    .OrderByDescending(g => g.Launcher ?? "", StringComparer.CurrentCultureIgnoreCase)
+                    .ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase);
+            }
         }
-
-        if (!ascending)
-            result = result.Reverse();
 
         container.Children.Clear();
         foreach (var panel in result)

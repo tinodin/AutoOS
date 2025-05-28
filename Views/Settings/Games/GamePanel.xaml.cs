@@ -293,6 +293,7 @@ public sealed partial class GamePanel : UserControl
             "FortniteClient-Win64-Shipping_EAC_EOS",
             "GameBar",
             "GameBarFTServer",
+            "mobsync",
             "rundll32",
             "RuntimeBroker",
             "SearchHost",
