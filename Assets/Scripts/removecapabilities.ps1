@@ -11,7 +11,6 @@ $features = @(
     "OneCoreUAP.OneSync~~~~0.0.1.0",
     "OpenSSH.Client~~~~0.0.1.0",
     "Print.Management.Console~~~~0.0.1.0",
-    "VBSCRIPT~~~~",
     "Windows.Kernel.LA57~~~~0.0.1.0",
     "WMIC~~~~"
 )

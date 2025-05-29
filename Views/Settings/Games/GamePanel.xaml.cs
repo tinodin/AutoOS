@@ -330,7 +330,6 @@ public sealed partial class GamePanel : UserControl
             "AudioEndpointBuilder",
             "AppXSvc",
             "Appinfo",
-            //"camsvc",
             "CryptSvc",
             "DoSvc",
             "gpsvc",
