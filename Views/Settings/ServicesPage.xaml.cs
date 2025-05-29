@@ -200,6 +200,31 @@ public sealed partial class ServicesPage : Page
         // write changes
         await File.WriteAllLinesAsync(list, lines);
 
+        if (isChecked)
+        {
+            // declare services and drivers
+            var groups = new[]
+            {
+                (new[] { "WlanSvc", "Dhcp", "EventLog", "Wcmsvc" }, 2),
+                (new[] { "NlaSvc", "WinHttpAutoProxySvc", "Netwtw10", "Netwtw14" }, 3),
+                (new[] { "tdx", "vwififlt"}, 1)
+            };
+
+            // set start values
+            foreach (var group in groups)
+            {
+                foreach (var service in group.Item1)
+                {
+                    using (var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}", writable: true))
+                    {
+                        if (key == null) continue;
+
+                        Registry.SetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\{service}", "Start", group.Item2);
+                    }
+                }
+            }
+        }
+
         if (!Services.IsOn)
         {
             // get latest build
@@ -316,6 +341,29 @@ public sealed partial class ServicesPage : Page
 
         // write changes
         await File.WriteAllLinesAsync(list, lines);
+
+        if (isChecked)
+        {
+            // declare services and drivers
+            var groups = new[]
+            {
+                (new[] { "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DevicesFlowUserSvc", "DsmSvc", "WFDSConMgrSvc", "BthA2dp", "BthEnum", "BthHFAud", "BthHFEnum", "BthLEEnum", "BTHMODEM", "BthMini", "BthPan", "BTHPORT", "BTHUSB", "HidBth", "Microsoft_Bluetooth_AvrcpTransport", "RFCOMM", "ibtusb" }, 3),
+            };
+
+            // set start values
+            foreach (var group in groups)
+            {
+                foreach (var service in group.Item1)
+                {
+                    using (var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}", writable: true))
+                    {
+                        if (key == null) continue;
+
+                        Registry.SetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\{service}", "Start", group.Item2);
+                    }
+                }
+            }
+        }
 
         if (!Services.IsOn)
         {
