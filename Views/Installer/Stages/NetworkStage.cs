@@ -29,8 +29,7 @@ public static class NetworkStage
             ("Waiting for internet connection to reestablish", async () => await ProcessActions.RunConnectionCheck(), null),
 
             // disable protocols
-            ("Disabling unnecessary protocols", async () => await ProcessActions.RunPowerShell(@"& { Get-NetAdapterBinding | Where-Object { $_.Enabled -eq $true -and $_.ComponentID -notin 'ms_tcpip', 'ms_pacer' } | ForEach-Object { Disable-NetAdapterBinding -Name $_.InterfaceAlias -ComponentID $_.ComponentID } }"), () => AppleMusic == false),
-            ("Disabling unnecessary protocols", async () => await ProcessActions.RunPowerShell(@"& { Get-NetAdapterBinding | Where-Object { $_.Enabled -eq $true -and $_.ComponentID -notin 'ms_tcpip', 'ms_tcpip6', 'ms_pacer' } | ForEach-Object { Disable-NetAdapterBinding -Name $_.InterfaceAlias -ComponentID $_.ComponentID } }"), () => AppleMusic == true),
+            ("Disabling unnecessary protocols", async () => await ProcessActions.RunPowerShell(@"& { Get-NetAdapterBinding | Where-Object { $_.Enabled -eq $true -and $_.ComponentID -notin 'ms_tcpip', 'ms_tcpip6', 'ms_pacer' } | ForEach-Object { Disable-NetAdapterBinding -Name $_.InterfaceAlias -ComponentID $_.ComponentID } }"), null),
 
             // disable netbios over tcp
             ("Disabling NetBIOS over TCP", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c for %a in (NetbiosOptions) do for /f ""delims="" %b in ('reg query HKLM\SYSTEM\CurrentControlSet\Services\NetBT\Parameters\Interfaces /s /f %a ^| findstr HKEY') do reg add ""%b"" /v %a /t REG_DWORD /d 2 /f"), null),

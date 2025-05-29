@@ -33,8 +33,6 @@ public static class GraphicsStage
         var match = Regex.Match(html, pattern);
         string version = match.Groups[1].Value;
 
-        Debug.WriteLine(version);
-
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
             //// download the latest intel driver
@@ -154,12 +152,8 @@ public static class GraphicsStage
             ("Disabling high-definition-content-protection (HDCP)", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\cphs"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => Intel10th == true),
             ("Disabling high-definition-content-protection (HDCP)", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\cplspcon"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => Intel10th == true),
 
-
-
             // configure settings
             ("Configuring settings", async () => await ProcessActions.RunPowerShellScript("amdsettings.ps1", ""), () => AMD == true),
-
-
 
             // disable the nvidia tray icon
             ("Disabling the NVIDIA tray icon", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\NVIDIA Corporation\NvTray"" /v StartOnLogin /t REG_DWORD /d 0 /f"), () => NVIDIA == true),
