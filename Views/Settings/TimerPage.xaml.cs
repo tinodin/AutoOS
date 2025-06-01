@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32;
+﻿using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.Win32;
 using System.Diagnostics;
 
 namespace AutoOS.Views.Settings;
@@ -31,7 +32,18 @@ public sealed partial class TimerPage : Page
 
         if (Process.GetProcessesByName("SetTimerResolution").Length == 0)
         {
-            Process.Start(new ProcessStartInfo { FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "TimerResolution", "SetTimerResolution.exe"), Arguments = "--resolution " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "RequestedResolution", null)?.ToString() + " --no-console", CreateNoWindow = true });
+            if (Resolution.SelectedItem is ComboBoxItem selectedItem)
+            {
+                int selectedResolution = int.Parse(selectedItem.Content.ToString());
+                Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "RequestedResolution", selectedResolution);
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "TimerResolution", "SetTimerResolution.exe"),
+                    Arguments = $"--resolution {selectedResolution} --no-console",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                });
+            }
         }
 
         isInitializingTimerResolutionState = false;
