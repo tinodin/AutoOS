@@ -14,7 +14,7 @@ public sealed partial class GamePanel : UserControl
     [DllImport("kernel32.dll")]
     static extern bool SetProcessWorkingSetSize(IntPtr process, int min, int max);
 
-    private readonly string nsudoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NSudo", "NSudoLC.exe");
+    private static readonly HttpClient httpClient = new HttpClient();
 
     public string Title
     {
@@ -64,14 +64,6 @@ public sealed partial class GamePanel : UserControl
         AutoScrollHoverEffectViewDescription.IsPlaying = false;
     }
 
-    public ImageSource ImageSource { get; set; }
-
-    public GamePanel()
-    {
-        this.InitializeComponent();
-        this.Unloaded += GamePanel_Unloaded;
-    }
-
     public string Launcher { get; set; }
     public string LauncherLocation { get; set; }
     public string DataLocation { get; set; }
@@ -87,6 +79,13 @@ public sealed partial class GamePanel : UserControl
     private bool? previousGameState = null;
     private bool? previousExplorerState = null;
     private bool servicesState = false;
+    public ImageSource ImageSource { get; set; }
+
+    public GamePanel()
+    {
+        this.InitializeComponent();
+        this.Unloaded += GamePanel_Unloaded;
+    }
 
     private void GamePanel_Unloaded(object sender, RoutedEventArgs e)
     {
@@ -408,8 +407,6 @@ public sealed partial class GamePanel : UserControl
         Process.Start("explorer.exe");
     }
 
-    private static readonly HttpClient httpClient = new HttpClient();
-
     private async void Settings_Click(object sender, RoutedEventArgs e)
     {
         BitmapImage imageSource = null;
@@ -437,6 +434,7 @@ public sealed partial class GamePanel : UserControl
                     if (image?["type"]?.GetValue<string>() == "DieselGameBox")
                     {
                         imageSource = new BitmapImage(new Uri(image["url"]?.GetValue<string>()));
+                        break;
                     }
                 }
             }

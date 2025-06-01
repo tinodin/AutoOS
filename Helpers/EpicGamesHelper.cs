@@ -132,9 +132,7 @@ namespace AutoOS.Helpers
 
                         // more up to date than the fortnite item id
                         if (itemJson["AppName"]?.GetValue<string>() == "Fortnite")
-                        {
                             url = $"https://api.egdata.app/offers/d69e49517f0f4e49a39253f7b106dc27";
-                        }
 
                         try
                         {
@@ -164,6 +162,8 @@ namespace AutoOS.Helpers
 
                                     // start watcher
                                     gamePanel.CheckGameRunning();
+
+                                    break;
                                 }
                             }
                         }
