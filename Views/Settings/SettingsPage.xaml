@@ -106,7 +106,15 @@
                         </dev:SettingsExpander.ItemsHeader>
                     </dev:SettingsExpander>
                 </dev:SimpleSettingsGroup>
-
+                <dev:SimpleSettingsGroup Header="Startup">
+                    <dev:SettingsCard
+                        Description="Completely hides the AutoOS Startup window."
+                        Header="Launch minimized"
+                        HeaderIcon="{dev:FontIcon FontFamily={StaticResource SymbolThemeFontFamily},
+                                                  Glyph=&#xE73F;}">
+                        <ToggleSwitch x:Name="LaunchMinimized" Toggled="LaunchMinimized_Toggled" />
+                    </dev:SettingsCard>
+                </dev:SimpleSettingsGroup>
                 <dev:SimpleSettingsGroup Header="About">
                     <dev:SettingsExpander
                         Description="tinodin"

@@ -30,6 +30,7 @@ namespace AutoOS.Views
             ((OverlappedPresenter)AppWindow.Presenter).PreferredMaximumWidth = (int)(340 * App.Scaling);
             ((OverlappedPresenter)AppWindow.Presenter).PreferredMaximumHeight = (int)(130 * App.Scaling);
             ((OverlappedPresenter)AppWindow.Presenter).IsResizable = false;
+            ((OverlappedPresenter)AppWindow.Presenter).IsMaximizable = false;
             ((OverlappedPresenter)AppWindow.Presenter).IsAlwaysOnTop = true;
             ((OverlappedPresenter)AppWindow.Presenter).SetBorderAndTitleBar(true, false);
 

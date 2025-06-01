@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;
 using Microsoft.Windows.AppLifecycle;
 using Windows.Graphics;
+using Windows.Storage;
 
 namespace AutoOS
 {
@@ -53,7 +54,10 @@ namespace AutoOS
 
                     MainWindow.AppWindow.MoveAndResize(new RectInt32(posX, posY, windowWidth, windowHeight));
 
-                    MainWindow.Activate();
+                    if (!(ApplicationData.Current.LocalSettings.Values["LaunchMinimized"] is true))
+                    {
+                        MainWindow.Activate();
+                    }
                 }
                 else
                 {

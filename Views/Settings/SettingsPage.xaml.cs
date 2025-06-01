@@ -1,5 +1,7 @@
 ﻿using Microsoft.UI.Xaml.Media;
+using Newtonsoft.Json.Linq;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.Storage;
 
 namespace AutoOS.Views.Settings;
 
@@ -8,6 +10,7 @@ public sealed partial class SettingsPage : Page
     public SettingsPage()
     {
         this.InitializeComponent();
+        LoadSettings();
     }
 
     private void toCloneRepoCard_Click(object sender, RoutedEventArgs e)
@@ -40,6 +43,16 @@ public sealed partial class SettingsPage : Page
             }
             TintBox.Fill = new SolidColorBrush(color.Color);
         }
+    }
+
+    private void LoadSettings()
+    {
+        LaunchMinimized.IsOn = (bool?)ApplicationData.Current.LocalSettings.Values["LaunchMinimized"] ?? false;
+    }
+
+    private void LaunchMinimized_Toggled(object sender, RoutedEventArgs e)
+    {
+        ApplicationData.Current.LocalSettings.Values["LaunchMinimized"] = LaunchMinimized.IsOn;
     }
 }
 
