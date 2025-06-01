@@ -7,7 +7,6 @@ public sealed partial class ServicesPage : Page
     private bool isInitializingWIFIState = true;
     private bool isInitializingBluetoothState = true;
     private bool isInitializingCameraState = true;
-    private bool isInitializingSnippingState = true;
     private bool isInitializingTaskManagerState = true;
     private bool isInitializingLaptopState = true;
     private bool isInitializingAMDVRRState = true;
@@ -24,7 +23,6 @@ public sealed partial class ServicesPage : Page
         GetWIFIState();
         GetBluetoothState();
         GetCameraState();
-        GetSnippingState();
         GetTaskManagerState();
         GetLaptopState();
         GetAMDVRRState();
@@ -133,39 +131,6 @@ public sealed partial class ServicesPage : Page
         {
             if (drivers.Contains(lines[i].Trim().TrimStart('#', ' ')))
                 lines[i] = (isChecked ? "# " + lines[i] : lines[i].TrimStart('#')).Trim();
-        }
-
-        // write changes
-        await File.WriteAllLinesAsync(list, lines);
-    }
-
-    private void GetSnippingState()
-    {
-        // define services and drivers
-        var services = new[] { "cbdhsvc", "CaptureService" };
-
-        // check state
-        Snipping.IsChecked = services.All(service => File.ReadAllLines(list).Any(line => line.Trim() == service));
-
-        isInitializingSnippingState = false;
-    }
-
-    private async void Snipping_Checked(object sender, RoutedEventArgs e)
-    {
-        if (isInitializingSnippingState) return;
-
-        // read list
-        var lines = await File.ReadAllLinesAsync(list);
-
-        // define services
-        var services = new[] { "cbdhsvc", "CaptureService" };
-
-        // make changes
-        bool isChecked = Snipping.IsChecked == true;
-        for (int i = 0; i < lines.Length; i++)
-        {
-            if (services.Contains(lines[i].Trim().TrimStart('#', ' ')))
-                lines[i] = (isChecked ? lines[i].TrimStart('#', ' ') : "# " + lines[i].TrimStart('#', ' ')).Trim();
         }
 
         // write changes

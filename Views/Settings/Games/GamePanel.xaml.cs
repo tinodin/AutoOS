@@ -250,6 +250,7 @@ public sealed partial class GamePanel : UserControl
         // rename start menu binaries
         await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $@"-U:T -P:E -Wait -ShowWindowMode:Hide ren ""C:\Windows\System32\ctfmon.exe"" ctfmon.exee & ren ""C:\Windows\System32\RuntimeBroker.exe"" RuntimeBroker.exee & ren ""C:\Windows\SystemApps\ShellExperienceHost_cw5n1h2txyewy\ShellExperienceHost.exe"" ShellExperienceHost.exee & ren ""C:\Windows\SystemApps\MicrosoftWindows.Client.CBS_cw5n1h2txyewy\SearchHost.exe"" SearchHost.exee & ren ""C:\Windows\SystemApps\Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy\StartMenuExperienceHost.exe"" StartMenuExperienceHost.exee", CreateNoWindow = true }).WaitForExitAsync();
 
+        // close dllhost processes
         foreach (var process in Process.GetProcessesByName("dllhost"))
         {
             try
@@ -330,17 +331,24 @@ public sealed partial class GamePanel : UserControl
             "AudioEndpointBuilder",
             "AppXSvc",
             "Appinfo",
+            "CaptureService",
+            "cbdhsvc",
+            "ClipSvc",
             "CryptSvc",
+            "DevicesFlowUserSvc",
             "DoSvc",
             "gpsvc",
             "InstallService",
+            "msiserver",
             "netprofm",
             "nsi",
             "ProfSvc",
             "StateRepository",
             "TextInputManagementService",
             "TrustedInstaller",
+            "UdkUserSvc",
             "UserManager",
+            "WFDSConMgrSvc",
             "Windhawk"
         };
 
@@ -348,7 +356,7 @@ public sealed partial class GamePanel : UserControl
         {
             try
             {
-                var searcher = new ManagementObjectSearcher($"SELECT ProcessId FROM Win32_Service WHERE Name = '{serviceName}'");
+                var searcher = new ManagementObjectSearcher($"SELECT ProcessId FROM Win32_Service WHERE Name LIKE '{serviceName}%'");
                 foreach (ManagementObject service in searcher.Get())
                 {
                     try
@@ -363,23 +371,6 @@ public sealed partial class GamePanel : UserControl
             }
             catch { }
         }
-
-        try
-        {
-            var searcher = new ManagementObjectSearcher("SELECT Name, ProcessId FROM Win32_Service WHERE Name LIKE 'UdkUserSvc%'");
-            foreach (ManagementObject service in searcher.Get())
-            {
-                try
-                {
-                    int pid = Convert.ToInt32(service["ProcessId"]);
-                    var process = Process.GetProcessById(pid);
-                    process.Kill();
-                    process.WaitForExit();
-                }
-                catch { }
-            }
-        }
-        catch { }
 
         try { new ServiceController("Winmgmt").Stop(); } catch { }
 

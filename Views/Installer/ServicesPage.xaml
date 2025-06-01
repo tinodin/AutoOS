@@ -58,14 +58,6 @@
                         </dev:SettingsCard>
                         <dev:SettingsCard ContentAlignment="Left">
                             <CheckBox
-                                x:Name="Snipping"
-                                Margin="0,0,0,15"
-                                Padding="22,5,0,0"
-                                Click="Snipping_Checked"
-                                Content="Snipping tool support" />
-                        </dev:SettingsCard>
-                        <dev:SettingsCard ContentAlignment="Left">
-                            <CheckBox
                                 x:Name="TaskManager"
                                 Margin="0,0,0,15"
                                 Padding="22,5,0,0"
