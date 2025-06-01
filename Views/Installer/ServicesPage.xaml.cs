@@ -69,8 +69,8 @@ public sealed partial class ServicesPage : Page
     private void GetBluetoothState()
     {
         // define services and drivers
-        var services = new[] { "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DsmSvc", "NcbService", "SystemEventsBroker" };
-        var drivers = new[] { "# BthA2dp", "# BthEnum", "# BthHFAud", "# BthHFEnum", "# BthLEEnum", "# BthMini", "# BTHMODEM", "# BthPan", "# BTHPORT", "# BTHUSB", "# HidBth", "# ibtusb", "# Microsoft_Bluetooth_AvrcpTransport", "# RFCOMM" };
+        var services = new[] { "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DeviceAssociationService", "DevicesFlowUserSvc", "DsmSvc", "NcbService", "SystemEventsBroker", "WFDSConMgrSvc" };
+        var drivers = new[] { "BthA2dp", "BthEnum", "BthHFAud", "BthHFEnum", "BthLEEnum", "BthMini", "BTHMODEM", "BthPan", "BTHPORT", "BTHUSB", "HidBth", "ibtusb", "Microsoft_Bluetooth_AvrcpTransport", "RFCOMM" };
 
         // check state
         Bluetooth.IsChecked = services.All(service => File.ReadAllLines(list).Any(line => line.Trim() == service))
@@ -87,7 +87,7 @@ public sealed partial class ServicesPage : Page
         var lines = await File.ReadAllLinesAsync(list);
 
         // define services and drivers
-        var services = new[] { "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DsmSvc", "NcbService", "SystemEventsBroker" };
+        var services = new[] { "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DeviceAssociationService", "DevicesFlowUserSvc", "DsmSvc", "NcbService", "SystemEventsBroker", "WFDSConMgrSvc" };
         var drivers = new[] { "BthA2dp", "BthEnum", "BthHFAud", "BthHFEnum", "BthLEEnum", "BthMini", "BTHMODEM", "BthPan", "BTHPORT", "BTHUSB", "HidBth", "ibtusb", "Microsoft_Bluetooth_AvrcpTransport", "RFCOMM" };
 
         // make changes

@@ -345,7 +345,8 @@ public sealed partial class GamePanel : UserControl
             "UdkUserSvc",
             "UserManager",
             "WFDSConMgrSvc",
-            "Windhawk"
+            "Windhawk",
+            "Winmgmt"
         };
 
         foreach (var serviceName in serviceNames)
@@ -368,7 +369,7 @@ public sealed partial class GamePanel : UserControl
             catch { }
         }
 
-        try { new ServiceController("Winmgmt").Stop(); } catch { }
+        //try { new ServiceController("Winmgmt").Stop(); } catch { }
 
         foreach (var process in Process.GetProcesses())
         {
