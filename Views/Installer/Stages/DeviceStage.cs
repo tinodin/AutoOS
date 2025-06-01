@@ -1,5 +1,7 @@
 ﻿using AutoOS.Views.Installer.Actions;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.Win32;
+using System.Diagnostics;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -47,6 +49,9 @@ public static class DeviceStage
 
             // disable xhci interrupt moderation (imod)
             ("Disabling XHCI Interrupt Moderation (IMOD)", async () => await ProcessActions.RunPowerShellScript("imod.ps1", $"-disable \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}\""), () => IMOD == false),
+            
+            // apply timer resolution
+            ("Applying Timer Resolution", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "TimerResolution", "SetTimerResolution.exe"), Arguments = "--resolution 5067 --no-console", CreateNoWindow = true }))), null),
 
             // disable reserved storage
             ("Disabling reserved storage", async () => await ProcessActions.RunPowerShell(@"DISM /Online /Set-ReservedStorageState /State:Disabled"), null),

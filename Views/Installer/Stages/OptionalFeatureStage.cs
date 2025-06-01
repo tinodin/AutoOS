@@ -10,7 +10,7 @@ public static class OptionalFeatureStage
         InstallPage.Status.Text = "Configuring Optional Features...";
 
         string previousTitle = string.Empty;
-        int stagePercentage = 2;
+        int stagePercentage = 5;
 
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {       

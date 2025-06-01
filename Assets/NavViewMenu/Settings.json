@@ -38,13 +38,6 @@
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Settings.TimerPage",
-          "Title": "Timer Resolution",
-          "Subtitle": "Timer Resolution",
-          "ImagePath": "ms-appx:///Assets/Fluent/Timer.png",
-          "HideItem": true
-        },
-        {
           "UniqueId": "AutoOS.Views.Settings.DevicesPage",
           "Title": "Bluetooth & Devices",
           "Subtitle": "Bluetooth & Devices",

@@ -263,7 +263,5 @@ public static class PreparingStage
         InstallPage.Info.Severity = InfoBarSeverity.Informational;
         InstallPage.Progress.Foreground = (Brush)Application.Current.Resources["AccentForegroundBrush"];
         InstallPage.ProgressRingControl.Foreground = null;
-
-        InstallPage.Progress.Value = 1;
     }
 }

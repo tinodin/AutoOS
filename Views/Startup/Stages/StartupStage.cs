@@ -35,12 +35,6 @@ public static class StartupStage
             // apply msi afterburner profile
             ("Applying MSI Afterburner profile", async () => await StartupActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = @"C:\Program Files (x86)\MSI Afterburner\MSIAfterburner.exe", Arguments = "/Profile1 /q" }))), () => MSI == true),
 
-            // apply timer resolution
-            ("Applying Timer Resolution " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "RequestedResolution", null)?.ToString(), async () => await StartupActions.RunApplication("TimerResolution", "SetTimerResolution.exe", "--resolution " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "RequestedResolution", null)?.ToString() + " --no-console"), null),
-
-            // launch lowaudiolatency
-            ("Launching LowAudioLatency", async () => await StartupActions.RunApplication("LowAudioLatency", "low_audio_latency_no_console.exe", ""), null),
-
             // disable device power management
             ("Disabling device power management", async () => await StartupActions.RunPowerShellScript("devicepowermanagement.ps1", ""), null),
 
@@ -49,6 +43,12 @@ public static class StartupStage
 
             // disable xhci interrupt moderation
             ("Disabling XHCI Interrupt Moderation (IMOD)", async () => await StartupActions.RunPowerShellScript("imod.ps1", $"-disable \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}\""), () => IMOD == false),
+
+            // apply timer resolution
+            ("Applying Timer Resolution", async () => await StartupActions.RunApplication("TimerResolution", "SetTimerResolution.exe", "--resolution 5067 --no-console"), null),
+
+            // launch lowaudiolatency
+            ("Launching LowAudioLatency", async () => await StartupActions.RunApplication("LowAudioLatency", "low_audio_latency_no_console.exe", ""), null),
 
             // disable event trace sessions (ets)
             ("Disabling Event Trace Sessions (ETS)", async () => await StartupActions.RunNsudo("TrustedInstaller", $"cmd /c reg import \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "ets-disable.reg")}\""), null),

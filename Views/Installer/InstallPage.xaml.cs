@@ -60,7 +60,6 @@ public sealed partial class InstallPage : Page
         await ApplicationStage.Run();
         await GamesStage.Run();
         await SchedulingStage.Run();
-        await TimerStage.Run();
         await ServicesStage.Run();
         await CleanupStage.Run();
     }
