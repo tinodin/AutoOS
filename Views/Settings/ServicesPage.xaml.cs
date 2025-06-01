@@ -16,7 +16,7 @@ public sealed partial class ServicesPage : Page
     private bool isInitializingGTAState = true;
     private bool isInitializingAMDVRRState = true;
     private string list = Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "lists.ini");
-    private string nsudoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NSudo", "NSudoLC.exe");
+    private readonly string nsudoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NSudo", "NSudoLC.exe");
 
     public ServicesPage()
     {
@@ -89,7 +89,9 @@ public sealed partial class ServicesPage : Page
             Margin = new Thickness(5)
         });
 
-        try
+        string buildPath = Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build");
+
+        if (Directory.Exists(buildPath) && Directory.EnumerateDirectories(buildPath).Any())
         {
             // get latest build
             string folderName = Directory.GetDirectories(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
@@ -97,7 +99,7 @@ public sealed partial class ServicesPage : Page
             // toggle services
             await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build", folderName, Services.IsOn ? "Services-Enable.bat" : "Services-Disable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
         }
-        catch
+        else
         {
             // build service list
             await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $@"-U:T -P:E -Wait -ShowWindowMode:Hide ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "service-list-builder.exe")}"" --config ""{Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "lists.ini")}"" --disable-service-warning --output-dir ""{Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")}""", CreateNoWindow = true }).WaitForExitAsync();
@@ -198,6 +200,15 @@ public sealed partial class ServicesPage : Page
         // write changes
         await File.WriteAllLinesAsync(list, lines);
 
+        if (!Services.IsOn)
+        {
+            // get latest build
+            string folderName = Directory.GetDirectories(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+
+            // enable services
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build", folderName, "Services-Enable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+        }
+
         if (isChecked)
         {
             // declare services and drivers
@@ -221,15 +232,6 @@ public sealed partial class ServicesPage : Page
                     }
                 }
             }
-        }
-
-        if (!Services.IsOn)
-        {
-            // get latest build
-            string folderName = Directory.GetDirectories(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
-
-            // enable services
-            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build", folderName, "Services-Enable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
         }
 
         // build service list
@@ -340,6 +342,15 @@ public sealed partial class ServicesPage : Page
         // write changes
         await File.WriteAllLinesAsync(list, lines);
 
+        if (!Services.IsOn)
+        {
+            // get latest build
+            string folderName = Directory.GetDirectories(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+
+            // enable services
+            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build", folderName, "Services-Enable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+        }
+
         if (isChecked)
         {
             // declare services and drivers
@@ -361,15 +372,6 @@ public sealed partial class ServicesPage : Page
                     }
                 }
             }
-        }
-
-        if (!Services.IsOn)
-        {
-            // get latest build
-            string folderName = Directory.GetDirectories(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
-
-            // enable services
-            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build", folderName, "Services-Enable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
         }
 
         // build service list
