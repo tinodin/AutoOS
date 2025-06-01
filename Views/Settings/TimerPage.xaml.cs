@@ -29,6 +29,11 @@ public sealed partial class TimerPage : Page
             Resolution.SelectedIndex = 67;
         }
 
+        if (Process.GetProcessesByName("SetTimerResolution").Length == 0)
+        {
+            Process.Start(new ProcessStartInfo { FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "TimerResolution", "SetTimerResolution.exe"), Arguments = "--resolution " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "RequestedResolution", null)?.ToString() + " --no-console", CreateNoWindow = true });
+        }
+
         isInitializingTimerResolutionState = false;
     }
 
