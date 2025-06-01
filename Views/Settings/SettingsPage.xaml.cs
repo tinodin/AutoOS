@@ -1,5 +1,4 @@
 ﻿using Microsoft.UI.Xaml.Media;
-using Newtonsoft.Json.Linq;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 

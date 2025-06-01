@@ -11,7 +11,6 @@ public sealed partial class ServicesPage : Page
     private bool isInitializingWIFIState = true;
     private bool isInitializingBluetoothState = true;
     private bool isInitializingCameraState = true;
-    private bool isInitializingSnippingState = true;
     private bool isInitializingTaskManagerState = true;
     private bool isInitializingLaptopState = true;
     private bool isInitializingGTAState = true;
@@ -31,7 +30,6 @@ public sealed partial class ServicesPage : Page
         GetWIFIState();
         GetBluetoothState();
         GetCameraState();
-        GetSnippingState();
         GetTaskManagerState();
         GetLaptopState();
         GetGTAState();
@@ -530,118 +528,6 @@ public sealed partial class ServicesPage : Page
             ServiceInfo.Children.Add(new InfoBar
             {
                 Title = Camera.IsChecked == true ? "Successfully enabled Camera support." : "Successfully disabled Camera support.",
-                IsClosable = false,
-                IsOpen = true,
-                Severity = InfoBarSeverity.Success,
-                Margin = new Thickness(5)
-            });
-
-            // delay
-            await Task.Delay(2000);
-
-            // remove infobar
-            ServiceInfo.Children.Clear();
-        }
-    }
-
-    private void GetSnippingState()
-    {
-        // define services and drivers
-        var services = new[] { "cbdhsvc", "CaptureService" };
-
-        // check state
-        Snipping.IsChecked = services.All(service => File.ReadAllLines(list).Any(line => line.Trim() == service));
-
-        isInitializingSnippingState = false;
-    }
-
-    private async void Snipping_Checked(object sender, RoutedEventArgs e)
-    {
-        if (isInitializingSnippingState) return;
-
-        // remove infobar
-        ServiceInfo.Children.Clear();
-
-        // add infobar
-        ServiceInfo.Children.Add(new InfoBar
-        {
-            Title = Snipping.IsChecked == true ? "Enabling Snipping Tool support..." : "Disabling Snipping Tool support...",
-            IsClosable = false,
-            IsOpen = true,
-            Severity = InfoBarSeverity.Informational,
-            Margin = new Thickness(5)
-        });
-
-        // read list
-        var lines = await File.ReadAllLinesAsync(list);
-
-        // define services
-        var services = new[] { "cbdhsvc", "CaptureService" };
-
-        // make changes
-        bool isChecked = Snipping.IsChecked == true;
-        for (int i = 0; i < lines.Length; i++)
-        {
-            if (services.Contains(lines[i].Trim().TrimStart('#', ' ')))
-                lines[i] = (isChecked ? lines[i].TrimStart('#', ' ') : "# " + lines[i].TrimStart('#', ' ')).Trim();
-        }
-
-        // write changes
-        await File.WriteAllLinesAsync(list, lines);
-
-        if (!Services.IsOn)
-        {
-            // get latest build
-            string folderName = Directory.GetDirectories(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
-
-            // enable services
-            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build", folderName, "Services-Enable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
-        }
-
-        // build service list
-        await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $@"-U:T -P:E -Wait -ShowWindowMode:Hide ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "service-list-builder.exe")}"" --config ""{Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "lists.ini")}"" --disable-service-warning --output-dir ""{Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")}""", CreateNoWindow = true }).WaitForExitAsync();
-
-        if (!Services.IsOn)
-        {
-            // get latest build
-            string folderName = Directory.GetDirectories(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
-
-            // disable services
-            await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build", folderName, "Services-Disable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
-
-            // remove infobar
-            ServiceInfo.Children.Clear();
-
-            // add infobar
-            var infoBar = new InfoBar
-            {
-                Title = Snipping.IsChecked == true ? "Successfully enabled Snipping Tool support. A restart is required to apply the change." : "Successfully disabled Snipping Tool support. A restart is required to apply the change.",
-                IsClosable = false,
-                IsOpen = true,
-                Severity = InfoBarSeverity.Success,
-                Margin = new Thickness(5)
-            };
-
-            // add restart button
-            infoBar.ActionButton = new Button
-            {
-                Content = "Restart",
-                HorizontalAlignment = HorizontalAlignment.Right
-            };
-            ((Button)infoBar.ActionButton).Click += (s, args) =>
-            Process.Start("shutdown", "/r /f /t 0");
-
-            ServiceInfo.Children.Add(infoBar);
-        }
-        else
-        {
-            // remove infobar
-            ServiceInfo.Children.Clear();
-
-            // add infobar
-            ServiceInfo.Children.Add(new InfoBar
-            {
-                Title = Snipping.IsChecked == true ? "Successfully enabled Snipping Tool support." : "Successfully disabled Snipping Tool support.",
                 IsClosable = false,
                 IsOpen = true,
                 Severity = InfoBarSeverity.Success,

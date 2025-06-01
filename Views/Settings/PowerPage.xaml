@@ -39,7 +39,7 @@
                             <ToggleSwitch x:Name="IdleStates" Toggled="IdleStates_Toggled" />
                         </dev:SettingsCard>
                         <dev:SettingsCard
-                            Description="Forces the use of BIOS power management instead of Windows. Only disable if you have a fully modded BIOS with cfglock/oclock enabled."
+                            Description="Disabling forces the use of BIOS power management instead of Windows. Only disable if you have a fully tweaked BIOS with cfglock/oclock enabled."
                             Header="Power Service"
                             IsClickEnabled="False">
                             <ToggleSwitch x:Name="PowerService" Toggled="PowerService_Toggled" />
