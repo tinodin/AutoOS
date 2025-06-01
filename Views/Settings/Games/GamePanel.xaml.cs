@@ -245,11 +245,8 @@ public sealed partial class GamePanel : UserControl
         }
     }
 
-    private async void StopProcesses_Click(object sender, RoutedEventArgs e)
+    private void StopProcesses_Click(object sender, RoutedEventArgs e)
     {
-        // rename start menu binaries
-        await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $@"-U:T -P:E -Wait -ShowWindowMode:Hide ren ""C:\Windows\System32\ctfmon.exe"" ctfmon.exee & ren ""C:\Windows\System32\RuntimeBroker.exe"" RuntimeBroker.exee & ren ""C:\Windows\SystemApps\ShellExperienceHost_cw5n1h2txyewy\ShellExperienceHost.exe"" ShellExperienceHost.exee & ren ""C:\Windows\SystemApps\MicrosoftWindows.Client.CBS_cw5n1h2txyewy\SearchHost.exe"" SearchHost.exee & ren ""C:\Windows\SystemApps\Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy\StartMenuExperienceHost.exe"" StartMenuExperienceHost.exee", CreateNoWindow = true }).WaitForExitAsync();
-
         // close dllhost processes
         foreach (var process in Process.GetProcessesByName("dllhost"))
         {
@@ -384,11 +381,8 @@ public sealed partial class GamePanel : UserControl
         }
     }
 
-    private async void LaunchExplorer_Click(object sender, RoutedEventArgs e)
+    private void LaunchExplorer_Click(object sender, RoutedEventArgs e)
     {
-        // rename start menu binaries
-        await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $@"-U:T -P:E -Wait -ShowWindowMode:Hide ren ""C:\Windows\System32\ctfmon.exee"" ctfmon.exe & ren ""C:\Windows\System32\RuntimeBroker.exee"" RuntimeBroker.exe & ren ""C:\Windows\SystemApps\ShellExperienceHost_cw5n1h2txyewy\ShellExperienceHost.exee"" ShellExperienceHost.exe & ren ""C:\Windows\SystemApps\MicrosoftWindows.Client.CBS_cw5n1h2txyewy\SearchHost.exee"" SearchHost.exe & ren ""C:\Windows\SystemApps\Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy\StartMenuExperienceHost.exee"" StartMenuExperienceHost.exe", CreateNoWindow = true }).WaitForExitAsync();
-
         // start windhawk service
         using (ServiceController service = new ServiceController("Windhawk"))
         {
