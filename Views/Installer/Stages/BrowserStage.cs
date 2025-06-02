@@ -286,7 +286,7 @@ public static class BrowserStage
             ("Installing Arc Dependency", async () => await ProcessActions.RunNsudo("CurrentUser", @"powershell -Command ""Add-AppxPackage -Path $env:TEMP\Microsoft.VCLibs.x64.14.00.Desktop.14.0.33728.0.appx"""), () => Arc == true),
 
             // download arc
-            ("Downloading Arc", async () => await ProcessActions.RunDownload("https://releases.arc.net/windows/prod/1.53.0.157/Arc.x64.msix", Path.GetTempPath(), "Arc.x64.msix"), () => Arc == true),
+            ("Downloading Arc", async () => await ProcessActions.RunDownload("https://releases.arc.net/windows/prod/1.56.0.351/Arc.x64.msix", Path.GetTempPath(), "Arc.x64.msix"), () => Arc == true),
 
             // install arc
             ("Installing Arc", async () => await ProcessActions.RunNsudo("CurrentUser", @"powershell -Command ""Add-AppxPackage -Path $env:TEMP\Arc.x64.msix"""), () => Arc == true),

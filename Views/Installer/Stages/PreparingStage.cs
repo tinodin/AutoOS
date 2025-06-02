@@ -221,25 +221,19 @@ public static class PreparingStage
 
             Rename = "System Product Name".Equals(Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\BIOS", "SystemProductName", "")?.ToString(), StringComparison.Ordinal);
 
-            using var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_SystemEnclosure");
-            foreach (ManagementObject obj in searcher.Get())
+            Desktop = new ManagementObjectSearcher("SELECT * FROM Win32_SystemEnclosure")
+                .Get()
+                .Cast<ManagementObject>()
+                .Any(obj => ((ushort[])obj["ChassisTypes"])?.Any(type => new ushort[] { 3, 4, 5, 6, 7, 15, 16, 17 }.Contains(type)) == true);
+
+            foreach (ManagementObject m in new ManagementObjectSearcher("SELECT * FROM Win32_Processor").Get())
             {
-                ushort[] chassisTypes = (ushort[])obj["ChassisTypes"];
-                Desktop = chassisTypes != null && chassisTypes.Any(type => new ushort[] { 3, 4, 5, 6, 7, 15, 16, 17 }.Contains(type));
+                CoreCount += Convert.ToInt32(m["NumberOfCores"]);
             }
-
-            ManagementObjectSearcher searcher2 = new ManagementObjectSearcher("SELECT * FROM Win32_Processor");
-            ManagementObjectCollection queryCollection = searcher2.Get();
-
-            foreach (ManagementObject m in queryCollection)
-            {
-                CoreCount = Convert.ToInt32(m["NumberOfCores"]);
-            }
-
+            
             RSS = CoreCount >= 4;
 
-            var searcher3 = new ManagementObjectSearcher("SELECT * FROM Win32_NetworkAdapter");
-            foreach (var obj in searcher3.Get())
+            foreach (var obj in new ManagementObjectSearcher("SELECT * FROM Win32_NetworkAdapter").Get())
             {
                 var pnpDeviceId = obj["PNPDeviceID"]?.ToString();
                 if (!string.IsNullOrEmpty(pnpDeviceId) && pnpDeviceId.StartsWith("PCI\\VEN_"))
@@ -255,7 +249,6 @@ public static class PreparingStage
                         TxIntDelay = true;
                         break;
                     }
-
                 }
             }
 
