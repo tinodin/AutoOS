@@ -7,7 +7,8 @@ public sealed partial class SchedulingPage : Page
 {
     private bool isInitializingAffinities = true;
     private bool isHyperThreadingEnabled = false;
-    private readonly int processorCount = Environment.ProcessorCount;
+    private int physicalCoreCount = 0;
+    private readonly int logicalCoreCount = Environment.ProcessorCount;
 
     private ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 
@@ -27,6 +28,11 @@ public sealed partial class SchedulingPage : Page
 
     private void GetCpuCount(params ComboBox[] comboBoxes)
     {
+        physicalCoreCount = new ManagementObjectSearcher("SELECT NumberOfCores FROM Win32_Processor")
+            .Get()
+            .Cast<ManagementObject>()
+            .Sum(m => Convert.ToInt32(m["NumberOfCores"]));
+
         isHyperThreadingEnabled = new ManagementObjectSearcher("SELECT NumberOfCores, NumberOfLogicalProcessors FROM Win32_Processor")
            .Get()
            .Cast<ManagementObject>()
@@ -36,13 +42,20 @@ public sealed partial class SchedulingPage : Page
         {
             comboBox.Items.Clear();
 
-            for (int i = 0; i < processorCount; i++)
+            for (int i = 0; i < logicalCoreCount; i++)
             {
                 var item = new ComboBoxItem { Content = $"CPU {i}" };
 
-                if ((processorCount > 2 && (i == 0 || (isHyperThreadingEnabled && i % 2 == 1))))
+                if ((physicalCoreCount > 2 && (i == 0 || (isHyperThreadingEnabled && i % 2 == 1))))
                 {
                     item.IsEnabled = false;
+                }
+                else
+                {
+                    if (isHyperThreadingEnabled && i % 2 == 1)
+                    {
+                        item.IsEnabled = false;
+                    }
                 }
 
                 comboBox.Items.Add(item);
@@ -67,7 +80,7 @@ public sealed partial class SchedulingPage : Page
         string configPath = Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini");
         string[] lines = File.ReadAllLines(configPath);
 
-        if (processorCount > 2)
+        if (physicalCoreCount > 2)
         {
             if (isHyperThreadingEnabled)
             {
@@ -75,7 +88,7 @@ public sealed partial class SchedulingPage : Page
                 {
                     if (line.StartsWith("custom_cpus="))
                     {
-                        var cores = Enumerable.Range(2, processorCount - 2).Where(i => i % 2 == 0);
+                        var cores = Enumerable.Range(2, logicalCoreCount - 2).Where(i => i % 2 == 0);
                         return $"custom_cpus=[{string.Join(",", cores)}]";
                     }
                     return line;
@@ -86,7 +99,7 @@ public sealed partial class SchedulingPage : Page
                 lines = lines.Select(line =>
                 {
                     if (line.StartsWith("custom_cpus="))
-                        return $"custom_cpus=[1..{processorCount - 1}]";
+                        return $"custom_cpus=[1..{logicalCoreCount - 1}]";
                     return line;
                 }).ToArray();
             }
@@ -205,7 +218,7 @@ public sealed partial class SchedulingPage : Page
     {
         int selectedIndex = activeComboBox.SelectedIndex;
 
-        if (processorCount > 2)
+        if (physicalCoreCount > 2)
         {
             for (int i = 0; i < otherComboBox.Items.Count; i++)
             {
