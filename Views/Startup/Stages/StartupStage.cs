@@ -1,20 +1,21 @@
 ﻿using AutoOS.Views.Startup.Actions;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.Win32;
 using System.Diagnostics;
+using Windows.Storage;
 
 namespace AutoOS.Views.Startup.Stages;
 
 public static class StartupStage
 {
+    private static readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
     public static async Task Run()
     {
         bool MSI = Directory.Exists(@"C:\Program Files (x86)\MSI Afterburner\Profiles\") &&
            Directory.GetFiles(@"C:\Program Files (x86)\MSI Afterburner\Profiles\")
            .Any(f => !f.EndsWith("MSIAfterburner.cfg", StringComparison.OrdinalIgnoreCase));
-        bool HID = Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "HumanInterfaceDevices", "0")?.ToString() == "1";
-        bool IMOD = Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciInterruptModeration", "0")?.ToString() == "1";
-        bool WindowsUpdates = Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "PauseWindowsUpdates", "0")?.ToString() == "1";
+        bool HID = localSettings.Values["HumanInterfaceDevices"]?.ToString() == "1";
+        bool IMOD = localSettings.Values["XhciInterruptModeration"]?.ToString() == "1";
+        bool WindowsUpdates = localSettings.Values["PauseWindowsUpdates"]?.ToString() == "1";
         bool Discord = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Discord"));
 
         string discordVersion = "";

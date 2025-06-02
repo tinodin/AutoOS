@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Windows.Graphics;
+using Windows.Storage;
 
 namespace AutoOS.Views.Installer.Actions;
 
@@ -76,6 +77,8 @@ public static class ProcessActions
 
     [DllImport("user32.dll")]
     static extern int ChangeDisplaySettingsEx(string lpszDeviceName, ref DEVMODE lpDevMode, IntPtr hwnd, uint dwflags, IntPtr lParam);
+
+    private static readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 
     public static async Task RunNsudo(string user, string command)
     {
@@ -819,8 +822,8 @@ public static class ProcessActions
 
         if (match.Success)
         {
-            Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GpuAffinity", int.Parse(match.Groups[1].Value), RegistryValueKind.DWord);
-            Registry.SetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciAffinity", int.Parse(match.Groups[2].Value), RegistryValueKind.DWord);
+            localSettings.Values["GpuAffinity"] = int.Parse(match.Groups[1].Value);
+            localSettings.Values["XhciAffinity"] = int.Parse(match.Groups[2].Value);
         }
     }
 

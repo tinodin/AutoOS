@@ -1,4 +1,4 @@
-﻿using Microsoft.Win32;
+﻿using Windows.Storage;
 
 namespace AutoOS.Views.Installer;
 
@@ -7,6 +7,8 @@ public sealed partial class DevicesPage : Page
     private bool isInitializingBluetoothState = true;
     private bool isInitializingHIDState = true;
     private bool isInitializingIMODState = true;
+
+    private readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 
     public DevicesPage()
     {
@@ -18,13 +20,9 @@ public sealed partial class DevicesPage : Page
 
     private void GetBluetoothState()
     {
-        // get state
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        var value = key?.GetValue("Bluetooth");
-
-        if (value == null)
+        if (!localSettings.Values.TryGetValue("Bluetooth", out object value))
         {
-            key?.SetValue("Bluetooth", 1, RegistryValueKind.DWord);
+            localSettings.Values["Bluetooth"] = 1;
             Bluetooth.IsOn = true;
         }
         else
@@ -38,21 +36,14 @@ public sealed partial class DevicesPage : Page
     private void Bluetooth_Toggled(object sender, RoutedEventArgs e)
     {
         if (isInitializingBluetoothState) return;
-
-        // set value
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        key?.SetValue("Bluetooth", Bluetooth.IsOn ? 1 : 0, RegistryValueKind.DWord);
+        localSettings.Values["Bluetooth"] = Bluetooth.IsOn ? 1 : 0;
     }
 
     private void GetHIDState()
     {
-        // get state
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        var value = key?.GetValue("HumanInterfaceDevices");
-
-        if (value == null)
+        if (!localSettings.Values.TryGetValue("HumanInterfaceDevices", out object value))
         {
-            key?.SetValue("HumanInterfaceDevices", 0, RegistryValueKind.DWord);
+            localSettings.Values["HumanInterfaceDevices"] = 0;
         }
         else
         {
@@ -65,21 +56,14 @@ public sealed partial class DevicesPage : Page
     private void HID_Toggled(object sender, RoutedEventArgs e)
     {
         if (isInitializingHIDState) return;
-
-        // set value
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        key?.SetValue("HumanInterfaceDevices", HID.IsOn ? 1 : 0, RegistryValueKind.DWord);
+        localSettings.Values["HumanInterfaceDevices"] = HID.IsOn ? 1 : 0;
     }
 
     private void GetIMODState()
     {
-        // get state
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        var value = key?.GetValue("XhciInterruptModeration");
-
-        if (value == null)
+        if (!localSettings.Values.TryGetValue("XhciInterruptModeration", out object value))
         {
-            key?.SetValue("XhciInterruptModeration", 0, RegistryValueKind.DWord);
+            localSettings.Values["XhciInterruptModeration"] = 0;
         }
         else
         {
@@ -92,10 +76,6 @@ public sealed partial class DevicesPage : Page
     private void IMOD_Toggled(object sender, RoutedEventArgs e)
     {
         if (isInitializingIMODState) return;
-
-        // set value
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        key?.SetValue("XhciInterruptModeration", IMOD.IsOn ? 1 : 0, RegistryValueKind.DWord);
+        localSettings.Values["XhciInterruptModeration"] = IMOD.IsOn ? 1 : 0;
     }
 }
-

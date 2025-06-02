@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Management;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using Windows.Storage;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -83,7 +84,8 @@ public static class PreparingStage
     public static bool? Scheduling;
     public static bool? Hyperthreading;
     public static bool? Reserve;
-    public static bool? TimerResolution;
+
+    private static readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 
     public static async Task Run()
     {
@@ -121,60 +123,65 @@ public static class PreparingStage
                 SSD = true;
             }
 
-            using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
-            {
-                IdleStates = key?.GetValue("IdleStates")?.ToString() == "1";
-                PowerService = key?.GetValue("PowerService")?.ToString() == "1";
-                Wifi = key?.GetValue("WiFi")?.ToString() == "1";
-                Bluetooth = key?.GetValue("Bluetooth")?.ToString() == "1";
-                WindowsDefender = key?.GetValue("WindowsDefender")?.ToString() == "1";
-                UserAccountControl = key?.GetValue("UserAccountControl")?.ToString() == "1";
-                DEP = key?.GetValue("DataExecutionPrevention")?.ToString() == "1";
-                SpectreMeltdownMitigations = key?.GetValue("SpectreMeltdownMitigations")?.ToString() == "1";
-                ProcessMitigations = key?.GetValue("ProcessMitigations")?.ToString() == "1";
-                LegacyContextMenu = key?.GetValue("LegacyContextMenu")?.ToString() == "1";
-                ShowMyTaskbarOnAllDisplays = key?.GetValue("ShowMyTaskbarOnAllDisplays")?.ToString() == "1";
-                AlwaysShowTrayIcons = key?.GetValue("AlwaysShowTrayIcons")?.ToString() == "1";
-                TaskbarAlignment = key?.GetValue("TaskbarAlignment")?.ToString() == "Left";
-                WOL = key?.GetValue("WakeOnLan")?.ToString() == "1";
-                HID = key?.GetValue("HumanInterfaceDevices")?.ToString() == "1";
-                IMOD = key?.GetValue("XhciInterruptModeration")?.ToString() == "1";
-                Intel10th = key?.GetValue("GpuBrand")?.ToString().Contains("Intel® 7th-10th Gen Processor Graphics");
-                Intel11th = key?.GetValue("GpuBrand")?.ToString().Contains("Intel® Arc™ & Iris® Xe Graphics");
-                NVIDIA = key?.GetValue("GpuBrand")?.ToString().Contains("NVIDIA");
-                AMD = key?.GetValue("GpuBrand")?.ToString().Contains("AMD");
-                HDCP = key?.GetValue("HighDefinitionContentProtection")?.ToString() == "1";
-                MSI = key?.GetValue("MsiProfile") != null;
-                CRU = key?.GetValue("CruProfile") != null;
-                Chrome = key?.GetValue("Browser")?.ToString().Contains("Chrome");
-                Brave = key?.GetValue("Browser")?.ToString().Contains("Brave");
-                Firefox = key?.GetValue("Browser")?.ToString().Contains("Firefox");
-                Zen = key?.GetValue("Browser")?.ToString().Contains("Zen");
-                Arc = key?.GetValue("Browser")?.ToString().Contains("Arc");
-                uBlock = key?.GetValue("Extensions")?.ToString()?.Contains("uBlock Origin");
-                SponsorBlock = key?.GetValue("Extensions")?.ToString()?.Contains("SponsorBlock");
-                ReturnYouTubeDislike = key?.GetValue("Extensions")?.ToString()?.Contains("Return YouTube Dislike");
-                Cookies = key?.GetValue("Extensions")?.ToString()?.Contains("I still don't care about cookies");
-                DarkReader = key?.GetValue("Extensions")?.ToString()?.Contains("Dark Reader");
-                Violentmonkey = key?.GetValue("Extensions")?.ToString()?.Contains("Violentmonkey");
-                Tampermonkey = key?.GetValue("Extensions")?.ToString()?.Contains("Tampermonkey");
-                Shazam = key?.GetValue("Extensions")?.ToString()?.Contains("Shazam");
-                iCloud = key?.GetValue("Extensions")?.ToString()?.Contains("iCloud Passwords");
-                Bitwarden = key?.GetValue("Extensions")?.ToString()?.Contains("Bitwarden");
-                OnePassword = key?.GetValue("Extensions")?.ToString()?.Contains("1Password");
-                LightTime = key?.GetValue("LightTime")?.ToString();
-                DarkTime = key?.GetValue("DarkTime")?.ToString();
-                Spotify = key?.GetValue("Music")?.ToString().Contains("Spotify");
-                AppleMusic = key?.GetValue("Music")?.ToString().Contains("Apple Music");
-                AmazonMusic = key?.GetValue("Music")?.ToString().Contains("Amazon Music");
-                DeezerMusic = key?.GetValue("Music")?.ToString().Contains("Deezer Music");
-                WhatsApp = key?.GetValue("Messaging")?.ToString().Contains("WhatsApp");
-                Discord = key?.GetValue("Messaging")?.ToString().Contains("Discord");
-                EpicGames = key?.GetValue("Launchers")?.ToString().Contains("Epic Games");
-                Steam = key?.GetValue("Launchers")?.ToString().Contains("Steam");
-                Scheduling = key?.GetValue("Affinities")?.ToString() == "Automatic";
-                TimerResolution = key?.GetValue("TimerResolution")?.ToString() == "Automatic";
-            }
+            IdleStates = (localSettings.Values["IdleStates"]?.ToString() == "1");
+            PowerService = (localSettings.Values["PowerService"]?.ToString() == "1");
+            Wifi = (localSettings.Values["WiFi"]?.ToString() == "1");
+            Bluetooth = (localSettings.Values["Bluetooth"]?.ToString() == "1");
+            WindowsDefender = (localSettings.Values["WindowsDefender"]?.ToString() == "1");
+            UserAccountControl = (localSettings.Values["UserAccountControl"]?.ToString() == "1");
+            DEP = (localSettings.Values["DataExecutionPrevention"]?.ToString() == "1");
+            SpectreMeltdownMitigations = (localSettings.Values["SpectreMeltdownMitigations"]?.ToString() == "1");
+            ProcessMitigations = (localSettings.Values["ProcessMitigations"]?.ToString() == "1");
+            LegacyContextMenu = (localSettings.Values["LegacyContextMenu"]?.ToString() == "1");
+            ShowMyTaskbarOnAllDisplays = (localSettings.Values["ShowMyTaskbarOnAllDisplays"]?.ToString() == "1");
+            AlwaysShowTrayIcons = (localSettings.Values["AlwaysShowTrayIcons"]?.ToString() == "1");
+            TaskbarAlignment = (localSettings.Values["TaskbarAlignment"]?.ToString() == "Left");
+            WOL = (localSettings.Values["WakeOnLan"]?.ToString() == "1");
+            HID = (localSettings.Values["HumanInterfaceDevices"]?.ToString() == "1");
+            IMOD = (localSettings.Values["XhciInterruptModeration"]?.ToString() == "1");
+
+            Intel10th = (localSettings.Values["GpuBrand"]?.ToString().Contains("Intel® 7th-10th Gen Processor Graphics") ?? false);
+            Intel11th = (localSettings.Values["GpuBrand"]?.ToString().Contains("Intel® Arc™ & Iris® Xe Graphics") ?? false);
+            NVIDIA = (localSettings.Values["GpuBrand"]?.ToString().Contains("NVIDIA") ?? false);
+            AMD = (localSettings.Values["GpuBrand"]?.ToString().Contains("AMD") ?? false);
+
+            HDCP = (localSettings.Values["HighDefinitionContentProtection"]?.ToString() == "1");
+            MSI = (localSettings.Values["MsiProfile"] != null);
+            CRU = (localSettings.Values["CruProfile"] != null);
+
+            Chrome = (localSettings.Values["Browser"]?.ToString().Contains("Chrome") ?? false);
+            Brave = (localSettings.Values["Browser"]?.ToString().Contains("Brave") ?? false);
+            Firefox = (localSettings.Values["Browser"]?.ToString().Contains("Firefox") ?? false);
+            Zen = (localSettings.Values["Browser"]?.ToString().Contains("Zen") ?? false);
+            Arc = (localSettings.Values["Browser"]?.ToString().Contains("Arc") ?? false);
+
+            uBlock = (localSettings.Values["Extensions"]?.ToString().Contains("uBlock Origin") ?? false);
+            SponsorBlock = (localSettings.Values["Extensions"]?.ToString().Contains("SponsorBlock") ?? false);
+            ReturnYouTubeDislike = (localSettings.Values["Extensions"]?.ToString().Contains("Return YouTube Dislike") ?? false);
+            Cookies = (localSettings.Values["Extensions"]?.ToString().Contains("I still don't care about cookies") ?? false);
+            DarkReader = (localSettings.Values["Extensions"]?.ToString().Contains("Dark Reader") ?? false);
+            Violentmonkey = (localSettings.Values["Extensions"]?.ToString().Contains("Violentmonkey") ?? false);
+            Tampermonkey = (localSettings.Values["Extensions"]?.ToString().Contains("Tampermonkey") ?? false);
+            Shazam = (localSettings.Values["Extensions"]?.ToString().Contains("Shazam") ?? false);
+            iCloud = (localSettings.Values["Extensions"]?.ToString().Contains("iCloud Passwords") ?? false);
+            Bitwarden = (localSettings.Values["Extensions"]?.ToString().Contains("Bitwarden") ?? false);
+            OnePassword = (localSettings.Values["Extensions"]?.ToString().Contains("1Password") ?? false);
+
+            LightTime = localSettings.Values["LightTime"]?.ToString();
+            DarkTime = localSettings.Values["DarkTime"]?.ToString();
+
+            Spotify = (localSettings.Values["Music"]?.ToString().Contains("Spotify") ?? false);
+            AppleMusic = (localSettings.Values["Music"]?.ToString().Contains("Apple Music") ?? false);
+            AmazonMusic = (localSettings.Values["Music"]?.ToString().Contains("Amazon Music") ?? false);
+            DeezerMusic = (localSettings.Values["Music"]?.ToString().Contains("Deezer Music") ?? false);
+
+            WhatsApp = (localSettings.Values["Messaging"]?.ToString().Contains("WhatsApp") ?? false);
+            Discord = (localSettings.Values["Messaging"]?.ToString().Contains("Discord") ?? false);
+
+            EpicGames = (localSettings.Values["Launchers"]?.ToString().Contains("Epic Games") ?? false);
+            Steam = (localSettings.Values["Launchers"]?.ToString().Contains("Steam") ?? false);
+
+            Scheduling = (localSettings.Values["Affinities"]?.ToString() == "Automatic");
 
             EpicGamesAccount = DriveInfo.GetDrives()
                 .Where(d => d.DriveType == DriveType.Fixed && d.Name != @"C:\")

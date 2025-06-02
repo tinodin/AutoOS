@@ -2,11 +2,14 @@
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using System.Management;
+using Windows.Storage;
 
 namespace AutoOS.Views.Installer.Stages;
 
 public static class SchedulingStage
 {
+    private static readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
+
     public static async Task Run()
     {
         bool? Scheduling = PreparingStage.Scheduling;
@@ -32,16 +35,16 @@ public static class SchedulingStage
             ("Running AutoGpuAffinity", async () => await ProcessActions.RunAutoGpuAffinity(), () => Scheduling == true),
 
             // apply gpu affinity manually
-            ("Applying GPU Affinity to CPU " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GpuAffinity", null)?.ToString(), async () => await ProcessActions.Sleep(500), null),
-            ("Applying GPU Affinity to CPU " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GpuAffinity", null)?.ToString(), async () => await ProcessActions.RunNsudo("TrustedInstaller", $"cmd /c \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "AutoGpuAffinity.exe")}\" --apply-affinity {Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GpuAffinity", null)?.ToString()}"), null),
+            ("Applying GPU Affinity to CPU " + localSettings.Values["GpuAffinity"]?.ToString(), async () => await ProcessActions.Sleep(500), null),
+            ("Applying GPU Affinity to CPU " + localSettings.Values["GpuAffinity"]?.ToString(), async () => await ProcessActions.RunNsudo("TrustedInstaller", $"cmd /c \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "AutoGpuAffinity.exe")}\" --apply-affinity {localSettings.Values["GpuAffinity"]}"), null),
 
             // apply xhci affinity manually
-            ("Applying XHCI Affinity to CPU " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciAffinity", null)?.ToString(), async () => await ProcessActions.Sleep(500), () => Scheduling == false),
-            ("Applying XHCI Affinity to CPU " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciAffinity", null)?.ToString(), async () => await ProcessActions.RunCustom(async () => await Task.Run(() => { var query = "SELECT PNPDeviceID FROM Win32_USBController"; foreach (ManagementObject obj in new ManagementObjectSearcher(query).Get()) if (obj["PNPDeviceID"]?.ToString()?.StartsWith("PCI\\VEN_") == true) using (var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Enum\{obj["PNPDeviceID"]}\Device Parameters\Interrupt Management\Affinity Policy", true)) if (key != null && Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciAffinity", null) is int i && i >= 0) { key.SetValue("AssignmentSetOverride", new byte[(i / 8) + 1].Select((_, idx) => (byte)(idx == i / 8 ? 1 << (i % 8) : 0)).ToArray(), RegistryValueKind.Binary); key.SetValue("DevicePolicy", 4, RegistryValueKind.DWord); } })), null),
+            ("Applying XHCI Affinity to CPU " + localSettings.Values["XhciAffinity"]?.ToString(), async () => await ProcessActions.Sleep(500), () => Scheduling == false),
+            ("Applying XHCI Affinity to CPU " + localSettings.Values["XhciAffinity"], async () => await ProcessActions.RunCustom(async () => await Task.Run(() => { var i = Convert.ToInt32(localSettings.Values["XhciAffinity"]); var query = "SELECT PNPDeviceID FROM Win32_USBController"; foreach (ManagementObject obj in new ManagementObjectSearcher(query).Get()) if (obj["PNPDeviceID"]?.ToString()?.StartsWith("PCI\\VEN_") == true) using (var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Enum\{obj["PNPDeviceID"]}\Device Parameters\Interrupt Management\Affinity Policy", true)) if (key != null) { key.SetValue("AssignmentSetOverride", new byte[(i / 8) + 1].Select((_, idx) => (byte)(idx == i / 8 ? 1 << (i % 8) : 0)).ToArray(), RegistryValueKind.Binary); key.SetValue("DevicePolicy", 4, RegistryValueKind.DWord); } })), null),
 
             // reserve cpus
-            ("Reserving CPU " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GpuAffinity", null)?.ToString() + " and " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciAffinity", null)?.ToString(), async () => await ProcessActions.Sleep(500), () => Scheduling == false),
-            ("Reserving CPU " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GpuAffinity", null)?.ToString() + " and " + Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciAffinity", null)?.ToString(), async () => await ProcessActions.RunCustom(async () => await Task.Run(() => { using (var key = Registry.LocalMachine.OpenSubKey("SYSTEM\\CurrentControlSet\\Control\\Session Manager\\kernel", true)) key.SetValue("ReservedCpuSets", BitConverter.GetBytes((long)(1 << (int)Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GpuAffinity", 0)) | (long)(1 << (int)Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciAffinity", 0))).Concat(new byte[8 - BitConverter.GetBytes((long)(1 << (int)Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "GpuAffinity", 0)) | (long)(1 << (int)Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "XhciAffinity", 0))).Length]).ToArray(), RegistryValueKind.Binary); })), () => Reserve == true),
+            ("Reserving CPU " + localSettings.Values["GpuAffinity"]?.ToString() + " and " + localSettings.Values["XhciAffinity"]?.ToString(), async () => await ProcessActions.Sleep(500), () => Scheduling == false),
+            ("Reserving CPU " + localSettings.Values["GpuAffinity"] + " and " + localSettings.Values["XhciAffinity"], async () => await ProcessActions.RunCustom(async () => await Task.Run(() => { using (var key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Session Manager\kernel", true)) key.SetValue("ReservedCpuSets", BitConverter.GetBytes((1L << Convert.ToInt32(localSettings.Values["GpuAffinity"])) | (1L << Convert.ToInt32(localSettings.Values["XhciAffinity"]))).Concat(new byte[8 - BitConverter.GetBytes((1L << Convert.ToInt32(localSettings.Values["GpuAffinity"])) | (1L << Convert.ToInt32(localSettings.Values["XhciAffinity"]))).Length]).ToArray(), RegistryValueKind.Binary); })), () => Reserve == true),
         }; 
 
         var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();

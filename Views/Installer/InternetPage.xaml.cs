@@ -1,4 +1,4 @@
-﻿using Microsoft.Win32;
+﻿using Windows.Storage;
 
 namespace AutoOS.Views.Installer;
 
@@ -6,6 +6,8 @@ public sealed partial class InternetPage : Page
 {
     private bool isInitializingWIFIState = true;
     private bool isInitializingWOLState = true;
+
+    private readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 
     public InternetPage()
     {
@@ -16,13 +18,10 @@ public sealed partial class InternetPage : Page
 
     private void GetWIFIState()
     {
-        // get state
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        var value = key?.GetValue("WiFi");
-
-        if (value == null)
+        object value = localSettings.Values["WiFi"];
+        if (value is null)
         {
-            key?.SetValue("WiFi", 1, RegistryValueKind.DWord);
+            localSettings.Values["WiFi"] = 1;
             WiFi.IsOn = true;
         }
         else
@@ -37,20 +36,15 @@ public sealed partial class InternetPage : Page
     {
         if (isInitializingWIFIState) return;
 
-        // set value
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        key?.SetValue("WiFi", WiFi.IsOn ? 1 : 0, RegistryValueKind.DWord);
+        localSettings.Values["WiFi"] = WiFi.IsOn ? 1 : 0;
     }
 
     private void GetWOLState()
     {
-        // get state
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        var value = key?.GetValue("WakeOnLan");
-
-        if (value == null)
+        object value = localSettings.Values["WakeOnLan"];
+        if (value is null)
         {
-            key?.SetValue("WakeOnLan", 0, RegistryValueKind.DWord);
+            localSettings.Values["WakeOnLan"] = 0;
         }
         else
         {
@@ -64,8 +58,6 @@ public sealed partial class InternetPage : Page
     {
         if (isInitializingWOLState) return;
 
-        // set value
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        key?.SetValue("WakeOnLan", WOL.IsOn ? 1 : 0, RegistryValueKind.DWord);
+        localSettings.Values["WakeOnLan"] = WOL.IsOn ? 1 : 0;
     }
 }

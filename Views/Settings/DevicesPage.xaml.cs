@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Management;
 using System.ServiceProcess;
+using Windows.Storage;
 
 namespace AutoOS.Views.Settings;
 
@@ -11,6 +12,8 @@ public sealed partial class DevicesPage : Page
     private bool isInitializingBluetoothState = true;
     private bool isInitializingHIDState = true;
     private bool isInitializingIMODState = true;
+
+    private readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 
     public DevicesPage()
     {
@@ -196,12 +199,7 @@ public sealed partial class DevicesPage : Page
             Margin = new Thickness(5)
         });
 
-        // toggle registry value
-        using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
-        {
-            int value = HID.IsOn ? 1 : 0;
-            key?.SetValue("HumanInterfaceDevices", value, RegistryValueKind.DWord);
-        }
+        localSettings.Values["HumanInterfaceDevices"] = HID.IsOn ? 1 : 0;
 
         // toggle hid devices
         string command = HID.IsOn
@@ -314,16 +312,14 @@ public sealed partial class DevicesPage : Page
 
         if (output.Contains("ENABLED"))
         {
-            // set value
-            Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS", true)?.SetValue("XhciInterruptModeration", 1, RegistryValueKind.DWord);
+            localSettings.Values["XhciInterruptModeration"] = 1;
 
             IMOD.IsOn = true;
         }
         else if (output.Contains("FAILED"))
         {
-            // resort to registry value
-            using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS", true);
-            if ((int)key.GetValue("XhciInterruptModeration") == 1)
+            // resort to setting
+            if ((int?)localSettings.Values["XhciInterruptModeration"] == 1)
             {
                 IMOD.IsOn = true;
             }
@@ -421,12 +417,8 @@ public sealed partial class DevicesPage : Page
         }
         else
         {
-            // toggle registry value
-            using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
-            {
-                int value = IMOD.IsOn ? 1 : 0;
-                key?.SetValue("XhciInterruptModeration", value, RegistryValueKind.DWord);
-            }
+            // toggle setting
+            localSettings.Values["XhciInterruptModeration"] = IMOD.IsOn ? 1 : 0;
 
             // remove infobar
             DevicesInfo.Children.Clear();
@@ -449,4 +441,3 @@ public sealed partial class DevicesPage : Page
         }
     }
 }
-

@@ -4,11 +4,13 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using Windows.Storage;
 
 namespace AutoOS.Views.Installer.Stages;
 
 public static class GraphicsStage
 {
+    private static readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
     public static async Task Run()
     {
         bool? Intel10th = PreparingStage.Intel10th;
@@ -90,7 +92,7 @@ public static class GraphicsStage
 
             // apply custom resolution utility (cru) profile
             ("Importing Custom Resolution Utility (CRU) profile", async () => await ProcessActions.Sleep(1500), () => CRU == true),
-            ("Importing Custom Resolution Utility (CRU) profile", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "CruProfile", null).ToString(), Arguments = "-i" })!.WaitForExitAsync())), () => CRU == true),
+            ("Importing Custom Resolution Utility (CRU) profile", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = localSettings.Values["CruProfile"]?.ToString(), Arguments = "-i" })!.WaitForExitAsync())), () => CRU == true),
             ("Applying Custom Resolution Utility (CRU) profile", async () => await ProcessActions.Sleep(1500), () => CRU == true),
             ("Applying Custom Resolution Utility (CRU) profile", async () => await ProcessActions.RunApplication("CRU", "restart64.exe", "/q"), () => CRU == true),
             ("Applying Custom Resolution Utility (CRU) profile", async () => await ProcessActions.Sleep(2000), () => CRU == true),
@@ -205,8 +207,8 @@ public static class GraphicsStage
             ("Installing MSI Afterburner", async () => await ProcessActions.RunPowerShell(@"$Shell=New-Object -ComObject WScript.Shell; @(@{P='MSI Afterburner.lnk';T='C:\Program Files (x86)\MSI Afterburner\MSIAfterburner.exe'},@{P='ReadMe.lnk';T='C:\Program Files (x86)\MSI Afterburner\Doc\ReadMe.pdf'},@{P='Uninstall.lnk';T='C:\Program Files (x86)\MSI Afterburner\Uninstall.exe'},@{P='SDK\MSI Afterburner localization reference.lnk';T='C:\Program Files (x86)\MSI Afterburner\SDK\Doc\Localization reference.pdf'},@{P='SDK\MSI Afterburner skin format reference.lnk';T='C:\Program Files (x86)\MSI Afterburner\SDK\Doc\USF skin format reference.pdf'},@{P='SDK\Samples.lnk';T='C:\Program Files (x86)\MSI Afterburner\SDK\Samples\'}) | % {$Shortcut=$Shell.CreateShortcut([System.IO.Path]::Combine($env:APPDATA, 'Microsoft\Windows\Start Menu\Programs\MSI Afterburner', $_.P)); $Shortcut.TargetPath=$_.T; $Shortcut.Save()}"), null),
 
             // import msi afterburner profile
-            ("Importing MSI Afterburner profile", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => File.Copy(Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "MsiProfile", null).ToString(), Path.Combine(@"C:\Program Files (x86)\MSI Afterburner\Profiles\", Path.GetFileName(Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\AutoOS", "MsiProfile", null).ToString()))))), () => MSI == true),
-            
+            ("Importing MSI Afterburner profile", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => File.Copy(localSettings.Values["MsiProfile"]?.ToString(), Path.Combine(@"C:\Program Files (x86)\MSI Afterburner\Profiles\", Path.GetFileName(localSettings.Values["MsiProfile"]?.ToString()))))), () => MSI == true),
+
             // apply msi afterburner profile
             ("Applying MSI Afterburner profile", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = @"C:\Program Files (x86)\MSI Afterburner\MSIAfterburner.exe", Arguments = "/Profile1 /q" }))), () => MSI == true),
         };

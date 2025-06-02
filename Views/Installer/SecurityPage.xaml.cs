@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32;
+using Windows.Storage;
 
 namespace AutoOS.Views.Installer;
 
@@ -9,6 +10,8 @@ public sealed partial class SecurityPage : Page
     private bool isInitializingDEPState = true;
     private bool isInitializingSpectreMeltdownState = true;
     private bool isInitializingProcessMitigationsState = true;
+
+    private ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 
     public SecurityPage()
     {
@@ -22,13 +25,12 @@ public sealed partial class SecurityPage : Page
 
     private void GetWindowsDefenderState()
     {
-        // get state
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        var value = key?.GetValue("WindowsDefender");
+        var value = localSettings.Values["WindowsDefender"];
 
         if (value == null)
         {
-            key?.SetValue("WindowsDefender", 0, RegistryValueKind.DWord);
+            localSettings.Values["WindowsDefender"] = 0;
+            WindowsDefender.IsOn = false;
         }
         else
         {
@@ -42,20 +44,17 @@ public sealed partial class SecurityPage : Page
     {
         if (isInitializingWindowsDefenderState) return;
 
-        // set value
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        key?.SetValue("WindowsDefender", WindowsDefender.IsOn ? 1 : 0, RegistryValueKind.DWord);
+        localSettings.Values["WindowsDefender"] = WindowsDefender.IsOn ? 1 : 0;
     }
 
     private void GetUACState()
     {
-        // get state
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        var value = key?.GetValue("UserAccountControl");
+        var value = localSettings.Values["UserAccountControl"];
 
         if (value == null)
         {
-            key?.SetValue("UserAccountControl", 0, RegistryValueKind.DWord);
+            localSettings.Values["UserAccountControl"] = 0;
+            UAC.IsOn = false;
         }
         else
         {
@@ -69,16 +68,12 @@ public sealed partial class SecurityPage : Page
     {
         if (isInitializingUACState) return;
 
-        // set value
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        key?.SetValue("UserAccountControl", UAC.IsOn ? 1 : 0, RegistryValueKind.DWord);
+        localSettings.Values["UserAccountControl"] = UAC.IsOn ? 1 : 0;
     }
 
     private void GetDEPState()
     {
-        // get state
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        var value = key?.GetValue("DataExecutionPrevention");
+        var value = localSettings.Values["DataExecutionPrevention"];
 
         if (value == null)
         {
@@ -88,11 +83,11 @@ public sealed partial class SecurityPage : Page
             if (secureBootValue != null && (int)secureBootValue == 1)
             {
                 DEP.IsOn = true;
-                key?.SetValue("DataExecutionPrevention", 1, RegistryValueKind.DWord);
+                localSettings.Values["DataExecutionPrevention"] = 1;
             }
             else
             {
-                key?.SetValue("DataExecutionPrevention", 0, RegistryValueKind.DWord);
+                localSettings.Values["DataExecutionPrevention"] = 0;
             }
         }
         else
@@ -107,27 +102,23 @@ public sealed partial class SecurityPage : Page
     {
         if (isInitializingDEPState) return;
 
-        // set value
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        key?.SetValue("DataExecutionPrevention", DEP.IsOn ? 1 : 0, RegistryValueKind.DWord);
+        localSettings.Values["DataExecutionPrevention"] = DEP.IsOn ? 1 : 0;
     }
 
     private void GetSpectreMeltdownState()
     {
-        // get state
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        var value = key?.GetValue("SpectreMeltdownMitigations");
+        var value = localSettings.Values["SpectreMeltdownMitigations"];
 
         if (value == null)
         {
             string cpuVendor = (string)Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\CentralProcessor\0", "VendorIdentifier", null);
             if (cpuVendor.Contains("GenuineIntel"))
             {
-                key?.SetValue("SpectreMeltdownMitigations", 0, RegistryValueKind.DWord);
+                localSettings.Values["SpectreMeltdownMitigations"] = 0;
             }
             else if (cpuVendor.Contains("AuthenticAMD"))
             {
-                key?.SetValue("SpectreMeltdownMitigations", 1, RegistryValueKind.DWord);
+                localSettings.Values["SpectreMeltdownMitigations"] = 1;
                 SpectreMeltdown.IsOn = true;
             }
         }
@@ -143,20 +134,15 @@ public sealed partial class SecurityPage : Page
     {
         if (isInitializingSpectreMeltdownState) return;
 
-        // set value
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        key?.SetValue("SpectreMeltdownMitigations", SpectreMeltdown.IsOn ? 1 : 0, RegistryValueKind.DWord);
+        localSettings.Values["SpectreMeltdownMitigations"] = SpectreMeltdown.IsOn ? 1 : 0;
     }
 
     private void GetProcessMitigationsState()
     {
-        // get state
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        var value = key?.GetValue("ProcessMitigations");
-
+        var value = localSettings.Values["ProcessMitigations"];
         if (value == null)
         {
-            key?.SetValue("ProcessMitigations", 0, RegistryValueKind.DWord);
+            localSettings.Values["ProcessMitigations"] = 0;
         }
         else
         {
@@ -170,9 +156,6 @@ public sealed partial class SecurityPage : Page
     {
         if (isInitializingProcessMitigationsState) return;
 
-        // set value
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        key?.SetValue("ProcessMitigations", ProcessMitigations.IsOn ? 1 : 0, RegistryValueKind.DWord);
+        localSettings.Values["ProcessMitigations"] = ProcessMitigations.IsOn ? 1 : 0;
     }
 }
-

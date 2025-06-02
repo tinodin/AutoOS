@@ -1,10 +1,13 @@
 ﻿using Microsoft.Win32;
 using System.Diagnostics;
+using Windows.Storage;
 
 namespace AutoOS.Views.Settings;
 
 public sealed partial class DisplayPage : Page
 {
+    private readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
+
     public DisplayPage()
     {
         InitializeComponent();
@@ -72,12 +75,9 @@ public sealed partial class DisplayPage : Page
                 await Task.Run(() => Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "CRU", "restart64.exe")) { Arguments = "/q" })?.WaitForExit());
 
                 // apply profile
-                using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
+                if (localSettings.Values["MsiProfile"] != null)
                 {
-                    if (key?.GetValue("MsiProfile") != null)
-                    {
-                        await Task.Run(() => Process.Start(new ProcessStartInfo(@"C:\Program Files (x86)\MSI Afterburner\MSIAfterburner.exe") { Arguments = "/Profile1 /q" })?.WaitForExit());
-                    }
+                    await Task.Run(() => Process.Start(new ProcessStartInfo(@"C:\Program Files (x86)\MSI Afterburner\MSIAfterburner.exe") { Arguments = "/Profile1 /q" })?.WaitForExit());
                 }
 
                 // remove infobar
@@ -198,12 +198,9 @@ public sealed partial class DisplayPage : Page
         Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "CRU", "restart64.exe")) { Arguments = "/q" }).WaitForExit();
 
         // apply profile
-        using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
+        if (localSettings.Values["MsiProfile"] != null)
         {
-            if (key?.GetValue("MsiProfile") != null)
-            {
-                await Task.Run(() => Process.Start(new ProcessStartInfo(@"C:\Program Files (x86)\MSI Afterburner\MSIAfterburner.exe") { Arguments = "/Profile1 /q" })?.WaitForExit());
-            }
+            await Task.Run(() => Process.Start(new ProcessStartInfo(@"C:\Program Files (x86)\MSI Afterburner\MSIAfterburner.exe") { Arguments = "/Profile1 /q" })?.WaitForExit());
         }
 
         // remove infobar
@@ -248,12 +245,9 @@ public sealed partial class DisplayPage : Page
         Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "CRU", "restart64.exe")) { Arguments = "/q" }).WaitForExit();
 
         // apply profile
-        using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
+        if (localSettings.Values["MsiProfile"] != null)
         {
-            if (key?.GetValue("MsiProfile") != null)
-            {
-                await Task.Run(() => Process.Start(new ProcessStartInfo(@"C:\Program Files (x86)\MSI Afterburner\MSIAfterburner.exe") { Arguments = "/Profile1 /q" })?.WaitForExit());
-            }
+            await Task.Run(() => Process.Start(new ProcessStartInfo(@"C:\Program Files (x86)\MSI Afterburner\MSIAfterburner.exe") { Arguments = "/Profile1 /q" })?.WaitForExit());
         }
 
         // remove infobar
@@ -276,5 +270,3 @@ public sealed partial class DisplayPage : Page
         CruInfo.Children.Clear();
     }
 }
-
-

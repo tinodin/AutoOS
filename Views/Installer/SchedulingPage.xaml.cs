@@ -1,4 +1,4 @@
-﻿using Microsoft.Win32;
+﻿using Windows.Storage;
 using System.Management;
 
 namespace AutoOS.Views.Installer;
@@ -8,6 +8,8 @@ public sealed partial class SchedulingPage : Page
     private bool isInitializingAffinities = true;
     private bool isHyperThreadingEnabled = false;
     private readonly int processorCount = Environment.ProcessorCount;
+
+    private ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 
     public SchedulingPage()
     {
@@ -40,7 +42,6 @@ public sealed partial class SchedulingPage : Page
             }
         }
 
-        // copy autogpuaffinity to localstate because of permissions
         string sourcePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity");
         string destinationPath = Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity");
 
@@ -56,7 +57,6 @@ public sealed partial class SchedulingPage : Page
             File.Copy(file, destFilePath, true);
         }
 
-        // configure config
         string configPath = Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini");
         string[] lines = File.ReadAllLines(configPath);
 
@@ -98,58 +98,55 @@ public sealed partial class SchedulingPage : Page
 
     private void GetAffinities()
     {
-        using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
+        var affinityValue = localSettings.Values["Affinities"] as string;
+        if (string.IsNullOrEmpty(affinityValue) || affinityValue == "Automatic")
         {
-            var affinityValue = key.GetValue("Affinities") as string;
-            if (string.IsNullOrEmpty(affinityValue) || affinityValue == "Automatic")
+            localSettings.Values["Affinities"] = "Automatic";
+
+            Affinities.SelectedIndex = 0;
+            GpuSettings.IsEnabled = false;
+            XhciSettings.IsEnabled = false;
+
+            int gpuAffinity = localSettings.Values.TryGetValue("GpuAffinity", out var gpuVal) && gpuVal is int g ? g : -1;
+            if (gpuAffinity >= 0 && gpuAffinity < GPU.Items.Count && ((ComboBoxItem)GPU.Items[gpuAffinity]).IsEnabled)
             {
-                key.SetValue("Affinities", "Automatic", RegistryValueKind.String);
-
-                Affinities.SelectedIndex = 0;
-                GpuSettings.IsEnabled = false;
-                XhciSettings.IsEnabled = false;
-
-                int gpuAffinity = (int)(key.GetValue("GpuAffinity") ?? -1);
-                if (gpuAffinity >= 0 && gpuAffinity < GPU.Items.Count && ((ComboBoxItem)GPU.Items[gpuAffinity]).IsEnabled)
-                {
-                    GPU.SelectedIndex = gpuAffinity;
-                }
-                else
-                {
-                    GPU.SelectedIndex = GPU.Items.OfType<ComboBoxItem>().ToList().FindIndex(item => item.IsEnabled);
-                }
-                UpdateComboBoxState(GPU, XHCI);
-
-                int xhciAffinity = (int)(key.GetValue("XhciAffinity") ?? -1);
-                if (xhciAffinity >= 0 && xhciAffinity < XHCI.Items.Count && ((ComboBoxItem)XHCI.Items[xhciAffinity]).IsEnabled)
-                {
-                    XHCI.SelectedIndex = xhciAffinity;
-                }
-                else
-                {
-                    XHCI.SelectedIndex = XHCI.Items.OfType<ComboBoxItem>().ToList().FindIndex(item => item.IsEnabled);
-                }
-                UpdateComboBoxState(XHCI, GPU);
+                GPU.SelectedIndex = gpuAffinity;
             }
-            else if (affinityValue == "Manual")
+            else
             {
-                Affinities.SelectedIndex = 1;
-                GpuSettings.IsEnabled = true;
-                XhciSettings.IsEnabled = true;
+                GPU.SelectedIndex = GPU.Items.OfType<ComboBoxItem>().ToList().FindIndex(item => item.IsEnabled);
+            }
+            UpdateComboBoxState(GPU, XHCI);
 
-                int gpuAffinity = (int)(key.GetValue("GpuAffinity") ?? -1);
-                if (gpuAffinity >= 0 && gpuAffinity < GPU.Items.Count)
-                {
-                    GPU.SelectedIndex = gpuAffinity;
-                    UpdateComboBoxState(GPU, XHCI);
-                }
+            int xhciAffinity = localSettings.Values.TryGetValue("XhciAffinity", out var xhciVal) && xhciVal is int x ? x : -1;
+            if (xhciAffinity >= 0 && xhciAffinity < XHCI.Items.Count && ((ComboBoxItem)XHCI.Items[xhciAffinity]).IsEnabled)
+            {
+                XHCI.SelectedIndex = xhciAffinity;
+            }
+            else
+            {
+                XHCI.SelectedIndex = XHCI.Items.OfType<ComboBoxItem>().ToList().FindIndex(item => item.IsEnabled);
+            }
+            UpdateComboBoxState(XHCI, GPU);
+        }
+        else if (affinityValue == "Manual")
+        {
+            Affinities.SelectedIndex = 1;
+            GpuSettings.IsEnabled = true;
+            XhciSettings.IsEnabled = true;
 
-                int xhciAffinity = (int)(key.GetValue("XhciAffinity") ?? -1);
-                if (xhciAffinity >= 0 && xhciAffinity < XHCI.Items.Count)
-                {
-                    XHCI.SelectedIndex = xhciAffinity;
-                    UpdateComboBoxState(XHCI, GPU);
-                }
+            int gpuAffinity = localSettings.Values.TryGetValue("GpuAffinity", out var gpuVal) && gpuVal is int g ? g : -1;
+            if (gpuAffinity >= 0 && gpuAffinity < GPU.Items.Count)
+            {
+                GPU.SelectedIndex = gpuAffinity;
+                UpdateComboBoxState(GPU, XHCI);
+            }
+
+            int xhciAffinity = localSettings.Values.TryGetValue("XhciAffinity", out var xhciVal) && xhciVal is int x ? x : -1;
+            if (xhciAffinity >= 0 && xhciAffinity < XHCI.Items.Count)
+            {
+                XHCI.SelectedIndex = xhciAffinity;
+                UpdateComboBoxState(XHCI, GPU);
             }
         }
 
@@ -160,23 +157,20 @@ public sealed partial class SchedulingPage : Page
     {
         if (isInitializingAffinities) return;
 
-        using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
+        if (Affinities.SelectedIndex == 0)
         {
-            if (Affinities.SelectedIndex == 0)
-            {
-                key.SetValue("Affinities", "Automatic", RegistryValueKind.String);
-                GpuSettings.IsEnabled = false;
-                XhciSettings.IsEnabled = false;
-            }
-            else if (Affinities.SelectedIndex == 1)
-            {
-                key.SetValue("Affinities", "Manual", RegistryValueKind.String);
-                GpuSettings.IsEnabled = true;
-                XhciSettings.IsEnabled = true;
+            localSettings.Values["Affinities"] = "Automatic";
+            GpuSettings.IsEnabled = false;
+            XhciSettings.IsEnabled = false;
+        }
+        else if (Affinities.SelectedIndex == 1)
+        {
+            localSettings.Values["Affinities"] = "Manual";
+            GpuSettings.IsEnabled = true;
+            XhciSettings.IsEnabled = true;
 
-                Gpu_Changed(null, null);
-                Xhci_Changed(null, null);
-            }
+            Gpu_Changed(null, null);
+            Xhci_Changed(null, null);
         }
     }
 
@@ -184,11 +178,8 @@ public sealed partial class SchedulingPage : Page
     {
         if (isInitializingAffinities) return;
 
-        using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
-        {
-            int selectedIndex = GPU.SelectedIndex;
-            key.SetValue("GpuAffinity", selectedIndex, RegistryValueKind.DWord);
-        }
+        int selectedIndex = GPU.SelectedIndex;
+        localSettings.Values["GpuAffinity"] = selectedIndex;
 
         UpdateComboBoxState(GPU, XHCI);
     }
@@ -197,11 +188,8 @@ public sealed partial class SchedulingPage : Page
     {
         if (isInitializingAffinities) return;
 
-        using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
-        {
-            int selectedIndex = XHCI.SelectedIndex;
-            key.SetValue("XhciAffinity", selectedIndex, RegistryValueKind.DWord);
-        }
+        int selectedIndex = XHCI.SelectedIndex;
+        localSettings.Values["XhciAffinity"] = selectedIndex;
 
         UpdateComboBoxState(XHCI, GPU);
     }
@@ -223,7 +211,6 @@ public sealed partial class SchedulingPage : Page
         }
         else
         {
-            // swap indexes
             if (otherComboBox.SelectedIndex == selectedIndex)
             {
                 int swapIndex = otherComboBox.SelectedIndex == 0 ? 1 : 0;

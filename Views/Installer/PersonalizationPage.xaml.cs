@@ -1,16 +1,18 @@
 ﻿using Microsoft.Win32;
+using Windows.Storage;
 using System.Diagnostics;
 
 namespace AutoOS.Views.Installer;
 
 public sealed partial class PersonalizationPage : Page
 {
-    private string nsudoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NSudo", "NSudoLC.exe");
     private bool isInitializingThemeState = true;
     private bool isInitializingSchedule = true;
     private bool isInitializingContextMenuState = true;
     private bool isInitializingTrayIconsState = true;
     private bool isInitializingTaskbarAlignmentState = true;
+
+    private readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 
     public PersonalizationPage()
     {
@@ -36,7 +38,6 @@ public sealed partial class PersonalizationPage : Page
 
     private void GetItems()
     {
-        // add theme items
         Themes.ItemsSource = new List<ThemeItem>
         {
             new ThemeItem { ImageSource1 = @"C:\Windows\Web\Wallpaper\Windows\img0.jpg", ImageSource2 = @"C:\Windows\Web\Wallpaper\Windows\img19.jpg" }
@@ -56,86 +57,52 @@ public sealed partial class PersonalizationPage : Page
         isInitializingThemeState = false;
     }
 
-    private async void Theme_Changed(object sender, RoutedEventArgs e)
+    private void Theme_Changed(object sender, RoutedEventArgs e)
     {
         if (isInitializingThemeState) return;
-
-        //// declare theme
-        //string theme = Themes.SelectedIndex == 0 ? @"C:\Windows\Resources\Themes\aero.theme" : @"C:\Windows\Resources\Themes\dark.theme";
-
-        //// apply theme
-        //await Task.Run(() =>
-        //{
-        //    Process.Start(new ProcessStartInfo
-        //    {
-        //        FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "ThemeTool", "ThemeTool.exe"),
-        //        Arguments = $"ChangeTheme {theme}",
-        //        UseShellExecute = false,
-        //        CreateNoWindow = true
-        //    });
-        //});
     }
 
     private void GetSchedule()
     {
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-
-        if (key.GetValue("LightTime") is string lightTimeStr && TimeSpan.TryParse(lightTimeStr, out var lightTime))
+        if (localSettings.Values["LightTime"] is string lightTimeStr && TimeSpan.TryParse(lightTimeStr, out var lightTime))
         {
             LightTime.Time = lightTime;
         }
         else
         {
-            key.SetValue("LightTime", "07:00", RegistryValueKind.String);
+            localSettings.Values["LightTime"] = "07:00";
             LightTime.Time = TimeSpan.Parse("07:00");
         }
 
-        if (key.GetValue("DarkTime") is string darkTimeStr && TimeSpan.TryParse(darkTimeStr, out var darkTime))
+        if (localSettings.Values["DarkTime"] is string darkTimeStr && TimeSpan.TryParse(darkTimeStr, out var darkTime))
         {
             DarkTime.Time = darkTime;
         }
         else
         {
-            key.SetValue("DarkTime", "19:00", RegistryValueKind.String);
+            localSettings.Values["DarkTime"] = "19:00";
             DarkTime.Time = TimeSpan.Parse("19:00");
         }
 
         isInitializingSchedule = false;
     }
-
     private void LightMode_TimeChanged(object sender, TimePickerValueChangedEventArgs e)
     {
         if (isInitializingSchedule) return;
 
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        string timeString = e.NewTime.ToString(@"hh\:mm");
-        key.SetValue("LightTime", timeString, RegistryValueKind.String);
+        localSettings.Values["LightTime"] = e.NewTime.ToString(@"hh\:mm");
     }
 
     private void DarkMode_TimeChanged(object sender, TimePickerValueChangedEventArgs e)
     {
         if (isInitializingSchedule) return;
 
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        string timeString = e.NewTime.ToString(@"hh\:mm");
-        key.SetValue("DarkTime", timeString, RegistryValueKind.String);
+        localSettings.Values["DarkTime"] = e.NewTime.ToString(@"hh\:mm");
     }
 
-    private async void GetContextMenuState()
-    {
-        // get state
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32");
-        var value = key?.GetValue("LegacyContextMenu");
-
-        if (value == null)
-        {
-            ContextMenu.IsOn = true;
-            await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:P -P:E -Wait -ShowWindowMode:Hide cmd /c reg add ""HKEY_CURRENT_USER\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32"" /ve /t REG_SZ /d """" /f", CreateNoWindow = true }).WaitForExit());
-        }
-        else
-        {
-            ContextMenu.IsOn = (int)value == 1;
-        }
+    private void GetContextMenuState()
+    {        
+        ContextMenu.IsOn = Registry.CurrentUser.OpenSubKey(@"Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32") != null;
 
         isInitializingContextMenuState = false;
     }
@@ -144,31 +111,38 @@ public sealed partial class PersonalizationPage : Page
     {
         if (isInitializingContextMenuState) return;
 
-        // set value
         if (ContextMenu.IsOn)
         {
-            await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:P -P:E -Wait -ShowWindowMode:Hide cmd /c reg add ""HKEY_CURRENT_USER\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32"" /ve /t REG_SZ /d """" /f", CreateNoWindow = true }).WaitForExit());
+            await Task.Run(() => Process.Start(new ProcessStartInfo
+            {
+                FileName = "reg.exe",
+                Arguments = @"add ""HKEY_CURRENT_USER\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32"" /ve /t REG_SZ /d """" /f",
+                CreateNoWindow = true,
+                UseShellExecute = false
+            })?.WaitForExit());
         }
         else
         {
-            await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:P -P:E -Wait -ShowWindowMode:Hide cmd /c reg delete ""HKEY_CURRENT_USER\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}"" /f", CreateNoWindow = true }).WaitForExit());
+            await Task.Run(() => Process.Start(new ProcessStartInfo
+            {
+                FileName = "reg.exe",
+                Arguments = @"delete ""HKEY_CURRENT_USER\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}"" /f",
+                CreateNoWindow = true,
+                UseShellExecute = false
+            })?.WaitForExit());
         }
     }
 
     private void GetTrayIconsState()
     {
-        // get state
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        var value = key?.GetValue("AlwaysShowTrayIcons");
-
-        if (value == null)
+        if (localSettings.Values["AlwaysShowTrayIcons"] is int value)
         {
-            key?.SetValue("AlwaysShowTrayIcons", 1, RegistryValueKind.DWord);
-            TrayIcons.IsChecked = true;
+            TrayIcons.IsChecked = value == 1;
         }
         else
         {
-            TrayIcons.IsChecked = (int)value == 1;
+            localSettings.Values["AlwaysShowTrayIcons"] = 1;
+            TrayIcons.IsChecked = true;
         }
 
         isInitializingTrayIconsState = false;
@@ -178,51 +152,36 @@ public sealed partial class PersonalizationPage : Page
     {
         if (isInitializingTrayIconsState) return;
 
-        // set value
-        using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS");
-        key?.SetValue("AlwaysShowTrayIcons", TrayIcons.IsChecked ?? false ? 1 : 0, RegistryValueKind.DWord);
+        localSettings.Values["AlwaysShowTrayIcons"] = (TrayIcons.IsChecked ?? false) ? 1 : 0;
     }
 
     private void GetTaskbarAlignmentState()
     {
-        // get state
         using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced");
         var obj = key?.GetValue("TaskbarAl");
-        int alignment = obj is int i ? i : 1;
+        int alignment = obj is int i && (i == 0 || i == 1) ? i : 1;
 
-        TaskbarAlignment.SelectedIndex = alignment switch
-        {
-            0 => 0,
-            1 => 1,
-            _ => 1
-        };
-
-        // change header icon
-        TaskbarIcon.HeaderIcon = alignment switch
-        {
-            0 => new SymbolIcon(Symbol.AlignLeft),
-            1 => new SymbolIcon(Symbol.AlignCenter),
-            _ => null
-        };
+        TaskbarAlignment.SelectedIndex = alignment;
+        TaskbarIcon.HeaderIcon = alignment == 0 ? new SymbolIcon(Symbol.AlignLeft) : new SymbolIcon(Symbol.AlignCenter);
 
         isInitializingTaskbarAlignmentState = false;
     }
-
 
     private async void TaskbarAlignment_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (isInitializingTaskbarAlignmentState) return;
 
-        // set value
-        if (TaskbarAlignment.SelectedIndex == 0)
+        string value = TaskbarAlignment.SelectedIndex == 0 ? "0" : "1";
+        Symbol icon = TaskbarAlignment.SelectedIndex == 0 ? Symbol.AlignLeft : Symbol.AlignCenter;
+
+        await Task.Run(() => Process.Start(new ProcessStartInfo
         {
-            await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:P -P:E -Wait -ShowWindowMode:Hide reg add ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced"" /v TaskbarAl /t REG_DWORD /d 0 /f", CreateNoWindow = true }).WaitForExit());
-            TaskbarIcon.HeaderIcon = new SymbolIcon(Symbol.AlignLeft);
-        }
-        else
-        {
-            await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = @"-U:P -P:E -Wait -ShowWindowMode:Hide reg add ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced"" /v TaskbarAl /t REG_DWORD /d 1 /f", CreateNoWindow = true }).WaitForExit());
-            TaskbarIcon.HeaderIcon = new SymbolIcon(Symbol.AlignCenter);
-        }
+            FileName = "reg.exe",
+            Arguments = $@"add ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced"" /v TaskbarAl /t REG_DWORD /d {value} /f",
+            CreateNoWindow = true,
+            UseShellExecute = false
+        })?.WaitForExit());
+
+        TaskbarIcon.HeaderIcon = new SymbolIcon(icon);
     }
 }

@@ -1,4 +1,4 @@
-﻿using Microsoft.Win32;
+﻿using Windows.Storage;
 
 namespace AutoOS.Views.Installer;
 
@@ -7,6 +7,8 @@ public sealed partial class ApplicationsPage : Page
     private bool isInitializingMusicState = true;
     private bool isInitializingMessagingState = true;
     private bool isInitializingLaunchersState = true;
+
+    private readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 
     public ApplicationsPage()
     {
@@ -25,7 +27,6 @@ public sealed partial class ApplicationsPage : Page
 
     private void GetItems()
     {
-        // add music items
         Music.ItemsSource = new List<GridViewItem>
         {
             new GridViewItem { Text = "Spotify", ImageSource = "ms-appx:///Assets/Fluent/Spotify.png" },
@@ -34,14 +35,12 @@ public sealed partial class ApplicationsPage : Page
             new GridViewItem { Text = "Deezer Music", ImageSource = "ms-appx:///Assets/Fluent/DeezerMusic.png" }
         };
 
-        // add messaging items
         Messaging.ItemsSource = new List<GridViewItem>
         {
             new GridViewItem { Text = "WhatsApp", ImageSource = "ms-appx:///Assets/Fluent/Whatsapp.png" },
             new GridViewItem { Text = "Discord", ImageSource = "ms-appx:///Assets/Fluent/Discord.png" }
         };
 
-        // add launchers items
         Launchers.ItemsSource = new List<GridViewItem>
         {
             new GridViewItem { Text = "Epic Games", ImageSource = "ms-appx:///Assets/Fluent/EpicGames.png" },
@@ -51,9 +50,7 @@ public sealed partial class ApplicationsPage : Page
 
     private void GetMusic()
     {
-        // get music
-        using var key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS");
-        var selectedMusic = key?.GetValue("Music") as string;
+        var selectedMusic = localSettings.Values["Music"] as string;
         var musicItems = Music.ItemsSource as List<GridViewItem>;
         Music.SelectedItems.AddRange(
             selectedMusic?.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
@@ -61,15 +58,12 @@ public sealed partial class ApplicationsPage : Page
             .Where(ext => ext != null) ?? Enumerable.Empty<GridViewItem>()
         );
 
-
         isInitializingMusicState = false;
     }
 
     private void GetMessaging()
     {
-        // get messaging
-        using var key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS");
-        var selectedMessaging = key?.GetValue("Messaging") as string;
+        var selectedMessaging = localSettings.Values["Messaging"] as string;
         var messagingItems = Messaging.ItemsSource as List<GridViewItem>;
         Messaging.SelectedItems.AddRange(
             selectedMessaging?.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
@@ -82,9 +76,7 @@ public sealed partial class ApplicationsPage : Page
 
     private void GetLaunchers()
     {
-        // get launchers
-        using var key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS");
-        var selectedLaunchers = key?.GetValue("Launchers") as string;
+        var selectedLaunchers = localSettings.Values["Launchers"] as string;
         var launcherItems = Launchers.ItemsSource as List<GridViewItem>;
         Launchers.SelectedItems.AddRange(
             selectedLaunchers?.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
@@ -99,47 +91,35 @@ public sealed partial class ApplicationsPage : Page
     {
         if (isInitializingMusicState) return;
 
-        // set value
         var selectedMusic = Music.SelectedItems
             .Cast<GridViewItem>()
             .Select(item => item.Text)
             .ToArray();
 
-        using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
-        {
-            key?.SetValue("Music", string.Join(", ", selectedMusic), RegistryValueKind.String);
-        }
+        localSettings.Values["Music"] = string.Join(", ", selectedMusic);
     }
 
     private void Messaging_Changed(object sender, SelectionChangedEventArgs e)
     {
         if (isInitializingMessagingState) return;
 
-        // set value
         var selectedMessaging = Messaging.SelectedItems
             .Cast<GridViewItem>()
             .Select(item => item.Text)
             .ToArray();
 
-        using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
-        {
-            key?.SetValue("Messaging", string.Join(", ", selectedMessaging), RegistryValueKind.String);
-        }
+        localSettings.Values["Messaging"] = string.Join(", ", selectedMessaging);
     }
 
     private void Launchers_Changed(object sender, SelectionChangedEventArgs e)
     {
         if (isInitializingLaunchersState) return;
 
-        // set value
         var selectedLaunchers = Launchers.SelectedItems
             .Cast<GridViewItem>()
             .Select(item => item.Text)
             .ToArray();
 
-        using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
-        {
-            key?.SetValue("Launchers", string.Join(", ", selectedLaunchers), RegistryValueKind.String);
-        }
+        localSettings.Values["Launchers"] = string.Join(", ", selectedLaunchers);
     }
 }

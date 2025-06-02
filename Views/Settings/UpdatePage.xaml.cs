@@ -1,11 +1,14 @@
 ﻿using Microsoft.Win32;
 using System.Diagnostics;
+using Windows.Storage;
 
 namespace AutoOS.Views.Settings;
 
 public sealed partial class UpdatePage : Page
 {
     private bool isInitializingWindowsUpdateState = true;
+
+    private readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 
     public UpdatePage()
     {
@@ -42,11 +45,7 @@ public sealed partial class UpdatePage : Page
         });
 
         // toggle registry value
-        using (var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\AutoOS"))
-        {
-            int value = WindowsUpdate.IsOn ? 0 : 1;
-            key?.SetValue("PauseWindowsUpdate", value, RegistryValueKind.DWord);
-        }
+        localSettings.Values["PauseWindowsUpdate"] = WindowsUpdate.IsOn ? 0 : 1;
 
         // toggle windows update
         if (WindowsUpdate.IsOn)
@@ -104,4 +103,3 @@ public sealed partial class UpdatePage : Page
         WindowsUpdateInfo.Children.Clear();
     }
 }
-
