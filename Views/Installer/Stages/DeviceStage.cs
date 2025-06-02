@@ -1,6 +1,5 @@
 ﻿using AutoOS.Views.Installer.Actions;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.Win32;
 using System.Diagnostics;
 
 namespace AutoOS.Views.Installer.Stages;

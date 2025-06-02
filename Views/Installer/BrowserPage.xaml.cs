@@ -17,6 +17,13 @@ public sealed partial class BrowserPage : Page
         GetExtensions();
     }
 
+    protected override void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+        MainWindow.Instance.MarkVisited(nameof(BrowserPage));
+        MainWindow.Instance.CheckAllPagesVisited();
+    }
+
     public class GridViewItem
     {
         public string Text { get; set; }

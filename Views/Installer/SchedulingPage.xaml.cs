@@ -18,6 +18,13 @@ public sealed partial class SchedulingPage : Page
         GetAffinities();
     }
 
+    protected override void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+        MainWindow.Instance.MarkVisited(nameof(SchedulingPage));
+        MainWindow.Instance.CheckAllPagesVisited();
+    }
+
     private void GetCpuCount(params ComboBox[] comboBoxes)
     {
         isHyperThreadingEnabled = new ManagementObjectSearcher("SELECT NumberOfCores, NumberOfLogicalProcessors FROM Win32_Processor")

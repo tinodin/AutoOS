@@ -25,6 +25,13 @@ public sealed partial class PersonalizationPage : Page
         GetTrayIconsState();
     }
 
+    protected override void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+        MainWindow.Instance.MarkVisited(nameof(PersonalizationPage));
+        MainWindow.Instance.CheckAllPagesVisited();
+    }
+
     public class GridViewItem
     {
         public string ImageSource { get; set; }

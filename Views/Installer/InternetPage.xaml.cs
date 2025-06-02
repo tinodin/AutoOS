@@ -16,6 +16,13 @@ public sealed partial class InternetPage : Page
         GetWOLState();
     }
 
+    protected override void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+        MainWindow.Instance.MarkVisited(nameof(InternetPage));
+        MainWindow.Instance.CheckAllPagesVisited();
+    }
+
     private void GetWIFIState()
     {
         object value = localSettings.Values["WiFi"];

@@ -43,6 +43,51 @@ namespace AutoOS.Views
                 TitleBarName = "AutoOS Installer";
 
                 ((OverlappedPresenter)AppWindow.Presenter).Maximize();
+
+                foreach (var item in NavView.FooterMenuItems.OfType<NavigationViewItem>())
+                {
+                    item.IsEnabled = false;
+                }
+            }
+        }
+
+        private readonly HashSet<string> _visitedPages = new();
+        public IReadOnlyCollection<string> VisitedPages => _visitedPages;
+
+        public readonly string[] AllPages = new[]
+        {
+            "PersonalizationPage",
+            "ApplicationsPage",
+            "BrowserPage",
+            "DisplayPage",
+            "GraphicsPage",
+            "SchedulingPage",
+            "DevicesPage",
+            "InternetPage",
+            "PowerPage",
+            "ServicesPage",
+            "SecurityPage"
+        };
+
+        public void MarkVisited(string pageName)
+        {
+            _visitedPages.Add(pageName);
+        }
+
+        public bool AllPagesVisited()
+        {
+            return AllPages.All(p => _visitedPages.Contains(p));
+        }
+
+        public void CheckAllPagesVisited()
+        {
+            if (AllPagesVisited())
+            {
+                var navView = GetNavView();
+                foreach (var item in navView.FooterMenuItems.OfType<NavigationViewItem>())
+                {
+                    item.IsEnabled = true;
+                }
             }
         }
 

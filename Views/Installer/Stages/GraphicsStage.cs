@@ -1,7 +1,6 @@
 ﻿using AutoOS.Helpers;
 using AutoOS.Views.Installer.Actions;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.Win32;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Windows.Storage;

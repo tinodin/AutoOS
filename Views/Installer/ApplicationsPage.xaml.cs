@@ -19,6 +19,13 @@ public sealed partial class ApplicationsPage : Page
         GetLaunchers();
     }
 
+    protected override void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+        MainWindow.Instance.MarkVisited(nameof(ApplicationsPage));
+        MainWindow.Instance.CheckAllPagesVisited();
+    }
+
     public class GridViewItem
     {
         public string Text { get; set; }

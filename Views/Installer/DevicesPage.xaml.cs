@@ -18,6 +18,13 @@ public sealed partial class DevicesPage : Page
         GetIMODState();
     }
 
+    protected override void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+        MainWindow.Instance.MarkVisited(nameof(DevicesPage));
+        MainWindow.Instance.CheckAllPagesVisited();
+    }
+
     private void GetBluetoothState()
     {
         if (!localSettings.Values.TryGetValue("Bluetooth", out object value))

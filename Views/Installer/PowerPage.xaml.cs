@@ -16,6 +16,13 @@ public sealed partial class PowerPage : Page
         GetPowerServiceState();
     }
 
+    protected override void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+        MainWindow.Instance.MarkVisited(nameof(PowerPage));
+        MainWindow.Instance.CheckAllPagesVisited();
+    }
+
     private void GetIdleState()
     {
         var value = localSettings.Values["IdleStates"];

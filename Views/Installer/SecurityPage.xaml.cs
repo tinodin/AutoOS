@@ -23,6 +23,13 @@ public sealed partial class SecurityPage : Page
         GetProcessMitigationsState();
     }
 
+    protected override void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+        MainWindow.Instance.MarkVisited(nameof(SecurityPage));
+        MainWindow.Instance.CheckAllPagesVisited();
+    }
+
     private void GetWindowsDefenderState()
     {
         var value = localSettings.Values["WindowsDefender"];

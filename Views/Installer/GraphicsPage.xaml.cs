@@ -18,6 +18,13 @@ public sealed partial class GraphicsPage : Page
         GetMsiProfile();
     }
 
+    protected override void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+        MainWindow.Instance.MarkVisited(nameof(GraphicsPage));
+        MainWindow.Instance.CheckAllPagesVisited();
+    }
+
     public class GridViewItem
     {
         public string Text { get; set; }

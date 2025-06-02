@@ -28,6 +28,13 @@ public sealed partial class ServicesPage : Page
         GetAMDVRRState();
     }
 
+    protected override void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+        MainWindow.Instance.MarkVisited(nameof(ServicesPage));
+        MainWindow.Instance.CheckAllPagesVisited();
+    }
+
     private void GetWIFIState()
     {
         // define services and drivers

@@ -12,6 +12,13 @@ public sealed partial class DisplayPage : Page
         GetCruProfile();
     }
 
+    protected override void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+        MainWindow.Instance.MarkVisited(nameof(DisplayPage));
+        MainWindow.Instance.CheckAllPagesVisited();
+    }
+
     private void GetCruProfile()
     {
         var value = localSettings.Values["CruProfile"] as string;
