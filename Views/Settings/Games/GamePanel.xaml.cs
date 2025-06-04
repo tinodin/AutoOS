@@ -369,8 +369,6 @@ public sealed partial class GamePanel : UserControl
             catch { }
         }
 
-        //try { new ServiceController("Winmgmt").Stop(); } catch { }
-
         foreach (var process in Process.GetProcesses())
         {
             try
