@@ -553,14 +553,17 @@ public static class ProcessActions
                     EpicGamesHelper.DisableMinimizeToTray(EpicGamesHelper.ActiveEpicGamesAccountPath);
                     EpicGamesHelper.DisableNotifications(EpicGamesHelper.ActiveEpicGamesAccountPath);
 
+                    // get accountId
+                    string accountId = EpicGamesHelper.GetAccountData(file.FullName).AccountId;
+
                     // create backup folder
-                    Directory.CreateDirectory(Path.Combine(EpicGamesHelper.EpicGamesAccountDir, EpicGamesHelper.SanitizeDisplayName(file.FullName)));
+                    Directory.CreateDirectory(Path.Combine(EpicGamesHelper.EpicGamesAccountDir, accountId));
 
                     // copy config
-                    File.Copy(EpicGamesHelper.ActiveEpicGamesAccountPath, Path.Combine(EpicGamesHelper.EpicGamesAccountDir, EpicGamesHelper.SanitizeDisplayName(file.FullName), "GameUserSettings.ini"), true);
+                    File.Copy(EpicGamesHelper.ActiveEpicGamesAccountPath, Path.Combine(EpicGamesHelper.EpicGamesAccountDir, accountId, "GameUserSettings.ini"), true);
 
                     // create reg file
-                    File.WriteAllText(Path.Combine(Path.Combine(EpicGamesHelper.EpicGamesAccountDir, EpicGamesHelper.SanitizeDisplayName(file.FullName)), "accountId.reg"), $"Windows Registry Editor Version 5.00\r\n\r\n[HKEY_CURRENT_USER\\Software\\Epic Games\\Unreal Engine\\Identifiers]\r\n\"AccountId\"=\"{EpicGamesHelper.GetAccountData(file.FullName).AccountId}\"");
+                    File.WriteAllText(Path.Combine(Path.Combine(EpicGamesHelper.EpicGamesAccountDir, accountId), "accountId.reg"), $"Windows Registry Editor Version 5.00\r\n\r\n[HKEY_CURRENT_USER\\Software\\Epic Games\\Unreal Engine\\Identifiers]\r\n\"AccountId\"=\"{accountId}\"");
 
                     // launch epic games to get new token
                     await Task.Run(() => Process.Start(new ProcessStartInfo(EpicGamesHelper.EpicGamesPath) { WindowStyle = ProcessWindowStyle.Hidden }));
@@ -599,7 +602,7 @@ public static class ProcessActions
                     EpicGamesHelper.CloseEpicGames();
 
                     // update the backed up config
-                    File.Copy(file.FullName, Path.Combine(EpicGamesHelper.EpicGamesAccountDir, EpicGamesHelper.SanitizeDisplayName(file.FullName), "GameUserSettings.ini"), true);
+                    File.Copy(file.FullName, Path.Combine(EpicGamesHelper.EpicGamesAccountDir, accountId, "GameUserSettings.ini"), true);
 
                     await Task.Delay(1000);
 
@@ -794,7 +797,7 @@ public static class ProcessActions
             EpicGamesHelper.CloseEpicGames();
 
             // update the backed up config
-            File.Copy(EpicGamesHelper.ActiveEpicGamesAccountPath, Path.Combine(EpicGamesHelper.EpicGamesAccountDir, EpicGamesHelper.SanitizeDisplayName(EpicGamesHelper.ActiveEpicGamesAccountPath), "GameUserSettings.ini"), true);
+            File.Copy(EpicGamesHelper.ActiveEpicGamesAccountPath, Path.Combine(EpicGamesHelper.EpicGamesAccountDir, EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath).AccountId, "GameUserSettings.ini"), true);
         }
         else
         {

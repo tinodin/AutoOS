@@ -6,15 +6,18 @@ namespace AutoOS.Helpers
 {
     public static class CustomGameHelper
     {
-
-        public static void LoadGames()
+        public static async Task LoadGames()
         {
-            if (Directory.Exists(Path.Combine(PathHelper.GetAppDataFolderPath(), "Games")))
+            var gamesDir = Path.Combine(PathHelper.GetAppDataFolderPath(), "Games");
+            if (Directory.Exists(gamesDir))
             {
-                foreach (var file in Directory.GetFiles(Path.Combine(PathHelper.GetAppDataFolderPath(), "Games"), "*.json"))
+                var files = Directory.GetFiles(gamesDir, "*.json");
+
+                foreach (var file in files)
                 {
                     // read game json
-                    var game = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(file));
+                    var json = await Task.Run(() => File.ReadAllText(file));
+                    var game = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
 
                     // add game panel
                     var gamePanel = new GamePanel

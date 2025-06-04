@@ -48,30 +48,16 @@ namespace AutoOS.Helpers
                     return sr.ReadToEnd().Replace("\0", string.Empty);
                 }
 
-                string decryptedOffline = Decrypt(offlineData);
-                var offlineDoc = JsonDocument.Parse(decryptedOffline);
-                var offlineRoot = offlineDoc.RootElement[0];
+                var offlineRoot = JsonDocument.Parse(Decrypt(offlineData)).RootElement[0];
                 string accountId = offlineRoot.GetProperty("UserID").GetString();
 
-                string decryptedRememberMe = Decrypt(rememberMeData);
-                var rememberMeDoc = JsonDocument.Parse(decryptedRememberMe);
-                var rememberMeRoot = rememberMeDoc.RootElement[0];
+                var rememberMeRoot = JsonDocument.Parse(Decrypt(rememberMeData)).RootElement[0];
                 string displayName = rememberMeRoot.GetProperty("DisplayName").GetString();
                 string token = rememberMeRoot.GetProperty("Token").GetString();
                 int tokenUseCount = rememberMeRoot.GetProperty("TokenUseCount").GetInt32();
 
                 return (accountId, displayName, token, tokenUseCount);
             }
-        }
-
-        public static string SanitizeDisplayName(string file)
-        {
-            var (_, displayName, _, _) = GetAccountData(file);
-
-            return new string(displayName
-                .Where(c => !Path.GetInvalidFileNameChars().Contains(c))
-                .ToArray())
-                .TrimEnd('.', ' ');
         }
 
         public static bool ValidateData(string file)

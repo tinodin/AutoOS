@@ -1,9 +1,10 @@
-﻿using AutoOS.Views.Settings.Games;
-using AutoOS.Helpers;
+﻿using AutoOS.Helpers;
+using AutoOS.Views.Settings.Games;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System.Diagnostics;
 using System.Text.Json;
 using Windows.Storage;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AutoOS.Views.Settings;
 
@@ -12,6 +13,9 @@ public sealed partial class GamesPage : Page
     private bool isInitializingAccounts = true;
     public static GamesPage Instance { get; private set; }
     public GameGallery Games => games;
+
+    private readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
+
     public GamesPage()
     {
         Instance = this;
@@ -114,14 +118,14 @@ public sealed partial class GamesPage : Page
 
     private void SaveSortSettings()
     {
-        ApplicationData.Current.LocalSettings.Values["SortKey"] = currentSortKey;
-        ApplicationData.Current.LocalSettings.Values["SortAscending"] = ascending;
+        localSettings.Values["SortKey"] = currentSortKey;
+        localSettings.Values["SortAscending"] = ascending;
     }
 
     private void LoadSortSettings()
     {
-        var savedSortKey = ApplicationData.Current.LocalSettings.Values["SortKey"];
-        var savedAscending = ApplicationData.Current.LocalSettings.Values["SortAscending"];
+        var savedSortKey = localSettings.Values["SortKey"];
+        var savedAscending = localSettings.Values["SortAscending"];
 
         currentSortKey = savedSortKey as string ?? "Title";
         ascending = savedAscending is bool b ? b : true;
@@ -139,7 +143,7 @@ public sealed partial class GamesPage : Page
         await SteamHelper.LoadGames();
 
         // add custom games
-        CustomGameHelper.LoadGames();
+        await CustomGameHelper.LoadGames();
 
         // sort games
         LoadSortSettings();
@@ -224,12 +228,11 @@ public sealed partial class GamesPage : Page
 
     public void LoadEpicAccounts()
     {
-        // clear list
-        Accounts.ItemsSource = null;
+        string selectedAccount = null;
+
+        List<(string DisplayName, string AccountId)> accountList = new();
 
         // get all configs
-        List<string> accountList = new List<string>();
-
         if (File.Exists(EpicGamesHelper.EpicGamesPath))
         {
             foreach (var file in Directory.GetFiles(EpicGamesHelper.EpicGamesAccountDir, "GameUserSettings.ini", SearchOption.AllDirectories))
@@ -237,14 +240,16 @@ public sealed partial class GamesPage : Page
                 // check if data is valid
                 if (EpicGamesHelper.ValidateData(file))
                 {
+                    string accountId = EpicGamesHelper.GetAccountData(file).AccountId;
+
                     // update config if accountids match
-                    if (Directory.Exists(Path.Combine(EpicGamesHelper.EpicGamesAccountDir, EpicGamesHelper.SanitizeDisplayName(file))))
+                    if (Directory.Exists(Path.Combine(EpicGamesHelper.EpicGamesAccountDir, accountId)))
                     {
-                        if (File.Exists(EpicGamesHelper.ActiveEpicGamesAccountPath))
+                        if (File.Exists(EpicGamesHelper.ActiveEpicGamesAccountPath) && file != EpicGamesHelper.ActiveEpicGamesAccountPath)
                         {
-                            if (EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath).AccountId == EpicGamesHelper.GetAccountData(file).AccountId)
+                            if (EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath).AccountId == accountId)
                             {
-                                File.Copy(EpicGamesHelper.ActiveEpicGamesAccountPath, Path.Combine(EpicGamesHelper.EpicGamesAccountDir, EpicGamesHelper.SanitizeDisplayName(file), "GameUserSettings.ini"), true);
+                                File.Copy(EpicGamesHelper.ActiveEpicGamesAccountPath, Path.Combine(EpicGamesHelper.EpicGamesAccountDir, accountId, "GameUserSettings.ini"), true);
                             }
                         }
                     }
@@ -252,42 +257,60 @@ public sealed partial class GamesPage : Page
                     else
                     {
                         // create folder
-                        Directory.CreateDirectory(Path.Combine(EpicGamesHelper.EpicGamesAccountDir, EpicGamesHelper.SanitizeDisplayName(file)));
+                        Directory.CreateDirectory(Path.Combine(EpicGamesHelper.EpicGamesAccountDir, accountId));
 
                         // copy config
-                        File.Copy(EpicGamesHelper.ActiveEpicGamesAccountPath, Path.Combine(EpicGamesHelper.EpicGamesAccountDir, EpicGamesHelper.SanitizeDisplayName(file), "GameUserSettings.ini"), true);
+                        File.Copy(EpicGamesHelper.ActiveEpicGamesAccountPath, Path.Combine(EpicGamesHelper.EpicGamesAccountDir, accountId, "GameUserSettings.ini"), true);
 
                         // create reg file
-                        File.WriteAllText(Path.Combine(Path.Combine(EpicGamesHelper.EpicGamesAccountDir, EpicGamesHelper.SanitizeDisplayName(file)), "accountId.reg"), $"Windows Registry Editor Version 5.00\r\n\r\n[HKEY_CURRENT_USER\\Software\\Epic Games\\Unreal Engine\\Identifiers]\r\n\"AccountId\"=\"{EpicGamesHelper.GetAccountData(file).AccountId}\"");
+                        File.WriteAllText(Path.Combine(Path.Combine(EpicGamesHelper.EpicGamesAccountDir, accountId), "accountId.reg"), $"Windows Registry Editor Version 5.00\r\n\r\n[HKEY_CURRENT_USER\\Software\\Epic Games\\Unreal Engine\\Identifiers]\r\n\"AccountId\"=\"{accountId}\"");
                     }
 
-                    // add account to list
-                    if (!accountList.Contains(EpicGamesHelper.GetAccountData(file).DisplayName))
+                    if (!accountList.Any(x => x.AccountId == accountId))
                     {
-                        accountList.Add(EpicGamesHelper.GetAccountData(file).DisplayName);
+                        accountList.Add((EpicGamesHelper.GetAccountData(file).DisplayName, accountId));
                     }
 
-                    // select active account
+                    // store which to select later
                     if (file == EpicGamesHelper.ActiveEpicGamesAccountPath)
                     {
-                        Accounts.SelectedItem = EpicGamesHelper.GetAccountData(file).DisplayName;
+                        selectedAccount = accountId;
                     }
                 }
-                // if not logged in or invalid data
-                else
-                {
+            }
 
+            // sort
+            accountList = accountList.OrderBy(x => x.DisplayName).ToList();
+            Accounts.Items.Clear();
+
+            if (accountList.Count == 0)
+            {
+                Accounts.Items.Add(new ComboBoxItem { Content = "Not logged in", IsEnabled = false });
+                Accounts.SelectedIndex = 0;
+                Accounts.IsEnabled = false;
+            }
+            else
+            {
+                Accounts.IsEnabled = true;
+
+                foreach (var (displayName, accountId) in accountList)
+                {
+                    var item = new ComboBoxItem
+                    {
+                        Content = displayName,
+                        Tag = accountId
+                    };
+
+                    Accounts.Items.Add(item);
+
+                    if (accountId == selectedAccount)
+                        Accounts.SelectedItem = item;
                 }
             }
         }
 
-        // sort accounts
-        accountList.Sort();
-        Accounts.ItemsSource = accountList;
-
         isInitializingAccounts = false;
     }
-
 
     private async void Accounts_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -296,11 +319,14 @@ public sealed partial class GamesPage : Page
         // close epic games launcher
         EpicGamesHelper.CloseEpicGames();
 
+        // get accountId
+        string accountId = (Accounts.SelectedItem as ComboBoxItem)?.Tag as string;
+
         // replace file
-        File.Copy(Path.Combine(EpicGamesHelper.EpicGamesAccountDir, Accounts.SelectedItem.ToString(), "GameUserSettings.ini"), EpicGamesHelper.ActiveEpicGamesAccountPath, true);
+        File.Copy(Path.Combine(EpicGamesHelper.EpicGamesAccountDir, accountId, "GameUserSettings.ini"), EpicGamesHelper.ActiveEpicGamesAccountPath, true);
 
         // replace accountid
-        Process.Start("regedit.exe", $"/s \"{Path.Combine(EpicGamesHelper.EpicGamesAccountDir, Accounts.SelectedItem.ToString(), Accounts.SelectedItem.ToString(), "accountId.reg")}\"");
+        Process.Start("regedit.exe", $"/s \"{Path.Combine(EpicGamesHelper.EpicGamesAccountDir, accountId, "accountId.reg")}\"");
 
         // launch epic games to get new token
         await Task.Run(() => Process.Start(new ProcessStartInfo(EpicGamesHelper.EpicGamesPath) { WindowStyle = ProcessWindowStyle.Hidden }));
@@ -537,8 +563,13 @@ public sealed partial class GamesPage : Page
                 // close epic games launcher
                 EpicGamesHelper.CloseEpicGames();
 
+                // get accountId
+                string accountId = EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath).AccountId;
+
                 // delete gameusersettings.ini
                 File.Delete(EpicGamesHelper.ActiveEpicGamesAccountPath);
+
+                Directory.Delete(Path.Combine(EpicGamesHelper.EpicGamesAccountDir, accountId));
 
                 // delay
                 await Task.Delay(500);
