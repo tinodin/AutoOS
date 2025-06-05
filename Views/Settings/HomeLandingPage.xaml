@@ -11,7 +11,7 @@
     <dev:MainLandingPage
         HeaderImage="{ThemeResource HeaderCover}"
         HeaderOverlayImage="{ThemeResource HeaderCover}"
-        HeaderSubtitleText="{x:Bind dev:ProcessInfoHelper.Version}"
+        HeaderSubtitleText="Windows App SDK 1.8"
         HeaderText="AutoOS Settings"
         JsonNavigationService="{x:Bind local:App.Current.NavService}">
         <dev:MainLandingPage.HeaderContent>
