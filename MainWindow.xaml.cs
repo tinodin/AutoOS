@@ -43,7 +43,13 @@ namespace AutoOS.Views
                 TitleBarName = "AutoOS Installer";
 
                 ((OverlappedPresenter)AppWindow.Presenter).Maximize();
+            }
+        }
 
+        private void RootGrid_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (!App.IsInstalled)
+            {
                 foreach (var item in NavView.FooterMenuItems.OfType<NavigationViewItem>())
                 {
                     item.IsEnabled = false;
