@@ -40,7 +40,7 @@ AutoOS is a WinUI3 application focused on automation to improve performance whil
 
 **Step 3:** Extract the ISO file
 
-**Step 4:** Define variables
+**Step 4:** Open cmd as admin and define these variables
 
 ```bat
 set EXTRACTED_ISO=
