@@ -53,10 +53,6 @@ public static class GamesStage
             ("Creating Fortnite QoS Policy", async () => await ProcessActions.RunPowerShell(@"New-NetQosPolicy -Name ""FortniteClient-Win64-Shipping.exe"" -AppPathNameMatchCondition ""FortniteClient-Win64-Shipping.exe"" -Precedence 127 -DSCPAction 46 -IPProtocol Both"), () => Fortnite == true),
         
             // create presentation mode entries
-            //("Creating presentation mode entries", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo("cmd", $@"/c ""{fortnitePath}\FortniteGame\Binaries\Win64\FortniteClient-Win64-Shipping.exe""") { CreateNoWindow = true }))), () => Fortnite == true),
-            //("Creating presentation mode entries", async () => await ProcessActions.Sleep(200), () => Fortnite == true),
-            //("Creating presentation mode entries", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.GetProcessesByName("FortniteClient-Win64-Shipping")[0].Kill())), () => Fortnite == true),
-
             ("Creating presentation mode entries", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo("cmd", $"/c \"{fortnitePath}\\FortniteGame\\Binaries\\Win64\\FortniteClient-Win64-Shipping.exe\"") { CreateNoWindow = true }))), () => Fortnite == true),
             ("Creating presentation mode entries", async () => await ProcessActions.Sleep(100), () => Fortnite == true),
             ("Creating presentation mode entries", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.GetProcessesByName("FortniteClient-Win64-Shipping")[0].Kill())), () => Fortnite == true),
