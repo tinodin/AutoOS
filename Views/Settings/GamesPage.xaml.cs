@@ -4,7 +4,6 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using System.Diagnostics;
 using System.Text.Json;
 using Windows.Storage;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AutoOS.Views.Settings;
 
