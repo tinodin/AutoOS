@@ -24,12 +24,14 @@ public static class GamesStage
 
         string fortnitePath = string.Empty;
 
+        Fortnite = true;
+
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
             // import fortnite settings
             ("Importing Fortnite settings", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c mkdir ""%LocalAppData%\FortniteGame\Saved\Config\WindowsClient"""), () => Fortnite == true),
             ("Importing Fortnite settings", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c copy /Y """ + Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "GameUserSettings.ini") + @""" ""%LocalAppData%\FortniteGame\Saved\Config\WindowsClient\GameUserSettings.ini"""), () => Fortnite == true),
-            ("Importing Fortnite settings", async () => await ProcessActions.RunNsudo("CurrentUser", @$"powershell -Command ""$content = Get-Content (Join-Path $env:LOCALAPPDATA 'FortniteGame\Saved\Config\WindowsClient\GameUserSettings.ini') -Raw; $content = $content.Replace('FrameRateLimit=', 'FrameRateLimit=' + '{GetDeviceCaps(GetDC(IntPtr.Zero), 116)}' + '.000000'); Set-Content -Path (Join-Path $env:LOCALAPPDATA 'FortniteGame\Saved\Config\WindowsClient\GameUserSettings.ini') -Value $content"""), () => Fortnite == true),
+            ("Importing Fortnite settings", async () => await ProcessActions.RunNsudo("CurrentUser", @$"powershell -Command ""$path = Join-Path $env:LOCALAPPDATA 'FortniteGame\Saved\Config\WindowsClient\GameUserSettings.ini'; $lines = Get-Content $path; $lines = $lines | ForEach-Object {{ if ($_ -like 'FrameRateLimit=*') {{ 'FrameRateLimit=' + {GetDeviceCaps(GetDC(IntPtr.Zero), 116)} + '.000000' }} else {{ $_ }} }}; Set-Content -Path $path -Value $lines"""), () => Fortnite == true),
 
             // set gpu preference to high performance for fortnite
             ("Setting GPU Preference to high performance for Fortnite", async () => await ProcessActions.RunCustom(async () => fortnitePath = await Task.Run(() => JsonDocument.Parse(File.ReadAllText(@"C:\ProgramData\Epic\UnrealEngineLauncher\LauncherInstalled.dat")).RootElement.GetProperty("InstallationList").EnumerateArray().FirstOrDefault(e => e.GetProperty("AppName").GetString() == "Fortnite").GetProperty("InstallLocation").GetString())), () => Fortnite == true),
