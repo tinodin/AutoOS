@@ -102,10 +102,10 @@ namespace AutoOS.Helpers
 
         public static async Task LoadGames()
         {
-            if (File.Exists(EpicGamesHelper.EpicGamesPath))
+            if (File.Exists(EpicGamesPath) && Directory.Exists(EpicGamesMainfestDir))
             {
                 // for each manifest
-                foreach (var file in Directory.GetFiles(EpicGamesHelper.EpicGamesMainfestDir, "*.item", SearchOption.TopDirectoryOnly))
+                foreach (var file in Directory.GetFiles(EpicGamesMainfestDir, "*.item", SearchOption.TopDirectoryOnly))
                 {
                     // read file
                     var itemJson = JsonNode.Parse(await File.ReadAllTextAsync(file));
