@@ -1,6 +1,5 @@
 ﻿using AutoOS.Views.Installer.Actions;
 using Microsoft.UI.Xaml.Media;
-using System.Diagnostics;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -20,7 +19,7 @@ public static class DeviceStage
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
             // disable write-cache buffer flushing on all drives
-            ("Disabling write-cache buffer flushing on all drives", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"cmd /c for /f ""tokens=*"" %i in ('reg query ""HKLM\SYSTEM\CurrentControlSet\Enum\SCSI""^| findstr ""HKEY""') do for /f ""tokens=*"" %a in ('reg query ""%i""^| findstr ""HKEY""') do reg.exe add ""%a\Device Parameters\Disk"" /v ""CacheIsPowerProtected"" /t REG_DWORD /d 1 /f > NUL 2>&1 & for /f ""tokens=*"" %i in ('reg query ""HKLM\SYSTEM\CurrentControlSet\Enum\SCSI""^| findstr ""HKEY""') do for /f ""tokens=*"" %a in ('reg query ""%i""^| findstr ""HKEY""') do reg.exe add ""%a\Device Parameters\Disk"" /v ""UserWriteCacheSetting"" /t REG_DWORD /d 1 /f"), null),
+            ("Disabling write-cache buffer flushing on all drives", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"cmd /c for /f ""tokens=*"" %i in ('reg query ""HKLM\SYSTEM\CurrentControlSet\Enum\SCSI""^| findstr ""HKEY""') do for /f ""tokens=*"" %a in ('reg query ""%i""^| findstr ""HKEY""') do reg.exe add ""%a\Device Parameters\Disk"" /v ""CacheIsPowerProtected"" /t REG_DWORD /d 1 /f & for /f ""tokens=*"" %i in ('reg query ""HKLM\SYSTEM\CurrentControlSet\Enum\SCSI""^| findstr ""HKEY""') do for /f ""tokens=*"" %a in ('reg query ""%i""^| findstr ""HKEY""') do reg.exe add ""%a\Device Parameters\Disk"" /v ""UserWriteCacheSetting"" /t REG_DWORD /d 1 /f"), null),
 
             // disable drive powersaving features
             ("Disabling drive powersaving features", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"cmd /c for %a in (EnableHIPM EnableDIPM EnableHDDParking) do for /f ""delims="" %b in ('reg query ""HKLM\SYSTEM\CurrentControlSet\Services"" /s /f ""%a"" ^| findstr ""HKEY""') do reg.exe add ""%b"" /v ""%a"" /t REG_DWORD /d 0 /f"), null),

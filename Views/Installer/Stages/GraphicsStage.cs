@@ -2,7 +2,6 @@
 using AutoOS.Views.Installer.Actions;
 using Microsoft.UI.Xaml.Media;
 using System.Diagnostics;
-using System.Text.RegularExpressions;
 using Windows.Storage;
 
 namespace AutoOS.Views.Installer.Stages;
@@ -27,12 +26,6 @@ public static class GraphicsStage
         int stagePercentage = 5;
 
         var (_, _, newestDownloadUrl) = await NvidiaHelper.CheckUpdate();
-
-        using var client = new HttpClient();
-        string html = client.GetStringAsync("https://www.techspot.com/downloads/drivers/essentials/nvidia-geforce/").Result;
-        string pattern = @"<title>.*?(\d+\.\d+).*?</title>";
-        var match = Regex.Match(html, pattern);
-        string version = match.Groups[1].Value;
 
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {

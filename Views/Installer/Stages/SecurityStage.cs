@@ -71,7 +71,7 @@ public static class SecurityStage
             ("Disabling Smartscreen", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer"" /v SmartScreenEnabled /t REG_SZ /d ""Off"" /f"), null),
             ("Disabling Smartscreen", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Edge\SmartScreenEnabled"" /ve /t REG_DWORD /d 0 /f"), null),
             ("Disabling Smartscreen", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\System"" /v EnableSmartScreen /t REG_DWORD /d 0 /f"), null),
-            ("Disabling Smartscreen", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"cmd /c taskkill /f /im smartscreen.exe > nul 2>&1 & ren C:\Windows\System32\smartscreen.exe smartscreen.exee"), null),
+            ("Disabling Smartscreen", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"cmd /c taskkill /f /im smartscreen.exe & ren C:\Windows\System32\smartscreen.exe smartscreen.exee"), null),
 
             // disable windows marking file attachments with information about their zone of origin
             ("Disabling windows marking file attachments with information about their zone of origin", async () => await ProcessActions.RunNsudo("CurrentUser", @"reg add ""HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Attachments"" /v SaveZoneInformation /t REG_DWORD /d 1 /f"), null),
