@@ -487,6 +487,29 @@ public sealed partial class ServicesPage : Page
             await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build", folderName, "Services-Enable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
         }
 
+        if (isChecked)
+        {
+            // declare services and drivers
+            var groups = new[]
+            {
+                (new[] { "swenum" }, 3),
+            };
+
+            // set start values
+            foreach (var group in groups)
+            {
+                foreach (var service in group.Item1)
+                {
+                    using (var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}", writable: true))
+                    {
+                        if (key == null) continue;
+
+                        Registry.SetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\{service}", "Start", group.Item2);
+                    }
+                }
+            }
+        }
+
         // build service list
         await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $@"-U:T -P:E -Wait -ShowWindowMode:Hide ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "service-list-builder.exe")}"" --config ""{Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "lists.ini")}"" --disable-service-warning --output-dir ""{Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")}""", CreateNoWindow = true }).WaitForExitAsync();
 
@@ -597,6 +620,29 @@ public sealed partial class ServicesPage : Page
 
             // enable services
             await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build", folderName, "Services-Enable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+        }
+
+        if (isChecked)
+        {
+            // declare services and drivers
+            var groups = new[]
+            {
+                (new[] { "pcw" }, 0),
+            };
+
+            // set start values
+            foreach (var group in groups)
+            {
+                foreach (var service in group.Item1)
+                {
+                    using (var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}", writable: true))
+                    {
+                        if (key == null) continue;
+
+                        Registry.SetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\{service}", "Start", group.Item2);
+                    }
+                }
+            }
         }
 
         // build service list
@@ -721,6 +767,29 @@ public sealed partial class ServicesPage : Page
             await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build", folderName, "Services-Enable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
         }
 
+        if (isChecked)
+        {
+            // declare services and drivers
+            var groups = new[]
+            {
+                (new[] { "msisadrv" }, 0),
+            };
+
+            // set start values
+            foreach (var group in groups)
+            {
+                foreach (var service in group.Item1)
+                {
+                    using (var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}", writable: true))
+                    {
+                        if (key == null) continue;
+
+                        Registry.SetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\{service}", "Start", group.Item2);
+                    }
+                }
+            }
+        }
+
         // build service list
         await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $@"-U:T -P:E -Wait -ShowWindowMode:Hide ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "service-list-builder.exe")}"" --config ""{Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "lists.ini")}"" --disable-service-warning --output-dir ""{Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")}""", CreateNoWindow = true }).WaitForExitAsync();
 
@@ -831,6 +900,29 @@ public sealed partial class ServicesPage : Page
 
             // enable services
             await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build", folderName, "Services-Enable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+        }
+
+        if (isChecked)
+        {
+            // declare services and drivers
+            var groups = new[]
+            {
+                (new[] { "mssmbios" }, 1),
+            };
+
+            // set start values
+            foreach (var group in groups)
+            {
+                foreach (var service in group.Item1)
+                {
+                    using (var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}", writable: true))
+                    {
+                        if (key == null) continue;
+
+                        Registry.SetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\{service}", "Start", group.Item2);
+                    }
+                }
+            }
         }
 
         // build service list
@@ -961,6 +1053,29 @@ public sealed partial class ServicesPage : Page
 
             // enable services
             await Process.Start(new ProcessStartInfo { FileName = nsudoPath, Arguments = $"-U:T -P:E -Wait -ShowWindowMode:Hide \"{Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build", folderName, "Services-Enable.bat")}\"", CreateNoWindow = true }).WaitForExitAsync();
+        }
+
+        if (isChecked)
+        {
+            // declare services and drivers
+            var groups = new[]
+            {
+                (new[] { "AMD External Events Utility" }, 2),
+            };
+
+            // set start values
+            foreach (var group in groups)
+            {
+                foreach (var service in group.Item1)
+                {
+                    using (var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}", writable: true))
+                    {
+                        if (key == null) continue;
+
+                        Registry.SetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\{service}", "Start", group.Item2);
+                    }
+                }
+            }
         }
 
         // build service list
