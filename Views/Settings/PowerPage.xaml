@@ -36,7 +36,16 @@
                             Description="Disabling leads to a lower latency at the expense of higher temperatures and power consumption. Do not disable if you have hyperthreading enabled."
                             Header="Idle States"
                             IsClickEnabled="False">
-                            <ToggleSwitch x:Name="IdleStates" Toggled="IdleStates_Toggled" />
+                            <StackPanel Orientation="Horizontal">
+                                <ToggleSwitch x:Name="IdleStates" Toggled="IdleStates_Toggled" />
+                                <ProgressRing
+                                    x:Name="IdleStatesProgress"
+                                    Width="25"
+                                    Height="25"
+                                    Margin="10,0,0,0"
+                                    Background="Transparent"
+                                    IsActive="True" />
+                            </StackPanel>
                         </dev:SettingsCard>
                         <dev:SettingsCard
                             Description="Disabling forces the use of BIOS power management instead of Windows. Only disable if you have a fully tweaked BIOS with cfglock/oclock enabled."

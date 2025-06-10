@@ -17,6 +17,9 @@ public sealed partial class PowerPage : Page
 
     public async void GetIdleState()
     {
+        // hide toggle switch
+        IdleStates.Visibility = Visibility.Collapsed;
+
         var serviceController = new ServiceController("Power");
 
         if (serviceController.Status != ServiceControllerStatus.Running)
@@ -35,6 +38,12 @@ public sealed partial class PowerPage : Page
             };
             PowerInfo.Children.Add(infoBar);
 
+            // hide progress ring
+            IdleStatesProgress.Visibility = Visibility.Collapsed;
+
+            // show toggle
+            IdleStates.Visibility = Visibility.Visible;
+
             // disable idle states toggle
             IdleStates.IsEnabled = false;
             return;
@@ -49,6 +58,12 @@ public sealed partial class PowerPage : Page
                     return true;
             return false;
         });
+
+        // hide progress ring
+        IdleStatesProgress.Visibility = Visibility.Collapsed;
+
+        // show toggle
+        IdleStates.Visibility = Visibility.Visible;
 
         // toggle idle state
         IdleStates.IsOn = idleEnabled;
