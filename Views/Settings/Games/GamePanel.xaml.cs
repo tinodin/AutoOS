@@ -208,6 +208,7 @@ public sealed partial class GamePanel : UserControl
                 Content = "Are you sure that you want to launch " + Title + " in service enabled state?",
                 PrimaryButtonText = "Yes",
                 SecondaryButtonText = "No",
+                DefaultButton = ContentDialogButton.Secondary,
                 XamlRoot = this.XamlRoot
             };
 
