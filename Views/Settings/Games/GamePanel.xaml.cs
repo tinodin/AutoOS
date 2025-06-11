@@ -25,7 +25,7 @@ public sealed partial class GamePanel : UserControl
     }
 
     public static readonly DependencyProperty TitleProperty =
-        DependencyProperty.Register("Title", typeof(string), typeof(HeaderTile), new PropertyMetadata(null));
+        DependencyProperty.Register("Title", typeof(string), typeof(GamePanel), new PropertyMetadata(null));
 
     public string Description
     {
@@ -34,10 +34,10 @@ public sealed partial class GamePanel : UserControl
     }
 
     public static readonly DependencyProperty DescriptionProperty =
-        DependencyProperty.Register("Description", typeof(string), typeof(HeaderTile), new PropertyMetadata(null));
+        DependencyProperty.Register("Description", typeof(string), typeof(GamePanel), new PropertyMetadata(null));
 
     public static readonly DependencyProperty SourceProperty =
-        DependencyProperty.Register("Source", typeof(object), typeof(HeaderTile), new PropertyMetadata(null));
+        DependencyProperty.Register("Source", typeof(object), typeof(GamePanel), new PropertyMetadata(null));
 
     public string Link
     {
@@ -46,7 +46,7 @@ public sealed partial class GamePanel : UserControl
     }
 
     public static readonly DependencyProperty LinkProperty =
-        DependencyProperty.Register("Link", typeof(string), typeof(HeaderTile), new PropertyMetadata(null));
+        DependencyProperty.Register("Link", typeof(string), typeof(GamePanel), new PropertyMetadata(null));
 
     private bool isScaledUp = false;
     private readonly TimeSpan animationDuration = TimeSpan.FromMilliseconds(300);
