@@ -295,7 +295,7 @@ public sealed partial class GamePanel : UserControl
             var contentDialog = new ContentDialog
             {
                 Title = "Attention Required",
-                Content = "Are you sure that you want to launch " + Title + " in service enabled state?",
+                Content = "Are you sure that you want to launch " + Title + " while Services & Drivers are enabled?",
                 PrimaryButtonText = "Yes",
                 SecondaryButtonText = "No",
                 DefaultButton = ContentDialogButton.Secondary,
