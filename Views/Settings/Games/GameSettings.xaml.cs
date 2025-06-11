@@ -20,7 +20,7 @@ public sealed partial class GameSettings : Page
     }
 
     public static readonly DependencyProperty TitleProperty =
-        DependencyProperty.Register("Title", typeof(string), typeof(HeaderTile), new PropertyMetadata(null));
+        DependencyProperty.Register("Title", typeof(string), typeof(GameSettings), new PropertyMetadata(null));
 
     public string InstallLocationDescription => $"Open the install location of {Title}";
 
@@ -101,7 +101,7 @@ public sealed partial class GameSettings : Page
                                 StartInfo = new ProcessStartInfo
                                 {
                                     FileName = "cmd.exe",
-                                    Arguments = "/C " + cmd,
+                                    Arguments = "/c " + cmd,
                                     CreateNoWindow = true,
                                 }
                             };

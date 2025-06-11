@@ -472,15 +472,6 @@ public sealed partial class GamePanel : UserControl
 
     private void LaunchExplorer_Click(object sender, RoutedEventArgs e)
     {
-        // start windhawk service
-        using (ServiceController service = new ServiceController("Windhawk"))
-        {
-            if (service.Status == ServiceControllerStatus.Stopped)
-            {
-                service.Start();
-            }
-        }
-
         // start audioendpoint builder
         using (ServiceController service = new ServiceController("AudioEndpointBuilder"))
         {
@@ -495,6 +486,15 @@ public sealed partial class GamePanel : UserControl
 
         // launch explorer
         Process.Start("explorer.exe");
+
+        // start windhawk service
+        using (ServiceController service = new ServiceController("Windhawk"))
+        {
+            if (service.Status == ServiceControllerStatus.Stopped)
+            {
+                service.Start();
+            }
+        }
     }
 
     private async void Settings_Click(object sender, RoutedEventArgs e)
