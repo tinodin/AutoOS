@@ -1,4 +1,6 @@
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.Win32;
 using System.Diagnostics;
@@ -46,22 +48,110 @@ public sealed partial class GamePanel : UserControl
     public static readonly DependencyProperty LinkProperty =
         DependencyProperty.Register("Link", typeof(string), typeof(HeaderTile), new PropertyMetadata(null));
 
-    private void AutoScrollHoverEffectView_PointerCanceled(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    private bool isScaledUp = false;
+    private readonly TimeSpan animationDuration = TimeSpan.FromMilliseconds(300);
+    private readonly CubicEase easingFunction = new CubicEase { EasingMode = EasingMode.EaseOut };
+
+    private void Animate(DependencyObject target, string property, double to, TimeSpan? duration = null)
     {
-        AutoScrollHoverEffectViewTitle.IsPlaying = false;
-        AutoScrollHoverEffectViewDescription.IsPlaying = false;
+        var anim = new DoubleAnimation
+        {
+            To = to,
+            Duration = duration ?? animationDuration,
+            EasingFunction = easingFunction,
+            EnableDependentAnimation = true
+        };
+
+        Storyboard.SetTarget(anim, target);
+        Storyboard.SetTargetProperty(anim, property);
+
+        var sb = new Storyboard();
+        sb.Children.Add(anim);
+        sb.Begin();
     }
 
-    private void AutoScrollHoverEffectView_PointerEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    private void AnimateProjection(double tiltX, double tiltY, double offsetX, double offsetY)
+    {
+        var shortDuration = TimeSpan.FromMilliseconds(80);
+        Animate(PanelProjection, "RotationX", tiltX, shortDuration);
+        Animate(PanelProjection, "RotationY", tiltY, shortDuration);
+        Animate(PanelProjection, "LocalOffsetX", offsetX, shortDuration);
+        Animate(PanelProjection, "LocalOffsetY", offsetY, shortDuration);
+    }
+
+    private void StartScaleAnimation(double toX, double toY)
+    {
+        Animate(PanelTransform, "ScaleX", toX);
+        Animate(PanelTransform, "ScaleY", toY);
+    }
+
+    private void ResetHoverEffects()
+    {
+        Animate(PanelProjection, "RotationX", 0);
+        Animate(PanelProjection, "RotationY", 0);
+        Animate(PanelProjection, "LocalOffsetX", 0);
+        Animate(PanelProjection, "LocalOffsetY", 0);
+        Animate(LightSpot, "Opacity", 0);
+    }
+
+    private void AutoScrollHoverEffectView_PointerEntered(object sender, PointerRoutedEventArgs e)
     {
         AutoScrollHoverEffectViewTitle.IsPlaying = true;
         AutoScrollHoverEffectViewDescription.IsPlaying = true;
     }
 
-    private void AutoScrollHoverEffectView_PointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    private void AutoScrollHoverEffectView_PointerMoved(object sender, PointerRoutedEventArgs e)
+    {
+        if (!isScaledUp)
+        {
+            StartScaleAnimation(1.02, 1.02);
+            isScaledUp = true;
+        }
+
+        var pos = e.GetCurrentPoint(Panel).Position;
+        double centerX = Panel.ActualWidth / 2;
+        double centerY = Panel.ActualHeight / 2;
+
+        double deltaX = pos.X - centerX;
+        double deltaY = pos.Y - centerY;
+
+        double maxTilt = 4;
+        double maxMove = 4;
+
+        double tiltX = -deltaY / centerY * maxTilt;
+        double tiltY = deltaX / centerX * maxTilt;
+        double translateX = deltaX / centerX * maxMove;
+        double translateY = deltaY / centerY * maxMove;
+
+        AnimateProjection(tiltX, tiltY, translateX, translateY);
+
+        Canvas.SetLeft(LightSpot, pos.X - LightSpot.Width / 2);
+        Canvas.SetTop(LightSpot, pos.Y - LightSpot.Height / 2);
+        LightSpot.Opacity = 0.35;
+    }
+
+    private void AutoScrollHoverEffectView_PointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        EndHoverEffect();
+    }
+
+    private void AutoScrollHoverEffectView_PointerCanceled(object sender, PointerRoutedEventArgs e)
+    {
+        EndHoverEffect();
+    }
+
+    private void AutoScrollHoverEffectView_PointerCaptureLost(object sender, PointerRoutedEventArgs e)
+    {
+        EndHoverEffect();
+    }
+
+    private void EndHoverEffect()
     {
         AutoScrollHoverEffectViewTitle.IsPlaying = false;
         AutoScrollHoverEffectViewDescription.IsPlaying = false;
+        ResetHoverEffects();
+        StartScaleAnimation(1.0, 1.0);
+        isScaledUp = false;
     }
 
     public string Launcher { get; set; }
@@ -449,7 +539,7 @@ public sealed partial class GamePanel : UserControl
         }
         else if (Launcher == "Ryujinx")
         {
-            
+
         }
 
         var gameSettings = new GameSettings

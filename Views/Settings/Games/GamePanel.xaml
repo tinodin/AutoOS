@@ -49,8 +49,10 @@
             Click="Launch_Click"
             CornerRadius="{StaticResource OverlayCornerRadius}"
             PointerCanceled="AutoScrollHoverEffectView_PointerCanceled"
+            PointerCaptureLost="AutoScrollHoverEffectView_PointerCaptureLost"
             PointerEntered="AutoScrollHoverEffectView_PointerEntered"
-            PointerExited="AutoScrollHoverEffectView_PointerExited">
+            PointerExited="AutoScrollHoverEffectView_PointerExited"
+            PointerMoved="AutoScrollHoverEffectView_PointerMoved">
             <Grid
                 Padding="16"
                 VerticalAlignment="Stretch"
@@ -60,11 +62,34 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
                 <dev:ImageEx
+                    CornerRadius="8"
+                    RenderTransformOrigin="0.5,0.5"
+                    Source="{x:Bind ImageSource}"
                     Width="192"
                     Height="256"
-                    CornerRadius="{StaticResource OverlayCornerRadius}"
-                    Source="{x:Bind ImageSource}"
-                    Stretch="Fill" />
+                    Stretch="UniformToFill">
+                    <dev:ImageEx.Projection>
+                        <PlaneProjection x:Name="PanelProjection" />
+                    </dev:ImageEx.Projection>
+                    <dev:ImageEx.RenderTransform>
+                        <CompositeTransform x:Name="PanelTransform" />
+                    </dev:ImageEx.RenderTransform>
+                </dev:ImageEx>
+                <Canvas IsHitTestVisible="False">
+                    <Ellipse
+                        x:Name="LightSpot"
+                        Width="175"
+                        Height="175"
+                        Opacity="0"
+                        RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.Fill>
+                            <RadialGradientBrush>
+                                <GradientStop Offset="0" Color="White" />
+                                <GradientStop Offset="1" Color="#00FFFFFF" />
+                            </RadialGradientBrush>
+                        </Ellipse.Fill>
+                    </Ellipse>
+                </Canvas>
                 <StackPanel
                     Grid.Row="1"
                     Orientation="Vertical"
