@@ -60,7 +60,7 @@ set DRIVERDIR=
 DISM /Apply-Image /ImageFile:%EXTRACTED_ISO%\sources\install.wim /Index:1 /ApplyDir:%TARGETDRIVE%
 ```
 
-**Step 6:** Create Panther directory and copy the [`unattend.xml`](https://github.com/tinodin/AutoOS/releases/latest/download/unattend.xml) into it.
+**Step 6:** Create Panther directory and move [`unattend.xml`](https://github.com/tinodin/AutoOS/releases/latest/download/unattend.xml) into the folder.
 
 ```bat
 mkdir %TARGETDRIVE%\Windows\Panther && explorer %TARGETDRIVE%\Windows\Panther
