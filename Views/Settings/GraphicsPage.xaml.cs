@@ -8,7 +8,8 @@ namespace AutoOS.Views.Settings;
 
 public sealed partial class GraphicsPage : Page
 {
-    private bool initialHDCPState = false;
+    private readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
+
     private bool isInitializingHDCPState = true;
 
     public GraphicsPage()
@@ -129,7 +130,6 @@ public sealed partial class GraphicsPage : Page
             if (Registry.GetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\{{4d36e968-e325-11ce-bfc1-08002be10318}}\000{i}", "ProviderName", null)?.ToString() == "NVIDIA" &&
                 (int?)Registry.GetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\{{4d36e968-e325-11ce-bfc1-08002be10318}}\000{i}", "RMHdcpKeyglobZero", null) == 0)
             {
-                initialHDCPState = true;
                 HDCP.IsOn = true;
             }
         }
@@ -181,6 +181,15 @@ public sealed partial class GraphicsPage : Page
         // delay
         await Task.Delay(400);
 
+        // restart driver
+        await Task.Run(() => Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "CRU", "restart64.exe")) { Arguments = "/q" })?.WaitForExit());
+
+        // apply profile
+        if (localSettings.Values["MsiProfile"] != null)
+        {
+            await Task.Run(() => Process.Start(new ProcessStartInfo(@"C:\Program Files (x86)\MSI Afterburner\MSIAfterburner.exe") { Arguments = "/Profile1 /q" })?.WaitForExit());
+        }
+
         // remove infobar
         NvidiaInfo.Children.Clear();
 
@@ -195,26 +204,11 @@ public sealed partial class GraphicsPage : Page
         };
         NvidiaInfo.Children.Add(infoBar);
 
-        // add restart button if needed
-        if (HDCP.IsOn != initialHDCPState)
-        {
-            infoBar.Title += " A restart is required to apply the change.";
-            infoBar.ActionButton = new Button
-            {
-                Content = "Restart",
-                HorizontalAlignment = HorizontalAlignment.Right
-            };
-            ((Button)infoBar.ActionButton).Click += (s, args) =>
-                Process.Start("shutdown", "/r /f /t 0");
-        }
-        else
-        {
-            // delay
-            await Task.Delay(2000);
+        // delay
+        await Task.Delay(2000);
 
-            // remove infobar
-            NvidiaInfo.Children.Clear();
-        }
+        // remove infobar
+        NvidiaInfo.Children.Clear();
     }
 
     private async void BrowseMsi_Click(object sender, RoutedEventArgs e)

@@ -1,5 +1,4 @@
-﻿using Microsoft.Win32;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Windows.Storage;
 
 namespace AutoOS.Views.Settings;
