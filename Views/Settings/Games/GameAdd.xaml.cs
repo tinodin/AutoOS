@@ -206,16 +206,19 @@ public sealed partial class GameAdd : Page
         {
             GameLocationValue.Text = file.Path;
 
-            string fileName = Path.GetFileNameWithoutExtension(file.Name);
-
-            int index = fileName.IndexOfAny(new char[] { '(', '[', 'v' });
-            if (index >= 0)
+            if (GameNameValue.Text == string.Empty)
             {
-                fileName = fileName.Substring(0, index).Trim();
-            }
+                string fileName = Path.GetFileNameWithoutExtension(file.Name);
 
-            GameNameValue.Text = fileName;
-            GameName_Changed(null, null);
+                int index = fileName.IndexOfAny(new char[] { '(', '[', 'v' });
+                if (index >= 0)
+                {
+                    fileName = fileName.Substring(0, index).Trim();
+                }
+
+                GameNameValue.Text = fileName;
+                GameName_Changed(null, null);
+            }               
         }
     }
 }
