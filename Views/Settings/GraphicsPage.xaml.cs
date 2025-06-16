@@ -15,10 +15,11 @@ public sealed partial class GraphicsPage : Page
     public GraphicsPage()
     {
         InitializeComponent();
-        GetGPUState();
+        LoadGpus();
         GetHDCPState();
     }
-    private async void GetGPUState()
+
+    private async void LoadGpus()
     {
         using (var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_VideoController"))
         {
@@ -31,31 +32,28 @@ public sealed partial class GraphicsPage : Page
                 {
                     if (name.Contains("NVIDIA", StringComparison.OrdinalIgnoreCase))
                     {
-                        GpuCard.HeaderIcon = new BitmapIcon { UriSource = new Uri("ms-appx:///Assets/Fluent/Nvidia.png"), ShowAsMonochrome = false };
-                        GpuCard.Header = "NVIDIA Driver";
-                        GpuCard.Description = "Current Version: " + (await Task.Run(() => Process.Start(new ProcessStartInfo("nvidia-smi", "--query-gpu=driver_version --format=csv,noheader") { CreateNoWindow = true, RedirectStandardOutput = true })?.StandardOutput.ReadToEndAsync()))?.Trim();
+                        Nvidia_SettingsGroup.Visibility = Visibility.Visible;
+                        Nvidia_SettingsGroup.Description = "Current Version: " + (await Task.Run(() => Process.Start(new ProcessStartInfo("nvidia-smi", "--query-gpu=driver_version --format=csv,noheader") { CreateNoWindow = true, RedirectStandardOutput = true })?.StandardOutput.ReadToEndAsync()))?.Trim();
+                        NvidiaUpdateCheck.IsChecked = true;
                     }
                     if (name.Contains("AMD", StringComparison.OrdinalIgnoreCase) || name.Contains("Radeon", StringComparison.OrdinalIgnoreCase))
                     {
-                        GpuCard.HeaderIcon = new BitmapIcon { UriSource = new Uri("ms-appx:///Assets/Fluent/Amd.png"), ShowAsMonochrome = false };
-                        GpuCard.Header = "AMD Driver";
+                        Amd_SettingsGroup.Visibility = Visibility.Visible;
+                        AmdUpdateCheck.IsChecked = true;
                     }
                     if (name.Contains("Intel", StringComparison.OrdinalIgnoreCase))
                     {
-                        GpuCard.HeaderIcon = new BitmapIcon { UriSource = new Uri("ms-appx:///Assets/Fluent/Intel.png"), ShowAsMonochrome = false };
-                        GpuCard.Header = "Intel Driver";
-                        GpuCard.Description = "Current Version: " + (version?.Split('.')[2] + "." + version?.Split('.')[3]);
+                        Intel_SettingsGroup.Description = "Current Version: " + (version?.Split('.')[2] + "." + version?.Split('.')[3]);
+                        IntelUpdateCheck.IsChecked = true;
                     }
                 }
             }
         }
-
-        UpdateCheck.IsChecked = true;
     }
 
-    private async void UpdateCheck_Checked(object sender, RoutedEventArgs e)
+    private async void NvidiaUpdateCheck_Checked(object sender, RoutedEventArgs e)
     {
-        if (UpdateCheck.Content.ToString().Contains("Update to"))
+        if (NvidiaUpdateCheck.Content.ToString().Contains("Update to"))
         {
             //UpdateCheck.CheckedContent = "Downloading the latest NVIDIA driver...";
 
@@ -67,59 +65,121 @@ public sealed partial class GraphicsPage : Page
         }
         else
         {
-            UpdateCheck.CheckedContent = "Checking for updates...";
+            NvidiaUpdateCheck.CheckedContent = "Checking for updates...";
 
-            using (var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_VideoController"))
+            try
             {
-                foreach (var obj in searcher.Get())
+                var (currentVersion, newestVersion, newestDownloadUrl) = await NvidiaHelper.CheckUpdate();
+
+                // delay
+                await Task.Delay(800);
+
+                // check if update is needed
+                if (string.Compare(newestVersion, currentVersion, StringComparison.Ordinal) > 0)
                 {
-                    string name = obj["Name"]?.ToString();
-
-                    if (name != null)
-                    {
-                        if (name.Contains("NVIDIA", StringComparison.OrdinalIgnoreCase))
-                        {
-                            try
-                            {
-                                var (currentVersion, newestVersion, newestDownloadUrl) = await NvidiaHelper.CheckUpdate();
-
-                                // delay
-                                await Task.Delay(800);
-
-                                // check if update is needed
-                                if (string.Compare(newestVersion, currentVersion, StringComparison.Ordinal) > 0)
-                                {
-                                    UpdateCheck.IsChecked = false;
-                                    UpdateCheck.Content = "Update to " + newestVersion;
-                                }
-                                else if (string.Compare(newestVersion, currentVersion, StringComparison.Ordinal) == 0)
-                                {
-                                    UpdateCheck.IsChecked = false;
-                                    UpdateCheck.Content = "No updates available";
-                                }
-                            }
-                            catch
-                            {
-                                // delay
-                                await Task.Delay(800);
-
-                                // connection failed message
-                                UpdateCheck.IsChecked = false;
-                                UpdateCheck.Content = "Failed to check for updates";
-                            }
-                        }
-                        if (name.Contains("AMD", StringComparison.OrdinalIgnoreCase) || name.Contains("Radeon", StringComparison.OrdinalIgnoreCase))
-                        {
-
-                        }
-                        if (name.Contains("Intel", StringComparison.OrdinalIgnoreCase))
-                        {
-
-                        }
-                    }
+                    NvidiaUpdateCheck.IsChecked = false;
+                    NvidiaUpdateCheck.Content = "Update to " + newestVersion;
+                }
+                else if (string.Compare(newestVersion, currentVersion, StringComparison.Ordinal) == 0)
+                {
+                    NvidiaUpdateCheck.IsChecked = false;
+                    NvidiaUpdateCheck.Content = "No updates available";
                 }
             }
-        }  
+            catch
+            {
+                // delay
+                await Task.Delay(800);
+
+                // connection failed message
+                NvidiaUpdateCheck.IsChecked = false;
+                NvidiaUpdateCheck.Content = "Failed to check for updates";
+            }
+        }
+    }
+
+    private async void AmdUpdateCheck_Checked(object sender, RoutedEventArgs e)
+    {
+        if (AmdUpdateCheck.Content.ToString().Contains("Update to"))
+        {
+
+        }
+        else
+        {
+            AmdUpdateCheck.CheckedContent = "Checking for updates...";
+
+            try
+            {
+                string currentVersion = "1";
+                string newestVersion = "2";
+
+                // delay
+                await Task.Delay(800);
+
+                // check if update is needed
+                if (string.Compare(newestVersion, currentVersion, StringComparison.Ordinal) > 0)
+                {
+                    AmdUpdateCheck.IsChecked = false;
+                    AmdUpdateCheck.Content = "Update to " + newestVersion;
+                }
+                else if (string.Compare(newestVersion, currentVersion, StringComparison.Ordinal) == 0)
+                {
+                    AmdUpdateCheck.IsChecked = false;
+                    AmdUpdateCheck.Content = "No updates available";
+                }
+            }
+            catch
+            {
+                // delay
+                await Task.Delay(800);
+
+                // connection failed message
+                AmdUpdateCheck.IsChecked = false;
+                AmdUpdateCheck.Content = "Failed to check for updates";
+            }
+        }
+    }
+
+    private async void IntelUpdateCheck_Checked(object sender, RoutedEventArgs e)
+    {
+        if (IntelUpdateCheck.Content.ToString().Contains("Update to"))
+        {
+
+        }
+        else
+        {
+            IntelUpdateCheck.CheckedContent = "Checking for updates...";
+
+            try
+            {
+                string currentVersion = "1";
+                string newestVersion = "2";
+
+                // delay
+                await Task.Delay(800);
+
+                // check if update is needed
+                if (string.Compare(newestVersion, currentVersion, StringComparison.Ordinal) > 0)
+                {
+                    IntelUpdateCheck.IsChecked = false;
+                    IntelUpdateCheck.Content = "Update to " + newestVersion;
+                }
+                else if (string.Compare(newestVersion, currentVersion, StringComparison.Ordinal) == 0)
+                {
+                    IntelUpdateCheck.IsChecked = false;
+                    IntelUpdateCheck.Content = "No updates available";
+                }
+            }
+            catch
+            {
+                // delay
+                await Task.Delay(800);
+
+                // connection failed message
+                IntelUpdateCheck.IsChecked = false;
+                IntelUpdateCheck.Content = "Failed to check for updates";
+            }
+        }
     }
 
     private void GetHDCPState()
@@ -142,10 +202,10 @@ public sealed partial class GraphicsPage : Page
         if (isInitializingHDCPState) return;
 
         // remove infobar
-        NvidiaInfo.Children.Clear();
+        GpuInfo.Children.Clear();
 
         // add infobar
-        NvidiaInfo.Children.Add(new InfoBar
+        GpuInfo.Children.Add(new InfoBar
         {
             Title = HDCP.IsOn ? "Enabling High-Bandwidth Digital Content Protection (HDCP)..." : "Disabling High-Bandwidth Digital Content Protection (HDCP)...",
             IsClosable = false,
@@ -191,7 +251,7 @@ public sealed partial class GraphicsPage : Page
         }
 
         // remove infobar
-        NvidiaInfo.Children.Clear();
+        GpuInfo.Children.Clear();
 
         // add infobar
         var infoBar = new InfoBar
@@ -202,13 +262,13 @@ public sealed partial class GraphicsPage : Page
             Severity = InfoBarSeverity.Success,
             Margin = new Thickness(5)
         };
-        NvidiaInfo.Children.Add(infoBar);
+        GpuInfo.Children.Add(infoBar);
 
         // delay
         await Task.Delay(2000);
 
         // remove infobar
-        NvidiaInfo.Children.Clear();
+        GpuInfo.Children.Clear();
     }
 
     private async void BrowseMsi_Click(object sender, RoutedEventArgs e)
