@@ -1,3 +1,8 @@
+# Credit: Revi Team
+# License: Attribution-NonCommercial-ShareAlike 4.0 International
+# Source: https://github.com/meetrevision/playbook/blob/main/src/Executables/SVCGROUP.ps1
+# Modified: Removed netprofm, TextInputManagementService, Appinfo, UserManager, ProfSvc, gpsvc, camsvc, StateRepository, CryptSvc in order to make them stoppable in service disabled state 
+
 $registryPath = "HKLM:\SYSTEM\ControlSet001\Services\"
 $services = @(
     "DisplayEnhancementService",
@@ -40,8 +45,17 @@ $services = @(
     "BrokerInfrastructure",
     "CoreMessagingRegistrar",
     "DPS",
+    "NcdAutoSetup",
     "AppXSvc",
-    "ClipSVC"
+    "ClipSVC",
+    "FDResPub",
+    "SSDPSRV",
+    "Dnscache",
+    "NlaSvc",
+    "LanmanWorkstation",
+    "KeyIso",
+    "VaultSvc",
+    "SamSs"
 )
 
 foreach ($service in $services) {

@@ -32,15 +32,15 @@ AutoOS is a WinUI3 application focused on automation to improve performance whil
 ## 🚀 Getting Started
 
 > [!NOTE]
-> You have to be logged into GitHub in order to be able to download the artifact
+> You must be logged into GitHub in order to be able to download the artifact
 
-**Step 1:** Download the latest Windows ISO from the latest action artifact [here](https://github.com/tinodin/uup-dump-get-windows-iso/actions/runs/15696031886) 
+**Step 1:** Download the latest Windows ISO from the latest action artifact [here](https://github.com/tinodin/uup-dump-get-windows-iso/actions/runs/15696031886). 
 
-**Step 2:** Extract the downloaded zip file
+**Step 2:** Extract the downloaded zip file.
 
-**Step 3:** Extract the ISO file
+**Step 3:** Extract the ISO file.
 
-**Step 4:** Open cmd as admin and define these variables
+**Step 4:** Open cmd as admin and define these variables:
 
 ```bat
 set EXTRACTED_ISO=
@@ -54,7 +54,7 @@ set TARGETDRIVE=
 set DRIVERDIR=
 ```
 
-**Step 5:** Apply `install.wim` to the newly created partition
+**Step 5:** Apply `install.wim` to the newly created partition.
 
 ```bat
 DISM /Apply-Image /ImageFile:%EXTRACTED_ISO%\sources\install.wim /Index:1 /ApplyDir:%TARGETDRIVE%
@@ -66,21 +66,63 @@ DISM /Apply-Image /ImageFile:%EXTRACTED_ISO%\sources\install.wim /Index:1 /Apply
 mkdir %TARGETDRIVE%\Windows\Panther && explorer %TARGETDRIVE%\Windows\Panther
 ```
 
-**Step 7:** Install drivers (Ethernet, WiFi, Bluetooth, etc.)
+**Step 7:** Install drivers (Ethernet, WiFi, Bluetooth, etc.).
 
 ```bat
 DISM /Image:%TARGETDRIVE%\ /Add-Driver /Driver:%DRIVERDIR% /Recurse
 ```
 
-**Step 8:** Create boot entry
+**Step 8:** Create the boot entry.
 
 ```bat
 bcdboot %TARGETDRIVE%\Windows
 ```
 
-## Credits
+## 🙏 Credits
 
-AMIT, Valleyofdoom, Revi Team, Imribiy, Calpyto, Spddl, djdallmann
+**Amitxv / Valleyofdoom:**  
+Thank you for your [PC-Tuning Guide](https://github.com/valleyofdoom/PC-Tuning) and your useful utilities:  
+- [AutoGpuAffinity](https://github.com/valleyofdoom/AutoGpuAffinity)  
+- [service-list-builder](https://github.com/valleyofdoom/service-list-builder)  
+- [TimerResolution](https://github.com/valleyofdoom/TimerResolution)  
+- [ReservedCpuSets](https://github.com/valleyofdoom/ReservedCpuSets)  
+
+Without your guide this project wouldn't exist. It inspired me to attempt to automate it and ultimately start this project.
+
+---
+
+**Revi Team:**  
+Thank you for [SVCGROUP.ps1](https://github.com/meetrevision/playbook/blob/main/src/Executables/SVCGROUP.ps1) and [useful registry keys](https://github.com/meetrevision/playbook/tree/main/src/Configuration/Tasks/registry), and for first introducing me to custom ISOs. Without the ReviOS project I don't know if I would have ever gotten into tweaking Windows.
+
+---
+
+**Imribiy:**  
+Thank you for your research on [Configuring services and features](https://github.com/imribiy/XOS/tree/main/configure-services-and-features) and [AMD GPU Tweaks](https://github.com/imribiy/amd-gpu-tweaks).  
+
+---
+
+**djdallmann:**  
+Thank you for your research on [Network Performance](https://github.com/djdallmann/GamingPCSetup/blob/master/CONTENT/RESEARCH/NETWORK/README.md).
+
+---
+
+**m417z (Michael Maltsev):**  
+Thank you for creating [Windhawk](https://github.com/ramensoftware/windhawk) and for helping me to publish my mod [Auto Theme Switcher](https://windhawk.net/mods/auto-theme-switcher).
+
+---
+
+**ghost1372 (Mahdi Hosseini):**  
+Thank you for creating [DevWinUI](https://github.com/ghost1372/DevWinUI). It inspired me to learn and rewrite this project in C# and WinUI3.
+
+---
+
+**rgl (Rui Lopes):**  
+Thank you for creating [uup-dump-get-windows-iso](https://github.com/rgl/uup-dump-get-windows-iso), which I modified to build the latest Windows release automatically to speed up and simplify AutoOS installation.
+
+---
+
+**cschneegans (Christoph Schneegans):**  
+Thank you for creating [unattend-generator](https://github.com/cschneegans/unattend-generator), which helps AutoOS installation to be seamless.
 
 ## 📜 License
 
