@@ -13,7 +13,7 @@ env:
   # Configuring Project
   AUTOOS_PROJECT_PATH: AutoOS.csproj
   APP_NAME: AutoOS
-  APP_VERSION: '1.0.0.18'
+  APP_VERSION: '1.0.0.19'
   APP_VERSION_SUFFIX: ''
   APP_VERSION_PREFIX: ''
 

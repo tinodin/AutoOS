@@ -22,12 +22,34 @@ public sealed partial class GameSettings : Page
     public static readonly DependencyProperty TitleProperty =
         DependencyProperty.Register("Title", typeof(string), typeof(GameSettings), new PropertyMetadata(null));
 
+    public string Developers
+    {
+        get { return (string)GetValue(DevelopersProperty); }
+        set { SetValue(DevelopersProperty, value); }
+    }
+
+    public static readonly DependencyProperty DevelopersProperty =
+        DependencyProperty.Register("Developers", typeof(string), typeof(GamePanel), new PropertyMetadata(null));
+
+    public string Description
+    {
+        get { return (string)GetValue(DescriptionProperty); }
+        set { SetValue(DescriptionProperty, value); }
+    }
+
+    public static readonly DependencyProperty DescriptionProperty =
+        DependencyProperty.Register("Description", typeof(string), typeof(GameSettings), new PropertyMetadata(null));
+
     public string InstallLocationDescription => $"Open the install location of {Title}";
 
     public static readonly DependencyProperty InstallLocationProperty =
     DependencyProperty.Register(nameof(InstallLocation), typeof(string), typeof(GameSettings), new PropertyMetadata(string.Empty));
     
-    public ImageSource ImageSource { get; set; }
+    public ImageSource ImageWide { get; set; }
+    public double Rating { get; set; }
+    public string PlayTime { get; set; }
+    public List<string> Genres { get; set; } = new();
+    public List<string> Features { get; set; } = new();
 
     public string InstallLocation
     {

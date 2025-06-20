@@ -5,9 +5,11 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using ValveKeyValue;
 using Windows.Graphics;
 using Windows.Storage;
 
@@ -606,14 +608,73 @@ public static class ProcessActions
 
                     await Task.Delay(1000);
 
-                    InstallPage.Info.Title = "Succesfully logged in as " + EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath).DisplayName + "...";
+                    InstallPage.Info.Title = $"Succesfully logged in as {EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath).DisplayName}...";
 
-                    await Task.Delay(500);
+                    await Task.Delay(1000);
 
                     return;
                 }
             }
         }
+    }
+
+    public static async Task EpicGamesLogin()
+    {
+        // launch epic games launcher
+        Process.Start(EpicGamesHelper.EpicGamesPath);
+
+        // check when logged in
+        while (true)
+        {
+            if (File.Exists(EpicGamesHelper.ActiveEpicGamesAccountPath))
+            {
+                if (EpicGamesHelper.ValidateData(EpicGamesHelper.ActiveEpicGamesAccountPath))
+                {
+                    break;
+                }
+            }
+
+            await Task.Delay(500);
+        }
+
+        // close epic games launcher
+        EpicGamesHelper.CloseEpicGames();
+
+        // disable tray and notifications
+        EpicGamesHelper.DisableMinimizeToTray(EpicGamesHelper.ActiveEpicGamesAccountPath);
+        EpicGamesHelper.DisableNotifications(EpicGamesHelper.ActiveEpicGamesAccountPath);
+
+        InstallPage.Info.Title = $"Succesfully logged in as {EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath).DisplayName}...";
+
+        await Task.Delay(1000);
+    }
+
+    public static async Task SteamLogin()
+    {
+        // launch steam
+        Process.Start(SteamHelper.SteamPath);
+
+        // check when logged in
+        while (true)
+        {
+            if (File.Exists(SteamHelper.SteamLoginUsersPath))
+            {
+                if (KVSerializer.Create(KVSerializationFormat.KeyValues1Text).Deserialize(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(File.ReadAllText(SteamHelper.SteamLoginUsersPath)))).Children.Count() > 0)
+                    break;
+            }
+
+            await Task.Delay(500);
+        }
+
+        // close steam
+        SteamHelper.CloseSteam();
+
+        var kv = KVSerializer.Create(KVSerializationFormat.KeyValues1Text)
+                             .Deserialize(new MemoryStream(Encoding.UTF8.GetBytes(File.ReadAllText(SteamHelper.SteamLoginUsersPath))));
+
+        InstallPage.Info.Title = $"Successfully logged in as {kv.Children.Select(c => c["AccountName"]?.ToString()).FirstOrDefault(name => !string.IsNullOrEmpty(name))}...";
+
+        await Task.Delay(1000);
     }
 
     public static async Task UpdateInvalidEpicGamesToken()
@@ -651,6 +712,8 @@ public static class ProcessActions
         EpicGamesHelper.DisableNotifications(EpicGamesHelper.ActiveEpicGamesAccountPath);
 
         InstallPage.Info.Title = "Succesfully logged in as " + EpicGamesHelper.ActiveEpicGamesAccountPath + " ...";
+
+        await Task.Delay(1000);
     }
 
     public static async Task RunImportEpicGamesLauncherGames()

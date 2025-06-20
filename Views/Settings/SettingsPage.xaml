@@ -106,6 +106,30 @@
                         </dev:SettingsExpander.ItemsHeader>
                     </dev:SettingsExpander>
                 </dev:SimpleSettingsGroup>
+                <dev:SimpleSettingsGroup Header="Games">
+                    <dev:SettingsCard Header="Ryujinx Location" HeaderIcon="{dev:FontIcon FontFamily={StaticResource SymbolThemeFontFamily}, Glyph=&#xE8A5;}">
+                        <dev:TextBox
+                            x:Name="RyujinxLocationValue"
+                            MinWidth="300"
+                            IsReadOnly="True"
+                            PlaceholderText="Ryujinx Location...">
+                            <dev:TextBox.Content>
+                                <Button Click="RyujinxLocation_Click" Content="&#xE838;" />
+                            </dev:TextBox.Content>
+                        </dev:TextBox>
+                    </dev:SettingsCard>
+                    <dev:SettingsCard Header="Ryujinx Data Location" HeaderIcon="{dev:FontIcon FontFamily={StaticResource SymbolThemeFontFamily}, Glyph=&#xE8B7;}">
+                        <dev:TextBox
+                            x:Name="RyujinxDataLocationValue"
+                            MinWidth="300"
+                            IsReadOnly="True"
+                            PlaceholderText="Ryujinx Data Location...">
+                            <dev:TextBox.Content>
+                                <Button Click="RyujinxDataLocation_Click" Content="&#xE838;" />
+                            </dev:TextBox.Content>
+                        </dev:TextBox>
+                    </dev:SettingsCard>
+                </dev:SimpleSettingsGroup>
                 <dev:SimpleSettingsGroup Header="Startup">
                     <dev:SettingsCard
                         Description="Completely hides the AutoOS Startup window."

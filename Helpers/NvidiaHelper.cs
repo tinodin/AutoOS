@@ -7,9 +7,9 @@ namespace AutoOS.Helpers
 {
     public static class NvidiaHelper
     {
-        private static readonly HttpClient httpClient = new HttpClient();
+        // Based on: https://github.com/ElPumpo/TinyNvidiaUpdateChecker
 
-        // credit: https://github.com/ElPumpo/TinyNvidiaUpdateChecker
+        private static readonly HttpClient httpClient = new HttpClient();
         public static async Task<(string currentVersion, string newestVersion, string newestDownloadUrl)> CheckUpdate()
         {
             bool isNotebook = false;

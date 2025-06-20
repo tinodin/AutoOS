@@ -1,17 +1,19 @@
 ﻿using AutoOS.Helpers;
 using AutoOS.Views.Settings.Games;
-using Microsoft.UI.Xaml.Media.Imaging;
 using System.Diagnostics;
-using System.Text.Json;
+using System.Text.RegularExpressions;
+using ValveKeyValue;
 using Windows.Storage;
 
 namespace AutoOS.Views.Settings;
 
 public sealed partial class GamesPage : Page
 {
-    private bool isInitializingAccounts = true;
+    private bool isInitializingEpicGamesAccounts = true;
+    private bool isInitializingSteamAccounts = true;
     public static GamesPage Instance { get; private set; }
     public GameGallery Games => games;
+    public Microsoft.UI.Xaml.Shapes.Ellipse EgDataStatus => EgDataStatusEllipse;
 
     private readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 
@@ -19,14 +21,11 @@ public sealed partial class GamesPage : Page
     {
         Instance = this;
         InitializeComponent();
+        LoadEpicGamesAccounts();
+        LoadSteamAccounts();
         LoadGames();
-        LoadEpicAccounts();
+        UpdateGridLayout();
     }
-
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = true
-    };
 
     private string currentSortKey = "Title";
     private bool ascending = true;
@@ -42,6 +41,22 @@ public sealed partial class GamesPage : Page
     private void SortByLauncher_Click(object sender, RoutedEventArgs e)
     {
         currentSortKey = "Launcher";
+        UpdateSortIcons();
+        ApplySort();
+        SaveSortSettings();
+    }
+
+    private void SortByPlayTime_Click(object sender, RoutedEventArgs e)
+    {
+        currentSortKey = "PlayTime";
+        UpdateSortIcons();
+        ApplySort();
+        SaveSortSettings();
+    }
+
+    private void SortByRating_Click(object sender, RoutedEventArgs e)
+    {
+        currentSortKey = "Rating";
         UpdateSortIcons();
         ApplySort();
         SaveSortSettings();
@@ -67,6 +82,8 @@ public sealed partial class GamesPage : Page
     {
         SortByName.Icon = currentSortKey == "Title" ? new FontIcon { Glyph = "\uE915" } : null;
         SortByLauncher.Icon = currentSortKey == "Launcher" ? new FontIcon { Glyph = "\uE915" } : null;
+        SortByPlayTime.Icon = currentSortKey == "PlayTime" ? new FontIcon { Glyph = "\uE915" } : null;
+        SortByRating.Icon = currentSortKey == "Rating" ? new FontIcon { Glyph = "\uE915" } : null;
 
         SortAscending.Icon = ascending ? new FontIcon { Glyph = "\uE915" } : null;
         SortDescending.Icon = !ascending ? new FontIcon { Glyph = "\uE915" } : null;
@@ -84,35 +101,51 @@ public sealed partial class GamesPage : Page
 
         if (panels.Count == 0) return;
 
-        IEnumerable<GamePanel> result;
-
-        if (currentSortKey == "Title")
+        IEnumerable<GamePanel> result = currentSortKey switch
         {
-            result = ascending
+            "Title" => ascending
                 ? panels.OrderBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase)
-                : panels.OrderByDescending(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase);
-        }
-        else
-        {
-            if (ascending)
-            {
-                result = panels
-                    .OrderBy(g => g.Launcher ?? "", StringComparer.CurrentCultureIgnoreCase)
-                    .ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase);
-            }
-            else
-            {
-                result = panels
-                    .OrderByDescending(g => g.Launcher ?? "", StringComparer.CurrentCultureIgnoreCase)
-                    .ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase);
-            }
-        }
+                : panels.OrderByDescending(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase),
+
+            "Launcher" => ascending
+                ? panels.OrderBy(g => g.Launcher ?? "", StringComparer.CurrentCultureIgnoreCase)
+                        .ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase)
+                : panels.OrderByDescending(g => g.Launcher ?? "", StringComparer.CurrentCultureIgnoreCase)
+                        .ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase),
+
+            "PlayTime" => ascending
+                ? panels.OrderBy(g => ParseMinutes(g.PlayTime))
+                        .ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase)
+                : panels.OrderByDescending(g => ParseMinutes(g.PlayTime))
+                        .ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase),
+            "Rating" => ascending
+                ? panels.OrderBy(g => g.Rating).ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase)
+                : panels.OrderByDescending(g => g.Rating).ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase),
+
+            _ => panels
+        };
 
         container.Children.Clear();
         foreach (var panel in result)
         {
             container.Children.Add(panel);
         }
+    }
+
+    private static int ParseMinutes(string time)
+    {
+        if (string.IsNullOrWhiteSpace(time))
+            return 0;
+
+        var match = Regex.Match(time, @"(?:(\d+)h)?\s*(\d+)m");
+        if (match.Success)
+        {
+            int hours = match.Groups[1].Success ? int.Parse(match.Groups[1].Value) : 0;
+            int minutes = int.Parse(match.Groups[2].Value);
+            return hours * 60 + minutes;
+        }
+
+        return 0;
     }
 
     private void SaveSortSettings()
@@ -135,191 +168,119 @@ public sealed partial class GamesPage : Page
 
     private async void LoadGames()
     {
-        // epic games
-        await EpicGamesHelper.LoadGames();
+        // reset
+        Games_SwitchPresenter.Value = true;
+        Games_SwitchPresenter.HorizontalAlignment = HorizontalAlignment.Center;
+        GamesGrid.Height = 350;
 
-        // steam
-        await SteamHelper.LoadGames();
-
-        // add custom games
-        await CustomGameHelper.LoadGames();
+        // load games
+        await Task.WhenAll(
+            EpicGamesHelper.LoadGames(),
+            SteamHelper.LoadGames(),
+            CustomGameHelper.LoadGames()
+        );
 
         // sort games
         LoadSortSettings();
 
-        // align games left
-        Games_SwitchPresenter.HorizontalAlignment = HorizontalAlignment.Left;
+        if (games.HeaderContent is StackPanel { Children.Count: 0 })
+        {
+            NoGamesInstalled.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            // set height to auto
+            GamesGrid.Height = Double.NaN;
+
+            // align games left
+            Games_SwitchPresenter.HorizontalAlignment = HorizontalAlignment.Left;
+        }
 
         // show game gallery
         Games_SwitchPresenter.Value = false;
     }
 
-    private async void AddCustomGame_Click(object sender, RoutedEventArgs e)
+    public void LoadEpicGamesAccounts()
     {
-        // show content dialog
-        var contentDialog = new ContentDialog
-        {
-            Title = "Add Game",
-            Content = new GameAdd(),
-            PrimaryButtonText = "Add",
-            CloseButtonText = "Cancel",
-            DefaultButton = ContentDialogButton.Primary,
-            XamlRoot = this.XamlRoot,
-        };
-
-        contentDialog.Resources["ContentDialogMinWidth"] = 850;
-        contentDialog.Resources["ContentDialogMaxWidth"] = 850;
-        contentDialog.Resources["ContentDialogMinHeight"] = 250;
-        contentDialog.Resources["ContentDialogMaxHeight"] = 850;
-
-        ContentDialogResult result = await contentDialog.ShowAsync();
-
-        if (result == ContentDialogResult.Primary)
-        {
-            // get data from gameadd
-            var gameAddPage = (GameAdd)contentDialog.Content;
-
-            // add game
-            var gamePanel = new GamePanel
-            {
-                Launcher = gameAddPage.Launcher,
-                LauncherLocation = gameAddPage.LauncherLocation,
-                DataLocation = gameAddPage.DataLocation,
-                InstallLocation = gameAddPage.GameLocation,
-                Title = gameAddPage.GameName,
-                Description = gameAddPage.GameDeveloper,
-                ImageSource = new BitmapImage(new Uri(gameAddPage.GameCoverUrl))
-            };
-
-            var stackPanel = (StackPanel)games.HeaderContent;
-
-            bool exists = stackPanel.Children
-                .OfType<GamePanel>()
-                .Any(g => g.Title == gamePanel.Title);
-
-            if (!exists)
-            {
-                stackPanel.Children.Add(gamePanel);
-            }
-
-            // save game data
-            var gameInfo = new
-            {
-                gameAddPage.Launcher,
-                gameAddPage.LauncherLocation,
-                gameAddPage.DataLocation,
-                gameAddPage.GameLocation,
-                gameAddPage.GameName,
-                gameAddPage.GameDeveloper,
-                gameAddPage.GameCoverUrl
-            };
-
-            Directory.CreateDirectory(Path.Combine(PathHelper.GetAppDataFolderPath(), "Games"));
-            File.WriteAllText(Path.Combine(PathHelper.GetAppDataFolderPath(), "Games", $"{string.Concat(gamePanel.Title.Split(Path.GetInvalidFileNameChars()))}.json"), JsonSerializer.Serialize(gameInfo, JsonOptions));
-
-            // sort games
-            LoadSortSettings();
-
-            // start watcher
-            gamePanel.CheckGameRunning();
-        }
-    }
-
-    public void LoadEpicAccounts()
-    {
-        string selectedAccount = null;
-
-        List<(string DisplayName, string AccountId)> accountList = new();
-
-        // get all configs
         if (File.Exists(EpicGamesHelper.EpicGamesPath))
         {
-            foreach (var file in Directory.GetFiles(EpicGamesHelper.EpicGamesAccountDir, "GameUserSettings.ini", SearchOption.AllDirectories))
+            EpicGames_SettingsGroup.Visibility = Visibility.Visible;
+
+            // get all accounts
+            var accounts = EpicGamesHelper.GetEpicGamesAccounts();
+
+            // reset ui elements
+            EpicGamesAccounts.Items.Clear();
+            EpicGamesAccounts.IsEnabled = accounts.Count > 0;
+            RemoveEpicGamesAccountButton.IsEnabled = accounts.Count > 0;
+
+            // add accounts to combobox
+            if (accounts.Count == 0)
             {
-                // check if data is valid
-                if (EpicGamesHelper.ValidateData(file))
-                {
-                    string accountId = EpicGamesHelper.GetAccountData(file).AccountId;
-
-                    // update config if accountids match
-                    if (Directory.Exists(Path.Combine(EpicGamesHelper.EpicGamesAccountDir, accountId)))
-                    {
-                        if (File.Exists(EpicGamesHelper.ActiveEpicGamesAccountPath) && file != EpicGamesHelper.ActiveEpicGamesAccountPath)
-                        {
-                            if (EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath).AccountId == accountId)
-                            {
-                                File.Copy(EpicGamesHelper.ActiveEpicGamesAccountPath, Path.Combine(EpicGamesHelper.EpicGamesAccountDir, accountId, "GameUserSettings.ini"), true);
-                            }
-                        }
-                    }
-                    // backup config if not already
-                    else
-                    {
-                        // create folder
-                        Directory.CreateDirectory(Path.Combine(EpicGamesHelper.EpicGamesAccountDir, accountId));
-
-                        // copy config
-                        File.Copy(EpicGamesHelper.ActiveEpicGamesAccountPath, Path.Combine(EpicGamesHelper.EpicGamesAccountDir, accountId, "GameUserSettings.ini"), true);
-
-                        // create reg file
-                        File.WriteAllText(Path.Combine(Path.Combine(EpicGamesHelper.EpicGamesAccountDir, accountId), "accountId.reg"), $"Windows Registry Editor Version 5.00\r\n\r\n[HKEY_CURRENT_USER\\Software\\Epic Games\\Unreal Engine\\Identifiers]\r\n\"AccountId\"=\"{accountId}\"");
-                    }
-
-                    if (!accountList.Any(x => x.AccountId == accountId))
-                    {
-                        accountList.Add((EpicGamesHelper.GetAccountData(file).DisplayName, accountId));
-                    }
-
-                    // store which to select later
-                    if (file == EpicGamesHelper.ActiveEpicGamesAccountPath)
-                    {
-                        selectedAccount = accountId;
-                    }
-                }
+                var notLoggedIn = new ComboBoxItem { Content = "Not logged in", IsEnabled = false };
+                EpicGamesAccounts.Items.Add(notLoggedIn);
+                EpicGamesAccounts.SelectedItem = notLoggedIn;
+                EpicGamesAccounts.IsEnabled = false;
+                RemoveEpicGamesAccountButton.IsEnabled = false;
             }
-
-            // sort
-            accountList = accountList.OrderBy(x => x.DisplayName).ToList();
-            Accounts.Items.Clear();
-
-            if (accountList.Count == 0)
+            else if (!accounts.Any(a => a.IsActive))
             {
-                Accounts.Items.Add(new ComboBoxItem { Content = "Not logged in", IsEnabled = false });
-                Accounts.SelectedIndex = 0;
-                Accounts.IsEnabled = false;
-            }
-            else
-            {
-                Accounts.IsEnabled = true;
+                var notLoggedIn = new ComboBoxItem { Content = "Not logged in", IsEnabled = false };
+                EpicGamesAccounts.Items.Add(notLoggedIn);
+                EpicGamesAccounts.SelectedItem = notLoggedIn;
+                RemoveEpicGamesAccountButton.IsEnabled = false;
 
-                foreach (var (displayName, accountId) in accountList)
+                foreach (var account in accounts)
                 {
                     var item = new ComboBoxItem
                     {
-                        Content = displayName,
-                        Tag = accountId
+                        Content = account.DisplayName,
+                        Tag = account.AccountId
                     };
 
-                    Accounts.Items.Add(item);
+                    EpicGamesAccounts.Items.Add(item);
+                }
+            }
+            else
+            {
+                foreach (var account in accounts)
+                {
+                    var item = new ComboBoxItem
+                    {
+                        Content = account.DisplayName,
+                        Tag = account.AccountId
+                    };
 
-                    if (accountId == selectedAccount)
-                        Accounts.SelectedItem = item;
+                    EpicGamesAccounts.Items.Add(item);
+
+                    if (account.IsActive)
+                        EpicGamesAccounts.SelectedItem = item;
                 }
             }
         }
 
-        isInitializingAccounts = false;
+        isInitializingEpicGamesAccounts = false;
     }
 
-    private async void Accounts_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private async void EpicGamesAccounts_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (isInitializingAccounts) return;
+        if (isInitializingEpicGamesAccounts) return;
 
         // close epic games launcher
         EpicGamesHelper.CloseEpicGames();
 
+        // update config
+        if (File.Exists(EpicGamesHelper.ActiveEpicGamesAccountPath))
+        {
+            var (oldAccountId, _, _, _) = EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath);
+
+            string accountDir = Path.Combine(EpicGamesHelper.EpicGamesAccountDir, oldAccountId);
+            if (Directory.Exists(accountDir))
+                File.Copy(EpicGamesHelper.ActiveEpicGamesAccountPath, Path.Combine(accountDir, "GameUserSettings.ini"), true);
+        }
+
         // get accountId
-        string accountId = (Accounts.SelectedItem as ComboBoxItem)?.Tag as string;
+        string accountId = (EpicGamesAccounts.SelectedItem as ComboBoxItem)?.Tag as string;
 
         // replace file
         File.Copy(Path.Combine(EpicGamesHelper.EpicGamesAccountDir, accountId, "GameUserSettings.ini"), EpicGamesHelper.ActiveEpicGamesAccountPath, true);
@@ -363,9 +324,11 @@ public sealed partial class GamesPage : Page
         // close epic games launcher
         EpicGamesHelper.CloseEpicGames();
 
-        // load accounts again to update the new login data
-        isInitializingAccounts = true;
-        LoadEpicAccounts();
+        // refresh combobox
+        isInitializingEpicGamesAccounts = true;
+        LoadEpicGamesAccounts();
+        await EpicGamesHelper.LoadGames();
+        LoadSortSettings();
     }
 
     private async void UpdateInvalidEpicGamesToken()
@@ -427,8 +390,10 @@ public sealed partial class GamesPage : Page
         });
 
         // refresh combobox
-        isInitializingAccounts = true;
-        LoadEpicAccounts();
+        isInitializingEpicGamesAccounts = true;
+        LoadEpicGamesAccounts();
+        await EpicGamesHelper.LoadGames();
+        LoadSortSettings();
 
         // delay
         await Task.Delay(2000);
@@ -437,15 +402,16 @@ public sealed partial class GamesPage : Page
         AccountInfo.Children.Clear();
     }
 
-    private async void AddAccount_Click(object sender, RoutedEventArgs e)
+    private async void AddEpicGamesAccount_Click(object sender, RoutedEventArgs e)
     {
         // add content dialog
         var contentDialog = new ContentDialog
         {
-            Title = "Add New Account",
-            Content = "Are you sure that you want to add another account?",
+            Title = "Add Epic Games Account",
+            Content = "Are you sure that you want to add an Epic Games account?",
             PrimaryButtonText = "Yes",
             CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Close,
             XamlRoot = this.XamlRoot
         };
 
@@ -505,7 +471,7 @@ public sealed partial class GamesPage : Page
             // disable tray and notifications
             EpicGamesHelper.DisableMinimizeToTray(EpicGamesHelper.ActiveEpicGamesAccountPath);
             EpicGamesHelper.DisableNotifications(EpicGamesHelper.ActiveEpicGamesAccountPath);
-            
+
             // remove infobar
             AccountInfo.Children.Clear();
 
@@ -520,7 +486,10 @@ public sealed partial class GamesPage : Page
             });
 
             // refresh combobox
-            LoadEpicAccounts();
+            isInitializingEpicGamesAccounts = true;
+            LoadEpicGamesAccounts();
+            await EpicGamesHelper.LoadGames();
+            LoadSortSettings();
 
             // delay
             await Task.Delay(2000);
@@ -530,71 +499,371 @@ public sealed partial class GamesPage : Page
         }
     }
 
-    private async void RemoveAccount_Click(object sender, RoutedEventArgs e)
+    private async void RemoveEpicGamesAccount_Click(object sender, RoutedEventArgs e)
     {
-        // making sure an account is selected
-        if (Accounts.SelectedItem != null)
+        // add content dialog
+        var contentDialog = new ContentDialog
         {
-            // add content dialog
-            var contentDialog = new ContentDialog
+            Title = "Remove Epic Games Account",
+            Content = $"Are you sure that you want to remove {(EpicGamesAccounts.SelectedItem as ComboBoxItem).Content}?",
+            PrimaryButtonText = "Yes",
+            CloseButtonText = "No",
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = this.XamlRoot,
+        };
+        ContentDialogResult result = await contentDialog.ShowAsync();
+
+        // check results
+        if (result == ContentDialogResult.Primary)
+        {
+            // add infobar
+            AccountInfo.Children.Add(new InfoBar
             {
-                Title = "Remove Account",
-                Content = "Are you sure that you want to remove " + Accounts.SelectedItem + "?",
-                PrimaryButtonText = "Yes",
-                CloseButtonText = "No",
-                XamlRoot = this.XamlRoot,
-            };
-            ContentDialogResult result = await contentDialog.ShowAsync();
+                Title = $"Removing {(EpicGamesAccounts.SelectedItem as ComboBoxItem).Content}...",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Informational,
+                Margin = new Thickness(5)
+            });
 
-            // check results
-            if (result == ContentDialogResult.Primary)
+            // close epic games launcher
+            EpicGamesHelper.CloseEpicGames();
+
+            // get accountId
+            string accountId = EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath).AccountId;
+
+            // remove account
+            File.Delete(EpicGamesHelper.ActiveEpicGamesAccountPath);
+            Directory.Delete(Path.Combine(EpicGamesHelper.EpicGamesAccountDir, accountId), true);
+
+            // delay
+            await Task.Delay(500);
+
+            // remove infobar
+            AccountInfo.Children.Clear();
+
+            // add infobar
+            AccountInfo.Children.Add(new InfoBar
             {
-                // add infobar
-                AccountInfo.Children.Add(new InfoBar
-                {
-                    Title = "Removing " + Accounts.SelectedItem + "...",
-                    IsClosable = false,
-                    IsOpen = true,
-                    Severity = InfoBarSeverity.Informational,
-                    Margin = new Thickness(5)
-                });
+                Title = $"Successfully removed {(EpicGamesAccounts.SelectedItem as ComboBoxItem).Content}.",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            });
 
-                // close epic games launcher
-                EpicGamesHelper.CloseEpicGames();
+            // refresh combobox
+            isInitializingEpicGamesAccounts = true;
+            LoadEpicGamesAccounts();
+            await EpicGamesHelper.LoadGames();
+            LoadSortSettings();
 
-                // get accountId
-                string accountId = EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath).AccountId;
+            // delay
+            await Task.Delay(2000);
 
-                // delete gameusersettings.ini
-                File.Delete(EpicGamesHelper.ActiveEpicGamesAccountPath);
+            // remove infobar
+            AccountInfo.Children.Clear();
+        }
+    }
 
-                Directory.Delete(Path.Combine(EpicGamesHelper.EpicGamesAccountDir, accountId));
+    public void LoadSteamAccounts()
+    {
+        if (File.Exists(SteamHelper.SteamPath))
+        {
+            // show steam settings group
+            Steam_SettingsGroup.Visibility = Visibility.Visible;
 
-                // delay
-                await Task.Delay(500);
+            // get all accounts
+            var accounts = SteamHelper.GetSteamAccounts();
 
-                // remove infobar
-                AccountInfo.Children.Clear();
+            // reset ui elements
+            SteamAccounts.Items.Clear();
+            SteamAccounts.IsEnabled = true;
+            RemoveSteamAccountButton.IsEnabled = true;
 
-                // refresh combobox
-                LoadEpicAccounts();
-
-                // add infobar
-                AccountInfo.Children.Add(new InfoBar
-                {
-                    Title = "Successfully removed " + Accounts.SelectedItem + ".",
-                    IsClosable = false,
-                    IsOpen = true,
-                    Severity = InfoBarSeverity.Success,
-                    Margin = new Thickness(5)
-                });
-
-                // delay
-                await Task.Delay(2000);
-
-                // remove infobar
-                AccountInfo.Children.Clear();
+            // add accounts to combobox
+            if (accounts.Count == 0)
+            {
+                var notLoggedIn = new ComboBoxItem { Content = "Not logged in", IsEnabled = false };
+                SteamAccounts.Items.Add(notLoggedIn);
+                SteamAccounts.SelectedItem = notLoggedIn;
+                SteamAccounts.IsEnabled = false;
+                RemoveSteamAccountButton.IsEnabled = false;
             }
+            else if (accounts.All(a => !a.MostRecent) || accounts.All(a => !a.AllowAutoLogin))
+            {
+                var notLoggedIn = new ComboBoxItem { Content = "Not logged in", IsEnabled = false };
+                SteamAccounts.Items.Add(notLoggedIn);
+                SteamAccounts.SelectedItem = notLoggedIn;
+                RemoveSteamAccountButton.IsEnabled = false;
+
+                foreach (var account in accounts)
+                {
+                    SteamAccounts.Items.Add(account.AccountName);
+                }
+            }
+            else
+            {
+                foreach (var account in accounts)
+                {
+                    SteamAccounts.Items.Add(account.AccountName);
+                }
+
+                int selectedIndex = accounts.FindIndex(a => a.MostRecent);
+                if (selectedIndex < 0)
+                    selectedIndex = accounts.FindIndex(a => a.AllowAutoLogin);
+
+                SteamAccounts.SelectedIndex = selectedIndex >= 0 ? selectedIndex : 0;
+            }
+        }
+
+        isInitializingSteamAccounts = false;
+    }
+
+    private async void SteamAccounts_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (isInitializingSteamAccounts) return;
+
+        // close steam
+        SteamHelper.CloseSteam();
+
+        // read file
+        var kv = KVSerializer.Create(KVSerializationFormat.KeyValues1Text).Deserialize(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(File.ReadAllText(SteamHelper.SteamLoginUsersPath))));
+
+        // make all accounts inactive
+        foreach (var user in kv.Children)
+        {
+            if (user["AccountName"]?.ToString() == SteamAccounts.SelectedItem.ToString())
+            {
+                user["MostRecent"] = "1";
+                user["AllowAutoLogin"] = "1";
+                user["Timestamp"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+            }
+            else
+            {
+                user["MostRecent"] = "0";
+                user["AllowAutoLogin"] = "0";
+            }
+        }
+
+        // write changes
+        using var msOut = new MemoryStream();
+        KVSerializer.Create(KVSerializationFormat.KeyValues1Text).Serialize(msOut, kv);
+        msOut.Position = 0;
+        File.WriteAllText(SteamHelper.SteamLoginUsersPath, new StreamReader(msOut).ReadToEnd());
+
+        // update registry key
+        var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = "reg.exe",
+                Arguments = @$"add ""HKEY_CURRENT_USER\Software\Valve\Steam"" /v AutoLoginUser /t REG_SZ /d {SteamAccounts.SelectedItem.ToString()} /f",
+                CreateNoWindow = true,
+                UseShellExecute = false
+            }
+        };
+        process.Start();
+
+        // refresh combobox
+        isInitializingSteamAccounts = true;
+        LoadSteamAccounts();
+        await SteamHelper.LoadGames();
+        LoadSortSettings();
+    }
+
+    private async void AddSteamAccount_Click(object sender, RoutedEventArgs e)
+    {
+        // add content dialog
+        var contentDialog = new ContentDialog
+        {
+            Title = "Add Steam Account",
+            Content = "Are you sure that you want to add a Steam account?",
+            PrimaryButtonText = "Yes",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = this.XamlRoot
+        };
+
+        ContentDialogResult result = await contentDialog.ShowAsync();
+
+        // check result
+        if (result == ContentDialogResult.Primary)
+        {
+            // remove infobar
+            AccountInfo.Children.Clear();
+
+            // add infobar
+            AccountInfo.Children.Add(new InfoBar
+            {
+                Title = "Please log in to your Steam account...",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Informational,
+                Margin = new Thickness(5)
+            });
+
+            // close steam
+            SteamHelper.CloseSteam();
+
+            // read file
+            var kv = KVSerializer.Create(KVSerializationFormat.KeyValues1Text).Deserialize(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(File.ReadAllText(SteamHelper.SteamLoginUsersPath))));
+
+            // make all accounts inactive
+            foreach (var user in kv.Children)
+            {
+                user["MostRecent"] = "0";
+                user["AllowAutoLogin"] = "0";
+            }
+
+            // write changes
+            using var msOut = new MemoryStream();
+            KVSerializer.Create(KVSerializationFormat.KeyValues1Text).Serialize(msOut, kv);
+            msOut.Position = 0;
+            File.WriteAllText(SteamHelper.SteamLoginUsersPath, new StreamReader(msOut).ReadToEnd());
+
+            // delay
+            await Task.Delay(500);
+
+            // get initial user count
+            int initialUserCount = KVSerializer.Create(KVSerializationFormat.KeyValues1Text).Deserialize(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(File.ReadAllText(SteamHelper.SteamLoginUsersPath)))).Children.Count();
+
+            // launch steam
+            Process.Start(SteamHelper.SteamPath);
+
+            // check when logged in
+            while (true)
+            {
+                if (KVSerializer.Create(KVSerializationFormat.KeyValues1Text).Deserialize(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(File.ReadAllText(SteamHelper.SteamLoginUsersPath)))).Children.Count() > initialUserCount)
+                    break;
+
+                await Task.Delay(500);
+            }
+
+            // close steam
+            SteamHelper.CloseSteam();
+
+            // remove infobar
+            AccountInfo.Children.Clear();
+
+            // refresh combobox
+            isInitializingSteamAccounts = true;
+            LoadSteamAccounts();
+            await SteamHelper.LoadGames();
+            LoadSortSettings();
+
+            // add infobar
+            AccountInfo.Children.Add(new InfoBar
+            {
+                Title = $"Successfully logged in as {SteamAccounts.SelectedItem}",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            });
+
+            // delay
+            await Task.Delay(2000);
+
+            // remove infobar
+            AccountInfo.Children.Clear();
+        }
+    }
+
+    private async void RemoveSteamAccount_Click(object sender, RoutedEventArgs e)
+    {
+        // add content dialog
+        var contentDialog = new ContentDialog
+        {
+            Title = "Remove Steam Account",
+            Content = $"Are you sure that you want to remove {SteamAccounts.SelectedItem}?",
+            PrimaryButtonText = "Yes",
+            CloseButtonText = "No",
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = this.XamlRoot,
+        };
+        ContentDialogResult result = await contentDialog.ShowAsync();
+
+        // check results
+        if (result == ContentDialogResult.Primary)
+        {
+            // add infobar
+            AccountInfo.Children.Add(new InfoBar
+            {
+                Title = $"Removing {SteamAccounts.SelectedItem}...",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Informational,
+                Margin = new Thickness(5)
+            });
+
+            // delay
+            await Task.Delay(500);
+
+            // close steam
+            SteamHelper.CloseSteam();
+
+            // read file
+            var kv = KVSerializer.Create(KVSerializationFormat.KeyValues1Text)
+                                 .Deserialize(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(File.ReadAllText(SteamHelper.SteamLoginUsersPath))));
+            // remove selected account
+            var newChildren = kv.Children.Where(c => c != kv.Children.First(child => child.Value["AccountName"]?.ToString() == SteamAccounts.SelectedItem.ToString()));
+            var newRoot = new KVObject(kv.Name, newChildren);
+
+            // write changes
+            using var msOut = new MemoryStream();
+            KVSerializer.Create(KVSerializationFormat.KeyValues1Text).Serialize(msOut, newRoot);
+            msOut.Position = 0;
+            File.WriteAllText(SteamHelper.SteamLoginUsersPath, new StreamReader(msOut).ReadToEnd());
+
+            // remove infobar
+            AccountInfo.Children.Clear();
+
+            // add infobar
+            AccountInfo.Children.Add(new InfoBar
+            {
+                Title = $"Successfully removed {SteamAccounts.SelectedItem}.",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            });
+
+            // refresh combobox
+            isInitializingSteamAccounts = true;
+            LoadSteamAccounts();
+            await SteamHelper.LoadGames();
+            LoadSortSettings();
+
+            // delay
+            await Task.Delay(2000);
+
+            // remove infobar
+            AccountInfo.Children.Clear();
+        }
+    }
+
+    private void UpdateGridLayout()
+    {
+        bool epicVisible = EpicGames_SettingsGroup.Visibility == Visibility.Visible;
+        bool steamVisible = Steam_SettingsGroup.Visibility == Visibility.Visible;
+
+        if (epicVisible && steamVisible)
+        {
+            Grid.SetColumn(EpicGames_SettingsGroup, 0);
+            Grid.SetColumnSpan(EpicGames_SettingsGroup, 1);
+            Grid.SetColumn(Steam_SettingsGroup, 1);
+            Grid.SetColumnSpan(Steam_SettingsGroup, 1);
+        }
+        else if (epicVisible)
+        {
+            Grid.SetColumn(EpicGames_SettingsGroup, 0);
+            Grid.SetColumnSpan(EpicGames_SettingsGroup, 2);
+        }
+        else if (steamVisible)
+        {
+            Grid.SetColumn(Steam_SettingsGroup, 0);
+            Grid.SetColumnSpan(Steam_SettingsGroup, 2);
         }
     }
 }

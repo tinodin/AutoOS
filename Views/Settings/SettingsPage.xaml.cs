@@ -6,10 +6,69 @@ namespace AutoOS.Views.Settings;
 
 public sealed partial class SettingsPage : Page
 {
+    private readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
     public SettingsPage()
     {
         this.InitializeComponent();
         LoadSettings();
+    }
+
+    private async void RyujinxLocation_Click(object sender, RoutedEventArgs e)
+    {
+        var picker = new FilePicker(App.MainWindow)
+        {
+            ShowAllFilesOption = false
+        };
+        picker.FileTypeChoices.Add("Ryujinx executable", ["*.exe"]);
+
+        var file = await picker.PickSingleFileAsync();
+
+        if (file != null)
+        {
+            if (Path.GetFileName(file.Path).Equals("Ryujinx.exe", StringComparison.OrdinalIgnoreCase))
+            {
+                RyujinxLocationValue.Text = file.Path;
+                localSettings.Values["RyujinxLocation"] = file.Path;
+            }
+            else 
+            {
+                var dialog = new ContentDialog
+                {
+                    Title = "Invalid File",
+                    Content = "Please select the Ryujinx.exe file.",
+                    CloseButtonText = "OK",
+                    XamlRoot = App.MainWindow.Content.XamlRoot
+                };
+                await dialog.ShowAsync();
+            }
+        }   
+    }
+
+    private async void RyujinxDataLocation_Click(object sender, RoutedEventArgs e)
+    {
+        var picker = new FolderPicker(App.MainWindow);
+        var folder = await picker.PickSingleFolderAsync();
+
+        if (folder != null)
+        {
+            string folderName = Path.GetFileName(folder.Path).ToLowerInvariant();
+            if (folderName == "ryujinx" || folderName == "portable")
+            {
+                RyujinxDataLocationValue.Text = folder.Path;
+                localSettings.Values["RyujinxDataLocation"] = folder.Path;
+            }
+            else
+            {
+                var dialog = new ContentDialog
+                {
+                    Title = "Invalid Folder",
+                    Content = "Please select the portable folder.",
+                    CloseButtonText = "OK",
+                    XamlRoot = App.MainWindow.Content.XamlRoot
+                };
+                await dialog.ShowAsync();
+            }
+        }
     }
 
     private void toCloneRepoCard_Click(object sender, RoutedEventArgs e)
@@ -46,6 +105,24 @@ public sealed partial class SettingsPage : Page
 
     private void LoadSettings()
     {
+        if (localSettings.Values.TryGetValue("RyujinxLocation", out object ryujinxLocationValue) && ryujinxLocationValue is string ryujinxLocationPath)
+        {
+            RyujinxLocationValue.Text = ryujinxLocationPath;
+        }
+
+        if (localSettings.Values.TryGetValue("RyujinxDataLocation", out object ryujinxDataValue) && ryujinxDataValue is string ryujinxDataPath)
+        {
+            RyujinxDataLocationValue.Text = ryujinxDataPath;
+        }
+        else
+        {
+            string defaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ryujinx");
+            if (Directory.Exists(defaultPath))
+            {
+                RyujinxDataLocationValue.Text = defaultPath;
+            }
+        }
+
         LaunchMinimized.IsOn = (bool?)ApplicationData.Current.LocalSettings.Values["LaunchMinimized"] ?? false;
     }
 

@@ -73,7 +73,7 @@
                         <CompositeTransform x:Name="PanelTransform" />
                     </Border.RenderTransform>
                     <Grid>
-                        <dev:ImageEx Source="{x:Bind ImageSource}" Stretch="UniformToFill" />
+                        <dev:ImageEx Source="{x:Bind ImageTall}" Stretch="UniformToFill" />
                         <Canvas IsHitTestVisible="False">
                             <Ellipse
                                 x:Name="LightSpot"
@@ -114,7 +114,7 @@
                         <TextBlock
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             Style="{StaticResource CaptionTextBlockStyle}"
-                            Text="{x:Bind Description, Mode=OneWay}"
+                            Text="{x:Bind Developers, Mode=OneWay}"
                             TextTrimming="CharacterEllipsis"
                             TextWrapping="NoWrap" />
                     </dev:AutoScrollView>

@@ -3,7 +3,6 @@ using Microsoft.UI.Xaml.Media;
 using System.Diagnostics;
 using System.Management;
 using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -301,7 +300,7 @@ public static class ApplicationStage
             ("Importing Epic Games Launcher Games", async () => await ProcessActions.Sleep(1000), () => EpicGames == true && EpicGamesGames == true),
 
             // log in to epic games launcher account
-            ("Please log in to your Epic Games Launcher account", async () => await ProcessActions.RunCustom(async () => await Task.Run(async () => { Process.Start(@"C:\Program Files (x86)\Epic Games\Launcher\Portal\Binaries\Win32\EpicGamesLauncher.exe"); string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "EpicGamesLauncher", "Saved", "Config", "Windows", "GameUserSettings.ini"); while (!File.Exists(path) || Regex.Match(await File.ReadAllTextAsync(path), @"Data=([^\r\n]+)").Groups[1].Value.Length < 1000) await Task.Delay(500); new[] { "EpicGamesLauncher", "EpicWebHelper" }.ToList().ForEach(name => Process.GetProcessesByName(name).ToList().ForEach(p => { p.Kill(); p.WaitForExit(); })); })), () => EpicGames == true && EpicGamesAccount == false),
+            ("Please log in to your Epic Games Launcher account", async () => await ProcessActions.EpicGamesLogin(), () => EpicGames == true && EpicGamesAccount == false),
 
             // disable epic games startup entries
             ("Disabling Epic Games startup entries", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"reg add ""HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\EpicOnlineServices"" /v ""Start"" /t REG_DWORD /d 4 /f"), () => EpicGames == true),
@@ -318,7 +317,7 @@ public static class ApplicationStage
             ("Updating Steam", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Path.Combine(@"C:\Program Files (x86)\Steam\Steam.exe")})!.WaitForExitAsync())), () => Steam == true),
 
             // log in to steam
-            ("Please log in to your Steam account", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo { FileName = Path.Combine(@"C:\Program Files (x86)\Steam\Steam.exe")})!.WaitForExitAsync())), () => Steam == true),
+            ("Please log in to your Steam account", async () => await ProcessActions.SteamLogin(), () => Steam == true),
 
             // remove steam desktop shortcut
             ("Removing Steam desktop shortcut", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c del /f /q ""C:\Users\Public\Desktop\Steam.lnk"""), () => Steam == true),

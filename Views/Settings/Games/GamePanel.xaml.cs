@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml.Input;
+﻿using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Media.Imaging;
@@ -7,7 +7,6 @@ using System.Diagnostics;
 using System.Management;
 using System.Runtime.InteropServices;
 using System.ServiceProcess;
-using System.Text.Json.Nodes;
 
 namespace AutoOS.Views.Settings.Games;
 
@@ -15,9 +14,18 @@ public sealed partial class GamePanel : UserControl
 {
     [DllImport("kernel32.dll")]
     static extern bool SetProcessWorkingSetSize(IntPtr process, int min, int max);
-
-    private static readonly HttpClient httpClient = new HttpClient();
-
+    public string Launcher { get; set; }
+    public string LauncherLocation { get; set; }
+    public string DataLocation { get; set; }
+    public string GameLocation { get; set; }
+    public string CatalogNamespace { get; set; }
+    public string CatalogItemId { get; set; }
+    public string AppName { get; set; }
+    public string InstallLocation { get; set; }
+    public string LaunchExecutable { get; set; }
+    public string GameID { get; set; }
+    public ImageSource ImageTall { get; set; }
+    public string ImageWide { get; set; }
     public string Title
     {
         get { return (string)GetValue(TitleProperty); }
@@ -27,30 +35,39 @@ public sealed partial class GamePanel : UserControl
     public static readonly DependencyProperty TitleProperty =
         DependencyProperty.Register("Title", typeof(string), typeof(GamePanel), new PropertyMetadata(null));
 
-    public string Description
+    public string Developers
     {
-        get { return (string)GetValue(DescriptionProperty); }
-        set { SetValue(DescriptionProperty, value); }
+        get { return (string)GetValue(DevelopersProperty); }
+        set { SetValue(DevelopersProperty, value); }
     }
 
-    public static readonly DependencyProperty DescriptionProperty =
-        DependencyProperty.Register("Description", typeof(string), typeof(GamePanel), new PropertyMetadata(null));
+    public static readonly DependencyProperty DevelopersProperty =
+        DependencyProperty.Register("Developers", typeof(string), typeof(GamePanel), new PropertyMetadata(null));
 
-    public static readonly DependencyProperty SourceProperty =
-        DependencyProperty.Register("Source", typeof(object), typeof(GamePanel), new PropertyMetadata(null));
-
-    public string Link
-    {
-        get { return (string)GetValue(LinkProperty); }
-        set { SetValue(LinkProperty, value); }
-    }
-
-    public static readonly DependencyProperty LinkProperty =
-        DependencyProperty.Register("Link", typeof(string), typeof(GamePanel), new PropertyMetadata(null));
-
+    public List<string> Genres { get; set; } = [];
+    public List<string> Features { get; set; } = [];
+    public double Rating { get; set; }
+    public string PlayTime { get; set; }
+    public string Description { get; set; }
+    private DispatcherTimer gameWatcherTimer;
+    private bool? previousGameState = null;
+    private bool? previousExplorerState = null;
+    private bool servicesState = false;
     private bool isScaledUp = false;
     private readonly TimeSpan animationDuration = TimeSpan.FromMilliseconds(300);
     private readonly CubicEase easingFunction = new CubicEase { EasingMode = EasingMode.EaseOut };
+
+    public GamePanel()
+    {
+        this.InitializeComponent();
+        this.Unloaded += GamePanel_Unloaded;
+    }
+
+    private void GamePanel_Unloaded(object sender, RoutedEventArgs e)
+    {
+        // stop watchers when navigation to another page
+        gameWatcherTimer?.Stop();
+    }
 
     private void Animate(DependencyObject target, string property, double to, TimeSpan? duration = null)
     {
@@ -154,35 +171,6 @@ public sealed partial class GamePanel : UserControl
         isScaledUp = false;
     }
 
-    public string Launcher { get; set; }
-    public string LauncherLocation { get; set; }
-    public string DataLocation { get; set; }
-    public string GameLocation { get; set; }
-    public string CatalogNamespace { get; set; }
-    public string CatalogItemId { get; set; }
-    public string AppName { get; set; }
-    public string InstallLocation { get; set; }
-    public string LaunchExecutable { get; set; }
-    public string GameID { get; set; }
-
-    private DispatcherTimer gameWatcherTimer;
-    private bool? previousGameState = null;
-    private bool? previousExplorerState = null;
-    private bool servicesState = false;
-    public ImageSource ImageSource { get; set; }
-
-    public GamePanel()
-    {
-        this.InitializeComponent();
-        this.Unloaded += GamePanel_Unloaded;
-    }
-
-    private void GamePanel_Unloaded(object sender, RoutedEventArgs e)
-    {
-        // stop watchers when navigation to another page
-        gameWatcherTimer?.Stop();
-    }
-
     void StartGameWatcher(Func<bool> isGameRunning)
     {
         // define check rate
@@ -207,7 +195,6 @@ public sealed partial class GamePanel : UserControl
 
                     if (isRunning)
                     {
-                        Debug.WriteLine("is running");
                         Panel.Click -= Launch_Click;
 
                         if (!servicesState && stopProcesses.Visibility == Visibility.Collapsed)
@@ -499,53 +486,16 @@ public sealed partial class GamePanel : UserControl
 
     private async void Settings_Click(object sender, RoutedEventArgs e)
     {
-        BitmapImage imageSource = null;
-
-        // epic games
-        if (Launcher == "Epic Games")
-        {
-            // get json data
-            string url = $"https://api.egdata.app/items/{CatalogItemId}";
-
-            // more up to date than the fortnite item id
-            if (Title == "Fortnite")
-            {
-                url = $"https://api.egdata.app/offers/d69e49517f0f4e49a39253f7b106dc27";
-            }
-
-            try
-            {
-                // read json data
-                var remoteData = JsonNode.Parse(await httpClient.GetStringAsync(url));
-
-                // search cover image
-                foreach (var image in remoteData?["keyImages"]?.AsArray())
-                {
-                    if (image?["type"]?.GetValue<string>() == "DieselGameBox")
-                    {
-                        imageSource = new BitmapImage(new Uri(image["url"]?.GetValue<string>()));
-                        break;
-                    }
-                }
-            }
-            catch
-            {
-
-            }
-        }
-        else if (Launcher == "Steam")
-        {
-            imageSource = new BitmapImage(new Uri(Path.Combine(@"C:\Program Files (x86)\Steam", $@"appcache\librarycache\{GameID}\library_hero.jpg")));
-        }
-        else if (Launcher == "Ryujinx")
-        {
-
-        }
-
         var gameSettings = new GameSettings
         {
+            ImageWide = new BitmapImage(new Uri(ImageWide)),
             Title = Title,
-            ImageSource = imageSource,
+            Developers = Developers,
+            Genres = Genres,
+            Features = Features,
+            Rating = Rating,
+            PlayTime = PlayTime,
+            Description = Description,
             InstallLocation = InstallLocation
         };
 
@@ -559,8 +509,7 @@ public sealed partial class GamePanel : UserControl
         contentDialog.Resources["ContentDialogMinWidth"] = 600;
         contentDialog.Resources["ContentDialogMaxWidth"] = 850;
         contentDialog.Resources["ContentDialogMinHeight"] = 250;
-        contentDialog.Resources["ContentDialogMaxHeight"] = 850;
-
-        ContentDialogResult result = await contentDialog.ShowAsync();
+        contentDialog.Resources["ContentDialogMaxHeight"] = 1500;
+        _ = await contentDialog.ShowAsync();
     }
 }
