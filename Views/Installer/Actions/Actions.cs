@@ -711,7 +711,7 @@ public static class ProcessActions
         EpicGamesHelper.DisableMinimizeToTray(EpicGamesHelper.ActiveEpicGamesAccountPath);
         EpicGamesHelper.DisableNotifications(EpicGamesHelper.ActiveEpicGamesAccountPath);
 
-        InstallPage.Info.Title = "Succesfully logged in as " + EpicGamesHelper.ActiveEpicGamesAccountPath + " ...";
+        InstallPage.Info.Title = $"Succesfully logged in as {EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath).DisplayName}...";
 
         await Task.Delay(1000);
     }
