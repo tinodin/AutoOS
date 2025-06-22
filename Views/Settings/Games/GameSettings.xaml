@@ -101,7 +101,7 @@
             HorizontalAlignment="Right"
             VerticalAlignment="Top"
             IsReadOnly="True"
-            PlaceholderValue="{x:Bind Rating, Mode=OneWay}" />
+            PlaceholderValue="{x:Bind Rating}" />
         <TextBlock
             Grid.Row="1"
             Margin="0,28,0,0"

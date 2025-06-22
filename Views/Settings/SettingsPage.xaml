@@ -111,8 +111,8 @@
                         <dev:TextBox
                             x:Name="RyujinxLocationValue"
                             MinWidth="300"
-                            IsReadOnly="True"
-                            PlaceholderText="Ryujinx Location...">
+                            PlaceholderText="Ryujinx Location..."
+                            TextChanged="RyujinxLocation_TextChanged">
                             <dev:TextBox.Content>
                                 <Button Click="RyujinxLocation_Click" Content="&#xE838;" />
                             </dev:TextBox.Content>
@@ -122,8 +122,8 @@
                         <dev:TextBox
                             x:Name="RyujinxDataLocationValue"
                             MinWidth="300"
-                            IsReadOnly="True"
-                            PlaceholderText="Ryujinx Data Location...">
+                            PlaceholderText="Ryujinx Data Location..."
+                            TextChanged="RyujinxDataLocation_TextChanged">
                             <dev:TextBox.Content>
                                 <Button Click="RyujinxDataLocation_Click" Content="&#xE838;" />
                             </dev:TextBox.Content>

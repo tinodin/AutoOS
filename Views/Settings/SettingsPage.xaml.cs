@@ -13,6 +13,15 @@ public sealed partial class SettingsPage : Page
         LoadSettings();
     }
 
+    private  void RyujinxLocation_TextChanged(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(RyujinxLocationValue?.Text))
+        {
+            localSettings.Values.Remove("RyujinxLocation");
+            return;
+        }
+    }
+
     private async void RyujinxLocation_Click(object sender, RoutedEventArgs e)
     {
         var picker = new FilePicker(App.MainWindow)
@@ -42,6 +51,15 @@ public sealed partial class SettingsPage : Page
                 await dialog.ShowAsync();
             }
         }   
+    }
+
+    private void RyujinxDataLocation_TextChanged(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(RyujinxDataLocationValue?.Text))
+        {
+            localSettings.Values.Remove("RyujinxDataLocation");
+            return;
+        }
     }
 
     private async void RyujinxDataLocation_Click(object sender, RoutedEventArgs e)
