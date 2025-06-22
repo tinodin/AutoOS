@@ -423,7 +423,7 @@ namespace AutoOS.Helpers
                                 InstallLocation = itemJson["InstallLocation"]?.GetValue<string>(),
                                 LaunchExecutable = itemJson["LaunchExecutable"]?.GetValue<string>(),
                                 ImageTall = new BitmapImage(new Uri(imageTallUrl)),
-                                ImageWide = imageWideUrl,
+                                ImageWide = new BitmapImage(new Uri(imageWideUrl)),
                                 Title = offerData["title"]?.GetValue<string>(),
                                 Developers = offerData["seller"]?["name"]?.GetValue<string>(),
                                 Genres = genresData?.AsArray()?.Select(g => g?["name"]?.GetValue<string>())

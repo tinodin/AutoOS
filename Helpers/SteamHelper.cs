@@ -147,7 +147,7 @@ namespace AutoOS.Helpers
                                 {
                                     Launcher = "Steam",
                                     ImageTall = new BitmapImage(new Uri(Path.Combine(SteamLibraryCacheDir, gameId, "library_600x900.jpg"))),
-                                    ImageWide = Path.Combine(SteamLibraryCacheDir, gameId, "library_hero.jpg"),
+                                    ImageWide = new BitmapImage(new Uri(Path.Combine(SteamLibraryCacheDir, gameId, "library_hero.jpg"))),
                                     Title = appManifestData["name"]?.ToString(),
                                     Developers = string.Join(", ", gameData.GetProperty("data").GetProperty("developers")
                                                        .EnumerateArray().Select(d => d.GetString()).Where(s => !string.IsNullOrWhiteSpace(s))),

@@ -25,7 +25,7 @@ public sealed partial class GamePanel : UserControl
     public string LaunchExecutable { get; set; }
     public string GameID { get; set; }
     public ImageSource ImageTall { get; set; }
-    public string ImageWide { get; set; }
+    public ImageSource ImageWide { get; set; }
     public string Title
     {
         get { return (string)GetValue(TitleProperty); }
@@ -479,7 +479,7 @@ public sealed partial class GamePanel : UserControl
     {
         var gameSettings = new GameSettings
         {
-            ImageWide = new BitmapImage(new Uri(ImageWide)),
+            ImageWide = ImageWide,
             Title = Title,
             Developers = Developers,
             Genres = Genres,

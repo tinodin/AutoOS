@@ -128,7 +128,7 @@ namespace AutoOS.Helpers
                             InstallLocation = bestInstallLocation,
                             Title = name,
                             ImageTall = new BitmapImage(new Uri(result["cover_url"])),
-                            ImageWide = entry.GetProperty("bannerUrl").GetString(),
+                            ImageWide = new BitmapImage(new Uri(entry.GetProperty("bannerUrl").GetString())),
                             Developers = result["developers"],
                             Genres = [.. data.GetProperty("genres").EnumerateArray().Select(g => g.GetProperty("name").GetString())],
                             Features = [.. data.GetProperty("game_modes").EnumerateArray().Select(m => m.GetProperty("name").GetString())],
