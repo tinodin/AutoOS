@@ -87,13 +87,12 @@ public sealed partial class GamePanel : UserControl
         sb.Begin();
     }
 
-    private void AnimateProjection(double tiltX, double tiltY, double offsetX, double offsetY)
+    private void SetProjectionDirect(double tiltX, double tiltY, double offsetX, double offsetY)
     {
-        var shortDuration = TimeSpan.FromMilliseconds(80);
-        Animate(PanelProjection, "RotationX", tiltX, shortDuration);
-        Animate(PanelProjection, "RotationY", tiltY, shortDuration);
-        Animate(PanelProjection, "LocalOffsetX", offsetX, shortDuration);
-        Animate(PanelProjection, "LocalOffsetY", offsetY, shortDuration);
+        PanelProjection.RotationX = tiltX;
+        PanelProjection.RotationY = tiltY;
+        PanelProjection.LocalOffsetX = offsetX;
+        PanelProjection.LocalOffsetY = offsetY;
     }
 
     private void StartScaleAnimation(double toX, double toY)
@@ -104,10 +103,7 @@ public sealed partial class GamePanel : UserControl
 
     private void ResetHoverEffects()
     {
-        Animate(PanelProjection, "RotationX", 0);
-        Animate(PanelProjection, "RotationY", 0);
-        Animate(PanelProjection, "LocalOffsetX", 0);
-        Animate(PanelProjection, "LocalOffsetY", 0);
+        SetProjectionDirect(0, 0, 0, 0);
         Animate(LightSpot, "Opacity", 0);
     }
 
@@ -140,7 +136,7 @@ public sealed partial class GamePanel : UserControl
         double translateX = deltaX / centerX * maxMove;
         double translateY = deltaY / centerY * maxMove;
 
-        AnimateProjection(tiltX, tiltY, translateX, translateY);
+        SetProjectionDirect(tiltX, tiltY, translateX, translateY);
 
         Canvas.SetLeft(LightSpot, pos.X - LightSpot.Width / 2);
         Canvas.SetTop(LightSpot, pos.Y - LightSpot.Height / 2);
