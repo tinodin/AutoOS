@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Management;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using ValveKeyValue;
 using Windows.Storage;
 
 namespace AutoOS.Views.Installer.Stages;
@@ -80,6 +81,7 @@ public static class PreparingStage
     public static bool? EpicGamesAccount;
     public static bool? EpicGamesGames;
     public static bool? Steam;
+    public static bool? SteamGames;
 
     public static bool? Scheduling;
     public static bool? Hyperthreading;
@@ -217,6 +219,20 @@ public static class PreparingStage
                     return installationList != null && installationList.Count > 0;
                 })
                 .Select(t => t.Result)
+                .FirstOrDefault(false);
+
+            SteamGames = DriveInfo.GetDrives()
+                .Where(d => d.DriveType == DriveType.Fixed && d.Name != @"C:\")
+                .Select(d => Path.Combine(d.Name, "Program Files (x86)", "Steam", "steamapps", "libraryfolders.vdf"))
+                .Where(File.Exists)
+                .Select(path => new FileInfo(path))
+                .OrderByDescending(f => f.LastWriteTime)
+                .Select(file =>
+                {
+                    using var stream = File.OpenRead(file.FullName);
+                    var kv = KVSerializer.Create(KVSerializationFormat.KeyValues1Text).Deserialize(stream);
+                    return kv?.Children?.Any() == true;
+                })
                 .FirstOrDefault(false);
 
             Rename = "System Product Name".Equals(Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\BIOS", "SystemProductName", "")?.ToString(), StringComparison.Ordinal);

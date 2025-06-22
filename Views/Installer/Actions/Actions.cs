@@ -727,7 +727,9 @@ public static class ProcessActions
             .OrderByDescending(f => f.LastWriteTime)
             .ToList();
 
-        var jsonContent = await File.ReadAllTextAsync(foundFiles.First().FullName);
+        FileInfo newestFile = foundFiles.First();
+
+        var jsonContent = await File.ReadAllTextAsync(newestFile.FullName);
 
         if (string.IsNullOrWhiteSpace(jsonContent))
             return;
@@ -740,8 +742,6 @@ public static class ProcessActions
         {
             return;
         }
-
-        FileInfo newestFile = foundFiles.First();
 
         Directory.CreateDirectory(Path.GetDirectoryName(EpicGamesHelper.EpicGamesInstalledGamesPath));
 
@@ -866,6 +866,83 @@ public static class ProcessActions
         {
             return;
         }
+    }
+
+    public static async Task RunImportSteamGames()
+    {
+        var foundFiles = DriveInfo.GetDrives()
+            .Where(d => d.DriveType == DriveType.Fixed && d.Name != @"C:\")
+            .Select(d => Path.Combine(d.Name, "Program Files (x86)", "Steam", "steamapps", "libraryfolders.vdf"))
+            .Where(File.Exists)
+            .Select(path => new FileInfo(path))
+            .OrderByDescending(f => f.LastWriteTime)
+            .ToList();
+
+        if (foundFiles.Count == 0)
+            return;
+
+        var newestFile = foundFiles.First();
+
+        string sourceDrive = Path.GetPathRoot(newestFile.FullName)?.TrimEnd('\\') ?? "";
+        string targetDrive = @"C:\";
+
+        string sourceCacheDir = SteamHelper.SteamLibraryCacheDir.Replace(Path.GetPathRoot(SteamHelper.SteamLibraryCacheDir) ?? "", sourceDrive + @"\");
+        string targetCacheDir = SteamHelper.SteamLibraryCacheDir.Replace(Path.GetPathRoot(SteamHelper.SteamLibraryCacheDir) ?? "", targetDrive);
+
+        Directory.CreateDirectory(targetCacheDir);
+
+        foreach (var dir in Directory.GetDirectories(sourceCacheDir, "*", SearchOption.AllDirectories))
+        {
+            var targetDir = dir.Replace(sourceCacheDir, targetCacheDir);
+            Directory.CreateDirectory(targetDir);
+        }
+
+        foreach (var file in Directory.GetFiles(sourceCacheDir, "*.*", SearchOption.AllDirectories))
+        {
+            var targetFile = file.Replace(sourceCacheDir, targetCacheDir);
+            File.Copy(file, targetFile, true);
+        }
+
+        Directory.CreateDirectory(Path.GetDirectoryName(SteamHelper.SteamLibraryPath));
+
+        var libraryFolderData = KVSerializer.Create(KVSerializationFormat.KeyValues1Text).Deserialize(File.OpenRead(newestFile.FullName));
+
+        var drives = DriveInfo.GetDrives()
+            .Where(d => d.DriveType == DriveType.Fixed && d.Name != @"C:\")
+            .Select(d => d.Name.TrimEnd('\\'))
+            .ToList();
+
+        List<KVObject> newFolders = [.. libraryFolderData.Children.Select(folder =>
+        {
+            var children = folder.Children.ToList();
+
+            var pathNode = children.FirstOrDefault(c => c.Name == "path");
+            if (pathNode != null)
+            {
+                children.Remove(pathNode);
+                children.Insert(0, pathNode);
+
+                if (!pathNode.Value?.ToString().Equals(@"C:\\Program Files (x86)\\Steam", StringComparison.OrdinalIgnoreCase) ?? true)
+                {
+                    string pathValue = pathNode.Value?.ToString() ?? "";
+                    string folderSuffix = (pathValue.Length > 2 && pathValue[1] == ':') ? pathValue.Substring(2) : "";
+
+                    string foundPath = drives.FirstOrDefault(drive => Directory.Exists(drive + folderSuffix)) is string fPath ? fPath + folderSuffix : null;
+
+                    if (foundPath != null)
+                        children[0] = new KVObject("path", foundPath);
+                }
+            }
+
+            return new KVObject(folder.Name, children);
+        })];
+
+        using var msOut = new MemoryStream();
+        KVSerializer.Create(KVSerializationFormat.KeyValues1Text).Serialize(msOut, new KVObject(libraryFolderData.Name, newFolders));
+        msOut.Position = 0;
+        File.WriteAllText(SteamHelper.SteamLibraryPath, new StreamReader(msOut).ReadToEnd());
+
+        await Task.Delay(1000);
     }
 
     public static async Task RunAutoGpuAffinity()

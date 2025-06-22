@@ -28,6 +28,7 @@ public static class ApplicationStage
         bool? EpicGamesAccount = PreparingStage.EpicGamesAccount;
         bool? EpicGamesGames = PreparingStage.EpicGamesGames;
         bool? Steam = PreparingStage.Steam;
+        bool? SteamGames = PreparingStage.SteamGames;
 
         InstallPage.Status.Text = "Configuring Applications...";
 
@@ -318,6 +319,9 @@ public static class ApplicationStage
 
             // log in to steam
             ("Please log in to your Steam account", async () => await ProcessActions.SteamLogin(), () => Steam == true),
+
+            // import steam games
+            ("Importing Steam Games", async () => await ProcessActions.RunImportSteamGames(), () => Steam == true && SteamGames == true),
 
             // remove steam desktop shortcut
             ("Removing Steam desktop shortcut", async () => await ProcessActions.RunNsudo("CurrentUser", @"cmd /c del /f /q ""C:\Users\Public\Desktop\Steam.lnk"""), () => Steam == true),
