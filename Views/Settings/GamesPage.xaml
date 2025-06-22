@@ -82,13 +82,13 @@
                                         Click="SortByLauncher_Click"
                                         Text="Launcher" />
                                     <MenuFlyoutItem
-                                        x:Name="SortByPlayTime"
-                                        Click="SortByPlayTime_Click"
-                                        Text="Play Time" />
-                                    <MenuFlyoutItem
                                         x:Name="SortByRating"
                                         Click="SortByRating_Click"
                                         Text="Rating" />
+                                    <MenuFlyoutItem
+                                        x:Name="SortByPlayTime"
+                                        Click="SortByPlayTime_Click"
+                                        Text="Play Time" />
                                     <MenuFlyoutSeparator />
                                     <MenuFlyoutItem
                                         x:Name="SortAscending"

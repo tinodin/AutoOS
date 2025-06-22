@@ -92,7 +92,7 @@ Without your guide this project wouldn't exist. It inspired me to attempt to aut
 ---
 
 **Revi Team:**  
-Thank you for [SVCGROUP.ps1](https://github.com/meetrevision/playbook/blob/main/src/Executables/SVCGROUP.ps1) and [useful registry keys](https://github.com/meetrevision/playbook/tree/main/src/Configuration/Tasks/registry), and for first introducing me to custom ISOs. Without the ReviOS project I don't know if I would have ever gotten into tweaking Windows.
+Thank you for [SVCGROUP.ps1](https://github.com/meetrevision/playbook/blob/main/src/Executables/SVCGROUP.ps1), [useful registry keys](https://github.com/meetrevision/playbook/tree/main/src/Configuration/Tasks/registry) and for first introducing me to custom ISOs. Without the ReviOS project I don't know if I would have ever gotten into tweaking Windows.
 
 ---
 
