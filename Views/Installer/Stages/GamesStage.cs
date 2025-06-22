@@ -56,7 +56,10 @@ public static class GamesStage
         
             // create presentation mode entries
             ("Creating presentation mode entries", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo("cmd", $"/c \"{fortnitePath}\\FortniteGame\\Binaries\\Win64\\FortniteClient-Win64-Shipping.exe\"") { CreateNoWindow = true }))), () => Fortnite == true),
-            ("Creating presentation mode entries", async () => await ProcessActions.Sleep(100), () => Fortnite == true),
+            ("Creating presentation mode entries", async () => await ProcessActions.Sleep(500), () => Fortnite == true),
+            ("Creating presentation mode entries", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.GetProcessesByName("FortniteClient-Win64-Shipping")[0].Kill())), () => Fortnite == true),
+            ("Creating presentation mode entries", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.Start(new ProcessStartInfo("cmd", $"/c \"{fortnitePath}\\FortniteGame\\Binaries\\Win64\\FortniteClient-Win64-Shipping.exe\"") { CreateNoWindow = true }))), () => Fortnite == true),
+            ("Creating presentation mode entries", async () => await ProcessActions.Sleep(500), () => Fortnite == true),
             ("Creating presentation mode entries", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => Process.GetProcessesByName("FortniteClient-Win64-Shipping")[0].Kill())), () => Fortnite == true),
 
             // set the presentation mode to hardware: legacy flip
