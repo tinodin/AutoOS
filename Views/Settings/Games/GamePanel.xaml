@@ -46,7 +46,6 @@
             HorizontalContentAlignment="Stretch"
             VerticalContentAlignment="Stretch"
             AutomationProperties.LabeledBy="{Binding ElementName=TitleText}"
-            Click="Launch_Click"
             CornerRadius="{StaticResource OverlayCornerRadius}"
             PointerCanceled="AutoScrollHoverEffectView_PointerCanceled"
             PointerCaptureLost="AutoScrollHoverEffectView_PointerCaptureLost"

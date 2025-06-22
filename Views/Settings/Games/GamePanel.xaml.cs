@@ -104,7 +104,6 @@ public sealed partial class GamePanel : UserControl
     private void ResetHoverEffects()
     {
         SetProjectionDirect(0, 0, 0, 0);
-        Animate(LightSpot, "Opacity", 0);
     }
 
     private void AutoScrollHoverEffectView_PointerEntered(object sender, PointerRoutedEventArgs e)
@@ -112,6 +111,7 @@ public sealed partial class GamePanel : UserControl
         AutoScrollHoverEffectViewTitle.IsPlaying = true;
         AutoScrollHoverEffectViewDescription.IsPlaying = true;
     }
+
 
     private void AutoScrollHoverEffectView_PointerMoved(object sender, PointerRoutedEventArgs e)
     {
@@ -191,16 +191,11 @@ public sealed partial class GamePanel : UserControl
 
                     if (isRunning)
                     {
-                        Panel.Click -= Launch_Click;
-
                         if (!servicesState && stopProcesses.Visibility == Visibility.Collapsed)
                             stopProcesses.Visibility = Visibility.Visible;
                     }
                     else
                     {
-                        Panel.Click -= Launch_Click;
-                        Panel.Click += Launch_Click;
-
                         if (!servicesState && stopProcesses.Visibility == Visibility.Visible)
                             stopProcesses.Visibility = Visibility.Collapsed;
                     }
