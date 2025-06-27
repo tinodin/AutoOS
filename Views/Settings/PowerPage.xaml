@@ -26,7 +26,7 @@
                 Margin="{ThemeResource ContentPageMargin}"
                 Padding="{ThemeResource ContentPagePadding}"
                 dev:PanelAttach.ChildrenTransitions="Default"
-                Spacing="12">
+                Spacing="8">
                 <dev:SettingsGroup
                     Description="Toggle idle states and power management."
                     Header="Power Options"

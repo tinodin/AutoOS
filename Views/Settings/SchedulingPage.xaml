@@ -26,7 +26,7 @@
                 Margin="{ThemeResource ContentPageMargin}"
                 Padding="{ThemeResource ContentPagePadding}"
                 dev:PanelAttach.ChildrenTransitions="Default"
-                Spacing="12">
+                Spacing="8">
                 <dev:SettingsGroup
                     Description="Let AutoOS benchmark your GPU and XHCI Controller Affinities or set them manually. If your CPU has 6 or more cores they will be reserved."
                     Header="Per-CPU Scheduling"

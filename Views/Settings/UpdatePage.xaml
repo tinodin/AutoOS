@@ -26,7 +26,7 @@
                 Margin="{ThemeResource ContentPageMargin}"
                 Padding="{ThemeResource ContentPagePadding}"
                 dev:PanelAttach.ChildrenTransitions="Default"
-                Spacing="12">
+                Spacing="8">
                 <dev:SettingsGroup
                     Description="Enabling Windows Updates is not recommended as it tends to be buggy (24H2) and rarely adds major features or security patches."
                     Header="Windows Updates"

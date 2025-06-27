@@ -26,7 +26,7 @@
                 Margin="{ThemeResource ContentPageMargin}"
                 Padding="{ThemeResource ContentPagePadding}"
                 dev:PanelAttach.ChildrenTransitions="Default"
-                Spacing="12">
+                Spacing="8">
                 <dev:SettingsGroup
                     Description="Disabling Event Trace Sessions breaks logging apps e.g. Event Viewer and xperf."
                     Header="Event Trace Sessions (ETS)"

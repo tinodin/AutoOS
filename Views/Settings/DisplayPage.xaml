@@ -26,7 +26,7 @@
                 Margin="{ThemeResource ContentPageMargin}"
                 Padding="{ThemeResource ContentPagePadding}"
                 dev:PanelAttach.ChildrenTransitions="Default"
-                Spacing="12">
+                Spacing="8">
                 <dev:SettingsGroup
                     Description="Add custom resolutions, remove unwanted resolutions, edit FreeSync ranges, and more."
                     Header="Custom Resolution Utility (CRU)"

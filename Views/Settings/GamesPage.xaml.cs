@@ -169,6 +169,7 @@ public sealed partial class GamesPage : Page
     private async void LoadGames()
     {
         // reset
+        LoadSortSettings();
         Games_SwitchPresenter.Value = true;
         Games_SwitchPresenter.HorizontalAlignment = HorizontalAlignment.Center;
         GamesGrid.Height = 350;
