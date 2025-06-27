@@ -166,7 +166,7 @@
                                 <ToolTip Placement="Mouse">
                                     <StackPanel>
                                         <TextBlock FontWeight="Bold" Text="Settings" />
-                                        <TextBlock Text="Click to change the install location etc." TextWrapping="Wrap" />
+                                        <TextBlock Text="Click to see metadata and settings." TextWrapping="Wrap" />
                                     </StackPanel>
                                 </ToolTip>
                             </ToolTipService.ToolTip>
