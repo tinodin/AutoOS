@@ -293,50 +293,50 @@ namespace AutoOS.Helpers
                 foreach (var panel in ((StackPanel)GamesPage.Instance.Games.HeaderContent).Children.OfType<GamePanel>().Where(panel => panel.Launcher == "Epic Games").ToList())
                     ((StackPanel)GamesPage.Instance.Games.HeaderContent).Children.Remove(panel);
 
-                // get new login data
-                var (AccountId, DisplayName, AccessToken, RefreshToken) = await Authenticate(GetAccountData(ActiveEpicGamesAccountPath).Token);
-                loginClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
+                //// get new login data
+                //var (AccountId, DisplayName, AccessToken, RefreshToken) = await Authenticate(GetAccountData(ActiveEpicGamesAccountPath).Token);
+                //loginClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
 
-                // get library items
-                var libraryResponse = await loginClient.GetAsync("https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/public/assets/Windows?label=Live");
+                //// get library items
+                //var libraryResponse = await loginClient.GetAsync("https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/public/assets/Windows?label=Live");
 
-                if (libraryResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-                {
-                    return;
-                }
+                //if (libraryResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                //{
+                //    return;
+                //}
 
-                var libraryData = await libraryResponse.Content.ReadAsStringAsync();
+                //var libraryData = await libraryResponse.Content.ReadAsStringAsync();
 
-                // get playtime data
-                var playTimeResponse = await loginClient.GetAsync($"https://library-service.live.use1a.on.epicgames.com/library/api/public/playtime/account/{GetAccountData(ActiveEpicGamesAccountPath).AccountId}/all");
+                //// get playtime data
+                //var playTimeResponse = await loginClient.GetAsync($"https://library-service.live.use1a.on.epicgames.com/library/api/public/playtime/account/{GetAccountData(ActiveEpicGamesAccountPath).AccountId}/all");
 
-                if (playTimeResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-                {
-                    return;
-                }
+                //if (playTimeResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                //{
+                //    return;
+                //}
 
-                var playTimeData = await playTimeResponse.Content.ReadAsStringAsync();
+                //var playTimeData = await playTimeResponse.Content.ReadAsStringAsync();
 
-                // read old data
-                var iniHelper = new InIHelper(ActiveEpicGamesAccountPath);
-                string rememberMeData = iniHelper.ReadValue("Data", "RememberMe", 2048);
+                //// read old data
+                //var iniHelper = new InIHelper(ActiveEpicGamesAccountPath);
+                //string rememberMeData = iniHelper.ReadValue("Data", "RememberMe", 2048);
 
-                // decrypt it
-                string decryptedJson = Decrypt(rememberMeData);
-                JsonArray jsonArray = JsonNode.Parse(decryptedJson).AsArray();
+                //// decrypt it
+                //string decryptedJson = Decrypt(rememberMeData);
+                //JsonArray jsonArray = JsonNode.Parse(decryptedJson).AsArray();
 
-                // replace old display name and refresh token with new data
-                jsonArray[0]["DisplayName"] = DisplayName;
-                jsonArray[0]["Token"] = RefreshToken;
+                //// replace old display name and refresh token with new data
+                //jsonArray[0]["DisplayName"] = DisplayName;
+                //jsonArray[0]["Token"] = RefreshToken;
 
-                // write changes
-                var options = new JsonSerializerOptions
-                {
-                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-                };
+                //// write changes
+                //var options = new JsonSerializerOptions
+                //{
+                //    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+                //};
 
-                iniHelper.AddValue("Data", $"\"{Encrypt(jsonArray.ToJsonString(options))}\"", "RememberMe");
-                new InIHelper(Path.Combine(EpicGamesAccountDir, AccountId, "GameUserSettings.ini")).AddValue("Data", $"\"{Encrypt(jsonArray.ToJsonString(options))}\"", "RememberMe");
+                //iniHelper.AddValue("Data", $"\"{Encrypt(jsonArray.ToJsonString(options))}\"", "RememberMe");
+                //new InIHelper(Path.Combine(EpicGamesAccountDir, AccountId, "GameUserSettings.ini")).AddValue("Data", $"\"{Encrypt(jsonArray.ToJsonString(options))}\"", "RememberMe");
 
                 // for each manifest
                 await Parallel.ForEachAsync(Directory.GetFiles(EpicGamesMainfestDir, "*.item", SearchOption.TopDirectoryOnly), new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount * 2 }, async (file, _) =>
@@ -349,11 +349,11 @@ namespace AutoOS.Helpers
                         // return if not a game
                         if (itemJson?["bIsApplication"]?.GetValue<bool>() != true) return;
 
-                        // return if not in library
-                        if (!libraryData.Contains(itemJson["MainGameCatalogItemId"]?.GetValue<string>()))
-                        {
-                            return;
-                        }
+                        //// return if not in library
+                        //if (!libraryData.Contains(itemJson["MainGameCatalogItemId"]?.GetValue<string>()))
+                        //{
+                        //    return;
+                        //}
 
                         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1.5));
                         var token = cts.Token;
@@ -400,17 +400,18 @@ namespace AutoOS.Helpers
                         string artifactId = itemData?["releaseInfo"]?[0]?["appId"]?.ToString();
 
                         // read playtime json data
-                        var entries = JsonSerializer.Deserialize<List<Dictionary<string, JsonElement>>>(playTimeData);
-                        var match = entries?.FirstOrDefault(e => e["artifactId"].GetString() == artifactId);
+                        //var entries = JsonSerializer.Deserialize<List<Dictionary<string, JsonElement>>>(playTimeData);
+                        //var match = entries?.FirstOrDefault(e => e["artifactId"].GetString() == artifactId);
 
-                        var totalSeconds = (match?.TryGetValue("totalTime", out var totalTimeElem) == true && totalTimeElem.TryGetInt32(out var seconds))
-                            ? seconds
-                            : 0;
+                        //var totalSeconds = (match?.TryGetValue("totalTime", out var totalTimeElem) == true && totalTimeElem.TryGetInt32(out var seconds))
+                        //    ? seconds
+                        //    : 0;
 
-                        var ts = TimeSpan.FromSeconds(totalSeconds);
-                        string playTime = ts.TotalHours >= 1
-                            ? $"{(int)ts.TotalHours}h {ts.Minutes}m"
-                            : $"{ts.Minutes}m";
+                        //var ts = TimeSpan.FromSeconds(totalSeconds);
+                        //string playTime = ts.TotalHours >= 1
+                        //    ? $"{(int)ts.TotalHours}h {ts.Minutes}m"
+                        //    : $"{ts.Minutes}m";
+                        string playTime = "0m";
 
                         GamesPage.Instance.DispatcherQueue.TryEnqueue(() =>
                         {
