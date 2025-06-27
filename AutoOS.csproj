@@ -72,8 +72,8 @@
     <ProjectCapability Include="Msix" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="DevWinUI" Version="8.3.0" />
-    <PackageReference Include="DevWinUI.Controls" Version="8.3.0" />
+    <PackageReference Include="DevWinUI" Version="8.4.1" />
+    <PackageReference Include="DevWinUI.Controls" Version="8.4.1" />
     <PackageReference Include="Downloader" Version="4.0.1-beta" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.4188" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.250610002-experimental3" />

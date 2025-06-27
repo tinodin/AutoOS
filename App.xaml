@@ -11,8 +11,8 @@
                 <ResourceDictionary Source="ms-appx:///DevWinUI.Controls/Themes/Generic.xaml" />
                 <ResourceDictionary Source="Themes/Styles.xaml" />
                 <ResourceDictionary Source="ms-appx:///DevWinUI.Controls/Themes/InfoBarInformationalColor.xaml" />
-                <ResourceDictionary Source="ms-appx:///DevWinUI.Controls/Themes/NavigationViewItemStyle.xaml" />
                 <ResourceDictionary Source="Themes/ThemeResources.xaml" />
+                <ResourceDictionary Source="Themes/NavigationViewItemStyle.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <!--  Other app resources here  -->
         </ResourceDictionary>

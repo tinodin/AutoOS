@@ -15,7 +15,7 @@
         </Grid.RowDefinitions>
         <TitleBar
             x:Name="AppTitleBar"
-            Title="{x:Bind TitleBarName}"
+            Title="AutoOS"
             IconSource="{dev:BitmapIconSource Source=ms-appx:///Assets/AppIcon.png}"
             IsBackButtonVisible="False"
             IsPaneToggleButtonVisible="True"

@@ -28,7 +28,7 @@ namespace AutoOS.Views
                     .ConfigureJsonFile("Assets/NavViewMenu/Settings.json")
                     .ConfigureTitleBar(AppTitleBar, false)
                     .ConfigureBreadcrumbBar(BreadCrumbNav, BreadcrumbPageMappings.PageDictionary);
-                TitleBarName = "AutoOS Settings";
+                AppTitleBar.Title = "AutoOS Settings";
 
                 NavView.IsSettingsVisible = true;
             }
@@ -40,7 +40,7 @@ namespace AutoOS.Views
                     .ConfigureJsonFile("Assets/NavViewMenu/Installer.json")
                     .ConfigureTitleBar(AppTitleBar, false)
                     .ConfigureBreadcrumbBar(BreadCrumbNav, BreadcrumbPageMappings.PageDictionary);
-                TitleBarName = "AutoOS Installer";
+                AppTitleBar.Title = "AutoOS Installer";
 
                 ((OverlappedPresenter)AppWindow.Presenter).Maximize();
             }
@@ -57,11 +57,11 @@ namespace AutoOS.Views
             }
         }
 
-        private readonly HashSet<string> _visitedPages = new();
+        private readonly HashSet<string> _visitedPages = [];
         public IReadOnlyCollection<string> VisitedPages => _visitedPages;
 
-        public readonly string[] AllPages = new[]
-        {
+        public readonly string[] AllPages =
+        [
             "PersonalizationPage",
             "ApplicationsPage",
             "BrowserPage",
@@ -73,7 +73,7 @@ namespace AutoOS.Views
             "PowerPage",
             "ServicesPage",
             "SecurityPage"
-        };
+        ];
 
         public void MarkVisited(string pageName)
         {
