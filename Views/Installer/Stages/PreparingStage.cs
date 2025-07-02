@@ -23,7 +23,6 @@ public static class PreparingStage
     public static bool? WindowsDefender;
     public static bool? UserAccountControl;
     public static bool? DEP;
-    public static bool? MemoryIntegrity;
     public static bool? INTELCPU;
     public static bool? AMDCPU;
     public static bool? SpectreMeltdownMitigations;
@@ -133,7 +132,6 @@ public static class PreparingStage
             WindowsDefender = (localSettings.Values["WindowsDefender"]?.ToString() == "1");
             UserAccountControl = (localSettings.Values["UserAccountControl"]?.ToString() == "1");
             DEP = (localSettings.Values["DataExecutionPrevention"]?.ToString() == "1");
-            MemoryIntegrity = (localSettings.Values["MemoryIntegrity"]?.ToString() == "1");
             SpectreMeltdownMitigations = (localSettings.Values["SpectreMeltdownMitigations"]?.ToString() == "1");
             ProcessMitigations = (localSettings.Values["ProcessMitigations"]?.ToString() == "1");
             LegacyContextMenu = (localSettings.Values["LegacyContextMenu"]?.ToString() == "1");

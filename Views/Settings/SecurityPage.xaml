@@ -41,9 +41,6 @@
                         <dev:SettingsCard Description="Protection against malicious code execution in memory areas. Some anti-cheats require this to be enabled. Can't be disabled when secure boot is enabled." Header="Data Execution Prevention (DEP)">
                             <ToggleSwitch x:Name="DEP" Toggled="DEP_Toggled" />
                         </dev:SettingsCard>
-                        <dev:SettingsCard Description="Enforces kernel-mode code integrity by using the hypervisor to block unsigned or untrusted drivers from loading. Some anti-cheats require this to be enabled." Header="Hypervisor Enforced Code Integrity (HVCI)">
-                            <ToggleSwitch x:Name="MemoryIntegrity" Toggled="MemoryIntegrity_Toggled" />
-                        </dev:SettingsCard>
                         <dev:SettingsCard Description="Patches to enable mitigation against CPU vulnerabilities. Increases performance especially on older Intel CPUs. Recommended to keep enabled on AMD CPUs." Header="Spectre &amp; Meltdown Mitigations">
                             <ToggleSwitch x:Name="SpectreMeltdown" Toggled="SpectreMeltdown_Toggled" />
                         </dev:SettingsCard>

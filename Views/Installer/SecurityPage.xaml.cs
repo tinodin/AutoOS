@@ -8,7 +8,6 @@ public sealed partial class SecurityPage : Page
     private bool isInitializingWindowsDefenderState = true;
     private bool isInitializingUACState = true;
     private bool isInitializingDEPState = true;
-    private bool isInitializingMemoryIntegrityState = true;
     private bool isInitializingSpectreMeltdownState = true;
     private bool isInitializingProcessMitigationsState = true;
 
@@ -20,7 +19,6 @@ public sealed partial class SecurityPage : Page
         GetWindowsDefenderState();
         GetUACState();
         GetDEPState();
-        GetMemoryIntegrityState();
         GetSpectreMeltdownState();
         GetProcessMitigationsState();
     }
@@ -112,28 +110,6 @@ public sealed partial class SecurityPage : Page
         if (isInitializingDEPState) return;
 
         localSettings.Values["DataExecutionPrevention"] = DEP.IsOn ? 1 : 0;
-    }
-
-    private void GetMemoryIntegrityState()
-    {
-        var value = localSettings.Values["MemoryIntegrity"];
-        if (value == null)
-        {
-            localSettings.Values["MemoryIntegrity"] = 0;
-        }
-        else
-        {
-            MemoryIntegrity.IsOn = (int)value == 1;
-        }
-
-        isInitializingMemoryIntegrityState = false;
-    }
-
-    private void MemoryIntegrity_Toggled(object sender, RoutedEventArgs e)
-    {
-        if (isInitializingMemoryIntegrityState) return;
-
-        localSettings.Values["MemoryIntegrity"] = MemoryIntegrity.IsOn ? 1 : 0;
     }
 
     private void GetSpectreMeltdownState()
