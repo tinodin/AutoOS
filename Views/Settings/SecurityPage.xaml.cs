@@ -9,11 +9,13 @@ public sealed partial class SecurityPage : Page
 {
     private string nsudoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NSudo", "NSudoLC.exe");
     private bool initialUACState = false;
+    private bool initialMemoryIntegrityState = false;
     private bool initialSpectreMeltdownState = false;
     private bool initialProcessMitigationsState = false;
     private bool isInitializingWindowsDefenderState = true;
     private bool isInitializingUACState = true;
     private bool isInitializingDEPState = true;
+    private bool isInitializingMemoryIntegrityState = true;
     private bool isInitializingSpectreMeltdownState = true;
     private bool isInitializingProcessMitigationsState = true;
 
@@ -27,6 +29,7 @@ public sealed partial class SecurityPage : Page
         GetDEPState();
         GetSpectreMeltdownState();
         GetProcessMitigationsState();
+        GetMemoryIntegrityState();
     }
 
     private void GetWindowsDefenderState()
@@ -400,6 +403,76 @@ public sealed partial class SecurityPage : Page
                 // remove infobar
                 WindowsDefenderInfo.Children.Clear();
             }
+        }
+    }
+
+    private void GetMemoryIntegrityState()
+    {
+        // get state
+        if ((int)Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity", "Enabled", 0) == 1)
+        {
+            MemoryIntegrity.IsOn = true;
+            initialMemoryIntegrityState = true;
+        }
+        isInitializingMemoryIntegrityState = false;
+    }
+
+    private async void MemoryIntegrity_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (isInitializingMemoryIntegrityState) return;
+
+        // remove infobar
+        WindowsDefenderInfo.Children.Clear();
+
+        // add infobar
+        WindowsDefenderInfo.Children.Add(new InfoBar
+        {
+            Title = MemoryIntegrity.IsOn ? "Enabling Hypervisor Enforced Code Integrity (HVCI)..." : "Disabling Hypervisor Enforced Code Integrity (HVCI)...",
+            IsClosable = false,
+            IsOpen = true,
+            Severity = InfoBarSeverity.Informational,
+            Margin = new Thickness(5)
+        });
+
+        // toggle
+        Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity", "Enabled", MemoryIntegrity.IsOn ? 1 : 0, RegistryValueKind.DWord);
+
+        // delay
+        await Task.Delay(500);
+
+        // remove infobar
+        WindowsDefenderInfo.Children.Clear();
+
+        // add infobar
+        var infoBar = new InfoBar
+        {
+            Title = MemoryIntegrity.IsOn ? "Successfully enabled Hypervisor Enforced Code Integrity (HVCI)." : "Successfully disabled Hypervisor Enforced Code Integrity (HVCI).",
+            IsClosable = false,
+            IsOpen = true,
+            Severity = InfoBarSeverity.Success,
+            Margin = new Thickness(5)
+        };
+        WindowsDefenderInfo.Children.Add(infoBar);
+
+        // add restart button if needed
+        if (MemoryIntegrity.IsOn != initialMemoryIntegrityState)
+        {
+            infoBar.Title += " A restart is required to apply the change.";
+            infoBar.ActionButton = new Button
+            {
+                Content = "Restart",
+                HorizontalAlignment = HorizontalAlignment.Right
+            };
+            ((Button)infoBar.ActionButton).Click += (s, args) =>
+            Process.Start("shutdown", "/r /f /t 0");
+        }
+        else
+        {
+            // delay
+            await Task.Delay(2000);
+
+            // remove infobar
+            WindowsDefenderInfo.Children.Clear();
         }
     }
 
