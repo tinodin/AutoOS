@@ -442,6 +442,8 @@ public sealed partial class SchedulingPage : Page
 
     private async void Benchmark_Checked(object sender, RoutedEventArgs e)
     {
+        await Task.Delay(1000);
+
         var process = new Process
         {
             StartInfo = new ProcessStartInfo
