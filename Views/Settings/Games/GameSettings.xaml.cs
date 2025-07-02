@@ -73,6 +73,7 @@ public sealed partial class GameSettings : Page
         using (var key = Registry.CurrentUser.OpenSubKey(@"System\GameConfigStore\Children"))
         {
             foreach (var subKeyName in key.GetSubKeyNames())
+            { 
                 using (var subKey = key.OpenSubKey(subKeyName))
                 {
                     if (subKey.GetValueNames().Any(valueName => subKey.GetValue(valueName) is string strValue && strValue.Contains("Fortnite")))
@@ -90,7 +91,13 @@ public sealed partial class GameSettings : Page
                             isInitializingPresentationMode = false;
                         }
                     }
+                    else
+                    {
+                        PresentationMode.SelectedIndex = 0;
+                        isInitializingPresentationMode = false;
+                    }
                 }
+            }
         }
     }
 
@@ -106,32 +113,34 @@ public sealed partial class GameSettings : Page
                 {
                     if (subKey.GetValueNames().Any(valueName => subKey.GetValue(valueName) is string strValue && strValue.Contains("Fortnite")))
                     {
-                        string cmd = "";
                         if (PresentationMode.SelectedIndex == 0)
-                        {
-                            cmd = "reg delete \"HKCU\\System\\GameConfigStore\\Children\\" + subKeyName + "\" /v Flags /f";
-                        }
-                        else if (PresentationMode.SelectedIndex == 1)
-                        {
-                            cmd = "reg add \"HKCU\\System\\GameConfigStore\\Children\\" + subKeyName + "\" /v Flags /t REG_DWORD /d 0x211 /f";
-                        }
-
-                        if (!string.IsNullOrEmpty(cmd))
                         {
                             var process = new Process
                             {
                                 StartInfo = new ProcessStartInfo
                                 {
-                                    FileName = "cmd.exe",
-                                    Arguments = "/c " + cmd,
+                                    FileName = "reg.exe",
+                                    Arguments = $@"delete ""HKCU\System\GameConfigStore\Children\{subKeyName}"" /v Flags /f",
                                     CreateNoWindow = true,
                                 }
                             };
                             process.Start();
                             process.WaitForExit();
                         }
-
-                        return;
+                        else if (PresentationMode.SelectedIndex == 1)
+                        {
+                            var process = new Process
+                            {
+                                StartInfo = new ProcessStartInfo
+                                {
+                                    FileName = "reg.exe",
+                                    Arguments = $@"add ""HKCU\System\GameConfigStore\Children\{subKeyName}"" /v Flags /t REG_DWORD /d 0x211 /f",
+                                    CreateNoWindow = true,
+                                }
+                            };
+                            process.Start();
+                            process.WaitForExit();
+                        }
                     }
                 }
             }

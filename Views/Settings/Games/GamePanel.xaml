@@ -78,7 +78,11 @@
                                 x:Name="LightSpot"
                                 Width="175"
                                 Height="175"
-                                Opacity="0">
+                                Opacity="0"
+                                RenderTransformOrigin="0.5,0.5">
+                                <Ellipse.RenderTransform>
+                                    <CompositeTransform x:Name="LightSpotTransform" />
+                                </Ellipse.RenderTransform>
                                 <Ellipse.Fill>
                                     <RadialGradientBrush>
                                         <GradientStop Offset="0" Color="White" />

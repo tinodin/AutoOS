@@ -1,10 +1,11 @@
-﻿using Microsoft.UI.Xaml.Input;
+﻿using Microsoft.UI.Xaml.Hosting;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
-using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.Win32;
 using System.Diagnostics;
 using System.Management;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using System.ServiceProcess;
 
@@ -61,6 +62,8 @@ public sealed partial class GamePanel : UserControl
     {
         this.InitializeComponent();
         this.Unloaded += GamePanel_Unloaded;
+
+        _lightSpotVisual = ElementCompositionPreview.GetElementVisual(LightSpot);
     }
 
     private void GamePanel_Unloaded(object sender, RoutedEventArgs e)
@@ -112,6 +115,7 @@ public sealed partial class GamePanel : UserControl
         AutoScrollHoverEffectViewDescription.IsPlaying = true;
     }
 
+    private Microsoft.UI.Composition.Visual _lightSpotVisual;
 
     private void AutoScrollHoverEffectView_PointerMoved(object sender, PointerRoutedEventArgs e)
     {
@@ -122,6 +126,21 @@ public sealed partial class GamePanel : UserControl
         }
 
         var pos = e.GetCurrentPoint(Panel).Position;
+        var canvas = LightSpot.Parent as UIElement;
+        if (canvas == null || _lightSpotVisual == null)
+            return;
+
+        var transform = Panel.TransformToVisual(canvas);
+        var canvasPos = transform.TransformPoint(pos);
+
+        _lightSpotVisual.Offset = new Vector3(
+            (float)(canvasPos.X - LightSpot.Width / 2),
+            (float)(canvasPos.Y - LightSpot.Height / 2),
+            0);
+
+        if (_lightSpotVisual.Opacity == 0)
+            _lightSpotVisual.Opacity = 0.35f;
+
         double centerX = Panel.ActualWidth / 2;
         double centerY = Panel.ActualHeight / 2;
 
@@ -137,15 +156,12 @@ public sealed partial class GamePanel : UserControl
         double translateY = deltaY / centerY * maxMove;
 
         SetProjectionDirect(tiltX, tiltY, translateX, translateY);
-
-        Canvas.SetLeft(LightSpot, pos.X - LightSpot.Width / 2);
-        Canvas.SetTop(LightSpot, pos.Y - LightSpot.Height / 2);
-        LightSpot.Opacity = 0.35;
     }
 
     private void AutoScrollHoverEffectView_PointerExited(object sender, PointerRoutedEventArgs e)
     {
         EndHoverEffect();
+        _lightSpotVisual.Opacity = 0f;
     }
 
     private void AutoScrollHoverEffectView_PointerCanceled(object sender, PointerRoutedEventArgs e)
