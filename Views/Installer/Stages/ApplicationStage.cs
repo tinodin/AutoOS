@@ -48,6 +48,30 @@ public static class ApplicationStage
 
         var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
         {
+            // download heif image extension
+            ("Downloading HEIF Image Extension", async () => await ProcessActions.RunMicrosoftStoreDownload("Microsoft.HEIFImageExtension_8wekyb3d8bbwe", "appxbundle", "", "HEIFImageExtension.appxbundle", 0), () => true),
+
+            // install heif image extension
+            ("Installing HEIF Image Extension", async () => await ProcessActions.RunPowerShell(@"Add-AppxPackage -Path ""$env:TEMP\HEIFImageExtension.appxbundle"""), () => true),
+
+            // download mpeg-2 video extension
+            ("Downloading MPEG-2 Video Extension", async () => await ProcessActions.RunMicrosoftStoreDownload("Microsoft.MPEG2VideoExtension_8wekyb3d8bbwe", "appxbundle", "", "MPEG2VideoExtension.appxbundle", 0), () => true),
+
+            // install mpeg-2 video extension
+            ("Installing MPEG-2 Video Extension", async () => await ProcessActions.RunPowerShell(@"Add-AppxPackage -Path ""$env:TEMP\MPEG2VideoExtension.appxbundle"""), () => true),
+
+            // download av1 video extension
+            ("Downloading AV1 Video Extension", async () => await ProcessActions.RunMicrosoftStoreDownload("Microsoft.AV1VideoExtension_8wekyb3d8bbwe", "appxbundle", "", "AV1VideoExtension.appxbundle", 0), () => true),
+
+            // install av1 video extension
+            ("Installing AV1 Video Extension", async () => await ProcessActions.RunPowerShell(@"Add-AppxPackage -Path ""$env:TEMP\AV1VideoExtension.appxbundle"""), () => true),
+
+            // download dolby vision extension
+            ("Downloading Dolby Vision Extension", async () => await ProcessActions.RunMicrosoftStoreDownload("DolbyLaboratories.DolbyVisionAccess_rz1tebttyb220", "msixbundle", "", "DolbyVisionExtension.msixbundle", 0), () => true),
+
+            // install dolby vision extension
+            ("Installing Dolby Vision Extension", async () => await ProcessActions.RunPowerShell(@"Add-AppxPackage -Path ""$env:TEMP\DolbyVisionExtension.msixbundle"""), () => true),
+
             // download icloud dependency
             ("Downloading iCloud Dependency", async () => await ProcessActions.RunMicrosoftStoreDownload("AppleInc.iCloud_nzyj5cx40ttqa", "msix", "x64", "iCloudDependency.msix", 0), () => iCloud == true),
 

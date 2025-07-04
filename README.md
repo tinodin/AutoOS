@@ -118,7 +118,7 @@ Thank you for creating [Windhawk](https://github.com/ramensoftware/windhawk) and
 ---
 
 **ghost1372 (Mahdi Hosseini):**  
-Thanks for creating [DevWinUI](https://github.com/ghost1372/DevWinUI). It inspired me to learn C# and rewrite this project in WinUI 3. I appreciate your quick responses, fixes to issues, and the helpful [workflow file](https://github.com/ghost1372/DevWinUI/blob/main/.github/workflows/publish-release.yml), which I adapted for this project.
+Thank you for creating [DevWinUI](https://github.com/ghost1372/DevWinUI). It inspired me to learn C# and rewrite this project in WinUI 3. I appreciate your quick responses, fixes to issues, and the helpful [workflow file](https://github.com/ghost1372/DevWinUI/blob/main/.github/workflows/publish-release.yml), which I adapted for this project.
 
 ---
 
