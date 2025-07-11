@@ -249,107 +249,103 @@ public sealed partial class DevicesPage : Page
         // hide toggle switch
         IMOD.Visibility = Visibility.Collapsed;
 
-        // stop easy anti cheat driver when fortnite is not running
-        if (Process.GetProcessesByName("FortniteClient-Win64-Shipping").Length == 0)
+        var query = new SelectQuery("SELECT * FROM Win32_SystemDriver WHERE Name = 'EasyAntiCheat_EOSSys'");
+        using (var searcher = new ManagementObjectSearcher(query))
         {
-            ServiceController[] services = ServiceController.GetServices();
-            ServiceController service = Array.Find(services, s => s.ServiceName == "EasyAntiCheat_EOSSys");
-
-            if (service != null && service.Status == ServiceControllerStatus.Running)
+            var driver = searcher.Get().Cast<ManagementObject>().FirstOrDefault();
+            if (driver != null && driver["State"]?.ToString() == "Running")
             {
-                service.Stop();
+                // add infobar
+                DevicesInfo.Children.Add(new InfoBar
+                {
+                    Title = "Failed to run RWEverything because it is already running or an anticheat is blocking the driver.",
+                    IsClosable = false,
+                    IsOpen = true,
+                    Severity = InfoBarSeverity.Error,
+                    Margin = new Thickness(5)
+                });
+
+                // disable the switch
+                IMOD.IsEnabled = false;
+
+                // hide progress ring
+                imodProgress.Visibility = Visibility.Collapsed;
+
+                // show toggle
+                IMOD.Visibility = Visibility.Visible;
+
+                isInitializingIMODState = false;
+
+                return;
+            }
+            else
+            {
+                // check state
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "cmd.exe",
+                    Arguments = $"/c takeown /f \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}\" & icacls \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}\" /grant Everyone:F /T /C /Q",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                });
+
+                var process = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "powershell.exe",
+                        Arguments = $"-ExecutionPolicy Bypass -Command \"& '{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "imod.ps1")}' -status '{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}'\"",
+                        CreateNoWindow = true,
+                        RedirectStandardOutput = true
+                    }
+                };
+
+                process.Start();
+
+                string output = await process.StandardOutput.ReadToEndAsync();
+
+                if (output.Contains("ENABLED"))
+                {
+                    localSettings.Values["XhciInterruptModeration"] = 1;
+
+                    IMOD.IsOn = true;
+                }
+                else if (output.Contains("FAILED"))
+                {
+                    // resort to setting
+                    if ((int?)localSettings.Values["XhciInterruptModeration"] == 1)
+                    {
+                        IMOD.IsOn = true;
+                    }
+
+                    IMOD.IsEnabled = false;
+
+                    // hide progress ring
+                    imodProgress.Visibility = Visibility.Collapsed;
+
+                    // show toggle
+                    IMOD.Visibility = Visibility.Visible;
+
+                    // add infobar
+                    DevicesInfo.Children.Add(new InfoBar
+                    {
+                        Title = "Failed to run RWEverything because it is already running or an anticheat is blocking the driver.",
+                        IsClosable = false,
+                        IsOpen = true,
+                        Severity = InfoBarSeverity.Error,
+                        Margin = new Thickness(5)
+                    });
+                }
+
+                // hide progress ring
+                imodProgress.Visibility = Visibility.Collapsed;
+
+                // show toggle
+                IMOD.Visibility = Visibility.Visible;
+
+                isInitializingIMODState = false;
             }
         }
-        else if (Process.GetProcessesByName("FortniteClient-Win64-Shipping").Length == 1)
-        {
-            // add infobar
-            DevicesInfo.Children.Add(new InfoBar
-            {
-                Title = "Failed to run RWEverything because it is already running or an anticheat is blocking the driver.",
-                IsClosable = false,
-                IsOpen = true,
-                Severity = InfoBarSeverity.Error,
-                Margin = new Thickness(5)
-            });
-
-            // disable the switch
-            IMOD.IsEnabled = false;
-
-            // hide progress ring
-            imodProgress.Visibility = Visibility.Collapsed;
-
-            // show toggle
-            IMOD.Visibility = Visibility.Visible;
-
-            isInitializingIMODState = false;
-
-            return;
-        }
-
-        // check state
-        Process.Start(new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c takeown /f \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}\" & icacls \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}\" /grant Everyone:F /T /C /Q",
-            UseShellExecute = false,
-            CreateNoWindow = true
-        });
-
-        var process = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = "powershell.exe",
-                Arguments = $"-ExecutionPolicy Bypass -Command \"& '{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "imod.ps1")}' -status '{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RwEverything", "Rw.exe")}'\"",
-                CreateNoWindow = true,
-                RedirectStandardOutput = true
-            }
-        };
-
-        process.Start();
-
-        string output = await process.StandardOutput.ReadToEndAsync();
-
-        if (output.Contains("ENABLED"))
-        {
-            localSettings.Values["XhciInterruptModeration"] = 1;
-
-            IMOD.IsOn = true;
-        }
-        else if (output.Contains("FAILED"))
-        {
-            // resort to setting
-            if ((int?)localSettings.Values["XhciInterruptModeration"] == 1)
-            {
-                IMOD.IsOn = true;
-            }
-
-            IMOD.IsEnabled = false;
-
-            // hide progress ring
-            imodProgress.Visibility = Visibility.Collapsed;
-
-            // show toggle
-            IMOD.Visibility = Visibility.Visible;
-
-            // add infobar
-            DevicesInfo.Children.Add(new InfoBar
-            {
-                Title = "Failed to run RWEverything because it is already running or an anticheat is blocking the driver.",
-                IsClosable = false,
-                IsOpen = true,
-                Severity = InfoBarSeverity.Error,
-                Margin = new Thickness(5)
-            });
-        }
-
-        // hide progress ring
-        imodProgress.Visibility = Visibility.Collapsed;
-
-        // show toggle
-        IMOD.Visibility = Visibility.Visible;
-
-        isInitializingIMODState = false;
     }
 
     private async void IMOD_Toggled(object sender, RoutedEventArgs e)
