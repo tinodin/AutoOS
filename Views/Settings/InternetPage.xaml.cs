@@ -90,7 +90,7 @@ public sealed partial class InternetPage : Page
         // declare services and drivers
         var groups = new[]
         {
-            (new[] { "WlanSvc", "Dhcp", "EventLog", "Wcmsvc" }, 2),
+            (new[] { "WlanSvc", "Wcmsvc" }, 2),
             (new[] { "NlaSvc", "WinHttpAutoProxySvc", "Netwtw10", "Netwtw14" }, 3),
             (new[] { "tdx", "vwififlt"}, 1)
         };
@@ -159,7 +159,7 @@ public sealed partial class InternetPage : Page
             StartInfo = new ProcessStartInfo
             {
                 FileName = "powershell.exe",
-                Arguments = $"-ExecutionPolicy Bypass -File \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "wol.ps1")}\"",
+                Arguments = $@"-ExecutionPolicy Bypass -File ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "wol.ps1")}""",
                 CreateNoWindow = true,
                 RedirectStandardOutput = true
             }
