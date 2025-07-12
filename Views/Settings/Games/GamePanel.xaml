@@ -73,6 +73,14 @@
                     </Border.RenderTransform>
                     <Grid>
                         <dev:ImageEx Source="{x:Bind ImageTall}" Stretch="UniformToFill" />
+                        <InfoBadge
+                            x:Name="UpdateBadge"
+                            Margin="4"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Top"
+                            Style="{StaticResource StringInfoBadgeUpdateStyle}"
+                            Tag="Update available"
+                            Visibility="Collapsed" />
                         <Canvas IsHitTestVisible="False">
                             <Ellipse
                                 x:Name="LightSpot"

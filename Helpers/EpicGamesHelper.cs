@@ -297,26 +297,6 @@ namespace AutoOS.Helpers
                 //var (AccountId, DisplayName, AccessToken, RefreshToken) = await Authenticate(GetAccountData(ActiveEpicGamesAccountPath).Token);
                 //loginClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
 
-                //// get library items
-                //var libraryResponse = await loginClient.GetAsync("https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/public/assets/Windows?label=Live");
-
-                //if (libraryResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-                //{
-                //    return;
-                //}
-
-                //var libraryData = await libraryResponse.Content.ReadAsStringAsync();
-
-                //// get playtime data
-                //var playTimeResponse = await loginClient.GetAsync($"https://library-service.live.use1a.on.epicgames.com/library/api/public/playtime/account/{GetAccountData(ActiveEpicGamesAccountPath).AccountId}/all");
-
-                //if (playTimeResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-                //{
-                //    return;
-                //}
-
-                //var playTimeData = await playTimeResponse.Content.ReadAsStringAsync();
-
                 //// read old data
                 //var iniHelper = new InIHelper(ActiveEpicGamesAccountPath);
                 //string rememberMeData = iniHelper.ReadValue("Data", "RememberMe", 2048);
@@ -337,6 +317,26 @@ namespace AutoOS.Helpers
 
                 //iniHelper.AddValue("Data", $"\"{Encrypt(jsonArray.ToJsonString(options))}\"", "RememberMe");
                 //new InIHelper(Path.Combine(EpicGamesAccountDir, AccountId, "GameUserSettings.ini")).AddValue("Data", $"\"{Encrypt(jsonArray.ToJsonString(options))}\"", "RememberMe");
+
+                //// get library items
+                //var libraryResponse = await loginClient.GetAsync("https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/public/assets/Windows?label=Live");
+
+                //if (libraryResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                //{
+                //    return;
+                //}
+
+                //var libraryData = await libraryResponse.Content.ReadAsStringAsync();
+
+                //// get playtime data
+                //var playTimeResponse = await loginClient.GetAsync($"https://library-service.live.use1a.on.epicgames.com/library/api/public/playtime/account/{GetAccountData(ActiveEpicGamesAccountPath).AccountId}/all");
+
+                //if (playTimeResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                //{
+                //    return;
+                //}
+
+                //var playTimeData = await playTimeResponse.Content.ReadAsStringAsync();
 
                 // for each manifest
                 await Parallel.ForEachAsync(Directory.GetFiles(EpicGamesMainfestDir, "*.item", SearchOption.TopDirectoryOnly), new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount * 2 }, async (file, _) =>
@@ -364,6 +364,7 @@ namespace AutoOS.Helpers
 
                         // get metadata
                         var itemTask = httpClient.GetStringAsync($"https://api.egdata.app/items/{itemJson["MainGameCatalogItemId"]?.GetValue<string>()}", token);
+                        var buildsTask = httpClient.GetStringAsync($"https://api.egdata.app/items/{itemJson["MainGameCatalogItemId"]?.GetValue<string>()}/builds", token);
                         var offerTask = httpClient.GetStringAsync($"https://api.egdata.app/offers/{offerId}", token);
                         var ratingTask = httpClient.GetStringAsync($"https://api.egdata.app/offers/{offerId}/polls", token);
                         var genresTask = httpClient.GetStringAsync($"https://api.egdata.app/offers/{offerId}/genres", token);
@@ -372,6 +373,7 @@ namespace AutoOS.Helpers
                         await Task.WhenAll(offerTask, ratingTask, genresTask, featuresTask).ConfigureAwait(false);
 
                         var itemData = JsonNode.Parse(await itemTask.ConfigureAwait(false));
+                        var buildsData = JsonNode.Parse(await buildsTask.ConfigureAwait(false));
                         var offerData = JsonNode.Parse(await offerTask.ConfigureAwait(false));
                         var ratingData = JsonNode.Parse(await ratingTask.ConfigureAwait(false));
                         var genresData = JsonNode.Parse(await genresTask.ConfigureAwait(false));
@@ -411,7 +413,22 @@ namespace AutoOS.Helpers
                         //string playTime = ts.TotalHours >= 1
                         //    ? $"{(int)ts.TotalHours}h {ts.Minutes}m"
                         //    : $"{ts.Minutes}m";
+
                         string playTime = "0m";
+
+                        //// get latest build
+                        //var buildResponse = await loginClient.GetAsync($"https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/public/assets/v2/platform/Windows/namespace/{itemJson["MainGameCatalogNamespace"]?.GetValue<string>()}/catalogItem/{itemJson["CatalogItemId"]?.GetValue<string>()}/app/{itemJson["AppName"]?.GetValue<string>()}/label/Live", token);
+
+                        //if (buildResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                        //{
+                        //    return;
+                        //}
+
+                        //var buildData = await buildResponse.Content.ReadAsStringAsync(token);
+
+                        string currentVersion = itemJson["AppVersionString"]?.GetValue<string>();
+                        string latestVersion = itemJson["AppVersionString"]?.GetValue<string>();
+                        //var latestVersion = JsonNode.Parse(buildData)?["elements"]?[0]?["buildVersion"]?.GetValue<string>();
 
                         GamesPage.Instance.DispatcherQueue.TryEnqueue(() =>
                         {
@@ -423,6 +440,7 @@ namespace AutoOS.Helpers
                                 AppName = itemJson["MainGameAppName"]?.GetValue<string>(),
                                 InstallLocation = itemJson["InstallLocation"]?.GetValue<string>(),
                                 LaunchExecutable = itemJson["LaunchExecutable"]?.GetValue<string>(),
+                                UpdateIsAvailable = latestVersion != null && latestVersion != currentVersion,
                                 ImageTall = new BitmapImage(new Uri(imageTallUrl)),
                                 ImageWide = new BitmapImage(new Uri(imageWideUrl)),
                                 Title = offerData["title"]?.GetValue<string>(),

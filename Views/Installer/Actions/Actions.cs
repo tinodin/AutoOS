@@ -446,7 +446,7 @@ public static class ProcessActions
     public static async Task DisableWiFiServicesAndDrivers()
     {
         // set start values
-        string[] services = { "WlanSvc", "EventLog", "Wcmsvc", "WinHttpAutoProxySvc", "NlaSvc", "tdx", "vwififlt", "Netwtw10", "Netwtw14" };
+        string[] services = { "WlanSvc", "Wcmsvc", "WinHttpAutoProxySvc", "NlaSvc", "tdx", "vwififlt", "Netwtw10", "Netwtw14" };
 
         foreach (var service in services)
         {

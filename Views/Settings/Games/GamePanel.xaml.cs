@@ -50,6 +50,13 @@ public sealed partial class GamePanel : UserControl
     public double Rating { get; set; }
     public string PlayTime { get; set; }
     public string Description { get; set; }
+
+    public bool UpdateIsAvailable
+    {
+        get => UpdateBadge.Visibility == Visibility.Visible;
+        set => UpdateBadge.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     private DispatcherTimer gameWatcherTimer;
     private bool? previousGameState = null;
     private bool? previousExplorerState = null;
