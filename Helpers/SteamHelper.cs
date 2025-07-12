@@ -132,46 +132,43 @@ namespace AutoOS.Helpers
                                     ? $"{(int)h}h {(int)((h - (int)h) * 60)}min"
                                     : null;
                             })
-                            .FirstOrDefault();
+                            .FirstOrDefault() ?? "0m";
 
-                        if (playTime != null)
+                        // get review data
+                        var reviewData = JsonDocument.Parse(await httpClient.GetStringAsync($"https://store.steampowered.com/appreviews/{gameId}?json=1", _)).RootElement.GetProperty("query_summary");
+                        int totalPositive = reviewData.GetProperty("total_positive").GetInt32();
+                        int totalNegative = reviewData.GetProperty("total_negative").GetInt32();
+
+                        GamesPage.Instance.DispatcherQueue.TryEnqueue(() =>
                         {
-                            // get review data
-                            var reviewData = JsonDocument.Parse(await httpClient.GetStringAsync($"https://store.steampowered.com/appreviews/{gameId}?json=1", _)).RootElement.GetProperty("query_summary");
-                            int totalPositive = reviewData.GetProperty("total_positive").GetInt32();
-                            int totalNegative = reviewData.GetProperty("total_negative").GetInt32();
-
-                            GamesPage.Instance.DispatcherQueue.TryEnqueue(() =>
+                            var gamePanel = new GamePanel
                             {
-                                var gamePanel = new GamePanel
-                                {
-                                    Launcher = "Steam",
-                                    ImageTall = new BitmapImage(new Uri($"https://cdn.steamstatic.com/steam/apps/{gameId}/library_600x900.jpg")),
-                                    ImageWide = new BitmapImage(new Uri($"https://cdn.steamstatic.com/steam/apps/{gameId}/library_hero.jpg")),
-                                    Title = appManifestData["name"]?.ToString(),
-                                    Developers = string.Join(", ", gameData.GetProperty("data").GetProperty("developers")
-                                                       .EnumerateArray().Select(d => d.GetString()).Where(s => !string.IsNullOrWhiteSpace(s))),
-                                    Genres = [.. gameData.GetProperty("data").GetProperty("genres")
+                                Launcher = "Steam",
+                                ImageTall = new BitmapImage(new Uri($"https://cdn.steamstatic.com/steam/apps/{gameId}/library_600x900.jpg")),
+                                ImageWide = new BitmapImage(new Uri($"https://cdn.steamstatic.com/steam/apps/{gameId}/library_hero.jpg")),
+                                Title = appManifestData["name"]?.ToString(),
+                                Developers = string.Join(", ", gameData.GetProperty("data").GetProperty("developers")
+                                                   .EnumerateArray().Select(d => d.GetString()).Where(s => !string.IsNullOrWhiteSpace(s))),
+                                Genres = [.. gameData.GetProperty("data").GetProperty("genres")
                                         .EnumerateArray()
                                         .Select(g => g.GetProperty("description").GetString())
                                         .Where(s => !string.IsNullOrWhiteSpace(s))],
-                                    Features = [.. gameData.GetProperty("data").GetProperty("categories")
+                                Features = [.. gameData.GetProperty("data").GetProperty("categories")
                                         .EnumerateArray()
                                         .Select(c => c.GetProperty("description").GetString())
                                         .Where(s => !string.IsNullOrWhiteSpace(s))],
-                                    Rating = totalPositive + totalNegative > 0
-                                        ? Math.Round(5.0 * totalPositive / (totalPositive + totalNegative), 1)
-                                        : 0.0,
-                                    PlayTime = playTime,
-                                    Description = gameData.GetProperty("data").GetProperty("short_description").GetString(),
-                                    InstallLocation = Path.Combine(steamAppsDir, "common", appManifestData["installdir"]?.ToString()),
-                                    GameID = gameId
-                                };
+                                Rating = totalPositive + totalNegative > 0
+                                    ? Math.Round(5.0 * totalPositive / (totalPositive + totalNegative), 1)
+                                    : 0.0,
+                                PlayTime = playTime,
+                                Description = gameData.GetProperty("data").GetProperty("short_description").GetString(),
+                                InstallLocation = Path.Combine(steamAppsDir, "common", appManifestData["installdir"]?.ToString()),
+                                GameID = gameId
+                            };
 
-                                ((StackPanel)GamesPage.Instance.Games.HeaderContent).Children.Add(gamePanel);
-                                gamePanel.CheckGameRunning();
-                            });
-                        }
+                            ((StackPanel)GamesPage.Instance.Games.HeaderContent).Children.Add(gamePanel);
+                            gamePanel.CheckGameRunning();
+                        });
                     }
                     catch (Exception ex)
                     {
