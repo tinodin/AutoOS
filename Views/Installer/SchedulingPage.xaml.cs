@@ -15,7 +15,7 @@ public sealed partial class SchedulingPage : Page
     public SchedulingPage()
     {
         InitializeComponent();
-        GetCpuCount(GPU, XHCI);
+        GetCpuCount(GPU, XHCI, NIC);
         GetAffinities();
     }
 
@@ -62,6 +62,7 @@ public sealed partial class SchedulingPage : Page
             }
         }
 
+        // copy autogpuaffinity to localstate because of permissions
         string sourcePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity");
         string destinationPath = Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity");
 
@@ -77,6 +78,7 @@ public sealed partial class SchedulingPage : Page
             File.Copy(file, destFilePath, true);
         }
 
+        // configure config
         string configPath = Path.Combine(PathHelper.GetAppDataFolderPath(), "AutoGpuAffinity", "config.ini");
         string[] lines = File.ReadAllLines(configPath);
 
@@ -84,7 +86,7 @@ public sealed partial class SchedulingPage : Page
         {
             if (isHyperThreadingEnabled)
             {
-                lines = lines.Select(line =>
+                lines = [.. lines.Select(line =>
                 {
                     if (line.StartsWith("custom_cpus="))
                     {
@@ -92,16 +94,16 @@ public sealed partial class SchedulingPage : Page
                         return $"custom_cpus=[{string.Join(",", cores)}]";
                     }
                     return line;
-                }).ToArray();
+                })];
             }
             else
             {
-                lines = lines.Select(line =>
+                lines = [.. lines.Select(line =>
                 {
                     if (line.StartsWith("custom_cpus="))
                         return $"custom_cpus=[1..{logicalCoreCount - 1}]";
                     return line;
-                }).ToArray();
+                })];
             }
         }
 
@@ -126,49 +128,74 @@ public sealed partial class SchedulingPage : Page
             Affinities.SelectedIndex = 0;
             GpuSettings.IsEnabled = false;
             XhciSettings.IsEnabled = false;
+            NicSettings.IsEnabled = false;
 
-            int gpuAffinity = localSettings.Values.TryGetValue("GpuAffinity", out var gpuVal) && gpuVal is int g ? g : -1;
-            if (gpuAffinity >= 0 && gpuAffinity < GPU.Items.Count && ((ComboBoxItem)GPU.Items[gpuAffinity]).IsEnabled)
+            if (localSettings.Values.TryGetValue("GpuAffinity", out var gpuVal))
             {
-                GPU.SelectedIndex = gpuAffinity;
+                GPU.SelectedIndex = (int)gpuVal;
             }
             else
             {
-                GPU.SelectedIndex = GPU.Items.OfType<ComboBoxItem>().ToList().FindIndex(item => item.IsEnabled);
+                GPU.SelectedIndex = GPU.Items
+                    .OfType<ComboBoxItem>()
+                    .Select((item, index) => (item, index))
+                    .First(pair => pair.item.IsEnabled)
+                    .index;
             }
-            UpdateComboBoxState(GPU, XHCI);
+            UpdateComboBoxState(GPU, XHCI, NIC);
 
-            int xhciAffinity = localSettings.Values.TryGetValue("XhciAffinity", out var xhciVal) && xhciVal is int x ? x : -1;
-            if (xhciAffinity >= 0 && xhciAffinity < XHCI.Items.Count && ((ComboBoxItem)XHCI.Items[xhciAffinity]).IsEnabled)
+            if (localSettings.Values.TryGetValue("XhciAffinity", out var xhciVal))
             {
-                XHCI.SelectedIndex = xhciAffinity;
+                XHCI.SelectedIndex = (int)xhciVal;
             }
             else
             {
-                XHCI.SelectedIndex = XHCI.Items.OfType<ComboBoxItem>().ToList().FindIndex(item => item.IsEnabled);
+                XHCI.SelectedIndex = XHCI.Items
+                    .OfType<ComboBoxItem>()
+                    .Select((item, index) => (item, index))
+                    .First(pair => pair.item.IsEnabled)
+                    .index;
             }
-            UpdateComboBoxState(XHCI, GPU);
+            UpdateComboBoxState(GPU, XHCI, NIC);
+
+            if (localSettings.Values.TryGetValue("NicAffinity", out var nicVal))
+            {
+                NIC.SelectedIndex = (int)nicVal;
+            }
+            else
+            {
+                NIC.SelectedIndex = NIC.Items
+                    .OfType<ComboBoxItem>()
+                    .Select((item, index) => (item, index))
+                    .First(pair => pair.item.IsEnabled)
+                    .index;
+            }
+            UpdateComboBoxState(GPU, XHCI, NIC);
         }
         else if (affinityValue == "Manual")
         {
             Affinities.SelectedIndex = 1;
             GpuSettings.IsEnabled = true;
             XhciSettings.IsEnabled = true;
+            NicSettings.IsEnabled = true;
 
-            int gpuAffinity = localSettings.Values.TryGetValue("GpuAffinity", out var gpuVal) && gpuVal is int g ? g : -1;
-            if (gpuAffinity >= 0 && gpuAffinity < GPU.Items.Count)
+            if (localSettings.Values.TryGetValue("GpuAffinity", out var gpuVal))
             {
-                GPU.SelectedIndex = gpuAffinity;
-                UpdateComboBoxState(GPU, XHCI);
+                GPU.SelectedIndex = (int)gpuVal;
             }
 
-            int xhciAffinity = localSettings.Values.TryGetValue("XhciAffinity", out var xhciVal) && xhciVal is int x ? x : -1;
-            if (xhciAffinity >= 0 && xhciAffinity < XHCI.Items.Count)
+            if (localSettings.Values.TryGetValue("XhciAffinity", out var xhciVal))
             {
-                XHCI.SelectedIndex = xhciAffinity;
-                UpdateComboBoxState(XHCI, GPU);
+                XHCI.SelectedIndex = (int)xhciVal;
+            }
+
+            if (localSettings.Values.TryGetValue("NicAffinity", out var nicVal))
+            {
+                NIC.SelectedIndex = (int)nicVal;
             }
         }
+
+        UpdateComboBoxState(GPU, XHCI, NIC);
 
         isInitializingAffinities = false;
     }
@@ -182,15 +209,18 @@ public sealed partial class SchedulingPage : Page
             localSettings.Values["Affinities"] = "Automatic";
             GpuSettings.IsEnabled = false;
             XhciSettings.IsEnabled = false;
+            NicSettings.IsEnabled = false;
         }
         else if (Affinities.SelectedIndex == 1)
         {
             localSettings.Values["Affinities"] = "Manual";
             GpuSettings.IsEnabled = true;
             XhciSettings.IsEnabled = true;
+            NicSettings.IsEnabled = true;
 
             Gpu_Changed(null, null);
             Xhci_Changed(null, null);
+            Nic_Changed(null, null);
         }
     }
 
@@ -201,7 +231,7 @@ public sealed partial class SchedulingPage : Page
         int selectedIndex = GPU.SelectedIndex;
         localSettings.Values["GpuAffinity"] = selectedIndex;
 
-        UpdateComboBoxState(GPU, XHCI);
+        UpdateComboBoxState(GPU, XHCI, NIC);
     }
 
     private void Xhci_Changed(object sender, SelectionChangedEventArgs e)
@@ -211,32 +241,33 @@ public sealed partial class SchedulingPage : Page
         int selectedIndex = XHCI.SelectedIndex;
         localSettings.Values["XhciAffinity"] = selectedIndex;
 
-        UpdateComboBoxState(XHCI, GPU);
+        UpdateComboBoxState(GPU, XHCI, NIC);
     }
 
-    private void UpdateComboBoxState(ComboBox activeComboBox, ComboBox otherComboBox)
+    private void Nic_Changed(object sender, SelectionChangedEventArgs e)
     {
-        int selectedIndex = activeComboBox.SelectedIndex;
+        if (isInitializingAffinities) return;
 
-        if (physicalCoreCount > 2)
+        int selectedIndex = NIC.SelectedIndex;
+        localSettings.Values["NicAffinity"] = selectedIndex;
+
+        UpdateComboBoxState(GPU, XHCI, NIC);
+    }
+
+    private void UpdateComboBoxState(ComboBox combo1, ComboBox combo2, ComboBox combo3)
+    {
+        if (logicalCoreCount > 4)
         {
-            for (int i = 0; i < otherComboBox.Items.Count; i++)
+            var selected = new[] { combo1.SelectedIndex, combo2.SelectedIndex, combo3.SelectedIndex };
+
+            foreach (var combo in new[] { combo1, combo2, combo3 })
             {
-                var item = otherComboBox.Items[i] as ComboBoxItem;
-                if (item != null)
+                for (int i = 0; i < combo.Items.Count; i++)
                 {
-                    item.IsEnabled = i != selectedIndex && !(i == 0 || (isHyperThreadingEnabled && i % 2 == 1));
-                }
-            }
-        }
-        else
-        {
-            if (otherComboBox.SelectedIndex == selectedIndex)
-            {
-                int swapIndex = otherComboBox.SelectedIndex == 0 ? 1 : 0;
-                if (swapIndex < otherComboBox.Items.Count)
-                {
-                    otherComboBox.SelectedIndex = swapIndex;
+                    if (combo.Items[i] is ComboBoxItem item)
+                    {
+                        item.IsEnabled = !(selected.Any(index => index == i && combo.SelectedIndex != i)) && !(i == 0 || (isHyperThreadingEnabled && i % 2 == 1) && physicalCoreCount > 2);
+                    }
                 }
             }
         }

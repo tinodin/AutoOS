@@ -10,8 +10,6 @@ public static class NetworkStage
         bool? AppleMusic = PreparingStage.AppleMusic;
         bool? WOL = PreparingStage.WOL;
         bool? Wifi = PreparingStage.Wifi;
-        int? CoreCount = PreparingStage.CoreCount;
-        bool? RSS = PreparingStage.RSS;
         bool? TxIntDelay = PreparingStage.TxIntDelay;
 
         InstallPage.Status.Text = "Configuring the Network Adapters...";
@@ -52,10 +50,6 @@ public static class NetworkStage
             // configure wake-on-lan
             ("Configuring Wake-On-Lan (WOL)", async () => await ProcessActions.RunPowerShellScript("wol.ps1", ""), () => WOL == true),
 
-            // configure rss queues
-            ("Configuring RSS queues", async () => await ProcessActions.RunPowerShellScript("rss.ps1", ""), () => RSS == true),
-            ("Disabling RSS", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"netsh int tcp set global rss=disabled"), () => RSS == false),
-
              // set txintdelay to 0
             ("Setting TxIntDelay to 0", async () => await ProcessActions.RunPowerShellScript("txintdelay.ps1", ""), () => TxIntDelay == true),
 
@@ -63,6 +57,7 @@ public static class NetworkStage
             ("Disabling Nagles Algorithm", async () => await ProcessActions.RunPowerShell(@"Get-NetAdapter | ForEach-Object { New-ItemProperty -Path ""HKLM:\System\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\$($_.InterfaceGuid)"" -Name ""TcpAckFrequency"" -PropertyType DWord -Value 1 -Force; New-ItemProperty -Path ""HKLM:\System\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\$($_.InterfaceGuid)"" -Name ""TcpDelAckTicks"" -PropertyType DWord -Value 0 -Force; New-ItemProperty -Path ""HKLM:\System\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\$($_.InterfaceGuid)"" -Name ""TCPNoDelay"" -PropertyType DWord -Value 1 -Force }"), null),
 
             // configure tcp/ip settings
+            ("Disabling RSS", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"netsh int tcp set global rss=disabled"), null),
             ("Enabling task offload", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"netsh int ip set global taskoffload=enabled"), null),
             ("Enabling WinSock autotuning", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"netsh winsock set autotuning on"), null),
             ("Disabling RSC", async () => await ProcessActions.RunNsudo("TrustedInstaller", @"netsh int tcp set global rsc=disabled"), null),

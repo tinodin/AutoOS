@@ -90,6 +90,11 @@ Get-NetAdapter | Where-Object { $_.PhysicalMediaType -eq "802.3" } | ForEach-Obj
         Set-NetAdapterAdvancedProperty -Name $adapterName -DisplayName "Receive Buffers" -DisplayValue "4096"
     }
 
+    # Receive Side Scaling
+    if ($adapterProperties | Where-Object { $_.DisplayName -eq "Receive Side Scaling" }) {
+        Set-NetAdapterAdvancedProperty -Name $adapterName -DisplayName "Receive Side Scaling" -DisplayValue "Disabled"
+    }
+
     # Selective Suspend
     if ($adapterProperties | Where-Object { $_.DisplayName -eq "Selective Suspend" }) {
         Set-NetAdapterAdvancedProperty -Name $adapterName -DisplayName "Selective Suspend" -DisplayValue "Disabled"

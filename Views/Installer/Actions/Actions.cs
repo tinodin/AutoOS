@@ -4,6 +4,7 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using System.Diagnostics;
+using System.Management;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
@@ -961,13 +962,110 @@ public static class ProcessActions
 
         string output = await process.StandardOutput.ReadToEndAsync();
 
-        var match = Regex.Match(output, @"First:\s*(\d+)\s*Second:\s*(\d+)");
+        var match = Regex.Match(output, @"First:\s*(\d+)\s*Second:\s*(\d+)\s*Third:\s*(\d+)");
 
         if (match.Success)
         {
             localSettings.Values["GpuAffinity"] = int.Parse(match.Groups[1].Value);
             localSettings.Values["XhciAffinity"] = int.Parse(match.Groups[2].Value);
+            localSettings.Values["NicAffinity"] = int.Parse(match.Groups[3].Value);
         }
+    }
+
+    public static async Task ApplyXhciAffinity()
+    {
+        await Task.Run(() =>
+        {
+            var i = Convert.ToInt32(localSettings.Values["XhciAffinity"]);
+            var query = "SELECT PNPDeviceID FROM Win32_USBController";
+
+            foreach (ManagementObject obj in new ManagementObjectSearcher(query).Get())
+            {
+                if (obj["PNPDeviceID"]?.ToString()?.StartsWith("PCI\\VEN_") == true)
+                {
+                    using (var key = Registry.LocalMachine.OpenSubKey(
+                        $@"SYSTEM\CurrentControlSet\Enum\{obj["PNPDeviceID"]}\Device Parameters\Interrupt Management\Affinity Policy",
+                        true))
+                    {
+                        if (key != null)
+                        {
+                            var bytes = new byte[(i / 8) + 1]
+                                .Select((_, idx) => (byte)(idx == i / 8 ? 1 << (i % 8) : 0))
+                                .ToArray();
+
+                            key.SetValue("AssignmentSetOverride", bytes, RegistryValueKind.Binary);
+                            key.SetValue("DevicePolicy", 4, RegistryValueKind.DWord);
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    public static async Task ApplyNicAffinity()
+    {
+        var i = Convert.ToInt32(localSettings.Values["NicAffinity"]);
+
+        foreach (ManagementObject obj in new ManagementObjectSearcher("SELECT PNPDeviceID FROM Win32_NetworkAdapter").Get().Cast<ManagementObject>())
+        {
+            string pnp = obj["PNPDeviceID"]?.ToString();
+            if (pnp == null || !pnp.StartsWith("PCI\\VEN_")) continue;
+
+            using var driverKey = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Enum\{pnp}", writable: true);
+            string driver = driverKey?.GetValue("Driver")?.ToString();
+            if (string.IsNullOrEmpty(driver) || !driver.Contains('\\')) continue;
+
+            using var classKey = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Control\Class\{driver}", writable: true);
+            if (classKey?.GetValue("*PhysicalMediaType")?.ToString() != "14") continue;
+
+            classKey.SetValue("*RSS", "0", RegistryValueKind.String);
+            classKey.SetValue("*RssBaseProcNumber", i.ToString(), RegistryValueKind.String);
+            classKey.SetValue("*RssMaxProcNumber", i.ToString(), RegistryValueKind.String);
+            classKey.SetValue("*MaxRssProcessors", "1", RegistryValueKind.String);
+            classKey.SetValue("*RssBaseProcGroup", "0", RegistryValueKind.String);
+            classKey.SetValue("*RssMaxProcGroup", "^0", RegistryValueKind.String);
+
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "powershell.exe",
+                    Arguments = @"-Command ""Get-NetAdapter | Where { $_.PhysicalMediaType -eq '802.3' } | ForEach { Restart-NetAdapter -Name $_.Name }""",
+                    CreateNoWindow = true
+                }
+            };
+
+            process.Start();
+            await process.WaitForExitAsync();
+
+            break;
+        }
+    }
+
+    public static async Task ReserveCpus()
+    {
+        await Task.Run(() =>
+        {
+            using (var key = Registry.LocalMachine.OpenSubKey(
+                @"SYSTEM\CurrentControlSet\Control\Session Manager\kernel", true))
+            {
+                key.SetValue(
+                    "ReservedCpuSets",
+                    BitConverter.GetBytes(
+                        (1L << Convert.ToInt32(localSettings.Values["GpuAffinity"])) |
+                        (1L << Convert.ToInt32(localSettings.Values["XhciAffinity"])) |
+                        (1L << Convert.ToInt32(localSettings.Values["NicAffinity"]))
+                    ).Concat(
+                        new byte[8 - BitConverter.GetBytes(
+                            (1L << Convert.ToInt32(localSettings.Values["GpuAffinity"])) |
+                            (1L << Convert.ToInt32(localSettings.Values["XhciAffinity"])) |
+                            (1L << Convert.ToInt32(localSettings.Values["NicAffinity"]))
+                        ).Length]
+                    ).ToArray(),
+                    RegistryValueKind.Binary
+                );
+            }
+        });
     }
 
     public static async Task RefreshUI()

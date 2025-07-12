@@ -1,7 +1,5 @@
 ﻿using AutoOS.Views.Installer.Actions;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.Win32;
-using System.Management;
 using Windows.Storage;
 
 namespace AutoOS.Views.Installer.Stages;
@@ -36,15 +34,20 @@ public static class SchedulingStage
 
             // apply gpu affinity
             ("Applying GPU Affinity", async () => await ProcessActions.Sleep(1000), null),
-            ("Applying GPU Affinity", async () => await ProcessActions.RunNsudo("TrustedInstaller", $"cmd /c \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "AutoGpuAffinity.exe")}\" --apply-affinity {localSettings.Values["GpuAffinity"]}"), null),
+            ("Applying GPU Affinity", async () => await ProcessActions.RunNsudo("TrustedInstaller", $@"cmd /c ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "AutoGpuAffinity", "AutoGpuAffinity.exe")}"" --apply-affinity {localSettings.Values["GpuAffinity"]}"), null),
 
             // apply xhci affinity
             ("Applying XHCI Affinity", async () => await ProcessActions.Sleep(2000), () => Scheduling == false),
-            ("Applying XHCI Affinity", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => { var i = Convert.ToInt32(localSettings.Values["XhciAffinity"]); var query = "SELECT PNPDeviceID FROM Win32_USBController"; foreach (ManagementObject obj in new ManagementObjectSearcher(query).Get()) if (obj["PNPDeviceID"]?.ToString()?.StartsWith("PCI\\VEN_") == true) using (var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Enum\{obj["PNPDeviceID"]}\Device Parameters\Interrupt Management\Affinity Policy", true)) if (key != null) { key.SetValue("AssignmentSetOverride", new byte[(i / 8) + 1].Select((_, idx) => (byte)(idx == i / 8 ? 1 << (i % 8) : 0)).ToArray(), RegistryValueKind.Binary); key.SetValue("DevicePolicy", 4, RegistryValueKind.DWord); } })), null),
+            ("Applying XHCI Affinity", async () => await ProcessActions.ApplyXhciAffinity(), null),
+
+            // apply nic affinity
+            ("Applying NIC Affinity", async () => await ProcessActions.Sleep(2000), () => Scheduling == false),
+            ("Applying NIC Affinity", async () => await ProcessActions.ApplyNicAffinity(), null),
 
             // reserve cpus
             ("Reserving CPUs", async () => await ProcessActions.Sleep(1000), () => Reserve == true),
-            ("Reserving CPUs", async () => await ProcessActions.RunCustom(async () => await Task.Run(() => { using (var key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Session Manager\kernel", true)) key.SetValue("ReservedCpuSets", BitConverter.GetBytes((1L << Convert.ToInt32(localSettings.Values["GpuAffinity"])) | (1L << Convert.ToInt32(localSettings.Values["XhciAffinity"]))).Concat(new byte[8 - BitConverter.GetBytes((1L << Convert.ToInt32(localSettings.Values["GpuAffinity"])) | (1L << Convert.ToInt32(localSettings.Values["XhciAffinity"]))).Length]).ToArray(), RegistryValueKind.Binary); })), () => Reserve == true),
+            ("Reserving CPUs", async () => await ProcessActions.ReserveCpus(), () => Reserve == true)
+
         };
 
         var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();

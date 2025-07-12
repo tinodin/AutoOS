@@ -15,7 +15,7 @@ public sealed partial class SchedulingPage : Page
     public SchedulingPage()
     {
         InitializeComponent();
-        GetCpuCount(GPU, XHCI);
+        GetCpuCount(GPU, XHCI, NIC);
         GetAffinities();
     }
 
@@ -79,7 +79,7 @@ public sealed partial class SchedulingPage : Page
         {
             if (isHyperThreadingEnabled)
             {
-                lines = lines.Select(line =>
+                lines = [.. lines.Select(line =>
                 {
                     if (line.StartsWith("custom_cpus="))
                     {
@@ -87,16 +87,16 @@ public sealed partial class SchedulingPage : Page
                         return $"custom_cpus=[{string.Join(",", cores)}]";
                     }
                     return line;
-                }).ToArray();
+                })];
             }
             else
             {
-                lines = lines.Select(line =>
+                lines = [.. lines.Select(line =>
                 {
                     if (line.StartsWith("custom_cpus="))
                         return $"custom_cpus=[1..{logicalCoreCount - 1}]";
                     return line;
-                }).ToArray();
+                })];
             }
         }
 
@@ -147,24 +147,43 @@ public sealed partial class SchedulingPage : Page
                             if (query.Contains("VideoController"))
                             {
                                 GPU.SelectedIndex = coreIndex;
-                                if (coreIndex >= 0 && coreIndex < XHCI.Items.Count)
-                                    ((ComboBoxItem)XHCI.Items[coreIndex]).IsEnabled = false;
                             }
                             else if (query.Contains("USBController"))
                             {
                                 XHCI.SelectedIndex = coreIndex;
-                                if (coreIndex >= 0 && coreIndex < GPU.Items.Count)
-                                    ((ComboBoxItem)GPU.Items[coreIndex]).IsEnabled = false;
                             }
                         }
                     }
                 }
             }
         }
+
+        foreach (ManagementObject obj in new ManagementObjectSearcher("SELECT PNPDeviceID FROM Win32_NetworkAdapter").Get().Cast<ManagementObject>())
+        {
+            string pnp = obj["PNPDeviceID"]?.ToString();
+            if (pnp == null || !pnp.StartsWith("PCI\\VEN_")) continue;
+
+            using var driverKey = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Enum\{pnp}");
+            string driver = driverKey?.GetValue("Driver")?.ToString();
+            if (string.IsNullOrEmpty(driver) || !driver.Contains('\\')) continue;
+
+            using var classKey = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Control\Class\{driver}");
+            if (classKey?.GetValue("*PhysicalMediaType")?.ToString() != "14") continue;
+
+            if (int.TryParse(classKey.GetValue("*RssBaseProcNumber")?.ToString(), out int baseCore))
+            {
+                NIC.SelectedIndex = baseCore;
+            }
+
+            break;
+        }
+
+        UpdateComboBoxState(GPU, XHCI, NIC);
+
         isInitializingAffinities = false;
     }
 
-    private async void Gpu_Changed(object sender, SelectionChangedEventArgs e)
+    private async void GPU_Changed(object sender, SelectionChangedEventArgs e)
     {
         await ApplyGpuAffinity(sender, e);
     }
@@ -217,13 +236,19 @@ public sealed partial class SchedulingPage : Page
         process.Start();
         await process.WaitForExitAsync();
 
-        // apply reserved cpu sets if 6 cores or more
+        // reserve cpus if 6 cores or more
         if (physicalCoreCount >= 6)
         {
-            using (var key = Registry.LocalMachine.OpenSubKey("SYSTEM\\CurrentControlSet\\Control\\Session Manager\\kernel", true))
-            {
-                key.SetValue("ReservedCpuSets", BitConverter.GetBytes((long)(1 << GPU.SelectedIndex) | (long)(1 << XHCI.SelectedIndex)).Concat(new byte[8 - BitConverter.GetBytes((long)(1 << GPU.SelectedIndex) | (long)(1 << XHCI.SelectedIndex)).Length]).ToArray(), RegistryValueKind.Binary);
-            }
+            long mask =
+                (1L << GPU.SelectedIndex) |
+                (1L << XHCI.SelectedIndex) |
+                (1L << NIC.SelectedIndex);
+
+            byte[] maskBytes = BitConverter.GetBytes(mask);
+            Array.Resize(ref maskBytes, 8);
+
+            using var key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Session Manager\kernel", writable: true);
+            key?.SetValue("ReservedCpuSets", maskBytes, RegistryValueKind.Binary);
         }
 
         // delay
@@ -235,7 +260,7 @@ public sealed partial class SchedulingPage : Page
         // add infobar
         if (physicalCoreCount >= 6)
         {
-            UpdateComboBoxState(GPU, XHCI);
+            UpdateComboBoxState(GPU, XHCI, NIC);
 
             var infoBar = new InfoBar
             {
@@ -258,7 +283,7 @@ public sealed partial class SchedulingPage : Page
         }
         else
         {
-            UpdateComboBoxState(GPU, XHCI);
+            UpdateComboBoxState(GPU, XHCI, NIC);
 
             var infoBar = new InfoBar
             {
@@ -278,7 +303,7 @@ public sealed partial class SchedulingPage : Page
         }
     }
 
-    private async void Xhci_Changed(object sender, SelectionChangedEventArgs e)
+    private async void XHCI_Changed(object sender, SelectionChangedEventArgs e)
     {
         await ApplyXhciAffinity(sender, e);
     }
@@ -339,13 +364,19 @@ public sealed partial class SchedulingPage : Page
             }
         }
 
-        // apply reserved cpu sets if 6 cores or more
+        // reserve cpus if 6 cores or more
         if (physicalCoreCount >= 6)
         {
-            using (var key = Registry.LocalMachine.OpenSubKey("SYSTEM\\CurrentControlSet\\Control\\Session Manager\\kernel", true))
-            {
-                key.SetValue("ReservedCpuSets", BitConverter.GetBytes((long)(1 << GPU.SelectedIndex) | (long)(1 << XHCI.SelectedIndex)).Concat(new byte[8 - BitConverter.GetBytes((long)(1 << GPU.SelectedIndex) | (long)(1 << XHCI.SelectedIndex)).Length]).ToArray(), RegistryValueKind.Binary);
-            }
+            long mask =
+                (1L << GPU.SelectedIndex) |
+                (1L << XHCI.SelectedIndex) |
+                (1L << NIC.SelectedIndex);
+
+            byte[] maskBytes = BitConverter.GetBytes(mask);
+            Array.Resize(ref maskBytes, 8);
+
+            using var key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Session Manager\kernel", writable: true);
+            key?.SetValue("ReservedCpuSets", maskBytes, RegistryValueKind.Binary);
         }
 
         // delay
@@ -357,7 +388,7 @@ public sealed partial class SchedulingPage : Page
         // add infobar
         if (physicalCoreCount >= 6)
         {
-            UpdateComboBoxState(XHCI, GPU);
+            UpdateComboBoxState(GPU, XHCI, NIC);
 
             var infoBar = new InfoBar
             {
@@ -380,7 +411,7 @@ public sealed partial class SchedulingPage : Page
         }
         else
         {
-            UpdateComboBoxState(XHCI, GPU);
+            UpdateComboBoxState(GPU, XHCI, NIC);
 
             var infoBar = new InfoBar
             {
@@ -400,29 +431,161 @@ public sealed partial class SchedulingPage : Page
         }
     }
 
-    private void UpdateComboBoxState(ComboBox activeComboBox, ComboBox otherComboBox)
+    private async void NIC_Changed(object sender, SelectionChangedEventArgs e)
     {
-        int selectedIndex = activeComboBox.SelectedIndex;
+        await ApplyNicAffinity(sender, e);
+    }
 
-        if (physicalCoreCount > 2)
+    private async Task ApplyNicAffinity(object sender, SelectionChangedEventArgs e)
+    {
+        if (isInitializingAffinities) return;
+
+        // remove infobar
+        AffinityInfo.Children.Clear();
+
+        // add infobar
+        if (physicalCoreCount >= 6)
         {
-            for (int i = 0; i < otherComboBox.Items.Count; i++)
+            AffinityInfo.Children.Add(new InfoBar
             {
-                var item = otherComboBox.Items[i] as ComboBoxItem;
-                if (item != null)
-                {
-                    item.IsEnabled = i != selectedIndex && !(i == 0 || (isHyperThreadingEnabled && i % 2 == 1));
-                }
-            }
+                Title = "Applying NIC Affinity to CPU " + NIC.SelectedIndex + " and reserving it...",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Informational,
+                Margin = new Thickness(5)
+            });
         }
         else
         {
-            if (otherComboBox.SelectedIndex == selectedIndex)
+            AffinityInfo.Children.Add(new InfoBar
             {
-                int swapIndex = otherComboBox.SelectedIndex == 0 ? 1 : 0;
-                if (swapIndex < otherComboBox.Items.Count)
+                Title = "Applying NIC Affinity to CPU " + NIC.SelectedIndex + "...",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Informational,
+                Margin = new Thickness(5)
+            });
+        }
+
+        // delay
+        await Task.Delay(800);
+
+        foreach (ManagementObject obj in new ManagementObjectSearcher("SELECT PNPDeviceID FROM Win32_NetworkAdapter").Get().Cast<ManagementObject>())
+        {
+            string pnp = obj["PNPDeviceID"]?.ToString();
+            if (pnp == null || !pnp.StartsWith("PCI\\VEN_")) continue;
+
+            using var driverKey = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Enum\{pnp}", writable: true);
+            string driver = driverKey?.GetValue("Driver")?.ToString();
+            if (string.IsNullOrEmpty(driver) || !driver.Contains('\\')) continue;
+
+            using var classKey = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Control\Class\{driver}", writable: true);
+            if (classKey?.GetValue("*PhysicalMediaType")?.ToString() != "14") continue;
+
+            classKey.SetValue("*RSS", "0", RegistryValueKind.String);
+            classKey.SetValue("*RssBaseProcNumber", NIC.SelectedIndex.ToString(), RegistryValueKind.String);
+            classKey.SetValue("*RssMaxProcNumber", NIC.SelectedIndex.ToString(), RegistryValueKind.String);
+            classKey.SetValue("*MaxRssProcessors", "1", RegistryValueKind.String);
+            classKey.SetValue("*RssBaseProcGroup", "0", RegistryValueKind.String);
+            classKey.SetValue("*RssMaxProcGroup", "^0", RegistryValueKind.String);
+            
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
                 {
-                    otherComboBox.SelectedIndex = swapIndex;
+                    FileName = "powershell.exe",
+                    Arguments = @"-Command ""Get-NetAdapter | Where { $_.PhysicalMediaType -eq '802.3' } | ForEach { Restart-NetAdapter -Name $_.Name }""",
+                    CreateNoWindow = true
+                }
+            };
+
+            process.Start();
+            await process.WaitForExitAsync();
+
+            break;
+        }
+
+        // reserve cpus if 6 cores or more
+        if (physicalCoreCount >= 6)
+        {
+            long mask =
+                (1L << GPU.SelectedIndex) |
+                (1L << XHCI.SelectedIndex) |
+                (1L << NIC.SelectedIndex);
+
+            byte[] maskBytes = BitConverter.GetBytes(mask);
+            Array.Resize(ref maskBytes, 8);
+
+            using var key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Session Manager\kernel", writable: true);
+            key?.SetValue("ReservedCpuSets", maskBytes, RegistryValueKind.Binary);
+        }
+
+        // delay
+        await Task.Delay(800);
+
+        // remove infobar
+        AffinityInfo.Children.Clear();
+
+        // add infobar
+        if (physicalCoreCount >= 6)
+        {
+            UpdateComboBoxState(GPU, XHCI, NIC);
+
+            var infoBar = new InfoBar
+            {
+                Title = "Successfully applied NIC Affinity to CPU " + NIC.SelectedIndex + " and reserved it.",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            };
+            AffinityInfo.Children.Add(infoBar);
+
+            infoBar.Title += " A restart is required to apply the change.";
+            infoBar.ActionButton = new Button
+            {
+                Content = "Restart",
+                HorizontalAlignment = HorizontalAlignment.Right
+            };
+            ((Button)infoBar.ActionButton).Click += (s, args) =>
+            Process.Start("shutdown", "/r /f /t 0");
+        }
+        else
+        {
+            UpdateComboBoxState(GPU, XHCI, NIC);
+
+            var infoBar = new InfoBar
+            {
+                Title = "Successfully applied NIC Affinity to CPU " + NIC.SelectedIndex + ".",
+                IsClosable = false,
+                IsOpen = true,
+                Severity = InfoBarSeverity.Success,
+                Margin = new Thickness(5)
+            };
+            AffinityInfo.Children.Add(infoBar);
+
+            // delay
+            await Task.Delay(2000);
+
+            // remove infobar
+            AffinityInfo.Children.Clear();
+        }
+    }
+
+    private void UpdateComboBoxState(ComboBox combo1, ComboBox combo2, ComboBox combo3)
+    {
+        if (logicalCoreCount > 4)
+        {
+            var selected = new[] { combo1.SelectedIndex, combo2.SelectedIndex, combo3.SelectedIndex };
+
+            foreach (var combo in new[] { combo1, combo2, combo3 })
+            {
+                for (int i = 0; i < combo.Items.Count; i++)
+                {
+                    if (combo.Items[i] is ComboBoxItem item)
+                    {
+                        item.IsEnabled = !(selected.Any(index => index == i && combo.SelectedIndex != i)) && !(i == 0 || (isHyperThreadingEnabled && i % 2 == 1) && physicalCoreCount > 2);
+                    }
                 }
             }
         }
@@ -458,17 +621,19 @@ public sealed partial class SchedulingPage : Page
 
         string output = await process.StandardOutput.ReadToEndAsync();
 
-        var match = Regex.Match(output, @"First:\s*(\d+)\s*Second:\s*(\d+)");
+        var match = Regex.Match(output, @"First:\s*(\d+)\s*Second:\s*(\d+)\s*Third:\s*(\d+)");
 
         if (match.Success)
         {
             isInitializingAffinities = true;
             GPU.SelectedIndex = int.Parse(match.Groups[1].Value);
             XHCI.SelectedIndex = int.Parse(match.Groups[2].Value);
+            NIC.SelectedIndex = int.Parse(match.Groups[3].Value);
             isInitializingAffinities = false;
 
             await ApplyGpuAffinity(null, null);
             await ApplyXhciAffinity(null, null);
+            await ApplyNicAffinity(null, null);
         }
 
         Benchmark.IsChecked = false;

@@ -37,7 +37,6 @@ public static class PreparingStage
     public static bool? AppleMusic;
     public static bool? WOL;
     public static int? CoreCount;
-    public static bool? RSS;
     public static bool? TxIntDelay;
 
     public static bool? HID;
@@ -248,8 +247,6 @@ public static class PreparingStage
             .Get()
             .Cast<ManagementObject>()
             .Sum(m => Convert.ToInt32(m["NumberOfCores"]));
-
-            RSS = CoreCount >= 4;
 
             foreach (var obj in new ManagementObjectSearcher("SELECT * FROM Win32_NetworkAdapter").Get())
             {

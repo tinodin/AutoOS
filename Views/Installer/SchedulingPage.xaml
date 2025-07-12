@@ -29,7 +29,7 @@
                 Spacing="8">
                 <dev:SettingsGroup
                     Margin="0,0,0,10"
-                    Description="Let AutoOS benchmark your GPU and XHCI Controller Affinities or set them manually. If your CPU has 6 cores or more they will be reserved."
+                    Description="Let AutoOS benchmark your GPU, XHCI Controller and NIC Affinities or set them manually. If your CPU has 6 cores or more they will be reserved."
                     Header="Per-CPU Scheduling"
                     HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Cpu.png}">
                     <dev:SettingsGroup.Content>
@@ -44,6 +44,9 @@
                         </dev:SettingsCard>
                         <dev:SettingsCard x:Name="XhciSettings" Header="XHCI Controller Affinity">
                             <ComboBox x:Name="XHCI" SelectionChanged="Xhci_Changed" />
+                        </dev:SettingsCard>
+                        <dev:SettingsCard x:Name="NicSettings" Header="NIC Affinity">
+                            <ComboBox x:Name="NIC" SelectionChanged="Nic_Changed" />
                         </dev:SettingsCard>
                     </dev:SettingsGroup.Items>
                 </dev:SettingsGroup>
