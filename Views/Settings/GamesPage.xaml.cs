@@ -160,7 +160,7 @@ public sealed partial class GamesPage : Page
         var savedAscending = localSettings.Values["SortAscending"];
 
         currentSortKey = savedSortKey as string ?? "Title";
-        ascending = savedAscending is bool b ? b : true;
+        ascending = savedAscending is not bool b || b;
 
         UpdateSortIcons();
         ApplySort();
