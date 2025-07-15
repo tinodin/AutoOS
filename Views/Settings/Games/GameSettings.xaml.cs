@@ -1,4 +1,3 @@
-using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using System.Diagnostics;
 
@@ -29,7 +28,7 @@ public sealed partial class GameSettings : Page
     }
 
     public static readonly DependencyProperty DevelopersProperty =
-        DependencyProperty.Register("Developers", typeof(string), typeof(GamePanel), new PropertyMetadata(null));
+        DependencyProperty.Register("Developers", typeof(string), typeof(GameSettings), new PropertyMetadata(null));
 
     public string Description
     {
@@ -44,12 +43,51 @@ public sealed partial class GameSettings : Page
 
     public static readonly DependencyProperty InstallLocationProperty =
     DependencyProperty.Register(nameof(InstallLocation), typeof(string), typeof(GameSettings), new PropertyMetadata(string.Empty));
-    
-    public ImageSource ImageWide { get; set; }
-    public double Rating { get; set; }
-    public string PlayTime { get; set; }
-    public List<string> Genres { get; set; } = new();
-    public List<string> Features { get; set; } = new();
+
+    public string BackgroundImageUrl
+    {
+        get => (string)GetValue(BackgroundImageUrlProperty);
+        set => SetValue(BackgroundImageUrlProperty, value);
+    }
+
+    public static readonly DependencyProperty BackgroundImageUrlProperty =
+        DependencyProperty.Register(nameof(BackgroundImageUrl), typeof(string), typeof(HeaderCarouselItem), new PropertyMetadata(null));
+
+    public double Rating
+    {
+        get => (double)GetValue(RatingProperty);
+        set => SetValue(RatingProperty, value);
+    }
+
+    public static readonly DependencyProperty RatingProperty =
+        DependencyProperty.Register(nameof(Rating), typeof(double), typeof(HeaderCarouselItem), new PropertyMetadata(0.0));
+
+    public string PlayTime
+    {
+        get => (string)GetValue(PlayTimeProperty);
+        set => SetValue(PlayTimeProperty, value);
+    }
+
+    public static readonly DependencyProperty PlayTimeProperty =
+        DependencyProperty.Register(nameof(PlayTime), typeof(string), typeof(HeaderCarouselItem), new PropertyMetadata(null));
+
+    public IList<string> Genres
+    {
+        get => (IList<string>)GetValue(GenresProperty);
+        set => SetValue(GenresProperty, value);
+    }
+
+    public static readonly DependencyProperty GenresProperty =
+        DependencyProperty.Register(nameof(Genres), typeof(IList<string>), typeof(HeaderCarouselItem), new PropertyMetadata(new List<string>()));
+
+    public IList<string> Features
+    {
+        get => (IList<string>)GetValue(FeaturesProperty);
+        set => SetValue(FeaturesProperty, value);
+    }
+
+    public static readonly DependencyProperty FeaturesProperty =
+    DependencyProperty.Register(nameof(Features), typeof(IList<string>), typeof(HeaderCarouselItem), new PropertyMetadata(new List<string>()));
 
     public string InstallLocation
     {

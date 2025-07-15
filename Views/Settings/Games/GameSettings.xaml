@@ -22,7 +22,7 @@
             Margin="0,0,0,12"
             CornerRadius="{ThemeResource OverlayCornerRadius}"
             EnableLazyLoading="True"
-            Source="{x:Bind ImageWide}"
+            Source="{x:Bind BackgroundImageUrl}"
             Stretch="UniformToFill" />
         <StackPanel Grid.Row="1" Margin="0,0,0,12">
             <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="{x:Bind Title}" />

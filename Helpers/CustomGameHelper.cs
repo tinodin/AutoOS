@@ -1,6 +1,4 @@
-using AutoOS.Views.Settings.Games;
-using Microsoft.UI.Xaml.Media.Imaging;
-using System.Text.Json;
+ï»¿using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Windows.Storage;
@@ -34,8 +32,8 @@ namespace AutoOS.Helpers
                 }
 
                 // remove previous games
-                foreach (var panel in ((StackPanel)GamesPage.Instance.Games.HeaderContent).Children.OfType<GamePanel>().Where(panel => panel.Launcher == "Ryujinx").ToList())
-                    ((StackPanel)GamesPage.Instance.Games.HeaderContent).Children.Remove(panel);
+                foreach (var item in GamesPage.Instance.Games.Items.OfType<Views.Settings.Games.HeaderCarousel.HeaderCarouselItem>().Where(item => item.Launcher == "Ryujinx").ToList())
+                    GamesPage.Instance.Games.Items.Remove(item);
 
                 // get game dirs
                 var portableConfig = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(await File.ReadAllTextAsync(Path.Combine(localSettings.Values["RyujinxDataLocation"]?.ToString(), "Config.json")));
@@ -80,8 +78,8 @@ namespace AutoOS.Helpers
                     string name = entry.TryGetProperty("name", out var nameElement) ? nameElement.GetString() : null;
 
                     // clean name for searching
-                    string cleanName = Regex.Replace(name, @"[^\u0000-\u007F'’]+", "");
-                    cleanName = cleanName.Replace('’', '\'');
+                    string cleanName = Regex.Replace(name, @"[^\u0000-\u007F'â€™]+", "");
+                    cleanName = cleanName.Replace('â€™', '\'');
 
                     var result = await SearchCovers(cleanName);
                     if (result == null) return;
@@ -120,25 +118,24 @@ namespace AutoOS.Helpers
 
                     GamesPage.Instance.DispatcherQueue.TryEnqueue(() =>
                     {
-                        var gamePanel = new GamePanel
+                        GamesPage.Instance.Games.Items.Add(new Views.Settings.Games.HeaderCarousel.HeaderCarouselItem
                         {
                             Launcher = "Ryujinx",
                             LauncherLocation = localSettings.Values["RyujinxLocation"]?.ToString(),
                             DataLocation = localSettings.Values["RyujinxDataLocation"]?.ToString(),
                             InstallLocation = bestInstallLocation,
                             Title = name,
-                            ImageTall = new BitmapImage(new Uri(result["cover_url"])),
-                            ImageWide = new BitmapImage(new Uri(entry.GetProperty("bannerUrl").GetString())),
+                            ImageUrl = result["cover_url"],
+                            BackgroundImageUrl = entry.GetProperty("bannerUrl").GetString(),
                             Developers = result["developers"],
                             Genres = [.. data.GetProperty("genres").EnumerateArray().Select(g => g.GetProperty("name").GetString())],
                             Features = [.. data.GetProperty("game_modes").EnumerateArray().Select(m => m.GetProperty("name").GetString())],
                             Rating = Math.Round(data.GetProperty("aggregated_rating").GetDouble() / 20.0, 2),
                             PlayTime = playTime,
-                            Description = data.GetProperty("summary").GetString()
-                        };
-
-                        ((StackPanel)GamesPage.Instance.Games.HeaderContent).Children.Add(gamePanel);
-                        gamePanel.CheckGameRunning();
+                            Description = data.GetProperty("summary").GetString(),
+                            Width = 240,
+                            Height = 320,
+                        });
                     });
                 });
             }

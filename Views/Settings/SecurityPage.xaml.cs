@@ -409,7 +409,7 @@ public sealed partial class SecurityPage : Page
     private void GetMemoryIntegrityState()
     {
         // get state
-        if ((int)Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity", "Enabled", 0) == 1)
+        if ((Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity", "Enabled", 0) is int val && val == 1))
         {
             MemoryIntegrity.IsOn = true;
             initialMemoryIntegrityState = true;

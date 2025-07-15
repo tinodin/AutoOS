@@ -1,5 +1,4 @@
 ﻿using AutoOS.Helpers;
-using AutoOS.Views.Settings.Games;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using ValveKeyValue;
@@ -12,7 +11,8 @@ public sealed partial class GamesPage : Page
     private bool isInitializingEpicGamesAccounts = true;
     private bool isInitializingSteamAccounts = true;
     public static GamesPage Instance { get; private set; }
-    public GameGallery Games => games;
+    public Games.HeaderCarousel.HeaderCarousel Games => games;
+
     public Microsoft.UI.Xaml.Shapes.Ellipse EgDataStatus => EgDataStatusEllipse;
 
     private readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
@@ -91,44 +91,40 @@ public sealed partial class GamesPage : Page
 
     private void ApplySort()
     {
-        var container = games.HeaderContent as StackPanel;
-        if (container == null) return;
+        var items = games.Items.OfType<Games.HeaderCarousel.HeaderCarouselItem>().ToList();
+        if (items.Count == 0) return;
 
-        var panels = container.Children
-            .OfType<GamePanel>()
-            .Where(g => g != null)
-            .ToList();
-
-        if (panels.Count == 0) return;
-
-        IEnumerable<GamePanel> result = currentSortKey switch
+        IEnumerable<Games.HeaderCarousel.HeaderCarouselItem> result = currentSortKey switch
         {
             "Title" => ascending
-                ? panels.OrderBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase)
-                : panels.OrderByDescending(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase),
+                ? items.OrderBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase)
+                : items.OrderByDescending(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase),
 
             "Launcher" => ascending
-                ? panels.OrderBy(g => g.Launcher ?? "", StringComparer.CurrentCultureIgnoreCase)
-                        .ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase)
-                : panels.OrderByDescending(g => g.Launcher ?? "", StringComparer.CurrentCultureIgnoreCase)
-                        .ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase),
+                ? items.OrderBy(g => g.Launcher ?? "", StringComparer.CurrentCultureIgnoreCase)
+                      .ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase)
+                : items.OrderByDescending(g => g.Launcher ?? "", StringComparer.CurrentCultureIgnoreCase)
+                      .ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase),
 
             "PlayTime" => ascending
-                ? panels.OrderBy(g => ParseMinutes(g.PlayTime))
-                        .ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase)
-                : panels.OrderByDescending(g => ParseMinutes(g.PlayTime))
-                        .ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase),
-            "Rating" => ascending
-                ? panels.OrderBy(g => g.Rating).ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase)
-                : panels.OrderByDescending(g => g.Rating).ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase),
+                ? items.OrderBy(g => ParseMinutes(g.PlayTime))
+                      .ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase)
+                : items.OrderByDescending(g => ParseMinutes(g.PlayTime))
+                      .ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase),
 
-            _ => panels
+            "Rating" => ascending
+                ? items.OrderBy(g => g.Rating)
+                      .ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase)
+                : items.OrderByDescending(g => g.Rating)
+                      .ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase),
+
+            _ => items
         };
 
-        container.Children.Clear();
-        foreach (var panel in result)
+        games.Items.Clear();
+        foreach (var item in result)
         {
-            container.Children.Add(panel);
+            games.Items.Add(item);
         }
     }
 
@@ -172,7 +168,6 @@ public sealed partial class GamesPage : Page
         LoadSortSettings();
         Games_SwitchPresenter.Value = true;
         Games_SwitchPresenter.HorizontalAlignment = HorizontalAlignment.Center;
-        GamesGrid.Height = 350;
 
         // load games
         await Task.WhenAll(
@@ -184,15 +179,12 @@ public sealed partial class GamesPage : Page
         // sort games
         LoadSortSettings();
 
-        if (games.HeaderContent is StackPanel { Children.Count: 0 })
+        if (games.Items.Count == 0)
         {
             NoGamesInstalled.Visibility = Visibility.Visible;
         }
         else
         {
-            // set height to auto
-            GamesGrid.Height = Double.NaN;
-
             // align games left
             Games_SwitchPresenter.HorizontalAlignment = HorizontalAlignment.Left;
         }

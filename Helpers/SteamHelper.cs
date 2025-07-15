@@ -1,5 +1,3 @@
-using AutoOS.Views.Settings.Games;
-using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.Win32;
 using System.Diagnostics;
 using System.Text.Json;
@@ -86,8 +84,8 @@ namespace AutoOS.Helpers
             if (!File.Exists(SteamPath) || !File.Exists(SteamLibraryPath)) return;
 
             // remove previous games
-            foreach (var panel in ((StackPanel)GamesPage.Instance.Games.HeaderContent).Children.OfType<GamePanel>().Where(panel => panel.Launcher == "Steam").ToList())
-                ((StackPanel)GamesPage.Instance.Games.HeaderContent).Children.Remove(panel);
+            foreach (var item in GamesPage.Instance.Games.Items.OfType<Views.Settings.Games.HeaderCarousel.HeaderCarouselItem>().Where(item => item.Launcher == "Steam").ToList())
+                GamesPage.Instance.Games.Items.Remove(item);
 
             // read libraryfolders.vdf
             var libraryFolderData = KVSerializer.Create(KVSerializationFormat.KeyValues1Text).Deserialize(File.OpenRead(SteamLibraryPath));
@@ -141,33 +139,32 @@ namespace AutoOS.Helpers
 
                         GamesPage.Instance.DispatcherQueue.TryEnqueue(() =>
                         {
-                            var gamePanel = new GamePanel
+                            GamesPage.Instance.Games.Items.Add(new Views.Settings.Games.HeaderCarousel.HeaderCarouselItem
                             {
                                 Launcher = "Steam",
-                                ImageTall = new BitmapImage(new Uri($"https://cdn.steamstatic.com/steam/apps/{gameId}/library_600x900.jpg")),
-                                ImageWide = new BitmapImage(new Uri($"https://cdn.steamstatic.com/steam/apps/{gameId}/library_hero.jpg")),
+                                ImageUrl = $"https://cdn.steamstatic.com/steam/apps/{gameId}/library_600x900.jpg",
+                                BackgroundImageUrl = $"https://cdn.steamstatic.com/steam/apps/{gameId}/library_hero.jpg",
                                 Title = appManifestData["name"]?.ToString(),
                                 Developers = string.Join(", ", gameData.GetProperty("data").GetProperty("developers")
-                                                   .EnumerateArray().Select(d => d.GetString()).Where(s => !string.IsNullOrWhiteSpace(s))),
+                                                           .EnumerateArray().Select(d => d.GetString()).Where(s => !string.IsNullOrWhiteSpace(s))),
                                 Genres = [.. gameData.GetProperty("data").GetProperty("genres")
-                                        .EnumerateArray()
-                                        .Select(g => g.GetProperty("description").GetString())
-                                        .Where(s => !string.IsNullOrWhiteSpace(s))],
+                                                .EnumerateArray()
+                                                .Select(g => g.GetProperty("description").GetString())
+                                                .Where(s => !string.IsNullOrWhiteSpace(s))],
                                 Features = [.. gameData.GetProperty("data").GetProperty("categories")
-                                        .EnumerateArray()
-                                        .Select(c => c.GetProperty("description").GetString())
-                                        .Where(s => !string.IsNullOrWhiteSpace(s))],
+                                                .EnumerateArray()
+                                                .Select(c => c.GetProperty("description").GetString())
+                                                .Where(s => !string.IsNullOrWhiteSpace(s))],
                                 Rating = totalPositive + totalNegative > 0
-                                    ? Math.Round(5.0 * totalPositive / (totalPositive + totalNegative), 1)
-                                    : 0.0,
+                                            ? Math.Round(5.0 * totalPositive / (totalPositive + totalNegative), 1)
+                                            : 0.0,
                                 PlayTime = playTime,
                                 Description = gameData.GetProperty("data").GetProperty("short_description").GetString(),
                                 InstallLocation = Path.Combine(steamAppsDir, "common", appManifestData["installdir"]?.ToString()),
-                                GameID = gameId
-                            };
-
-                            ((StackPanel)GamesPage.Instance.Games.HeaderContent).Children.Add(gamePanel);
-                            gamePanel.CheckGameRunning();
+                                GameID = gameId,
+                                Width = 240,
+                                Height = 320,
+                            });
                         });
                     }
                     catch (Exception ex)

@@ -13,6 +13,8 @@
                 <ResourceDictionary Source="ms-appx:///DevWinUI.Controls/Themes/InfoBarInformationalColor.xaml" />
                 <ResourceDictionary Source="Themes/ThemeResources.xaml" />
                 <ResourceDictionary Source="Themes/NavigationViewItemStyle.xaml" />
+                <ResourceDictionary Source="Views/Settings/Games/HeaderCarousel/HeaderCarousel.xaml" />
+                <ResourceDictionary Source="Views/Settings/Games/HeaderCarousel/HeaderCarouselItem.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <!--  Other app resources here  -->
         </ResourceDictionary>

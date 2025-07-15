@@ -1,0 +1,153 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:dev="using:DevWinUI"
+    xmlns:local="using:AutoOS.Views.Settings.Games.HeaderCarousel">
+
+    <Style BasedOn="{StaticResource DefaultCarouselItemStyle}" TargetType="local:HeaderCarouselItem" />
+
+    <Style x:Key="DefaultCarouselItemStyle" TargetType="local:HeaderCarouselItem">
+        <Setter Property="Width" Value="360" />
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
+        <Setter Property="UseLayoutRounding" Value="True" />
+        <Setter Property="Height" Value="208" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="dev:VisualAttach.Scale" Value="0.8" />
+        <Setter Property="dev:VisualAttach.NormalizedCenterPoint" Value="0.5, 0.5" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="local:HeaderCarouselItem">
+                    <Grid>
+                        <Grid
+                            x:Name="PART_ShadowHost"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="{TemplateBinding CornerRadius}" />
+                        <Grid
+                            Padding="0"
+                            AutomationProperties.Name="{TemplateBinding Title}"
+                            CornerRadius="{TemplateBinding CornerRadius}">
+                            <Grid.Lights>
+                                <dev:HoverLight />
+                                <dev:AmbLight />
+                            </Grid.Lights>
+                            <dev:ImageEx
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"
+                                AutomationProperties.AccessibilityView="Raw"
+                                Source="{Binding ImageUrl, RelativeSource={RelativeSource TemplatedParent}}"
+                                Stretch="{TemplateBinding Stretch}" />
+                            <StackPanel
+                                x:Name="PART_TextPanel"
+                                Padding="12"
+                                VerticalAlignment="Bottom"
+                                Background="{ThemeResource AcrylicBackgroundFillColorDefaultBrush}"
+                                Orientation="Vertical"
+                                Visibility="Collapsed">
+                                <dev:AutoScrollView
+                                    x:Name="AutoScrollHoverEffectViewTitle"
+                                    IsPlaying="False"
+                                    ScrollingPixelsPreSecond="50">
+                                    <TextBlock
+                                        FontWeight="SemiBold"
+                                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                        Text="{TemplateBinding Title}"
+                                        TextTrimming="CharacterEllipsis"
+                                        TextWrapping="NoWrap" />
+                                </dev:AutoScrollView>
+                                <dev:AutoScrollView
+                                    x:Name="AutoScrollHoverEffectViewDescription"
+                                    IsPlaying="False"
+                                    ScrollingPixelsPreSecond="50">
+                                    <TextBlock
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Style="{StaticResource CaptionTextBlockStyle}"
+                                        Text="{TemplateBinding Developers}"
+                                        TextTrimming="CharacterEllipsis"
+                                        TextWrapping="NoWrap" />
+                                </dev:AutoScrollView>
+                                <dev:ElementGroup Margin="0,12,0,0" HorizontalAlignment="Center">
+                                    <Button
+                                        x:Name="Launch"
+                                        HorizontalAlignment="Stretch"
+                                        Style="{StaticResource AccentButtonStyle}">
+                                        <ToolTipService.ToolTip>
+                                            <ToolTip Placement="Mouse">
+                                                <StackPanel>
+                                                    <TextBlock FontWeight="Bold" Text="Launch" />
+                                                    <TextBlock Text="Click to launch." TextWrapping="Wrap" />
+                                                </StackPanel>
+                                            </ToolTip>
+                                        </ToolTipService.ToolTip>
+                                        <FontIcon FontSize="19" Glyph="&#xF5B0;" />
+                                    </Button>
+                                    <Button
+                                        x:Name="Update"
+                                        HorizontalAlignment="Stretch"
+                                        Style="{StaticResource AccentButtonStyle}"
+                                        Visibility="Collapsed">
+                                        <ToolTipService.ToolTip>
+                                            <ToolTip Placement="Mouse">
+                                                <StackPanel>
+                                                    <TextBlock FontWeight="Bold" Text="Update" />
+                                                    <TextBlock Text="Click to update." TextWrapping="Wrap" />
+                                                </StackPanel>
+                                            </ToolTip>
+                                        </ToolTipService.ToolTip>
+                                        <FontIcon FontSize="19" Glyph="&#xEDAB;" />
+                                    </Button>
+                                    <Button x:Name="StopProcesses" Visibility="Collapsed">
+                                        <ToolTipService.ToolTip>
+                                            <ToolTip Placement="Mouse">
+                                                <StackPanel>
+                                                    <TextBlock FontWeight="Bold" Text="Stop processes" />
+                                                    <TextBlock Text="Click after loading into your first match." TextWrapping="Wrap" />
+                                                </StackPanel>
+                                            </ToolTip>
+                                        </ToolTipService.ToolTip>
+                                        <FontIcon FontSize="19" Glyph="&#xE747;" />
+                                    </Button>
+                                    <Button x:Name="LaunchExplorer" Visibility="Collapsed">
+                                        <ToolTipService.ToolTip>
+                                            <ToolTip Placement="Mouse">
+                                                <StackPanel>
+                                                    <TextBlock FontWeight="Bold" Text="Launch explorer" />
+                                                    <TextBlock Text="Click to launch explorer again." TextWrapping="Wrap" />
+                                                </StackPanel>
+                                            </ToolTip>
+                                        </ToolTipService.ToolTip>
+                                        <FontIcon FontSize="19" Glyph="&#xE72C;" />
+                                    </Button>
+                                    <Button x:Name="Settings" HorizontalAlignment="Stretch">
+                                        <ToolTipService.ToolTip>
+                                            <ToolTip Placement="Mouse">
+                                                <StackPanel>
+                                                    <TextBlock FontWeight="Bold" Text="Settings" />
+                                                    <TextBlock Text="Click to see metadata and settings." TextWrapping="Wrap" />
+                                                </StackPanel>
+                                            </ToolTip>
+                                        </ToolTipService.ToolTip>
+                                        <FontIcon FontSize="19" Glyph="&#xE713;" />
+                                    </Button>
+                                </dev:ElementGroup>
+                            </StackPanel>
+
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="SelectedStates">
+                                    <VisualState x:Name="NotSelected" />
+                                    <VisualState x:Name="Selected">
+                                        <VisualState.Setters>
+                                            <Setter Target="PART_TextPanel.Visibility" Value="Visible" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                        </Grid>
+                    </Grid>
+
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

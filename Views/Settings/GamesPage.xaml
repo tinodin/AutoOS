@@ -5,7 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:dev="using:DevWinUI"
-    xmlns:local="using:AutoOS.Views.Settings"
+    xmlns:local="using:AutoOS.Views.Settings.Games.HeaderCarousel"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:views="using:AutoOS.Views.Settings.Games"
     mc:Ignorable="d">
@@ -130,7 +130,6 @@
                             <StackPanel Orientation="Vertical">
                                 <Grid
                                     x:Name="GamesGrid"
-                                    Height="350"
                                     HorizontalAlignment="Stretch"
                                     VerticalAlignment="Top">
                                     <StackPanel
@@ -147,11 +146,11 @@
                                             Style="{StaticResource CaptionTextBlockStyle}"
                                             Text="No games found" />
                                     </StackPanel>
-                                    <views:GameGallery x:Name="games">
-                                        <views:GameGallery.HeaderContent>
-                                            <StackPanel Orientation="Horizontal" Spacing="16" />
-                                        </views:GameGallery.HeaderContent>
-                                    </views:GameGallery>
+                                    <local:HeaderCarousel
+                                        x:Name="games"
+                                        BlurAmount="5"
+                                        IsAutoScrollEnabled="False"
+                                        IsBlurEnabled="True" />
                                 </Grid>
                             </StackPanel>
                         </dev:Case>
