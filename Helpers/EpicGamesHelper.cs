@@ -64,182 +64,18 @@ namespace AutoOS.Helpers
 
 
         private const string tagQuery = @"
-        query getCatalogOffer($sandboxId: String!, $offerId: String!, $locale: String, $country: String!) {
+        query getCatalogOffer($sandboxId: String!, $offerId: String!) {
             Catalog {
-            catalogOffer(namespace: $sandboxId, id: $offerId, locale: $locale) {
-                title
-                id
-                namespace
-                countriesBlacklist
-                countriesWhitelist
-                developerDisplayName
-                description
-                effectiveDate
-                expiryDate
-                viewableDate
-                allowPurchaseForPartialOwned
-                offerType
-                externalLinks {
-                text
-                url
-                }
-                isCodeRedemptionOnly
-                keyImages {
-                type
-                url
-                }
-                longDescription
-                seller {
-                id
-                name
-                }
-                productSlug
-                publisherDisplayName
-                releaseDate
-                urlSlug
-                url
-                tags {
-                id
-                name
-                groupName
-                }
-                items {
-                id
-                namespace
-                releaseInfo {
-                    appId
-                    platform
-                }
-                }
-                customAttributes {
-                key
-                value
-                }
-                categories {
-                path
-                }
-                catalogNs {
-                ageGatings {
-                    ageControl
-                    descriptor
-                    elements
-                    gameRating
-                    ratingImage
-                    ratingSystem
-                    title
-                }
-                displayName
-                mappings {
-                    createdDate
-                    deletedDate
-                    mappings {
-                    cmsSlug
-                    offerId
-                    prePurchaseOfferId
-                    }
-                    pageSlug
-                    pageType
-                    productId
-                    sandboxId
-                    updatedDate
-                }
-                store
-                }
-                offerMappings {
-                createdDate
-                deletedDate
-                mappings {
-                    cmsSlug
-                }
-                pageSlug
-                pageType
-                productId
-                sandboxId
-                updatedDate
-                }
-                pcReleaseDate
-                prePurchase
-                approximateReleasePlan {
-                day
-                month
-                quarter
-                year
-                releaseDateType
-                }
-                price(country: $country) {
-                totalPrice {
-                    discountPrice
-                    originalPrice
-                    voucherDiscount
-                    discount
-                    currencyCode
-                    currencyInfo {
-                    decimals
-                    }
-                    fmtPrice(locale: $locale) {
-                    originalPrice
-                    discountPrice
-                    intermediatePrice
-                    }
-                }
-                lineOffers {
-                    appliedRules {
-                    id
-                    endDate
-                    discountSetting {
-                        discountType
-                    }
-                    }
-                }
-                }
-                allDependNsOfferIds
-                majorNsOffers {
-                categories {
-                    path
-                }
-                id
-                namespace
-                title
-                }
-                subNsOffers {
-                categories {
-                    path
-                }
-                id
-                namespace
-                price(country: $country) {
-                    totalPrice {
-                    discountPrice
-                    originalPrice
-                    voucherDiscount
-                    discount
-                    currencyCode
-                    currencyInfo {
-                        decimals
-                    }
-                    fmtPrice(locale: $locale) {
-                        originalPrice
-                        discountPrice
-                        intermediatePrice
-                    }
-                    }
-                    lineOffers {
-                    appliedRules {
+                catalogOffer(namespace: $sandboxId, id: $offerId) {
+                    tags {
                         id
-                        endDate
-                        discountSetting {
-                        discountType
-                        }
-                    }
+                        name
+                        groupName
                     }
                 }
-                title
-                }
-                status
-                refundType
-            }
             }
         }";
+
 
         public class EpicAccountInfo
         {
@@ -609,7 +445,7 @@ namespace AutoOS.Helpers
                         var manifestTask = loginClient.GetStringAsync($"https://catalog-public-service-prod06.ol.epicgames.com/catalog/api/shared/namespace/{itemJson["MainGameCatalogNamespace"]?.GetValue<string>()}/bulk/items?id={itemJson["CatalogItemId"]?.GetValue<string>()}&includeDLCDetails=false&includeMainGameDetails=true&country=US&locale=en-US", token);
                         var offerTask = loginClient.GetStringAsync($"https://catalog-public-service-prod06.ol.epicgames.com/catalog/api/shared/bulk/offers?id={offerId}&returnItemDetails=true&country=US&locale=en-US", token);
                         var ratingTask = loginClient.PostAsync("https://graphql.epicgames.com/graphql", new StringContent(JsonSerializer.Serialize(new { query = ratingQuery, variables = new { sandboxId = itemJson["MainGameCatalogNamespace"]?.GetValue<string>(), locale = "en-US" } }), Encoding.UTF8, "application/json"), token);
-                        var tagTask = loginClient.PostAsync("https://graphql.epicgames.com/graphql", new StringContent(JsonSerializer.Serialize(new { query = tagQuery, variables = new { sandboxId = itemJson["MainGameCatalogNamespace"]?.GetValue<string>(), offerId, locale = "en-US", country = "US" } }), Encoding.UTF8, "application/json"), token);
+                        var tagTask = loginClient.PostAsync("https://graphql.epicgames.com/graphql", new StringContent(JsonSerializer.Serialize(new { query = tagQuery, variables = new { sandboxId = itemJson["MainGameCatalogNamespace"]?.GetValue<string>(), offerId } }), Encoding.UTF8, "application/json"), token);
 
                         await Task.WhenAll(manifestTask, offerTask, ratingTask, tagTask).ConfigureAwait(false);
 
@@ -617,15 +453,6 @@ namespace AutoOS.Helpers
                         var offerData = JsonNode.Parse(await offerTask.ConfigureAwait(false));
                         var ratingData = JsonNode.Parse(await (await ratingTask.ConfigureAwait(false)).Content.ReadAsStringAsync(token).ConfigureAwait(false));
                         var tagData = JsonNode.Parse(await (await tagTask.ConfigureAwait(false)).Content.ReadAsStringAsync(token).ConfigureAwait(false));
-
-
-                        if (itemJson["MainGameCatalogItemId"]?.GetValue<string>() == "")
-                        {
-                            Debug.WriteLine(offerData);
-                            Debug.WriteLine(tagData);
-                        }
-
-
 
                         // get description
                         string description = offerData[offerId]?["description"]?.GetValue<string>();

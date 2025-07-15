@@ -192,7 +192,7 @@ public sealed partial class GameSettings : Page
             Process.Start(new ProcessStartInfo
             {
                 FileName = "explorer.exe",
-                Arguments = $"\"{InstallLocation}\"",
+                Arguments = @$"{InstallLocation}",
                 UseShellExecute = true
             });
         }
