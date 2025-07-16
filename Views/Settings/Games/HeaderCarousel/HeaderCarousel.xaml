@@ -19,7 +19,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:HeaderCarousel">
-                    <Grid x:Name="RootGrid" CornerRadius="8,0,0,0">
+                    <Grid x:Name="RootGrid" CornerRadius="8,8,0,0">
                         <dev:OpacityMaskView VerticalAlignment="Top" OpacityMask="{ThemeResource OverlayRadialGradient}">
                             <dev:AnimatedImage
                                 x:Name="PART_BackDropImage"
