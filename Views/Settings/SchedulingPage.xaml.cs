@@ -487,7 +487,7 @@ public sealed partial class SchedulingPage : Page
             classKey.SetValue("*RssMaxProcNumber", NIC.SelectedIndex.ToString(), RegistryValueKind.String);
             classKey.SetValue("*MaxRssProcessors", "1", RegistryValueKind.String);
             classKey.SetValue("*RssBaseProcGroup", "0", RegistryValueKind.String);
-            classKey.SetValue("*RssMaxProcGroup", "^0", RegistryValueKind.String);
+            classKey.SetValue("*RssMaxProcGroup", "0", RegistryValueKind.String);
             
             var process = new Process
             {
