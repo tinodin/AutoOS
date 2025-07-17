@@ -170,6 +170,9 @@ public partial class HeaderCarousel : ItemsControl
         }
 
         deselectionTimer.Stop();
+
+        if (IsAutoScrollEnabled)
+            selectionTimer.Start();
     }
 
     private void ResetAndShuffle()
@@ -211,7 +214,7 @@ public partial class HeaderCarousel : ItemsControl
         {
             selectedTile.IsSelected = true;
             backDropImage.ImageUrl = new Uri(selectedTile.BackgroundImageUrl);
-            _blurManager.StartBlurAnimation(BlurAmount, TimeSpan.FromMilliseconds(100));
+
             if (selectedTile.Foreground is LinearGradientBrush brush)
             {
                 AnimateTitleGradient(brush);
@@ -249,7 +252,8 @@ public partial class HeaderCarousel : ItemsControl
     private void Tile_PointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
         ((HeaderCarouselItem)sender).IsSelected = false;
-        selectionTimer.Start();
+        if (IsAutoScrollEnabled)
+            selectionTimer.Start();
     }
 
     private void Tile_PointerEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
@@ -280,7 +284,8 @@ public partial class HeaderCarousel : ItemsControl
     private void Tile_LostFocus(object sender, RoutedEventArgs e)
     {
         ((HeaderCarouselItem)sender).IsSelected = false;
-        selectionTimer.Start();
+        if (IsAutoScrollEnabled)
+            selectionTimer.Start();
     }
 
     private void ApplyAutoScroll()
