@@ -106,12 +106,6 @@ Thank you for your research on [Network Performance](https://github.com/djdallma
 
 ---
 
-**nachoaldamav (Nacho Aldama):**  
-Thank you for creating [egdata-api](https://github.com/egdata-app/egdata-api) which is used by AutoOS to get metadata for Games by Epic Games.
-
----
-
-
 **m417z (Michael Maltsev):**  
 Thank you for creating [Windhawk](https://github.com/ramensoftware/windhawk) and for helping me to publish my mod [Auto Theme Switcher](https://windhawk.net/mods/auto-theme-switcher).
 
