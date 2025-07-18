@@ -34,7 +34,7 @@ AutoOS is a WinUI3 application focused on automation to improve performance whil
 > [!NOTE]
 > You must be logged into GitHub in order to be able to download the artifact
 
-**Step 1:** Download the latest Windows ISO from the latest action artifact [here](https://github.com/tinodin/uup-dump-get-windows-iso/actions/runs/15696031886). 
+**Step 1:** Download the latest Windows ISO from the latest action artifact [here](https://github.com/tinodin/uup-dump-get-windows-iso/actions/runs/16334281445). 
 
 **Step 2:** Extract the downloaded zip file.
 
