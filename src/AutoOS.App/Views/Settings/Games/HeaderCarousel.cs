@@ -1265,7 +1265,7 @@ public partial class HeaderCarousel : ItemsControl
         ApplySort();
     }
 
-    [GeneratedRegex(@"(?:(\d+)h)?\s*(\d+)m", RegexOptions.Compiled)]
+    [GeneratedRegex(@"^(\d+(?:\.\d+)?) hours played$|^(\d+) minutes? played$", RegexOptions.Compiled)]
     private static partial Regex PlayTimeMinutesRegex();
     private static int ParseMinutes(string time)
     {
@@ -1275,9 +1275,15 @@ public partial class HeaderCarousel : ItemsControl
         var match = PlayTimeMinutesRegex().Match(time);
         if (match.Success)
         {
-            int hours = match.Groups[1].Success ? int.Parse(match.Groups[1].Value) : 0;
-            int minutes = int.Parse(match.Groups[2].Value);
-            return hours * 60 + minutes;
+            if (match.Groups[1].Success)
+            {
+                double hours = double.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
+                return (int)(hours * 60);
+            }
+            else if (match.Groups[2].Success)
+            {
+                return int.Parse(match.Groups[2].Value);
+            }
         }
 
         return 0;

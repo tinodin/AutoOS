@@ -383,8 +383,8 @@ public static partial class EpicGamesHelper
 
             var playTimeJson = JsonNode.Parse(playTimeResponse.Content.ReadAsStringAsync().GetAwaiter().GetResult());
             var newTotalTime = playTimeJson?["totalTime"]?.GetValue<int>() ?? 0;
-            var ts = TimeSpan.FromSeconds(newTotalTime);
-            var formattedTime = ts.TotalHours >= 1 ? $"{(int)ts.TotalHours}h {ts.Minutes}m" : $"{ts.Minutes}m";
+            int totalMinutes = newTotalTime / 60;
+            var formattedTime = GameModel.FormatPlayTime(totalMinutes);
             onPlayTimeUpdated?.Invoke(artifactId, formattedTime);
         }
     }
@@ -986,11 +986,8 @@ public static partial class EpicGamesHelper
 
                     // read playtime json data
                     var totalSeconds = playTimeData?.GetValueOrDefault(artifactId) ?? 0;
-
-                    var ts = TimeSpan.FromSeconds(totalSeconds);
-                    string playTime = ts.TotalHours >= 1
-                        ? $"{(int)ts.TotalHours}h {ts.Minutes}m"
-                        : $"{ts.Minutes}m";
+                    int totalMinutes = totalSeconds / 60;
+                    string playTime = GameModel.FormatPlayTime(totalMinutes);
 
                     // get latest version
                     string currentVersion = itemJson["AppVersionString"]?.GetValue<string>();

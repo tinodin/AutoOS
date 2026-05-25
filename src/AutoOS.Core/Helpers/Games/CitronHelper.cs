@@ -77,7 +77,8 @@ public static partial class CitronHelper
                         if (BitConverter.ToUInt64(playtimeData, offset).ToString("x16").Equals(id, StringComparison.InvariantCultureIgnoreCase))
                         {
                             ulong seconds = BitConverter.ToUInt64(playtimeData, offset + 8);
-                            playTime = (seconds / 3600) > 0 ? $"{seconds / 3600}h {(seconds % 3600) / 60}m" : $"{(seconds % 3600) / 60}m";
+                            int totalMinutes = (int)(seconds / 60);
+                            playTime = GameModel.FormatPlayTime(totalMinutes);
                             break;
                         }
                     }
