@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace AutoOS.Core.Helpers.Games;
 
 public class GameModel
@@ -36,4 +38,31 @@ public class GameModel
     public string ReleaseDate { get; set; }
     public string Size { get; set; }
     public string Version { get; set; }
+
+    public static string FormatPlayTime(int totalMinutes)
+    {
+        const int twoHoursInMinutes = 120;
+        const int thousandHoursInMinutes = 60000;
+
+        if (totalMinutes < twoHoursInMinutes)
+        {
+            return totalMinutes == 1 ? "1 minute played" : $"{totalMinutes} minutes played";
+        }
+        else if (totalMinutes < thousandHoursInMinutes)
+        {
+            double hours = totalMinutes / 60.0;
+            string timeStr = $"{hours.ToString("F1", CultureInfo.InvariantCulture)} hours played";
+            // Remove .0 if present
+            if (timeStr.EndsWith(".0 hours played"))
+            {
+                timeStr = timeStr.Replace(".0 hours played", " hours played");
+            }
+            return timeStr;
+        }
+        else
+        {
+            int hours = totalMinutes / 60;
+            return $"{hours} hours played";
+        }
+    }
 }
