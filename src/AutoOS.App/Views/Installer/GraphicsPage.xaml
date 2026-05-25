@@ -31,7 +31,7 @@
                     <ItemsRepeater.ItemTemplate>
                         <DataTemplate x:DataType="gpuModels:GpuInfo">
                             <dev:SettingsGroup Margin="0,0,0,8"
-                                               Description="{x:Bind CurrentVersion}"
+                                               Description="{x:Bind CurrentVersion, Converter={StaticResource CurrentVersionConverter}}"
                                                Header="{x:Bind DeviceName}"
                                                HeaderIcon="{x:Bind VendorId, Converter={StaticResource VendorIdToImageIconConverter}}">
                                 <dev:SettingsGroup.Content>
@@ -105,6 +105,7 @@
     </Grid>
     <Page.Resources>
         <gpuConverters:VendorIdToImageIconConverter x:Key="VendorIdToImageIconConverter" />
+        <gpuConverters:CurrentVersionConverter x:Key="CurrentVersionConverter" />
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
     </Page.Resources>
 </Page>

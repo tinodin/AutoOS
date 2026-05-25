@@ -12,9 +12,12 @@ using AutoOS.Core.Helpers.TaskScheduler;
 using AutoOS.Views.Installer.Actions;
 using Microsoft.Win32;
 using System.Diagnostics;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using Windows.Win32;
+using Windows.Win32.Foundation;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -133,8 +136,8 @@ public static class ApplicationStage
         bool Teams = selection?.Teams ?? PreparingStage.Teams;
         bool Outlook = selection?.Outlook ?? PreparingStage.Outlook;
         bool OneDrive = selection?.OneDrive ?? PreparingStage.OneDrive;
-
-        string icloudVersion = "";
+		
+		string icloudVersion = "";
         string bitwardenVersion = "";
         string onePasswordVersion = "";
         string discordVersion = "";
@@ -333,6 +336,21 @@ public static class ApplicationStage
             ("Installing Autoruns", async () => await Task.Delay(500), () => selection == null),
             //("Cleaning up Autoruns files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Autoruns.zip")), () => selection == null),
 
+            // download process monitor
+            ("Downloading Process Monitor", async () => await DownloadHelper.Download("https://download.sysinternals.com/files/ProcessMonitor.zip", Path.GetTempPath(), "ProcessMonitor.zip", reporter: reporter), () => selection == null),
+
+            // install process monitor
+            ("Installing Process Monitor", async () => await ExtractHelper.Extract(Path.Combine(Path.GetTempPath(), "ProcessMonitor.zip"), Path.Combine(Path.GetTempPath(), "ProcessMonitor")), () => selection == null),
+            ("Installing Process Monitor", async () => Directory.Move(Path.Combine(Path.GetTempPath(), "ProcessMonitor"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Process Monitor")), () => selection == null),
+            ("Installing Process Monitor", async () => await ProcessActions.RunPowerShell(@"$Shell = New-Object -ComObject WScript.Shell; $Shortcut = $Shell.CreateShortcut([System.IO.Path]::Combine($env:ProgramData, 'Microsoft\Windows\Start Menu\Programs\Process Monitor.lnk')); $Shortcut.TargetPath = [System.IO.Path]::Combine($env:ProgramFiles, 'Process Monitor\Procmon64.exe'); $Shortcut.Save()"), () => selection == null),
+            ("Installing Process Monitor", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\ProcessMonitor", "DisplayName", "Process Monitor", RegistryValueKind.String), () => selection == null),
+            ("Installing Process Monitor", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\ProcessMonitor", "UninstallString", $@"cmd /c rd /s /q ""{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Process Monitor")}"" & del ""{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), @"Microsoft\Windows\Start Menu\Programs\Process Monitor.lnk")}"" & reg delete ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\ProcessMonitor"" /f", RegistryValueKind.String), () => selection == null),
+            ("Installing Process Monitor", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\ProcessMonitor", "DisplayIcon", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Process Monitor", "Procmon64.exe"), RegistryValueKind.String), () => selection == null),
+            ("Installing Process Monitor", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\ProcessMonitor", "Publisher", "Sysinternals", RegistryValueKind.String), () => selection == null),
+			("Installing Process Monitor", async () => await Process.Start(new ProcessStartInfo { FileName = "reg.exe", Arguments = $@"import ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "processmonitor.reg")}""", CreateNoWindow = true })!.WaitForExitAsync(), () => selection == null),
+			("Installing Process Monitor", async () => await Task.Delay(500), () => selection == null),
+            ("Cleaning up Process Monitor files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "ProcessMonitor.zip")), () => selection == null),
+
             // download process explorer
             ("Downloading Process Explorer", async () => await DownloadHelper.Download("https://www.dl.dropboxusercontent.com/scl/fi/a8l16rp3cpcvkkryavix1/procexp64.exe?rlkey=5fec8mcmkfcxlum9a95o1xn3t&st=mjkrpc1f&dl=0", Path.GetTempPath(), "procexp64.exe", reporter: reporter), () => selection == null),
             //("Downloading Process Explorer", async () => await DownloadHelper.Download("https://download.sysinternals.com/files/ProcessExplorer.zip", Path.GetTempPath(), "ProcessExplorer.zip", new InstallPageReporter()), () => selection == null),
@@ -350,21 +368,6 @@ public static class ApplicationStage
             ("Installing Process Explorer", async () => await Process.Start(new ProcessStartInfo { FileName = "reg.exe", Arguments = $@"import ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "processexplorer.reg")}""", CreateNoWindow = true })!.WaitForExitAsync(), () => selection == null),
             ("Installing Process Explorer", async () => await Task.Delay(500), () => selection == null),
             ("Cleaning up Process Explorer files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "procexp64.exe")), () => selection == null),
-
-            // download process monitor
-            ("Downloading Process Monitor", async () => await DownloadHelper.Download("https://download.sysinternals.com/files/ProcessMonitor.zip", Path.GetTempPath(), "ProcessMonitor.zip", reporter: reporter), () => selection == null),
-
-            // install process monitor
-            ("Installing Process Monitor", async () => await ExtractHelper.Extract(Path.Combine(Path.GetTempPath(), "ProcessMonitor.zip"), Path.Combine(Path.GetTempPath(), "ProcessMonitor")), () => selection == null),
-            ("Installing Process Monitor", async () => Directory.Move(Path.Combine(Path.GetTempPath(), "ProcessMonitor"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Process Monitor")), () => selection == null),
-            ("Installing Process Monitor", async () => await ProcessActions.RunPowerShell(@"$Shell = New-Object -ComObject WScript.Shell; $Shortcut = $Shell.CreateShortcut([System.IO.Path]::Combine($env:ProgramData, 'Microsoft\Windows\Start Menu\Programs\Process Monitor.lnk')); $Shortcut.TargetPath = [System.IO.Path]::Combine($env:ProgramFiles, 'Process Monitor\Procmon64.exe'); $Shortcut.Save()"), () => selection == null),
-            ("Installing Process Monitor", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\ProcessMonitor", "DisplayName", "Process Monitor", RegistryValueKind.String), () => selection == null),
-            ("Installing Process Monitor", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\ProcessMonitor", "UninstallString", $@"cmd /c rd /s /q ""{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Process Monitor")}"" & del ""{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), @"Microsoft\Windows\Start Menu\Programs\Process Monitor.lnk")}"" & reg delete ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\ProcessMonitor"" /f", RegistryValueKind.String), () => selection == null),
-            ("Installing Process Monitor", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\ProcessMonitor", "DisplayIcon", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Process Monitor", "Procmon64.exe"), RegistryValueKind.String), () => selection == null),
-            ("Installing Process Monitor", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\ProcessMonitor", "Publisher", "Sysinternals", RegistryValueKind.String), () => selection == null),
-			("Installing Process Monitor", async () => await Process.Start(new ProcessStartInfo { FileName = "reg.exe", Arguments = $@"import ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Scripts", "processmonitor.reg")}""", CreateNoWindow = true })!.WaitForExitAsync(), () => selection == null),
-			("Installing Process Monitor", async () => await Task.Delay(500), () => selection == null),
-            ("Cleaning up Process Monitor files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "ProcessMonitor.zip")), () => selection == null),
 
             // download discord
             ("Downloading Discord", async () => await DownloadHelper.Download("https://discord.com/api/downloads/distributions/app/installers/latest?channel=stable&platform=win&arch=x64", Path.GetTempPath(), "DiscordSetup.exe", reporter: reporter), () => Discord == true),
@@ -401,8 +404,13 @@ public static class ApplicationStage
 			("Importing Vencord settings", async () => await Task.Delay(500), () => Discord == true),
 
             // import discord account
-            //("Importing Discord Account", async () => await DiscordHelper.ImportAccount(reporter), () => Discord == true && DiscordAccount == true),
-
+            ("Importing Discord Account", async () => { Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Discord", "app-" + discordVersion, "Discord.exe"), WindowStyle = ProcessWindowStyle.Hidden }); while (!Process.GetProcessesByName("OpenWith").Any()) { await Task.Delay(500); } }, () => Discord == true && DiscordAccount == true),
+            ("Importing Discord Account", async () => await Task.Delay(2000), () => Discord == true && DiscordAccount == true),
+            ("Importing Discord Account", async () => { foreach (Process process in Process.GetProcessesByName("OpenWith")) { process.Kill(); process.WaitForExit(); }}, () => Discord == true && DiscordAccount == true),
+            ("Importing Discord Account", async () => { foreach (Process process in Process.GetProcessesByName("Discord")) { if (process.MainWindowHandle != IntPtr.Zero) PInvoke.PostMessage((HWND)process.MainWindowHandle, PInvoke.WM_CLOSE, default(WPARAM), default(LPARAM)); else process.Kill(); } }, () => Discord == true && DiscordAccount == true),
+			("Importing Discord Account", async () => await Task.Delay(2000), () => Discord == true && DiscordAccount == true),
+            ("Importing Discord Account", async () => await DiscordHelper.ImportAccount(reporter), () => Discord == true && DiscordAccount == true),
+			
             // log in to discord
             ("Please log in to your Discord account (Close to continue)", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Discord", "app-" + discordVersion, "Discord.exe"), WindowStyle = ProcessWindowStyle.Maximized }) !.WaitForExitAsync(), () => Discord == true && DiscordAccount == false),
 			
@@ -458,7 +466,6 @@ public static class ApplicationStage
             // import epic games launcher games
             ("Importing Epic Games Launcher Games", async () => await EpicGamesHelper.ImportGames(), () => EpicGames == true && EpicGamesGames == true),
             ("Importing Epic Games Launcher Games", async () => Fortnite = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Epic", "UnrealEngineLauncher", "LauncherInstalled.dat")) && (JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Epic", "UnrealEngineLauncher", "LauncherInstalled.dat")))?["InstallationList"] is JsonArray installations) && installations.Any(entry => entry?["AppName"]?.ToString() == "Fortnite") , () => EpicGames == true && EpicGamesGames == true),
-            ("Importing Epic Games Launcher Games", async () => Valorant = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Epic", "UnrealEngineLauncher", "LauncherInstalled.dat")) && (JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Epic", "UnrealEngineLauncher", "LauncherInstalled.dat")))?["InstallationList"] is JsonArray installations) && installations.Any(entry => entry?["AppName"]?.ToString() == "602eb4abc8764c87b7f2607a1ef8c18e") , () => EpicGames == true && EpicGamesGames == true),
             ("Importing Epic Games Launcher Games", async () => await Task.Delay(1000), () => EpicGames == true && EpicGamesGames == true),
 
             // log in to epic games launcher account
@@ -486,7 +493,7 @@ public static class ApplicationStage
             ("Please log in to your Steam account (Close to continue)", async () => await SteamHelper.SteamLogin(), () => Steam == true),
 
             // import steam games
-            ("Importing Steam Games", async () => await SteamHelper.RunImportSteamGames(), () => Steam == true && SteamGames == true),
+            ("Importing Steam Games", async () => await SteamHelper.ImportGames(), () => Steam == true && SteamGames == true),
 
             // remove steam desktop shortcut
             ("Removing Steam desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Steam.lnk")), () => Steam == true),
@@ -499,8 +506,8 @@ public static class ApplicationStage
 
             // install riot client
             ("Installing Riot Client", async () => await ExtractHelper.Extract(Path.Combine(Path.GetTempPath(), "Riot Games.zip"), Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))), () => RiotClient == true),
-            ("Installing Riot Client", async () => { Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System)), "Riot Games", "Riot Client", "RiotClientServices.exe"), WindowStyle = ProcessWindowStyle.Maximized }); while (Process.GetProcessesByName("RiotClientCrashHandler").Length == 0 || Process.GetProcessesByName("Riot Client").Length == 0) await Task.Delay(500); }, () => RiotClient == true),
-			("Installing Riot Client", async () => { foreach (Process process in new[] { "Riot Client", "RiotClientServices", "RiotClientCrashHandler" }.SelectMany(Process.GetProcessesByName)) { process.Kill(); process.WaitForExit(); }}, () => RiotClient == true),
+            ("Installing Riot Client", async () => { Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System)), "Riot Games", "Riot Client", "RiotClientServices.exe"), WindowStyle = ProcessWindowStyle.Maximized }); while (Process.GetProcessesByName("RiotClientCrashHandler").Length == 0 || Process.GetProcessesByName("Riot Client").Length == 0 || Process.GetProcessesByName("Riot Client").Length != 7) await Task.Delay(500); }, () => RiotClient == true),
+            ("Installing Riot Client", async () => { foreach (Process process in new[] { "Riot Client", "RiotClientServices", "RiotClientCrashHandler" }.SelectMany(Process.GetProcessesByName)) { process.Kill(); process.WaitForExit(); }}, () => RiotClient == true),
             ("Cleaning up Riot Client files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Riot Games.zip")), () => RiotClient == true),
 
             // import riot client account
@@ -508,6 +515,7 @@ public static class ApplicationStage
 
 			// import riot client games
             ("Importing Riot Client Games", async () => await RiotHelper.ImportGames(), () => RiotClient == true && RiotClientGames == true),
+            ("Importing Riot Client Games", async () => Valorant = File.Exists(Path.Combine(RiotHelper.RiotGamesMetadataPath, "valorant.live", "valorant.live.product_settings.yaml")) && !string.IsNullOrEmpty(Regex.Match(await File.ReadAllTextAsync(Path.Combine(RiotHelper.RiotGamesMetadataPath, "valorant.live", "valorant.live.product_settings.yaml")), @"product_install_full_path:\s*(.+)").Groups[1].Value.Trim()), () => RiotClient == true && RiotClientGames == true),
 
             // log in to riot client
             ("Please log in to your Riot account (Close to continue)", async () => { Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System)), "Riot Games", "Riot Client", "RiotClientServices.exe"), WindowStyle = ProcessWindowStyle.Maximized }); while (Process.GetProcessesByName("RiotClientCrashHandler").Length == 0 || Process.GetProcessesByName("Riot Client").Length == 0) await Task.Delay(500); while (Process.GetProcessesByName("Riot Client").Length > 0) await Task.Delay(500); }, () => RiotClient == true && RiotClientAccount == false),
@@ -1026,18 +1034,18 @@ public static class ApplicationStage
             ("Pinning Antigravity to the taskbar", async () => await ProcessActions.RunPowerShellScript("taskbarpin.ps1", $@"-Type Link -Path ""{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), @"Microsoft\Windows\Start Menu\Programs\Antigravity\Antigravity.lnk")}"""), () => Antigravity == true),
 
             // download git
-            ("Downloading Git", async () => await DownloadHelper.Download("https://github.com/git-for-windows/git/releases/download/v2.53.0.windows.1/Git-2.53.0-64-bit.exe", Path.GetTempPath(), "Git64-bit.exe", reporter: reporter), () => Git == true),
+            ("Downloading Git", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/git-for-windows/git/releases")).RootElement.EnumerateArray().First(release => release.GetProperty("assets").EnumerateArray().Any(asset => asset.GetProperty("name").GetString().Contains("64-bit.exe"))).GetProperty("assets").EnumerateArray().First(asset => asset.GetProperty("name").GetString().Contains("64-bit.exe")).GetProperty("browser_download_url").GetString(), Path.GetTempPath(), "Git64-bit.exe", reporter: reporter), () => Git == true),
 
             // install git
             ("Installing Git", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "Git64-bit.exe"), Arguments = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /NOICONS /COMPONENTS=GitLFS,GitGUI,GitCore" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Git ==  true),
             ("Cleaning up Git files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Git64-bit.exe")), () => Git ==  true),
 
             // download python
-            ("Downloading Python", async () => await DownloadHelper.Download("https://www.python.org/ftp/python/3.14.2/python-3.14.2-amd64.exe", Path.GetTempPath(), "python-3.14.2-amd64.exe", reporter: reporter), () => Python == true),
+            ("Downloading Python", async () => await DownloadHelper.Download("https://www.python.org/ftp/python/3.14.5/python-3.14.5-amd64.exe", Path.GetTempPath(), "python-amd64.exe", reporter: reporter), () => Python == true),
 
             // install python
-            ("Installing Python", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "python-3.14.2-amd64.exe"), Arguments = "/quiet InstallAllUsers=1 PrependPath=1" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Python == true),
-            ("Cleaning up Python files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "python-3.14.2-amd64.exe")), () => Python == true),
+            ("Installing Python", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "python-amd64.exe"), Arguments = "/quiet InstallAllUsers=1 PrependPath=1" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Python == true),
+            ("Cleaning up Python files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "python-amd64.exe")), () => Python == true),
 
             // download nodejs
             ("Downloading Node.js", async () => await DownloadHelper.Download("https://nodejs.org/dist/v24.12.0/node-v24.12.0-x64.msi", Path.GetTempPath(), "node-v24.12.0-x64.msi", reporter: reporter), () => Nodejs == true),

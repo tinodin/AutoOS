@@ -1388,7 +1388,7 @@ public partial class HeaderCarousel : ItemsControl
         LoadEpicGamesAccounts();
 
         // refresh library
-        foreach (var item in Items.OfType<HeaderCarouselItem>().Where(item => item.Launcher == "Epic Games" || item.Launcher == "UbisoftConnect" || item.Launcher == "The EA App" || item.Launcher == "Origin").ToList())
+        foreach (var item in Items.OfType<HeaderCarouselItem>().Where(item => item.Launcher == "Epic Games" || item.Launcher == "Ubisoft Connect" || item.Launcher == "The EA App" || item.Launcher == "Origin").ToList())
             Items.Remove(item);
         
         AddGames(await EpicGamesHelper.GetGames());
@@ -1462,7 +1462,7 @@ public partial class HeaderCarousel : ItemsControl
         LoadEpicGamesAccounts();
 
         // refresh library
-        foreach (var item in Items.OfType<HeaderCarouselItem>().Where(item => item.Launcher == "Epic Games" || item.Launcher == "UbisoftConnect" || item.Launcher == "The EA App" || item.Launcher == "Origin").ToList())
+        foreach (var item in Items.OfType<HeaderCarouselItem>().Where(item => item.Launcher == "Epic Games" || item.Launcher == "Ubisoft Connect" || item.Launcher == "The EA App" || item.Launcher == "Origin").ToList())
             Items.Remove(item);
 
         AddGames(await EpicGamesHelper.GetGames());
@@ -1555,7 +1555,7 @@ public partial class HeaderCarousel : ItemsControl
             LoadEpicGamesAccounts();
 
             // refresh library
-            foreach (var item in Items.OfType<HeaderCarouselItem>().Where(item => item.Launcher == "Epic Games" || item.Launcher == "UbisoftConnect" || item.Launcher == "The EA App" || item.Launcher == "Origin").ToList())
+            foreach (var item in Items.OfType<HeaderCarouselItem>().Where(item => item.Launcher == "Epic Games" || item.Launcher == "Ubisoft Connect" || item.Launcher == "The EA App" || item.Launcher == "Origin").ToList())
                 Items.Remove(item);
 
             AddGames(await EpicGamesHelper.GetGames());
@@ -1956,7 +1956,7 @@ public partial class HeaderCarousel : ItemsControl
 
                 Process.Start(startInfo);
             }
-            else if (launcher == "UbisoftConnect")
+            else if (launcher == "Ubisoft Connect")
             {
                 Process.Start(new ProcessStartInfo($"uplay://launch/{gameId}/0") { UseShellExecute = true });
             }
@@ -2386,7 +2386,7 @@ public partial class HeaderCarousel : ItemsControl
                        (ProcessNames?.Any(process => !string.IsNullOrEmpty(process) && running.Any(p => p.ProcessName.Contains(Path.GetFileNameWithoutExtension(process), StringComparison.OrdinalIgnoreCase))) ?? false);
             });
         }
-        else if (Launcher == "UbisoftConnect")
+        else if (Launcher == "Ubisoft Connect")
         {
             StartGameWatcher(() => Process.GetProcessesByName("UbisoftGameLauncher").Any(process => ProcessesHelper.GetCommandLine(process).Contains($"-upc_uplay_id {GameID}", StringComparison.OrdinalIgnoreCase)));
         }

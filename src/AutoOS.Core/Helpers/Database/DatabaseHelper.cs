@@ -18,6 +18,31 @@ public static partial class DatabaseHelper
 		Buffer.BlockCopy(separatorBytes, 0, finalKeyBytes, prefixBytes.Length, separatorBytes.Length);
 		Buffer.BlockCopy(keyNameBytes, 0, finalKeyBytes, prefixBytes.Length + separatorBytes.Length, keyNameBytes.Length);
 
+		JsonNode result;
+		try
+		{
+			result = ReadFromDatabase(databasePath, finalKeyBytes);
+		}
+		catch (IOException)
+		{
+			string tempDatabasePath = databasePath + " - Copy";
+			Directory.CreateDirectory(tempDatabasePath);
+
+			foreach (var file in Directory.GetFiles(databasePath))
+			{
+				File.Copy(file, Path.Combine(tempDatabasePath, Path.GetFileName(file)), true);
+			}
+
+			result = ReadFromDatabase(tempDatabasePath, finalKeyBytes);
+
+			Directory.Delete(tempDatabasePath, true);
+		}
+
+		return result;
+    }
+
+    private static JsonNode ReadFromDatabase(string databasePath, byte[] finalKeyBytes)
+    {
 		using var database = IronLeveldbBuilder.BuildFromPath(databasePath);
 		IReadOnlyList<byte> valueBytes = database.Get(finalKeyBytes);
 

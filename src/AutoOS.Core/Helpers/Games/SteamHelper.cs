@@ -131,7 +131,7 @@ public static partial class SteamHelper
 		await Task.Delay(1000);
 	}
 
-	public static async Task RunImportSteamGames()
+	public static async Task ImportGames()
 	{
 		var options = new KVSerializerOptions { HasEscapeSequences = true };
 
@@ -166,6 +166,68 @@ public static partial class SteamHelper
 			{
 				var targetFile = file.Replace(sourceCacheDir, targetCacheDir);
 				File.Copy(file, targetFile, true);
+			}
+		}
+
+		string sourceUserDataDir = SteamUserDataDir.Replace(Path.GetPathRoot(SteamUserDataDir) ?? "", sourceDrive + @"\");
+
+		Directory.CreateDirectory(SteamUserDataDir);
+
+		if (Directory.Exists(sourceUserDataDir))
+		{
+			foreach (var dir in Directory.GetDirectories(sourceUserDataDir, "*", SearchOption.AllDirectories))
+			{
+				var targetDir = dir.Replace(sourceUserDataDir, SteamUserDataDir);
+				Directory.CreateDirectory(targetDir);
+			}
+
+			foreach (var file in Directory.GetFiles(sourceUserDataDir, "*.*", SearchOption.AllDirectories))
+			{
+				var targetFile = file.Replace(sourceUserDataDir, SteamUserDataDir);
+				File.Copy(file, targetFile, true);
+			}
+
+			foreach (var userDir in Directory.GetDirectories(SteamUserDataDir))
+			{
+				string shortcutsPath = Path.Combine(userDir, "config", "shortcuts.vdf");
+
+				if (File.Exists(shortcutsPath))
+				{
+					using var stream = File.OpenRead(shortcutsPath);
+					var kv = KVSerializer.Create(KVSerializationFormat.KeyValues1Binary).Deserialize(stream);
+
+					foreach (var shortcut in kv.Root.Children)
+					{
+						var shortcutData = shortcut.Value;
+						var exeNode = shortcutData.Children.FirstOrDefault(children => string.Equals(children.Key, "Exe", StringComparison.OrdinalIgnoreCase));
+						var startDirNode = shortcutData.Children.FirstOrDefault(children => string.Equals(children.Key, "StartDir", StringComparison.OrdinalIgnoreCase));
+
+						if (!exeNode.Equals(default(KeyValuePair<string, KVObject>)))
+						{
+							string exe = exeNode.Value?.ToString()?.Replace("\"", "");
+							if (!string.IsNullOrEmpty(exe) && exe.StartsWith(sourceDrive, StringComparison.OrdinalIgnoreCase))
+							{
+								string newExe = string.Concat(Path.GetPathRoot(SteamDir)?.TrimEnd('\\'), exe.AsSpan(sourceDrive.Length));
+								shortcutData["Exe"] = new KVObject($"\"{newExe}\"");
+							}
+						}
+
+						if (!startDirNode.Equals(default(KeyValuePair<string, KVObject>)))
+						{
+							string startDir = startDirNode.Value?.ToString()?.Replace("\"", "")?.TrimEnd('\\', '/');
+							if (!string.IsNullOrEmpty(startDir) && startDir.StartsWith(sourceDrive, StringComparison.OrdinalIgnoreCase))
+							{
+								string newStartDir = string.Concat(Path.GetPathRoot(SteamDir)?.TrimEnd('\\'), startDir.AsSpan(sourceDrive.Length));
+								shortcutData["StartDir"] = new KVObject($"\"{newStartDir}\"");
+							}
+						}
+					}
+
+					using var msOut = new MemoryStream();
+					KVSerializer.Create(KVSerializationFormat.KeyValues1Binary).Serialize(msOut, kv);
+					msOut.Position = 0;
+					File.WriteAllBytes(shortcutsPath, msOut.ToArray());
+				}
 			}
 		}
 
@@ -374,155 +436,169 @@ public static partial class SteamHelper
 	public static async Task<List<GameModel>> GetNonSteamGames()
 	{
 		var games = new ConcurrentBag<GameModel>();
-		if (!Directory.Exists(SteamUserDataDir)) return [];
-
-		var shortcutList = new List<(string appName, string exe, string startDir, string longId, long sizeBytes)>();
-
-		string steam64Id = GetSteam64ID();
-		if (string.IsNullOrEmpty(steam64Id)) return [];
-
-		if (!ulong.TryParse(steam64Id, out var steam64IdNum)) return [];
-		const ulong steam64IdBase = 76561197960265728;
-		ulong folderId = steam64IdNum - steam64IdBase;
-		string folderName = folderId.ToString();
-
-		string shortcutsPath = Path.Combine(SteamUserDataDir, folderName, "config", "shortcuts.vdf");
-		if (!File.Exists(shortcutsPath)) return [];
-
-		using var stream = File.OpenRead(shortcutsPath);
-		var kv = KVSerializer.Create(KVSerializationFormat.KeyValues1Binary).Deserialize(stream);
-
-		foreach (var shortcut in kv.Root.Children)
+		try
 		{
-			var shortcutData = shortcut.Value;
-			string appName = shortcutData.Children.FirstOrDefault(children => string.Equals(children.Key, "AppName", StringComparison.OrdinalIgnoreCase)).Value?.ToString();
-			string exe = shortcutData.Children.FirstOrDefault(children => string.Equals(children.Key, "Exe", StringComparison.OrdinalIgnoreCase)).Value?.ToString()?.Replace("\"", "");
-			string startDir = shortcutData.Children.FirstOrDefault(children => string.Equals(children.Key, "StartDir", StringComparison.OrdinalIgnoreCase)).Value?.ToString()?.Replace("\"", "")?.TrimEnd('\\', '/');
-			var appidValue = shortcutData.Children.FirstOrDefault(children => string.Equals(children.Key, "appid", StringComparison.OrdinalIgnoreCase)).Value;
+			if (!Directory.Exists(SteamUserDataDir)) return [];
 
-			if (string.IsNullOrEmpty(appName)) continue;
+			var shortcutList = new List<(string appName, string exe, string startDir, string longId, long sizeBytes)>();
 
-			long appid = 0;
-			if (appidValue != null && long.TryParse(appidValue.ToString(), out var id))
+			string steam64Id = GetSteam64ID();
+			if (string.IsNullOrEmpty(steam64Id)) return [];
+
+			if (!ulong.TryParse(steam64Id, out var steam64IdNum)) return [];
+			const ulong steam64IdBase = 76561197960265728;
+			ulong folderId = steam64IdNum - steam64IdBase;
+			string folderName = folderId.ToString();
+
+			string shortcutsPath = Path.Combine(SteamUserDataDir, folderName, "config", "shortcuts.vdf");
+			if (!File.Exists(shortcutsPath)) return [];
+
+			using var stream = File.OpenRead(shortcutsPath);
+			var kv = KVSerializer.Create(KVSerializationFormat.KeyValues1Binary).Deserialize(stream);
+
+			foreach (var shortcut in kv.Root.Children)
 			{
-				appid = id;
-			}
+				var shortcutData = shortcut.Value;
+				string appName = shortcutData.Children.FirstOrDefault(children => string.Equals(children.Key, "AppName", StringComparison.OrdinalIgnoreCase)).Value?.ToString();
+				string exe = shortcutData.Children.FirstOrDefault(children => string.Equals(children.Key, "Exe", StringComparison.OrdinalIgnoreCase)).Value?.ToString()?.Replace("\"", "");
+				string startDir = shortcutData.Children.FirstOrDefault(children => string.Equals(children.Key, "StartDir", StringComparison.OrdinalIgnoreCase)).Value?.ToString()?.Replace("\"", "")?.TrimEnd('\\', '/');
+				var appidValue = shortcutData.Children.FirstOrDefault(children => string.Equals(children.Key, "appid", StringComparison.OrdinalIgnoreCase)).Value;
 
-			ulong longIdValue = ((ulong)(uint)appid << 32) | 0x02000000;
-			string longId = longIdValue.ToString();
-			string gameDir = !string.IsNullOrEmpty(startDir) && Directory.Exists(startDir) ? startDir : (!string.IsNullOrEmpty(exe) ? Path.GetDirectoryName(exe) : null);
+				if (string.IsNullOrEmpty(appName)) continue;
 
-			long sizeBytes = 0;
-			if (!string.IsNullOrEmpty(gameDir) && Directory.Exists(gameDir))
-			{
-				sizeBytes = new DirectoryInfo(gameDir).EnumerateFiles("*", SearchOption.AllDirectories).Sum(file => file.Length);
-			}
-
-			shortcutList.Add((appName, exe, startDir, longId, sizeBytes));
-		}
-
-		await Parallel.ForEachAsync(shortcutList, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount * 2 }, async (shortcutItem, cancellationToken) =>
-		{
-			var (appName, exe, startDir, longId, sizeBytes) = shortcutItem;
-
-			string version = FileVersionInfo.GetVersionInfo(Path.Combine(startDir, exe)).FileVersion;
-
-			var searchUrl = $"https://store.steampowered.com/api/storesearch/?term={Uri.EscapeDataString(appName)}&l=english&cc=US";
-			var searchResponse = await httpClient.GetStringAsync(searchUrl, cancellationToken);
-			using var searchDoc = JsonDocument.Parse(searchResponse);
-			var searchData = searchDoc.RootElement;
-
-			if (searchData.TryGetProperty("total", out var totalProp) && totalProp.GetInt32() > 0 && searchData.TryGetProperty("items", out var itemsProp))
-			{
-				var bestMatch = itemsProp.EnumerateArray().FirstOrDefault(item => string.Equals(item.GetProperty("name").GetString(), appName, StringComparison.OrdinalIgnoreCase));
-
-				if (bestMatch.ValueKind != JsonValueKind.Undefined && bestMatch.TryGetProperty("id", out var idProp))
+				long appid = 0;
+				if (appidValue != null && long.TryParse(appidValue.ToString(), out var id))
 				{
-					string steamAppId = idProp.GetInt32().ToString();
+					appid = id;
+				}
 
-					var tempGame = new GameModel
+				ulong longIdValue = ((ulong)(uint)appid << 32) | 0x02000000;
+				string longId = longIdValue.ToString();
+				string gameDir = !string.IsNullOrEmpty(startDir) && Directory.Exists(startDir) ? startDir : (!string.IsNullOrEmpty(exe) ? Path.GetDirectoryName(exe) : null);
+
+				long sizeBytes = 0;
+
+				if (!string.IsNullOrEmpty(gameDir) && Directory.Exists(gameDir))
+				{
+					sizeBytes = new DirectoryInfo(gameDir).EnumerateFiles("*", SearchOption.AllDirectories).Sum(file => file.Length);
+				}
+
+				shortcutList.Add((appName, exe, startDir, longId, sizeBytes));
+			}
+
+			await Parallel.ForEachAsync(shortcutList, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount * 2 }, async (shortcutItem, cancellationToken) =>
+			{
+				var (appName, exe, startDir, longId, sizeBytes) = shortcutItem;
+
+				string version = "";
+
+				string exePath = !string.IsNullOrEmpty(startDir) && !string.IsNullOrEmpty(exe) ? Path.Combine(startDir, exe) : exe;
+				if (!string.IsNullOrEmpty(exePath) && File.Exists(exePath))
+				{
+					version = FileVersionInfo.GetVersionInfo(exePath).FileVersion ?? "";
+				}
+
+				var searchUrl = $"https://store.steampowered.com/api/storesearch/?term={Uri.EscapeDataString(appName)}&l=english&cc=US";
+				var searchResponse = await httpClient.GetStringAsync(searchUrl, cancellationToken);
+				using var searchDoc = JsonDocument.Parse(searchResponse);
+				var searchData = searchDoc.RootElement;
+
+				if (searchData.TryGetProperty("total", out var totalProp) && totalProp.GetInt32() > 0 && searchData.TryGetProperty("items", out var itemsProp))
+				{
+					var bestMatch = itemsProp.EnumerateArray().FirstOrDefault(item => string.Equals(item.GetProperty("name").GetString(), appName, StringComparison.OrdinalIgnoreCase));
+
+					if (bestMatch.ValueKind != JsonValueKind.Undefined && bestMatch.TryGetProperty("id", out var idProp))
+					{
+						string steamAppId = idProp.GetInt32().ToString();
+
+						var tempGame = new GameModel
+						{
+							Launcher = "Steam",
+							Title = appName,
+							GameID = longId,
+							InstallLocation = startDir,
+							LaunchExecutable = exe,
+							Size = sizeBytes >= 1024d * 1024d * 1024d
+								? $"{sizeBytes / (1024d * 1024d * 1024d):F1} GB"
+								: $"{sizeBytes / (1024d * 1024d):F2} MB",
+							ProcessNames = [Path.GetFileNameWithoutExtension(exe)],
+							PlayTime = "0m",
+							Version = version
+						};
+
+						if (await GetStoreMetadata(tempGame, steamAppId, cancellationToken))
+						{
+							games.Add(tempGame);
+							return;
+						}
+					}
+				}
+
+				var result = await IgdbHelper.SearchCovers(appName);
+				if (result != null)
+				{
+					string gameUrl = result.GetValueOrDefault("game_url");
+					string coverUrl = result.GetValueOrDefault("cover_url");
+
+					string summary = "";
+					var genres = new List<string>();
+					var features = new List<string>();
+					double rating = 0;
+
+					if (!string.IsNullOrEmpty(gameUrl))
+					{
+						var docResponse = await httpClient.GetStringAsync(gameUrl, cancellationToken);
+						using var docData = JsonDocument.Parse(docResponse);
+						var data = docData.RootElement;
+
+						summary = data.TryGetProperty("summary", out var summaryProp) ? summaryProp.GetString() : "";
+
+						if (data.TryGetProperty("genres", out var genresProp) && genresProp.ValueKind == JsonValueKind.Array)
+						{
+							genres = [.. genresProp.EnumerateArray().Select(g => g.GetProperty("name").GetString())];
+						}
+
+						if (data.TryGetProperty("game_modes", out var modesProp) && modesProp.ValueKind == JsonValueKind.Array)
+						{
+							features = [.. modesProp.EnumerateArray().Select(m => m.GetProperty("name").GetString())];
+						}
+
+						rating = data.TryGetProperty("aggregated_rating", out var ratingProp) ? Math.Round(ratingProp.GetDouble() / 20.0, 2) : 0;
+					}
+
+					var igdbGame = new GameModel
 					{
 						Launcher = "Steam",
 						Title = appName,
 						GameID = longId,
 						InstallLocation = startDir,
 						LaunchExecutable = exe,
+						ImageUrl = coverUrl,
+						BackgroundImageUrl = coverUrl,
+						Developers = result.GetValueOrDefault("developers"),
+						ReleaseDate = result.GetValueOrDefault("release_date") ?? "Unknown",
 						Size = sizeBytes >= 1024d * 1024d * 1024d
 							? $"{sizeBytes / (1024d * 1024d * 1024d):F1} GB"
 							: $"{sizeBytes / (1024d * 1024d):F2} MB",
+						AgeRatingUrl = result.GetValueOrDefault("age_rating_url"),
+						AgeRatingTitle = result.GetValueOrDefault("age_rating_title"),
+						Description = summary,
+						Genres = genres,
+						Features = features,
+						Rating = rating,
 						ProcessNames = [Path.GetFileNameWithoutExtension(exe)],
 						PlayTime = "0m",
 						Version = version
 					};
 
-					if (await GetStoreMetadata(tempGame, steamAppId, cancellationToken))
-					{
-						games.Add(tempGame);
-						return;
-					}
+					games.Add(igdbGame);
 				}
-			}
-
-			var result = await IgdbHelper.SearchCovers(appName);
-			if (result != null)
-			{
-				string gameUrl = result.GetValueOrDefault("game_url");
-				string coverUrl = result.GetValueOrDefault("cover_url");
-
-				string summary = "";
-				var genres = new List<string>();
-				var features = new List<string>();
-				double rating = 0;
-
-				if (!string.IsNullOrEmpty(gameUrl))
-				{
-					var docResponse = await httpClient.GetStringAsync(gameUrl, cancellationToken);
-					using var docData = JsonDocument.Parse(docResponse);
-					var data = docData.RootElement;
-
-					summary = data.TryGetProperty("summary", out var summaryProp) ? summaryProp.GetString() : "";
-
-					if (data.TryGetProperty("genres", out var genresProp) && genresProp.ValueKind == JsonValueKind.Array)
-					{
-						genres = [.. genresProp.EnumerateArray().Select(g => g.GetProperty("name").GetString())];
-					}
-
-					if (data.TryGetProperty("game_modes", out var modesProp) && modesProp.ValueKind == JsonValueKind.Array)
-					{
-						features = [.. modesProp.EnumerateArray().Select(m => m.GetProperty("name").GetString())];
-					}
-
-					rating = data.TryGetProperty("aggregated_rating", out var ratingProp) ? Math.Round(ratingProp.GetDouble() / 20.0, 2) : 0;
-				}
-
-				var igdbGame = new GameModel
-				{
-					Launcher = "Steam",
-					Title = appName,
-					GameID = longId,
-					InstallLocation = startDir,
-					LaunchExecutable = exe,
-					ImageUrl = coverUrl,
-					BackgroundImageUrl = coverUrl,
-					Developers = result.GetValueOrDefault("developers"),
-					ReleaseDate = result.GetValueOrDefault("release_date") ?? "Unknown",
-					Size = sizeBytes >= 1024d * 1024d * 1024d
-						? $"{sizeBytes / (1024d * 1024d * 1024d):F1} GB"
-						: $"{sizeBytes / (1024d * 1024d):F2} MB",
-					AgeRatingUrl = result.GetValueOrDefault("age_rating_url"),
-					AgeRatingTitle = result.GetValueOrDefault("age_rating_title"),
-					Description = summary,
-					Genres = genres,
-					Features = features,
-					Rating = rating,
-					ProcessNames = [Path.GetFileNameWithoutExtension(exe)],
-					PlayTime = "0m",
-					Version = version
-				};
-
-				games.Add(igdbGame);
-			}
-		});
+			});
+		}
+		catch
+		{
+			
+		}
 
 		return [.. games];
 	}

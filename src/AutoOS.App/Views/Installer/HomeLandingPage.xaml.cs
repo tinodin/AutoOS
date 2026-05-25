@@ -2,7 +2,7 @@ using AutoOS.Core.Helpers.OS;
 using AutoOS.Core.Helpers.Registry;
 using Microsoft.Win32;
 using System.Diagnostics;
-using Microsoft.Windows.ApplicationModel.WindowsAppRuntime;
+//using Microsoft.Windows.ApplicationModel.WindowsAppRuntime;
 
 namespace AutoOS.Views.Installer
 {

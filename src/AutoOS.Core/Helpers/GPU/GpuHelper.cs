@@ -170,7 +170,7 @@ public static partial class GpuHelper
                     VendorId = vendorId,
                     DeviceId = deviceId,
                     Codename = codename,
-                    CurrentVersion = $"Current Version: {currentVersion}",
+                    CurrentVersion = currentVersion,
                     IsInstalled = isInstalled,
                     RegistryPath = registryPath,
                     PStates = pstates,

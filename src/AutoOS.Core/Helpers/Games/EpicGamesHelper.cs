@@ -838,7 +838,10 @@ public static partial class EpicGamesHelper
 
                         string gameId = null;
                         if (provider == "UbisoftConnect")
+                        {
                             gameId = json["GameID"]?.GetValue<string>();
+                            provider = "Ubisoft Connect";
+                        }
 
                         allManifests.Add(new JsonObject
                         {

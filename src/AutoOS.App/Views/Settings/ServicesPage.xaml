@@ -24,7 +24,7 @@
                         dev:PanelAttach.ChildrenTransitions="Default">
                 <dev:SettingsGroup x:Name="Services_SettingsGroup"
                                    Margin="0,0,0,36"
-                                   Description="Toggle functionality needed in service disabled state and toggle between service states."
+                                   Description="Toggle functionality needed in service disabled state and toggle between service states. &#x0A;Disable the toggle whenever you are gaming competitively. Enable it again if you need functionality back for work or installing applications / drivers."
                                    Header="Service-list-builder">
                     <dev:SettingsGroup.HeaderIcon>
                         <ImageIcon Source="/Assets/Fluent/Services.png" />

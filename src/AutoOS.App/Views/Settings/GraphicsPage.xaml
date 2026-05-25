@@ -30,7 +30,7 @@
                     <ItemsRepeater.ItemTemplate>
                         <DataTemplate x:DataType="gpuModels:GpuInfo">
                             <StackPanel>
-                                <dev:SettingsGroup Description="{x:Bind CurrentVersion, Mode=OneWay}"
+                                <dev:SettingsGroup Description="{x:Bind CurrentVersion, Converter={StaticResource CurrentVersionConverter}, Mode=OneWay}"
                                                    Header="{x:Bind DeviceName, Mode=OneWay}"
                                                    HeaderIcon="{x:Bind VendorId, Converter={StaticResource VendorIdToImageIconConverter}}">
                                     <dev:SettingsGroup.Content>
@@ -133,6 +133,7 @@
     </Grid>
     <Page.Resources>
         <gpuConverters:VendorIdToImageIconConverter x:Key="VendorIdToImageIconConverter" />
+        <gpuConverters:CurrentVersionConverter x:Key="CurrentVersionConverter" />
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
     </Page.Resources>
 </Page>
