@@ -51,10 +51,6 @@
                               Padding="0"
                               AutomationProperties.Name="{TemplateBinding Title}"
                               CornerRadius="{TemplateBinding CornerRadius}">
-                            <Grid.Lights>
-                                <dev:HoverLight />
-                                <dev:AmbLight />
-                            </Grid.Lights>
                             <dev:ImageEx HorizontalAlignment="Stretch"
                                          VerticalAlignment="Stretch"
                                          AutomationProperties.AccessibilityView="Raw"

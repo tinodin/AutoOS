@@ -815,9 +815,6 @@ public partial class HeaderCarousel : ItemsControl
     {
         foreach (HeaderCarouselItem tile in Items.Cast<HeaderCarouselItem>())
         {
-            tile.PointerEntered -= Tile_PointerEntered;
-            tile.PointerEntered += Tile_PointerEntered;
-
             tile.GotFocus -= Tile_GotFocus;
             tile.GotFocus += Tile_GotFocus;
         }
@@ -831,7 +828,6 @@ public partial class HeaderCarousel : ItemsControl
 
         foreach (HeaderCarouselItem tile in Items.Cast<HeaderCarouselItem>())
         {
-            tile.PointerEntered -= Tile_PointerEntered;
             tile.GotFocus -= Tile_GotFocus;
         }
     }
