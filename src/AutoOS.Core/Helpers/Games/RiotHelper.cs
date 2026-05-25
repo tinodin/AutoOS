@@ -1,5 +1,6 @@
 using AutoOS.Core.Common;
 using System.Text.RegularExpressions;
+using System.Text.Json;
 
 namespace AutoOS.Core.Helpers.Games;
 
@@ -14,7 +15,6 @@ public static partial class RiotHelper
     public static readonly string RiotGamesDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Riot Games\Riot Client\Data";
     public static readonly string RiotGamesConfigPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Riot Games\Riot Client\Config";
     public static readonly string RiotGamesMetadataPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData) + @"\Riot Games\Metadata";
-
     public static async Task ImportAccount(IStatusReporter reporter = null)
     {
         var systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));

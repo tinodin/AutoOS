@@ -118,7 +118,7 @@ public static partial class RyujinxHelper
                 string playTime = "0m";
                 if (metadataObj.TryGetProperty("timespan_played", out var timespanElement) && TimeSpan.TryParse(timespanElement.GetString(), out TimeSpan ts))
                 {
-                    playTime = (int)ts.TotalHours > 0 ? $"{(int)ts.TotalHours}h {ts.Minutes}m" : $"{ts.Minutes}m";
+                    playTime = GameModel.FormatPlayTime((int)ts.TotalMinutes);
                 }
 
                 // get size

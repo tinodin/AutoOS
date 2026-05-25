@@ -273,8 +273,7 @@ public static partial class SteamHelper
 				string playtimeValue = playtimeNode.Value?.ToString();
 				if (!string.IsNullOrEmpty(playtimeValue) && int.TryParse(playtimeValue, out var playtimeMinutes))
 				{
-					var ts = TimeSpan.FromMinutes(playtimeMinutes);
-					string formattedTime = ts.TotalHours >= 1 ? $"{(int)ts.TotalHours}h {ts.Minutes}m" : $"{ts.Minutes}m";
+					string formattedTime = GameModel.FormatPlayTime(playtimeMinutes);
 					playtimeData[gameId] = formattedTime;
 				}
 			}
