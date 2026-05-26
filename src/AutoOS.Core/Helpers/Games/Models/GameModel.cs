@@ -39,30 +39,55 @@ public class GameModel
     public string Size { get; set; }
     public string Version { get; set; }
 
-    public static string FormatPlayTime(int totalMinutes)
+    public static string PlaytimeFormat { get; set; } = "Compact";
+    public static event Action? PlaytimeFormatChanged;
+
+    public static void SetPlaytimeFormat(string format)
+    {
+        PlaytimeFormat = format;
+        PlaytimeFormatChanged?.Invoke();
+    }
+
+    public static string FormatPlayTime(int totalMinutes, string format = null)
     {
         const int twoHoursInMinutes = 120;
         const int thousandHoursInMinutes = 60000;
 
-        if (totalMinutes < twoHoursInMinutes)
+        format ??= PlaytimeFormat;
+
+        if (format == "Compact")
         {
-            return totalMinutes == 1 ? "1 minute played" : $"{totalMinutes} minutes played";
-        }
-        else if (totalMinutes < thousandHoursInMinutes)
-        {
-            double hours = totalMinutes / 60.0;
-            string timeStr = $"{hours.ToString("F1", CultureInfo.InvariantCulture)} hours played";
-            // Remove .0 if present
-            if (timeStr.EndsWith(".0 hours played"))
-            {
-                timeStr = timeStr.Replace(".0 hours played", " hours played");
-            }
-            return timeStr;
+            // Original format: 1h 1m
+            var ts = TimeSpan.FromMinutes(totalMinutes);
+            return ts.TotalHours >= 1 ? $"{(int)ts.TotalHours}h {ts.Minutes}m" : $"{ts.Minutes}m";
         }
         else
         {
-            int hours = totalMinutes / 60;
-            return $"{hours} hours played";
+            // Detailed format: Steam Format
+            if (totalMinutes == 0)
+            {
+                return "0 minutes played";
+            }
+            else if (totalMinutes < twoHoursInMinutes)
+            {
+                return totalMinutes == 1 ? "1 minute played" : $"{totalMinutes} minutes played";
+            }
+            else if (totalMinutes < thousandHoursInMinutes)
+            {
+                double hours = totalMinutes / 60.0;
+                string timeStr = $"{hours.ToString("F1", CultureInfo.InvariantCulture)} hours played";
+                // Remove .0 if present
+                if (timeStr.EndsWith(".0 hours played"))
+                {
+                    timeStr = timeStr.Replace(".0 hours played", " hours played");
+                }
+                return timeStr;
+            }
+            else
+            {
+                int hours = totalMinutes / 60;
+                return $"{hours} hours played";
+            }
         }
     }
 }

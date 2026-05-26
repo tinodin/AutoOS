@@ -150,6 +150,14 @@ public partial class HeaderCarousel : ItemsControl
         SortAscending.Click += SortOrder_Click;
         SortDescending.Click += SortOrder_Click;
 
+        var settingsButton = GetTemplateChild("Settings") as Button;
+        if (settingsButton != null)
+        {
+            settingsButton.Click += Settings_Click;
+        }
+
+        GameModel.PlaytimeFormatChanged += RefreshPlaytimeFormat;
+
         EpicGamesButton = GetTemplateChild("EpicGamesButton") as Button;
         EpicGamesAccounts = GetTemplateChild("EpicGamesAccounts") as ComboBox;
         EpicGamesAccounts.SelectionChanged += EpicGamesAccounts_SelectionChanged;
@@ -815,6 +823,9 @@ public partial class HeaderCarousel : ItemsControl
     {
         foreach (HeaderCarouselItem tile in Items.Cast<HeaderCarouselItem>())
         {
+            tile.PointerEntered -= Tile_PointerEntered;
+            tile.PointerEntered += Tile_PointerEntered;
+
             tile.GotFocus -= Tile_GotFocus;
             tile.GotFocus += Tile_GotFocus;
         }
@@ -828,6 +839,7 @@ public partial class HeaderCarousel : ItemsControl
 
         foreach (HeaderCarouselItem tile in Items.Cast<HeaderCarouselItem>())
         {
+            tile.PointerEntered -= Tile_PointerEntered;
             tile.GotFocus -= Tile_GotFocus;
         }
     }
@@ -1195,6 +1207,15 @@ public partial class HeaderCarousel : ItemsControl
         }
     }
 
+    public void Settings_Click(object sender, RoutedEventArgs e)
+    {
+        var settingsDialog = new HeaderCarouselSettings
+        {
+            XamlRoot = XamlRoot
+        };
+        _ = settingsDialog.ShowAsync();
+    }
+
     private async void ApplySort()
     {
         var items = Items.OfType<HeaderCarouselItem>().ToList();
@@ -1265,7 +1286,7 @@ public partial class HeaderCarousel : ItemsControl
         ApplySort();
     }
 
-    [GeneratedRegex(@"^(\d+(?:\.\d+)?) hours played$|^(\d+) minutes? played$", RegexOptions.Compiled)]
+    [GeneratedRegex(@"^(\d+(?:\.\d+)?) hours played$|^(\d+) minutes? played$|^(\d+)h (\d+)m$|^(\d+)m$", RegexOptions.Compiled)]
     private static partial Regex PlayTimeMinutesRegex();
     private static int ParseMinutes(string time)
     {
@@ -1283,6 +1304,16 @@ public partial class HeaderCarousel : ItemsControl
             else if (match.Groups[2].Success)
             {
                 return int.Parse(match.Groups[2].Value);
+            }
+            else if (match.Groups[3].Success && match.Groups[4].Success)
+            {
+                int hours = int.Parse(match.Groups[3].Value);
+                int minutes = int.Parse(match.Groups[4].Value);
+                return hours * 60 + minutes;
+            }
+            else if (match.Groups[5].Success)
+            {
+                return int.Parse(match.Groups[5].Value);
             }
         }
 
@@ -2466,6 +2497,39 @@ public partial class HeaderCarousel : ItemsControl
                 return false;
             });
         }
+    }
+
+    private void RefreshPlaytimeFormat()
+    {
+        foreach (var item in Items.OfType<HeaderCarouselItem>())
+        {
+            if (!string.IsNullOrEmpty(item.PlayTime))
+            {
+                var minutes = ParseMinutes(item.PlayTime);
+                if (minutes > 0)
+                {
+                    item.PlayTime = GameModel.FormatPlayTime(minutes);
+                }
+                else if (item.PlayTime == "0m" && GameModel.PlaytimeFormat == "Detailed")
+                {
+                    item.PlayTime = "0 minutes played";
+                }
+            }
+        }
+
+        if (selectedTile != null && !string.IsNullOrEmpty(selectedTile.PlayTime))
+        {
+            var minutes = ParseMinutes(selectedTile.PlayTime);
+            if (minutes > 0)
+            {
+                PlayTime = GameModel.FormatPlayTime(minutes);
+            }
+            else if (selectedTile.PlayTime == "0m" && GameModel.PlaytimeFormat == "Detailed")
+            {
+                PlayTime = "0 minutes played";
+            }
+        }
+        UpdateLayout();
     }
 }
 

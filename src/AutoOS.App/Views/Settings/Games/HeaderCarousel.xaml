@@ -24,6 +24,8 @@
                         <Grid.Resources>
                             <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
                         </Grid.Resources>
+
+
                         <dev:OpacityMaskView VerticalAlignment="Top">
                             <dev:OpacityMaskView.OpacityMask>
                                 <RadialGradientBrush Center="0.5,0.22"
@@ -173,14 +175,18 @@
                                     Spacing="8">
                             <!--  Epic Games  -->
                             <Button x:Name="EpicGamesButton"
+                                    Height="0"
+                                    Width="0"
                                     Padding="12,8"
                                     HorizontalAlignment="Right"
                                     VerticalAlignment="Top"
                                     CornerRadius="18"
+                                    Opacity="0"
                                     Style="{ThemeResource MicaButtonStyle}"
                                     XYFocusLeft="{Binding ElementName=Sort}"
                                     XYFocusRight="{Binding ElementName=SteamButton}">
-                                <dev:ImageEx Height="20"
+                                <dev:ImageEx Height="0"
+                                             Width="0"
                                              Source="Assets/Fluent/Epicgames.png" />
                                 <Button.Flyout>
                                     <Flyout Placement="Bottom">
@@ -257,13 +263,17 @@
                             </Button>
                             <!--  Steam  -->
                             <Button x:Name="SteamButton"
+                                    Height="0"
+                                    Width="0"
                                     Padding="12,8"
                                     HorizontalAlignment="Right"
                                     VerticalAlignment="Top"
                                     CornerRadius="18"
+                                    Opacity="0"
                                     Style="{ThemeResource MicaButtonStyle}"
                                     XYFocusLeft="{Binding ElementName=EpicGamesButton}">
-                                <dev:ImageEx Height="20"
+                                <dev:ImageEx Height="0"
+                                             Width="0"
                                              Source="Assets/Fluent/Steam.png" />
                                 <Button.Flyout>
                                     <Flyout Placement="Bottom">
@@ -336,6 +346,23 @@
                                         </StackPanel>
                                     </Flyout>
                                 </Button.Flyout>
+                            </Button>
+                            <!--  Settings  -->
+                            <Button x:Name="Settings"
+                                    Padding="12,8"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Top"
+                                    CornerRadius="18"
+                                    Style="{ThemeResource MicaButtonStyle}"
+                                    XYFocusLeft="{Binding ElementName=Sort}">
+                                <StackPanel VerticalAlignment="Center"
+                                            Orientation="Horizontal">
+                                    <FontIcon Margin="0,0,8,0"
+                                              FontSize="16"
+                                              Glyph="&#xE713;" />
+                                    <TextBlock VerticalAlignment="Center"
+                                               Text="Settings" />
+                                </StackPanel>
                             </Button>
                         </StackPanel>
                         <dev:SwitchPresenter x:Name="SwitchPresenter"
