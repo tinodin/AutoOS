@@ -164,6 +164,7 @@ public sealed partial class ApplicationsPage : Page
 		{
 			new() { Text = "Reaper", ImageSource = "ms-appx:///Assets/Fluent/Reaper.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "REAPER (x64)", "reaper.exe")) },
 			new() { Text = "FL Studio", ImageSource = "ms-appx:///Assets/Fluent/FLStudio.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Image-Line", "FL Studio 2025", "FL64.exe")) },
+			new() { Text = "Audacity", ImageSource = "ms-appx:///Assets/Fluent/Audacity.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Audacity", "Audacity.exe")) },
 			new() { Text = "FlexASIO", ImageSource = "ms-appx:///Assets/Fluent/FlexASIO.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "FlexASIO")) },
 			new() { Text = "ASIO4ALL", ImageSource = "ms-appx:///Assets/Fluent/ASIO4ALL.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "ASIO4ALL v2", "a4apanel.exe")) },
 			new() { Text = "Arturia MIDI Control Center", ImageSource = "ms-appx:///Assets/Fluent/ArturiaMidiControlCenter.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Arturia", "MIDI Control Center", "MIDI Control Center.exe")) }
@@ -318,6 +319,7 @@ public sealed partial class ApplicationsPage : Page
 		var selectedMusicProduction = selectedMusicProductionItems.Select(item => item.Text).ToList();
 		selection.Reaper = selectedMusicProduction.Contains("Reaper");
 		selection.FLStudio = selectedMusicProduction.Contains("FL Studio");
+		selection.Audacity = selectedMusicProduction.Contains("Audacity");
 		selection.FlexASIO = selectedMusicProduction.Contains("FlexASIO");
 		selection.ASIO4ALL = selectedMusicProduction.Contains("ASIO4ALL");
 		selection.ArturiaMidiControlCenter = selectedMusicProduction.Contains("Arturia MIDI Control Center");

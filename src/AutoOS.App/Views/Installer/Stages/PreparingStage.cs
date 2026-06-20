@@ -135,6 +135,7 @@ public static partial class PreparingStage
 
 	public static bool Reaper;
 	public static bool FLStudio;
+	public static bool Audacity;
 	public static bool FlexASIO;
 	public static bool ASIO4ALL;
 	public static bool ArturiaMidiControlCenter;
@@ -325,6 +326,7 @@ public static partial class PreparingStage
 
 			Reaper = (localSettings.Values["Music Production"]?.ToString().Contains("Reaper") ?? false);
 			FLStudio = (localSettings.Values["Music Production"]?.ToString().Contains("FL Studio") ?? false);
+			Audacity = (localSettings.Values["Music Production"]?.ToString().Contains("Audacity") ?? false);
 			FlexASIO = (localSettings.Values["Music Production"]?.ToString().Contains("FlexASIO") ?? false);
 			ASIO4ALL = (localSettings.Values["Music Production"]?.ToString().Contains("ASIO4ALL") ?? false);
 			ArturiaMidiControlCenter = (localSettings.Values["Music Production"]?.ToString().Contains("Arturia MIDI Control Center") ?? false);
