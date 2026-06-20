@@ -2045,8 +2045,8 @@ public static class ApplicationStage
 			("Cleaning up Apollo files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Apollo.exe")), () => Apollo == true),
 			
 			// download autohotkey
-			("Downloading AutoHotkey", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/AutoHotkey/AutoHotkey/releases")).RootElement.EnumerateArray().First(release => release.GetProperty("assets").EnumerateArray().Any(asset => asset.GetProperty("name").GetString().EndsWith("_setup.exe"))).GetProperty("assets").EnumerateArray().First(asset => asset.GetProperty("name").GetString().EndsWith("_setup.exe")).GetProperty("browser_download_url").GetString(), Path.GetTempPath(), "AutoHotkey_setup.exe", reporter: reporter), () => AutoHotkey == true),
-			
+			("Downloading AutoHotkey", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/AutoHotkey/AutoHotkey/releases")).RootElement.EnumerateArray().Where(release => !release.GetProperty("prerelease").GetBoolean()).First(release => release.GetProperty("assets").EnumerateArray().Any(asset => asset.GetProperty("name").GetString().EndsWith("_setup.exe"))).GetProperty("assets").EnumerateArray().First(asset => asset.GetProperty("name").GetString().EndsWith("_setup.exe")).GetProperty("browser_download_url").GetString(), Path.GetTempPath(), "AutoHotkey_setup.exe", reporter: reporter), () => AutoHotkey == true),
+
 			// install autohotkey
 			("Installing AutoHotkey", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "AutoHotkey_setup.exe"), Arguments = "/silent", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => AutoHotkey == true),
 			("Cleaning up AutoHotkey files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "AutoHotkey_setup.exe")), () => AutoHotkey == true),
