@@ -40,6 +40,8 @@ public sealed partial class BrowsersPage : Page
 			new() { Text = "Waterfox", ImageSource = "ms-appx:///Assets/Fluent/Waterfox.png" },
 			new() { Text = "LibreWolf", ImageSource = "ms-appx:///Assets/Fluent/Librewolf.png" },
 			new() { Text = "Mullvad Browser", ImageSource = "ms-appx:///Assets/Fluent/Mullvad.png" }
+			new() { Text = "Tor Browser", ImageSource = "ms-appx:///Assets/Fluent/Tor.png" }
+
 		};
 
 		Extensions.ItemsSource = new List<GridViewItem>
