@@ -74,6 +74,7 @@ public static partial class PreparingStage
 	public static bool BattleNet;
 	public static bool MinecraftLauncher;
 	public static bool CurseForge;
+	public static bool PrismLauncher;
 	public static bool LunarClient;
 	public static bool FeatherClient;
 	public static bool Froststrap;
@@ -275,6 +276,7 @@ public static partial class PreparingStage
 			BattleNet = (localSettings.Values["Launchers"]?.ToString().Contains("Battle.Net") ?? false);
 			MinecraftLauncher = (localSettings.Values["Launchers"]?.ToString().Contains("Minecraft Launcher") ?? false);
 			CurseForge = (localSettings.Values["Launchers"]?.ToString().Contains("CurseForge") ?? false);
+			PrismLauncher = (localSettings.Values["Launchers"]?.ToString().Contains("Prism Launcher") ?? false);
 			LunarClient = (localSettings.Values["Launchers"]?.ToString().Contains("Lunar Client") ?? false);
 			FeatherClient = (localSettings.Values["Launchers"]?.ToString().Contains("Feather Client") ?? false);
 			Froststrap = (localSettings.Values["Launchers"]?.ToString().Contains("Froststrap") ?? false);

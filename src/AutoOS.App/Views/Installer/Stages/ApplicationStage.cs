@@ -43,6 +43,7 @@ public class ApplicationSelection
 	public bool BattleNet { get; set; }
 	public bool MinecraftLauncher { get; set; }
 	public bool CurseForge { get; set; }
+	public bool PrismLauncher { get; set; }
 	public bool LunarClient { get; set; }
 	public bool FeatherClient { get; set; }
 	public bool Froststrap { get; set; }
@@ -179,6 +180,7 @@ public static class ApplicationStage
 		bool BattleNet = selection?.BattleNet ?? PreparingStage.BattleNet;
 		bool MinecraftLauncher = selection?.MinecraftLauncher ?? PreparingStage.MinecraftLauncher;
 		bool CurseForge = selection?.CurseForge ?? PreparingStage.CurseForge;
+		bool PrismLauncher = selection?.PrismLauncher ?? PreparingStage.PrismLauncher;
 		bool LunarClient = selection?.LunarClient ?? PreparingStage.LunarClient;
 		bool FeatherClient = selection?.FeatherClient ?? PreparingStage.FeatherClient;
 		bool Froststrap = selection?.Froststrap ?? PreparingStage.Froststrap;
@@ -816,6 +818,13 @@ public static class ApplicationStage
 
 			// remove curseforge desktop shortcut
 			("Removing CurseForge desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "CurseForge.lnk")), () => CurseForge == true),
+
+			// download prism launcher
+			("Downloading Prism Launcher", async () => await DownloadHelper.Download("https://github.com/PrismLauncher/PrismLauncher/releases/download/11.0.2/PrismLauncher-Windows-MSVC-Setup-11.0.2.exe", Path.GetTempPath(), "PrismLauncher-Windows-MSVC-Setup.exe", reporter: reporter), () => PrismLauncher == true),
+
+			// install prism launcher
+			("Installing Prism Launcher", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "PrismLauncher-Windows-MSVC-Setup.exe"), Arguments = "/S" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => PrismLauncher == true),
+			("Cleaning up Prism Launcher files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "PrismLauncher-Windows-MSVC-Setup.exe")), () => PrismLauncher == true),
 
 			// download lunar client
 			("Downloading Lunar Client", async () => await DownloadHelper.Download("https://launcherupdates.lunarclientcdn.com/Lunar%20Client%20v3.4.9.exe", Path.GetTempPath(), "Lunar Client.exe", reporter: reporter), () => LunarClient == true),

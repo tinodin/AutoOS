@@ -70,6 +70,7 @@ public sealed partial class ApplicationsPage : Page
 			new() { Text = "Battle.Net", ImageSource = "ms-appx:///Assets/Fluent/BattleNet.png" },
 			new() { Text = "Minecraft Launcher", ImageSource = "ms-appx:///Assets/Fluent/MinecraftLauncher.png" },
 			new() { Text = "CurseForge", ImageSource = "ms-appx:///Assets/Fluent/CurseForge.png" },
+			new() { Text = "Prism Launcher", ImageSource = "ms-appx:///Assets/Fluent/PrismLauncher.png" },
 			new() { Text = "Lunar Client", ImageSource = "ms-appx:///Assets/Fluent/LunarClient.png" },
 			new() { Text = "Feather Client", ImageSource = "ms-appx:///Assets/Fluent/FeatherClient.png" },
 			new() { Text = "Froststrap", ImageSource = "ms-appx:///Assets/Fluent/Froststrap.png" },
