@@ -1,65 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-	<OutputType>WinExe</OutputType>
-	<RootNamespace>AutoOS</RootNamespace>
-	<AssemblyName>AutoOS</AssemblyName>
-	<ApplicationManifest>app.manifest</ApplicationManifest>
-	<PublishProfile>win-$(Platform).pubxml</PublishProfile>
-	<UseWinUI>true</UseWinUI>
-	<WinUISDKReferences>false</WinUISDKReferences>
-	<EnableMsixTooling>true</EnableMsixTooling>
-	<TrimMode>partial</TrimMode>
-	<WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
-	<IsAotCompatible>true</IsAotCompatible>
-	<CsWinRTAotWarningLevel>2</CsWinRTAotWarningLevel>
-	<WindowsPackageType>MSIX</WindowsPackageType>
-	<ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
-	<Version>1.4.6.1</Version>
-	<!--Remove git hash from assembly informational version in .NET >= 8, Example: false = 1.0.0, true = 1.0.0+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-->
-	<IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<RootNamespace>AutoOS</RootNamespace>
+		<AssemblyName>AutoOS</AssemblyName>
+		<ApplicationManifest>app.manifest</ApplicationManifest>
+		<PublishProfile>win-$(Platform).pubxml</PublishProfile>
+		<UseWinUI>true</UseWinUI>
+		<WinUISDKReferences>false</WinUISDKReferences>
+		<EnableMsixTooling>true</EnableMsixTooling>
+		<TrimMode>partial</TrimMode>
+		<WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+		<IsAotCompatible>true</IsAotCompatible>
+		<CsWinRTAotWarningLevel>2</CsWinRTAotWarningLevel>
+		<WindowsPackageType>MSIX</WindowsPackageType>
+		<ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
+		<Version>1.4.6.1</Version>
+		<!--Remove git hash from assembly informational version in .NET >= 8, Example: false = 1.0.0, true = 1.0.0+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-->
+		<IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+	</PropertyGroup>
 
-  <!-- Publish Properties -->
-  <PropertyGroup>
-	<PublishAot>False</PublishAot>
-	<PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
-	<PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
-	<PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
-	<PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
-	<SelfContained Condition="'$(Configuration)' != 'Debug'">True</SelfContained>
-	<DefaultItemExcludes>$(DefaultItemExcludes);AppPackages\**</DefaultItemExcludes>
-	<GenerateAppInstallerFile>False</GenerateAppInstallerFile>
-	<AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
-	<PackageCertificateKeyFile>C:\Users\AutoOS\Desktop\AutoOS\AutoOS_TemporaryKey.pfx</PackageCertificateKeyFile>
-	<AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
-	<AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
-	<AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
-	<GenerateTestArtifacts>False</GenerateTestArtifacts>
-	<AppxBundle>Never</AppxBundle>
-	<HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
-  </PropertyGroup>
+	<!-- Publish Properties -->
+	<PropertyGroup>
+		<PublishAot>False</PublishAot>
+		<PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
+		<PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
+		<PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
+		<PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
+		<SelfContained Condition="'$(Configuration)' != 'Debug'">True</SelfContained>
+		<DefaultItemExcludes>$(DefaultItemExcludes);AppPackages\**</DefaultItemExcludes>
+		<GenerateAppInstallerFile>False</GenerateAppInstallerFile>
+		<AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
+		<PackageCertificateKeyFile>C:\Users\AutoOS\Desktop\AutoOS\AutoOS_TemporaryKey.pfx</PackageCertificateKeyFile>
+		<AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
+		<AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
+		<AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
+		<GenerateTestArtifacts>False</GenerateTestArtifacts>
+		<AppxBundle>Never</AppxBundle>
+		<HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
+	</PropertyGroup>
 
-  <ItemGroup>
-	<Content Include="Assets\NavViewMenu\Installer.json">
-	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	</Content>
-	<Content Include="Assets\NavViewMenu\Settings.json">
-	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	</Content>
-  </ItemGroup>
+	<ItemGroup>
+		<Content Include="Assets\NavViewMenu\Installer.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Assets\NavViewMenu\Settings.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 
-  <ItemGroup>
-	<None Include="Assets\**\*">
-	  <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-	</None>
-  </ItemGroup>
+	<ItemGroup>
+		<None Include="Assets\**\*">
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</None>
+	</ItemGroup>
 
-  <ItemGroup>
-	<Manifest Include="$(ApplicationManifest)" />
-	<None Include="..\AutoOS.Core\NativeMethods.txt" Link="NativeMethods.txt" />
-	<None Include="..\AutoOS.Core\NativeMethods.json" Link="NativeMethods.json" />
-  </ItemGroup>
+	<ItemGroup>
+		<Manifest Include="$(ApplicationManifest)" />
+		<None Include="..\AutoOS.Core\NativeMethods.txt" Link="NativeMethods.txt" />
+		<None Include="..\AutoOS.Core\NativeMethods.json" Link="NativeMethods.json" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<TrimmerRootAssembly Include="Syncfusion.Calendar.WinUI" />
@@ -75,69 +75,72 @@
 	Tools extension to be activated for this project even if the Windows App SDK Nuget
 	package has not yet been restored.
   -->
-  <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
-	<ProjectCapability Include="Msix" />
-  </ItemGroup>
+	<ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+		<ProjectCapability Include="Msix" />
+	</ItemGroup>
 
-  <ItemGroup>
-	<PackageReference Include="CommunityToolkit.Labs.WinUI.Controls.DataTable" />
-	<PackageReference Include="CommunityToolkit.Labs.WinUI.Controls.MarkdownTextBlock" />
-	<PackageReference Include="CommunityToolkit.Mvvm" />
-	<PackageReference Include="CommunityToolkit.WinUI.Controls.HeaderedControls" />
-	<PackageReference Include="CommunityToolkit.WinUI.Controls.Primitives" />
-	<PackageReference Include="CommunityToolkit.WinUI.Controls.TabbedCommandBar" />
-	<PackageReference Include="CommunityToolkit.WinUI.Converters" />
-	<PackageReference Include="DevWinUI" />
-	<PackageReference Include="Microsoft.Windows.CsWin32" />
-	<PackageReference Include="Microsoft.Windows.CsWinRT" />
-	<PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
-	<PackageReference Include="Microsoft.WindowsAppSDK" />
-	<PackageReference Include="Newtonsoft.Json" />
-	<PackageReference Include="nucs.JsonSettings" />
-	<PackageReference Include="nucs.JsonSettings.AutoSaveGenerator" />
-	<PackageReference Include="System.ServiceProcess.ServiceController" />
-	<PackageReference Include="Syncfusion.Grid.WinUI" />
-	<PackageReference Include="ValveKeyValue" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="CommunityToolkit.Labs.WinUI.Controls.DataTable" />
+		<PackageReference Include="CommunityToolkit.Labs.WinUI.Controls.MarkdownTextBlock" />
+		<PackageReference Include="CommunityToolkit.Mvvm" />
+		<PackageReference Include="CommunityToolkit.WinUI.Controls.HeaderedControls" />
+		<PackageReference Include="CommunityToolkit.WinUI.Controls.Primitives" />
+		<PackageReference Include="CommunityToolkit.WinUI.Controls.TabbedCommandBar" />
+		<PackageReference Include="CommunityToolkit.WinUI.Converters" />
+		<PackageReference Include="CsvHelper" />
+		<PackageReference Include="DevWinUI" />
+		<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" />
+		<PackageReference Include="Microsoft.Windows.CsWin32" />
+		<PackageReference Include="Microsoft.Windows.CsWinRT" />
+		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
+		<PackageReference Include="Microsoft.WindowsAppSDK" />
+		<PackageReference Include="Newtonsoft.Json" />
+		<PackageReference Include="nucs.JsonSettings" />
+		<PackageReference Include="nucs.JsonSettings.AutoSaveGenerator" />
+		<PackageReference Include="System.ServiceProcess.ServiceController" />
+		<PackageReference Include="Syncfusion.Chart.WinUI" />
+		<PackageReference Include="Syncfusion.Grid.WinUI" />
+		<PackageReference Include="ValveKeyValue" />
+	</ItemGroup>
 
-  <ItemGroup Condition="'$(CppBuiltSeparately)' != 'true'">
-	<ProjectReference Include="..\AutoOS.App.Sound\AutoOS.App.Sound.vcxproj" ReferenceOutputAssembly="false" />
-  </ItemGroup>
-  <ItemGroup>
-	<ProjectReference Include="..\AutoOS.Core\AutoOS.Core.csproj" />
-  </ItemGroup>
+	<ItemGroup Condition="'$(CppBuiltSeparately)' != 'true'">
+		<ProjectReference Include="..\AutoOS.App.Sound\AutoOS.App.Sound.vcxproj" ReferenceOutputAssembly="false" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\AutoOS.Core\AutoOS.Core.csproj" />
+	</ItemGroup>
 
-  <ItemGroup>
-	<Content Include="..\AutoOS.App.Sound\x64\$(Configuration)\AutoOS.Sound.exe" Link="AutoOS.Sound.exe">
-	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	</Content>
-  </ItemGroup>
+	<ItemGroup>
+		<Content Include="..\AutoOS.App.Sound\x64\$(Configuration)\AutoOS.Sound.exe" Link="AutoOS.Sound.exe">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 
-  <ItemGroup>
-	<Content Include="$(NuGetPackageRoot)leveldbsharp\$(LevelDBSharpPackageVersion)\runtimes\win-x64\native\leveldb.dll" Condition="'$(Platform)' == 'x64'">
-	  <Link>runtimes\win-x64\native\leveldb.dll</Link>
-	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	</Content>
-	<Content Include="$(NuGetPackageRoot)leveldbsharp\$(LevelDBSharpPackageVersion)\runtimes\win-arm64\native\leveldb.dll" Condition="'$(Platform)' == 'ARM64'">
-	  <Link>runtimes\win-arm64\native\leveldb.dll</Link>
-	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	</Content>
-	<Content Include="$(NuGetPackageRoot)leveldbsharp\$(LevelDBSharpPackageVersion)\runtimes\win-x86\native\leveldb.dll" Condition="'$(Platform)' == 'x86'">
-	  <Link>runtimes\win-x86\native\leveldb.dll</Link>
-	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	</Content>
-  </ItemGroup>
+	<ItemGroup>
+		<Content Include="$(NuGetPackageRoot)leveldbsharp\$(LevelDBSharpPackageVersion)\runtimes\win-x64\native\leveldb.dll" Condition="'$(Platform)' == 'x64'">
+			<Link>runtimes\win-x64\native\leveldb.dll</Link>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="$(NuGetPackageRoot)leveldbsharp\$(LevelDBSharpPackageVersion)\runtimes\win-arm64\native\leveldb.dll" Condition="'$(Platform)' == 'ARM64'">
+			<Link>runtimes\win-arm64\native\leveldb.dll</Link>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="$(NuGetPackageRoot)leveldbsharp\$(LevelDBSharpPackageVersion)\runtimes\win-x86\native\leveldb.dll" Condition="'$(Platform)' == 'x86'">
+			<Link>runtimes\win-x86\native\leveldb.dll</Link>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 
-  <!-- 
+	<!-- 
 	Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution 
 	Explorer "Package and Publish" context menu entry to be enabled for this project even if 
 	the Windows App SDK Nuget package has not yet been restored.
   -->
-  <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
-	<HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+		<HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
+	</PropertyGroup>
 
-  <Target Name="GetVersion">
-	<Message Importance="High" Text="$(Version)" />
-  </Target>
+	<Target Name="GetVersion">
+		<Message Importance="High" Text="$(Version)" />
+	</Target>
 </Project>

@@ -19,6 +19,7 @@ public partial class NavigationPageMappingsSettings
 		{"AutoOS.Views.Settings.UpdatePage", typeof(AutoOS.Views.Settings.UpdatePage)},
 		{"AutoOS.Views.Settings.BrowsersPage", typeof(AutoOS.Views.Settings.BrowsersPage)},
 		{"AutoOS.Views.Settings.ApplicationsPage", typeof(AutoOS.Views.Settings.ApplicationsPage)},
+		{"AutoOS.Views.Settings.BenchmarksPage", typeof(AutoOS.Views.Settings.BenchmarksPage)},
 		{"AutoOS.Views.Settings.GamesPage", typeof(AutoOS.Views.Settings.GamesPage)}
 	};
 }
