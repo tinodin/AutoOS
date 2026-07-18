@@ -504,7 +504,7 @@ public sealed partial class BiosSettingPage : Page
 		var picker = new FilePicker(App.MainWindow)
 		{
 			ShowAllFilesOption = false,
-			InitialDirectory = Path.Combine(PathHelper.GetAppDataFolderPath(), "SCEWIN", "Backups")
+			InitialDirectory = backupFolder
 		};
 		picker.FileTypeChoices.Add("NVRAM Backup", ["*.txt"]);
 		var file = await picker.PickSingleFileAsync();

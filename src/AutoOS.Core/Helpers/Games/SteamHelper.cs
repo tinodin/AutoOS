@@ -158,19 +158,51 @@ public static partial class SteamHelper
 	public static async Task ImportGames()
 	{
 		// get the newest install list from other drives
-		var foundFiles = DriveInfo.GetDrives()
-			.Where(d => d.DriveType == DriveType.Fixed && d.Name != Path.GetPathRoot(SteamDir))
-			.Select(d => Path.Combine(d.Name, "Program Files (x86)", "Steam", "steamapps", "libraryfolders.vdf"))
-			.Where(File.Exists)
-			.Select(path => new FileInfo(path))
-			.OrderByDescending(f => f.LastWriteTime)
+		var systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));
+		var candidates = DriveInfo.GetDrives()
+			.Where(d => d.DriveType == DriveType.Fixed && d.Name.ToUpperInvariant() != systemDrive.ToUpperInvariant())
+			.Select(d => new { Drive = d.Name, SoftwareHivePath = Path.Combine(d.Name, "Windows", "System32", "config", "SOFTWARE") })
+			.Where(x => File.Exists(x.SoftwareHivePath))
 			.ToList();
 
-		if (foundFiles.Count == 0)
+		string oldSteamInstallPath = null;
+		foreach (var candidate in candidates)
+		{
+			await Process.Start(new ProcessStartInfo
+			{
+				FileName = "reg.exe",
+				Arguments = $@"load HKLM\OfflineSoftware ""{candidate.SoftwareHivePath}""",
+				CreateNoWindow = true,
+				UseShellExecute = false
+			})!.WaitForExitAsync();
+
+			string steamPath = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"OfflineSoftware\Valve\Steam")?.GetValue("InstallPath") as string;
+
+			await Process.Start(new ProcessStartInfo
+			{
+				FileName = "reg.exe",
+				Arguments = @"unload HKLM\OfflineSoftware",
+				CreateNoWindow = true,
+				UseShellExecute = false
+			})!.WaitForExitAsync();
+
+			if (!string.IsNullOrWhiteSpace(steamPath))
+			{
+				oldSteamInstallPath = steamPath;
+				break;
+			}
+		}
+
+		if (string.IsNullOrWhiteSpace(oldSteamInstallPath))
 			return;
 
-		var newestFile = foundFiles.First();
-		string oldDrive = Path.GetPathRoot(newestFile.FullName);
+		string oldDrive = Path.GetPathRoot(oldSteamInstallPath);
+		string libraryfoldersPath = Path.Combine(oldSteamInstallPath, "steamapps", "libraryfolders.vdf");
+
+		if (!File.Exists(libraryfoldersPath))
+			return;
+
+		var newestFile = new FileInfo(libraryfoldersPath);
 
 		// copy manifests folder to new drive
 		string sourceCacheDir = Path.Combine(oldDrive, SteamLibraryCacheDir[Path.GetPathRoot(SteamLibraryCacheDir)!.Length..]);
@@ -264,7 +296,7 @@ public static partial class SteamHelper
 			string relativePath = originalPath[Path.GetPathRoot(originalPath).Length..];
 			string resolvedPath = originalPath;
 
-			foreach (var drive in DriveInfo.GetDrives().Where(drive => drive.DriveType == DriveType.Fixed))
+			foreach (var drive in DriveInfo.GetDrives().Where(drive => drive.DriveType == DriveType.Fixed && !drive.Name.Equals(systemDrive, StringComparison.InvariantCultureIgnoreCase)))
 			{
 				string testPath = Path.Combine(drive.Name, relativePath);
 				string externalVdfPath = Path.Combine(testPath, "libraryfolder.vdf");

@@ -200,7 +200,7 @@ Toggle Services & Drivers states with configured functionality:
 
 ### BIOS Settings
 Manually adjust or merge recommended BIOS Settings:
-- In the `Recommended Changes` field click `Merge` and `Import to NVRAM` on the top right, then restart your PC.
+- In the toolbar, click `Merge` and `Import to NVRAM`, then restart your PC.
 
   **If no internet:**
   - Enable the **toggle** in the `Services & Drivers` tab and restart your PC.
@@ -208,11 +208,11 @@ Manually adjust or merge recommended BIOS Settings:
 
   **If not booting:**
   - Reset CMOS using the **button** on your **motherboard** (if yours has one) or by **removing the CMOS battery** for 5 minutes.
-  - After that, **lower the amount** to merge using the **numberbox** on the left until you **find the setting** that causes your PC to not boot.
+  - After that, **lower** the **Merge Count** until you **find the setting** that causes your PC to not boot.
   - Once you find the setting, please leave a message on the [Discord Server](https://discord.gg/bZU4dMMWpg).
 
   **If crashing, freezing or worse performance:**
-  - Option 1 (Easier): Click `Restore from Backup` and select the oldest or previous `nvram.txt`.
+  - Option 1 (Easier): Click `Restore` and select the oldest or previous NVRAM backup.
   - Option 2 (Harder):
     - **Intel:**
       - Lower `Max Turbo Ratios`
