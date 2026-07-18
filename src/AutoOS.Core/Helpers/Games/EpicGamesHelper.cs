@@ -122,7 +122,7 @@ public static partial class EpicGamesHelper
 				string accountDir = Path.Combine(EpicGamesAccountDir, accountId);
 				if (Directory.Exists(accountDir))
 				{
-				if (File.Exists(ActiveEpicGamesAccountPath) && file != ActiveEpicGamesAccountPath)
+					if (File.Exists(ActiveEpicGamesAccountPath) && file != ActiveEpicGamesAccountPath)
 					{
 						if (GetAccountData(ActiveEpicGamesAccountPath).AccountId == accountId)
 						{
@@ -149,7 +149,7 @@ public static partial class EpicGamesHelper
 					{
 						DisplayName = displayName,
 						AccountId = accountId,
-					IsActive = file == ActiveEpicGamesAccountPath
+						IsActive = file == ActiveEpicGamesAccountPath
 					});
 				}
 			}
@@ -631,35 +631,48 @@ public static partial class EpicGamesHelper
 			FileSystem.CopyDirectory(srcManifest, EpicGamesManifestDir, true);
 			foreach (var file in Directory.GetFiles(EpicGamesManifestDir, "*.item", System.IO.SearchOption.AllDirectories))
 			{
-				var itemJson = JsonNode.Parse(await File.ReadAllTextAsync(file));
-
-				if (itemJson is JsonObject itemObj && itemObj.ContainsKey("InstallLocation"))
+				try
 				{
-					string originalPath = itemObj["InstallLocation"]!.ToString();
-					string relativePath = originalPath[Path.GetPathRoot(originalPath)!.Length..];
-
-					foreach (var drive in DriveInfo.GetDrives().Where(drive => drive.DriveType == DriveType.Fixed && drive.Name != systemDrive))
+					string fileContent = await File.ReadAllTextAsync(file);
+					if (string.IsNullOrWhiteSpace(fileContent))
 					{
-						if (Directory.Exists(Path.Combine(drive.Name, relativePath)))
+						File.Delete(file);
+						continue;
+					}
+					var itemJson = JsonNode.Parse(fileContent);
+
+					if (itemJson is JsonObject itemObj && itemObj.ContainsKey("InstallLocation"))
+					{
+						string originalPath = itemObj["InstallLocation"]!.ToString();
+						string relativePath = originalPath[Path.GetPathRoot(originalPath)!.Length..];
+
+						foreach (var drive in DriveInfo.GetDrives().Where(drive => drive.DriveType == DriveType.Fixed && drive.Name != systemDrive))
 						{
-							// store found drive
-							char newDrive = drive.Name[0];
-
-							// update install location
-							itemObj["InstallLocation"] = newDrive + originalPath[1..];
-
-							// update other paths
-							foreach (var prop in new[] { "ManifestLocation", "StagingLocation", "CompleteManifestPath", "PendingManifestPath" })
+							if (Directory.Exists(Path.Combine(drive.Name, relativePath)))
 							{
-								if (itemObj.ContainsKey(prop) && itemObj[prop]!.ToString() is string val && val.Length >= 2 && val[1] == ':')
-									itemObj[prop] = newDrive + val[1..];
-							}
+								// store found drive
+								char newDrive = drive.Name[0];
 
-							// write updated manifest files
-							await File.WriteAllTextAsync(file, itemObj.ToJsonString(new JsonSerializerOptions { WriteIndented = true, IndentCharacter = '\t', IndentSize = 1, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
-							break;
+								// update install location
+								itemObj["InstallLocation"] = newDrive + originalPath[1..];
+
+								// update other paths
+								foreach (var prop in new[] { "ManifestLocation", "StagingLocation", "CompleteManifestPath", "PendingManifestPath" })
+								{
+									if (itemObj.ContainsKey(prop) && itemObj[prop]!.ToString() is string val && val.Length >= 2 && val[1] == ':')
+										itemObj[prop] = newDrive + val[1..];
+								}
+
+								// write updated manifest files
+								await File.WriteAllTextAsync(file, itemObj.ToJsonString(new JsonSerializerOptions { WriteIndented = true, IndentCharacter = '\t', IndentSize = 1, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
+								break;
+							}
 						}
 					}
+				}
+				catch
+				{
+					continue;
 				}
 			}
 		}
@@ -908,53 +921,79 @@ public static partial class EpicGamesHelper
 			var allManifests = new List<JsonNode>();
 			foreach (var file in manifestFiles)
 			{
-					var node = JsonNode.Parse(File.ReadAllText(file));
+				try
+				{
+					string fileContent = File.ReadAllText(file);
+					if (string.IsNullOrWhiteSpace(fileContent))
+					{
+						File.Delete(file);
+						continue;
+					}
+					var node = JsonNode.Parse(fileContent);
 					allManifests.Add(node);
 				}
+				catch
+				{
+					continue;
+				}
+			}
 
 			if (Directory.Exists(EpicGamesThirdPartyManifestDir))
 			{
-					foreach (var file in Directory.GetFiles(EpicGamesThirdPartyManifestDir, "*.json"))
+				foreach (var file in Directory.GetFiles(EpicGamesThirdPartyManifestDir, "*.json"))
+				{
+					try
 					{
-							var json = JsonNode.Parse(File.ReadAllText(file));
+						string fileContent = File.ReadAllText(file);
+						if (string.IsNullOrWhiteSpace(fileContent))
+						{
+							File.Delete(file);
+							continue;
+						}
+						var json = JsonNode.Parse(fileContent);
 
-							string installLocation = null;
+						string installLocation = null;
 
-					using (var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(json["RegistryPath"]?.GetValue<string>()))
-									{
-										if (key != null)
-										{
-							installLocation = key.GetValue(json["RegistryKey"]?.GetValue<string>())?.ToString()?.TrimEnd('\\', '/');
-								}
-							}
-
-							if (Directory.Exists(installLocation))
+						using (var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(json["RegistryPath"]?.GetValue<string>()))
+						{
+							if (key != null)
 							{
-								string provider = json["Provider"]?.GetValue<string>();
-
-								string gameId = null;
-								if (provider == "UbisoftConnect")
-								{
-									gameId = json["GameID"]?.GetValue<string>();
-									provider = "Ubisoft Connect";
-								}
-
-								allManifests.Add(new JsonObject
-								{
-									["Provider"] = provider,
-									["bIsApplication"] = true,
-									["CatalogItemId"] = json["CatalogID"]?.GetValue<string>(),
-									["CatalogNamespace"] = json["Namespace"]?.GetValue<string>(),
-									["AppName"] = json["AppName"]?.GetValue<string>(),
-									["DisplayName"] = json["Title"]?.GetValue<string>(),
-									["InstallLocation"] = installLocation,
-									["GameID"] = gameId,
-									["LaunchExecutable"] = json["MainWindowProcessName"]?.GetValue<string>(),
-									["ProcessNames"] = json["ProcessNames"]?.AsArray().DeepClone()
-								});
+								installLocation = key.GetValue(json["RegistryKey"]?.GetValue<string>())?.ToString()?.TrimEnd('\\', '/');
 							}
 						}
+
+						if (Directory.Exists(installLocation))
+						{
+							string provider = json["Provider"]?.GetValue<string>();
+
+							string gameId = null;
+							if (provider == "UbisoftConnect")
+							{
+								gameId = json["GameID"]?.GetValue<string>();
+								provider = "Ubisoft Connect";
+							}
+
+							allManifests.Add(new JsonObject
+							{
+								["Provider"] = provider,
+								["bIsApplication"] = true,
+								["CatalogItemId"] = json["CatalogID"]?.GetValue<string>(),
+								["CatalogNamespace"] = json["Namespace"]?.GetValue<string>(),
+								["AppName"] = json["AppName"]?.GetValue<string>(),
+								["DisplayName"] = json["Title"]?.GetValue<string>(),
+								["InstallLocation"] = installLocation,
+								["GameID"] = gameId,
+								["LaunchExecutable"] = json["MainWindowProcessName"]?.GetValue<string>(),
+								["ProcessNames"] = json["ProcessNames"]?.AsArray().DeepClone()
+							});
+						}
+					}
+					catch
+					{
+						continue;
+					}
 				}
+			}
 
 			// for each manifest
 			await Parallel.ForEachAsync(allManifests, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount * 2 }, async (itemJson, _) =>

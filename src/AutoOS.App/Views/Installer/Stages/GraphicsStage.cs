@@ -31,10 +31,6 @@ public static class GraphicsStage
 
 		var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
 		{
-			// system -> display -> graphics -> default graphics settings
-			(@"Enabling ""Hardware-accelerated GPU scheduling"" (HAGS)", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\GraphicsDrivers", "HwSchMode", 2, RegistryValueKind.DWord), null),
-			(@"Enabling ""Optimizations for windowed games""", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\Software\Microsoft\DirectX\UserGpuPreferences", "DirectXUserGlobalSettings", "SwapEffectUpgradeEnable=1;", RegistryValueKind.String), null),
-
 			// apply custom resolution utility (cru) profile
 			("Importing Custom Resolution Utility (CRU) profile", async () => await Task.Delay(1500), () => CRU == true),
 			("Importing Custom Resolution Utility (CRU) profile", async () => await Process.Start(new ProcessStartInfo { FileName = localSettings.Values["CruProfile"]?.ToString(), Arguments = "-i", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => CRU == true),
@@ -167,7 +163,7 @@ public static class GraphicsStage
 			}
 		}
 
-		return [.. driverInstallActions, .. actions.Take(2), .. actions.Skip(2).Take(8), .. driverTweakActions, .. actions.Skip(10)];
+		return [.. actions.Take(12), .. driverInstallActions, .. driverTweakActions, .. actions.Skip(12)];
 	}
 }
 

@@ -3,9 +3,10 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using Windows.Wdk.System.Threading;
+using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.System.Threading;
-using Windows.Win32;
+using Windows.Win32.System.RestartManager;
 
 namespace AutoOS.Core.Helpers.Processes;
 
@@ -98,29 +99,64 @@ public static partial class ProcessesHelper
 		}
 	}
 
-	[LibraryImport("ntdll.dll")]
-	private static partial int NtSuspendProcess(IntPtr ProcessHandle);
-
-	[LibraryImport("ntdll.dll")]
-	private static partial int NtResumeProcess(IntPtr ProcessHandle);
-
-	public static unsafe void SuspendProcess(int pid)
+	public static unsafe IEnumerable<Process> GetLockingProcesses(string path)
 	{
-		HANDLE handle = PInvoke.OpenProcess(PROCESS_ACCESS_RIGHTS.PROCESS_SUSPEND_RESUME, false, (uint)pid);
-		if ((IntPtr)handle.Value != IntPtr.Zero)
-		{
-			_ = NtSuspendProcess((IntPtr)handle.Value);
-			PInvoke.CloseHandle(handle);
-		}
-	}
+		var results = new List<Process>();
+		var pathsToCheck = new List<string>();
 
-	public static unsafe void ResumeProcess(int pid)
-	{
-		HANDLE handle = PInvoke.OpenProcess(PROCESS_ACCESS_RIGHTS.PROCESS_SUSPEND_RESUME, false, (uint)pid);
-		if ((IntPtr)handle.Value != IntPtr.Zero)
+		if (Directory.Exists(path))
 		{
-			_ = NtResumeProcess((IntPtr)handle.Value);
-			PInvoke.CloseHandle(handle);
+			pathsToCheck.AddRange(Directory.GetFiles(path, "*.*", SearchOption.AllDirectories));
 		}
+		else if (File.Exists(path))
+		{
+			pathsToCheck.Add(path);
+		}
+
+		char* sessionKey = stackalloc char[257];
+		PCWSTR* pathsPointer = stackalloc PCWSTR[1];
+
+		foreach (var filePath in pathsToCheck)
+		{
+			uint sessionHandle = 0;
+			WIN32_ERROR result = PInvoke.RmStartSession(&sessionHandle, 0, sessionKey);
+			if (result != WIN32_ERROR.ERROR_SUCCESS) continue;
+
+			try
+			{
+				fixed (char* pathPointer = filePath)
+				{
+					pathsPointer[0] = new PCWSTR(pathPointer);
+					result = PInvoke.RmRegisterResources(sessionHandle, 1, pathsPointer, 0, null, 0, null);
+				}
+				if (result != WIN32_ERROR.ERROR_SUCCESS) continue;
+
+				uint processInfoCount = 0;
+				result = PInvoke.RmGetList(sessionHandle, out uint processInfoNeeded, ref processInfoCount, default, out uint rebootReasons);
+				if (result != WIN32_ERROR.ERROR_MORE_DATA || processInfoNeeded == 0) continue;
+
+				var processInfoBuffer = new RM_PROCESS_INFO[processInfoNeeded];
+				result = PInvoke.RmGetList(sessionHandle, out processInfoNeeded, ref processInfoCount, processInfoBuffer, out rebootReasons);
+
+				if (result == WIN32_ERROR.ERROR_SUCCESS)
+				{
+					for (int index = 0; index < processInfoCount; index++)
+					{
+						try
+						{
+							results.Add(Process.GetProcessById((int)processInfoBuffer[index].Process.dwProcessId));
+						}
+						catch
+						{	}
+					}
+				}
+			}
+			finally
+			{
+				PInvoke.RmEndSession(sessionHandle);
+			}
+		}
+
+		return results.DistinctBy(process => process.Id);
 	}
 }

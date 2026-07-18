@@ -1,4 +1,5 @@
 using AutoOS.Common;
+using AutoOS.Core.Helpers.Processes;
 using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.Store;
 using AutoOS.Core.Helpers.TaskScheduler;
@@ -16,10 +17,9 @@ public static class AppxStage
 			("Uninstalling OneDrive", async () => { foreach (Process process in new[] { "OneDrive", "OneDrive.Sync.Service", "UserOOBEBroker", "FileCoAuth", "OneDrivePatcher" }.SelectMany(Process.GetProcessesByName)) { process.Kill(); process.WaitForExit(); }}, null),
 			("Uninstalling OneDrive", async () => await Process.Start(new ProcessStartInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "OneDriveSetup.exe"), "/uninstall") { CreateNoWindow = true })!.WaitForExitAsync(), null),
 			("Uninstalling OneDrive", async () => await Task.Delay(2000), null),
-			("Uninstalling OneDrive", async () => { foreach (Process process in new[] { "OneDrive", "OneDrive.Sync.Service", "UserOOBEBroker", "FileCoAuth", "OneDrivePatcher" }.SelectMany(Process.GetProcessesByName)) { process.Kill(); process.WaitForExit(); }}, null),
+			("Uninstalling OneDrive", async () => { var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft OneDrive"); foreach (var process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } Directory.Delete(path, true); }, null),
+			("Uninstalling OneDrive", async () => { var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "OneDrive"); foreach (var process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } Directory.Delete(path, true); }, null),
 			("Uninstalling OneDrive", async () => await RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, async () => File.Move(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "OneDriveSetup.exe"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "OneDriveSetup.exee"))), null),
-			("Uninstalling OneDrive", async () => Directory.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft OneDrive"), true), null),
-			("Uninstalling OneDrive", async () => Directory.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "OneDrive"), true), null),
 			("Uninstalling OneDrive", async () => TaskSchedulerHelper.Unregister("OneDrive Startup Task"), null)
 		};
 

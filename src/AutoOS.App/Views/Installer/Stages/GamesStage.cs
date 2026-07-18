@@ -1,10 +1,6 @@
 using AutoOS.Core.Helpers.Download;
-using AutoOS.Core.Helpers.Games;
 using AutoOS.Core.Helpers.Monitor;
-using AutoOS.Core.Helpers.Registry;
-using Microsoft.Win32;
 using System.Diagnostics;
-using System.Text.Json;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -34,12 +30,6 @@ public static partial class GamesStage
 			($"Capping Frame Rate for Fortnite to {maxRefreshRate}fps", async () => File.Copy(Path.Combine(fortniteIniPath, "GameUserSettings.ini"), Path.Combine(Path.GetPathRoot(Environment.SystemDirectory)!, "Users", "Default", "AppData", "Local", "FortniteGame", "Saved", "Config", "WindowsClient", "GameUserSettings.ini"), true), () => Fortnite == true),
 			($"Capping Frame Rate for Fortnite to {maxRefreshRate}fps", async () => await Task.Delay(1000), () => Fortnite == true),
 
-			// set gpu preference to high performance for fortnite
-			(@"Setting ""GPU Preference"" to ""High Performance"" for Fortnite", async () => fortnitePath = JsonDocument.Parse(File.ReadAllText(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Epic", "UnrealEngineLauncher", "LauncherInstalled.dat"))).RootElement.GetProperty("InstallationList").EnumerateArray().FirstOrDefault(e => e.GetProperty("AppName").GetString() == "Fortnite").GetProperty("InstallLocation").GetString(), () => Fortnite == true),
-			(@"Setting ""GPU Preference"" to ""High Performance"" for Fortnite", async () => await Process.Start(new ProcessStartInfo { FileName = "reg.exe", Arguments = $@"load HKU\DefaultUser ""{Path.Combine(Path.GetPathRoot(Environment.SystemDirectory)!, "Users", "Default", "NTUSER.DAT")}""", CreateNoWindow = true })!.WaitForExitAsync(), () => Fortnite == true),
-			(@"Setting ""GPU Preference"" to ""High Performance"" for Fortnite", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\Software\Microsoft\DirectX\UserGpuPreferences", fortnitePath + @"\FortniteGame\Binaries\Win64\FortniteClient-Win64-Shipping.exe", "SwapEffectUpgradeEnable=1;GpuPreference=2;", RegistryValueKind.String, true), () => Fortnite == true),
-			(@"Setting ""GPU Preference"" to ""High Performance"" for Fortnite", async () => await Process.Start(new ProcessStartInfo { FileName = "reg.exe", Arguments = @"unload HKU\DefaultUser", CreateNoWindow = true })!.WaitForExitAsync(), () => Fortnite == true),
-
 			// install easyanticheat
 			("Installing EasyAntiCheat", async () => await Process.Start(new ProcessStartInfo($@"{fortnitePath}\FortniteGame\Binaries\Win64\EasyAntiCheat\EasyAntiCheat_EOS_Setup.exe", "install 4fe75bbc5a674f4f9b356b5c90567da5") {  WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Fortnite == true),
 			("Installing EasyAntiCheat", async () => await Task.Delay(1000), () => Fortnite == true),
@@ -51,13 +41,7 @@ public static partial class GamesStage
 			
 			//// cap frame rate for valorant
 			//($"Capping Frame Rate for Valorant to {maxRefreshRate}fps", async () => new InIHelper(Path.Combine(valorantIniPath, "GameUserSettings.ini")).AddValue("FrameRateLimit", $"{maxRefreshRate}.000000", "/Script/ShooterGame.ShooterGameUserSettings"), () => Valorant == true),
-			//($"Capping Frame Rate for Valorant to {maxRefreshRate}fps", async () => await Task.Delay(1000), () => Valorant == true),
-
-			// set "gpu preference" to "high performance" for valorant
-			(@"Setting ""GPU Preference"" to ""High Performance"" for Valorant", async () => valorantPath = RiotHelper.ProductInstallFullPathRegex().Match(File.ReadAllText(RiotHelper.RiotGamesMetadataPath + @"\valorant.live\valorant.live.product_settings.yaml")).Groups[1].Value.Replace('/', '\\'), () => Valorant == true),
-			(@"Setting ""GPU Preference"" to ""High Performance"" for Valorant", async () => await Process.Start(new ProcessStartInfo { FileName = "reg.exe", Arguments = $@"load HKU\DefaultUser ""{Path.Combine(Path.GetPathRoot(Environment.SystemDirectory)!, "Users", "Default", "NTUSER.DAT")}""", CreateNoWindow = true })!.WaitForExitAsync(), () => Valorant == true),
-			(@"Setting ""GPU Preference"" to ""High Performance"" for Valorant", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\Software\Microsoft\DirectX\UserGpuPreferences", $@"{valorantPath}\ShooterGame\Binaries\Win64\VALORANT-Win64-Shipping.exe", "SwapEffectUpgradeEnable=1;GpuPreference=2;", RegistryValueKind.String, true), () => Valorant == true),
-			(@"Setting ""GPU Preference"" to ""High Performance"" for Valorant", async () => await Process.Start(new ProcessStartInfo { FileName = "reg.exe", Arguments = @"unload HKU\DefaultUser", CreateNoWindow = true })!.WaitForExitAsync(), () => Valorant == true)
+			//($"Capping Frame Rate for Valorant to {maxRefreshRate}fps", async () => await Task.Delay(1000), () => Valorant == true)
 		};
 
 		return actions;
