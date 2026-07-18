@@ -1,6 +1,6 @@
-using System.Text.RegularExpressions;
-using AutoOS.Core.Helpers.Logging;
+﻿using AutoOS.Core.Helpers.Logging;
 using DevWinUI;
+using System.Text.RegularExpressions;
 
 namespace AutoOS.Core.Helpers.BIOS;
 

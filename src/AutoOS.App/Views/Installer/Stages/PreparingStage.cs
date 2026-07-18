@@ -1,8 +1,9 @@
-using AutoOS.Core.Helpers.CPU.Models;
+﻿using AutoOS.Core.Helpers.CPU.Models;
 using AutoOS.Core.Helpers.CPU;
 using AutoOS.Core.Helpers.Database;
 using AutoOS.Core.Helpers.Device.Models;
 using AutoOS.Core.Helpers.Device;
+using AutoOS.Core.Helpers.Games;
 using AutoOS.Core.Helpers.GPU.Models;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
@@ -11,7 +12,6 @@ using System.Text.RegularExpressions;
 using ValveKeyValue;
 using Windows.Storage;
 using WinRT.Interop;
-using AutoOS.Core.Helpers.Games;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -516,8 +516,8 @@ public static partial class PreparingStage
 			HidHide = (localSettings.Values["Controllers"]?.ToString().Contains("HidHide") ?? false);
 			DualSenseY = (localSettings.Values["Controllers"]?.ToString().Contains("DualSenseY") ?? false);
 			RaceElement = (localSettings.Values["Controllers"]?.ToString().Contains("RaceElement") ?? false);
-			PlaystationAccessories = (localSettings.Values["Controllers"]?.ToString().Contains("PlaystationAccessories") ?? false);
-			XboxAccessories = (localSettings.Values["Controllers"]?.ToString().Contains("XboxAccessories") ?? false);
+			PlaystationAccessories = (localSettings.Values["Controllers"]?.ToString().Contains("PlayStation® Accessories") ?? false);
+			XboxAccessories = (localSettings.Values["Controllers"]?.ToString().Contains("Xbox Accessories") ?? false);
 
 			VisualStudio = (localSettings.Values["Development"]?.ToString().Contains("Visual Studio") ?? false);
 			VisualStudioCode = (localSettings.Values["Development"]?.ToString().Contains("Visual Studio Code") ?? false);

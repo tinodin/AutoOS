@@ -1,7 +1,7 @@
+﻿using AutoOS.Core.Helpers.Picker;
 using AutoOS.Core.Helpers.Power;
-using AutoOS.Core.Helpers.Picker;
-using AutoOS.Views.Settings.Power;
 using AutoOS.Helpers.Picker;
+using AutoOS.Views.Settings.Power;
 using Microsoft.UI.Text;
 using System.Collections.ObjectModel;
 using System.Diagnostics;

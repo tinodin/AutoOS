@@ -1,4 +1,4 @@
-using AutoOS.Core.Helpers.BIOS;
+﻿using AutoOS.Core.Helpers.BIOS;
 using AutoOS.Core.Helpers.Logging;
 using AutoOS.Core.Helpers.Picker;
 using AutoOS.Views.Installer.Stages;
@@ -8,8 +8,8 @@ using Microsoft.VisualBasic.FileIO;
 using Microsoft.Win32;
 using Syncfusion.UI.Xaml.Data;
 using Syncfusion.UI.Xaml.DataGrid;
-using Syncfusion.UI.Xaml.TreeGrid;
 using Syncfusion.UI.Xaml.Grids;
+using Syncfusion.UI.Xaml.TreeGrid;
 using System.Diagnostics;
 using Windows.System;
 
@@ -294,155 +294,6 @@ public sealed partial class BiosSettingPage : Page
 		Search.Focus(FocusState.Programmatic);
 	}
 
-	private void RefreshSearchFilter()
-	{
-		BiosTreeGrid.View?.Filter = FilterNode;
-		BiosDiffTreeGrid.View?.Filter = FilterDiffNode;
-		BiosTreeGrid.View?.RefreshFilter();
-		BiosDiffTreeGrid.View?.RefreshFilter();
-
-		var searchText = Search.Text;
-		bool isSearchEmpty = string.IsNullOrWhiteSpace(searchText);
-
-		var allRoot = ViewModel.TreeNodes.LastOrDefault();
-		if (allRoot != null)
-		{
-			int totalCount = CountMatchingNodes(allRoot, searchText, isSearchEmpty);
-			allRoot.DisplayName = $"{(isSearchEmpty ? "All Settings" : "Results")} ({totalCount})";
-		}
-
-		if (ViewModel.DiffNodes.FirstOrDefault() is { } changesRoot)
-		{
-			int diffCount = CountMatchingNodes(changesRoot, searchText, isSearchEmpty);
-			changesRoot.DisplayName = $"{(isSearchEmpty ? "Changes" : "Results")} ({diffCount})";
-
-			foreach (var child in changesRoot.Children)
-			{
-				if (child.NodeKind != NodeKind.Group) continue;
-				int childCount = CountMatchingNodes(child, searchText, isSearchEmpty);
-				child.DisplayName = $"{child.DiffGroupKey} ({childCount})";
-			}
-		}
-	}
-
-	private int CountMatchingNodes(BiosTreeNode node, string searchText, bool isSearchEmpty)
-	{
-		if (node == null) return 0;
-
-		if (node.NodeKind == NodeKind.Leaf)
-		{
-			if (ViewChanges.IsChecked == true && node.Model?.IsModified != true)
-				return 0;
-
-			if (isSearchEmpty) return 1;
-
-			bool matches = false;
-
-			if (ViewModel.FilterSetting && TextMatches(node.DisplayName, searchText))
-				matches = true;
-
-			if (!matches && ViewModel.FilterDescription && TextMatches(node.Model?.HelpString, searchText))
-				matches = true;
-
-			if (!matches && ViewModel.FilterCurrent && TextMatches(node.DisplayCurrent, searchText))
-				matches = true;
-
-			return matches ? 1 : 0;
-		}
-
-		int count = 0;
-		if (node.Children != null)
-		{
-			foreach (var child in node.Children)
-			{
-				count += CountMatchingNodes(child, searchText, isSearchEmpty);
-			}
-		}
-
-		return count;
-	}
-
-	private bool TextMatches(string text, string searchText)
-	{
-		if (text == null) return false;
-		return ViewModel.FilterMode == BiosSettingViewModel.FilterModeType.ExactMatch ? text.Equals(searchText, StringComparison.OrdinalIgnoreCase) : text.Contains(searchText, StringComparison.OrdinalIgnoreCase);
-	}
-
-	private bool FilterDiffNode(object obj)
-	{
-		if (obj is not BiosTreeNode node) return true;
-
-		var searchText = Search.Text;
-		var hasSearch = !string.IsNullOrWhiteSpace(searchText);
-
-		if (node.NodeKind == NodeKind.Root) return true;
-
-		if (!hasSearch) return true;
-
-		if (ViewModel.FilterSetting)
-		{
-			if (node.NodeKind == NodeKind.Leaf && TextMatches(node.DisplayName, searchText)) return true;
-			if (node.NodeKind == NodeKind.Group && node.Children.Any(child => TextMatches(child.DisplayName, searchText))) return true;
-		}
-
-		if (ViewModel.FilterDescription)
-		{
-			if (node.NodeKind == NodeKind.Leaf && TextMatches(node.Model?.HelpString, searchText)) return true;
-			if (node.NodeKind == NodeKind.Group && node.Children.Any(child => TextMatches(child.Model?.HelpString, searchText))) return true;
-		}
-
-		if (ViewModel.FilterCurrent)
-		{
-			if (node.NodeKind == NodeKind.Leaf && TextMatches(node.DisplayCurrent, searchText)) return true;
-			if (node.NodeKind == NodeKind.Group && node.Children.Any(child => TextMatches(child.DisplayCurrent, searchText))) return true;
-		}
-
-		return false;
-	}
-
-	private bool FilterNode(object obj)
-	{
-		if (obj is not BiosTreeNode node) return true;
-
-		var searchText = Search.Text;
-		var hasSearch = !string.IsNullOrWhiteSpace(searchText);
-
-		if (node.NodeKind == NodeKind.Root)
-		{
-			var isRecommended = node.DisplayName.StartsWith("Recommended");
-			if ((ViewChanges.IsChecked == true || hasSearch) && isRecommended) return false;
-			return true;
-		}
-
-		if (ViewChanges.IsChecked == true)
-		{
-			if (node.NodeKind == NodeKind.Group && !node.Children.Any(child => child.Model?.IsModified == true)) return false;
-			if (node.NodeKind == NodeKind.Leaf && node.Model?.IsModified != true) return false;
-		}
-
-		if (!hasSearch) return true;
-
-		if (ViewModel.FilterSetting)
-		{
-			if (node.NodeKind == NodeKind.Leaf && TextMatches(node.DisplayName, searchText)) return true;
-			if (node.NodeKind == NodeKind.Group && node.Children.Any(child => TextMatches(child.DisplayName, searchText))) return true;
-		}
-
-		if (ViewModel.FilterDescription)
-		{
-			if (node.NodeKind == NodeKind.Leaf && TextMatches(node.Model?.HelpString, searchText)) return true;
-			if (node.NodeKind == NodeKind.Group && node.Children.Any(child => TextMatches(child.Model?.HelpString, searchText))) return true;
-		}
-
-		if (ViewModel.FilterCurrent)
-		{
-			if (node.NodeKind == NodeKind.Leaf && TextMatches(node.DisplayCurrent, searchText)) return true;
-			if (node.NodeKind == NodeKind.Group && node.Children.Any(child => TextMatches(child.DisplayCurrent, searchText))) return true;
-		}
-
-		return false;
-	}
-
 	private void Undo_Click(object sender, RoutedEventArgs e)
 	{
 		ViewModel.Undo();
@@ -483,12 +334,6 @@ public sealed partial class BiosSettingPage : Page
 	{
 		RefreshSearchFilter();
 		EnsureNodesExpanded();
-		DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
-		{
-			foreach (var col in BiosDiffTreeGrid.Columns)
-				col.Width = double.NaN;
-			BiosDiffTreeGrid.InvalidateMeasure();
-		});
 	}
 
 	private void ViewChanges_Unchecked(object sender, RoutedEventArgs e)
@@ -668,29 +513,6 @@ public sealed partial class BiosSettingPage : Page
 		}
 	}
 
-	private void EnsureNodesExpanded()
-	{
-		foreach (var root in ViewModel.TreeNodes.Where(node => node.NodeKind == NodeKind.Root))
-		{
-			if (root.IsExpanded)
-			{
-				var node = BiosTreeGrid.View?.Nodes?.FirstOrDefault(treeNode => treeNode.Item == root);
-				if (node != null && !node.IsExpanded)
-					BiosTreeGrid.ExpandNode(node);
-
-				foreach (var child in root.Children.Where(c => c.NodeKind == NodeKind.Group))
-				{
-					if (child.IsExpanded)
-					{
-						var childNode = BiosTreeGrid.View?.Nodes?.FirstOrDefault(treeNode => treeNode.Item == child);
-						if (childNode != null && !childNode.IsExpanded)
-							BiosTreeGrid.ExpandNode(childNode);
-					}
-				}
-			}
-		}
-	}
-
 	private void BiosTreeGrid_CellToolTipOpening(object sender, TreeGridCellToolTipOpeningEventArgs e)
 	{
 		if (e.Record is not BiosTreeNode node)
@@ -860,5 +682,177 @@ public sealed partial class BiosSettingPage : Page
 		var clearSort = new MenuFlyoutItem { Text = "Clear Sorting" };
 		clearSort.Click += (_, _) => grid.SortColumnDescriptions.Clear();
 		e.ContextFlyout.Items.Add(clearSort);
+	}
+
+	private void EnsureNodesExpanded()
+	{
+		foreach (var root in ViewModel.TreeNodes.Where(node => node.NodeKind == NodeKind.Root))
+		{
+			if (root.IsExpanded)
+			{
+				var node = BiosTreeGrid.View?.Nodes?.FirstOrDefault(treeNode => treeNode.Item == root);
+				if (node != null && !node.IsExpanded)
+					BiosTreeGrid.ExpandNode(node);
+
+				foreach (var child in root.Children.Where(c => c.NodeKind == NodeKind.Group))
+				{
+					if (child.IsExpanded)
+					{
+						var childNode = BiosTreeGrid.View?.Nodes?.FirstOrDefault(treeNode => treeNode.Item == child);
+						if (childNode != null && !childNode.IsExpanded)
+							BiosTreeGrid.ExpandNode(childNode);
+					}
+				}
+			}
+		}
+	}
+
+	private void RefreshSearchFilter()
+	{
+		BiosTreeGrid.View?.Filter = FilterNode;
+		BiosDiffTreeGrid.View?.Filter = FilterDiffNode;
+		BiosTreeGrid.View?.RefreshFilter();
+		BiosDiffTreeGrid.View?.RefreshFilter();
+
+		var searchText = Search.Text;
+		bool isSearchEmpty = string.IsNullOrWhiteSpace(searchText);
+
+		var allRoot = ViewModel.TreeNodes.LastOrDefault();
+		if (allRoot != null)
+		{
+			int totalCount = CountMatchingNodes(allRoot, searchText, isSearchEmpty);
+			allRoot.DisplayName = $"{(isSearchEmpty ? "All Settings" : "Results")} ({totalCount})";
+		}
+
+		if (ViewModel.DiffNodes.FirstOrDefault() is { } changesRoot)
+		{
+			int diffCount = CountMatchingNodes(changesRoot, searchText, isSearchEmpty);
+			changesRoot.DisplayName = $"{(isSearchEmpty ? "Changes" : "Results")} ({diffCount})";
+
+			foreach (var child in changesRoot.Children)
+			{
+				if (child.NodeKind != NodeKind.Group) continue;
+				int childCount = CountMatchingNodes(child, searchText, isSearchEmpty);
+				child.DisplayName = $"{child.DiffGroupKey} ({childCount})";
+			}
+		}
+	}
+
+	private int CountMatchingNodes(BiosTreeNode node, string searchText, bool isSearchEmpty)
+	{
+		if (node == null) return 0;
+
+		if (node.NodeKind == NodeKind.Leaf)
+		{
+			if (ViewChanges.IsChecked == true && node.Model?.IsModified != true)
+				return 0;
+
+			if (isSearchEmpty) return 1;
+
+			bool matches = false;
+
+			if (ViewModel.FilterSetting && TextMatches(node.DisplayName, searchText))
+				matches = true;
+
+			if (!matches && ViewModel.FilterDescription && TextMatches(node.Model?.HelpString, searchText))
+				matches = true;
+
+			if (!matches && ViewModel.FilterCurrent && TextMatches(node.DisplayCurrent, searchText))
+				matches = true;
+
+			return matches ? 1 : 0;
+		}
+
+		int count = 0;
+		if (node.Children != null)
+		{
+			foreach (var child in node.Children)
+			{
+				count += CountMatchingNodes(child, searchText, isSearchEmpty);
+			}
+		}
+
+		return count;
+	}
+
+	private bool TextMatches(string text, string searchText)
+	{
+		if (text == null) return false;
+		return ViewModel.FilterMode == BiosSettingViewModel.FilterModeType.ExactMatch ? text.Equals(searchText, StringComparison.OrdinalIgnoreCase) : text.Contains(searchText, StringComparison.OrdinalIgnoreCase);
+	}
+
+	private bool FilterDiffNode(object obj)
+	{
+		if (obj is not BiosTreeNode node) return true;
+
+		var searchText = Search.Text;
+		var hasSearch = !string.IsNullOrWhiteSpace(searchText);
+
+		if (node.NodeKind == NodeKind.Root) return true;
+
+		if (!hasSearch) return true;
+
+		if (ViewModel.FilterSetting)
+		{
+			if (node.NodeKind == NodeKind.Leaf && TextMatches(node.DisplayName, searchText)) return true;
+			if (node.NodeKind == NodeKind.Group && node.Children.Any(child => TextMatches(child.DisplayName, searchText))) return true;
+		}
+
+		if (ViewModel.FilterDescription)
+		{
+			if (node.NodeKind == NodeKind.Leaf && TextMatches(node.Model?.HelpString, searchText)) return true;
+			if (node.NodeKind == NodeKind.Group && node.Children.Any(child => TextMatches(child.Model?.HelpString, searchText))) return true;
+		}
+
+		if (ViewModel.FilterCurrent)
+		{
+			if (node.NodeKind == NodeKind.Leaf && TextMatches(node.DisplayCurrent, searchText)) return true;
+			if (node.NodeKind == NodeKind.Group && node.Children.Any(child => TextMatches(child.DisplayCurrent, searchText))) return true;
+		}
+
+		return false;
+	}
+
+	private bool FilterNode(object obj)
+	{
+		if (obj is not BiosTreeNode node) return true;
+
+		var searchText = Search.Text;
+		var hasSearch = !string.IsNullOrWhiteSpace(searchText);
+
+		if (node.NodeKind == NodeKind.Root)
+		{
+			var isRecommended = node.DisplayName.StartsWith("Recommended");
+			if ((ViewChanges.IsChecked == true || hasSearch) && isRecommended) return false;
+			return true;
+		}
+
+		if (ViewChanges.IsChecked == true)
+		{
+			if (node.NodeKind == NodeKind.Group && !node.Children.Any(child => child.Model?.IsModified == true)) return false;
+			if (node.NodeKind == NodeKind.Leaf && node.Model?.IsModified != true) return false;
+		}
+
+		if (!hasSearch) return true;
+
+		if (ViewModel.FilterSetting)
+		{
+			if (node.NodeKind == NodeKind.Leaf && TextMatches(node.DisplayName, searchText)) return true;
+			if (node.NodeKind == NodeKind.Group && node.Children.Any(child => TextMatches(child.DisplayName, searchText))) return true;
+		}
+
+		if (ViewModel.FilterDescription)
+		{
+			if (node.NodeKind == NodeKind.Leaf && TextMatches(node.Model?.HelpString, searchText)) return true;
+			if (node.NodeKind == NodeKind.Group && node.Children.Any(child => TextMatches(child.Model?.HelpString, searchText))) return true;
+		}
+
+		if (ViewModel.FilterCurrent)
+		{
+			if (node.NodeKind == NodeKind.Leaf && TextMatches(node.DisplayCurrent, searchText)) return true;
+			if (node.NodeKind == NodeKind.Group && node.Children.Any(child => TextMatches(child.DisplayCurrent, searchText))) return true;
+		}
+
+		return false;
 	}
 }

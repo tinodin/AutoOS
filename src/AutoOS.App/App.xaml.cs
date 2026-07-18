@@ -1,8 +1,8 @@
+﻿using AutoOS.Core.Helpers.Logging;
 using AutoOS.Core;
-using AutoOS.Core.Helpers.Logging;
-using AutoOS.Views;
 using AutoOS.Views.Installer.Stages;
 using AutoOS.Views.Startup;
+using AutoOS.Views;
 using Microsoft.UI.Windowing;
 using Microsoft.Win32;
 using Microsoft.Windows.AppLifecycle;

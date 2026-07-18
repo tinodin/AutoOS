@@ -1,10 +1,10 @@
-using System.Text;
-using System.Text.Json.Nodes;
-using AutoOS.Core.Common;
+﻿using AutoOS.Core.Common;
 using AutoOS.Core.Helpers.Download;
 using AutoOS.Core.Helpers.Logging;
 using AutoOS.Views.Installer.Stages;
 using Microsoft.UI.Xaml.Media;
+using System.Text.Json.Nodes;
+using System.Text;
 
 namespace AutoOS.Views.Updater;
 

@@ -1,21 +1,21 @@
+﻿using AutoOS.Core.Helpers.Database;
 using AutoOS.Core.Helpers.Device.Models;
 using AutoOS.Core.Helpers.Device;
+using AutoOS.Core.Helpers.Games;
 using AutoOS.Core.Helpers.GPU.Models;
 using AutoOS.Core.Helpers.GPU;
 using AutoOS.Core.Helpers.Monitor;
 using AutoOS.Core.Helpers.OS;
 using AutoOS.Core.Helpers.RAM;
-using AutoOS.Core.Helpers.Database;
-using AutoOS.Core.Helpers.Games;
 using AutoOS.Core.Helpers.Sound;
 using DevWinUI;
 using System.Net.Http.Headers;
 using System.Net.Security;
 using System.Security.Authentication;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using System.Text;
 using Windows.Storage;
-using System.Text.RegularExpressions;
 
 namespace AutoOS.Core.Helpers.Logging;
 
@@ -251,7 +251,7 @@ public static partial class LogHelper
 			if (localSettings.Values.TryGetValue($"LastPlayed_{game.Title}", out var val) && val is long ts && ts > 0)
 			{
 				DateTimeOffset lastPlayedDate = DateTimeOffset.FromUnixTimeSeconds(ts).ToLocalTime();
-				lastPlayedGame = $" ({lastPlayedDate:dd MMM yyyy — HH:mm:ss})";
+				lastPlayedGame = $" ({lastPlayedDate:dd MMM yyyy â€” HH:mm:ss})";
 			}
 			return $"{game.Title} ({game.Launcher}) ({game.PlayTime}){lastPlayedGame}";
 		}).ToList();
@@ -266,8 +266,8 @@ public static partial class LogHelper
 		bool startParsed = DateTimeOffset.TryParse(startStr, out DateTimeOffset start);
 		bool endParsed = DateTimeOffset.TryParse(endStr, out DateTimeOffset end);
 
-		string startFormatted = startParsed ? start.ToLocalTime().ToString("dddd, dd MMM yyyy — HH:mm:ss") : (startStr ?? "N/A");
-		string endFormatted = endParsed ? end.ToLocalTime().ToString("dddd, dd MMM yyyy — HH:mm:ss") : (endStr ?? "N/A");
+		string startFormatted = startParsed ? start.ToLocalTime().ToString("dddd, dd MMM yyyy â€” HH:mm:ss") : (startStr ?? "N/A");
+		string endFormatted = endParsed ? end.ToLocalTime().ToString("dddd, dd MMM yyyy â€” HH:mm:ss") : (endStr ?? "N/A");
 
 		if (startParsed && endParsed)
 		{

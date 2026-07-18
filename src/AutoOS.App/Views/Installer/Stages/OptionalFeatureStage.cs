@@ -1,5 +1,5 @@
+﻿using AutoOS.Core.Helpers.Services;
 using AutoOS.Views.Installer.Actions;
-using AutoOS.Core.Helpers.Services;
 
 namespace AutoOS.Views.Installer.Stages;
 

@@ -1,8 +1,8 @@
+﻿using PhantomClientCore.Native;
 using System.Runtime.InteropServices;
-using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-using PhantomClientCore.Native;
+using System.Text.Json;
 
 namespace AutoOS.Core.Helpers.Games.Clients;
 

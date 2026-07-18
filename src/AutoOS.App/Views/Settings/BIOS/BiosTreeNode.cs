@@ -1,7 +1,7 @@
-using AutoOS.Core.Helpers.BIOS;
+﻿using AutoOS.Core.Helpers.BIOS;
 using CommunityToolkit.Mvvm.ComponentModel;
-using System.Collections;
 using System.Collections.ObjectModel;
+using System.Collections;
 using System.ComponentModel;
 
 namespace AutoOS.Views.Settings.BIOS;

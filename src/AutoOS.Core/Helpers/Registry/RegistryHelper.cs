@@ -1,4 +1,4 @@
-using AutoOS.Core.Helpers.Services;
+﻿using AutoOS.Core.Helpers.Services;
 using Microsoft.Win32.SafeHandles;
 using Microsoft.Win32;
 using System.ComponentModel;
@@ -6,9 +6,9 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.ServiceProcess;
-using Windows.Win32.System.Registry;
 using Windows.Win32.Foundation;
 using Windows.Win32.Security;
+using Windows.Win32.System.Registry;
 using Windows.Win32.System.Services;
 using Windows.Win32.System.Threading;
 using Windows.Win32;

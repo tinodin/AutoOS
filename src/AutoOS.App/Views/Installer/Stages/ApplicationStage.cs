@@ -1,4 +1,4 @@
-using AutoOS.Common;
+﻿using AutoOS.Common;
 using AutoOS.Core.Common;
 using AutoOS.Core.Helpers.Database;
 using AutoOS.Core.Helpers.Download;
@@ -11,15 +11,15 @@ using AutoOS.Core.Helpers.Shortcut;
 using AutoOS.Core.Helpers.Store;
 using AutoOS.Core.Helpers.TaskScheduler;
 using AutoOS.Views.Installer.Actions;
-using Microsoft.Win32;
 using Microsoft.VisualBasic.FileIO;
+using Microsoft.Win32;
 using System.Diagnostics;
-using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
-using Windows.Win32;
 using Windows.Win32.Foundation;
+using Windows.Win32;
 
 namespace AutoOS.Views.Installer.Stages;
 

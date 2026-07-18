@@ -1,9 +1,9 @@
-using AutoOS.Core.Helpers.Monitor.Models;
+﻿using AutoOS.Core.Helpers.Monitor.Models;
+using System.Diagnostics;
 using System.Text;
 using Windows.Win32.Foundation;
 using Windows.Win32.Graphics.Gdi;
 using Windows.Win32;
-using System.Diagnostics;
 
 namespace AutoOS.Core.Helpers.Monitor;
 

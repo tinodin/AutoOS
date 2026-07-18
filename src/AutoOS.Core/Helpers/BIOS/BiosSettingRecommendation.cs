@@ -1,5 +1,5 @@
+﻿using AutoOS.Core.Helpers.CPU.Models;
 using AutoOS.Core.Helpers.CPU;
-using AutoOS.Core.Helpers.CPU.Models;
 
 namespace AutoOS.Core.Helpers.BIOS;
 
@@ -281,7 +281,7 @@ public static class BiosSettingRecommendationsList
 		new BiosSettingRecommendation { SetupQuestion = "Intel Rapid Recovery Technology", Type = "Option", RecommendedOption = "Disabled" },
 		new BiosSettingRecommendation { SetupQuestion = "Intel Ready Mode Technology", Type = "Option", RecommendedOption = "Disabled" },
 		//new BiosSettingRecommendation { SetupQuestion = "Intel Speed Shift Technology", Type = "Option", RecommendedOption = "Disabled" },
-		//new BiosSettingRecommendation { SetupQuestion = "Intel SpeedStep™", Type = "Option", RecommendedOption = "Disabled" },
+		//new BiosSettingRecommendation { SetupQuestion = "Intel SpeedStepâ„¢", Type = "Option", RecommendedOption = "Disabled" },
 		new BiosSettingRecommendation { SetupQuestion = "Intel Trusted Execution Technology", Type = "Option", RecommendedOption = "Disabled" }, // already disabled by default
 		new BiosSettingRecommendation { SetupQuestion = "Intel VT-D Tech", Type = "Option", RecommendedOption = "Enabled" }, // required for faceit
 		new BiosSettingRecommendation { SetupQuestion = "Intel Virtualization Tech", Type = "Option", RecommendedOption = "Enabled" }, // required for faceit
@@ -938,7 +938,7 @@ public static class BiosSettingRecommendationsList
 		new BiosSettingRecommendation { SetupQuestion = "Turbo Game Mode", Type = "Option", RecommendedOption = "Disabled" },
 		new BiosSettingRecommendation { SetupQuestion = "Turbo Performance Boost Ratio", Type = "Option", RecommendedOption = "Auto" },
 		new BiosSettingRecommendation { SetupQuestion = "TSME", Type = "Option", RecommendedOption = "Disabled" },
-		new BiosSettingRecommendation { SetupQuestion = "Thermal Limit", Type = "Option", RecommendedOption = "Level 1 (90�C)" },
+		new BiosSettingRecommendation { SetupQuestion = "Thermal Limit", Type = "Option", RecommendedOption = "Level 1 (90ï¿½C)" },
 		new BiosSettingRecommendation { SetupQuestion = "Thunderbolt Wake Up Command", Type = "Option", RecommendedOption = "Disabled" },
 		new BiosSettingRecommendation { SetupQuestion = "UART 0 D3 Support", Type = "Option", RecommendedOption = "Disabled" },
 		new BiosSettingRecommendation { SetupQuestion = "UART 1 D3 Support", Type = "Option", RecommendedOption = "Disabled" },

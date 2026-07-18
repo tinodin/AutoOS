@@ -1,5 +1,5 @@
+﻿using AutoOS.Core.Helpers.BIOS;
 using CommunityToolkit.Mvvm.ComponentModel;
-using AutoOS.Core.Helpers.BIOS;
 using System.Collections.ObjectModel;
 
 namespace AutoOS.Views.Settings.BIOS;

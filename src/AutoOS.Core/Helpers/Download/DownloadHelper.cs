@@ -1,9 +1,9 @@
-using AutoOS.Core.Common;
+﻿using AutoOS.Core.Common;
 using AutoOS.Core.Helpers.Logging;
 using DevWinUI;
 using Downloader;
-using System.Net;
 using System.Net.Http.Headers;
+using System.Net;
 using System.Text;
 
 namespace AutoOS.Core.Helpers.Download;

@@ -1,7 +1,7 @@
+﻿using System.Runtime.InteropServices.Marshalling;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.Marshalling;
-using Windows.Win32;
 using Windows.Win32.System.Com;
+using Windows.Win32;
 
 namespace AutoOS.Core.Helpers.Shortcut;
 

@@ -1,18 +1,17 @@
-//using Microsoft.Windows.ApplicationModel.WindowsAppRuntime;
-using System.Diagnostics;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using AutoOS.Core.Helpers.Database;
+﻿using AutoOS.Core.Helpers.Database;
 using AutoOS.Core.Helpers.Logging;
 using AutoOS.Core.Helpers.OS;
 using AutoOS.Core.Helpers.Registry;
 using AutoOS.Views.Installer.Stages;
-using AutoOS.Views.Updater;
 using AutoOS.Views.Updater.Stages;
+using AutoOS.Views.Updater;
 using CommunityToolkit.WinUI.Controls;
 using Microsoft.Win32;
+using System.Diagnostics;
+using System.Net.Http.Headers;
+using System.Text.Json.Nodes;
+using System.Text.Json;
+using System.Text;
 using Windows.Storage;
 
 namespace AutoOS.Views.Settings
@@ -125,6 +124,15 @@ namespace AutoOS.Views.Settings
 				RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\FeatureManagement\Overrides\8\3650112648", "Variant", 0, RegistryValueKind.DWord);
 				RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\FeatureManagement\Overrides\8\3650112648", "VariantPayload", 0, RegistryValueKind.DWord);
 				RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\FeatureManagement\Overrides\8\3650112648", "VariantPayloadKind", 0, RegistryValueKind.DWord);
+			}
+
+			if (ubr >= 8875 && Convert.ToInt32(Registry.GetValue(@"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\FeatureManagement\Overrides\8\4066113166", "EnabledState", 0)) != 2)
+			{
+				RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\FeatureManagement\Overrides\8\4066113166", "EnabledState", 2, RegistryValueKind.DWord);
+				RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\FeatureManagement\Overrides\8\4066113166", "EnabledStateOptions", 0, RegistryValueKind.DWord);
+				RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\FeatureManagement\Overrides\8\4066113166", "Variant", 0, RegistryValueKind.DWord);
+				RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\FeatureManagement\Overrides\8\4066113166", "VariantPayload", 0, RegistryValueKind.DWord);
+				RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\FeatureManagement\Overrides\8\4066113166", "VariantPayloadKind", 0, RegistryValueKind.DWord);
 			}
 
 			if (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\auto-theme-switcher", "Version", null) as string != "1.3.2" && Convert.ToInt32(Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\auto-theme-switcher", "Disabled", 0)) != 1)

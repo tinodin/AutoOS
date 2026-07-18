@@ -1,11 +1,11 @@
-using AutoOS.Core.Common;
+﻿using AutoOS.Core.Common;
+using Microsoft.VisualBasic.FileIO;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 using System.Text;
 using ValveKeyValue;
-using Microsoft.VisualBasic.FileIO;
 
 namespace AutoOS.Core.Helpers.Games;
 

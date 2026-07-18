@@ -1,12 +1,12 @@
-using Microsoft.Win32.SafeHandles;
+﻿using Microsoft.Win32.SafeHandles;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using Windows.Wdk.System.Threading;
-using Windows.Win32;
 using Windows.Win32.Foundation;
-using Windows.Win32.System.Threading;
 using Windows.Win32.System.RestartManager;
+using Windows.Win32.System.Threading;
+using Windows.Win32;
 
 namespace AutoOS.Core.Helpers.Processes;
 

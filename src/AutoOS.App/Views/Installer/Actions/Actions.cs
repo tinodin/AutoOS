@@ -1,10 +1,10 @@
+﻿using AutoOS.Core.Helpers.Registry;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Xml;
 using WinRT.Interop;
-using AutoOS.Core.Helpers.Registry;
 
 namespace AutoOS.Views.Installer.Actions;
 

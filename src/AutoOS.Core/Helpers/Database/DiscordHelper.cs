@@ -1,8 +1,8 @@
-using AutoOS.Core.Common;
+﻿using AutoOS.Core.Common;
 using System.Diagnostics;
 using System.Text.Json.Nodes;
-using Windows.Win32;
 using Windows.Win32.Foundation;
+using Windows.Win32;
 
 namespace AutoOS.Core.Helpers.Database;
 

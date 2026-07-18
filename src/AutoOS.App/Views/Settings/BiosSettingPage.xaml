@@ -13,487 +13,488 @@
       xmlns:sfgrid="using:Syncfusion.UI.Xaml.TreeGrid"
       xmlns:views="using:AutoOS.Views"
       mc:Ignorable="d">
-	<Page.Resources>
-		<ResourceDictionary>
-			<converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
-			<converters:StringVisibilityConverter x:Key="StringVisibilityConverter" />
+    <Page.Resources>
+        <ResourceDictionary>
+            <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+            <converters:StringVisibilityConverter x:Key="StringVisibilityConverter" />
 
-			<!--  Critical  -->
-			<Style x:Key="CriticalCellStyle"
+            <!--  Critical  -->
+            <Style x:Key="CriticalCellStyle"
                    TargetType="sfgrid:TreeGridCell">
-				<Setter Property="Background"
+                <Setter Property="Background"
                         Value="{ThemeResource SystemFillColorCriticalBackgroundBrush}" />
-			</Style>
+            </Style>
 
-			<!--  Success  -->
-			<Style x:Key="SuccessCellStyle"
+            <!--  Success  -->
+            <Style x:Key="SuccessCellStyle"
                    TargetType="sfgrid:TreeGridCell">
-				<Setter Property="Background"
+                <Setter Property="Background"
                         Value="{ThemeResource SystemFillColorSuccessBackgroundBrush}" />
-			</Style>
+            </Style>
 
-			<!--  Caution  -->
-			<Style x:Key="CautionCellStyle"
+            <!--  Caution  -->
+            <Style x:Key="CautionCellStyle"
                    TargetType="sfgrid:TreeGridCell">
-				<Setter Property="Background"
+                <Setter Property="Background"
                         Value="{ThemeResource SystemFillColorCautionBackgroundBrush}" />
-				<Setter Property="BorderThickness"
+                <Setter Property="BorderThickness"
                         Value="0,0,1,1" />
-				<Setter Property="BorderBrush"
+                <Setter Property="BorderBrush"
                         Value="{ThemeResource CardStrokeColorDefaultBrush}" />
-				<Setter Property="Padding"
+                <Setter Property="Padding"
                         Value="0" />
-				<Setter Property="Template">
-					<Setter.Value>
-						<ControlTemplate TargetType="sfgrid:TreeGridCell">
-							<Grid x:Name="Root"
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="sfgrid:TreeGridCell">
+                            <Grid x:Name="Root"
                                   Background="{TemplateBinding Background}"
                                   BorderBrush="{TemplateBinding BorderBrush}"
                                   BorderThickness="{TemplateBinding BorderThickness}">
-								<VisualStateManager.VisualStateGroups>
-									<VisualStateGroup x:Name="IndicationStates">
-										<VisualState x:Name="NoError" />
-										<VisualState x:Name="HasError">
-											<VisualState.Setters>
-												<Setter Target="PART_InValidCellBorder.Visibility"
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="IndicationStates">
+                                        <VisualState x:Name="NoError" />
+                                        <VisualState x:Name="HasError">
+                                            <VisualState.Setters>
+                                                <Setter Target="PART_InValidCellBorder.Visibility"
                                                         Value="Visible" />
-											</VisualState.Setters>
-										</VisualState>
-									</VisualStateGroup>
-									<VisualStateGroup x:Name="CurrentStates">
-										<VisualState x:Name="Regular" />
-										<VisualState x:Name="Current">
-											<VisualState.Setters>
-												<Setter Target="PART_CurrentCellBorder.Visibility"
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="CurrentStates">
+                                        <VisualState x:Name="Regular" />
+                                        <VisualState x:Name="Current">
+                                            <VisualState.Setters>
+                                                <Setter Target="PART_CurrentCellBorder.Visibility"
                                                         Value="Visible" />
-											</VisualState.Setters>
-										</VisualState>
-									</VisualStateGroup>
-								</VisualStateManager.VisualStateGroups>
-								<ContentPresenter />
-								<Border x:Name="PART_CurrentCellBorder"
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <ContentPresenter />
+                                <Border x:Name="PART_CurrentCellBorder"
                                         Background="Transparent"
                                         BorderBrush="{TemplateBinding CurrentCellBorderBrush}"
                                         BorderThickness="{TemplateBinding CurrentCellBorderThickness}"
                                         IsHitTestVisible="False"
                                         Visibility="Collapsed" />
-								<Border x:Name="PART_InValidCellBorder"
+                                <Border x:Name="PART_InValidCellBorder"
                                         Width="10"
                                         Height="10"
                                         HorizontalAlignment="Right"
                                         VerticalAlignment="Top"
                                         Visibility="Collapsed">
-									<ToolTipService.ToolTip>
-										<ToolTip Background="{ThemeResource SystemFillColorCaution}"
+                                    <ToolTipService.ToolTip>
+                                        <ToolTip Background="{ThemeResource SystemFillColorCaution}"
                                                  Placement="Right"
                                                  Tag="{TemplateBinding ErrorMessage}"
                                                  Template="{StaticResource TreeGridCellCautionToolTipTemplate}" />
-									</ToolTipService.ToolTip>
-									<Path Data="M0.5,0.5 L12.652698,0.5 12.652698,12.068006 z"
+                                    </ToolTipService.ToolTip>
+                                    <Path Data="M0.5,0.5 L12.652698,0.5 12.652698,12.068006 z"
                                           Fill="{ThemeResource SystemFillColorCautionBrush}"
                                           Stretch="Fill" />
-								</Border>
-							</Grid>
-						</ControlTemplate>
-					</Setter.Value>
-				</Setter>
-			</Style>
+                                </Border>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
 
-			<!--  Caution Badge  -->
-			<ControlTemplate x:Key="TreeGridCellCautionToolTipTemplate">
-				<Grid x:Name="PART_ToolTipPresenter"
+            <!--  Caution Badge  -->
+            <ControlTemplate x:Key="TreeGridCellCautionToolTipTemplate">
+                <Grid x:Name="PART_ToolTipPresenter"
                       Margin="5,0"
                       Opacity="0"
                       RenderTransformOrigin="0,0">
-					<Grid.RenderTransform>
-						<TranslateTransform x:Name="Transform"
+                    <Grid.RenderTransform>
+                        <TranslateTransform x:Name="Transform"
                                             X="-25" />
-					</Grid.RenderTransform>
-					<VisualStateManager.VisualStateGroups>
-						<VisualStateGroup x:Name="OpenStates">
-							<VisualStateGroup.Transitions>
-								<VisualTransition GeneratedDuration="0" />
-								<VisualTransition GeneratedDuration="0:0:0.2"
+                    </Grid.RenderTransform>
+                    <VisualStateManager.VisualStateGroups>
+                        <VisualStateGroup x:Name="OpenStates">
+                            <VisualStateGroup.Transitions>
+                                <VisualTransition GeneratedDuration="0" />
+                                <VisualTransition GeneratedDuration="0:0:0.2"
                                                   To="Opened">
-									<Storyboard>
-										<DoubleAnimation Storyboard.TargetName="Transform"
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Transform"
                                                          Storyboard.TargetProperty="X"
                                                          To="0"
                                                          Duration="0:0:0.2">
-											<DoubleAnimation.EasingFunction>
-												<BackEase Amplitude=".3"
+                                            <DoubleAnimation.EasingFunction>
+                                                <BackEase Amplitude=".3"
                                                           EasingMode="EaseOut" />
-											</DoubleAnimation.EasingFunction>
-										</DoubleAnimation>
-										<DoubleAnimation Storyboard.TargetName="PART_ToolTipPresenter"
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="PART_ToolTipPresenter"
                                                          Storyboard.TargetProperty="Opacity"
                                                          To="1"
                                                          Duration="0:0:0.2" />
-									</Storyboard>
-								</VisualTransition>
-							</VisualStateGroup.Transitions>
-							<VisualState x:Name="Closed">
-								<Storyboard>
-									<DoubleAnimation Storyboard.TargetName="PART_ToolTipPresenter"
+                                    </Storyboard>
+                                </VisualTransition>
+                            </VisualStateGroup.Transitions>
+                            <VisualState x:Name="Closed">
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="PART_ToolTipPresenter"
                                                      Storyboard.TargetProperty="Opacity"
                                                      To="0"
                                                      Duration="0" />
-								</Storyboard>
-							</VisualState>
-							<VisualState x:Name="Opened">
-								<Storyboard>
-									<DoubleAnimation Storyboard.TargetName="Transform"
+                                </Storyboard>
+                            </VisualState>
+                            <VisualState x:Name="Opened">
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="Transform"
                                                      Storyboard.TargetProperty="X"
                                                      To="0"
                                                      Duration="0" />
-									<DoubleAnimation Storyboard.TargetName="PART_ToolTipPresenter"
+                                    <DoubleAnimation Storyboard.TargetName="PART_ToolTipPresenter"
                                                      Storyboard.TargetProperty="Opacity"
                                                      To="1"
                                                      Duration="0" />
-								</Storyboard>
-							</VisualState>
-						</VisualStateGroup>
-					</VisualStateManager.VisualStateGroups>
-					<Border Margin="4,4,-4,-4"
+                                </Storyboard>
+                            </VisualState>
+                        </VisualStateGroup>
+                    </VisualStateManager.VisualStateGroups>
+                    <Border Margin="4,4,-4,-4"
                             Background="Transparent"
                             CornerRadius="5" />
-					<Border Margin="3,3,-3,-3"
+                    <Border Margin="3,3,-3,-3"
                             Background="Transparent"
                             CornerRadius="4" />
-					<Border Margin="2,2,-2,-2"
+                    <Border Margin="2,2,-2,-2"
                             Background="Transparent"
                             CornerRadius="3" />
-					<Border Margin="1,1,-1,-1"
+                    <Border Margin="1,1,-1,-1"
                             Background="Transparent"
                             CornerRadius="2" />
-					<Border Background="{ThemeResource SystemFillColorCaution}"
+                    <Border Background="{ThemeResource SystemFillColorCaution}"
                             CornerRadius="2" />
-					<Border BorderBrush="{ThemeResource SystemFillColorCaution}"
+                    <Border BorderBrush="{ThemeResource SystemFillColorCaution}"
                             CornerRadius="2">
-						<TextBlock MaxWidth="250"
+                        <TextBlock MaxWidth="250"
                                    Margin="8,4,8,4"
                                    FontSize="14"
                                    Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                                    HighContrastAdjustment="None"
                                    Text="{TemplateBinding Tag}"
                                    UseLayoutRounding="false" />
-					</Border>
-				</Grid>
-			</ControlTemplate>
+                    </Border>
+                </Grid>
+            </ControlTemplate>
 
-			<!--  Cell style selector  -->
-			<local:CellStyleSelector x:Key="BiosCellStyleSelector"
+            <!--  Cell style selector  -->
+            <local:CellStyleSelector x:Key="BiosCellStyleSelector"
                                      CautionStyle="{StaticResource CautionCellStyle}"
                                      CriticalStyle="{StaticResource CriticalCellStyle}"
                                      IsDiff="False"
                                      SuccessStyle="{StaticResource SuccessCellStyle}" />
 
-			<!--  Diff grid cell style selector  -->
-			<local:CellStyleSelector x:Key="DiffCellStyleSelector"
+            <!--  Diff grid cell style selector  -->
+            <local:CellStyleSelector x:Key="DiffCellStyleSelector"
                                      CautionStyle="{StaticResource CautionCellStyle}"
                                      CriticalStyle="{StaticResource CriticalCellStyle}"
                                      IsDiff="True"
                                      SuccessStyle="{StaticResource SuccessCellStyle}" />
 
-			<!--  ComboBox template  -->
-			<DataTemplate x:Key="ComboBoxEditTemplate"
+            <!--  ComboBox template  -->
+            <DataTemplate x:Key="ComboBoxEditTemplate"
                           x:DataType="local:BiosTreeNode">
-				<ComboBox HorizontalAlignment="Stretch"
+                <ComboBox HorizontalAlignment="Stretch"
                           BorderThickness="0"
                           CornerRadius="0"
                           ItemsSource="{x:Bind Options}"
                           Loaded="EditControl_Loaded"
                           SelectedItem="{x:Bind EditOption, Mode=TwoWay}"
                           UseSystemFocusVisuals="False">
-					<ComboBox.Resources>
-						<SolidColorBrush x:Key="ComboBoxBackgroundBorderBrushFocused"
+                    <ComboBox.Resources>
+                        <SolidColorBrush x:Key="ComboBoxBackgroundBorderBrushFocused"
                                          Color="Transparent" />
-						<SolidColorBrush x:Key="ComboBoxBackgroundFocused"
+                        <SolidColorBrush x:Key="ComboBoxBackgroundFocused"
                                          Color="{ThemeResource ControlFillColorSecondary}" />
-						<Thickness x:Key="ComboBoxBackgroundBorderThicknessFocused">0</Thickness>
-					</ComboBox.Resources>
-					<ComboBox.ItemTemplate>
-						<DataTemplate x:DataType="bios:Option">
-							<TextBlock Padding="0,2,0,0"
+                        <Thickness x:Key="ComboBoxBackgroundBorderThicknessFocused">0</Thickness>
+                    </ComboBox.Resources>
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="bios:Option">
+                            <TextBlock Padding="0,2,0,0"
                                        FontFamily="Segoe UI Variable Static Text"
                                        Text="{x:Bind Label}"
                                        TextTrimming="CharacterEllipsis"
                                        TextWrapping="NoWrap" />
-						</DataTemplate>
-					</ComboBox.ItemTemplate>
-				</ComboBox>
-			</DataTemplate>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </DataTemplate>
 
-			<!--  TextBox template  -->
-			<DataTemplate x:Key="TextBoxEditTemplate"
+            <!--  TextBox template  -->
+            <DataTemplate x:Key="TextBoxEditTemplate"
                           x:DataType="local:BiosTreeNode">
-				<TextBox Padding="12,5,6,6"
+                <TextBox Padding="12,5,6,6"
                          BorderThickness="0"
                          CornerRadius="0"
                          FontFamily="Segoe UI Variable Static Text"
                          Loaded="EditControl_Loaded"
                          Text="{x:Bind EditValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-					<TextBox.Resources>
-						<SolidColorBrush x:Key="TextControlBorderBrushFocused"
+                    <TextBox.Resources>
+                        <SolidColorBrush x:Key="TextControlBorderBrushFocused"
                                          Color="Transparent" />
-						<SolidColorBrush x:Key="TextControlBackgroundFocused"
+                        <SolidColorBrush x:Key="TextControlBackgroundFocused"
                                          Color="{ThemeResource ControlFillColorSecondary}" />
-						<Thickness x:Key="TextControlBorderThemeThicknessFocused">0</Thickness>
-					</TextBox.Resources>
-				</TextBox>
-			</DataTemplate>
+                        <Thickness x:Key="TextControlBorderThemeThicknessFocused">0</Thickness>
+                    </TextBox.Resources>
+                </TextBox>
+            </DataTemplate>
 
-			<local:EditTemplateSelector x:Key="EditTemplateSelector"
+            <local:EditTemplateSelector x:Key="EditTemplateSelector"
                                         ComboBoxTemplate="{StaticResource ComboBoxEditTemplate}"
                                         TextBoxTemplate="{StaticResource TextBoxEditTemplate}" />
 
-			<common:TreeGridSortComparer x:Key="DisplayNameComparer"
+            <common:TreeGridSortComparer x:Key="DisplayNameComparer"
                                          PropertyName="DisplayName" />
-			<common:TreeGridSortComparer x:Key="DisplayCurrentComparer"
+            <common:TreeGridSortComparer x:Key="DisplayCurrentComparer"
                                          PropertyName="DisplayCurrent" />
-			<common:TreeGridSortComparer x:Key="DisplayRecommendedComparer"
+            <common:TreeGridSortComparer x:Key="DisplayRecommendedComparer"
                                          PropertyName="DisplayRecommended" />
-			<common:TreeGridSortComparer x:Key="DisplayDefaultComparer"
+            <common:TreeGridSortComparer x:Key="DisplayDefaultComparer"
                                          PropertyName="DisplayDefault" />
-			<common:TreeGridSortComparer x:Key="DisplayOriginalComparer"
+            <common:TreeGridSortComparer x:Key="DisplayOriginalComparer"
                                          PropertyName="DisplayOriginal" />
-		</ResourceDictionary>
-	</Page.Resources>
+        </ResourceDictionary>
+    </Page.Resources>
 
-	<Grid>
-		<Grid.RowDefinitions>
-			<RowDefinition Height="Auto" />
-			<RowDefinition Height="*" />
-		</Grid.RowDefinitions>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-		<!--  Header  -->
-		<StackPanel Grid.Row="0"
+        <!--  Header  -->
+        <StackPanel Grid.Row="0"
                     Margin="36,24,36,0">
-			<TextBlock Style="{StaticResource TitleTextBlockStyle}"
+            <TextBlock Style="{StaticResource TitleTextBlockStyle}"
                        Text="BIOS Settings" />
 
-			<Grid Margin="0,48,0,8"
+            <Grid Margin="0,48,0,8"
                   ColumnSpacing="8">
-				<Grid.ColumnDefinitions>
-					<ColumnDefinition Width="*" />
-					<ColumnDefinition Width="Auto" />
-				</Grid.ColumnDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-				<!--  Search  -->
-				<dev:TextBox x:Name="Search"
+                <!--  Search  -->
+                <dev:TextBox x:Name="Search"
                              Grid.Column="0"
                              IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"
                              IsSpellCheckEnabled="False"
                              PlaceholderText="Search..."
                              TextChanged="Search_TextChanged"
                              ToolTipService.ToolTip="Search (Ctrl+F)">
-					<dev:TextBox.KeyboardAccelerators>
-						<KeyboardAccelerator Key="F"
+                    <dev:TextBox.KeyboardAccelerators>
+                        <KeyboardAccelerator Key="F"
                                              Invoked="Search_AcceleratorInvoked"
                                              Modifiers="Control" />
-					</dev:TextBox.KeyboardAccelerators>
-					<dev:TextBox.Content>
-						<Button Content="&#xE71E;" />
-					</dev:TextBox.Content>
-				</dev:TextBox>
+                    </dev:TextBox.KeyboardAccelerators>
+                    <dev:TextBox.Content>
+                        <Button Content="&#xE71E;" />
+                    </dev:TextBox.Content>
+                </dev:TextBox>
 
-				<!--  Filter  -->
-				<DropDownButton Grid.Column="1"
+                <!--  Filter  -->
+                <DropDownButton Grid.Column="1"
                                 VerticalAlignment="Stretch"
                                 IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"
                                 ToolTipService.ToolTip="Filter (Alt+Shift+F)">
-					<DropDownButton.Content>
-						<FontIcon FontSize="12"
+                    <DropDownButton.Content>
+                        <FontIcon FontSize="12"
                                   Glyph="&#xE71C;" />
-					</DropDownButton.Content>
-					<DropDownButton.Flyout>
-						<MenuFlyout Placement="Bottom">
+                    </DropDownButton.Content>
+                    <DropDownButton.Flyout>
+                        <MenuFlyout Placement="Bottom">
 
-							<!--  Setting  -->
-							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterSetting, Mode=TwoWay}"
+                            <!--  Setting  -->
+                            <ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterSetting, Mode=TwoWay}"
                                                   Text="Setting" />
 
-							<!--  Description  -->
-							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterDescription, Mode=TwoWay}"
+                            <!--  Description  -->
+                            <ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterDescription, Mode=TwoWay}"
                                                   Text="Description" />
 
-							<!--  Separator  -->
-							<MenuFlyoutSeparator />
+                            <!--  Separator  -->
+                            <MenuFlyoutSeparator />
 
-							<!--  Current  -->
-							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterCurrent, Mode=TwoWay}"
+                            <!--  Current  -->
+                            <ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterCurrent, Mode=TwoWay}"
                                                   Text="Current" />
 
-							<!--  Separator  -->
-							<MenuFlyoutSeparator />
+                            <!--  Separator  -->
+                            <MenuFlyoutSeparator />
 
-							<!--  Contains  -->
-							<RadioMenuFlyoutItem GroupName="FilterModeGroup"
+                            <!--  Contains  -->
+                            <RadioMenuFlyoutItem GroupName="FilterModeGroup"
                                                  IsChecked="{x:Bind ViewModel.FilterContains, Mode=TwoWay}"
                                                  Text="Contains" />
 
-							<!--  Exact Match  -->
-							<RadioMenuFlyoutItem GroupName="FilterModeGroup"
+                            <!--  Exact Match  -->
+                            <RadioMenuFlyoutItem GroupName="FilterModeGroup"
                                                  IsChecked="{x:Bind ViewModel.FilterExactMatch, Mode=TwoWay}"
                                                  Text="Exact Match" />
-						</MenuFlyout>
-					</DropDownButton.Flyout>
-					<DropDownButton.KeyboardAccelerators>
-						<KeyboardAccelerator Key="F"
+                        </MenuFlyout>
+                    </DropDownButton.Flyout>
+                    <DropDownButton.KeyboardAccelerators>
+                        <KeyboardAccelerator Key="F"
                                              Modifiers="Menu, Shift" />
-					</DropDownButton.KeyboardAccelerators>
-				</DropDownButton>
-			</Grid>
+                    </DropDownButton.KeyboardAccelerators>
+                </DropDownButton>
+            </Grid>
 
-			<!--  Command Bar  -->
-			<Border Margin="0,0,0,8"
+            <!--  Command Bar  -->
+            <Border Margin="0,0,0,8"
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                     BorderThickness="1"
                     CornerRadius="{ThemeResource OverlayCornerRadius}">
-				<CommandBar>
+                <CommandBar>
 
-					<!--  Undo  -->
-					<AppBarButton Click="Undo_Click"
+                    <!--  Undo  -->
+                    <AppBarButton Click="Undo_Click"
                                   Icon="{dev:FontIcon Glyph=&#xE7A7;}"
                                   IsEnabled="{x:Bind ViewModel.CanUndo, Mode=OneWay}"
                                   Label="Undo">
-						<AppBarButton.KeyboardAccelerators>
-							<KeyboardAccelerator Key="Z"
+                        <AppBarButton.KeyboardAccelerators>
+                            <KeyboardAccelerator Key="Z"
                                                  Modifiers="Control" />
-						</AppBarButton.KeyboardAccelerators>
-					</AppBarButton>
+                        </AppBarButton.KeyboardAccelerators>
+                    </AppBarButton>
 
-					<!--  Redo  -->
-					<AppBarButton Click="Redo_Click"
+                    <!--  Redo  -->
+                    <AppBarButton Click="Redo_Click"
                                   Icon="{dev:FontIcon Glyph=&#xE7A6;}"
                                   IsEnabled="{x:Bind ViewModel.CanRedo, Mode=OneWay}"
                                   Label="Redo">
-						<AppBarButton.KeyboardAccelerators>
-							<KeyboardAccelerator Key="Y"
+                        <AppBarButton.KeyboardAccelerators>
+                            <KeyboardAccelerator Key="Y"
                                                  Modifiers="Control" />
-						</AppBarButton.KeyboardAccelerators>
-					</AppBarButton>
+                        </AppBarButton.KeyboardAccelerators>
+                    </AppBarButton>
 
-					<!--  Separator  -->
-					<AppBarSeparator Margin="4,0" />
+                    <!--  Separator  -->
+                    <AppBarSeparator Margin="4,0" />
 
-					<!--  Merge Count  -->
-					<AppBarElementContainer Style="{StaticResource CommandBarElementContainerStyle}">
-						<NumberBox x:Name="MergeCountBox"
+                    <!--  Merge Count  -->
+                    <AppBarElementContainer Style="{StaticResource CommandBarElementContainerStyle}">
+                        <NumberBox x:Name="MergeCountBox"
                                    IsEnabled="{x:Bind ViewModel.CanMerge, Mode=OneWay}"
                                    Maximum="{x:Bind ViewModel.RecommendedCount, Mode=OneWay}"
                                    Minimum="0"
                                    SpinButtonPlacementMode="Inline"
                                    ToolTipService.ToolTip="Merge Count (Alt+Up/Down)"
                                    Value="{x:Bind ViewModel.MergeCount, Mode=TwoWay}">
-							<NumberBox.KeyboardAccelerators>
-								<KeyboardAccelerator Key="Up"
+                            <NumberBox.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="Up"
                                                      Invoked="MergeCountBox_Invoked"
                                                      Modifiers="Menu" />
-								<KeyboardAccelerator Key="Down"
+                                <KeyboardAccelerator Key="Down"
                                                      Invoked="MergeCountBox_Invoked"
                                                      Modifiers="Menu" />
-							</NumberBox.KeyboardAccelerators>
-						</NumberBox>
-					</AppBarElementContainer>
+                            </NumberBox.KeyboardAccelerators>
+                        </NumberBox>
+                    </AppBarElementContainer>
 
-					<!--  Merge  -->
-					<AppBarButton Click="Merge_Click"
+                    <!--  Merge  -->
+                    <AppBarButton Click="Merge_Click"
                                   Icon="{dev:FontIcon Glyph=&#xEA3C;}"
                                   IsEnabled="{x:Bind ViewModel.CanApplyMerge, Mode=OneWay}"
                                   Label="Merge">
-						<AppBarButton.KeyboardAccelerators>
-							<KeyboardAccelerator Key="M"
+                        <AppBarButton.KeyboardAccelerators>
+                            <KeyboardAccelerator Key="M"
                                                  Modifiers="Control" />
-						</AppBarButton.KeyboardAccelerators>
-					</AppBarButton>
+                        </AppBarButton.KeyboardAccelerators>
+                    </AppBarButton>
 
-					<!--  Separator  -->
-					<AppBarSeparator Margin="4,0" />
+                    <!--  Separator  -->
+                    <AppBarSeparator Margin="4,0" />
 
-					<!--  View Changes  -->
-					<AppBarToggleButton x:Name="ViewChanges"
+                    <!--  View Changes  -->
+                    <AppBarToggleButton x:Name="ViewChanges"
                                         Checked="ViewChanges_Checked"
                                         Icon="{dev:FontIcon Glyph=&#xF28B;}"
                                         IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"
                                         Label="{x:Bind ViewModel.ViewChangesLabel, Mode=OneWay}"
                                         ToolTipService.ToolTip="View Changes (Ctrl+D)"
                                         Unchecked="ViewChanges_Unchecked">
-						<AppBarToggleButton.KeyboardAccelerators>
-							<KeyboardAccelerator Key="D"
+                        <AppBarToggleButton.KeyboardAccelerators>
+                            <KeyboardAccelerator Key="D"
                                                  Modifiers="Control" />
-						</AppBarToggleButton.KeyboardAccelerators>
-					</AppBarToggleButton>
+                        </AppBarToggleButton.KeyboardAccelerators>
+                    </AppBarToggleButton>
 
-					<!--  Separator  -->
-					<AppBarSeparator Margin="4,0" />
+                    <!--  Separator  -->
+                    <AppBarSeparator Margin="4,0" />
 
-					<!--  Restore  -->
-					<AppBarButton x:Name="Restore"
+                    <!--  Restore  -->
+                    <AppBarButton x:Name="Restore"
                                   Click="Restore_Click"
                                   Icon="{dev:FontIcon Glyph=&#xE81C;}"
                                   IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"
                                   Label="Restore">
-						<AppBarButton.KeyboardAccelerators>
-							<KeyboardAccelerator Key="R"
+                        <AppBarButton.KeyboardAccelerators>
+                            <KeyboardAccelerator Key="R"
                                                  Modifiers="Control" />
-						</AppBarButton.KeyboardAccelerators>
-					</AppBarButton>
+                        </AppBarButton.KeyboardAccelerators>
+                    </AppBarButton>
 
-					<!--  Separator  -->
-					<AppBarSeparator Margin="4,0" />
+                    <!--  Separator  -->
+                    <AppBarSeparator Margin="4,0" />
 
-					<!--  Import  -->
-					<AppBarButton Click="Import_Click"
+                    <!--  Import  -->
+                    <AppBarButton Click="Import_Click"
                                   Icon="{dev:FontIcon Glyph=&#xE8B5;}"
                                   IsEnabled="{x:Bind ViewModel.CanImport, Mode=OneWay}"
                                   Label="Import to NVRAM">
-						<AppBarButton.KeyboardAccelerators>
-							<KeyboardAccelerator Key="I"
+                        <AppBarButton.KeyboardAccelerators>
+                            <KeyboardAccelerator Key="I"
                                                  Modifiers="Control" />
-						</AppBarButton.KeyboardAccelerators>
-					</AppBarButton>
-				</CommandBar>
-			</Border>
-		</StackPanel>
+                        </AppBarButton.KeyboardAccelerators>
+                    </AppBarButton>
+                </CommandBar>
+            </Border>
+        </StackPanel>
 
-		<!--  Switch Presenter  -->
-		<dev:SwitchPresenter x:Name="SwitchPresenter"
+        <!--  Switch Presenter  -->
+        <dev:SwitchPresenter x:Name="SwitchPresenter"
                              Grid.Row="1"
                              Value="Export">
 
-			<!--  Export  -->
-			<dev:Case Value="Export">
-				<StackPanel HorizontalAlignment="Center"
+            <!--  Export  -->
+            <dev:Case Value="Export">
+                <StackPanel HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Spacing="8">
-					<ProgressRing IsActive="True" />
-					<TextBlock HorizontalAlignment="Center"
+                    <ProgressRing IsActive="True" />
+                    <TextBlock HorizontalAlignment="Center"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                Style="{StaticResource CaptionTextBlockStyle}"
                                Text="Exporting NVRAM..." />
-				</StackPanel>
-			</dev:Case>
+                </StackPanel>
+            </dev:Case>
 
-			<!--  Import  -->
-			<dev:Case Value="Import">
-				<StackPanel HorizontalAlignment="Center"
+            <!--  Import  -->
+            <dev:Case Value="Import">
+                <StackPanel HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Spacing="8">
-					<ProgressRing IsActive="True" />
-					<TextBlock HorizontalAlignment="Center"
+                    <ProgressRing IsActive="True" />
+                    <TextBlock HorizontalAlignment="Center"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                Style="{StaticResource CaptionTextBlockStyle}"
                                Text="Importing NVRAM..." />
-				</StackPanel>
-			</dev:Case>
+                </StackPanel>
+            </dev:Case>
 
-			<dev:Case Value="Loaded">
-				<Grid Margin="36,0,36,36">
+            <dev:Case Value="Loaded">
+                <Grid Margin="36,0,36,36">
 
-					<!--  Tree Grid (Main)  -->
-					<sfgrid:SfTreeGrid x:Name="BiosTreeGrid"
+                    <!--  Tree Grid (Main)  -->
+                    <sfgrid:SfTreeGrid x:Name="BiosTreeGrid"
+                                       common:TreeGridSelectionControllerHelper.UseCustomSelectionController="True"
                                        AllowEditing="True"
                                        AllowSorting="True"
                                        AllowTriStateSorting="True"
@@ -502,7 +503,6 @@
                                        CellToolTipOpening="BiosTreeGrid_CellToolTipOpening"
                                        ChildPropertyName="Children"
                                        ColumnWidthMode="Star"
-                                       common:TreeGridSelectionControllerHelper.UseCustomSelectionController="True"
                                        CurrentCellBeginEdit="BiosTreeGrid_CurrentCellBeginEdit"
                                        CurrentCellEndEdit="BiosTreeGrid_CurrentCellEndEdit"
                                        DataValidationMode="InView"
@@ -519,26 +519,26 @@
                                        SizeChanged="BiosTreeGrid_SizeChanged"
                                        TreeGridContextFlyoutOpening="BiosTreeGrid_TreeGridContextFlyoutOpening"
                                        Visibility="{x:Bind ViewChanges.IsChecked, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=True}">
-						<sfgrid:SfTreeGrid.HeaderContextFlyout>
-							<MenuFlyout />
-						</sfgrid:SfTreeGrid.HeaderContextFlyout>
-						<sfgrid:SfTreeGrid.ColumnSizer>
-							<common:TreeGridStarColumnSizer />
-						</sfgrid:SfTreeGrid.ColumnSizer>
-						<sfgrid:SfTreeGrid.SortComparers>
-							<data:SortComparer Comparer="{StaticResource DisplayNameComparer}"
+                        <sfgrid:SfTreeGrid.HeaderContextFlyout>
+                            <MenuFlyout />
+                        </sfgrid:SfTreeGrid.HeaderContextFlyout>
+                        <sfgrid:SfTreeGrid.ColumnSizer>
+                            <common:TreeGridStarColumnSizer />
+                        </sfgrid:SfTreeGrid.ColumnSizer>
+                        <sfgrid:SfTreeGrid.SortComparers>
+                            <data:SortComparer Comparer="{StaticResource DisplayNameComparer}"
                                                PropertyName="DisplayName" />
-							<data:SortComparer Comparer="{StaticResource DisplayCurrentComparer}"
+                            <data:SortComparer Comparer="{StaticResource DisplayCurrentComparer}"
                                                PropertyName="DisplayCurrent" />
-							<data:SortComparer Comparer="{StaticResource DisplayRecommendedComparer}"
+                            <data:SortComparer Comparer="{StaticResource DisplayRecommendedComparer}"
                                                PropertyName="DisplayRecommended" />
-							<data:SortComparer Comparer="{StaticResource DisplayDefaultComparer}"
+                            <data:SortComparer Comparer="{StaticResource DisplayDefaultComparer}"
                                                PropertyName="DisplayDefault" />
-						</sfgrid:SfTreeGrid.SortComparers>
-						<sfgrid:SfTreeGrid.Columns>
+                        </sfgrid:SfTreeGrid.SortComparers>
+                        <sfgrid:SfTreeGrid.Columns>
 
-							<!--  Setting  -->
-							<sfgrid:TreeGridTextColumn common:StarRatio.ColumnRatio="3"
+                            <!--  Setting  -->
+                            <sfgrid:TreeGridTextColumn common:StarRatio.ColumnRatio="3"
                                                        AllowFocus="False"
                                                        HeaderText="Setting"
                                                        IsReadOnly="True"
@@ -547,27 +547,27 @@
                                                        TextTrimming="CharacterEllipsis"
                                                        TextWrapping="NoWrap" />
 
-							<!--  Current  -->
-							<sfgrid:TreeGridTemplateColumn common:StarRatio.ColumnRatio="1"
+                            <!--  Current  -->
+                            <sfgrid:TreeGridTemplateColumn common:StarRatio.ColumnRatio="1"
                                                            AllowSorting="True"
                                                            CellStyleSelector="{StaticResource BiosCellStyleSelector}"
                                                            EditTemplateSelector="{StaticResource EditTemplateSelector}"
                                                            HeaderText="Current"
                                                            MappingName="DisplayCurrent"
                                                            ShowToolTip="True">
-								<sfgrid:TreeGridTemplateColumn.CellTemplate>
-									<DataTemplate x:DataType="local:BiosTreeNode">
-										<TextBlock Margin="12,0"
+                                <sfgrid:TreeGridTemplateColumn.CellTemplate>
+                                    <DataTemplate x:DataType="local:BiosTreeNode">
+                                        <TextBlock Margin="12,0"
                                                    VerticalAlignment="Center"
                                                    Text="{x:Bind DisplayCurrent, Mode=OneWay}"
                                                    TextTrimming="CharacterEllipsis"
                                                    TextWrapping="NoWrap" />
-									</DataTemplate>
-								</sfgrid:TreeGridTemplateColumn.CellTemplate>
-							</sfgrid:TreeGridTemplateColumn>
+                                    </DataTemplate>
+                                </sfgrid:TreeGridTemplateColumn.CellTemplate>
+                            </sfgrid:TreeGridTemplateColumn>
 
-							<!--  Recommended  -->
-							<sfgrid:TreeGridTextColumn common:StarRatio.ColumnRatio="1"
+                            <!--  Recommended  -->
+                            <sfgrid:TreeGridTextColumn common:StarRatio.ColumnRatio="1"
                                                        AllowFocus="False"
                                                        CellStyleSelector="{StaticResource BiosCellStyleSelector}"
                                                        HeaderText="Recommended"
@@ -577,8 +577,8 @@
                                                        TextTrimming="CharacterEllipsis"
                                                        TextWrapping="NoWrap" />
 
-							<!--  Default  -->
-							<sfgrid:TreeGridTextColumn common:StarRatio.ColumnRatio="1"
+                            <!--  Default  -->
+                            <sfgrid:TreeGridTextColumn common:StarRatio.ColumnRatio="1"
                                                        AllowFocus="False"
                                                        HeaderText="Default"
                                                        IsReadOnly="True"
@@ -586,11 +586,12 @@
                                                        ShowToolTip="True"
                                                        TextTrimming="CharacterEllipsis"
                                                        TextWrapping="NoWrap" />
-						</sfgrid:SfTreeGrid.Columns>
-					</sfgrid:SfTreeGrid>
+                        </sfgrid:SfTreeGrid.Columns>
+                    </sfgrid:SfTreeGrid>
 
-					<!--  Tree View (View Changes)  -->
-					<sfgrid:SfTreeGrid x:Name="BiosDiffTreeGrid"
+                    <!--  Tree View (View Changes)  -->
+                    <sfgrid:SfTreeGrid x:Name="BiosDiffTreeGrid"
+                                       common:TreeGridSelectionControllerHelper.UseCustomSelectionController="True"
                                        AllowEditing="True"
                                        AllowSorting="True"
                                        AllowTriStateSorting="True"
@@ -599,7 +600,6 @@
                                        CellToolTipOpening="BiosDiffTreeGrid_CellToolTipOpening"
                                        ChildPropertyName="Children"
                                        ColumnWidthMode="Star"
-                                       common:TreeGridSelectionControllerHelper.UseCustomSelectionController="True"
                                        CurrentCellBeginEdit="BiosDiffTreeGrid_CurrentCellBeginEdit"
                                        CurrentCellEndEdit="BiosDiffTreeGrid_CurrentCellEndEdit"
                                        DataValidationMode="InView"
@@ -613,33 +613,33 @@
                                        NodeCollapsing="BiosDiffTreeGrid_NodeCollapsing"
                                        PasteOption="None"
                                        SelectionMode="Single"
-                                       SizeChanged="BiosTreeGrid_SizeChanged"
+                                       SizeChanged="BiosDiffTreeGrid_SizeChanged"
                                        TreeGridContextFlyoutOpening="BiosDiffTreeGrid_TreeGridContextFlyoutOpening"
                                        Visibility="{x:Bind ViewChanges.IsChecked, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-						<sfgrid:SfTreeGrid.HeaderContextFlyout>
-							<MenuFlyout />
-						</sfgrid:SfTreeGrid.HeaderContextFlyout>
-						<sfgrid:SfTreeGrid.ColumnSizer>
-							<common:TreeGridStarColumnSizer />
-						</sfgrid:SfTreeGrid.ColumnSizer>
-						<sfgrid:SfTreeGrid.SortComparers>
-							<data:SortComparer Comparer="{StaticResource DisplayNameComparer}"
+                        <sfgrid:SfTreeGrid.HeaderContextFlyout>
+                            <MenuFlyout />
+                        </sfgrid:SfTreeGrid.HeaderContextFlyout>
+                        <sfgrid:SfTreeGrid.ColumnSizer>
+                            <common:TreeGridStarColumnSizer />
+                        </sfgrid:SfTreeGrid.ColumnSizer>
+                        <sfgrid:SfTreeGrid.SortComparers>
+                            <data:SortComparer Comparer="{StaticResource DisplayNameComparer}"
                                                PropertyName="DisplayName" />
-							<data:SortComparer Comparer="{StaticResource DisplayOriginalComparer}"
+                            <data:SortComparer Comparer="{StaticResource DisplayOriginalComparer}"
                                                PropertyName="DisplayOriginal" />
-							<data:SortComparer Comparer="{StaticResource DisplayCurrentComparer}"
+                            <data:SortComparer Comparer="{StaticResource DisplayCurrentComparer}"
                                                PropertyName="DisplayCurrent" />
-							<data:SortComparer Comparer="{StaticResource DisplayDefaultComparer}"
+                            <data:SortComparer Comparer="{StaticResource DisplayDefaultComparer}"
                                                PropertyName="DisplayDefault" />
-						</sfgrid:SfTreeGrid.SortComparers>
-						<sfgrid:SfTreeGrid.SortColumnDescriptions>
-							<grid:SortColumnDescription ColumnName="DisplayName"
+                        </sfgrid:SfTreeGrid.SortComparers>
+                        <sfgrid:SfTreeGrid.SortColumnDescriptions>
+                            <grid:SortColumnDescription ColumnName="DisplayName"
                                                         SortDirection="Ascending" />
-						</sfgrid:SfTreeGrid.SortColumnDescriptions>
-						<sfgrid:SfTreeGrid.Columns>
+                        </sfgrid:SfTreeGrid.SortColumnDescriptions>
+                        <sfgrid:SfTreeGrid.Columns>
 
-							<!--  Setting  -->
-							<sfgrid:TreeGridTextColumn common:StarRatio.ColumnRatio="3"
+                            <!--  Setting  -->
+                            <sfgrid:TreeGridTextColumn common:StarRatio.ColumnRatio="3"
                                                        AllowFocus="False"
                                                        HeaderText="Setting"
                                                        IsReadOnly="True"
@@ -648,8 +648,8 @@
                                                        TextTrimming="CharacterEllipsis"
                                                        TextWrapping="NoWrap" />
 
-							<!--  Original  -->
-							<sfgrid:TreeGridTextColumn common:StarRatio.ColumnRatio="1"
+                            <!--  Original  -->
+                            <sfgrid:TreeGridTextColumn common:StarRatio.ColumnRatio="1"
                                                        AllowFocus="False"
                                                        CellStyleSelector="{StaticResource DiffCellStyleSelector}"
                                                        HeaderText="Original"
@@ -659,27 +659,27 @@
                                                        TextTrimming="CharacterEllipsis"
                                                        TextWrapping="NoWrap" />
 
-							<!--  New  -->
-							<sfgrid:TreeGridTemplateColumn common:StarRatio.ColumnRatio="1"
+                            <!--  New  -->
+                            <sfgrid:TreeGridTemplateColumn common:StarRatio.ColumnRatio="1"
                                                            AllowSorting="True"
                                                            CellStyleSelector="{StaticResource DiffCellStyleSelector}"
                                                            EditTemplateSelector="{StaticResource EditTemplateSelector}"
                                                            HeaderText="New"
                                                            MappingName="DisplayCurrent"
                                                            ShowToolTip="True">
-								<sfgrid:TreeGridTemplateColumn.CellTemplate>
-									<DataTemplate x:DataType="local:BiosTreeNode">
-										<TextBlock Margin="12,0"
+                                <sfgrid:TreeGridTemplateColumn.CellTemplate>
+                                    <DataTemplate x:DataType="local:BiosTreeNode">
+                                        <TextBlock Margin="12,0"
                                                    VerticalAlignment="Center"
                                                    Text="{x:Bind DisplayCurrent, Mode=OneWay}"
                                                    TextTrimming="CharacterEllipsis"
                                                    TextWrapping="NoWrap" />
-									</DataTemplate>
-								</sfgrid:TreeGridTemplateColumn.CellTemplate>
-							</sfgrid:TreeGridTemplateColumn>
+                                    </DataTemplate>
+                                </sfgrid:TreeGridTemplateColumn.CellTemplate>
+                            </sfgrid:TreeGridTemplateColumn>
 
-							<!--  Default  -->
-							<sfgrid:TreeGridTextColumn common:StarRatio.ColumnRatio="1"
+                            <!--  Default  -->
+                            <sfgrid:TreeGridTextColumn common:StarRatio.ColumnRatio="1"
                                                        AllowFocus="False"
                                                        HeaderText="Default"
                                                        IsReadOnly="True"
@@ -687,44 +687,44 @@
                                                        ShowToolTip="True"
                                                        TextTrimming="CharacterEllipsis"
                                                        TextWrapping="NoWrap" />
-						</sfgrid:SfTreeGrid.Columns>
-					</sfgrid:SfTreeGrid>
-				</Grid>
-			</dev:Case>
+                        </sfgrid:SfTreeGrid.Columns>
+                    </sfgrid:SfTreeGrid>
+                </Grid>
+            </dev:Case>
 
-			<!--  Unsupported  -->
-			<dev:Case Value="Unsupported">
-				<StackPanel HorizontalAlignment="Center"
+            <!--  Unsupported  -->
+            <dev:Case Value="Unsupported">
+                <StackPanel HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Spacing="8">
-					<FontIcon HorizontalAlignment="Center"
+                    <FontIcon HorizontalAlignment="Center"
                               FontSize="32"
                               Foreground="{ThemeResource SystemFillColorCritical}"
                               Glyph="&#xE783;" />
-					<TextBlock HorizontalAlignment="Center"
+                    <TextBlock HorizontalAlignment="Center"
                                Style="{StaticResource TitleTextBlockStyle}"
                                Text="Unsupported System" />
-					<TextBlock HorizontalAlignment="Center"
+                    <TextBlock HorizontalAlignment="Center"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                Style="{StaticResource BodyTextBlockStyle}"
                                Text="SCEWIN / AMISCE is not supported on this system."
                                TextWrapping="Wrap" />
-				</StackPanel>
-			</dev:Case>
+                </StackPanel>
+            </dev:Case>
 
-			<!--  HII Resources (Regular)  -->
-			<dev:Case Value="HII Resources (Regular)">
-				<StackPanel HorizontalAlignment="Center"
+            <!--  HII Resources (Regular)  -->
+            <dev:Case Value="HII Resources (Regular)">
+                <StackPanel HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Spacing="8">
-					<FontIcon HorizontalAlignment="Center"
+                    <FontIcon HorizontalAlignment="Center"
                               FontSize="32"
                               Foreground="{ThemeResource SystemFillColorCritical}"
                               Glyph="&#xE783;" />
-					<TextBlock HorizontalAlignment="Center"
+                    <TextBlock HorizontalAlignment="Center"
                                Style="{StaticResource TitleTextBlockStyle}"
                                Text="HII Resources not published" />
-					<TextBlock HorizontalAlignment="Center"
+                    <TextBlock HorizontalAlignment="Center"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                Style="{StaticResource BodyTextBlockStyle}"
                                TextWrapping="Wrap">
@@ -732,39 +732,39 @@
                         <Run FontWeight="Bold"
                              Text="Advanced (F7) → Tool" />
                         <Run Text=" section of your BIOS" />
-					</TextBlock>
-					<TextBlock HorizontalAlignment="Center"
+                    </TextBlock>
+                    <TextBlock HorizontalAlignment="Center"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                Style="{StaticResource BodyTextBlockStyle}"
                                TextWrapping="Wrap">
                         <Run Text="2. Enable " />
                         <Run FontWeight="Bold"
                              Text="Publish HII Resources" />
-					</TextBlock>
-					<TextBlock HorizontalAlignment="Center"
+                    </TextBlock>
+                    <TextBlock HorizontalAlignment="Center"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                Style="{StaticResource BodyTextBlockStyle}"
                                TextWrapping="Wrap">
                         <Run Text="3." />
                         <Run FontWeight="Bold"
                              Text="Save Changes and Exit (F10)" />
-					</TextBlock>
-				</StackPanel>
-			</dev:Case>
+                    </TextBlock>
+                </StackPanel>
+            </dev:Case>
 
-			<!--  HII Resources (Protected)  -->
-			<dev:Case Value="HII Resources (Protected)">
-				<StackPanel HorizontalAlignment="Center"
+            <!--  HII Resources (Protected)  -->
+            <dev:Case Value="HII Resources (Protected)">
+                <StackPanel HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Spacing="8">
-					<FontIcon HorizontalAlignment="Center"
+                    <FontIcon HorizontalAlignment="Center"
                               FontSize="32"
                               Foreground="{ThemeResource SystemFillColorCritical}"
                               Glyph="&#xE783;" />
-					<TextBlock HorizontalAlignment="Center"
+                    <TextBlock HorizontalAlignment="Center"
                                Style="{StaticResource TitleTextBlockStyle}"
                                Text="HII Resources not published" />
-					<TextBlock HorizontalAlignment="Center"
+                    <TextBlock HorizontalAlignment="Center"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                Style="{StaticResource BodyTextBlockStyle}"
                                TextWrapping="Wrap">
@@ -772,16 +772,16 @@
                         <Run FontWeight="Bold"
                              Text="Advanced (F7) → UEFI Variables Protection" />
                         <Run Text=" section of your BIOS" />
-					</TextBlock>
-					<TextBlock HorizontalAlignment="Center"
+                    </TextBlock>
+                    <TextBlock HorizontalAlignment="Center"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                Style="{StaticResource BodyTextBlockStyle}"
                                TextWrapping="Wrap">
                         <Run Text="2. Disable " />
                         <Run FontWeight="Bold"
                              Text="Password protection of Runtime Variables" />
-					</TextBlock>
-					<TextBlock HorizontalAlignment="Center"
+                    </TextBlock>
+                    <TextBlock HorizontalAlignment="Center"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                Style="{StaticResource BodyTextBlockStyle}"
                                TextWrapping="Wrap">
@@ -789,39 +789,39 @@
                         <Run FontWeight="Bold"
                              Text="Tool" />
                         <Run Text=" section of your BIOS" />
-					</TextBlock>
-					<TextBlock HorizontalAlignment="Center"
+                    </TextBlock>
+                    <TextBlock HorizontalAlignment="Center"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                Style="{StaticResource BodyTextBlockStyle}"
                                TextWrapping="Wrap">
                         <Run Text="4. Enable " />
                         <Run FontWeight="Bold"
                              Text="Publish HII Resources" />
-					</TextBlock>
-					<TextBlock HorizontalAlignment="Center"
+                    </TextBlock>
+                    <TextBlock HorizontalAlignment="Center"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                Style="{StaticResource BodyTextBlockStyle}"
                                TextWrapping="Wrap">
                         <Run Text="5." />
                         <Run FontWeight="Bold"
                              Text="Save Changes and Exit (F10)" />
-					</TextBlock>
-				</StackPanel>
-			</dev:Case>
+                    </TextBlock>
+                </StackPanel>
+            </dev:Case>
 
-			<!--  HII Resources (Other)  -->
-			<dev:Case Value="HII Resources (Other)">
-				<StackPanel HorizontalAlignment="Center"
+            <!--  HII Resources (Other)  -->
+            <dev:Case Value="HII Resources (Other)">
+                <StackPanel HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Spacing="8">
-					<FontIcon HorizontalAlignment="Center"
+                    <FontIcon HorizontalAlignment="Center"
                               FontSize="32"
                               Foreground="{ThemeResource SystemFillColorCritical}"
                               Glyph="&#xE783;" />
-					<TextBlock HorizontalAlignment="Center"
+                    <TextBlock HorizontalAlignment="Center"
                                Style="{StaticResource TitleTextBlockStyle}"
                                Text="HII resources not published" />
-					<TextBlock HorizontalAlignment="Center"
+                    <TextBlock HorizontalAlignment="Center"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                Style="{StaticResource BodyTextBlockStyle}"
                                TextAlignment="Center"
@@ -832,23 +832,23 @@
                                  Text="here" />
                         </Hyperlink>
                         <Run Text="for updates." />
-					</TextBlock>
-				</StackPanel>
-			</dev:Case>
+                    </TextBlock>
+                </StackPanel>
+            </dev:Case>
 
-			<!--  Write Protected (ASUS)  -->
-			<dev:Case Value="Write Protected (ASUS)">
-				<StackPanel HorizontalAlignment="Center"
+            <!--  Write Protected (ASUS)  -->
+            <dev:Case Value="Write Protected (ASUS)">
+                <StackPanel HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Spacing="8">
-					<FontIcon HorizontalAlignment="Center"
+                    <FontIcon HorizontalAlignment="Center"
                               FontSize="32"
                               Foreground="{ThemeResource SystemFillColorCritical}"
                               Glyph="&#xE783;" />
-					<TextBlock HorizontalAlignment="Center"
+                    <TextBlock HorizontalAlignment="Center"
                                Style="{StaticResource TitleTextBlockStyle}"
                                Text="Write Protected" />
-					<TextBlock HorizontalAlignment="Center"
+                    <TextBlock HorizontalAlignment="Center"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                Style="{StaticResource BodyTextBlockStyle}"
                                TextWrapping="Wrap">
@@ -856,39 +856,39 @@
                         <Run FontWeight="Bold"
                              Text="Advanced (F7) → UEFI Variables Protection" />
                         <Run Text=" section of your BIOS" />
-					</TextBlock>
-					<TextBlock HorizontalAlignment="Center"
+                    </TextBlock>
+                    <TextBlock HorizontalAlignment="Center"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                Style="{StaticResource BodyTextBlockStyle}"
                                TextWrapping="Wrap">
                         <Run Text="2. Disable " />
                         <Run FontWeight="Bold"
                              Text="Password protection of Runtime Variables" />
-					</TextBlock>
-					<TextBlock HorizontalAlignment="Center"
+                    </TextBlock>
+                    <TextBlock HorizontalAlignment="Center"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                Style="{StaticResource BodyTextBlockStyle}"
                                TextWrapping="Wrap">
                         <Run Text="3." />
                         <Run FontWeight="Bold"
                              Text="Save Changes and Exit (F10)" />
-					</TextBlock>
-				</StackPanel>
-			</dev:Case>
+                    </TextBlock>
+                </StackPanel>
+            </dev:Case>
 
-			<!--  Write Protected (ASRock)  -->
-			<dev:Case Value="Write Protected (ASRock)">
-				<StackPanel HorizontalAlignment="Center"
+            <!--  Write Protected (ASRock)  -->
+            <dev:Case Value="Write Protected (ASRock)">
+                <StackPanel HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Spacing="8">
-					<FontIcon HorizontalAlignment="Center"
+                    <FontIcon HorizontalAlignment="Center"
                               FontSize="32"
                               Foreground="{ThemeResource SystemFillColorCritical}"
                               Glyph="&#xE783;" />
-					<TextBlock HorizontalAlignment="Center"
+                    <TextBlock HorizontalAlignment="Center"
                                Style="{StaticResource TitleTextBlockStyle}"
                                Text="Write Protected" />
-					<TextBlock HorizontalAlignment="Center"
+                    <TextBlock HorizontalAlignment="Center"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                Style="{StaticResource BodyTextBlockStyle}"
                                TextWrapping="Wrap">
@@ -903,8 +903,8 @@
                                  Text="Menu swap" />
                         </Hyperlink>
                         <Run Text="to gain access to the setting." />
-					</TextBlock>
-					<TextBlock HorizontalAlignment="Center"
+                    </TextBlock>
+                    <TextBlock HorizontalAlignment="Center"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                Style="{StaticResource BodyTextBlockStyle}"
                                TextWrapping="Wrap">
@@ -912,39 +912,39 @@
                         <Run FontWeight="Bold"
                              Text="Advanced (F7) → UEFI Variables Protection" />
                         <Run Text=" section of your BIOS" />
-					</TextBlock>
-					<TextBlock HorizontalAlignment="Center"
+                    </TextBlock>
+                    <TextBlock HorizontalAlignment="Center"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                Style="{StaticResource BodyTextBlockStyle}"
                                TextWrapping="Wrap">
                         <Run Text="2. Disable " />
                         <Run FontWeight="Bold"
                              Text="Password protection of Runtime Variables" />
-					</TextBlock>
-					<TextBlock HorizontalAlignment="Center"
+                    </TextBlock>
+                    <TextBlock HorizontalAlignment="Center"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                Style="{StaticResource BodyTextBlockStyle}"
                                TextWrapping="Wrap">
                         <Run Text="3." />
                         <Run FontWeight="Bold"
                              Text="Save Changes and Exit (F10)" />
-					</TextBlock>
-				</StackPanel>
-			</dev:Case>
+                    </TextBlock>
+                </StackPanel>
+            </dev:Case>
 
-			<!--  Write Protected (Other)  -->
-			<dev:Case Value="Write Protected (Other)">
-				<StackPanel HorizontalAlignment="Center"
+            <!--  Write Protected (Other)  -->
+            <dev:Case Value="Write Protected (Other)">
+                <StackPanel HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Spacing="8">
-					<FontIcon HorizontalAlignment="Center"
+                    <FontIcon HorizontalAlignment="Center"
                               FontSize="32"
                               Foreground="{ThemeResource SystemFillColorCritical}"
                               Glyph="&#xE783;" />
-					<TextBlock HorizontalAlignment="Center"
+                    <TextBlock HorizontalAlignment="Center"
                                Style="{StaticResource TitleTextBlockStyle}"
                                Text="Write Protected" />
-					<TextBlock HorizontalAlignment="Center"
+                    <TextBlock HorizontalAlignment="Center"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                Style="{StaticResource BodyTextBlockStyle}"
                                TextWrapping="Wrap">
@@ -954,9 +954,9 @@
                                  Text="here" />
                         </Hyperlink>
                         <Run Text="for updates." />
-					</TextBlock>
-				</StackPanel>
-			</dev:Case>
-		</dev:SwitchPresenter>
-	</Grid>
+                    </TextBlock>
+                </StackPanel>
+            </dev:Case>
+        </dev:SwitchPresenter>
+    </Grid>
 </Page>
