@@ -446,14 +446,14 @@ public sealed partial class BiosSettingPage : Page
 	private void Undo_Click(object sender, RoutedEventArgs e)
 	{
 		ViewModel.Undo();
-		Search_TextChanged(Search, null);
+		RefreshSearchFilter();
 		EnsureNodesExpanded();
 	}
 
 	private void Redo_Click(object sender, RoutedEventArgs e)
 	{
 		ViewModel.Redo();
-		Search_TextChanged(Search, null);
+		RefreshSearchFilter();
 		EnsureNodesExpanded();
 	}
 
@@ -475,13 +475,13 @@ public sealed partial class BiosSettingPage : Page
 	private void Merge_Click(object sender, RoutedEventArgs e)
 	{
 		ViewModel.ApplyRecommendations(ViewModel.MergeCount);
-		Search_TextChanged(Search, null);
+		RefreshSearchFilter();
 		EnsureNodesExpanded();
 	}
 
 	private void ViewChanges_Checked(object sender, RoutedEventArgs e)
 	{
-		Search_TextChanged(Search, null);
+		RefreshSearchFilter();
 		EnsureNodesExpanded();
 		DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
 		{
@@ -493,7 +493,7 @@ public sealed partial class BiosSettingPage : Page
 
 	private void ViewChanges_Unchecked(object sender, RoutedEventArgs e)
 	{
-		Search_TextChanged(Search, null);
+		RefreshSearchFilter();
 		EnsureNodesExpanded();
 	}
 
