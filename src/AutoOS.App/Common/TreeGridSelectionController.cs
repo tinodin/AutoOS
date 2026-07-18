@@ -39,12 +39,27 @@ public sealed partial class TreeGridSelectionController : TreeGridRowSelectionCo
 		treeGrid.LostFocus += (_, _) =>
 		{
 			var focused = FocusManager.GetFocusedElement(_treeGrid.XamlRoot) as DependencyObject;
+			
 			if (focused == null)
 			{
 				ClearSelections(false);
 				if (CurrentCellManager.CurrentCell?.IsEditing == true)
 					CurrentCellManager.EndEdit();
 				return;
+			}
+
+			if (focused is ComboBox || focused is ComboBoxItem)
+				return;
+
+			if (focused is Microsoft.UI.Xaml.Controls.TextBox textBox)
+			{
+				var parent = VisualTreeHelper.GetParent(textBox);
+				while (parent != null)
+				{
+					if (parent is TreeGridCell)
+						return;
+					parent = VisualTreeHelper.GetParent(parent);
+				}
 			}
 
 			var current = focused;
