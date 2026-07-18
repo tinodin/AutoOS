@@ -18,7 +18,7 @@ If you have one of the following, download the drivers from the links below.<br/
 
 **INTEL:** [Ethernet](https://www.intel.com/content/www/us/en/download/727998/intel-network-adapter-driver-for-microsoft-windows-11.html) · [Wi-Fi](https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/Files/Intel/WiFi.zip) · [Bluetooth](https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/Files/Intel/Bluetooth.zip)
 
-**Realtek:** [Ethernet](https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/Files/Realtek/Install_PCIE_Win11_11029_20_DMAROFF_04212026.zip) · [Wi-Fi and Bluetooth](https://www.realtek.com/Download/Index?cate_id=203&menu_id=297)
+**Realtek:** [Ethernet](https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/Files/Realtek/Ethernet.zip) · [Wi-Fi and Bluetooth](https://www.realtek.com/Download/Index?cate_id=203&menu_id=297)
 
 **MediaTek:** [Wi-Fi](https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/Files/MediaTek/WiFi.zip) · [Bluetooth](https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/Files/MediaTek/Bluetooth.zip)
 
