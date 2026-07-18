@@ -13,10 +13,6 @@
       xmlns:sfgrid="using:Syncfusion.UI.Xaml.TreeGrid"
       mc:Ignorable="d">
     <Page.Resources>
-        <local:BenchmarksViewModel x:Key="BenchmarksViewModel"
-                                   FpsColor="#FF008FFB"
-                                   FpsColor2="#FFFFA600" />
-
         <!--  Critical  -->
         <Style x:Key="CriticalCellStyle"
                TargetType="sfgrid:TreeGridCell">
@@ -203,9 +199,13 @@
                                 <dev:DropdownColorPicker x:Name="HeaderFpsColorPicker"
                                                          VerticalAlignment="Bottom"
                                                          Background="{x:Bind ViewModel.FpsChartColor, Mode=OneWay}"
-                                                         ColorChanged="HeaderFpsColorPicker_ColorChanged"
+                                                         ColorSpectrumShape="Ring"
+                                                         IsAlphaEnabled="True"
+                                                         IsAlphaSliderVisible="True"
+                                                         IsMoreButtonVisible="True"
                                                          Tag="RecordingA"
-                                                         Color="{x:Bind ViewModel.FpsColor, Mode=TwoWay}" />
+                                                         Color="{x:Bind ViewModel.FpsColor, Mode=TwoWay}">
+                                </dev:DropdownColorPicker>
                             </AppBarElementContainer>
                             <!--  Recording B Color Picker  -->
                             <AppBarElementContainer Margin="4,0,0,0"
@@ -214,9 +214,13 @@
                                 <dev:DropdownColorPicker x:Name="HeaderFpsColorPicker2"
                                                          VerticalAlignment="Bottom"
                                                          Background="{x:Bind ViewModel.FpsChartColor2, Mode=OneWay}"
-                                                         ColorChanged="HeaderFpsColorPicker2_ColorChanged"
+                                                         ColorSpectrumShape="Ring"
+                                                         IsAlphaEnabled="True"
+                                                         IsAlphaSliderVisible="True"
+                                                         IsMoreButtonVisible="True"
                                                          Tag="RecordingB"
-                                                         Color="{x:Bind ViewModel.FpsColor2, Mode=TwoWay}" />
+                                                         Color="{x:Bind ViewModel.FpsColor2, Mode=TwoWay}">
+                                </dev:DropdownColorPicker>
                             </AppBarElementContainer>
                         </controls:TabbedCommandBarItem.PrimaryCommands>
                     </controls:TabbedCommandBarItem>

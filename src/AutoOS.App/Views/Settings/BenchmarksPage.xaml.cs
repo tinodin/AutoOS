@@ -1,5 +1,4 @@
 using System.Globalization;
-using AutoOS.Common;
 using AutoOS.Core.Helpers.Picker;
 using AutoOS.Views.Settings.Benchmarks;
 using Syncfusion.UI.Xaml.DataGrid;
@@ -10,7 +9,7 @@ namespace AutoOS.Views.Settings;
 
 public sealed partial class BenchmarksPage : Page
 {
-	public BenchmarksViewModel ViewModel => (BenchmarksViewModel)Resources["BenchmarksViewModel"];
+	public BenchmarksViewModel ViewModel { get; } = new();
 
 	private static readonly string RecordingsDirectory = Path.Combine(PathHelper.GetAppDataFolderPath(), "Benchmarks");
 	private static readonly string[] PercentileLabels = ["Mean", "P0.1", "P1", "P5", "P10", "P50", "P90", "P95", "P99", "P99.9"];
@@ -45,6 +44,8 @@ public sealed partial class BenchmarksPage : Page
 	public BenchmarksPage()
 	{
 		InitializeComponent();
+		ViewModel.FpsColor = Colors.DodgerBlue;
+		ViewModel.FpsColor2 = Colors.Orange;
 		LoadRecordings();
 	}
 
@@ -540,14 +541,7 @@ public sealed partial class BenchmarksPage : Page
 			return;
 		await RenderFpsChart(items);
 	}
-	private void HeaderFpsColorPicker_ColorChanged(object sender, DevWinUI.DropdownColorPickerColorChangedEventArgs e)
-	{
-		ViewModel.FpsColor = e.Color;
-	}
-	private void HeaderFpsColorPicker2_ColorChanged(object sender, DevWinUI.DropdownColorPickerColorChangedEventArgs e)
-	{
-		ViewModel.FpsColor2 = e.Color;
-	}
+
 	// ── Data model for analysis results ──────────────────────────────────────
 	/// <summary>
 	/// Describes whether a column's native unit is milliseconds or FPS.
