@@ -154,10 +154,7 @@ internal sealed partial class PresentMonProcessDiscovery : IDisposable
 	public List<string> GetRecordableProcesses(bool refreshRunningProcesses = false)
 	{
 		if (refreshRunningProcesses)
-		{
 			RefreshRunningProcesses();
-			RemoveStoppedProcesses();
-		}
 
 		lock (_sync)
 		{
@@ -367,7 +364,7 @@ internal sealed partial class PresentMonProcessDiscovery : IDisposable
 
 	private void RefreshRunningProcesses()
 	{
-		var candidates = new Dictionary<string, CandidateEligibility>(StringComparer.OrdinalIgnoreCase);
+		HashSet<string> candidates = new(StringComparer.OrdinalIgnoreCase);
 
 		foreach (Process process in Process.GetProcesses())
 		{
@@ -380,19 +377,15 @@ internal sealed partial class PresentMonProcessDiscovery : IDisposable
 					continue;
 				}
 
-				candidates.TryGetValue(name, out CandidateEligibility eligibility);
-				bool hasVisibleWindow = eligibility.HasVisibleWindow || HasVisibleMainWindow(process);
-				bool hasGraphicsRuntime = eligibility.HasGraphicsRuntime || HasGraphicsRuntime(process);
-				candidates[name] = new CandidateEligibility(hasVisibleWindow, hasGraphicsRuntime);
+				if (HasVisibleMainWindow(process) && HasGraphicsRuntime(process))
+					candidates.Add(name);
 			}
 		}
 
 		lock (_sync)
 		{
 			_snapshotCandidates.Clear();
-			foreach (var candidate in candidates.Where(candidate =>
-				candidate.Value.HasVisibleWindow && candidate.Value.HasGraphicsRuntime))
-				_snapshotCandidates.Add(candidate.Key);
+			_snapshotCandidates.UnionWith(candidates);
 		}
 	}
 
@@ -487,61 +480,6 @@ internal sealed partial class PresentMonProcessDiscovery : IDisposable
 		}
 	}
 
-	private void RemoveStoppedProcesses()
-	{
-		RemoveStoppedProcesses(_runningProcesses);
-		RemoveStoppedProcesses(_presentingProcesses);
-
-		string[] snapshotCandidates;
-		lock (_sync)
-		{
-			snapshotCandidates = [.. _snapshotCandidates];
-		}
-
-		foreach (string candidate in snapshotCandidates)
-		{
-			string processName = Path.GetFileNameWithoutExtension(candidate);
-			Process[] processes = Process.GetProcessesByName(processName);
-			bool isRunning = processes.Length != 0;
-
-			foreach (Process process in processes)
-				process.Dispose();
-
-			if (isRunning)
-				continue;
-
-			lock (_sync)
-			{
-				_snapshotCandidates.Remove(candidate);
-				_redirectedCompositionProcesses.Remove(candidate);
-				_confirmedPresentingProcesses.Remove(candidate);
-			}
-		}
-	}
-
-	private void RemoveStoppedProcesses(Dictionary<int, ProcessIdentity> processes)
-	{
-		KeyValuePair<int, ProcessIdentity>[] snapshot;
-		lock (_sync)
-		{
-			snapshot = [.. processes];
-		}
-
-		foreach (var process in snapshot)
-		{
-			if (TryGetProcessIdentity(process.Key, out ProcessIdentity current) &&
-				current.StartTimeUtc == process.Value.StartTimeUtc)
-			{
-				continue;
-			}
-
-			lock (_sync)
-			{
-				processes.Remove(process.Key);
-			}
-		}
-	}
-
 	private static bool TryGetProcessIdentity(int processId, out ProcessIdentity identity)
 	{
 		identity = default;
@@ -556,7 +494,7 @@ internal sealed partial class PresentMonProcessDiscovery : IDisposable
 			string name = processName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
 				? processName
 				: $"{processName}.exe";
-			identity = new ProcessIdentity(name, process.StartTime.ToUniversalTime());
+			identity = new ProcessIdentity(name);
 			return true;
 		}
 		catch (ArgumentException)
@@ -620,7 +558,6 @@ internal sealed partial class PresentMonProcessDiscovery : IDisposable
 		_session = null;
 	}
 
-	private readonly record struct ProcessIdentity(string Name, DateTime StartTimeUtc);
+	private readonly record struct ProcessIdentity(string Name);
 	private readonly record struct RuntimePresent(Guid Provider, int ProcessId, int ThreadId);
-	private readonly record struct CandidateEligibility(bool HasVisibleWindow, bool HasGraphicsRuntime);
 }
