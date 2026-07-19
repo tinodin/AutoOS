@@ -17,6 +17,8 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 	private double _recordingDelay = 10;
 	private bool _isRecording;
 	private bool _showFpsAsMilliseconds;
+	private readonly HashSet<string> _recordableProcesses = new(StringComparer.OrdinalIgnoreCase);
+	private ObservableCollection<string> _processSuggestions = [];
 	private ObservableCollection<RecordingItem> _recordings = [];
 	private ObservableCollection<ResultRow> _resultsRows = [];
 	private ObservableCollection<BarPoint> _fpsBarSeries = [];
@@ -75,13 +77,22 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 		set => SetProperty(ref _resultsRows, value);
 	}
 
+	public ObservableCollection<string> ProcessSuggestions
+	{
+		get => _processSuggestions;
+		private set => SetProperty(ref _processSuggestions, value);
+	}
+
 	public string ProcessName
 	{
 		get => _processName;
 		set
 		{
 			if (SetProperty(ref _processName, value))
+			{
+				FilterProcessSuggestions(value);
 				OnPropertyChanged(nameof(CanRecord));
+			}
 		}
 	}
 
@@ -125,16 +136,41 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 	}
 
 	public bool CanRecord =>
-		!IsRecording &&
-		!string.IsNullOrWhiteSpace(ProcessName) &&
-		RecordingDuration >= 3 &&
-		RecordingDelay >= 0;
+		IsRecording ||
+		(!string.IsNullOrWhiteSpace(ProcessName) &&
+			_recordableProcesses.Contains(ProcessName.Trim()) &&
+			RecordingDuration >= 3 &&
+			RecordingDelay >= 0);
 
 	public string RecordLabel => IsRecording ? "Recording..." : "Record";
 	public List<object> ShortcutKeys { get; } = ["Shift", "F11"];
 	public bool IsAggregateEnabled => _selectedRecordingCount > 1 && _selectedRecordingsHaveSameProcess;
 	public bool IsAnalysisToolbarEnabled => _selectedRecordingCount is > 0 and <= 2;
 	public bool IsSecondColorPickerEnabled => _selectedRecordingCount == 2;
+
+	public void SetRecordableProcesses(IEnumerable<string> processNames)
+	{
+		bool selectedProcessWasRecordable =
+			!string.IsNullOrWhiteSpace(ProcessName) &&
+			_recordableProcesses.Contains(ProcessName.Trim());
+		_recordableProcesses.Clear();
+		_recordableProcesses.UnionWith(processNames);
+		if (selectedProcessWasRecordable && !_recordableProcesses.Contains(ProcessName.Trim()))
+		{
+			ProcessName = string.Empty;
+			return;
+		}
+		FilterProcessSuggestions(ProcessName);
+		OnPropertyChanged(nameof(CanRecord));
+	}
+
+	private void FilterProcessSuggestions(string query)
+	{
+		ProcessSuggestions = [.. _recordableProcesses
+			.Where(name => string.IsNullOrWhiteSpace(query) ||
+				name.Contains(query.Trim(), StringComparison.OrdinalIgnoreCase))
+			.OrderBy(name => name, StringComparer.OrdinalIgnoreCase)];
+	}
 
 	public ObservableCollection<BarPoint> FpsBarSeries
 	{

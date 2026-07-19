@@ -37,35 +37,71 @@ internal sealed partial class PresentMonProcessDiscovery : IDisposable
 	private static readonly HashSet<string> GraphicsRuntimeModules = new(StringComparer.OrdinalIgnoreCase)
 	{
 		"d3d9.dll",
+		"d3d10.dll",
 		"d3d11.dll",
 		"d3d12.dll",
+		"dxgi.dll",
 		"vulkan-1.dll",
 		"opengl32.dll"
 	};
 	private static readonly HashSet<string> ExcludedProcessNames = new(StringComparer.OrdinalIgnoreCase)
 	{
-		"explorer.exe",
+		"ApplicationFrameHost.exe",
+		"audiodg.exe",
+		"AutoOS.exe",
+		"backgroundTaskHost.exe",
+		"conhost.exe",
+		"CrossDeviceResume.exe",
 		"csrss.exe",
+		"ctfmon.exe",
+		"dllhost.exe",
+		"Discord.exe",
+		"dwm.exe",
+		"explorer.exe",
+		"fontdrvhost.exe",
+		"LockApp.exe",
+		"lsass.exe",
+		"Memory Compression.exe",
 		"msedgeview.exe",
 		"msedgewebview2.exe",
-		"dwm.exe",
-		"svchost.exe",
-		"StartMenuExperienceHost.exe",
-		"ShellHost.exe",
-		"ShellExperienceHost.exe",
+		"PresentMon.exe",
+		"Registry.exe",
+		"RuntimeBroker.exe",
+		"SearchIndexer.exe",
+		"SecurityHealthService.exe",
+		"SecurityHealthSystray.exe",
+		"services.exe",
+		"sihost.exe",
+		"smss.exe",
+		"spoolsv.exe",
 		"SearchHost.exe",
-		"CrossDeviceResume.exe"
+		"ShellExperienceHost.exe",
+		"ShellHost.exe",
+		"StartMenuExperienceHost.exe",
+		"svchost.exe",
+		"System.exe",
+		"SystemIdleProcess.exe",
+		"SystemSettings.exe",
+		"taskhostw.exe",
+		"TextInputHost.exe",
+		"wininit.exe",
+		"winlogon.exe",
+		"Widgets.exe",
+		"WidgetService.exe",
+		"WmiPrvSE.exe"
 	};
 
 	private readonly Lock _sync = new();
 	private readonly Dictionary<int, ProcessIdentity> _runningProcesses = [];
 	private readonly Dictionary<int, ProcessIdentity> _presentingProcesses = [];
 	private readonly HashSet<RuntimePresent> _runtimePresents = [];
-	private readonly HashSet<string> _startupCandidates = new(StringComparer.OrdinalIgnoreCase);
+	private readonly HashSet<string> _snapshotCandidates = new(StringComparer.OrdinalIgnoreCase);
 	private readonly HashSet<string> _redirectedCompositionProcesses = new(StringComparer.OrdinalIgnoreCase);
 	private readonly HashSet<string> _confirmedPresentingProcesses = new(StringComparer.OrdinalIgnoreCase);
 	private TraceEventSession _session;
 	private bool _started;
+
+	public event EventHandler ProcessesChanged;
 
 	public void Start()
 	{
@@ -99,13 +135,6 @@ internal sealed partial class PresentMonProcessDiscovery : IDisposable
 			};
 			traceThread.Start();
 
-			var startupDiscoveryThread = new Thread(DiscoverStartupCandidates)
-			{
-				IsBackground = true,
-				Name = "PresentMon startup process discovery"
-			};
-			startupDiscoveryThread.Start();
-
 			// PresentMon requests process capture-state so processes that started
 			// before the trace session are emitted as ProcessRundown events.
 			_session.CaptureState(KernelProcessProvider, ProcessKeyword);
@@ -122,15 +151,19 @@ internal sealed partial class PresentMonProcessDiscovery : IDisposable
 		}
 	}
 
-	public List<string> GetRecordableProcesses()
+	public List<string> GetRecordableProcesses(bool refreshRunningProcesses = false)
 	{
-		RemoveStoppedProcesses();
+		if (refreshRunningProcesses)
+		{
+			RefreshRunningProcesses();
+			RemoveStoppedProcesses();
+		}
 
 		lock (_sync)
 		{
 			return [.. _presentingProcesses.Values
 				.Select(process => process.Name)
-				.Concat(_startupCandidates)
+				.Concat(_snapshotCandidates)
 				.Where(name => !ExcludedProcessNames.Contains(name))
 				.Where(name => !_redirectedCompositionProcesses.Contains(name) ||
 					_confirmedPresentingProcesses.Contains(name))
@@ -184,11 +217,43 @@ internal sealed partial class PresentMonProcessDiscovery : IDisposable
 		int processId = (int)processIdValue;
 		if (eventId == ProcessStopEventId)
 		{
+			string stoppedProcessName = null;
 			lock (_sync)
 			{
+				if (_runningProcesses.TryGetValue(processId, out ProcessIdentity runningProcess))
+					stoppedProcessName = runningProcess.Name;
+				else if (_presentingProcesses.TryGetValue(processId, out ProcessIdentity presentingProcess))
+					stoppedProcessName = presentingProcess.Name;
 				_runningProcesses.Remove(processId);
 				_presentingProcesses.Remove(processId);
 				_runtimePresents.RemoveWhere(present => present.ProcessId == processId);
+			}
+			if (stoppedProcessName is not null)
+			{
+				Process[] matchingProcesses = Process.GetProcessesByName(
+					Path.GetFileNameWithoutExtension(stoppedProcessName));
+				bool processIsStillRunning = false;
+				foreach (Process process in matchingProcesses)
+				{
+					try
+					{
+						processIsStillRunning |= !process.HasExited;
+					}
+					catch (InvalidOperationException)
+					{
+					}
+					process.Dispose();
+				}
+				if (!processIsStillRunning)
+				{
+					lock (_sync)
+					{
+						_snapshotCandidates.Remove(stoppedProcessName);
+						_redirectedCompositionProcesses.Remove(stoppedProcessName);
+						_confirmedPresentingProcesses.Remove(stoppedProcessName);
+					}
+					ProcessesChanged?.Invoke(this, EventArgs.Empty);
+				}
 			}
 			return;
 		}
@@ -275,13 +340,11 @@ internal sealed partial class PresentMonProcessDiscovery : IDisposable
 	{
 		int eventId = (int)presentEvent.ID;
 		if ((eventId != PresentHistoryStartEventId && eventId != PresentHistoryDetailedStartEventId) ||
-			!TryReadUInt32(presentEvent, "Model", out uint model))
+			!TryReadUInt32(presentEvent, "Model", out uint model) ||
+			!TryGetProcessIdentity(presentEvent.ProcessID, out ProcessIdentity identity))
 		{
 			return;
 		}
-
-		if (!TryGetProcessIdentity(presentEvent.ProcessID, out ProcessIdentity identity))
-			return;
 
 		if (model == RedirectedCompositionModel)
 		{
@@ -302,7 +365,7 @@ internal sealed partial class PresentMonProcessDiscovery : IDisposable
 		RememberPresentingProcess(presentEvent.ProcessID);
 	}
 
-	private void DiscoverStartupCandidates()
+	private void RefreshRunningProcesses()
 	{
 		var candidates = new Dictionary<string, CandidateEligibility>(StringComparer.OrdinalIgnoreCase);
 
@@ -324,20 +387,12 @@ internal sealed partial class PresentMonProcessDiscovery : IDisposable
 			}
 		}
 
-		// Allow the live trace to classify actively-rendering composition-only
-		// applications before publishing the startup candidates.
-		Thread.Sleep(1500);
-
 		lock (_sync)
 		{
-			if (!_started)
-				return;
-
-			foreach (var candidate in candidates)
-			{
-				if (candidate.Value.HasVisibleWindow && candidate.Value.HasGraphicsRuntime)
-					_startupCandidates.Add(candidate.Key);
-			}
+			_snapshotCandidates.Clear();
+			foreach (var candidate in candidates.Where(candidate =>
+				candidate.Value.HasVisibleWindow && candidate.Value.HasGraphicsRuntime))
+				_snapshotCandidates.Add(candidate.Key);
 		}
 	}
 
@@ -367,7 +422,7 @@ internal sealed partial class PresentMonProcessDiscovery : IDisposable
 	{
 		try
 		{
-			return process.MainWindowHandle != IntPtr.Zero && !string.IsNullOrWhiteSpace(process.MainWindowTitle);
+			return process.MainWindowHandle != IntPtr.Zero;
 		}
 		catch (InvalidOperationException)
 		{
@@ -437,13 +492,13 @@ internal sealed partial class PresentMonProcessDiscovery : IDisposable
 		RemoveStoppedProcesses(_runningProcesses);
 		RemoveStoppedProcesses(_presentingProcesses);
 
-		string[] startupCandidates;
+		string[] snapshotCandidates;
 		lock (_sync)
 		{
-			startupCandidates = [.. _startupCandidates];
+			snapshotCandidates = [.. _snapshotCandidates];
 		}
 
-		foreach (string candidate in startupCandidates)
+		foreach (string candidate in snapshotCandidates)
 		{
 			string processName = Path.GetFileNameWithoutExtension(candidate);
 			Process[] processes = Process.GetProcessesByName(processName);
@@ -457,7 +512,7 @@ internal sealed partial class PresentMonProcessDiscovery : IDisposable
 
 			lock (_sync)
 			{
-				_startupCandidates.Remove(candidate);
+				_snapshotCandidates.Remove(candidate);
 				_redirectedCompositionProcesses.Remove(candidate);
 				_confirmedPresentingProcesses.Remove(candidate);
 			}
@@ -556,7 +611,7 @@ internal sealed partial class PresentMonProcessDiscovery : IDisposable
 			_runningProcesses.Clear();
 			_presentingProcesses.Clear();
 			_runtimePresents.Clear();
-			_startupCandidates.Clear();
+			_snapshotCandidates.Clear();
 			_redirectedCompositionProcesses.Clear();
 			_confirmedPresentingProcesses.Clear();
 		}

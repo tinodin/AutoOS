@@ -28,7 +28,7 @@ public sealed partial class BenchmarksPage : Page
 		{
 			DispatcherQueue.TryEnqueue(() =>
 			{
-				if (!ViewModel.IsRecording)
+				if (ViewModel.CanRecord)
 					Record_Checked(this, null);
 			});
 		}
@@ -44,6 +44,7 @@ public sealed partial class BenchmarksPage : Page
 	public BenchmarksPage()
 	{
 		InitializeComponent();
+		PresentingProcesses.ProcessesChanged += PresentingProcesses_ProcessesChanged;
 		ViewModel.FpsColor = Colors.DodgerBlue;
 		ViewModel.FpsColor2 = Colors.Orange;
 		LoadRecordings();
@@ -52,6 +53,7 @@ public sealed partial class BenchmarksPage : Page
 	protected override void OnNavigatedTo(NavigationEventArgs e)
 	{
 		base.OnNavigatedTo(e);
+		PresentingProcesses.Start();
 		_globalKeyboardHook = new GlobalKeyboardHook();
 		_globalKeyboardHook.KeyDown += OnGlobalKeyDown;
 		_globalKeyboardHook.Start();
@@ -179,6 +181,11 @@ public sealed partial class BenchmarksPage : Page
 	{
 		if (ViewModel.IsRecording)
 			return;
+		if (!ViewModel.CanRecord)
+		{
+			Record.IsChecked = false;
+			return;
+		}
 		ViewModel.IsRecording = true;
 		Record.IsChecked = true;
 		int duration = (int)ViewModel.RecordingDuration;
@@ -1321,26 +1328,27 @@ public sealed partial class BenchmarksPage : Page
 		return true;
 	}
 	// ── Process name ─────────────────────────────────────────────────────────
-	private void UpdateProcessSuggestions()
-	{
-		string query = ProcessAutoSuggestBox.Text.Trim();
-		var processNames = PresentingProcesses.GetRecordableProcesses();
-		List<string> suggestions = string.IsNullOrEmpty(query)
-			? processNames
-			: [.. processNames.Where(name => name.Contains(query, StringComparison.OrdinalIgnoreCase))];
-		ProcessAutoSuggestBox.ItemsSource = suggestions;
-		ProcessAutoSuggestBox.IsSuggestionListOpen = suggestions.Count > 0;
-	}
 	private void ProcessAutoSuggestBox_GotFocus(object sender, RoutedEventArgs e)
 	{
-		PresentingProcesses.Start();
-		UpdateProcessSuggestions();
+		ProcessAutoSuggestBox.IsSuggestionListOpen = ViewModel.ProcessSuggestions.Count > 0;
+	}
+
+	private void PresentingProcesses_ProcessesChanged(object sender, EventArgs e)
+	{
+		DispatcherQueue.TryEnqueue(() =>
+		{
+			if (ViewModel.ActiveTab == "Recordings")
+				ViewModel.SetRecordableProcesses(PresentingProcesses.GetRecordableProcesses());
+		});
 	}
 
 	private void ProcessAutoSuggestBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
 	{
 		if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput)
-			UpdateProcessSuggestions();
+		{
+			ViewModel.ProcessName = sender.Text;
+			sender.IsSuggestionListOpen = ViewModel.ProcessSuggestions.Count > 0;
+		}
 	}
 	[System.Diagnostics.CodeAnalysis.SuppressMessage(
 		"Performance",
@@ -1349,6 +1357,7 @@ public sealed partial class BenchmarksPage : Page
 	private void ProcessAutoSuggestBox_SuggestionChosen(AutoSuggestBox sender, AutoSuggestBoxSuggestionChosenEventArgs args)
 	{
 		sender.Text = args.SelectedItem as string ?? string.Empty;
+		ViewModel.ProcessName = sender.Text;
 	}
 	private async void BenchmarksSelectorBar_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
 	{
@@ -1356,6 +1365,9 @@ public sealed partial class BenchmarksPage : Page
 		if (ReferenceEquals(selectedItem, RecordingsTab))
 		{
 			ViewModel.ActiveTab = "Recordings";
+			PresentingProcesses.Start();
+			ViewModel.SetRecordableProcesses(
+				PresentingProcesses.GetRecordableProcesses(refreshRunningProcesses: true));
 		}
 		else if (ReferenceEquals(selectedItem, AnalysisTab))
 		{
