@@ -258,6 +258,8 @@ public static partial class DiscordHelper
 				process.WaitForExit();
 			}
 		}
+
+		await Task.Delay(500);
 	}
 
 	public static List<DiscordAccountInfo> GetAccountData(string levelDbPath, string origin = null)

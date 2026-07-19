@@ -96,8 +96,8 @@ public static class GraphicsStage
 			("Installing OBS Studio", async () => iniHelper.AddValue("RecEncoder", "obs_qsv11_v2", "AdvOut"), () => NVIDIA == false && INTEL == true),
 			("Installing OBS Studio", async () => iniHelper.AddValue("Encoder", "h264_texture_amf", "AdvOut"), () => NVIDIA == false && AMD == true),
 			("Installing OBS Studio", async () => iniHelper.AddValue("RecEncoder", "h264_texture_amf", "AdvOut"), () => NVIDIA == false &&  AMD == true),
-			("Installing OBS Studio", async () => Directory.Move(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "obs-studio", "$APPDATA", "obs-studio-hook"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "obs-studio-hook")), null),
-			("Installing OBS Studio", async () => Directory.Move(Path.Combine(Path.GetTempPath(), "obs-studio"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "obs-studio")), null),
+			("Installing OBS Studio", async () => FileSystem.CopyDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "obs-studio", "$APPDATA", "obs-studio-hook"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "obs-studio-hook"), true), null),
+			("Installing OBS Studio", async () => FileSystem.CopyDirectory(Path.Combine(Path.GetTempPath(), "obs-studio"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "obs-studio"), true), null),
 			("Installing OBS Studio", async () => FileSystem.CopyDirectory(Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "obs-studio")), Path.Combine(Directory.GetParent(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile))!.FullName, "Default", "AppData", "Roaming", "obs-studio"), true), null),
 			("Installing OBS Studio", async () => Directory.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "obs-studio", "$PLUGINSDIR"), true), null),
 			("Installing OBS Studio", async () => Directory.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "obs-studio", "$APPDATA"), true), null),
@@ -112,7 +112,8 @@ public static class GraphicsStage
 			("Installing OBS Studio", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\OBS Studio", "QuietUninstallString", @$"""{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "obs-studio", "uninstall.exe")}"" /S", RegistryValueKind.String), null),
 			("Installing OBS Studio", async () => ShortcutHelper.Create(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "OBS Studio.lnk"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "obs-studio", "bin", "64bit", "obs64.exe"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "obs-studio", "bin", "64bit")), null),
 			("Cleaning up OBS Studio files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "OBS-Studio-Windows-x64-Installer.exe")), null),
-			("Cleaning up OBS Studio files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "obs-studio.zip")), null)
+			("Cleaning up OBS Studio files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "obs-studio.zip")), null),
+			("Cleaning up OBS Studio files", async () => Directory.Delete(Path.Combine(Path.GetTempPath(), "obs-studio")), null)
 		};
 
 		var gpus = PreparingStage.GPUs.Where(gpu => gpu.Install).ToList();

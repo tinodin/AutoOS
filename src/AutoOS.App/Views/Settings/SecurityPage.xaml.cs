@@ -68,8 +68,16 @@ public sealed partial class SecurityPage : Page
 
 		WindowsDefender.IsOn = isEnabled;
 
-		var serviceController = new ServiceController("WinDefend");
-		bool isRunning = serviceController.Status == ServiceControllerStatus.Running;
+		bool isRunning = false;
+		try
+		{
+			isRunning = new ServiceController("WinDefend").Status == ServiceControllerStatus.Running;
+		}
+		catch (InvalidOperationException)
+		{
+			WindowsDefender.IsOn = false;
+		}
+
 		if (WindowsDefender.IsOn && !isRunning || !WindowsDefender.IsOn && isRunning)
 		{
 			// remove infobar

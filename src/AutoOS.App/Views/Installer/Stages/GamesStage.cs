@@ -1,6 +1,8 @@
 using AutoOS.Core.Helpers.Download;
+using AutoOS.Core.Helpers.Games;
 using AutoOS.Core.Helpers.Monitor;
 using System.Diagnostics;
+using System.Text.Json;
 
 namespace AutoOS.Views.Installer.Stages;
 
@@ -12,7 +14,6 @@ public static partial class GamesStage
 		bool Valorant = ApplicationStage.Valorant;
 
 		string fortnitePath = string.Empty;
-		string valorantPath = string.Empty;
 
 		string fortniteIniPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FortniteGame", "Saved", "Config", "WindowsClient");
 		string valorantIniPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "VALORANT", "Saved", "Config", "WindowsClient");
@@ -31,6 +32,7 @@ public static partial class GamesStage
 			($"Capping Frame Rate for Fortnite to {maxRefreshRate}fps", async () => await Task.Delay(1000), () => Fortnite == true),
 
 			// install easyanticheat
+			("Installing EasyAntiCheat", async () => fortnitePath = JsonDocument.Parse(File.ReadAllText(Path.Combine(EpicGamesHelper.EpicGamesInstalledGamesPath)).RootElement.GetProperty("InstallationList").EnumerateArray().FirstOrDefault(entry => entry.GetProperty("AppName").GetString() == "Fortnite").GetProperty("InstallLocation").GetString(), () => Fortnite == true),
 			("Installing EasyAntiCheat", async () => await Process.Start(new ProcessStartInfo($@"{fortnitePath}\FortniteGame\Binaries\Win64\EasyAntiCheat\EasyAntiCheat_EOS_Setup.exe", "install 4fe75bbc5a674f4f9b356b5c90567da5") {  WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Fortnite == true),
 			("Installing EasyAntiCheat", async () => await Task.Delay(1000), () => Fortnite == true),
 

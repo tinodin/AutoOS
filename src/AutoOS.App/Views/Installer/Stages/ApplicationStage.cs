@@ -511,6 +511,9 @@ public static class ApplicationStage
 			("Cleaning up Windhawk files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "windhawk_setup_offline.exe")), () => selection == null),
 			("Cleaning up Windhawk files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "windhawk.reg")), () => selection == null),
 			
+			// remove windhawk desktop shortcut 
+			("Removing Windhawk desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Windhawk.lnk")), () => selection == null),
+
 			// download startallback
 			("Downloading StartAllBack", async () => await DownloadHelper.Download("https://www.startallback.com/download.php", Path.GetTempPath(), "StartAllBackSetup.exe", reporter: reporter), () => selection == null),
 
