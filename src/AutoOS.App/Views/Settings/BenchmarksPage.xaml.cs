@@ -2,6 +2,7 @@ using System.Globalization;
 using AutoOS.Core.Helpers.Picker;
 using AutoOS.Views.Settings.Benchmarks;
 using Syncfusion.UI.Xaml.DataGrid;
+using System.Text.Json;
 using Windows.System;
 using static AutoOS.Views.Settings.Benchmarks.BenchmarkCsv;
 using static AutoOS.Views.Settings.Benchmarks.BenchmarkStatistics;
@@ -14,6 +15,7 @@ public sealed partial class BenchmarksPage : Page
 	private static readonly string RecordingsDirectory = Path.Combine(PathHelper.GetAppDataFolderPath(), "Benchmarks");
 	private static readonly string[] PercentileLabels = ["Mean", "P0.1", "P1", "P5", "P10", "P50", "P90", "P95", "P99", "P99.9"];
 	private const string AggregateDurationColumn = "AutoOSAggregateDurationSeconds";
+	private const string AggregateSourcesColumn = "AutoOSAggregateSources";
 	private GlobalKeyboardHook _globalKeyboardHook;
 	private VirtualKeyModifiers _currentModifiers = VirtualKeyModifiers.Shift;
 	private VirtualKey _currentKey = VirtualKey.F11;
@@ -133,7 +135,31 @@ public sealed partial class BenchmarksPage : Page
 			: [.. RecordingsTreeGrid.SelectedItems.OfType<RecordingItem>()];
 		if (selected.Count == 0 && RecordingsTreeGrid.SelectedItem is RecordingItem item)
 			selected.Add(item);
-		return selected;
+
+		selected = [.. selected.DistinctBy(recording => recording.FilePath, StringComparer.OrdinalIgnoreCase)];
+		HashSet<string> selectedPaths = selected
+			.Select(recording => recording.FilePath)
+			.ToHashSet(StringComparer.OrdinalIgnoreCase);
+		List<RecordingItem> normalizedSelection = [];
+		foreach (RecordingItem recording in selected)
+		{
+			bool hasSelectedDescendant = false;
+			HashSet<RecordingItem> visited = [];
+			Stack<RecordingItem> descendants = new(recording.Children);
+			while (descendants.TryPop(out RecordingItem descendant) && visited.Add(descendant))
+			{
+				if (selectedPaths.Contains(descendant.FilePath))
+				{
+					hasSelectedDescendant = true;
+					break;
+				}
+				foreach (RecordingItem child in descendant.Children)
+					descendants.Push(child);
+			}
+			if (!hasSelectedDescendant)
+				normalizedSelection.Add(recording);
+		}
+		return normalizedSelection;
 	}
 	private async void FpsUnitSelector_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
 	{
@@ -249,6 +275,7 @@ public sealed partial class BenchmarksPage : Page
 	private void LoadRecordings()
 	{
 		List<RecordingItem> recordings = [];
+		Dictionary<RecordingItem, List<string>> aggregateSources = [];
 		if (!Directory.Exists(RecordingsDirectory))
 		{
 			ViewModel.SetRecordings(recordings);
@@ -266,7 +293,7 @@ public sealed partial class BenchmarksPage : Page
 			foreach (var file in csvFiles)
 			{
 				var info = new FileInfo(file);
-				var (process, durationSeconds) = ReadRecordingMetadata(file, info);
+				var (process, durationSeconds, sourceFileNames) = ReadRecordingMetadata(file, info);
 				var recording = new RecordingItem
 				{
 					FilePath = file,
@@ -279,22 +306,44 @@ public sealed partial class BenchmarksPage : Page
 					FileSizeKb = info.Length / 1024.0
 				};
 				recordings.Add(recording);
+				if (sourceFileNames.Count > 0)
+					aggregateSources[recording] = sourceFileNames;
 			}
-			ViewModel.SetRecordings(recordings);
+
+			Dictionary<string, RecordingItem> recordingsByFileName = recordings.ToDictionary(
+				recording => recording.FileName,
+				StringComparer.OrdinalIgnoreCase);
+			HashSet<RecordingItem> childRecordings = [];
+			foreach (var (aggregate, sourceFileNames) in aggregateSources)
+			{
+				foreach (string sourceFileName in sourceFileNames.Distinct(StringComparer.OrdinalIgnoreCase))
+				{
+					if (recordingsByFileName.TryGetValue(sourceFileName, out RecordingItem source) &&
+						!ReferenceEquals(source, aggregate))
+					{
+						aggregate.Children.Add(source);
+						childRecordings.Add(source);
+					}
+				}
+			}
+			ViewModel.SetRecordings(recordings.Where(recording => !childRecordings.Contains(recording)));
 		}
 		ViewModel.SetSelectedRecordings(GetSelectedRecordings());
 	}
-	private static (string Process, double DurationSeconds) ReadRecordingMetadata(string filePath, FileInfo info)
+	private static (string Process, double DurationSeconds, List<string> SourceFileNames) ReadRecordingMetadata(
+		string filePath,
+		FileInfo info)
 	{
 		string process = Path.GetFileNameWithoutExtension(info.Name);
 		double durationSeconds = Math.Max(0, (info.LastWriteTime - info.CreationTime).TotalSeconds);
+		List<string> sourceFileNames = [];
 		try
 		{
 			using var reader = new StreamReader(filePath);
 			var headerLine = reader.ReadLine();
 			var firstLine = reader.ReadLine();
 			if (string.IsNullOrWhiteSpace(headerLine) || string.IsNullOrWhiteSpace(firstLine))
-				return (process, durationSeconds);
+				return (process, durationSeconds, sourceFileNames);
 			var headers = ParseCsvLine(headerLine);
 			var firstValues = ParseCsvLine(firstLine);
 			string lastLine = firstLine;
@@ -323,6 +372,15 @@ public sealed partial class BenchmarksPage : Page
 				durationSeconds = Math.Max(0, aggregateDuration);
 				hasCsvDuration = true;
 			}
+			int aggregateSourcesIndex = headers.FindIndex(h =>
+				string.Equals(h, AggregateSourcesColumn, StringComparison.OrdinalIgnoreCase));
+			if (aggregateSourcesIndex >= 0 &&
+				aggregateSourcesIndex < firstValues.Count &&
+				!string.IsNullOrWhiteSpace(firstValues[aggregateSourcesIndex]))
+			{
+				byte[] sourceJson = Convert.FromBase64String(firstValues[aggregateSourcesIndex]);
+				sourceFileNames = JsonSerializer.Deserialize<List<string>>(sourceJson) ?? [];
+			}
 			int dateTimeIndex = headers.FindIndex(h => string.Equals(h, "TimeInDateTime", StringComparison.OrdinalIgnoreCase));
 			if (!hasCsvDuration && dateTimeIndex >= 0 && dateTimeIndex < firstValues.Count && dateTimeIndex < lastValues.Count &&
 				DateTime.TryParse(firstValues[dateTimeIndex], CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var start) &&
@@ -342,7 +400,7 @@ public sealed partial class BenchmarksPage : Page
 		catch
 		{
 		}
-		return (process, durationSeconds);
+		return (process, durationSeconds, sourceFileNames);
 	}
 	private async void RecordingsTreeGrid_SelectionChanged(object sender, Syncfusion.UI.Xaml.Grids.GridSelectionChangedEventArgs e)
 	{
@@ -366,7 +424,7 @@ public sealed partial class BenchmarksPage : Page
 			return;
 		string oldPath = recording.FilePath;
 		string oldTitle = Path.GetFileNameWithoutExtension(oldPath);
-		string requestedTitle = recording.Title.Trim();
+		string requestedTitle = recording.Title?.Trim() ?? string.Empty;
 		if (string.IsNullOrWhiteSpace(requestedTitle))
 		{
 			recording.Title = oldTitle;
@@ -388,7 +446,7 @@ public sealed partial class BenchmarksPage : Page
 			recording.FilePath = newPath;
 			recording.FileName = Path.GetFileName(newPath);
 			recording.Title = safeTitle;
-			LoadRecordings();
+			DispatcherQueue.TryEnqueue(LoadRecordings);
 		}
 		catch (Exception ex)
 		{
@@ -484,6 +542,16 @@ public sealed partial class BenchmarksPage : Page
 			aggregateDurationIndex = headerCols.Count;
 			headerCols.Add(AggregateDurationColumn);
 		}
+		int aggregateSourcesIndex = headerCols.FindIndex(header =>
+			string.Equals(header, AggregateSourcesColumn, StringComparison.OrdinalIgnoreCase));
+		if (aggregateSourcesIndex < 0)
+		{
+			aggregateSourcesIndex = headerCols.Count;
+			headerCols.Add(AggregateSourcesColumn);
+		}
+		string aggregateSources = Convert.ToBase64String(JsonSerializer.SerializeToUtf8Bytes(
+			selected.Select(recording => recording.FileName)
+				.Distinct(StringComparer.OrdinalIgnoreCase)));
 		double meanDurationSeconds = selected.Average(recording => recording.DurationSeconds);
 		int maxRows = fileData.Max(f => f.Rows.Count);
 		await using (var writer = new StreamWriter(outPath))
@@ -502,6 +570,11 @@ public sealed partial class BenchmarksPage : Page
 					if (c == aggregateDurationIndex)
 					{
 						averagedRow[c] = meanDurationSeconds.ToString(CultureInfo.InvariantCulture);
+						continue;
+					}
+					if (c == aggregateSourcesIndex)
+					{
+						averagedRow[c] = r == 0 ? aggregateSources : string.Empty;
 						continue;
 					}
 					double sum = 0;

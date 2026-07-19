@@ -248,6 +248,7 @@
                                            AllowEditing="True"
                                            AllowTriStateSorting="True"
                                            AutoGenerateColumns="False"
+                                           ChildPropertyName="Children"
                                            ColumnWidthMode="Star"
                                            CurrentCellBorderThickness="0"
                                            CurrentCellEndEdit="RecordingsTreeGrid_CurrentCellEndEdit"

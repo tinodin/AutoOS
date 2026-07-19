@@ -354,6 +354,8 @@ public sealed partial class RecordingItem : ObservableObject
 	private TimeSpan _time;
 	private double _fileSizeKb;
 
+	public ObservableCollection<RecordingItem> Children { get; } = [];
+
 	public string FilePath
 	{
 		get => _filePath;
