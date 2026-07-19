@@ -296,7 +296,7 @@ public static partial class SteamHelper
 			string relativePath = originalPath[Path.GetPathRoot(originalPath).Length..];
 			string resolvedPath = originalPath;
 
-			foreach (var drive in DriveInfo.GetDrives().Where(drive => drive.DriveType == DriveType.Fixed && !drive.Name.Equals(systemDrive, StringComparison.InvariantCultureIgnoreCase)))
+			foreach (var drive in DriveInfo.GetDrives().Where(drive => drive.DriveType == DriveType.Fixed))
 			{
 				string testPath = Path.Combine(drive.Name, relativePath);
 				string externalVdfPath = Path.Combine(testPath, "libraryfolder.vdf");
