@@ -44,6 +44,11 @@ internal sealed partial class PresentMonProcessDiscovery : IDisposable
 		"vulkan-1.dll",
 		"opengl32.dll"
 	};
+	private static readonly HashSet<string> CompositionFrameworkModules = new(StringComparer.OrdinalIgnoreCase)
+	{
+		"Microsoft.UI.Xaml.dll",
+		"Windows.UI.Xaml.dll"
+	};
 	private static readonly HashSet<string> ExcludedProcessNames = new(StringComparer.OrdinalIgnoreCase)
 	{
 		"ApplicationFrameHost.exe",
@@ -259,6 +264,51 @@ internal sealed partial class PresentMonProcessDiscovery : IDisposable
 			return;
 
 		RememberRunningProcess(processId);
+		ClassifyProcess(processId);
+	}
+
+	private void ClassifyProcess(int processId)
+	{
+		string name;
+		try
+		{
+			using Process process = Process.GetProcessById(processId);
+			if (process.HasExited ||
+				!TryGetProcessName(process, out name) ||
+				ExcludedProcessNames.Contains(name))
+			{
+				return;
+			}
+		}
+		catch (ArgumentException)
+		{
+			return;
+		}
+		catch (InvalidOperationException)
+		{
+			return;
+		}
+		catch (Win32Exception)
+		{
+			return;
+		}
+
+		List<Process> matchingProcesses = [.. Process.GetProcessesByName(
+			Path.GetFileNameWithoutExtension(name))];
+		bool isCandidate = IsSnapshotCandidate(matchingProcesses);
+		foreach (Process process in matchingProcesses)
+			process.Dispose();
+
+		bool processListChanged;
+		lock (_sync)
+		{
+			_runningProcesses[processId] = new ProcessIdentity(name);
+			processListChanged = isCandidate
+				? _snapshotCandidates.Add(name)
+				: _snapshotCandidates.Remove(name);
+		}
+		if (processListChanged)
+			ProcessesChanged?.Invoke(this, EventArgs.Empty);
 	}
 
 	private void ProcessDxgiEvent(TraceEvent presentEvent)
@@ -345,48 +395,91 @@ internal sealed partial class PresentMonProcessDiscovery : IDisposable
 
 		if (model == RedirectedCompositionModel)
 		{
+			bool processWasExcluded = false;
 			lock (_sync)
 			{
 				if (!_confirmedPresentingProcesses.Contains(identity.Name))
-					_redirectedCompositionProcesses.Add(identity.Name);
+					processWasExcluded = _redirectedCompositionProcesses.Add(identity.Name);
 			}
+			if (processWasExcluded)
+				ProcessesChanged?.Invoke(this, EventArgs.Empty);
 			return;
 		}
 
+		bool processWasRestored;
 		lock (_sync)
 		{
 			_confirmedPresentingProcesses.Add(identity.Name);
-			_redirectedCompositionProcesses.Remove(identity.Name);
+			processWasRestored = _redirectedCompositionProcesses.Remove(identity.Name);
 		}
 
 		RememberPresentingProcess(presentEvent.ProcessID);
+		if (processWasRestored)
+			ProcessesChanged?.Invoke(this, EventArgs.Empty);
 	}
 
 	private void RefreshRunningProcesses()
 	{
-		HashSet<string> candidates = new(StringComparer.OrdinalIgnoreCase);
+		Dictionary<string, List<Process>> processGroups = new(StringComparer.OrdinalIgnoreCase);
 
 		foreach (Process process in Process.GetProcesses())
 		{
-			using (process)
+			if (!TryGetProcessName(process, out string name) ||
+				ExcludedProcessNames.Contains(name) ||
+				process.Id == Environment.ProcessId)
 			{
-				if (!TryGetProcessName(process, out string name) ||
-					ExcludedProcessNames.Contains(name) ||
-					process.Id == Environment.ProcessId)
-				{
-					continue;
-				}
-
-				if (HasVisibleMainWindow(process) && HasGraphicsRuntime(process))
-					candidates.Add(name);
+				process.Dispose();
+				continue;
 			}
+
+			if (!processGroups.TryGetValue(name, out List<Process> processes))
+				processGroups[name] = processes = [];
+			processes.Add(process);
 		}
 
+		HashSet<string> candidates = new(StringComparer.OrdinalIgnoreCase);
+		foreach (var (name, processes) in processGroups)
+		{
+			if (IsSnapshotCandidate(processes))
+				candidates.Add(name);
+			foreach (Process process in processes)
+				process.Dispose();
+		}
 		lock (_sync)
 		{
 			_snapshotCandidates.Clear();
 			_snapshotCandidates.UnionWith(candidates);
 		}
+	}
+
+	private static bool IsSnapshotCandidate(List<Process> processes)
+	{
+		if (!processes.Any(HasVisibleMainWindow))
+			return false;
+
+		bool hasGraphicsRuntime = false;
+		foreach (Process process in processes)
+		{
+			try
+			{
+				foreach (ProcessModule module in process.Modules)
+				{
+					if (CompositionFrameworkModules.Contains(module.ModuleName))
+						return false;
+					hasGraphicsRuntime |= GraphicsRuntimeModules.Contains(module.ModuleName);
+				}
+			}
+			catch (InvalidOperationException)
+			{
+			}
+			catch (Win32Exception)
+			{
+			}
+			catch (NotSupportedException)
+			{
+			}
+		}
+		return hasGraphicsRuntime;
 	}
 
 	private static bool TryGetProcessName(Process process, out string name)
@@ -423,32 +516,6 @@ internal sealed partial class PresentMonProcessDiscovery : IDisposable
 		}
 	}
 
-	private static bool HasGraphicsRuntime(Process process)
-	{
-		try
-		{
-			foreach (ProcessModule module in process.Modules)
-			{
-				if (GraphicsRuntimeModules.Contains(module.ModuleName))
-					return true;
-			}
-		}
-		catch (InvalidOperationException)
-		{
-			return false;
-		}
-		catch (Win32Exception)
-		{
-			return false;
-		}
-		catch (NotSupportedException)
-		{
-			return false;
-		}
-
-		return false;
-	}
-
 	private void RememberRunningProcess(int processId)
 	{
 		if (processId <= 4 || processId == Environment.ProcessId ||
@@ -473,11 +540,16 @@ internal sealed partial class PresentMonProcessDiscovery : IDisposable
 			return;
 		}
 
+		bool isNewProcessName;
 		lock (_sync)
 		{
+			isNewProcessName = !_presentingProcesses.Values.Any(process =>
+				string.Equals(process.Name, identity.Name, StringComparison.OrdinalIgnoreCase));
 			_runningProcesses[processId] = identity;
 			_presentingProcesses[processId] = identity;
 		}
+		if (isNewProcessName)
+			ProcessesChanged?.Invoke(this, EventArgs.Empty);
 	}
 
 	private static bool TryGetProcessIdentity(int processId, out ProcessIdentity identity)
