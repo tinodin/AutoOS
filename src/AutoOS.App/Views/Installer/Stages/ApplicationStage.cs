@@ -763,7 +763,7 @@ public static class ApplicationStage
 			("Disabling Riot Client startup entry", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", "RiotClient", new byte[] { 0x01 }, RegistryValueKind.Binary), () => RiotClient == true),
 
 			// remove riot client desktop shortcut
-			("Removing Riot Client desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Riot Client.lnk")), () => RiotClient == true),
+			("Removing Riot Client desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Riot Client.lnk")), () => RiotClient == true),
 
 			// download vanguard
 			("Downloading Vanguard", async () => await DownloadHelper.Download("https://github.com/tinodin/AutoOS-Resources/releases/download/v1.0.0.0/setup.exe", Path.GetTempPath(), "setup.exe", new InstallPageReporter()), () => RiotClient == true),
@@ -903,7 +903,9 @@ public static class ApplicationStage
 			("Downloading Froststrap", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/Froststrap/Froststrap/releases")).RootElement.EnumerateArray().First(release => release.GetProperty("assets").EnumerateArray().Any(asset => asset.GetProperty("name").GetString().EndsWith(".exe"))).GetProperty("assets").EnumerateArray().First(asset => asset.GetProperty("name").GetString().EndsWith(".exe")).GetProperty("browser_download_url").GetString(), Path.GetTempPath(), "Froststrap.exe", reporter: reporter), () => Froststrap == true),
 
 			// install froststrap
-			("Installing Froststrap", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "Froststrap.exe"), Arguments = "-quiet -nolaunch" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Froststrap == true),
+			("Installing Froststrap", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "Froststrap.exe"), Arguments = "/S" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Froststrap == true),
+			("Installing Froststrap", async () => Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Froststrap")), () => Froststrap == true),
+			("Installing Froststrap", async () => ShortcutHelper.Create(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Froststrap", "Froststrap.lnk"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Froststrap", "Froststrap.exe")), () => Froststrap == true),
 			("Cleaning up Froststrap files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Froststrap.exe")), () => Froststrap == true),
 
 			// remove froststrap desktop shortcut

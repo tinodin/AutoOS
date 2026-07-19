@@ -113,7 +113,7 @@ public static class GraphicsStage
 			("Installing OBS Studio", async () => ShortcutHelper.Create(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "OBS Studio.lnk"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "obs-studio", "bin", "64bit", "obs64.exe"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "obs-studio", "bin", "64bit")), null),
 			("Cleaning up OBS Studio files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "OBS-Studio-Windows-x64-Installer.exe")), null),
 			("Cleaning up OBS Studio files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "obs-studio.zip")), null),
-			("Cleaning up OBS Studio files", async () => Directory.Delete(Path.Combine(Path.GetTempPath(), "obs-studio")), null)
+			("Cleaning up OBS Studio files", async () => Directory.Delete(Path.Combine(Path.GetTempPath(), "obs-studio"), true), null)
 		};
 
 		var gpus = PreparingStage.GPUs.Where(gpu => gpu.Install).ToList();
@@ -164,7 +164,7 @@ public static class GraphicsStage
 			}
 		}
 
-		return [.. actions.Take(12), .. driverInstallActions, .. driverTweakActions, .. actions.Skip(12)];
+		return [.. driverInstallActions, .. driverTweakActions, .. actions];
 	}
 }
 

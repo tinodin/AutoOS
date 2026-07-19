@@ -1,4 +1,4 @@
-﻿using AutoOS.Core.Common;
+using AutoOS.Core.Common;
 using Microsoft.VisualBasic.FileIO;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -157,7 +157,7 @@ public static partial class SteamHelper
 
 	public static async Task ImportGames()
 	{
-		// get the newest install list from other drives
+		// get install list from other drives
 		var systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));
 		var candidates = DriveInfo.GetDrives()
 			.Where(d => d.DriveType == DriveType.Fixed && d.Name.ToUpperInvariant() != systemDrive.ToUpperInvariant())
@@ -165,7 +165,8 @@ public static partial class SteamHelper
 			.Where(x => File.Exists(x.SoftwareHivePath))
 			.ToList();
 
-		string oldSteamInstallPath = null;
+		var libraryFiles = new List<FileInfo>();
+
 		foreach (var candidate in candidates)
 		{
 			await Process.Start(new ProcessStartInfo
@@ -188,21 +189,47 @@ public static partial class SteamHelper
 
 			if (!string.IsNullOrWhiteSpace(steamPath))
 			{
-				oldSteamInstallPath = steamPath;
-				break;
+				string registryDrive = Path.GetPathRoot(steamPath)!;
+				string relativePath = steamPath[registryDrive.Length..];
+				string vdfRelative = Path.Combine(relativePath, "steamapps", "libraryfolders.vdf");
+
+				if (registryDrive.Equals(systemDrive, StringComparison.InvariantCultureIgnoreCase))
+				{
+					string actualVdfPath = Path.Combine(candidate.Drive, vdfRelative);
+
+					if (File.Exists(actualVdfPath))
+						libraryFiles.Add(new FileInfo(actualVdfPath));
+				}
+				else
+				{
+					string originalVdfPath = Path.Combine(registryDrive, vdfRelative);
+
+					if (File.Exists(originalVdfPath))
+					{
+						libraryFiles.Add(new FileInfo(originalVdfPath));
+					}
+					else
+					{
+						foreach (var drive in DriveInfo.GetDrives().Where(d => d.DriveType == DriveType.Fixed && !d.Name.Equals(systemDrive, StringComparison.InvariantCultureIgnoreCase) && !d.Name.Equals(candidate.Drive, StringComparison.InvariantCultureIgnoreCase)))
+						{
+							string testVdfPath = Path.Combine(drive.Name, vdfRelative);
+
+							if (File.Exists(testVdfPath))
+							{
+								libraryFiles.Add(new FileInfo(testVdfPath));
+								break;
+							}
+						}
+					}
+				}
 			}
 		}
 
-		if (string.IsNullOrWhiteSpace(oldSteamInstallPath))
+		if (libraryFiles.Count == 0)
 			return;
 
-		string oldDrive = Path.GetPathRoot(oldSteamInstallPath);
-		string libraryfoldersPath = Path.Combine(oldSteamInstallPath, "steamapps", "libraryfolders.vdf");
-
-		if (!File.Exists(libraryfoldersPath))
-			return;
-
-		var newestFile = new FileInfo(libraryfoldersPath);
+		var newestFile = libraryFiles.OrderByDescending(f => f.LastWriteTime).First();
+		string oldDrive = Path.GetPathRoot(newestFile.FullName);
 
 		// copy manifests folder to new drive
 		string sourceCacheDir = Path.Combine(oldDrive, SteamLibraryCacheDir[Path.GetPathRoot(SteamLibraryCacheDir)!.Length..]);
