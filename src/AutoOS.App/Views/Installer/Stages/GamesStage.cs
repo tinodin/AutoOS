@@ -32,7 +32,7 @@ public static partial class GamesStage
 			($"Capping Frame Rate for Fortnite to {maxRefreshRate}fps", async () => await Task.Delay(1000), () => Fortnite == true),
 
 			// install easyanticheat
-			("Installing EasyAntiCheat", async () => fortnitePath = JsonDocument.Parse(File.ReadAllText(Path.Combine(EpicGamesHelper.EpicGamesInstalledGamesPath)).RootElement.GetProperty("InstallationList").EnumerateArray().FirstOrDefault(entry => entry.GetProperty("AppName").GetString() == "Fortnite").GetProperty("InstallLocation").GetString(), () => Fortnite == true),
+			("Installing EasyAntiCheat", async () => fortnitePath = JsonDocument.Parse(File.ReadAllText(Path.Combine(EpicGamesHelper.EpicGamesInstalledGamesPath))).RootElement.GetProperty("InstallationList").EnumerateArray().FirstOrDefault(entry => entry.GetProperty("AppName").GetString() == "Fortnite").GetProperty("InstallLocation").GetString(), () => Fortnite == true),
 			("Installing EasyAntiCheat", async () => await Process.Start(new ProcessStartInfo($@"{fortnitePath}\FortniteGame\Binaries\Win64\EasyAntiCheat\EasyAntiCheat_EOS_Setup.exe", "install 4fe75bbc5a674f4f9b356b5c90567da5") {  WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Fortnite == true),
 			("Installing EasyAntiCheat", async () => await Task.Delay(1000), () => Fortnite == true),
 
