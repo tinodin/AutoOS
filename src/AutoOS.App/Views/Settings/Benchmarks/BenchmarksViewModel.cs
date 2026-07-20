@@ -343,6 +343,7 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 	}
 }
 
+[WinRT.GeneratedBindableCustomProperty]
 public sealed partial class RecordingItem : ObservableObject
 {
 	private string _filePath = string.Empty;
@@ -412,6 +413,7 @@ public sealed partial class RecordingItem : ObservableObject
 	}
 }
 
+[WinRT.GeneratedBindableCustomProperty]
 public sealed partial class ResultRow : ObservableObject
 {
 	private string _metric = string.Empty;
@@ -481,6 +483,7 @@ public sealed partial class ResultCellStyleSelector : StyleSelector
 	}
 }
 
+[WinRT.GeneratedBindableCustomProperty]
 public sealed partial class BarPoint : ObservableObject
 {
 	private string _label = string.Empty;
@@ -499,6 +502,7 @@ public sealed partial class BarPoint : ObservableObject
 	}
 }
 
+[WinRT.GeneratedBindableCustomProperty]
 public sealed partial class SeriesPoint : ObservableObject
 {
 	private int _index;
@@ -516,3 +520,10 @@ public sealed partial class SeriesPoint : ObservableObject
 		set => SetProperty(ref _value, value);
 	}
 }
+
+[System.Text.Json.Serialization.JsonSerializable(typeof(string[]))]
+[System.Text.Json.Serialization.JsonSerializable(typeof(List<string>))]
+internal sealed partial class BenchmarksJsonContext : System.Text.Json.Serialization.JsonSerializerContext
+{
+}
+

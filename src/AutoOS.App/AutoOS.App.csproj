@@ -63,6 +63,7 @@
 
 	<ItemGroup>
 		<TrimmerRootAssembly Include="Syncfusion.Calendar.WinUI" />
+		<TrimmerRootAssembly Include="Syncfusion.Chart.WinUI" />
 		<TrimmerRootAssembly Include="Syncfusion.Core.WinUI" />
 		<TrimmerRootAssembly Include="Syncfusion.Data.WinUI" />
 		<TrimmerRootAssembly Include="Syncfusion.Editors.WinUI" />

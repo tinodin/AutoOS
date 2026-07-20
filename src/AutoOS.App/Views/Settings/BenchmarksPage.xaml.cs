@@ -394,7 +394,7 @@ public sealed partial class BenchmarksPage : Page
 				!string.IsNullOrWhiteSpace(firstValues[aggregateSourcesIndex]))
 			{
 				byte[] sourceJson = Convert.FromBase64String(firstValues[aggregateSourcesIndex]);
-				sourceFileNames = JsonSerializer.Deserialize<List<string>>(sourceJson) ?? [];
+				sourceFileNames = [.. JsonSerializer.Deserialize(sourceJson, BenchmarksJsonContext.Default.ListString) ?? []];
 			}
 			int dateTimeIndex = headers.FindIndex(h => string.Equals(h, "TimeInDateTime", StringComparison.OrdinalIgnoreCase));
 			if (!hasCsvDuration && dateTimeIndex >= 0 && dateTimeIndex < firstValues.Count && dateTimeIndex < lastValues.Count &&
@@ -566,7 +566,8 @@ public sealed partial class BenchmarksPage : Page
 		}
 		string aggregateSources = Convert.ToBase64String(JsonSerializer.SerializeToUtf8Bytes(
 			selected.Select(recording => recording.FileName)
-				.Distinct(StringComparer.OrdinalIgnoreCase)));
+				.Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
+			BenchmarksJsonContext.Default.StringArray));
 		double meanDurationSeconds = selected.Average(recording => recording.DurationSeconds);
 		int maxRows = fileData.Max(f => f.Rows.Count);
 		await using (var writer = new StreamWriter(outPath))
@@ -1041,21 +1042,21 @@ public sealed partial class BenchmarksPage : Page
 						resultRows.Add(new ResultRow { Metric = rowLabel, RecordingA = recordingA, RecordingB = recordingB });
 					}
 					// Add Displayed FPS time series stats
-					resultRows.AddRange(
-					[
-					CreateTimeSeriesStatRow("Displayed CV", "MsBetweenDisplayChange", loaded, s => s.cv),
-					CreateTimeSeriesStatRow("Displayed RMSSD", "MsBetweenDisplayChange", loaded, s => s.rmssd),
-					CreateTimeSeriesStatRow("Displayed Stepwise-Relative", "MsBetweenDisplayChange", loaded, s => s.stepwiseRelSD)
-					]);
-					// Add MsBetweenDisplayChange stats
-					resultRows.Add(CreateMetricRow("Average MsBetweenDisplayChange", "MsBetweenDisplayChange", loaded));
-					resultRows.AddRange(
-					[
-					CreateTimeSeriesStatRow("MsBetweenDisplayChange SD", "MsBetweenDisplayChange", loaded, s => s.stdDev),
-					CreateTimeSeriesStatRow("MsBetweenDisplayChange CV", "MsBetweenDisplayChange", loaded, s => s.cv),
-					CreateTimeSeriesStatRow("MsBetweenDisplayChange RMSSD", "MsBetweenDisplayChange", loaded, s => s.rmssd),
-					CreateTimeSeriesStatRow("MsBetweenDisplayChange Stepwise-Relative", "MsBetweenDisplayChange", loaded, s => s.stepwiseRelSD)
-					]);
+			resultRows.AddRange((ResultRow[])
+			[
+			CreateTimeSeriesStatRow("Displayed CV", "MsBetweenDisplayChange", loaded, s => s.cv),
+			CreateTimeSeriesStatRow("Displayed RMSSD", "MsBetweenDisplayChange", loaded, s => s.rmssd),
+			CreateTimeSeriesStatRow("Displayed Stepwise-Relative", "MsBetweenDisplayChange", loaded, s => s.stepwiseRelSD)
+			]);
+			// Add MsBetweenDisplayChange stats
+			resultRows.Add(CreateMetricRow("Average MsBetweenDisplayChange", "MsBetweenDisplayChange", loaded));
+			resultRows.AddRange((ResultRow[])
+			[
+			CreateTimeSeriesStatRow("MsBetweenDisplayChange SD", "MsBetweenDisplayChange", loaded, s => s.stdDev),
+			CreateTimeSeriesStatRow("MsBetweenDisplayChange CV", "MsBetweenDisplayChange", loaded, s => s.cv),
+			CreateTimeSeriesStatRow("MsBetweenDisplayChange RMSSD", "MsBetweenDisplayChange", loaded, s => s.rmssd),
+			CreateTimeSeriesStatRow("MsBetweenDisplayChange Stepwise-Relative", "MsBetweenDisplayChange", loaded, s => s.stepwiseRelSD)
+			]);
 					// Add Rendered FPS percentiles
 					foreach (var percentileLabel in PercentileLabels)
 					{
@@ -1074,39 +1075,39 @@ public sealed partial class BenchmarksPage : Page
 						resultRows.Add(new ResultRow { Metric = rowLabel, RecordingA = recordingA, RecordingB = recordingB });
 					}
 					// Add Rendered FPS time series stats
-					resultRows.AddRange(
-					[
-					CreateTimeSeriesStatRow("Rendered CV", "MsBetweenPresents", loaded, s => s.cv),
-					CreateTimeSeriesStatRow("Rendered RMSSD", "MsBetweenPresents", loaded, s => s.rmssd),
-					CreateTimeSeriesStatRow("Rendered Stepwise-Relative", "MsBetweenPresents", loaded, s => s.stepwiseRelSD)
-					]);
+			resultRows.AddRange((ResultRow[])
+			[
+			CreateTimeSeriesStatRow("Rendered CV", "MsBetweenPresents", loaded, s => s.cv),
+			CreateTimeSeriesStatRow("Rendered RMSSD", "MsBetweenPresents", loaded, s => s.rmssd),
+			CreateTimeSeriesStatRow("Rendered Stepwise-Relative", "MsBetweenPresents", loaded, s => s.stepwiseRelSD)
+			]);
 					// Add MsBetweenPresents stats
 					resultRows.Add(CreateMetricRow("Average MsBetweenPresents", "MsBetweenPresents", loaded));
-					resultRows.AddRange(
-					[
-					CreateTimeSeriesStatRow("MsBetweenPresents SD", "MsBetweenPresents", loaded, s => s.stdDev),
-					CreateTimeSeriesStatRow("MsBetweenPresents CV", "MsBetweenPresents", loaded, s => s.cv),
-					CreateTimeSeriesStatRow("MsBetweenPresents RMSSD", "MsBetweenPresents", loaded, s => s.rmssd),
-					CreateTimeSeriesStatRow("MsBetweenPresents Stepwise-Relative", "MsBetweenPresents", loaded, s => s.stepwiseRelSD)
-					]);
+			resultRows.AddRange((ResultRow[])
+			[
+			CreateTimeSeriesStatRow("MsBetweenPresents SD", "MsBetweenPresents", loaded, s => s.stdDev),
+			CreateTimeSeriesStatRow("MsBetweenPresents CV", "MsBetweenPresents", loaded, s => s.cv),
+			CreateTimeSeriesStatRow("MsBetweenPresents RMSSD", "MsBetweenPresents", loaded, s => s.rmssd),
+			CreateTimeSeriesStatRow("MsBetweenPresents Stepwise-Relative", "MsBetweenPresents", loaded, s => s.stepwiseRelSD)
+			]);
 					// Add MsGPUBusy stats
 					resultRows.Add(CreateMetricRow("Average MsGPUBusy", "MsGPUBusy", loaded));
-					resultRows.AddRange(
-					[
-					CreateTimeSeriesStatRow("MsGPUBusy SD", "MsGPUBusy", loaded, s => s.stdDev),
-					CreateTimeSeriesStatRow("MsGPUBusy CV", "MsGPUBusy", loaded, s => s.cv),
-					CreateTimeSeriesStatRow("MsGPUBusy RMSSD", "MsGPUBusy", loaded, s => s.rmssd),
-					CreateTimeSeriesStatRow("MsGPUBusy Stepwise-Relative", "MsGPUBusy", loaded, s => s.stepwiseRelSD)
-					]);
+			resultRows.AddRange((ResultRow[])
+			[
+			CreateTimeSeriesStatRow("MsGPUBusy SD", "MsGPUBusy", loaded, s => s.stdDev),
+			CreateTimeSeriesStatRow("MsGPUBusy CV", "MsGPUBusy", loaded, s => s.cv),
+			CreateTimeSeriesStatRow("MsGPUBusy RMSSD", "MsGPUBusy", loaded, s => s.rmssd),
+			CreateTimeSeriesStatRow("MsGPUBusy Stepwise-Relative", "MsGPUBusy", loaded, s => s.stepwiseRelSD)
+			]);
 					// Add MsUntilDisplayed stats
 					resultRows.Add(CreateMetricRow("Average MsUntilDisplayed", "MsUntilDisplayed", loaded));
-					resultRows.AddRange(
-					[
-					CreateTimeSeriesStatRow("MsUntilDisplayed SD", "MsUntilDisplayed", loaded, s => s.stdDev),
-					CreateTimeSeriesStatRow("MsUntilDisplayed CV", "MsUntilDisplayed", loaded, s => s.cv),
-					CreateTimeSeriesStatRow("MsUntilDisplayed RMSSD", "MsUntilDisplayed", loaded, s => s.rmssd),
-					CreateTimeSeriesStatRow("MsUntilDisplayed Stepwise-Relative", "MsUntilDisplayed", loaded, s => s.stepwiseRelSD)
-					]);
+			resultRows.AddRange((ResultRow[])
+			[
+			CreateTimeSeriesStatRow("MsUntilDisplayed SD", "MsUntilDisplayed", loaded, s => s.stdDev),
+			CreateTimeSeriesStatRow("MsUntilDisplayed CV", "MsUntilDisplayed", loaded, s => s.cv),
+			CreateTimeSeriesStatRow("MsUntilDisplayed RMSSD", "MsUntilDisplayed", loaded, s => s.rmssd),
+			CreateTimeSeriesStatRow("MsUntilDisplayed Stepwise-Relative", "MsUntilDisplayed", loaded, s => s.stepwiseRelSD)
+			]);
 					ApplyResultComparisons(resultRows, loaded.Count == 2);
 					return (loaded, rows: GroupResultRows(resultRows));
 					// Helper functions
@@ -1490,3 +1491,4 @@ public sealed partial class BenchmarksPage : Page
 		picker.Color = color;
 	}
 }
+

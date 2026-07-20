@@ -79,9 +79,9 @@
                             <!--  Process  -->
                             <AppBarElementContainer>
                                 <AutoSuggestBox x:Name="ProcessAutoSuggestBox"
-                                                ItemsSource="{x:Bind ViewModel.ProcessSuggestions, Mode=OneWay}"
                                                 MinWidth="200"
                                                 GotFocus="ProcessAutoSuggestBox_GotFocus"
+                                                ItemsSource="{x:Bind ViewModel.ProcessSuggestions, Mode=OneWay}"
                                                 PlaceholderText="Select a process..."
                                                 SuggestionChosen="ProcessAutoSuggestBox_SuggestionChosen"
                                                 Text="{x:Bind ViewModel.ProcessName, Mode=TwoWay}"
@@ -273,10 +273,11 @@
                             <sfgrid:SfTreeGrid.Columns>
 
                                 <!--  Title  -->
-                                <sfgrid:TreeGridTextColumn common:StarRatio.ColumnRatio="5"
+                                <sfgrid:TreeGridTextColumn common:StarRatio.ColumnRatio="2"
                                                            AllowEditing="True"
                                                            HeaderText="Title"
                                                            MappingName="Title"
+                                                           MinimumWidth="70"
                                                            ShowToolTip="True"
                                                            TextTrimming="CharacterEllipsis"
                                                            TextWrapping="NoWrap" />
@@ -296,7 +297,7 @@
                                                            HeaderText="Presentation Mode"
                                                            IsReadOnly="True"
                                                            MappingName="PresentationMode"
-                                                           MinimumWidth="120"
+                                                           MinimumWidth="125"
                                                            ShowToolTip="True"
                                                            TextTrimming="CharacterEllipsis"
                                                            TextWrapping="NoWrap" />
@@ -307,43 +308,24 @@
                                                               HeaderText="Duration"
                                                               IsReadOnly="True"
                                                               MappingName="DurationSeconds"
-                                                              MinimumWidth="70"
+                                                              MaximumWidth="80"
+                                                              MinimumWidth="75"
                                                               ShowToolTip="True"
                                                               TextTrimming="CharacterEllipsis"
                                                               TextWrapping="NoWrap" />
 
-                                <!--  Date  -->
+                                <!--  Date / Time  -->
                                 <sfgrid:TreeGridDateColumn common:StarRatio.ColumnRatio="1"
-                                                           DisplayDateFormat="dd/MM/yyyy"
-                                                           HeaderText="Date"
+                                                           DisplayDateFormat="dd/MM/yy HH:mm"
+                                                           HeaderText="Date / Time"
                                                            IsReadOnly="True"
                                                            MappingName="Date"
+                                                           MaximumWidth="125"
                                                            MinimumWidth="100"
                                                            ShowToolTip="True"
                                                            TextTrimming="CharacterEllipsis"
                                                            TextWrapping="NoWrap" />
 
-                                <!--  Time  -->
-                                <sfgrid:TreeGridTimeColumn common:StarRatio.ColumnRatio="1"
-                                                           DisplayTimeFormat="HH:mm"
-                                                           HeaderText="Time"
-                                                           IsReadOnly="True"
-                                                           MappingName="Time"
-                                                           MinimumWidth="80"
-                                                           ShowToolTip="True"
-                                                           TextTrimming="CharacterEllipsis"
-                                                           TextWrapping="NoWrap" />
-
-                                <!--  Size  -->
-                                <sfgrid:TreeGridNumericColumn common:StarRatio.ColumnRatio="1"
-                                                              DisplayNumberFormat="0.# KB"
-                                                              HeaderText="File Size"
-                                                              IsReadOnly="True"
-                                                              MappingName="FileSizeKb"
-                                                              MinimumWidth="80"
-                                                              ShowToolTip="True"
-                                                              TextTrimming="CharacterEllipsis"
-                                                              TextWrapping="NoWrap" />
                             </sfgrid:SfTreeGrid.Columns>
                         </sfgrid:SfTreeGrid>
                     </dev:Case>
