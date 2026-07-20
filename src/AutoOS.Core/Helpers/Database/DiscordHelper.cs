@@ -255,11 +255,11 @@ public static partial class DiscordHelper
 			if (process.MainWindowHandle != IntPtr.Zero)
 			{
 				PInvoke.PostMessage((HWND)process.MainWindowHandle, PInvoke.WM_CLOSE, default(WPARAM), default(LPARAM));
-				process.WaitForExit();
+				process.WaitForExit(500);
+				try { process.Kill(); } catch { }
+
 			}
 		}
-
-		await Task.Delay(500);
 	}
 
 	public static List<DiscordAccountInfo> GetAccountData(string levelDbPath, string origin = null)

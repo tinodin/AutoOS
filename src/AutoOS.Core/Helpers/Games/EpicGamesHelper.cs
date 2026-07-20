@@ -29,7 +29,7 @@ public static partial class EpicGamesHelper
 
 	private static readonly HttpClient httpClient = new();
 	private static readonly HttpClient loginClient = new();
-	private static readonly TlsClient tlsClient = new();
+	private static readonly Lazy<TlsClient> tlsClient = new(() => new TlsClient());
 
 	private const string ClientId = "34a02cf8f4414e29b15921876da36f9a";
 
@@ -1022,7 +1022,7 @@ public static partial class EpicGamesHelper
 					if (!Directory.Exists(installLocation))
 						return;
 
-					var offerResponse = await tlsClient.PostAsync(
+					var offerResponse = await tlsClient.Value.PostAsync(
 						"https://store.epicgames.com/graphql",
 						new JsonObject
 						{
@@ -1140,7 +1140,7 @@ public static partial class EpicGamesHelper
 					{
 						try
 						{
-							var ratingResponse = await tlsClient.PostAsync(
+							var ratingResponse = await tlsClient.Value.PostAsync(
 								"https://store.epicgames.com/graphql",
 								new JsonObject
 								{
@@ -1164,7 +1164,7 @@ public static partial class EpicGamesHelper
 					{
 						try
 						{
-							var productOfferResponse = await tlsClient.GetAsync(productOfferUrl);
+							var productOfferResponse = await tlsClient.Value.GetAsync(productOfferUrl);
 							productOfferData = productOfferResponse.IsSuccess ? JsonNode.Parse(productOfferResponse.Body) : JsonNode.Parse("{}");
 						}
 						catch (Exception ex)
@@ -1177,7 +1177,7 @@ public static partial class EpicGamesHelper
 					{
 						try
 						{
-							var ageRatingResponse = await tlsClient.GetAsync(ageRatingUrl);
+							var ageRatingResponse = await tlsClient.Value.GetAsync(ageRatingUrl);
 							ageRatingData = ageRatingResponse.IsSuccess ? JsonNode.Parse(ageRatingResponse.Body) : JsonNode.Parse("{}");
 						}
 						catch (Exception ex)
@@ -1242,7 +1242,7 @@ public static partial class EpicGamesHelper
 					if (screenshots.Count == 0 && !string.IsNullOrEmpty(productSlug))
 					{
 						var cmsUrl = $"https://store-content-ipv4.ak.epicgames.com/api/en-US/content/products/{productSlug}";
-						var cmsResponse = await tlsClient.GetAsync(cmsUrl).ConfigureAwait(false);
+						var cmsResponse = await tlsClient.Value.GetAsync(cmsUrl).ConfigureAwait(false);
 						if (cmsResponse.IsSuccess)
 						{
 							var cmsJson = JsonNode.Parse(cmsResponse.Body);

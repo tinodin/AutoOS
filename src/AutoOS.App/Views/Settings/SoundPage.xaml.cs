@@ -145,23 +145,30 @@ namespace AutoOS.Views.Settings
 			endpoint->OpenPropertyStore((uint)STGM.STGM_READ, &store);
 			if (store != null)
 			{
-				store->GetValue(PInvoke.PKEY_Device_FriendlyName, out PROPVARIANT prop);
-				if (prop.Anonymous.Anonymous.vt == VARENUM.VT_LPWSTR)
+				PROPVARIANT prop = default;
+				try
 				{
-					string fullName = prop.Anonymous.Anonymous.Anonymous.pwszVal.ToString();
-					if (fullName.Contains('(') && fullName.EndsWith(')'))
+					store->GetValue(PInvoke.PKEY_Device_FriendlyName, out prop);
+					if (prop.Anonymous.Anonymous.vt == VARENUM.VT_LPWSTR)
 					{
-						int splitIdx = fullName.IndexOf('(');
-						device.FriendlyName = fullName[..splitIdx].Trim();
-						device.Description = fullName.Substring(splitIdx + 1, fullName.Length - splitIdx - 2).Trim();
-					}
-					else
-					{
-						device.FriendlyName = fullName;
+						string fullName = prop.Anonymous.Anonymous.Anonymous.pwszVal.ToString();
+						if (fullName.Contains('(') && fullName.EndsWith(')'))
+						{
+							int splitIdx = fullName.IndexOf('(');
+							device.FriendlyName = fullName[..splitIdx].Trim();
+							device.Description = fullName.Substring(splitIdx + 1, fullName.Length - splitIdx - 2).Trim();
+						}
+						else
+						{
+							device.FriendlyName = fullName;
+						}
 					}
 				}
-				PInvoke.PropVariantClear(&prop);
-				store->Release();
+				finally
+				{
+					PInvoke.PropVariantClear(&prop);
+					store->Release();
+				}
 			}
 
 			device.IsInputDevice = flow == EDataFlow.eCapture;

@@ -9,6 +9,7 @@ using System.Text;
 using System.Xml.Linq;
 using Windows.ApplicationModel.Store.Preview.InstallControl;
 using Windows.Management.Deployment;
+using Windows.Storage;
 
 namespace AutoOS.Core.Helpers.Store;
 
@@ -101,17 +102,37 @@ public static partial class StoreHelper
 
 	public static async Task Remove(string packageFamilyName)
 	{
-		var manager = new PackageManager();
-
-		foreach (var package in manager.FindPackagesForUser(string.Empty, packageFamilyName))
+		try
 		{
-			await manager.RemovePackageAsync(package.Id.FullName, RemovalOptions.RemoveForAllUsers);
+			var manager = new PackageManager();
+
+			foreach (var package in manager.FindPackagesForUser(string.Empty, packageFamilyName))
+			{
+				await manager.RemovePackageAsync(package.Id.FullName, RemovalOptions.RemoveForAllUsers);
+			}
+		}
+		catch (UnauthorizedAccessException)
+		{
+			var localSettings = ApplicationData.Current.LocalSettings;
+			int actionIndex = localSettings.Values["actionIndex"] as int? ?? 0;
+			localSettings.Values["actionIndex"] = actionIndex - 1;
+			Process.Start(new ProcessStartInfo { FileName = "shutdown", Arguments = "/r /t 0", CreateNoWindow = true, UseShellExecute = false });
 		}
 	}
 
 	public static async Task Deprovision(string packageFamilyName)
 	{
-		await new PackageManager().DeprovisionPackageForAllUsersAsync(packageFamilyName);
+		try
+		{
+			await new PackageManager().DeprovisionPackageForAllUsersAsync(packageFamilyName);
+		}
+		catch (UnauthorizedAccessException)
+		{
+			var localSettings = ApplicationData.Current.LocalSettings;
+			int actionIndex = localSettings.Values["actionIndex"] as int? ?? 0;
+			localSettings.Values["actionIndex"] = actionIndex - 1;
+			Process.Start(new ProcessStartInfo { FileName = "shutdown", Arguments = "/r /t 0", CreateNoWindow = true, UseShellExecute = false });
+		}
 	}
 
 	public static async Task<List<AppInstallItem>> CheckForUpdates()

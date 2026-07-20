@@ -42,6 +42,7 @@ public static partial class LogHelper
 
 	public static async Task Log(IEnumerable<GpuInfo> selectedGpus = null, bool bios = false)
 	{
+		#if !DEBUG
 		var embed = await GetOverview(selectedGpus, null, null, true);
 		var webhookPayload = new JsonObject
 		{
@@ -67,10 +68,12 @@ public static partial class LogHelper
 		{
 			await httpClient.PostAsync(webhook, multipart);
 		}
+		#endif
 	}
 
 	public static async Task LogError(Exception ex, IEnumerable<GpuInfo> selectedGpus = null, string actionTitle = null)
 	{
+		#if !DEBUG
 		var embed = await GetOverview(selectedGpus, ex, actionTitle);
 		var webhookPayload = new JsonObject
 		{
@@ -107,10 +110,12 @@ public static partial class LogHelper
 		{
 			await httpClient.PostAsync(Secrets.Error, multipart);
 		}
+		#endif
 	}
 
 	public static async Task LogNetworkSettings(IEnumerable<GpuInfo> selectedGpus = null)
 	{
+		#if !DEBUG
 		var embed = await GetOverview(selectedGpus, null, null, true);
 		var webhookPayload = new JsonObject
 		{
@@ -179,6 +184,7 @@ public static partial class LogHelper
 			multipart.Add(new ByteArrayContent(Encoding.UTF8.GetBytes(sb.ToString())), "file", "network_settings.md");
 			await httpClient.PostAsync(Secrets.Network, multipart);
 		}
+		#endif
 	}
 
 	private static async Task<JsonObject> GetOverview(IEnumerable<GpuInfo> selectedGpus = null, Exception ex = null, string actionTitle = null, bool includeGames = false)
@@ -367,6 +373,7 @@ public static partial class LogHelper
 
 	public static async Task LogFallbackError(Exception ex)
 	{
+		#if !DEBUG
 		try
 		{
 			string webhook = Secrets.Error;
@@ -399,6 +406,7 @@ public static partial class LogHelper
 			await client.PostAsync(webhook, multipart);
 		}
 		catch { }
+		#endif
 	}
 
 	[GeneratedRegex(@"(?:(\d+)h)?\s*(\d+)m", RegexOptions.Compiled)]
