@@ -31,7 +31,13 @@ internal sealed class PresentMonRecorder
 		if (_stopRequested)
 			return PresentMonRecordingResult.Stopped;
 
-		string outputPath = Path.Combine(outputDirectory, $"PresentMon_Recording_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+		int recordingNumber = 1;
+		string outputPath;
+		do
+		{
+			outputPath = Path.Combine(outputDirectory, $"Recording-{recordingNumber++}.csv");
+		}
+		while (File.Exists(outputPath));
 		var startInfo = new ProcessStartInfo
 		{
 			FileName = presentMonPath,

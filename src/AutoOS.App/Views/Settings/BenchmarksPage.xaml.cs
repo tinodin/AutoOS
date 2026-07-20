@@ -42,6 +42,7 @@ public sealed partial class BenchmarksPage : Page
 	private readonly Dictionary<(string path, DateTime lastWriteUtc), Dictionary<string, double>> _averagesCache = [];
 	private readonly Dictionary<(string path, DateTime lastWriteUtc, string metric), double[]> _sortedFpsCache = [];
 	private readonly Dictionary<(string path, DateTime lastWriteUtc, string metric), (double stepwiseRelSD, double cv, double rmssd, double stdDev)> _statsCache = [];
+	private readonly Dictionary<string, ChartPresentation> _analysisPresentationCache = new(StringComparer.OrdinalIgnoreCase);
 	private readonly Lock _cacheLock = new();
 	public BenchmarksPage()
 	{
@@ -575,7 +576,13 @@ public sealed partial class BenchmarksPage : Page
 			}.ShowAsync();
 			return;
 		}
-		string outPath = Path.Combine(RecordingsDirectory, $"PresentMon_Aggregated_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+		int aggregateNumber = 1;
+		string outPath;
+		do
+		{
+			outPath = Path.Combine(RecordingsDirectory, $"Aggregate-{aggregateNumber++}.csv");
+		}
+		while (File.Exists(outPath));
 		var fileData = new List<(List<string[]> Rows, List<string> HeaderList)>();
 		foreach (var item in selected)
 		{
@@ -753,6 +760,16 @@ public sealed partial class BenchmarksPage : Page
 			.Where(entry => entry.lastWriteUtc != DateTime.MinValue)];
 		if (loaded.Count == 0)
 			return null;
+		string presentationCacheKey = string.Join(
+			"|",
+			loaded.Select(entry =>
+				$"{entry.item.FilePath}\u001f{entry.lastWriteUtc.Ticks}")) +
+			$"|\u001e{metric}";
+		lock (_cacheLock)
+		{
+			if (_analysisPresentationCache.TryGetValue(presentationCacheKey, out ChartPresentation cached))
+				return cached;
+		}
 		if (!loaded.Any(entry =>
 			HasMetricColumn(entry.item.FilePath, entry.lastWriteUtc, "MsBetweenDisplayChange") ||
 			HasMetricColumn(entry.item.FilePath, entry.lastWriteUtc, "MsBetweenPresents")))
@@ -766,11 +783,12 @@ public sealed partial class BenchmarksPage : Page
 		for (int recordingIndex = 0; recordingIndex < loaded.Count; recordingIndex++)
 		{
 			var (item, lastWriteUtc) = loaded[recordingIndex];
+			LoadAnalysisColumns(item.FilePath, lastWriteUtc);
 			LoadMetricColumn(item.FilePath, lastWriteUtc, metricColumn, out var rawMetricValues);
 			List<double> metricValues = [.. rawMetricValues];
 			if (metricValues.Count > 0)
 			{
-				const int maxPoints = 800;
+				const int maxPoints = 300;
 				int step = Math.Max(1, metricValues.Count / maxPoints);
 				var points = new List<(int x, double y)>(
 					Math.Min(maxPoints, (metricValues.Count + step - 1) / step));
@@ -798,8 +816,11 @@ public sealed partial class BenchmarksPage : Page
 				CreateFpsStats(displayedFrameTimes),
 				CreateFpsStats(renderedFrameTimes)));
 		}
-		return BuildChartPresentation(
+		ChartPresentation presentation = BuildChartPresentation(
 			new AnalysisModel(metricSeries, fpsStatsSeries));
+		lock (_cacheLock)
+			_analysisPresentationCache[presentationCacheKey] = presentation;
+		return presentation;
 
 		static Dictionary<string, double> CreateFpsStats(List<double> frameTimes)
 		{
@@ -1362,6 +1383,65 @@ public sealed partial class BenchmarksPage : Page
 			}
 			values = list;
 			return list.Count > 0;
+		}
+		catch
+		{
+			return false;
+		}
+	}
+	private bool LoadAnalysisColumns(string filePath, DateTime lastWriteUtc)
+	{
+		if (!GetHeaderIndex(filePath, lastWriteUtc, out var headerIndex))
+			return false;
+
+		string[] metrics =
+		[
+			"MsBetweenDisplayChange",
+			"MsBetweenPresents",
+			"MsGPUBusy",
+			"MsUntilDisplayed"
+		];
+		List<(string Metric, int Index, List<double> Values)> columns = [];
+		foreach (string metric in metrics)
+		{
+			if (ResolveHeaderIndex(headerIndex, metric, out int index))
+				columns.Add((metric, index, new List<double>(4096)));
+		}
+		if (columns.Count == 0)
+			return false;
+
+		lock (_cacheLock)
+		{
+			if (columns.All(column =>
+				_columnCache.ContainsKey((filePath, lastWriteUtc, column.Metric))))
+				return true;
+		}
+
+		try
+		{
+			using var reader = new StreamReader(filePath);
+			_ = reader.ReadLine();
+			while (!reader.EndOfStream)
+			{
+				string line = reader.ReadLine();
+				if (string.IsNullOrWhiteSpace(line))
+					continue;
+				List<string> values = ParseCsvLine(line);
+				for (int index = 0; index < columns.Count; index++)
+				{
+					var column = columns[index];
+					if (column.Index < values.Count &&
+						TryParseDouble(values[column.Index], out double value))
+						column.Values.Add(value);
+				}
+			}
+
+			lock (_cacheLock)
+			{
+				foreach (var column in columns)
+					_columnCache[(filePath, lastWriteUtc, column.Metric)] = column.Values;
+			}
+			return true;
 		}
 		catch
 		{
