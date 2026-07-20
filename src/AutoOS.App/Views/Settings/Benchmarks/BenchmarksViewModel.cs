@@ -292,36 +292,20 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 	public bool ShowFpsChart2
 	{
 		get => _showFpsChart2;
-		set
-		{
-			if (SetProperty(ref _showFpsChart2, value))
-				OnPropertyChanged(nameof(FpsChart2Visibility));
-		}
+		set => SetProperty(ref _showFpsChart2, value);
 	}
 
 	public bool ShowRenderedFps
 	{
 		get => _showRenderedFps;
-		set
-		{
-			if (SetProperty(ref _showRenderedFps, value))
-				OnPropertyChanged(nameof(RenderedFpsVisibility));
-		}
+		set => SetProperty(ref _showRenderedFps, value);
 	}
 
 	public bool ShowRenderedFpsChart2
 	{
 		get => _showRenderedFpsChart2;
-		set
-		{
-			if (SetProperty(ref _showRenderedFpsChart2, value))
-				OnPropertyChanged(nameof(RenderedFpsChart2Visibility));
-		}
+		set => SetProperty(ref _showRenderedFpsChart2, value);
 	}
-
-	public Visibility FpsChart2Visibility => ShowFpsChart2 ? Visibility.Visible : Visibility.Collapsed;
-	public Visibility RenderedFpsVisibility => ShowRenderedFps ? Visibility.Visible : Visibility.Collapsed;
-	public Visibility RenderedFpsChart2Visibility => ShowRenderedFpsChart2 ? Visibility.Visible : Visibility.Collapsed;
 
 	public bool ShowMetricChart2
 	{

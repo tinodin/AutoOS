@@ -846,7 +846,7 @@ public sealed partial class BenchmarksPage : Page
 	}
 	private static ChartPresentation BuildChartPresentation(AnalysisModel model)
 	{
-		string[] order = ["P99.9", "P99", "P95", "P90", "P50", "P10", "P5", "P1", "P0.1", "Mean"];
+		string[] order = ["Mean", "P0.1", "P1", "P5", "P10", "P50", "P90", "P95", "P99", "P99.9"];
 		List<BarPoint> displayedFpsBars1 = [];
 		List<BarPoint> renderedFpsBars1 = [];
 		List<BarPoint> displayedFpsBars2 = [];
