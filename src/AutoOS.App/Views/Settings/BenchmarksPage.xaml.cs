@@ -293,13 +293,15 @@ public sealed partial class BenchmarksPage : Page
 			foreach (var file in csvFiles)
 			{
 				var info = new FileInfo(file);
-				var (process, durationSeconds, sourceFileNames) = ReadRecordingMetadata(file, info);
+				var (process, presentationMode, durationSeconds, sourceFileNames) =
+					ReadRecordingMetadata(file, info);
 				var recording = new RecordingItem
 				{
 					FilePath = file,
 					FileName = info.Name,
 					Title = Path.GetFileNameWithoutExtension(info.Name),
 					Process = process,
+					PresentationMode = presentationMode,
 					DurationSeconds = durationSeconds,
 					Date = info.LastWriteTime,
 					Time = info.LastWriteTime.TimeOfDay,
@@ -330,11 +332,16 @@ public sealed partial class BenchmarksPage : Page
 		}
 		ViewModel.SetSelectedRecordings(GetSelectedRecordings());
 	}
-	private static (string Process, double DurationSeconds, List<string> SourceFileNames) ReadRecordingMetadata(
+	private static (
+		string Process,
+		string PresentationMode,
+		double DurationSeconds,
+		List<string> SourceFileNames) ReadRecordingMetadata(
 		string filePath,
 		FileInfo info)
 	{
 		string process = Path.GetFileNameWithoutExtension(info.Name);
+		string presentationMode = string.Empty;
 		double durationSeconds = Math.Max(0, (info.LastWriteTime - info.CreationTime).TotalSeconds);
 		List<string> sourceFileNames = [];
 		try
@@ -343,7 +350,7 @@ public sealed partial class BenchmarksPage : Page
 			var headerLine = reader.ReadLine();
 			var firstLine = reader.ReadLine();
 			if (string.IsNullOrWhiteSpace(headerLine) || string.IsNullOrWhiteSpace(firstLine))
-				return (process, durationSeconds, sourceFileNames);
+				return (process, presentationMode, durationSeconds, sourceFileNames);
 			var headers = ParseCsvLine(headerLine);
 			var firstValues = ParseCsvLine(firstLine);
 			string lastLine = firstLine;
@@ -364,6 +371,14 @@ public sealed partial class BenchmarksPage : Page
 			int applicationIndex = headers.FindIndex(h => string.Equals(h, "Application", StringComparison.OrdinalIgnoreCase));
 			if (applicationIndex >= 0 && applicationIndex < firstValues.Count && !string.IsNullOrWhiteSpace(firstValues[applicationIndex]))
 				process = firstValues[applicationIndex];
+			int presentModeIndex = headers.FindIndex(header =>
+				string.Equals(header, "PresentMode", StringComparison.OrdinalIgnoreCase));
+			if (presentModeIndex >= 0 &&
+				presentModeIndex < firstValues.Count &&
+				!string.IsNullOrWhiteSpace(firstValues[presentModeIndex]))
+			{
+				presentationMode = firstValues[presentModeIndex];
+			}
 			bool hasCsvDuration = false;
 			int aggregateDurationIndex = headers.FindIndex(h => string.Equals(h, AggregateDurationColumn, StringComparison.OrdinalIgnoreCase));
 			if (aggregateDurationIndex >= 0 && aggregateDurationIndex < firstValues.Count &&
@@ -400,7 +415,7 @@ public sealed partial class BenchmarksPage : Page
 		catch
 		{
 		}
-		return (process, durationSeconds, sourceFileNames);
+		return (process, presentationMode, durationSeconds, sourceFileNames);
 	}
 	private async void RecordingsTreeGrid_SelectionChanged(object sender, Syncfusion.UI.Xaml.Grids.GridSelectionChangedEventArgs e)
 	{

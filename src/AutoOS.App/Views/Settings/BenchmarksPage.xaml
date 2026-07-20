@@ -291,6 +291,16 @@
                                                            TextTrimming="CharacterEllipsis"
                                                            TextWrapping="NoWrap" />
 
+                                <!--  Presentation Mode  -->
+                                <sfgrid:TreeGridTextColumn common:StarRatio.ColumnRatio="2"
+                                                           HeaderText="Presentation Mode"
+                                                           IsReadOnly="True"
+                                                           MappingName="PresentationMode"
+                                                           MinimumWidth="120"
+                                                           ShowToolTip="True"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           TextWrapping="NoWrap" />
+
                                 <!--  Duration  -->
                                 <sfgrid:TreeGridNumericColumn common:StarRatio.ColumnRatio="1"
                                                               DisplayNumberFormat="0.# s"
@@ -411,7 +421,6 @@
                                             <chart:ColumnSeries x:Name="FpsChart2Series"
                                                                 EnableAnimation="True"
                                                                 Fill="{x:Bind ViewModel.FpsChartColor2, Mode=OneWay}"
-                                                                IsSeriesVisible="{x:Bind ViewModel.ShowFpsChart2, Mode=OneWay}"
                                                                 IsVisibleOnLegend="{x:Bind ViewModel.ShowFpsChart2, Mode=OneWay}"
                                                                 ItemsSource="{x:Bind ViewModel.FpsBarSeries2, Mode=OneWay}"
                                                                 Label="{x:Bind ViewModel.FpsChartLabel2, Mode=OneWay}"
@@ -467,7 +476,6 @@
                                             <chart:LineSeries x:Name="MetricChart2Series"
                                                               EnableAnimation="True"
                                                               Fill="{x:Bind ViewModel.FpsChartColor2, Mode=OneWay}"
-                                                              IsSeriesVisible="{x:Bind ViewModel.ShowMetricChart2, Mode=OneWay}"
                                                               IsVisibleOnLegend="{x:Bind ViewModel.ShowMetricChart2, Mode=OneWay}"
                                                               ItemsSource="{x:Bind ViewModel.MetricLineSeries2, Mode=OneWay}"
                                                               Label="{x:Bind ViewModel.MetricChartLabel2, Mode=OneWay}"

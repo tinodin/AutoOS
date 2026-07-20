@@ -349,6 +349,7 @@ public sealed partial class RecordingItem : ObservableObject
 	private string _fileName = string.Empty;
 	private string _title = string.Empty;
 	private string _process = string.Empty;
+	private string _presentationMode = string.Empty;
 	private double _durationSeconds;
 	private DateTimeOffset _date;
 	private TimeSpan _time;
@@ -378,6 +379,12 @@ public sealed partial class RecordingItem : ObservableObject
 	{
 		get => _process;
 		set => SetProperty(ref _process, value);
+	}
+
+	public string PresentationMode
+	{
+		get => _presentationMode;
+		set => SetProperty(ref _presentationMode, value);
 	}
 
 	public double DurationSeconds
