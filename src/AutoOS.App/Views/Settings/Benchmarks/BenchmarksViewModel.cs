@@ -162,7 +162,6 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 	public bool IsAggregateEnabled => _selectedRecordingCount > 1 && _selectedRecordingsHaveSameProcess;
 	public bool IsAnalysisToolbarEnabled => _selectedRecordingCount is > 0 and <= 2;
 	public bool IsSecondColorPickerEnabled => _selectedRecordingCount == 2;
-	public bool IsRecordingBColumnHidden => _selectedRecordingCount != 2;
 
 	public void SetRecordableProcesses(IEnumerable<string> processNames)
 	{
@@ -293,20 +292,36 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 	public bool ShowFpsChart2
 	{
 		get => _showFpsChart2;
-		set => SetProperty(ref _showFpsChart2, value);
+		set
+		{
+			if (SetProperty(ref _showFpsChart2, value))
+				OnPropertyChanged(nameof(FpsChart2Visibility));
+		}
 	}
 
 	public bool ShowRenderedFps
 	{
 		get => _showRenderedFps;
-		set => SetProperty(ref _showRenderedFps, value);
+		set
+		{
+			if (SetProperty(ref _showRenderedFps, value))
+				OnPropertyChanged(nameof(RenderedFpsVisibility));
+		}
 	}
 
 	public bool ShowRenderedFpsChart2
 	{
 		get => _showRenderedFpsChart2;
-		set => SetProperty(ref _showRenderedFpsChart2, value);
+		set
+		{
+			if (SetProperty(ref _showRenderedFpsChart2, value))
+				OnPropertyChanged(nameof(RenderedFpsChart2Visibility));
+		}
 	}
+
+	public Visibility FpsChart2Visibility => ShowFpsChart2 ? Visibility.Visible : Visibility.Collapsed;
+	public Visibility RenderedFpsVisibility => ShowRenderedFps ? Visibility.Visible : Visibility.Collapsed;
+	public Visibility RenderedFpsChart2Visibility => ShowRenderedFpsChart2 ? Visibility.Visible : Visibility.Collapsed;
 
 	public bool ShowMetricChart2
 	{
@@ -386,7 +401,6 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 		OnPropertyChanged(nameof(IsAggregateEnabled));
 		OnPropertyChanged(nameof(IsAnalysisToolbarEnabled));
 		OnPropertyChanged(nameof(IsSecondColorPickerEnabled));
-		OnPropertyChanged(nameof(IsRecordingBColumnHidden));
 	}
 
 	public void ClearAnalysis()

@@ -346,11 +346,58 @@
                     <dev:Case Value="Content">
                         <dev:SwitchPresenter Value="{x:Bind ViewModel.AnalysisChartType, Mode=OneWay}">
                             <dev:Case Value="Bar">
-                                <chart:SfCartesianChart x:Name="FpsChart"
-                                                        IsTransposed="True">
-                                        <chart:SfCartesianChart.Legend>
-                                            <chart:ChartLegend />
-                                        </chart:SfCartesianChart.Legend>
+                                <Grid RowSpacing="4">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+                                    <StackPanel HorizontalAlignment="Center"
+                                                Orientation="Horizontal"
+                                                Spacing="16">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <Border Width="12"
+                                                    Height="12"
+                                                    VerticalAlignment="Center"
+                                                    Background="{x:Bind ViewModel.FpsChartColor, Mode=OneWay}" />
+                                            <TextBlock VerticalAlignment="Center"
+                                                       Text="{x:Bind ViewModel.FpsChartLabel, Mode=OneWay}" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal"
+                                                    Spacing="6"
+                                                    Visibility="{x:Bind ViewModel.RenderedFpsVisibility, Mode=OneWay}">
+                                            <Border Width="12" Height="12" VerticalAlignment="Center">
+                                                <Border.Background>
+                                                    <SolidColorBrush Color="{x:Bind ViewModel.FpsRenderedColor, Mode=OneWay}" />
+                                                </Border.Background>
+                                            </Border>
+                                            <TextBlock VerticalAlignment="Center"
+                                                       Text="{x:Bind ViewModel.FpsRenderedChartLabel, Mode=OneWay}" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal"
+                                                    Spacing="6"
+                                                    Visibility="{x:Bind ViewModel.FpsChart2Visibility, Mode=OneWay}">
+                                            <Border Width="12"
+                                                    Height="12"
+                                                    VerticalAlignment="Center"
+                                                    Background="{x:Bind ViewModel.FpsChartColor2, Mode=OneWay}" />
+                                            <TextBlock VerticalAlignment="Center"
+                                                       Text="{x:Bind ViewModel.FpsChartLabel2, Mode=OneWay}" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal"
+                                                    Spacing="6"
+                                                    Visibility="{x:Bind ViewModel.RenderedFpsChart2Visibility, Mode=OneWay}">
+                                            <Border Width="12" Height="12" VerticalAlignment="Center">
+                                                <Border.Background>
+                                                    <SolidColorBrush Color="{x:Bind ViewModel.FpsRenderedColor2, Mode=OneWay}" />
+                                                </Border.Background>
+                                            </Border>
+                                            <TextBlock VerticalAlignment="Center"
+                                                       Text="{x:Bind ViewModel.FpsRenderedChartLabel2, Mode=OneWay}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <chart:SfCartesianChart x:Name="FpsChart"
+                                                            Grid.Row="1"
+                                                            IsTransposed="True">
                                         <chart:SfCartesianChart.XAxes>
                                             <chart:CategoryAxis ShowMajorGridLines="False" />
                                         </chart:SfCartesianChart.XAxes>
@@ -362,21 +409,6 @@
                                                                  ShowMajorGridLines="True" />
                                         </chart:SfCartesianChart.YAxes>
                                         <chart:SfCartesianChart.Series>
-                                            <chart:ColumnSeries x:Name="FpsChart1Series"
-                                                                EnableAnimation="True"
-                                                                Fill="{x:Bind ViewModel.FpsChartColor, Mode=OneWay}"
-                                                                ItemsSource="{x:Bind ViewModel.FpsBarSeries, Mode=OneWay}"
-                                                                Label="{x:Bind ViewModel.FpsChartLabel, Mode=OneWay}"
-                                                                SegmentSpacing="0.2"
-                                                                ShowDataLabels="True"
-                                                                XBindingPath="Label"
-                                                                YBindingPath="Value">
-                                                <chart:ColumnSeries.DataLabelSettings>
-                                                    <chart:CartesianDataLabelSettings Format="{x:Bind ViewModel.FpsChartLabelFormat, Mode=OneWay}"
-                                                                                      Position="Outer"
-                                                                                      UseSeriesPalette="False" />
-                                                </chart:ColumnSeries.DataLabelSettings>
-                                            </chart:ColumnSeries>
                                             <chart:ColumnSeries x:Name="FpsRenderedChart1Series"
                                                                 EnableAnimation="True"
                                                                 IsVisibleOnLegend="{x:Bind ViewModel.ShowRenderedFps, Mode=OneWay}"
@@ -395,14 +427,13 @@
                                                                                       UseSeriesPalette="False" />
                                                 </chart:ColumnSeries.DataLabelSettings>
                                             </chart:ColumnSeries>
-                                            <chart:ColumnSeries x:Name="FpsChart2Series"
+                                            <chart:ColumnSeries x:Name="FpsChart1Series"
                                                                 EnableAnimation="True"
-                                                                Fill="{x:Bind ViewModel.FpsChartColor2, Mode=OneWay}"
-                                                                IsVisibleOnLegend="{x:Bind ViewModel.ShowFpsChart2, Mode=OneWay}"
-                                                                ItemsSource="{x:Bind ViewModel.FpsBarSeries2, Mode=OneWay}"
-                                                                Label="{x:Bind ViewModel.FpsChartLabel2, Mode=OneWay}"
+                                                                Fill="{x:Bind ViewModel.FpsChartColor, Mode=OneWay}"
+                                                                ItemsSource="{x:Bind ViewModel.FpsBarSeries, Mode=OneWay}"
+                                                                Label="{x:Bind ViewModel.FpsChartLabel, Mode=OneWay}"
                                                                 SegmentSpacing="0.2"
-                                                                ShowDataLabels="{x:Bind ViewModel.ShowFpsChart2, Mode=OneWay}"
+                                                                ShowDataLabels="True"
                                                                 XBindingPath="Label"
                                                                 YBindingPath="Value">
                                                 <chart:ColumnSeries.DataLabelSettings>
@@ -429,8 +460,25 @@
                                                                                       UseSeriesPalette="False" />
                                                 </chart:ColumnSeries.DataLabelSettings>
                                             </chart:ColumnSeries>
+                                            <chart:ColumnSeries x:Name="FpsChart2Series"
+                                                                EnableAnimation="True"
+                                                                Fill="{x:Bind ViewModel.FpsChartColor2, Mode=OneWay}"
+                                                                IsVisibleOnLegend="{x:Bind ViewModel.ShowFpsChart2, Mode=OneWay}"
+                                                                ItemsSource="{x:Bind ViewModel.FpsBarSeries2, Mode=OneWay}"
+                                                                Label="{x:Bind ViewModel.FpsChartLabel2, Mode=OneWay}"
+                                                                SegmentSpacing="0.2"
+                                                                ShowDataLabels="{x:Bind ViewModel.ShowFpsChart2, Mode=OneWay}"
+                                                                XBindingPath="Label"
+                                                                YBindingPath="Value">
+                                                <chart:ColumnSeries.DataLabelSettings>
+                                                    <chart:CartesianDataLabelSettings Format="{x:Bind ViewModel.FpsChartLabelFormat, Mode=OneWay}"
+                                                                                      Position="Outer"
+                                                                                      UseSeriesPalette="False" />
+                                                </chart:ColumnSeries.DataLabelSettings>
+                                            </chart:ColumnSeries>
                                         </chart:SfCartesianChart.Series>
-                                </chart:SfCartesianChart>
+                                    </chart:SfCartesianChart>
+                                </Grid>
                             </dev:Case>
                                 <dev:Case Value="Line">
                                     <chart:SfCartesianChart>
@@ -581,22 +629,19 @@
                             <sfgrid:SfTreeGrid.Columns>
 
                                 <!--  Metric  -->
-                                <sfgrid:TreeGridTextColumn common:StarRatio.ColumnRatio="4"
-                                                           HeaderText="Metric"
+                                <sfgrid:TreeGridTextColumn HeaderText="Metric"
                                                            MappingName="Metric" />
 
                                 <!--  Recording A  -->
                                 <sfgrid:TreeGridTextColumn x:Name="RecordingAColumn"
-                                                           common:StarRatio.ColumnRatio="3"
                                                            CellStyleSelector="{StaticResource RecordingACellStyleSelector}"
                                                            HeaderText="{x:Bind ViewModel.RecordingAHeader, Mode=OneWay}"
                                                            MappingName="RecordingA" />
 
                                 <!--  Recording B  -->
-                                <sfgrid:TreeGridTextColumn common:StarRatio.ColumnRatio="3"
+                                <sfgrid:TreeGridTextColumn x:Name="ResultsRecordingBColumn"
                                                            CellStyleSelector="{StaticResource RecordingBCellStyleSelector}"
                                                            HeaderText="{x:Bind ViewModel.RecordingBHeader, Mode=OneWay}"
-                                                           IsHidden="{x:Bind ViewModel.IsRecordingBColumnHidden, Mode=OneWay}"
                                                            MappingName="RecordingB" />
                             </sfgrid:SfTreeGrid.Columns>
                         </sfgrid:SfTreeGrid>

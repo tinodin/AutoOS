@@ -1037,6 +1037,12 @@ public sealed partial class BenchmarksPage : Page
 		if (ViewModel.ActiveTab != "Results")
 			return;
 		var selected = GetSelectedRecordings();
+		bool showRecordingB = selected.Count == 2;
+		bool containsRecordingB = ResultsTreeGrid.Columns.Contains(ResultsRecordingBColumn);
+		if (showRecordingB && !containsRecordingB)
+			ResultsTreeGrid.Columns.Add(ResultsRecordingBColumn);
+		else if (!showRecordingB && containsRecordingB)
+			ResultsTreeGrid.Columns.Remove(ResultsRecordingBColumn);
 		if (selected.Count == 0)
 		{
 			ViewModel.ResultsRows.Clear();
