@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 
 namespace AutoOS.Views.Settings.Benchmarks;
@@ -233,7 +232,7 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 			if (!SetProperty(ref _fpsColor, value))
 				return;
 			FpsChartColor = new SolidColorBrush(value);
-			FpsRenderedColor = CreateRenderedColor(value);
+			FpsRenderedColor = DevWinUI.ColorHelper.GetInterpolatedColor(0.35, value, Colors.White);
 		}
 	}
 
@@ -245,14 +244,8 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 			if (!SetProperty(ref _fpsColor2, value))
 				return;
 			FpsChartColor2 = new SolidColorBrush(value);
-			FpsRenderedColor2 = CreateRenderedColor(value);
+			FpsRenderedColor2 = DevWinUI.ColorHelper.GetInterpolatedColor(0.35, value, Colors.White);
 		}
-	}
-
-	public SolidColorBrush FpsChartColor
-	{
-		get => _fpsChartColor;
-		private set => SetProperty(ref _fpsChartColor, value);
 	}
 
 	public Windows.UI.Color FpsRenderedColor
@@ -261,16 +254,22 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 		private set => SetProperty(ref _fpsRenderedColor, value);
 	}
 
-	public SolidColorBrush FpsChartColor2
+	public SolidColorBrush FpsChartColor
 	{
-		get => _fpsChartColor2;
-		private set => SetProperty(ref _fpsChartColor2, value);
+		get => _fpsChartColor;
+		private set => SetProperty(ref _fpsChartColor, value);
 	}
 
 	public Windows.UI.Color FpsRenderedColor2
 	{
 		get => _fpsRenderedColor2;
 		private set => SetProperty(ref _fpsRenderedColor2, value);
+	}
+
+	public SolidColorBrush FpsChartColor2
+	{
+		get => _fpsChartColor2;
+		private set => SetProperty(ref _fpsChartColor2, value);
 	}
 
 	public string FpsChartYAxisLabel
@@ -413,17 +412,11 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 	public void RefreshChartColors()
 	{
 		FpsChartColor = new SolidColorBrush(FpsColor);
-		FpsRenderedColor = CreateRenderedColor(FpsColor);
+		FpsRenderedColor = DevWinUI.ColorHelper.GetInterpolatedColor(0.35, FpsColor, Colors.White);
 		FpsChartColor2 = new SolidColorBrush(FpsColor2);
-		FpsRenderedColor2 = CreateRenderedColor(FpsColor2);
+		FpsRenderedColor2 = DevWinUI.ColorHelper.GetInterpolatedColor(0.35, FpsColor2, Colors.White);
 	}
 
-	private static Windows.UI.Color CreateRenderedColor(Windows.UI.Color color)
-		=> Windows.UI.Color.FromArgb(
-			color.A,
-			(byte)(color.R + (255 - color.R) * 0.35),
-			(byte)(color.G + (255 - color.G) * 0.35),
-			(byte)(color.B + (255 - color.B) * 0.35));
 }
 
 [WinRT.GeneratedBindableCustomProperty]
