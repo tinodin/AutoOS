@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 
 namespace AutoOS.Views.Settings.Benchmarks;
@@ -16,26 +17,34 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 	private double _recordingDuration = 30;
 	private double _recordingDelay = 10;
 	private bool _isRecording;
-	private bool _showFpsAsMilliseconds;
+	private string _analysisChartType = "Bar";
 	private readonly HashSet<string> _recordableProcesses = new(StringComparer.OrdinalIgnoreCase);
 	private ObservableCollection<string> _processSuggestions = [];
 	private ObservableCollection<RecordingItem> _recordings = [];
 	private ObservableCollection<ResultRow> _resultsRows = [];
 	private ObservableCollection<BarPoint> _fpsBarSeries = [];
+	private ObservableCollection<BarPoint> _fpsRenderedBarSeries = [];
 	private ObservableCollection<BarPoint> _fpsBarSeries2 = [];
-	private ObservableCollection<SeriesPoint> _metricLineSeries = [];
-	private ObservableCollection<SeriesPoint> _metricLineSeries2 = [];
+	private ObservableCollection<BarPoint> _fpsRenderedBarSeries2 = [];
+	private ObservableCollection<SeriesPoint> _metricSeries = [];
+	private ObservableCollection<SeriesPoint> _metricSeries2 = [];
 	private Windows.UI.Color _fpsColor;
 	private Windows.UI.Color _fpsColor2;
+	private Windows.UI.Color _fpsRenderedColor;
+	private Windows.UI.Color _fpsRenderedColor2;
 	private SolidColorBrush _fpsChartColor;
 	private SolidColorBrush _fpsChartColor2;
 	private string _fpsChartYAxisLabel = "FPS";
 	private string _metricChartYAxisLabel = "Milliseconds (ms)";
 	private string _fpsChartLabelFormat = "0.# FPS";
 	private bool _showFpsChart2;
+	private bool _showRenderedFps;
+	private bool _showRenderedFpsChart2;
 	private bool _showMetricChart2;
 	private string _fpsChartLabel = string.Empty;
+	private string _fpsRenderedChartLabel = string.Empty;
 	private string _fpsChartLabel2 = string.Empty;
+	private string _fpsRenderedChartLabel2 = string.Empty;
 	private string _metricChartLabel = string.Empty;
 	private string _metricChartLabel2 = string.Empty;
 	private string _recordingAHeader = "Recording A";
@@ -129,11 +138,18 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 		}
 	}
 
-	public bool ShowFpsAsMilliseconds
+	public string AnalysisChartType
 	{
-		get => _showFpsAsMilliseconds;
-		set => SetProperty(ref _showFpsAsMilliseconds, value);
+		get => _analysisChartType;
+		set
+		{
+			if (SetProperty(ref _analysisChartType, value))
+				OnPropertyChanged(nameof(MetricVisibility));
+		}
 	}
+
+	public Visibility MetricVisibility =>
+		AnalysisChartType == "Bar" ? Visibility.Collapsed : Visibility.Visible;
 
 	public bool CanRecord =>
 		IsRecording ||
@@ -147,6 +163,7 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 	public bool IsAggregateEnabled => _selectedRecordingCount > 1 && _selectedRecordingsHaveSameProcess;
 	public bool IsAnalysisToolbarEnabled => _selectedRecordingCount is > 0 and <= 2;
 	public bool IsSecondColorPickerEnabled => _selectedRecordingCount == 2;
+	public bool IsRecordingBColumnHidden => _selectedRecordingCount != 2;
 
 	public void SetRecordableProcesses(IEnumerable<string> processNames)
 	{
@@ -178,22 +195,34 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 		set => SetProperty(ref _fpsBarSeries, value);
 	}
 
+	public ObservableCollection<BarPoint> FpsRenderedBarSeries
+	{
+		get => _fpsRenderedBarSeries;
+		set => SetProperty(ref _fpsRenderedBarSeries, value);
+	}
+
 	public ObservableCollection<BarPoint> FpsBarSeries2
 	{
 		get => _fpsBarSeries2;
 		set => SetProperty(ref _fpsBarSeries2, value);
 	}
 
-	public ObservableCollection<SeriesPoint> MetricLineSeries
+	public ObservableCollection<BarPoint> FpsRenderedBarSeries2
 	{
-		get => _metricLineSeries;
-		set => SetProperty(ref _metricLineSeries, value);
+		get => _fpsRenderedBarSeries2;
+		set => SetProperty(ref _fpsRenderedBarSeries2, value);
 	}
 
-	public ObservableCollection<SeriesPoint> MetricLineSeries2
+	public ObservableCollection<SeriesPoint> MetricSeries
 	{
-		get => _metricLineSeries2;
-		set => SetProperty(ref _metricLineSeries2, value);
+		get => _metricSeries;
+		set => SetProperty(ref _metricSeries, value);
+	}
+
+	public ObservableCollection<SeriesPoint> MetricSeries2
+	{
+		get => _metricSeries2;
+		set => SetProperty(ref _metricSeries2, value);
 	}
 
 	public Windows.UI.Color FpsColor
@@ -204,6 +233,7 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 			if (!SetProperty(ref _fpsColor, value))
 				return;
 			FpsChartColor = new SolidColorBrush(value);
+			FpsRenderedColor = CreateRenderedColor(value);
 		}
 	}
 
@@ -215,6 +245,7 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 			if (!SetProperty(ref _fpsColor2, value))
 				return;
 			FpsChartColor2 = new SolidColorBrush(value);
+			FpsRenderedColor2 = CreateRenderedColor(value);
 		}
 	}
 
@@ -224,10 +255,22 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 		private set => SetProperty(ref _fpsChartColor, value);
 	}
 
+	public Windows.UI.Color FpsRenderedColor
+	{
+		get => _fpsRenderedColor;
+		private set => SetProperty(ref _fpsRenderedColor, value);
+	}
+
 	public SolidColorBrush FpsChartColor2
 	{
 		get => _fpsChartColor2;
 		private set => SetProperty(ref _fpsChartColor2, value);
+	}
+
+	public Windows.UI.Color FpsRenderedColor2
+	{
+		get => _fpsRenderedColor2;
+		private set => SetProperty(ref _fpsRenderedColor2, value);
 	}
 
 	public string FpsChartYAxisLabel
@@ -254,6 +297,18 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 		set => SetProperty(ref _showFpsChart2, value);
 	}
 
+	public bool ShowRenderedFps
+	{
+		get => _showRenderedFps;
+		set => SetProperty(ref _showRenderedFps, value);
+	}
+
+	public bool ShowRenderedFpsChart2
+	{
+		get => _showRenderedFpsChart2;
+		set => SetProperty(ref _showRenderedFpsChart2, value);
+	}
+
 	public bool ShowMetricChart2
 	{
 		get => _showMetricChart2;
@@ -266,10 +321,22 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 		set => SetProperty(ref _fpsChartLabel, value);
 	}
 
+	public string FpsRenderedChartLabel
+	{
+		get => _fpsRenderedChartLabel;
+		set => SetProperty(ref _fpsRenderedChartLabel, value);
+	}
+
 	public string FpsChartLabel2
 	{
 		get => _fpsChartLabel2;
 		set => SetProperty(ref _fpsChartLabel2, value);
+	}
+
+	public string FpsRenderedChartLabel2
+	{
+		get => _fpsRenderedChartLabel2;
+		set => SetProperty(ref _fpsRenderedChartLabel2, value);
 	}
 
 	public string MetricChartLabel
@@ -320,27 +387,43 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 		OnPropertyChanged(nameof(IsAggregateEnabled));
 		OnPropertyChanged(nameof(IsAnalysisToolbarEnabled));
 		OnPropertyChanged(nameof(IsSecondColorPickerEnabled));
+		OnPropertyChanged(nameof(IsRecordingBColumnHidden));
 	}
 
 	public void ClearAnalysis()
 	{
 		FpsBarSeries = [];
+		FpsRenderedBarSeries = [];
 		FpsBarSeries2 = [];
-		MetricLineSeries = [];
-		MetricLineSeries2 = [];
+		FpsRenderedBarSeries2 = [];
+		MetricSeries = [];
+		MetricSeries2 = [];
 		FpsChartLabel = string.Empty;
+		FpsRenderedChartLabel = string.Empty;
 		FpsChartLabel2 = string.Empty;
+		FpsRenderedChartLabel2 = string.Empty;
 		MetricChartLabel = string.Empty;
 		MetricChartLabel2 = string.Empty;
 		ShowFpsChart2 = false;
+		ShowRenderedFps = false;
+		ShowRenderedFpsChart2 = false;
 		ShowMetricChart2 = false;
 	}
 
 	public void RefreshChartColors()
 	{
 		FpsChartColor = new SolidColorBrush(FpsColor);
+		FpsRenderedColor = CreateRenderedColor(FpsColor);
 		FpsChartColor2 = new SolidColorBrush(FpsColor2);
+		FpsRenderedColor2 = CreateRenderedColor(FpsColor2);
 	}
+
+	private static Windows.UI.Color CreateRenderedColor(Windows.UI.Color color)
+		=> Windows.UI.Color.FromArgb(
+			color.A,
+			(byte)(color.R + (255 - color.R) * 0.35),
+			(byte)(color.G + (255 - color.G) * 0.35),
+			(byte)(color.B + (255 - color.B) * 0.35));
 }
 
 [WinRT.GeneratedBindableCustomProperty]

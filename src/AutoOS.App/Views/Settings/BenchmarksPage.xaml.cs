@@ -161,14 +161,56 @@ public sealed partial class BenchmarksPage : Page
 		}
 		return normalizedSelection;
 	}
-	private async void FpsUnitSelector_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
+	private void AnalysisChartTypeSelector_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
 	{
-		ViewModel.ShowFpsAsMilliseconds = sender.SelectedItem == MsUnitItem;
+		string chartType = ReferenceEquals(sender.SelectedItem, BarChartItem)
+			? "Bar"
+			: ReferenceEquals(sender.SelectedItem, ScatterChartItem)
+				? "Scatter"
+				: "Line";
+		if (ViewModel.AnalysisChartType == chartType)
+			return;
+
+		ViewModel.AnalysisChartType = chartType;
 		if (ViewModel.ActiveTab != "Analysis")
 			return;
-		var items = GetSelectedRecordings();
-		if (items.Count > 0)
-			await RenderFpsChart(items);
+
+		if (chartType == "Bar")
+		{
+			List<BarPoint> displayedFirstSeries = [.. ViewModel.FpsBarSeries];
+			List<BarPoint> renderedFirstSeries = [.. ViewModel.FpsRenderedBarSeries];
+			List<BarPoint> displayedSecondSeries = [.. ViewModel.FpsBarSeries2];
+			List<BarPoint> renderedSecondSeries = [.. ViewModel.FpsRenderedBarSeries2];
+			ViewModel.FpsBarSeries = [];
+			ViewModel.FpsRenderedBarSeries = [];
+			ViewModel.FpsBarSeries2 = [];
+			ViewModel.FpsRenderedBarSeries2 = [];
+			DispatcherQueue.TryEnqueue(() =>
+			{
+				if (ViewModel.AnalysisChartType != chartType)
+					return;
+				ViewModel.FpsBarSeries = [.. displayedFirstSeries];
+				ViewModel.FpsRenderedBarSeries = [.. renderedFirstSeries];
+				ViewModel.FpsBarSeries2 = [.. displayedSecondSeries];
+				ViewModel.FpsRenderedBarSeries2 = [.. renderedSecondSeries];
+			});
+			return;
+		}
+
+		if (ViewModel.MetricSeries.Count == 0)
+			return;
+
+		List<SeriesPoint> firstSeries = [.. ViewModel.MetricSeries];
+		List<SeriesPoint> secondSeries = [.. ViewModel.MetricSeries2];
+		ViewModel.MetricSeries = [];
+		ViewModel.MetricSeries2 = [];
+		DispatcherQueue.TryEnqueue(() =>
+		{
+			if (ViewModel.AnalysisChartType != chartType)
+				return;
+			ViewModel.MetricSeries = [.. firstSeries];
+			ViewModel.MetricSeries2 = [.. secondSeries];
+		});
 	}
 	// ── Play / Record ────────────────────────────────────────────────────────
 	private async void AddRecording_Click(object sender, RoutedEventArgs e)
@@ -630,29 +672,25 @@ public sealed partial class BenchmarksPage : Page
 			return;
 		await RenderMetricChart(items);
 	}
-	private async void FpsMetricComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-	{
-		var items = GetSelectedRecordings();
-		if (items.Count == 0 || ViewModel.ActiveTab != "Analysis")
-			return;
-		await RenderFpsChart(items);
-	}
-
 	// ── Data model for analysis results ──────────────────────────────────────
-	/// <summary>
-	/// Describes whether a column's native unit is milliseconds or FPS.
-	/// </summary>
-	private enum NativeUnit { Milliseconds, Fps }
 	private sealed record AnalysisModel(
-			NativeUnit FpsNativeUnit,
 			List<(string recordingName, List<(int x, double y)> points)> MetricSeries,
-			List<(string recordingName, Dictionary<string, double> stats)> FpsStatsSeries);
+			List<(
+				string recordingName,
+				Dictionary<string, double> displayedStats,
+				Dictionary<string, double> renderedStats)> FpsStatsSeries);
 	private sealed record ChartPresentation(
-			List<BarPoint> FpsBars1,
-			List<BarPoint> FpsBars2,
-			bool ShowFps2,
-			string FpsLabel1,
-			string FpsLabel2,
+			List<BarPoint> DisplayedFpsBars1,
+			List<BarPoint> RenderedFpsBars1,
+			List<BarPoint> DisplayedFpsBars2,
+			List<BarPoint> RenderedFpsBars2,
+			bool ShowRenderedFps1,
+			bool ShowDisplayedFps2,
+			bool ShowRenderedFps2,
+			string DisplayedFpsLabel1,
+			string RenderedFpsLabel1,
+			string DisplayedFpsLabel2,
+			string RenderedFpsLabel2,
 			List<SeriesPoint> MetricPts1,
 			List<SeriesPoint> MetricPts2,
 			bool ShowMetric2,
@@ -680,14 +718,6 @@ public sealed partial class BenchmarksPage : Page
 		}
 		ApplyAnalysisChartPresentation(presentation);
 	}
-	private async Task RenderFpsChart(List<RecordingItem> items)
-	{
-		var presentation = await CreateAnalysisPresentation(items);
-		if (presentation is not null &&
-			ViewModel.ActiveTab == "Analysis" &&
-			IsCurrentSelection(items))
-			ApplyFpsChartPresentation(presentation);
-	}
 	private async Task RenderMetricChart(List<RecordingItem> items)
 	{
 		var presentation = await CreateAnalysisPresentation(items);
@@ -706,21 +736,15 @@ public sealed partial class BenchmarksPage : Page
 	private Task<ChartPresentation> CreateAnalysisPresentation(List<RecordingItem> items)
 	{
 		string metric = Metric1ComboBox.SelectedItem as string ?? string.Empty;
-		string fpsMetric = FpsMetricComboBox.SelectedItem as string ?? "Displayed FPS";
-		if (string.IsNullOrWhiteSpace(metric) || string.IsNullOrWhiteSpace(fpsMetric))
+		if (string.IsNullOrWhiteSpace(metric))
 			return Task.FromResult<ChartPresentation>(null);
-		bool showMilliseconds = ViewModel.ShowFpsAsMilliseconds;
 		return Task.Run(() => BuildAnalysisPresentation(
 			items,
-			metric,
-			fpsMetric,
-			showMilliseconds));
+			metric));
 	}
 	private ChartPresentation BuildAnalysisPresentation(
 			List<RecordingItem> items,
-			string metric,
-			string fpsMetric,
-			bool showMs)
+			string metric)
 	{
 		List<(RecordingItem item, DateTime lastWriteUtc)> loaded = [.. items
 			.Select(item => (item, lastWriteUtc: File.Exists(item.FilePath)
@@ -729,26 +753,21 @@ public sealed partial class BenchmarksPage : Page
 			.Where(entry => entry.lastWriteUtc != DateTime.MinValue)];
 		if (loaded.Count == 0)
 			return null;
-		string fpsColumn = GetFpsSourceColumn(fpsMetric);
-		if (string.IsNullOrWhiteSpace(fpsColumn) ||
-			!loaded.Any(entry => HasMetricColumn(entry.item.FilePath, entry.lastWriteUtc, fpsColumn)))
+		if (!loaded.Any(entry =>
+			HasMetricColumn(entry.item.FilePath, entry.lastWriteUtc, "MsBetweenDisplayChange") ||
+			HasMetricColumn(entry.item.FilePath, entry.lastWriteUtc, "MsBetweenPresents")))
 			return null;
 		List<(string recordingName, List<(int x, double y)> points)> metricSeries = [];
-		List<(string recordingName, Dictionary<string, double> stats)> fpsStatsSeries = [];
+		List<(
+			string recordingName,
+			Dictionary<string, double> displayedStats,
+			Dictionary<string, double> renderedStats)> fpsStatsSeries = [];
 		string metricColumn = GetFpsSourceColumn(metric);
 		for (int recordingIndex = 0; recordingIndex < loaded.Count; recordingIndex++)
 		{
 			var (item, lastWriteUtc) = loaded[recordingIndex];
 			LoadMetricColumn(item.FilePath, lastWriteUtc, metricColumn, out var rawMetricValues);
 			List<double> metricValues = [.. rawMetricValues];
-			if (IsFpsMetric(metric))
-			{
-				for (int index = 0; index < metricValues.Count; index++)
-				{
-					if (metricValues[index] > 0)
-						metricValues[index] = 1000.0 / metricValues[index];
-				}
-			}
 			if (metricValues.Count > 0)
 			{
 				const int maxPoints = 800;
@@ -762,66 +781,91 @@ public sealed partial class BenchmarksPage : Page
 					points.Add((finalIndex, metricValues[finalIndex]));
 				metricSeries.Add((item.FileName, points));
 			}
-			List<double> fpsValues;
-			if (string.Equals(fpsColumn, metricColumn, StringComparison.OrdinalIgnoreCase))
-				fpsValues = [.. rawMetricValues];
+			List<double> displayedFrameTimes;
+			if (string.Equals(metricColumn, "MsBetweenDisplayChange", StringComparison.OrdinalIgnoreCase))
+				displayedFrameTimes = [.. rawMetricValues];
 			else
-				LoadMetricColumn(item.FilePath, lastWriteUtc, fpsColumn, out fpsValues);
-			List<double> displayValues = showMs
-							? [.. fpsValues.Where(value => value > 0)]
-							: [.. fpsValues.Where(value => value > 0).Select(value => 1000.0 / value)];
-			if (displayValues.Count == 0)
-				continue;
-			var ordered = displayValues.OrderBy(value => value).ToArray();
-			var stats = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
-			if (TryGetPercentileFromSorted(ordered, 99.9, out var p999)) stats["P99.9"] = p999;
-			if (TryGetPercentileFromSorted(ordered, 99.0, out var p99)) stats["P99"] = p99;
-			if (TryGetPercentileFromSorted(ordered, 95.0, out var p95)) stats["P95"] = p95;
-			if (TryGetPercentileFromSorted(ordered, 90.0, out var p90)) stats["P90"] = p90;
-			if (TryGetPercentileFromSorted(ordered, 50.0, out var p50)) stats["P50"] = p50;
-			if (TryGetPercentileFromSorted(ordered, 10.0, out var p10)) stats["P10"] = p10;
-			if (TryGetPercentileFromSorted(ordered, 5.0, out var p5)) stats["P5"] = p5;
-			if (TryGetPercentileFromSorted(ordered, 1.0, out var p1)) stats["P1"] = p1;
-			if (TryGetPercentileFromSorted(ordered, 0.1, out var p01)) stats["P0.1"] = p01;
-			stats["Mean"] = displayValues.Average();
-			fpsStatsSeries.Add((item.FileName, stats));
+				LoadMetricColumn(item.FilePath, lastWriteUtc, "MsBetweenDisplayChange", out displayedFrameTimes);
+
+			List<double> renderedFrameTimes;
+			if (string.Equals(metricColumn, "MsBetweenPresents", StringComparison.OrdinalIgnoreCase))
+				renderedFrameTimes = [.. rawMetricValues];
+			else
+				LoadMetricColumn(item.FilePath, lastWriteUtc, "MsBetweenPresents", out renderedFrameTimes);
+
+			fpsStatsSeries.Add((
+				item.FileName,
+				CreateFpsStats(displayedFrameTimes),
+				CreateFpsStats(renderedFrameTimes)));
 		}
 		return BuildChartPresentation(
-					new AnalysisModel(
-						showMs ? NativeUnit.Milliseconds : NativeUnit.Fps,
-						metricSeries,
-						fpsStatsSeries),
-					showMs,
-					metric);
+			new AnalysisModel(metricSeries, fpsStatsSeries));
+
+		static Dictionary<string, double> CreateFpsStats(List<double> frameTimes)
+		{
+			double[] ordered = [.. frameTimes
+				.Where(value => value > 0)
+				.Select(value => 1000.0 / value)
+				.OrderBy(value => value)];
+			var stats = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+			if (ordered.Length == 0)
+				return stats;
+			if (TryGetPercentileFromSorted(ordered, 99.9, out double p999)) stats["P99.9"] = p999;
+			if (TryGetPercentileFromSorted(ordered, 99.0, out double p99)) stats["P99"] = p99;
+			if (TryGetPercentileFromSorted(ordered, 95.0, out double p95)) stats["P95"] = p95;
+			if (TryGetPercentileFromSorted(ordered, 90.0, out double p90)) stats["P90"] = p90;
+			if (TryGetPercentileFromSorted(ordered, 50.0, out double p50)) stats["P50"] = p50;
+			if (TryGetPercentileFromSorted(ordered, 10.0, out double p10)) stats["P10"] = p10;
+			if (TryGetPercentileFromSorted(ordered, 5.0, out double p5)) stats["P5"] = p5;
+			if (TryGetPercentileFromSorted(ordered, 1.0, out double p1)) stats["P1"] = p1;
+			if (TryGetPercentileFromSorted(ordered, 0.1, out double p01)) stats["P0.1"] = p01;
+			stats["Mean"] = ordered.Average();
+			return stats;
+		}
 	}
-	private static ChartPresentation BuildChartPresentation(AnalysisModel model, bool showMs, string metric1)
+	private static ChartPresentation BuildChartPresentation(AnalysisModel model)
 	{
 		string[] order = ["P99.9", "P99", "P95", "P90", "P50", "P10", "P5", "P1", "P0.1", "Mean"];
-		List<BarPoint> fpsBars1 = [];
-		List<BarPoint> fpsBars2 = [];
-		bool showFps2 = false;
-		string fpsLabel1 = string.Empty;
-		string fpsLabel2 = string.Empty;
-		double maxDisplayVal = 0;
+		List<BarPoint> displayedFpsBars1 = [];
+		List<BarPoint> renderedFpsBars1 = [];
+		List<BarPoint> displayedFpsBars2 = [];
+		List<BarPoint> renderedFpsBars2 = [];
+		bool showRenderedFps1 = false;
+		bool showDisplayedFps2 = false;
+		bool showRenderedFps2 = false;
+		string displayedFpsLabel1 = string.Empty;
+		string renderedFpsLabel1 = string.Empty;
+		string displayedFpsLabel2 = string.Empty;
+		string renderedFpsLabel2 = string.Empty;
 		if (model.FpsStatsSeries.Count > 0)
 		{
 			int seriesIdx = 0;
-			foreach (var (recordingName, stats) in model.FpsStatsSeries)
+			foreach (var (recordingName, displayedStats, renderedStats) in model.FpsStatsSeries)
 			{
-				var target = seriesIdx == 0 ? fpsBars1 : fpsBars2;
-				if (seriesIdx == 1)
-					showFps2 = true;
-				foreach (var k in order)
+				List<BarPoint> displayedTarget =
+					seriesIdx == 0 ? displayedFpsBars1 : displayedFpsBars2;
+				List<BarPoint> renderedTarget =
+					seriesIdx == 0 ? renderedFpsBars1 : renderedFpsBars2;
+				foreach (string percentile in order)
 				{
-					if (!stats.TryGetValue(k, out var nativeVal))
-						continue;
-					double displayVal = ConvertForDisplay(nativeVal, model.FpsNativeUnit, showMs);
-					target.Add(new BarPoint { Label = k, Value = displayVal });
-					if (displayVal > maxDisplayVal)
-						maxDisplayVal = displayVal;
+					if (displayedStats.TryGetValue(percentile, out double displayedValue))
+						displayedTarget.Add(new BarPoint { Label = percentile, Value = displayedValue });
+					if (renderedStats.TryGetValue(percentile, out double renderedValue))
+						renderedTarget.Add(new BarPoint { Label = percentile, Value = renderedValue });
 				}
-				if (seriesIdx == 0) fpsLabel1 = recordingName;
-				else fpsLabel2 = recordingName;
+				if (seriesIdx == 0)
+				{
+					displayedFpsLabel1 = $"{recordingName} · Displayed FPS";
+					renderedFpsLabel1 = $"{recordingName} · Rendered FPS";
+					showRenderedFps1 = renderedTarget.Count > 0;
+				}
+				else
+				{
+					displayedFpsLabel2 = $"{recordingName} · Displayed FPS";
+					renderedFpsLabel2 = $"{recordingName} · Rendered FPS";
+					showDisplayedFps2 = displayedTarget.Count > 0;
+					showRenderedFps2 = renderedTarget.Count > 0;
+				}
 				seriesIdx++;
 			}
 		}
@@ -846,19 +890,25 @@ public sealed partial class BenchmarksPage : Page
 			}
 		}
 		return new ChartPresentation(
-					fpsBars1,
-					fpsBars2,
-					showFps2,
-					fpsLabel1,
-					fpsLabel2,
+					displayedFpsBars1,
+					renderedFpsBars1,
+					displayedFpsBars2,
+					renderedFpsBars2,
+					showRenderedFps1,
+					showDisplayedFps2,
+					showRenderedFps2,
+					displayedFpsLabel1,
+					renderedFpsLabel1,
+					displayedFpsLabel2,
+					renderedFpsLabel2,
 					metricPts1,
 					metricPts2,
 					showMetric2,
 					metricLabel1,
 					metricLabel2,
-					showMs ? "ms" : "FPS",
-					showMs ? "0.## ms" : "0.# FPS",
-					IsFpsMetric(metric1) ? "FPS" : "Milliseconds (ms)");
+					"FPS",
+					"0.# FPS",
+					"Milliseconds (ms)");
 	}
 
 	private void ApplyAnalysisChartPresentation(ChartPresentation presentation)
@@ -871,16 +921,26 @@ public sealed partial class BenchmarksPage : Page
 	private void ApplyFpsChartPresentation(ChartPresentation presentation)
 	{
 		FpsChart1Series.EnableAnimation = false;
+		FpsRenderedChart1Series.EnableAnimation = false;
 		FpsChart2Series.EnableAnimation = false;
+		FpsRenderedChart2Series.EnableAnimation = false;
 		FpsChart1Series.EnableAnimation = true;
+		FpsRenderedChart1Series.EnableAnimation = true;
 		FpsChart2Series.EnableAnimation = true;
+		FpsRenderedChart2Series.EnableAnimation = true;
 		ViewModel.FpsChartYAxisLabel = presentation.FpsYAxisLabel;
 		ViewModel.FpsChartLabelFormat = presentation.FpsLabelFormat;
-		ViewModel.FpsChartLabel = presentation.FpsLabel1;
-		ViewModel.FpsChartLabel2 = presentation.FpsLabel2;
-		ViewModel.ShowFpsChart2 = presentation.ShowFps2;
-		ViewModel.FpsBarSeries = [.. presentation.FpsBars1];
-		ViewModel.FpsBarSeries2 = [.. presentation.FpsBars2];
+		ViewModel.FpsChartLabel = presentation.DisplayedFpsLabel1;
+		ViewModel.FpsRenderedChartLabel = presentation.RenderedFpsLabel1;
+		ViewModel.FpsChartLabel2 = presentation.DisplayedFpsLabel2;
+		ViewModel.FpsRenderedChartLabel2 = presentation.RenderedFpsLabel2;
+		ViewModel.ShowRenderedFps = presentation.ShowRenderedFps1;
+		ViewModel.ShowFpsChart2 = presentation.ShowDisplayedFps2;
+		ViewModel.ShowRenderedFpsChart2 = presentation.ShowRenderedFps2;
+		ViewModel.FpsBarSeries = [.. presentation.DisplayedFpsBars1];
+		ViewModel.FpsRenderedBarSeries = [.. presentation.RenderedFpsBars1];
+		ViewModel.FpsBarSeries2 = [.. presentation.DisplayedFpsBars2];
+		ViewModel.FpsRenderedBarSeries2 = [.. presentation.RenderedFpsBars2];
 		FpsChart.InvalidateMeasure();
 	}
 	private void ApplyMetricChartPresentation(ChartPresentation presentation)
@@ -889,23 +949,8 @@ public sealed partial class BenchmarksPage : Page
 		ViewModel.MetricChartLabel = presentation.MetricLabel1;
 		ViewModel.MetricChartLabel2 = presentation.MetricLabel2;
 		ViewModel.ShowMetricChart2 = presentation.ShowMetric2;
-		ViewModel.MetricLineSeries = [.. presentation.MetricPts1];
-		ViewModel.MetricLineSeries2 = [.. presentation.MetricPts2];
-	}
-	private static double ConvertForDisplay(double nativeValue, NativeUnit nativeUnit, bool showMs)
-	{
-		if (nativeValue <= 0)
-			return 0;
-		if (nativeUnit == NativeUnit.Milliseconds)
-		{
-			// Native is ms. If showing ms, display as-is. If showing FPS, convert.
-			return showMs ? nativeValue : 1000.0 / nativeValue;
-		}
-		else
-		{
-			// Native is FPS. If showing FPS, display as-is. If showing ms, convert.
-			return showMs ? 1000.0 / nativeValue : nativeValue;
-		}
+		ViewModel.MetricSeries = [.. presentation.MetricPts1];
+		ViewModel.MetricSeries2 = [.. presentation.MetricPts2];
 	}
 	private static bool IsFpsMetric(string metric) =>
 			metric.EndsWith("FPS", StringComparison.OrdinalIgnoreCase) ||
@@ -997,7 +1042,6 @@ public sealed partial class BenchmarksPage : Page
 			ViewModel.ResultsRows.Clear();
 			ViewModel.RecordingAHeader = "Recording A";
 			ViewModel.RecordingBHeader = "Recording B";
-			RecordingBColumn.IsHidden = true;
 			return;
 		}
 		if (selected.Count > 2)
@@ -1005,12 +1049,10 @@ public sealed partial class BenchmarksPage : Page
 			ViewModel.ResultsRows.Clear();
 			ViewModel.RecordingAHeader = "Recording A";
 			ViewModel.RecordingBHeader = "Recording B";
-			RecordingBColumn.IsHidden = true;
 			return;
 		}
 		ViewModel.RecordingAHeader = selected.Count >= 1 ? selected[0].Title : "Recording A";
 		ViewModel.RecordingBHeader = selected.Count >= 2 ? selected[1].Title : "Recording B";
-		RecordingBColumn.IsHidden = selected.Count < 2;
 		var builtRows = await Task.Run(() =>
 				{
 					List<(RecordingItem item, DateTime lastWriteUtc, Dictionary<string, double> averages)> loaded = [];
