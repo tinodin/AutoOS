@@ -977,7 +977,7 @@ public static partial class EpicGamesHelper
 							{
 								["Provider"] = provider,
 								["bIsApplication"] = true,
-								["AppCategories"] = new JsonArray { "games" },
+								["AppCategories"] = new JsonArray(JsonValue.Create("games")),
 								["CatalogItemId"] = json["CatalogID"]?.GetValue<string>(),
 								["CatalogNamespace"] = json["Namespace"]?.GetValue<string>(),
 								["AppName"] = json["AppName"]?.GetValue<string>(),

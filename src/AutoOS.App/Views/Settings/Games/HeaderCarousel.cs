@@ -1,4 +1,4 @@
-﻿using AutoOS.Core.Helpers.Games;
+using AutoOS.Core.Helpers.Games;
 using AutoOS.Core.Helpers.Processes;
 using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.Services;
@@ -2472,7 +2472,7 @@ public partial class HeaderCarousel : ItemsControl
 
 			StartGameWatcher(() =>
 			{
-				var running = Process.GetProcesses();
+				var running = Process.GetProcesses().Where(p => !p.ProcessName.Equals("EpicGamesLauncher", StringComparison.OrdinalIgnoreCase)).ToArray();
 				return (!string.IsNullOrEmpty(offlineExecutable) && running.Any(p => p.ProcessName.Contains(Path.GetFileNameWithoutExtension(offlineExecutable), StringComparison.OrdinalIgnoreCase))) ||
 			(!string.IsNullOrEmpty(onlineExecutable) && running.Any(p => p.ProcessName.Contains(Path.GetFileNameWithoutExtension(onlineExecutable), StringComparison.OrdinalIgnoreCase))) ||
 			(ProcessNames?.Any(process => !string.IsNullOrEmpty(process) && running.Any(p => p.ProcessName.Contains(Path.GetFileNameWithoutExtension(process), StringComparison.OrdinalIgnoreCase))) ?? false);
