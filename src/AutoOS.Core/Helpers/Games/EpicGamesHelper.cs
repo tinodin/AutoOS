@@ -1,4 +1,4 @@
-﻿using AutoOS.Core.Common;
+using AutoOS.Core.Common;
 using AutoOS.Core.Helpers.Games.Clients;
 using AutoOS.Core.Helpers.Logging;
 using DevWinUI;
@@ -977,6 +977,7 @@ public static partial class EpicGamesHelper
 							{
 								["Provider"] = provider,
 								["bIsApplication"] = true,
+								["AppCategories"] = new JsonArray { "games" },
 								["CatalogItemId"] = json["CatalogID"]?.GetValue<string>(),
 								["CatalogNamespace"] = json["Namespace"]?.GetValue<string>(),
 								["AppName"] = json["AppName"]?.GetValue<string>(),
@@ -1249,29 +1250,120 @@ public static partial class EpicGamesHelper
 							var pages = cmsJson?["pages"]?.AsArray();
 							if (pages != null)
 							{
-								foreach (var page in pages)
+								var sortedPages = pages.OrderByDescending(page => page?["type"]?.GetValue<string>() == "productHome").ToList();
+								foreach (var page in sortedPages)
 								{
 									var carouselItems = page?["data"]?["carousel"]?["items"]?.AsArray();
-									if (carouselItems != null && carouselItems.Count > 0)
+									if (carouselItems != null)
 									{
 										foreach (var item in carouselItems)
 										{
-											var videoNode = item?["video"];
-											bool isVideo = videoNode != null && videoNode["recipes"] != null;
-											if (!isVideo)
+											if (item == null) continue;
+
+											string src = item["image"]?["src"]?.GetValue<string>();
+											if (!string.IsNullOrEmpty(src))
 											{
-												string src = item?["image"]?["src"]?.GetValue<string>();
-												if (!string.IsNullOrEmpty(src))
+												if (!screenshots.Contains(src))
+												{
+													screenshots.Add(src);
+												}
+												continue;
+											}
+
+											var videoNode = item["video"];
+											if (videoNode != null)
+											{
+												string poster = videoNode["poster"]?.GetValue<string>();
+												if (!string.IsNullOrEmpty(poster))
+												{
+													if (!screenshots.Contains(poster))
+													{
+														screenshots.Add(poster);
+													}
+													continue;
+												}
+
+												string videoThumb = videoNode["thumbnail"]?.GetValue<string>();
+												if (!string.IsNullOrEmpty(videoThumb))
+												{
+													if (!screenshots.Contains(videoThumb))
+													{
+														screenshots.Add(videoThumb);
+													}
+													continue;
+												}
+
+												string recipesStr = videoNode["recipes"]?.GetValue<string>();
+												if (!string.IsNullOrEmpty(recipesStr))
+												{
+													var recipesJson = JsonNode.Parse(recipesStr);
+													if (recipesJson != null)
+													{
+														string thumbnail = recipesJson["thumbnail"]?.GetValue<string>();
+														if (!string.IsNullOrEmpty(thumbnail))
+														{
+															if (!screenshots.Contains(thumbnail))
+															{
+																screenshots.Add(thumbnail);
+															}
+															continue;
+														}
+
+														if (recipesJson is JsonObject obj)
+														{
+															foreach (var kvp in obj)
+															{
+																if (kvp.Value is JsonArray recipeArray)
+																{
+																	foreach (var recipe in recipeArray)
+																	{
+																		var outputs = recipe?["outputs"]?.AsArray();
+																		if (outputs != null)
+																		{
+																			foreach (var output in outputs)
+																			{
+																				if (output?["key"]?.GetValue<string>() == "thumbnail")
+																				{
+																					string url = output["url"]?.GetValue<string>();
+																					if (!string.IsNullOrEmpty(url))
+																					{
+																						if (!screenshots.Contains(url))
+																						{
+																							screenshots.Add(url);
+																						}
+																					}
+																				}
+																			}
+																		}
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+
+									var galleryImages = page?["data"]?["gallery"]?["galleryImages"]?.AsArray();
+									if (galleryImages != null)
+									{
+										foreach (var img in galleryImages)
+										{
+											string src = img?["src"]?.GetValue<string>();
+											if (!string.IsNullOrEmpty(src))
+											{
+												if (!screenshots.Contains(src))
 												{
 													screenshots.Add(src);
 												}
 											}
 										}
+									}
 
-										if (screenshots.Count > 0)
-										{
-											break;
-										}
+									if (screenshots.Count > 0)
+									{
+										break;
 									}
 								}
 							}
