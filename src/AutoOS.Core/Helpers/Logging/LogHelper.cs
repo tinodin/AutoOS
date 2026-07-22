@@ -1,4 +1,4 @@
-using AutoOS.Core.Helpers.Database;
+﻿using AutoOS.Core.Helpers.Database;
 using AutoOS.Core.Helpers.Device.Models;
 using AutoOS.Core.Helpers.Device;
 using AutoOS.Core.Helpers.Games;
@@ -193,9 +193,6 @@ public static partial class LogHelper
 		if (discordAccounts.Count == 0)
 			discordAccounts = DiscordHelper.GetOtherAccounts();
 
-		var epicAccounts = EpicGamesHelper.GetEpicGamesAccounts();
-		var steamAccounts = SteamHelper.GetSteamAccounts();
-
 		string cpuName = Microsoft.Win32.Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\CentralProcessor\0", "ProcessorNameString", "")?.ToString() ?? "";
 		string manufacturer = Microsoft.Win32.Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\BIOS", "BaseBoardManufacturer", "")?.ToString() ?? "";
 		string product = Microsoft.Win32.Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\BIOS", "BaseBoardProduct", "")?.ToString() ?? "";
@@ -335,8 +332,6 @@ public static partial class LogHelper
 		}
 
 		AddField("Discord", discordAccounts.Count > 0 ? string.Join("\n", discordAccounts.Select(account => $"{account.Username} <@{account.UserId}> [{account.Origin}]{(account.IsActive ? " [Active]" : "")}{(account.IsMember ? " [Member]" : "")}")) : "N/A");
-		AddField("Epic Games", epicAccounts != null && epicAccounts.Count > 0 ? string.Join("\n", epicAccounts.Select(a => $"{a.DisplayName}{(a.IsActive ? " [Active]" : "")}")) : "N/A");
-		AddField("Steam", steamAccounts != null && steamAccounts.Count > 0 ? string.Join("\n", steamAccounts.Select(a => $"[{a.AccountName}](https://steamcommunity.com/profiles/{a.Steam64Id}){(a.AllowAutoLogin ? " [Active]" : "")}")) : "N/A");
 		AddField("Motherboard", motherboard);
 		AddField("CPU", cpuName);
 		AddField("RAM", ram);
