@@ -513,7 +513,7 @@ try {
 	}
 
 	Write-Host "Copying install.wim..."
-	$TempWim = "$env:TEMP\install.wim"
+	$TempWim = Join-Path ([System.IO.Path]::GetFullPath($env:TEMP)) "install.wim"
 	Copy-Item -Path $WimPath -Destination $TempWim -Force
 	& "$env:SystemRoot\System32\attrib.exe" -r $TempWim
 } finally {
@@ -551,7 +551,9 @@ foreach ($Image in $Images) {
 
 Write-Host "Applying Windows image to $TargetDrive..."
 DISM /Apply-Image /ImageFile:$TempWim /Index:1 /ApplyDir:$TargetDrive
-Remove-Item $TempWim -Force
+if (Test-Path -LiteralPath $TempWim) {
+	Remove-Item -LiteralPath $TempWim -Force -ErrorAction SilentlyContinue
+}
 
 Write-Host "`n===== Step 6: Install Drivers =====`n" -ForegroundColor Yellow
 Write-Host "Installing drivers from $DriversDir..."
