@@ -155,6 +155,8 @@
                                     <SelectorBarItem x:Name="BarChartItem"
                                                      IsSelected="True"
                                                      Text="Bar" />
+                                    <SelectorBarItem x:Name="ColumnChartItem"
+                                                     Text="Column" />
                                     <SelectorBarItem x:Name="LineChartItem"
                                                      Text="Line" />
                                     <SelectorBarItem x:Name="ScatterChartItem"
@@ -165,7 +167,68 @@
                             <!--  Separator  -->
                             <AppBarSeparator Margin="4,0" />
 
-                            <!--  Graph 2 Metric  -->
+                            <!--  Bar / Column Metrics  -->
+                            <AppBarElementContainer Margin="0,0,4,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="Mean"
+                                              IsChecked="{x:Bind ViewModel.ShowMean, Mode=TwoWay}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer Margin="0,0,4,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="P0.1"
+                                              IsChecked="{x:Bind ViewModel.ShowP01, Mode=TwoWay}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer Margin="0,0,4,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="P1"
+                                              IsChecked="{x:Bind ViewModel.ShowP1, Mode=TwoWay}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer Margin="0,0,4,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="P5"
+                                              IsChecked="{x:Bind ViewModel.ShowP5, Mode=TwoWay}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer Margin="0,0,4,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="P10"
+                                              IsChecked="{x:Bind ViewModel.ShowP10, Mode=TwoWay}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer Margin="0,0,4,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="P50"
+                                              IsChecked="{x:Bind ViewModel.ShowP50, Mode=TwoWay}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer Margin="0,0,4,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="P90"
+                                              IsChecked="{x:Bind ViewModel.ShowP90, Mode=TwoWay}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer Margin="0,0,4,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="P95"
+                                              IsChecked="{x:Bind ViewModel.ShowP95, Mode=TwoWay}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer Margin="0,0,4,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="P99"
+                                              IsChecked="{x:Bind ViewModel.ShowP99, Mode=TwoWay}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="P99.9"
+                                              IsChecked="{x:Bind ViewModel.ShowP999, Mode=TwoWay}" />
+                            </AppBarElementContainer>
+
+                            <!--  Line / Scatter Metrics  -->
                             <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
                                                     ToolTipService.ToolTip="Graph 2 Metric"
                                                     Visibility="{x:Bind ViewModel.MetricVisibility, Mode=OneWay}">
@@ -199,8 +262,8 @@
                             </AppBarElementContainer>
                             <!--  Recording B Color Picker  -->
                             <AppBarElementContainer Margin="4,0,0,0"
-                                                    IsEnabled="{x:Bind ViewModel.IsSecondColorPickerEnabled, Mode=OneWay}"
-                                                    ToolTipService.ToolTip="Recording B Color">
+                                                    ToolTipService.ToolTip="Recording B Color"
+                                                    Visibility="{x:Bind ViewModel.SecondColorPickerVisibility, Mode=OneWay}">
                                 <dev:DropdownColorPicker x:Name="HeaderFpsColorPicker2"
                                                          VerticalAlignment="Bottom"
                                                          Background="{x:Bind ViewModel.FpsChartColor2, Mode=OneWay}"
@@ -346,171 +409,265 @@
                     <dev:Case Value="Content">
                         <dev:SwitchPresenter Value="{x:Bind ViewModel.AnalysisChartType, Mode=OneWay}">
                             <dev:Case Value="Bar">
+
+                                <!--  Bar Chart  -->
                                 <chart:SfCartesianChart x:Name="FpsChart"
                                                         IsTransposed="True">
-                                        <chart:SfCartesianChart.Legend>
-                                            <chart:ChartLegend />
-                                        </chart:SfCartesianChart.Legend>
-                                        <chart:SfCartesianChart.XAxes>
-                                            <chart:CategoryAxis IsInversed="True"
-                                                                ShowMajorGridLines="False" />
-                                        </chart:SfCartesianChart.XAxes>
-                                        <chart:SfCartesianChart.YAxes>
-                                            <chart:NumericalAxis x:Name="FpsChartYAxis"
-                                                                 EdgeLabelsDrawingMode="Shift"
-                                                                 Header="{x:Bind ViewModel.FpsChartYAxisLabel, Mode=OneWay}"
-                                                                 RangePadding="AppendInterval"
-                                                                 ShowMajorGridLines="True" />
-                                        </chart:SfCartesianChart.YAxes>
-                                        <chart:SfCartesianChart.Series>
-                                            <chart:ColumnSeries x:Name="FpsChart1Series"
-                                                                EnableAnimation="True"
-                                                                Fill="{x:Bind ViewModel.FpsChartColor, Mode=OneWay}"
-                                                                ItemsSource="{x:Bind ViewModel.FpsBarSeries, Mode=OneWay}"
-                                                                Label="{x:Bind ViewModel.FpsChartLabel, Mode=OneWay}"
-                                                                SegmentSpacing="0.2"
-                                                                ShowDataLabels="True"
-                                                                XBindingPath="Label"
-                                                                YBindingPath="Value">
-                                                <chart:ColumnSeries.DataLabelSettings>
-                                                    <chart:CartesianDataLabelSettings Format="{x:Bind ViewModel.FpsChartLabelFormat, Mode=OneWay}"
-                                                                                      Position="Outer"
-                                                                                      UseSeriesPalette="False" />
-                                                </chart:ColumnSeries.DataLabelSettings>
-                                            </chart:ColumnSeries>
-                                            <chart:ColumnSeries x:Name="FpsRenderedChart1Series"
-                                                                EnableAnimation="True"
-                                                                IsVisibleOnLegend="{x:Bind ViewModel.ShowRenderedFps, Mode=OneWay}"
-                                                                ItemsSource="{x:Bind ViewModel.FpsRenderedBarSeries, Mode=OneWay}"
-                                                                Label="{x:Bind ViewModel.FpsRenderedChartLabel, Mode=OneWay}"
-                                                                SegmentSpacing="0.2"
-                                                                ShowDataLabels="{x:Bind ViewModel.ShowRenderedFps, Mode=OneWay}"
-                                                                XBindingPath="Label"
-                                                                YBindingPath="Value">
-                                                <chart:ColumnSeries.Fill>
-                                                    <SolidColorBrush Color="{x:Bind ViewModel.FpsRenderedColor, Mode=OneWay}" />
-                                                </chart:ColumnSeries.Fill>
-                                                <chart:ColumnSeries.DataLabelSettings>
-                                                    <chart:CartesianDataLabelSettings Format="{x:Bind ViewModel.FpsChartLabelFormat, Mode=OneWay}"
-                                                                                      Position="Outer"
-                                                                                      UseSeriesPalette="False" />
-                                                </chart:ColumnSeries.DataLabelSettings>
-                                            </chart:ColumnSeries>
-                                            <chart:ColumnSeries x:Name="FpsChart2Series"
-                                                                EnableAnimation="True"
-                                                                Fill="{x:Bind ViewModel.FpsChartColor2, Mode=OneWay}"
-                                                                IsVisibleOnLegend="{x:Bind ViewModel.ShowFpsChart2, Mode=OneWay}"
-                                                                ItemsSource="{x:Bind ViewModel.FpsBarSeries2, Mode=OneWay}"
-                                                                Label="{x:Bind ViewModel.FpsChartLabel2, Mode=OneWay}"
-                                                                SegmentSpacing="0.2"
-                                                                ShowDataLabels="{x:Bind ViewModel.ShowFpsChart2, Mode=OneWay}"
-                                                                XBindingPath="Label"
-                                                                YBindingPath="Value">
-                                                <chart:ColumnSeries.DataLabelSettings>
-                                                    <chart:CartesianDataLabelSettings Format="{x:Bind ViewModel.FpsChartLabelFormat, Mode=OneWay}"
-                                                                                      Position="Outer"
-                                                                                      UseSeriesPalette="False" />
-                                                </chart:ColumnSeries.DataLabelSettings>
-                                            </chart:ColumnSeries>
-                                            <chart:ColumnSeries x:Name="FpsRenderedChart2Series"
-                                                                EnableAnimation="True"
-                                                                IsVisibleOnLegend="{x:Bind ViewModel.ShowRenderedFpsChart2, Mode=OneWay}"
-                                                                ItemsSource="{x:Bind ViewModel.FpsRenderedBarSeries2, Mode=OneWay}"
-                                                                Label="{x:Bind ViewModel.FpsRenderedChartLabel2, Mode=OneWay}"
-                                                                SegmentSpacing="0.2"
-                                                                ShowDataLabels="{x:Bind ViewModel.ShowRenderedFpsChart2, Mode=OneWay}"
-                                                                XBindingPath="Label"
-                                                                YBindingPath="Value">
-                                                <chart:ColumnSeries.Fill>
-                                                    <SolidColorBrush Color="{x:Bind ViewModel.FpsRenderedColor2, Mode=OneWay}" />
-                                                </chart:ColumnSeries.Fill>
-                                                <chart:ColumnSeries.DataLabelSettings>
-                                                    <chart:CartesianDataLabelSettings Format="{x:Bind ViewModel.FpsChartLabelFormat, Mode=OneWay}"
-                                                                                      Position="Outer"
-                                                                                      UseSeriesPalette="False" />
-                                                </chart:ColumnSeries.DataLabelSettings>
-                                            </chart:ColumnSeries>
-                                        </chart:SfCartesianChart.Series>
+                                    <chart:SfCartesianChart.Legend>
+                                        <chart:ChartLegend />
+                                    </chart:SfCartesianChart.Legend>
+                                    <chart:SfCartesianChart.XAxes>
+                                        <chart:CategoryAxis IsInversed="True"
+                                                            ShowMajorGridLines="False" />
+                                    </chart:SfCartesianChart.XAxes>
+                                    <chart:SfCartesianChart.YAxes>
+                                        <chart:NumericalAxis EdgeLabelsDrawingMode="Shift"
+                                                             Header="{x:Bind ViewModel.FpsChartYAxisLabel, Mode=OneWay}"
+                                                             RangePadding="AppendInterval"
+                                                             ShowMajorGridLines="True" />
+                                    </chart:SfCartesianChart.YAxes>
+                                    <chart:SfCartesianChart.Series>
+                                        <chart:ColumnSeries x:Name="FpsChart1Series"
+                                                            EnableAnimation="True"
+                                                            Fill="{x:Bind ViewModel.FpsChartColor, Mode=OneWay}"
+                                                            ItemsSource="{x:Bind ViewModel.FpsBarSeries, Mode=OneWay}"
+                                                            Label="{x:Bind ViewModel.FpsChartLabel, Mode=OneWay}"
+                                                            SegmentSpacing="0.2"
+                                                            ShowDataLabels="True"
+                                                            XBindingPath="Label"
+                                                            YBindingPath="Value">
+                                            <chart:ColumnSeries.DataLabelSettings>
+                                                <chart:CartesianDataLabelSettings Format="{x:Bind ViewModel.FpsChartLabelFormat, Mode=OneWay}"
+                                                                                  Position="Outer"
+                                                                                  UseSeriesPalette="False" />
+                                            </chart:ColumnSeries.DataLabelSettings>
+                                        </chart:ColumnSeries>
+                                        <chart:ColumnSeries x:Name="FpsRenderedChart1Series"
+                                                            EnableAnimation="True"
+                                                            IsVisibleOnLegend="{x:Bind ViewModel.ShowRenderedFps, Mode=OneWay}"
+                                                            ItemsSource="{x:Bind ViewModel.FpsRenderedBarSeries, Mode=OneWay}"
+                                                            Label="{x:Bind ViewModel.FpsRenderedChartLabel, Mode=OneWay}"
+                                                            SegmentSpacing="0.2"
+                                                            ShowDataLabels="True"
+                                                            Visibility="{x:Bind ViewModel.ShowRenderedFpsVisibility, Mode=OneWay}"
+                                                            XBindingPath="Label"
+                                                            YBindingPath="Value">
+                                            <chart:ColumnSeries.Fill>
+                                                <SolidColorBrush Color="{x:Bind ViewModel.FpsRenderedColor, Mode=OneWay}" />
+                                            </chart:ColumnSeries.Fill>
+                                            <chart:ColumnSeries.DataLabelSettings>
+                                                <chart:CartesianDataLabelSettings Format="{x:Bind ViewModel.FpsChartLabelFormat, Mode=OneWay}"
+                                                                                  Position="Outer"
+                                                                                  UseSeriesPalette="False" />
+                                            </chart:ColumnSeries.DataLabelSettings>
+                                        </chart:ColumnSeries>
+                                        <chart:ColumnSeries x:Name="FpsChart2Series"
+                                                            EnableAnimation="True"
+                                                            Fill="{x:Bind ViewModel.FpsChartColor2, Mode=OneWay}"
+                                                            IsVisibleOnLegend="{x:Bind ViewModel.ShowFpsChart2, Mode=OneWay}"
+                                                            ItemsSource="{x:Bind ViewModel.FpsBarSeries2, Mode=OneWay}"
+                                                            Label="{x:Bind ViewModel.FpsChartLabel2, Mode=OneWay}"
+                                                            SegmentSpacing="0.2"
+                                                            ShowDataLabels="True"
+                                                            Visibility="{x:Bind ViewModel.ShowFpsChart2Visibility, Mode=OneWay}"
+                                                            XBindingPath="Label"
+                                                            YBindingPath="Value">
+                                            <chart:ColumnSeries.DataLabelSettings>
+                                                <chart:CartesianDataLabelSettings Format="{x:Bind ViewModel.FpsChartLabelFormat, Mode=OneWay}"
+                                                                                  Position="Outer"
+                                                                                  UseSeriesPalette="False" />
+                                            </chart:ColumnSeries.DataLabelSettings>
+                                        </chart:ColumnSeries>
+                                        <chart:ColumnSeries x:Name="FpsRenderedChart2Series"
+                                                            EnableAnimation="True"
+                                                            IsVisibleOnLegend="{x:Bind ViewModel.ShowRenderedFpsChart2, Mode=OneWay}"
+                                                            ItemsSource="{x:Bind ViewModel.FpsRenderedBarSeries2, Mode=OneWay}"
+                                                            Label="{x:Bind ViewModel.FpsRenderedChartLabel2, Mode=OneWay}"
+                                                            SegmentSpacing="0.2"
+                                                            ShowDataLabels="True"
+                                                            Visibility="{x:Bind ViewModel.ShowRenderedFpsChart2Visibility, Mode=OneWay}"
+                                                            XBindingPath="Label"
+                                                            YBindingPath="Value">
+                                            <chart:ColumnSeries.Fill>
+                                                <SolidColorBrush Color="{x:Bind ViewModel.FpsRenderedColor2, Mode=OneWay}" />
+                                            </chart:ColumnSeries.Fill>
+                                            <chart:ColumnSeries.DataLabelSettings>
+                                                <chart:CartesianDataLabelSettings Format="{x:Bind ViewModel.FpsChartLabelFormat, Mode=OneWay}"
+                                                                                  Position="Outer"
+                                                                                  UseSeriesPalette="False" />
+                                            </chart:ColumnSeries.DataLabelSettings>
+                                        </chart:ColumnSeries>
+                                    </chart:SfCartesianChart.Series>
                                 </chart:SfCartesianChart>
                             </dev:Case>
-                                <dev:Case Value="Line">
-                                    <chart:SfCartesianChart>
-                                            <chart:SfCartesianChart.Legend>
-                                                <chart:ChartLegend />
-                                            </chart:SfCartesianChart.Legend>
-                                            <chart:SfCartesianChart.XAxes>
-                                                <chart:NumericalAxis EdgeLabelsDrawingMode="Shift"
-                                                                     Header="Frame Index"
-                                                                     Minimum="0" />
-                                            </chart:SfCartesianChart.XAxes>
-                                            <chart:SfCartesianChart.YAxes>
-                                                <chart:NumericalAxis Header="{x:Bind ViewModel.MetricChartYAxisLabel, Mode=OneWay}" />
-                                            </chart:SfCartesianChart.YAxes>
-                                            <chart:SfCartesianChart.TrackballBehavior>
-                                                <chart:ChartTrackballBehavior />
-                                            </chart:SfCartesianChart.TrackballBehavior>
-                                            <chart:SfCartesianChart.ZoomPanBehavior>
-                                                <chart:ChartZoomPanBehavior EnableMouseWheelZooming="True"
-                                                                            EnablePanning="True"
-                                                                            ZoomMode="XY" />
-                                            </chart:SfCartesianChart.ZoomPanBehavior>
-                                            <chart:SfCartesianChart.Series>
-                                                <chart:LineSeries EnableAnimation="True"
-                                                                  Fill="{x:Bind ViewModel.FpsChartColor, Mode=OneWay}"
-                                                                  ItemsSource="{x:Bind ViewModel.MetricSeries, Mode=OneWay}"
-                                                                  Label="{x:Bind ViewModel.MetricChartLabel, Mode=OneWay}"
-                                                                  XBindingPath="Index"
-                                                                  YBindingPath="Value" />
-                                                <chart:LineSeries EnableAnimation="True"
-                                                                  Fill="{x:Bind ViewModel.FpsChartColor2, Mode=OneWay}"
-                                                                  IsVisibleOnLegend="{x:Bind ViewModel.ShowMetricChart2, Mode=OneWay}"
-                                                                  ItemsSource="{x:Bind ViewModel.MetricSeries2, Mode=OneWay}"
-                                                                  Label="{x:Bind ViewModel.MetricChartLabel2, Mode=OneWay}"
-                                                                  XBindingPath="Index"
-                                                                  YBindingPath="Value" />
-                                            </chart:SfCartesianChart.Series>
-                                    </chart:SfCartesianChart>
-                                </dev:Case>
-                                <dev:Case Value="Scatter">
-                                    <chart:SfCartesianChart>
-                                            <chart:SfCartesianChart.Legend>
-                                                <chart:ChartLegend />
-                                            </chart:SfCartesianChart.Legend>
-                                            <chart:SfCartesianChart.XAxes>
-                                                <chart:NumericalAxis EdgeLabelsDrawingMode="Shift"
-                                                                     Header="Frame Index"
-                                                                     Minimum="0" />
-                                            </chart:SfCartesianChart.XAxes>
-                                            <chart:SfCartesianChart.YAxes>
-                                                <chart:NumericalAxis Header="{x:Bind ViewModel.MetricChartYAxisLabel, Mode=OneWay}" />
-                                            </chart:SfCartesianChart.YAxes>
-                                            <chart:SfCartesianChart.TrackballBehavior>
-                                                <chart:ChartTrackballBehavior />
-                                            </chart:SfCartesianChart.TrackballBehavior>
-                                            <chart:SfCartesianChart.ZoomPanBehavior>
-                                                <chart:ChartZoomPanBehavior EnableMouseWheelZooming="True"
-                                                                            EnablePanning="True"
-                                                                            ZoomMode="XY" />
-                                            </chart:SfCartesianChart.ZoomPanBehavior>
-                                            <chart:SfCartesianChart.Series>
-                                                <chart:ScatterSeries Fill="{x:Bind ViewModel.FpsChartColor, Mode=OneWay}"
-                                                                     ItemsSource="{x:Bind ViewModel.MetricSeries, Mode=OneWay}"
-                                                                     Label="{x:Bind ViewModel.MetricChartLabel, Mode=OneWay}"
-                                                                     PointHeight="6"
-                                                                     PointWidth="6"
-                                                                     XBindingPath="Index"
-                                                                     YBindingPath="Value" />
-                                                <chart:ScatterSeries Fill="{x:Bind ViewModel.FpsChartColor2, Mode=OneWay}"
-                                                                     IsVisibleOnLegend="{x:Bind ViewModel.ShowMetricChart2, Mode=OneWay}"
-                                                                     ItemsSource="{x:Bind ViewModel.MetricSeries2, Mode=OneWay}"
-                                                                     Label="{x:Bind ViewModel.MetricChartLabel2, Mode=OneWay}"
-                                                                     PointHeight="6"
-                                                                     PointWidth="6"
-                                                                     XBindingPath="Index"
-                                                                     YBindingPath="Value" />
-                                            </chart:SfCartesianChart.Series>
-                                    </chart:SfCartesianChart>
-                                </dev:Case>
+                            <dev:Case Value="Column">
+
+                                <!--  Column Chart  -->
+                                <chart:SfCartesianChart x:Name="ColumnFpsChart">
+                                    <chart:SfCartesianChart.Legend>
+                                        <chart:ChartLegend />
+                                    </chart:SfCartesianChart.Legend>
+                                    <chart:SfCartesianChart.XAxes>
+                                        <chart:CategoryAxis LabelPlacement="BetweenTicks"
+                                                            ShowMajorGridLines="False" />
+                                    </chart:SfCartesianChart.XAxes>
+                                    <chart:SfCartesianChart.YAxes>
+                                        <chart:NumericalAxis EdgeLabelsDrawingMode="Shift"
+                                                             Header="{x:Bind ViewModel.FpsChartYAxisLabel, Mode=OneWay}"
+                                                             RangePadding="AppendInterval"
+                                                             ShowMajorGridLines="True" />
+                                    </chart:SfCartesianChart.YAxes>
+                                    <chart:SfCartesianChart.Series>
+                                        <chart:ColumnSeries x:Name="ColumnFpsChart1Series"
+                                                            EnableAnimation="True"
+                                                            Fill="{x:Bind ViewModel.FpsChartColor, Mode=OneWay}"
+                                                            ItemsSource="{x:Bind ViewModel.FpsBarSeries, Mode=OneWay}"
+                                                            Label="{x:Bind ViewModel.FpsChartLabel, Mode=OneWay}"
+                                                            SegmentSpacing="0.2"
+                                                            ShowDataLabels="True"
+                                                            XBindingPath="Label"
+                                                            YBindingPath="Value">
+                                            <chart:ColumnSeries.DataLabelSettings>
+                                                <chart:CartesianDataLabelSettings Format="{x:Bind ViewModel.FpsChartLabelFormat, Mode=OneWay}"
+                                                                                  Position="Outer"
+                                                                                  UseSeriesPalette="False" />
+                                            </chart:ColumnSeries.DataLabelSettings>
+                                        </chart:ColumnSeries>
+                                        <chart:ColumnSeries x:Name="ColumnFpsRenderedChart1Series"
+                                                            EnableAnimation="True"
+                                                            IsVisibleOnLegend="{x:Bind ViewModel.ShowRenderedFps, Mode=OneWay}"
+                                                            ItemsSource="{x:Bind ViewModel.FpsRenderedBarSeries, Mode=OneWay}"
+                                                            Label="{x:Bind ViewModel.FpsRenderedChartLabel, Mode=OneWay}"
+                                                            SegmentSpacing="0.2"
+                                                            ShowDataLabels="True"
+                                                            XBindingPath="Label"
+                                                            YBindingPath="Value">
+                                            <chart:ColumnSeries.Fill>
+                                                <SolidColorBrush Color="{x:Bind ViewModel.FpsRenderedColor, Mode=OneWay}" />
+                                            </chart:ColumnSeries.Fill>
+                                            <chart:ColumnSeries.DataLabelSettings>
+                                                <chart:CartesianDataLabelSettings Format="{x:Bind ViewModel.FpsChartLabelFormat, Mode=OneWay}"
+                                                                                  Position="Outer"
+                                                                                  UseSeriesPalette="False" />
+                                            </chart:ColumnSeries.DataLabelSettings>
+                                        </chart:ColumnSeries>
+                                        <chart:ColumnSeries x:Name="ColumnFpsChart2Series"
+                                                            EnableAnimation="True"
+                                                            Fill="{x:Bind ViewModel.FpsChartColor2, Mode=OneWay}"
+                                                            IsVisibleOnLegend="{x:Bind ViewModel.ShowFpsChart2, Mode=OneWay}"
+                                                            ItemsSource="{x:Bind ViewModel.FpsBarSeries2, Mode=OneWay}"
+                                                            Label="{x:Bind ViewModel.FpsChartLabel2, Mode=OneWay}"
+                                                            SegmentSpacing="0.2"
+                                                            ShowDataLabels="True"
+                                                            XBindingPath="Label"
+                                                            YBindingPath="Value">
+                                            <chart:ColumnSeries.DataLabelSettings>
+                                                <chart:CartesianDataLabelSettings Format="{x:Bind ViewModel.FpsChartLabelFormat, Mode=OneWay}"
+                                                                                  Position="Outer"
+                                                                                  UseSeriesPalette="False" />
+                                            </chart:ColumnSeries.DataLabelSettings>
+                                        </chart:ColumnSeries>
+                                        <chart:ColumnSeries x:Name="ColumnFpsRenderedChart2Series"
+                                                            EnableAnimation="True"
+                                                            IsVisibleOnLegend="{x:Bind ViewModel.ShowRenderedFpsChart2, Mode=OneWay}"
+                                                            ItemsSource="{x:Bind ViewModel.FpsRenderedBarSeries2, Mode=OneWay}"
+                                                            Label="{x:Bind ViewModel.FpsRenderedChartLabel2, Mode=OneWay}"
+                                                            SegmentSpacing="0.2"
+                                                            ShowDataLabels="True"
+                                                            XBindingPath="Label"
+                                                            YBindingPath="Value">
+                                            <chart:ColumnSeries.Fill>
+                                                <SolidColorBrush Color="{x:Bind ViewModel.FpsRenderedColor2, Mode=OneWay}" />
+                                            </chart:ColumnSeries.Fill>
+                                            <chart:ColumnSeries.DataLabelSettings>
+                                                <chart:CartesianDataLabelSettings Format="{x:Bind ViewModel.FpsChartLabelFormat, Mode=OneWay}"
+                                                                                  Position="Outer"
+                                                                                  UseSeriesPalette="False" />
+                                            </chart:ColumnSeries.DataLabelSettings>
+                                        </chart:ColumnSeries>
+                                    </chart:SfCartesianChart.Series>
+                                </chart:SfCartesianChart>
+                            </dev:Case>
+                            <dev:Case Value="Line">
+                                <chart:SfCartesianChart>
+                                    <chart:SfCartesianChart.Legend>
+                                        <chart:ChartLegend />
+                                    </chart:SfCartesianChart.Legend>
+                                    <chart:SfCartesianChart.XAxes>
+                                        <chart:NumericalAxis EdgeLabelsDrawingMode="Shift"
+                                                             Header="Frame Index"
+                                                             Minimum="0" />
+                                    </chart:SfCartesianChart.XAxes>
+                                    <chart:SfCartesianChart.YAxes>
+                                        <chart:NumericalAxis Header="{x:Bind ViewModel.MetricChartYAxisLabel, Mode=OneWay}" />
+                                    </chart:SfCartesianChart.YAxes>
+                                    <chart:SfCartesianChart.TrackballBehavior>
+                                        <chart:ChartTrackballBehavior />
+                                    </chart:SfCartesianChart.TrackballBehavior>
+                                    <chart:SfCartesianChart.ZoomPanBehavior>
+                                        <chart:ChartZoomPanBehavior EnableMouseWheelZooming="True"
+                                                                    EnablePanning="True"
+                                                                    ZoomMode="XY" />
+                                    </chart:SfCartesianChart.ZoomPanBehavior>
+                                    <chart:SfCartesianChart.Series>
+                                        <chart:FastLineSeries EnableAnimation="True"
+                                                              Fill="{x:Bind ViewModel.FpsChartColor, Mode=OneWay}"
+                                                              ItemsSource="{x:Bind ViewModel.MetricSeries, Mode=OneWay}"
+                                                              Label="{x:Bind ViewModel.MetricChartLabel, Mode=OneWay}"
+                                                              XBindingPath="Index"
+                                                              YBindingPath="Value" />
+                                        <chart:FastLineSeries EnableAnimation="True"
+                                                              Fill="{x:Bind ViewModel.FpsChartColor2, Mode=OneWay}"
+                                                              IsVisibleOnLegend="{x:Bind ViewModel.ShowMetricChart2, Mode=OneWay}"
+                                                              ItemsSource="{x:Bind ViewModel.MetricSeries2, Mode=OneWay}"
+                                                              Label="{x:Bind ViewModel.MetricChartLabel2, Mode=OneWay}"
+                                                              XBindingPath="Index"
+                                                              YBindingPath="Value" />
+                                    </chart:SfCartesianChart.Series>
+                                </chart:SfCartesianChart>
+                            </dev:Case>
+                            <dev:Case Value="Scatter">
+                                <chart:SfCartesianChart>
+                                    <chart:SfCartesianChart.Legend>
+                                        <chart:ChartLegend />
+                                    </chart:SfCartesianChart.Legend>
+                                    <chart:SfCartesianChart.XAxes>
+                                        <chart:NumericalAxis EdgeLabelsDrawingMode="Shift"
+                                                             Header="Frame Index"
+                                                             Minimum="0" />
+                                    </chart:SfCartesianChart.XAxes>
+                                    <chart:SfCartesianChart.YAxes>
+                                        <chart:NumericalAxis Header="{x:Bind ViewModel.MetricChartYAxisLabel, Mode=OneWay}" />
+                                    </chart:SfCartesianChart.YAxes>
+                                    <chart:SfCartesianChart.TrackballBehavior>
+                                        <chart:ChartTrackballBehavior />
+                                    </chart:SfCartesianChart.TrackballBehavior>
+                                    <chart:SfCartesianChart.ZoomPanBehavior>
+                                        <chart:ChartZoomPanBehavior EnableMouseWheelZooming="True"
+                                                                    EnablePanning="True"
+                                                                    ZoomMode="XY" />
+                                    </chart:SfCartesianChart.ZoomPanBehavior>
+                                    <chart:SfCartesianChart.Series>
+                                        <chart:FastScatterBitmapSeries EnableAnimation="True"
+                                                                       Fill="{x:Bind ViewModel.FpsChartColor, Mode=OneWay}"
+                                                                       ItemsSource="{x:Bind ViewModel.MetricSeries, Mode=OneWay}"
+                                                                       Label="{x:Bind ViewModel.MetricChartLabel, Mode=OneWay}"
+                                                                       PointHeight="5"
+                                                                       PointWidth="5"
+                                                                       XBindingPath="Index"
+                                                                       YBindingPath="Value" />
+                                        <chart:FastScatterBitmapSeries EnableAnimation="True"
+                                                                       Fill="{x:Bind ViewModel.FpsChartColor2, Mode=OneWay}"
+                                                                       IsVisibleOnLegend="{x:Bind ViewModel.ShowMetricChart2, Mode=OneWay}"
+                                                                       ItemsSource="{x:Bind ViewModel.MetricSeries2, Mode=OneWay}"
+                                                                       Label="{x:Bind ViewModel.MetricChartLabel2, Mode=OneWay}"
+                                                                       PointHeight="5"
+                                                                       PointWidth="5"
+                                                                       XBindingPath="Index"
+                                                                       YBindingPath="Value" />
+                                    </chart:SfCartesianChart.Series>
+                                </chart:SfCartesianChart>
+                            </dev:Case>
                         </dev:SwitchPresenter>
                     </dev:Case>
 

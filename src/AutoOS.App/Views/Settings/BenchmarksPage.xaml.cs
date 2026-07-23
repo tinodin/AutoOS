@@ -1,6 +1,7 @@
 using System.Globalization;
 using AutoOS.Core.Helpers.Picker;
 using AutoOS.Views.Settings.Benchmarks;
+using Syncfusion.UI.Xaml.Charts;
 using Syncfusion.UI.Xaml.DataGrid;
 using System.Text.Json;
 using Windows.System;
@@ -50,7 +51,16 @@ public sealed partial class BenchmarksPage : Page
 		PresentingProcesses.ProcessesChanged += PresentingProcesses_ProcessesChanged;
 		ViewModel.FpsColor = Colors.DodgerBlue;
 		ViewModel.FpsColor2 = Colors.Orange;
+		ViewModel.MetricToggled += OnMetricToggled;
 		LoadRecordings();
+	}
+
+	private void OnMetricToggled()
+	{
+		if (_lastChartPresentation != null && ViewModel.ActiveTab == "Analysis" && (ViewModel.AnalysisChartType is "Bar" or "Column"))
+		{
+			ApplyFpsChartPresentation(_lastChartPresentation);
+		}
 	}
 
 	protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -166,35 +176,29 @@ public sealed partial class BenchmarksPage : Page
 	{
 		string chartType = ReferenceEquals(sender.SelectedItem, BarChartItem)
 			? "Bar"
-			: ReferenceEquals(sender.SelectedItem, ScatterChartItem)
-				? "Scatter"
-				: "Line";
+			: ReferenceEquals(sender.SelectedItem, ColumnChartItem)
+				? "Column"
+				: ReferenceEquals(sender.SelectedItem, ScatterChartItem)
+					? "Scatter"
+					: "Line";
 		if (ViewModel.AnalysisChartType == chartType)
 			return;
 
+		string oldType = ViewModel.AnalysisChartType;
 		ViewModel.AnalysisChartType = chartType;
 		if (ViewModel.ActiveTab != "Analysis")
 			return;
 
-		if (chartType == "Bar")
+		if (chartType is "Bar" or "Column")
 		{
-			List<BarPoint> displayedFirstSeries = [.. ViewModel.FpsBarSeries];
-			List<BarPoint> renderedFirstSeries = [.. ViewModel.FpsRenderedBarSeries];
-			List<BarPoint> displayedSecondSeries = [.. ViewModel.FpsBarSeries2];
-			List<BarPoint> renderedSecondSeries = [.. ViewModel.FpsRenderedBarSeries2];
-			ViewModel.FpsBarSeries = [];
-			ViewModel.FpsRenderedBarSeries = [];
-			ViewModel.FpsBarSeries2 = [];
-			ViewModel.FpsRenderedBarSeries2 = [];
-			DispatcherQueue.TryEnqueue(() =>
+			if (_lastChartPresentation != null)
 			{
-				if (ViewModel.AnalysisChartType != chartType)
-					return;
-				ViewModel.FpsBarSeries = [.. displayedFirstSeries];
-				ViewModel.FpsRenderedBarSeries = [.. renderedFirstSeries];
-				ViewModel.FpsBarSeries2 = [.. displayedSecondSeries];
-				ViewModel.FpsRenderedBarSeries2 = [.. renderedSecondSeries];
-			});
+				DispatcherQueue.TryEnqueue(() =>
+				{
+					if (_lastChartPresentation != null)
+						ApplyFpsChartPresentation(_lastChartPresentation);
+				});
+			}
 			return;
 		}
 
@@ -681,7 +685,7 @@ public sealed partial class BenchmarksPage : Page
 	}
 	// ── Data model for analysis results ──────────────────────────────────────
 	private sealed record AnalysisModel(
-			List<(string recordingName, List<(int x, double y)> points)> MetricSeries,
+			List<(string recordingName, List<SeriesPoint> points)> MetricSeries,
 			List<(
 				string recordingName,
 				Dictionary<string, double> displayedStats,
@@ -774,7 +778,7 @@ public sealed partial class BenchmarksPage : Page
 			HasMetricColumn(entry.item.FilePath, entry.lastWriteUtc, "MsBetweenDisplayChange") ||
 			HasMetricColumn(entry.item.FilePath, entry.lastWriteUtc, "MsBetweenPresents")))
 			return null;
-		List<(string recordingName, List<(int x, double y)> points)> metricSeries = [];
+		List<(string recordingName, List<SeriesPoint> points)> metricSeries = [];
 		List<(
 			string recordingName,
 			Dictionary<string, double> displayedStats,
@@ -785,20 +789,11 @@ public sealed partial class BenchmarksPage : Page
 			var (item, lastWriteUtc) = loaded[recordingIndex];
 			LoadAnalysisColumns(item.FilePath, lastWriteUtc);
 			LoadMetricColumn(item.FilePath, lastWriteUtc, metricColumn, out var rawMetricValues);
-			List<double> metricValues = [.. rawMetricValues];
-			if (metricValues.Count > 0)
-			{
-				const int maxPoints = 300;
-				int step = Math.Max(1, metricValues.Count / maxPoints);
-				var points = new List<(int x, double y)>(
-					Math.Min(maxPoints, (metricValues.Count + step - 1) / step));
-				for (int index = 0; index < metricValues.Count; index += step)
-					points.Add((index, metricValues[index]));
-				int finalIndex = metricValues.Count - 1;
-				if (points[^1].x != finalIndex)
-					points.Add((finalIndex, metricValues[finalIndex]));
-				metricSeries.Add((item.FileName, points));
-			}
+			List<SeriesPoint> points = new(rawMetricValues.Count);
+			for (int index = 0; index < rawMetricValues.Count; index++)
+				points.Add(new SeriesPoint { Index = index + 1, Value = rawMetricValues[index] });
+
+			metricSeries.Add((item.FileName, points));
 			List<double> displayedFrameTimes;
 			if (string.Equals(metricColumn, "MsBetweenDisplayChange", StringComparison.OrdinalIgnoreCase))
 				displayedFrameTimes = [.. rawMetricValues];
@@ -900,13 +895,17 @@ public sealed partial class BenchmarksPage : Page
 			int seriesIdx = 0;
 			foreach (var (recordingName, points) in model.MetricSeries)
 			{
-				var target = seriesIdx == 0 ? metricPts1 : metricPts2;
-				if (seriesIdx == 1)
+				if (seriesIdx == 0)
+				{
+					metricPts1 = points;
+					metricLabel1 = recordingName;
+				}
+				else
+				{
+					metricPts2 = points;
+					metricLabel2 = recordingName;
 					showMetric2 = true;
-				foreach (var (x, y) in points)
-					target.Add(new SeriesPoint { Index = x, Value = y });
-				if (seriesIdx == 0) metricLabel1 = recordingName;
-				else metricLabel2 = recordingName;
+				}
 				seriesIdx++;
 			}
 		}
@@ -928,7 +927,7 @@ public sealed partial class BenchmarksPage : Page
 					metricLabel1,
 					metricLabel2,
 					"FPS",
-					"0.# FPS",
+					"0.#",
 					"Milliseconds (ms)");
 	}
 
@@ -939,16 +938,11 @@ public sealed partial class BenchmarksPage : Page
 		ApplyFpsChartPresentation(presentation);
 		ApplyMetricChartPresentation(presentation);
 	}
+	private ChartPresentation _lastChartPresentation;
+
 	private void ApplyFpsChartPresentation(ChartPresentation presentation)
 	{
-		FpsChart1Series.EnableAnimation = false;
-		FpsRenderedChart1Series.EnableAnimation = false;
-		FpsChart2Series.EnableAnimation = false;
-		FpsRenderedChart2Series.EnableAnimation = false;
-		FpsChart1Series.EnableAnimation = true;
-		FpsRenderedChart1Series.EnableAnimation = true;
-		FpsChart2Series.EnableAnimation = true;
-		FpsRenderedChart2Series.EnableAnimation = true;
+		_lastChartPresentation = presentation;
 		ViewModel.FpsChartYAxisLabel = presentation.FpsYAxisLabel;
 		ViewModel.FpsChartLabelFormat = presentation.FpsLabelFormat;
 		ViewModel.FpsChartLabel = presentation.DisplayedFpsLabel1;
@@ -958,11 +952,63 @@ public sealed partial class BenchmarksPage : Page
 		ViewModel.ShowRenderedFps = presentation.ShowRenderedFps1;
 		ViewModel.ShowFpsChart2 = presentation.ShowDisplayedFps2;
 		ViewModel.ShowRenderedFpsChart2 = presentation.ShowRenderedFps2;
-		ViewModel.FpsBarSeries = [.. presentation.DisplayedFpsBars1];
-		ViewModel.FpsRenderedBarSeries = [.. presentation.RenderedFpsBars1];
-		ViewModel.FpsBarSeries2 = [.. presentation.DisplayedFpsBars2];
-		ViewModel.FpsRenderedBarSeries2 = [.. presentation.RenderedFpsBars2];
-		FpsChart.InvalidateMeasure();
+		var series1Data = presentation.DisplayedFpsBars1.Where(b => ViewModel.IsMetricEnabled(b.Label)).ToList();
+		var series1RenderedData = presentation.RenderedFpsBars1.Where(b => ViewModel.IsMetricEnabled(b.Label)).ToList();
+		var series2Data = presentation.DisplayedFpsBars2.Where(b => ViewModel.IsMetricEnabled(b.Label)).ToList();
+		var series2RenderedData = presentation.RenderedFpsBars2.Where(b => ViewModel.IsMetricEnabled(b.Label)).ToList();
+
+		ViewModel.FpsBarSeries = [.. series1Data];
+		ViewModel.FpsRenderedBarSeries = presentation.ShowRenderedFps1 ? [.. series1RenderedData] : null;
+		ViewModel.FpsBarSeries2 = presentation.ShowDisplayedFps2 ? [.. series2Data] : null;
+		ViewModel.FpsRenderedBarSeries2 = presentation.ShowRenderedFps2 ? [.. series2RenderedData] : null;
+
+
+		// Manage series collection for Bar chart (only exists when AnalysisChartType == "Bar")
+		if (FpsChart != null)
+		{
+			FpsChart.Series.Clear();
+			FpsChart.Series.Add(FpsChart1Series);
+			if (presentation.ShowRenderedFps1)
+				FpsChart.Series.Add(FpsRenderedChart1Series);
+			if (presentation.ShowDisplayedFps2)
+				FpsChart.Series.Add(FpsChart2Series);
+			if (presentation.ShowRenderedFps2)
+				FpsChart.Series.Add(FpsRenderedChart2Series);
+
+			FpsChart1Series.ShowDataLabels = false;
+			FpsChart1Series.ShowDataLabels = true;
+			FpsRenderedChart1Series.ShowDataLabels = false;
+			FpsRenderedChart1Series.ShowDataLabels = presentation.ShowRenderedFps1;
+			FpsChart2Series.ShowDataLabels = false;
+			FpsChart2Series.ShowDataLabels = presentation.ShowDisplayedFps2;
+			FpsRenderedChart2Series.ShowDataLabels = false;
+			FpsRenderedChart2Series.ShowDataLabels = presentation.ShowRenderedFps2;
+
+			FpsChart.IsTransposed = false;
+			FpsChart.IsTransposed = true;
+		}
+
+		// Manage series collection for Column chart (only exists when AnalysisChartType == "Column")
+		if (ColumnFpsChart != null)
+		{
+			ColumnFpsChart.Series.Clear();
+			ColumnFpsChart.Series.Add(ColumnFpsChart1Series);
+			if (presentation.ShowRenderedFps1)
+				ColumnFpsChart.Series.Add(ColumnFpsRenderedChart1Series);
+			if (presentation.ShowDisplayedFps2)
+				ColumnFpsChart.Series.Add(ColumnFpsChart2Series);
+			if (presentation.ShowRenderedFps2)
+				ColumnFpsChart.Series.Add(ColumnFpsRenderedChart2Series);
+
+			ColumnFpsChart1Series.ShowDataLabels = false;
+			ColumnFpsChart1Series.ShowDataLabels = true;
+			ColumnFpsRenderedChart1Series.ShowDataLabels = false;
+			ColumnFpsRenderedChart1Series.ShowDataLabels = presentation.ShowRenderedFps1;
+			ColumnFpsChart2Series.ShowDataLabels = false;
+			ColumnFpsChart2Series.ShowDataLabels = presentation.ShowDisplayedFps2;
+			ColumnFpsRenderedChart2Series.ShowDataLabels = false;
+			ColumnFpsRenderedChart2Series.ShowDataLabels = presentation.ShowRenderedFps2;
+		}
 	}
 	private void ApplyMetricChartPresentation(ChartPresentation presentation)
 	{
@@ -984,6 +1030,7 @@ public sealed partial class BenchmarksPage : Page
 	};
 	private void ClearAnalysisCharts()
 	{
+		_lastChartPresentation = null;
 		ViewModel.ClearAnalysis();
 	}
 	// ── Results tab ──────────────────────────────────────────────────────────

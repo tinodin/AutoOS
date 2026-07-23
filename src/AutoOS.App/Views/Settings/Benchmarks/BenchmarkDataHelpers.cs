@@ -25,8 +25,19 @@ internal static class BenchmarkCsv
 	public static bool TryParseDouble(string value, out double result)
 	{
 		value = value.Trim();
-		return double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out result) ||
-			double.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out result);
+		if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out result) ||
+			double.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out result))
+		{
+			return true;
+		}
+
+		if (value.Contains(','))
+		{
+			string normalized = value.Replace(',', '.');
+			return double.TryParse(normalized, NumberStyles.Float, CultureInfo.InvariantCulture, out result);
+		}
+
+		return false;
 	}
 
 	public static List<string> ParseCsvLine(string line)

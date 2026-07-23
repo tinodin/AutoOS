@@ -35,7 +35,7 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 	private SolidColorBrush _fpsChartColor2;
 	private string _fpsChartYAxisLabel = "FPS";
 	private string _metricChartYAxisLabel = "Milliseconds (ms)";
-	private string _fpsChartLabelFormat = "0.# FPS";
+	private string _fpsChartLabelFormat = "0.#";
 	private bool _showFpsChart2;
 	private bool _showRenderedFps;
 	private bool _showRenderedFpsChart2;
@@ -137,18 +137,152 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 		}
 	}
 
+	public event Action MetricToggled;
+
+	private bool _showMean = true;
+	private bool _showP01 = true;
+	private bool _showP1 = true;
+	private bool _showP5 = true;
+	private bool _showP10 = true;
+	private bool _showP50 = true;
+	private bool _showP90 = true;
+	private bool _showP95 = true;
+	private bool _showP99 = true;
+	private bool _showP999 = true;
+
+	public bool ShowMean
+	{
+		get => _showMean;
+		set
+		{
+			if (SetProperty(ref _showMean, value))
+				MetricToggled?.Invoke();
+		}
+	}
+
+	public bool ShowP01
+	{
+		get => _showP01;
+		set
+		{
+			if (SetProperty(ref _showP01, value))
+				MetricToggled?.Invoke();
+		}
+	}
+
+	public bool ShowP1
+	{
+		get => _showP1;
+		set
+		{
+			if (SetProperty(ref _showP1, value))
+				MetricToggled?.Invoke();
+		}
+	}
+
+	public bool ShowP5
+	{
+		get => _showP5;
+		set
+		{
+			if (SetProperty(ref _showP5, value))
+				MetricToggled?.Invoke();
+		}
+	}
+
+	public bool ShowP10
+	{
+		get => _showP10;
+		set
+		{
+			if (SetProperty(ref _showP10, value))
+				MetricToggled?.Invoke();
+		}
+	}
+
+	public bool ShowP50
+	{
+		get => _showP50;
+		set
+		{
+			if (SetProperty(ref _showP50, value))
+				MetricToggled?.Invoke();
+		}
+	}
+
+	public bool ShowP90
+	{
+		get => _showP90;
+		set
+		{
+			if (SetProperty(ref _showP90, value))
+				MetricToggled?.Invoke();
+		}
+	}
+
+	public bool ShowP95
+	{
+		get => _showP95;
+		set
+		{
+			if (SetProperty(ref _showP95, value))
+				MetricToggled?.Invoke();
+		}
+	}
+
+	public bool ShowP99
+	{
+		get => _showP99;
+		set
+		{
+			if (SetProperty(ref _showP99, value))
+				MetricToggled?.Invoke();
+		}
+	}
+
+	public bool ShowP999
+	{
+		get => _showP999;
+		set
+		{
+			if (SetProperty(ref _showP999, value))
+				MetricToggled?.Invoke();
+		}
+	}
+
+	public bool IsMetricEnabled(string metric) => metric switch
+	{
+		"Mean" => ShowMean,
+		"P0.1" => ShowP01,
+		"P1" => ShowP1,
+		"P5" => ShowP5,
+		"P10" => ShowP10,
+		"P50" => ShowP50,
+		"P90" => ShowP90,
+		"P95" => ShowP95,
+		"P99" => ShowP99,
+		"P99.9" => ShowP999,
+		_ => true
+	};
+
 	public string AnalysisChartType
 	{
 		get => _analysisChartType;
 		set
 		{
 			if (SetProperty(ref _analysisChartType, value))
+			{
 				OnPropertyChanged(nameof(MetricVisibility));
+				OnPropertyChanged(nameof(BarMetricsVisibility));
+			}
 		}
 	}
 
 	public Visibility MetricVisibility =>
-		AnalysisChartType == "Bar" ? Visibility.Collapsed : Visibility.Visible;
+		(AnalysisChartType is "Bar" or "Column") ? Visibility.Collapsed : Visibility.Visible;
+
+	public Visibility BarMetricsVisibility =>
+		(AnalysisChartType is "Bar" or "Column") ? Visibility.Visible : Visibility.Collapsed;
 
 	public bool CanRecord =>
 		IsRecording ||
@@ -292,20 +426,37 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 	public bool ShowFpsChart2
 	{
 		get => _showFpsChart2;
-		set => SetProperty(ref _showFpsChart2, value);
+		set
+		{
+			if (SetProperty(ref _showFpsChart2, value))
+				OnPropertyChanged(nameof(ShowFpsChart2Visibility));
+		}
 	}
 
 	public bool ShowRenderedFps
 	{
 		get => _showRenderedFps;
-		set => SetProperty(ref _showRenderedFps, value);
+		set
+		{
+			if (SetProperty(ref _showRenderedFps, value))
+				OnPropertyChanged(nameof(ShowRenderedFpsVisibility));
+		}
 	}
 
 	public bool ShowRenderedFpsChart2
 	{
 		get => _showRenderedFpsChart2;
-		set => SetProperty(ref _showRenderedFpsChart2, value);
+		set
+		{
+			if (SetProperty(ref _showRenderedFpsChart2, value))
+				OnPropertyChanged(nameof(ShowRenderedFpsChart2Visibility));
+		}
 	}
+
+	public Visibility ShowRenderedFpsVisibility => ShowRenderedFps ? Visibility.Visible : Visibility.Collapsed;
+	public Visibility ShowFpsChart2Visibility => ShowFpsChart2 ? Visibility.Visible : Visibility.Collapsed;
+	public Visibility ShowRenderedFpsChart2Visibility => ShowRenderedFpsChart2 ? Visibility.Visible : Visibility.Collapsed;
+	public Visibility SecondColorPickerVisibility => _selectedRecordingCount == 2 ? Visibility.Visible : Visibility.Collapsed;
 
 	public bool ShowMetricChart2
 	{
@@ -385,14 +536,15 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 		OnPropertyChanged(nameof(IsAggregateEnabled));
 		OnPropertyChanged(nameof(IsAnalysisToolbarEnabled));
 		OnPropertyChanged(nameof(IsSecondColorPickerEnabled));
+		OnPropertyChanged(nameof(SecondColorPickerVisibility));
 	}
 
 	public void ClearAnalysis()
 	{
-		FpsBarSeries = [];
-		FpsRenderedBarSeries = [];
-		FpsBarSeries2 = [];
-		FpsRenderedBarSeries2 = [];
+		FpsBarSeries = null;
+		FpsRenderedBarSeries = null;
+		FpsBarSeries2 = null;
+		FpsRenderedBarSeries2 = null;
 		MetricSeries = [];
 		MetricSeries2 = [];
 		FpsChartLabel = string.Empty;
