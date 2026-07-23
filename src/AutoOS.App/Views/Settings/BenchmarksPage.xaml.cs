@@ -13,7 +13,7 @@ public sealed partial class BenchmarksPage : Page
 	public BenchmarksViewModel ViewModel { get; } = new();
 
 	private static readonly string RecordingsDirectory = Path.Combine(PathHelper.GetAppDataFolderPath(), "Benchmarks");
-	private static readonly string[] MetricLabels = ["0.1% Low", "1% Low", "Avg (Arithmetic)", "Avg (Harmonic)", "Min", "Max", "P0.1", "P1", "P5", "P50 (Median)", "P95", "P99"];
+	private static readonly string[] MetricLabels = ["0.1% Low", "1% Low", "Average (Arithmetic)", "Average (Harmonic)", "Minimum", "Maximum", "P0.1", "P1", "P5", "P50 (Median)", "P95", "P99"];
 	private const string AggregateDurationColumn = "AutoOSAggregateDurationSeconds";
 	private const string AggregateSourcesColumn = "AutoOSAggregateSources";
 	private GlobalKeyboardHook _globalKeyboardHook;
@@ -1049,13 +1049,18 @@ public sealed partial class BenchmarksPage : Page
 			var (groupName, childLabel) = GetResultGroup(row.Metric);
 			if (!groupLookup.TryGetValue(groupName, out var group))
 			{
-				group = new ResultRow { Metric = groupName };
+				group = new ResultRow
+				{
+					Metric = groupName,
+					Tooltip = GetResultTooltip(groupName, string.Empty)
+				};
 				groupLookup[groupName] = group;
 				groups.Add(group);
 			}
 			group.Children.Add(new ResultRow
 			{
 				Metric = childLabel,
+				Tooltip = GetResultTooltip(groupName, childLabel),
 				RecordingA = row.RecordingA,
 				RecordingB = row.RecordingB,
 				RecordingAComparison = row.RecordingAComparison,
@@ -1087,6 +1092,56 @@ public sealed partial class BenchmarksPage : Page
 		if (label.StartsWith("MsUntilDisplayed ", StringComparison.Ordinal))
 			return ("MsUntilDisplayed", label["MsUntilDisplayed ".Length..]);
 		return ("Other", label);
+	}
+	private static string GetResultTooltip(string group, string metric)
+	{
+		if (string.IsNullOrEmpty(metric))
+		{
+			return group switch
+			{
+				"Rendered FPS" => "Measures how fast the game creates frames before they are sent to your screen.",
+				"Displayed FPS" => "Measures how fast frames actually change on your screen.",
+				"MsBetweenPresents" => "The time it takes the game engine to push out each new frame. Lower values mean a more responsive engine.",
+				"MsBetweenDisplayChange" => "The time it takes for a new image to physically appear on your screen. Lower values mean visually smoother motion.",
+				"MsGPUBusy" => "How long the graphics card works on a single frame. Higher values cause noticeable input lag.",
+				"MsUntilDisplayed" => "The delay between the game finishing a frame and it appearing on screen. High values mean lag caused by the GPU.",
+				_ => "Benchmark statistic."
+			};
+		}
+
+		if (metric.StartsWith("0.1% Low", StringComparison.Ordinal))
+			return "Average FPS across the worst-performing 0.1% of frames. Higher values indicate smoother performance.";
+		if (metric.StartsWith("1% Low", StringComparison.Ordinal))
+			return "Average FPS across the worst-performing 1% of frames. Higher values indicate smoother performance";
+		if (metric.StartsWith("Average (Arithmetic)", StringComparison.Ordinal))
+			return "Conventional average FPS. Every sampled frame contributes equally.";
+		if (metric.StartsWith("Average (Harmonic)", StringComparison.Ordinal))
+			return "Frame-duration-weighted average FPS. Long, low-FPS frames have more influence, making lag spikes more visible.";
+		if (metric.StartsWith("Minimum", StringComparison.Ordinal))
+			return "Lowest sampled FPS value in the recording.";
+		if (metric.StartsWith("Maximum", StringComparison.Ordinal))
+			return "Highest sampled FPS value in the recording.";
+		if (metric.StartsWith("P0.1", StringComparison.Ordinal))
+			return "FPS threshold containing the bottom 0.1% of sampled frames.";
+		if (metric.StartsWith("P1", StringComparison.Ordinal))
+			return "FPS threshold containing the bottom 1% of sampled frames.";
+		if (metric.StartsWith("P50", StringComparison.Ordinal))
+			return "FPS threshold containing 50% of the sampled frames.";
+		if (metric.StartsWith("P5", StringComparison.Ordinal))
+			return "FPS threshold containing the bottom 5% of sampled frames.";
+		if (metric.StartsWith("P95", StringComparison.Ordinal))
+			return "FPS threshold containing 95% of the sampled frames.";
+		if (metric.StartsWith("P99", StringComparison.Ordinal))
+			return "FPS threshold containing 99% of the sampled frames.";
+		if (metric.StartsWith("SD", StringComparison.Ordinal))
+			return "Standard deviation: Measures how far individual frametimes typically stray from the average frametime. Lower values indicate more consistent performance. Measured in ms.";
+		if (metric.StartsWith("CV", StringComparison.Ordinal))
+			return "Coefficient of variation: Standard deviation divided by the mean. Useful for comparing stutter severity across different performance levels. Lower values indicate better frametime stability";
+		if (metric.StartsWith("RMSSD", StringComparison.Ordinal))
+			return "Root mean square of successive differences: Measures frame pacing by comparing the timing of adjacent frames. Lower values indicate smoother frame pacing. Measured in ms.";
+		if (metric.StartsWith("Stepwise-Relative", StringComparison.Ordinal))
+			return "Typical percentage change in rendering time from one frame to the next. Lower values indicate lower spike severity.";
+		return "Benchmark statistic.";
 	}
 	private async Task RefreshResultsTable()
 	{
@@ -1143,6 +1198,26 @@ public sealed partial class BenchmarksPage : Page
 							string b = loaded.Count < 2 ? "" : FormatStat(NumericMetric(m[1], label), isFps);
 							resultRows.Add(new ResultRow { Metric = $"{prefix} {label} FPS", RecordingA = a, RecordingB = b });
 						}
+						string FormatFpsPacing(double value, string format) =>
+							value == 0 ? "—" : value.ToString(format, CultureInfo.InvariantCulture);
+						resultRows.Add(new ResultRow
+						{
+							Metric = $"{prefix} CV",
+							RecordingA = FormatFpsPacing(m[0].Cv, "0.#####"),
+							RecordingB = loaded.Count < 2 ? "" : FormatFpsPacing(m[1].Cv, "0.#####")
+						});
+						resultRows.Add(new ResultRow
+						{
+							Metric = $"{prefix} RMSSD",
+							RecordingA = FormatFpsPacing(m[0].Rmssd, "0.####"),
+							RecordingB = loaded.Count < 2 ? "" : FormatFpsPacing(m[1].Rmssd, "0.####")
+						});
+						resultRows.Add(new ResultRow
+						{
+							Metric = $"{prefix} Stepwise-Relative",
+							RecordingA = FormatFpsPacing(m[0].StepwiseRelSD, "0.#####"),
+							RecordingB = loaded.Count < 2 ? "" : FormatFpsPacing(m[1].StepwiseRelSD, "0.#####")
+						});
 					}
 					AddStatsRows("Displayed", "MsBetweenDisplayChange", isFps: true);
 					AddStatsRows("Rendered", "MsBetweenPresents", isFps: true);
@@ -1156,23 +1231,17 @@ public sealed partial class BenchmarksPage : Page
 								return;
 							m[i] = mm;
 						}
-						foreach (var label in MetricLabels)
-						{
-							string a = FormatStat(NumericMetric(m[0], label), isFps: false);
-							string b = loaded.Count < 2 ? "" : FormatStat(NumericMetric(m[1], label), isFps: false);
-							resultRows.Add(new ResultRow { Metric = $"{prefix} {label} (ms)", RecordingA = a, RecordingB = b });
-						}
 						string fmtSd(double v) => v == 0 ? "—" : v.ToString("0.####", CultureInfo.InvariantCulture);
 						string fmtRel(double v) => v == 0 ? "—" : v.ToString("0.#####", CultureInfo.InvariantCulture);
 						string aSd = fmtSd(m[0].StdDev);
 						string bSd = loaded.Count < 2 ? "" : fmtSd(m[1].StdDev);
-						resultRows.Add(new ResultRow { Metric = $"{prefix} SD (ms)", RecordingA = aSd, RecordingB = bSd });
+						resultRows.Add(new ResultRow { Metric = $"{prefix} SD", RecordingA = aSd, RecordingB = bSd });
 						string aCv = fmtRel(m[0].Cv);
 						string bCv = loaded.Count < 2 ? "" : fmtRel(m[1].Cv);
 						resultRows.Add(new ResultRow { Metric = $"{prefix} CV", RecordingA = aCv, RecordingB = bCv });
 						string aRmssd = fmtSd(m[0].Rmssd);
 						string bRmssd = loaded.Count < 2 ? "" : fmtSd(m[1].Rmssd);
-						resultRows.Add(new ResultRow { Metric = $"{prefix} RMSSD (ms)", RecordingA = aRmssd, RecordingB = bRmssd });
+						resultRows.Add(new ResultRow { Metric = $"{prefix} RMSSD", RecordingA = aRmssd, RecordingB = bRmssd });
 						string aSr = fmtRel(m[0].StepwiseRelSD);
 						string bSr = loaded.Count < 2 ? "" : fmtRel(m[1].StepwiseRelSD);
 						resultRows.Add(new ResultRow { Metric = $"{prefix} Stepwise-Relative", RecordingA = aSr, RecordingB = bSr });
@@ -1254,10 +1323,10 @@ public sealed partial class BenchmarksPage : Page
 	{
 		"0.1% Low" => m.Low01,
 		"1% Low" => m.Low1,
-		"Avg (Arithmetic)" => m.AvgArithmetic,
-		"Avg (Harmonic)" => m.AvgHarmonic,
-		"Min" => m.Min,
-		"Max" => m.Max,
+		"Average (Arithmetic)" => m.AvgArithmetic,
+		"Average (Harmonic)" => m.AvgHarmonic,
+		"Minimum" => m.Min,
+		"Maximum" => m.Max,
 		"P0.1" => m.P01,
 		"P1" => m.P1,
 		"P5" => m.P5,

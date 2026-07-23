@@ -300,9 +300,9 @@
                         </controls:TabbedCommandBarItem.PrimaryCommands>
                     </controls:TabbedCommandBarItem>
 
-                    <!--  Results  -->
+                    <!--  Statistics  -->
                     <controls:TabbedCommandBarItem x:Name="ResultsTab"
-                                                   Header="Results" />
+                                                   Header="Statistics" />
                 </controls:TabbedCommandBar.MenuItems>
             </controls:TabbedCommandBar>
         </StackPanel>
@@ -737,13 +737,13 @@
                 </dev:SwitchPresenter>
             </dev:Case>
 
-            <!--  Results  -->
+            <!--  Statistics  -->
             <dev:Case Value="Results">
                 <dev:SwitchPresenter x:Name="ResultsSwitchPresenter"
                                      Value="{x:Bind ViewModel.ResultsState, Mode=OneWay}">
                     <dev:Case Value="Content">
 
-                        <!--  Results TreeGrid  -->
+                        <!--  Statistics TreeGrid  -->
                         <sfgrid:SfTreeGrid x:Name="ResultsTreeGrid"
                                            VerticalAlignment="Stretch"
                                            AutoExpandMode="AllNodesExpanded"
@@ -761,8 +761,19 @@
                             <sfgrid:SfTreeGrid.Columns>
 
                                 <!--  Metric  -->
-                                <sfgrid:TreeGridTextColumn HeaderText="Metric"
-                                                           MappingName="Metric" />
+                                <sfgrid:TreeGridTemplateColumn HeaderText="Metric"
+                                                               MappingName="Metric">
+                                    <sfgrid:TreeGridTemplateColumn.CellTemplate>
+                                        <DataTemplate x:DataType="local:ResultRow">
+                                            <TextBlock Margin="12,0"
+                                                       VerticalAlignment="Center"
+                                                       Text="{x:Bind Metric, Mode=OneWay}"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       TextWrapping="NoWrap"
+                                                       ToolTipService.ToolTip="{x:Bind Tooltip, Mode=OneWay}" />
+                                        </DataTemplate>
+                                    </sfgrid:TreeGridTemplateColumn.CellTemplate>
+                                </sfgrid:TreeGridTemplateColumn>
 
                                 <!--  Recording A  -->
                                 <sfgrid:TreeGridTextColumn x:Name="RecordingAColumn"
@@ -795,7 +806,7 @@
                             <TextBlock HorizontalAlignment="Center"
                                        FontSize="12"
                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                       Text="Select up to two recordings to view results"
+                                       Text="Select up to two recordings to view statistics"
                                        TextAlignment="Center" />
 
                         </StackPanel>
@@ -817,7 +828,7 @@
                             <TextBlock HorizontalAlignment="Center"
                                        FontSize="12"
                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                       Text="Maximum of 2 recordings supported for results"
+                                       Text="Maximum of 2 recordings supported for statistics"
                                        TextAlignment="Center" />
                         </StackPanel>
                     </dev:Case>

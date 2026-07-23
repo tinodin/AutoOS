@@ -667,6 +667,7 @@ public sealed partial class RecordingItem : ObservableObject
 public sealed partial class ResultRow : ObservableObject
 {
 	private string _metric = string.Empty;
+	private string _tooltip = string.Empty;
 	private string _recordingA = string.Empty;
 	private string _recordingB = string.Empty;
 	private ResultComparison _recordingAComparison;
@@ -676,6 +677,12 @@ public sealed partial class ResultRow : ObservableObject
 	{
 		get => _metric;
 		set => SetProperty(ref _metric, value);
+	}
+
+	public string Tooltip
+	{
+		get => _tooltip;
+		set => SetProperty(ref _tooltip, value);
 	}
 
 	public string RecordingA
