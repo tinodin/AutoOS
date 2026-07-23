@@ -772,8 +772,8 @@ public sealed partial class BenchmarksPage : Page
 				return cached;
 		}
 		if (!loaded.Any(entry =>
-			HasMetricColumn(entry.item.FilePath, entry.lastWriteUtc, "MsBetweenDisplayChange") ||
-			HasMetricColumn(entry.item.FilePath, entry.lastWriteUtc, "MsBetweenPresents")))
+			GetHeaderIndex(entry.item.FilePath, entry.lastWriteUtc, out var h) &&
+			(h.TryGetValue("MsBetweenDisplayChange", out _) || h.TryGetValue("MsBetweenPresents", out _))))
 			return null;
 		List<(string recordingName, List<SeriesPoint> points)> metricSeries = [];
 		List<(
@@ -820,11 +820,18 @@ public sealed partial class BenchmarksPage : Page
 	{
 		return new(StringComparer.OrdinalIgnoreCase)
 		{
-			["0.1% Low Avg"] = m.Low01, ["1% Low Avg"] = m.Low1,
-			["Avg (Arithmetic)"] = m.AvgArithmetic, ["Avg (Harmonic)"] = m.AvgHarmonic,
-			["Min"] = m.Min, ["Max"] = m.Max,
-			["P0.1"] = m.P01, ["P1"] = m.P1, ["P5"] = m.P5,
-			["P50 (Median)"] = m.P50Median, ["P95"] = m.P95, ["P99"] = m.P99
+			["0.1% Low Avg"] = m.Low01,
+			["1% Low Avg"] = m.Low1,
+			["Avg (Arithmetic)"] = m.AvgArithmetic,
+			["Avg (Harmonic)"] = m.AvgHarmonic,
+			["Min"] = m.Min,
+			["Max"] = m.Max,
+			["P0.1"] = m.P01,
+			["P1"] = m.P1,
+			["P5"] = m.P5,
+			["P50 (Median)"] = m.P50Median,
+			["P95"] = m.P95,
+			["P99"] = m.P99
 		};
 	}
 	private static ChartPresentation BuildChartPresentation(AnalysisModel model)
@@ -1007,9 +1014,6 @@ public sealed partial class BenchmarksPage : Page
 		ViewModel.MetricSeries = [.. presentation.MetricPts1];
 		ViewModel.MetricSeries2 = [.. presentation.MetricPts2];
 	}
-	private static bool IsFpsMetric(string metric) =>
-			metric.EndsWith("FPS", StringComparison.OrdinalIgnoreCase) ||
-			metric.Contains("FPS", StringComparison.OrdinalIgnoreCase);
 	private static string GetFpsSourceColumn(string metric) => metric switch
 	{
 		"Displayed FPS" => "MsBetweenDisplayChange",
@@ -1348,32 +1352,7 @@ public sealed partial class BenchmarksPage : Page
 			_metricsCache[cacheKey] = metrics;
 		return true;
 	}
-	private string GetMetricValue(string filePath, DateTime lastWriteUtc, string column, bool isFps, string label)
-	{
-		if (!TryGetMetricsCached(filePath, lastWriteUtc, column, isFps, out var metrics))
-			return "-";
-		double value = label switch
-		{
-			"0.1% Low" => metrics.Low01,
-			"1% Low" => metrics.Low1,
-			"Avg (Arithmetic)" => metrics.AvgArithmetic,
-			"Avg (Harmonic)" => metrics.AvgHarmonic,
-			"Min" => metrics.Min,
-			"Max" => metrics.Max,
-			"P0.1" => metrics.P01,
-			"P1" => metrics.P1,
-			"P5" => metrics.P5,
-			"P50 (Median)" => metrics.P50Median,
-			"P95" => metrics.P95,
-			"P99" => metrics.P99,
-			_ => 0
-		};
-		return value == 0 ? "—" : value.ToString(isFps ? "0.###" : "0.####", CultureInfo.InvariantCulture);
-	}
-	private bool HasResultMetric(string filePath, DateTime lastWriteUtc, string column)
-	{
-		return HasMetricColumn(filePath, lastWriteUtc, column);
-	}
+
 	private static double NumericMetric(Metrics m, string label) => label switch
 	{
 		"0.1% Low Avg" => m.Low01,
@@ -1397,10 +1376,6 @@ public sealed partial class BenchmarksPage : Page
 		return value.ToString(isFps ? "0.###" : "0.####", CultureInfo.InvariantCulture) + (isFps ? " FPS" : " ms");
 	}
 	// ── CSV loading / stats ──────────────────────────────────────────────────
-	private bool HasMetricColumn(string filePath, DateTime lastWriteUtc, string metric)
-	{
-		return GetHeaderIndex(filePath, lastWriteUtc, out var headerIndex) && ResolveHeaderIndex(headerIndex, metric, out _);
-	}
 	private bool GetHeaderIndex(string filePath, DateTime lastWriteUtc, out Dictionary<string, int> headerIndex)
 	{
 		headerIndex = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -1451,7 +1426,7 @@ public sealed partial class BenchmarksPage : Page
 		values = [];
 		if (!GetHeaderIndex(filePath, lastWriteUtc, out var headerIndex))
 			return false;
-		if (!ResolveHeaderIndex(headerIndex, metric, out int idx))
+		if (!headerIndex.TryGetValue(metric, out int idx))
 			return false;
 		var key = (filePath, lastWriteUtc, metric);
 		lock (_cacheLock)
@@ -1465,7 +1440,7 @@ public sealed partial class BenchmarksPage : Page
 		try
 		{
 			using var reader = new StreamReader(filePath);
-			_ = reader.ReadLine(); // header
+			_ = reader.ReadLine();
 			var list = new List<double>(capacity: 4096);
 			while (!reader.EndOfStream)
 			{
@@ -1505,7 +1480,7 @@ public sealed partial class BenchmarksPage : Page
 		List<(string Metric, int Index, List<double> Values)> columns = [];
 		foreach (string metric in metrics)
 		{
-			if (ResolveHeaderIndex(headerIndex, metric, out int index))
+			if (headerIndex.TryGetValue(metric, out int index))
 				columns.Add((metric, index, new List<double>(4096)));
 		}
 		if (columns.Count == 0)
@@ -1549,15 +1524,6 @@ public sealed partial class BenchmarksPage : Page
 			return false;
 		}
 	}
-	private static bool ResolveHeaderIndex(Dictionary<string, int> headerIndex, string metric, out int idx)
-	{
-		return headerIndex.TryGetValue(metric, out idx);
-	}
-
-	private bool TryGetMetricsCached(string filePath, DateTime lastWriteUtc, string metric, out Metrics metrics)
-	{
-		return TryGetMetricsCached(filePath, lastWriteUtc, metric, isFps: false, out metrics);
-	}
 	// ── Process name ─────────────────────────────────────────────────────────
 	private void ProcessAutoSuggestBox_GotFocus(object sender, RoutedEventArgs e)
 	{
@@ -1581,10 +1547,6 @@ public sealed partial class BenchmarksPage : Page
 			sender.IsSuggestionListOpen = ViewModel.ProcessSuggestions.Count > 0;
 		}
 	}
-	[System.Diagnostics.CodeAnalysis.SuppressMessage(
-		"Performance",
-		"CA1822:Mark members as static",
-		Justification = "XAML event handlers must be instance methods.")]
 	private void ProcessAutoSuggestBox_SuggestionChosen(AutoSuggestBox sender, AutoSuggestBoxSuggestionChosenEventArgs args)
 	{
 		sender.Text = args.SelectedItem as string ?? string.Empty;
@@ -1621,7 +1583,7 @@ public sealed partial class BenchmarksPage : Page
 				await RefreshStatisticsTable();
 		}
 	}
-	private static void ReapplyColorPickerTemplate(DevWinUI.DropdownColorPicker picker, Windows.UI.Color color)
+	private static void ReapplyColorPickerTemplate(DropdownColorPicker picker, Windows.UI.Color color)
 	{
 		var template = picker.Template;
 		if (template is null)
