@@ -55,12 +55,12 @@ internal static class BenchmarkStatistics
 		result.Min = sorted[0];
 		result.Max = sorted[n - 1];
 
-		result.P01 = Percentile(sorted, isFpsMetric ? 99.9 : 0.1);
-		result.P1 = Percentile(sorted, isFpsMetric ? 99 : 1);
-		result.P5 = Percentile(sorted, isFpsMetric ? 95 : 5);
+		result.P01 = Percentile(sorted, isFpsMetric ? 0.1 : 99.9);
+		result.P1 = Percentile(sorted, isFpsMetric ? 1 : 99);
+		result.P5 = Percentile(sorted, isFpsMetric ? 5 : 95);
 		result.P50Median = Percentile(sorted, 50);
-		result.P95 = Percentile(sorted, isFpsMetric ? 5 : 95);
-		result.P99 = Percentile(sorted, isFpsMetric ? 1 : 99);
+		result.P95 = Percentile(sorted, isFpsMetric ? 95 : 5);
+		result.P99 = Percentile(sorted, isFpsMetric ? 99 : 1);
 
 		double variance = values.Sum(v => (v - arithmeticMean) * (v - arithmeticMean)) / (n - 1);
 		result.StdDev = Math.Sqrt(variance);
