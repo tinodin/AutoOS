@@ -6,7 +6,6 @@ using Syncfusion.UI.Xaml.DataGrid;
 using System.Text.Json;
 using Windows.System;
 using static AutoOS.Views.Settings.Benchmarks.BenchmarkCsv;
-using static AutoOS.Views.Settings.Benchmarks.BenchmarkStatistics;
 namespace AutoOS.Views.Settings;
 
 public sealed partial class BenchmarksPage : Page
@@ -14,7 +13,7 @@ public sealed partial class BenchmarksPage : Page
 	public BenchmarksViewModel ViewModel { get; } = new();
 
 	private static readonly string RecordingsDirectory = Path.Combine(PathHelper.GetAppDataFolderPath(), "Benchmarks");
-	private static readonly string[] PercentileLabels = ["Mean", "P0.1", "P1", "P5", "P10", "P50", "P90", "P95", "P99", "P99.9"];
+	private static readonly string[] MetricLabels = ["0.1% Low", "1% Low", "Avg (Arithmetic)", "Avg (Harmonic)", "Min", "Max", "P0.1", "P1", "P5", "P50 (Median)", "P95", "P99"];
 	private const string AggregateDurationColumn = "AutoOSAggregateDurationSeconds";
 	private const string AggregateSourcesColumn = "AutoOSAggregateSources";
 	private GlobalKeyboardHook _globalKeyboardHook;
@@ -40,9 +39,7 @@ public sealed partial class BenchmarksPage : Page
 	private sealed record CachedFile(string Path, DateTime LastWriteUtc, Dictionary<string, int> HeaderIndex);
 	private readonly Dictionary<string, CachedFile> _headerCache = new(StringComparer.OrdinalIgnoreCase);
 	private readonly Dictionary<(string path, DateTime lastWriteUtc, string metric), List<double>> _columnCache = [];
-	private readonly Dictionary<(string path, DateTime lastWriteUtc), Dictionary<string, double>> _averagesCache = [];
-	private readonly Dictionary<(string path, DateTime lastWriteUtc, string metric), double[]> _sortedFpsCache = [];
-	private readonly Dictionary<(string path, DateTime lastWriteUtc, string metric), (double stepwiseRelSD, double cv, double rmssd, double stdDev)> _statsCache = [];
+	private readonly Dictionary<(string path, DateTime lastWriteUtc, string metric), Metrics> _metricsCache = [];
 	private readonly Dictionary<string, ChartPresentation> _analysisPresentationCache = new(StringComparer.OrdinalIgnoreCase);
 	private readonly Lock _cacheLock = new();
 	public BenchmarksPage()
@@ -429,7 +426,7 @@ public sealed partial class BenchmarksPage : Page
 			bool hasCsvDuration = false;
 			int aggregateDurationIndex = headers.FindIndex(h => string.Equals(h, AggregateDurationColumn, StringComparison.OrdinalIgnoreCase));
 			if (aggregateDurationIndex >= 0 && aggregateDurationIndex < firstValues.Count &&
-				TryParseDouble(firstValues[aggregateDurationIndex], out double aggregateDuration))
+				double.TryParse(firstValues[aggregateDurationIndex], NumberStyles.Float, CultureInfo.InvariantCulture, out double aggregateDuration))
 			{
 				durationSeconds = Math.Max(0, aggregateDuration);
 				hasCsvDuration = true;
@@ -453,8 +450,8 @@ public sealed partial class BenchmarksPage : Page
 			}
 			int timeSecondsIndex = headers.FindIndex(h => string.Equals(h, "TimeInSeconds", StringComparison.OrdinalIgnoreCase));
 			if (!hasCsvDuration && timeSecondsIndex >= 0 && timeSecondsIndex < firstValues.Count && timeSecondsIndex < lastValues.Count &&
-				TryParseDouble(firstValues[timeSecondsIndex], out double firstTimeSeconds) &&
-				TryParseDouble(lastValues[timeSecondsIndex], out double lastTimeSeconds))
+				double.TryParse(firstValues[timeSecondsIndex], NumberStyles.Float, CultureInfo.InvariantCulture, out double firstTimeSeconds) &&
+				double.TryParse(lastValues[timeSecondsIndex], NumberStyles.Float, CultureInfo.InvariantCulture, out double lastTimeSeconds))
 			{
 				durationSeconds = Math.Max(0, lastTimeSeconds - firstTimeSeconds);
 			}
@@ -651,7 +648,7 @@ public sealed partial class BenchmarksPage : Page
 					foreach (var (rows, _) in fileData)
 					{
 						if (r < rows.Count && c < rows[r].Length &&
-							TryParseDouble(rows[r][c], out double value))
+							double.TryParse(rows[r][c], NumberStyles.Float, CultureInfo.InvariantCulture, out double value))
 						{
 							sum += value;
 							count++;
@@ -808,40 +805,31 @@ public sealed partial class BenchmarksPage : Page
 
 			fpsStatsSeries.Add((
 				item.FileName,
-				CreateFpsStats(displayedFrameTimes),
-				CreateFpsStats(renderedFrameTimes)));
+				StatsToDict(BenchmarkStatistics.CalculateMetrics([.. displayedFrameTimes
+					.Where(v => v > 0).Select(v => 1000.0 / v)], isFpsMetric: true)),
+				StatsToDict(BenchmarkStatistics.CalculateMetrics([.. renderedFrameTimes
+					.Where(v => v > 0).Select(v => 1000.0 / v)], isFpsMetric: true))));
 		}
 		ChartPresentation presentation = BuildChartPresentation(
 			new AnalysisModel(metricSeries, fpsStatsSeries));
 		lock (_cacheLock)
 			_analysisPresentationCache[presentationCacheKey] = presentation;
 		return presentation;
-
-		static Dictionary<string, double> CreateFpsStats(List<double> frameTimes)
+	}
+	private static Dictionary<string, double> StatsToDict(Metrics m)
+	{
+		return new(StringComparer.OrdinalIgnoreCase)
 		{
-			double[] ordered = [.. frameTimes
-				.Where(value => value > 0)
-				.Select(value => 1000.0 / value)
-				.OrderBy(value => value)];
-			var stats = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
-			if (ordered.Length == 0)
-				return stats;
-			if (TryGetPercentileFromSorted(ordered, 99.9, out double p999)) stats["P99.9"] = p999;
-			if (TryGetPercentileFromSorted(ordered, 99.0, out double p99)) stats["P99"] = p99;
-			if (TryGetPercentileFromSorted(ordered, 95.0, out double p95)) stats["P95"] = p95;
-			if (TryGetPercentileFromSorted(ordered, 90.0, out double p90)) stats["P90"] = p90;
-			if (TryGetPercentileFromSorted(ordered, 50.0, out double p50)) stats["P50"] = p50;
-			if (TryGetPercentileFromSorted(ordered, 10.0, out double p10)) stats["P10"] = p10;
-			if (TryGetPercentileFromSorted(ordered, 5.0, out double p5)) stats["P5"] = p5;
-			if (TryGetPercentileFromSorted(ordered, 1.0, out double p1)) stats["P1"] = p1;
-			if (TryGetPercentileFromSorted(ordered, 0.1, out double p01)) stats["P0.1"] = p01;
-			stats["Mean"] = ordered.Average();
-			return stats;
-		}
+			["0.1% Low"] = m.Low01, ["1% Low"] = m.Low1,
+			["Avg (Arithmetic)"] = m.AvgArithmetic, ["Avg (Harmonic)"] = m.AvgHarmonic,
+			["Min"] = m.Min, ["Max"] = m.Max,
+			["P0.1"] = m.P01, ["P1"] = m.P1, ["P5"] = m.P5,
+			["P50 (Median)"] = m.P50Median, ["P95"] = m.P95, ["P99"] = m.P99
+		};
 	}
 	private static ChartPresentation BuildChartPresentation(AnalysisModel model)
 	{
-		string[] order = ["Mean", "P0.1", "P1", "P5", "P10", "P50", "P90", "P95", "P99", "P99.9"];
+		string[] order = ["0.1% Low", "1% Low", "Avg (Arithmetic)", "Avg (Harmonic)", "Min", "Max", "P0.1", "P1", "P5", "P50 (Median)", "P95", "P99"];
 		List<BarPoint> displayedFpsBars1 = [];
 		List<BarPoint> renderedFpsBars1 = [];
 		List<BarPoint> displayedFpsBars2 = [];
@@ -1129,217 +1117,160 @@ public sealed partial class BenchmarksPage : Page
 		ViewModel.RecordingBHeader = selected.Count >= 2 ? selected[1].Title : "Recording B";
 		var builtRows = await Task.Run(() =>
 				{
-					List<(RecordingItem item, DateTime lastWriteUtc, Dictionary<string, double> averages)> loaded = [];
+					List<(RecordingItem item, DateTime lastWriteUtc)> loaded = [];
 					List<ResultRow> resultRows = [];
 					foreach (var i in selected.Take(2))
 					{
 						var lastWriteUtc = File.Exists(i.FilePath) ? File.GetLastWriteTimeUtc(i.FilePath) : DateTime.MinValue;
-						if (lastWriteUtc != DateTime.MinValue && LoadNumericAverages(i.FilePath, lastWriteUtc, out var avg))
-							loaded.Add((i, lastWriteUtc, avg));
+						if (lastWriteUtc != DateTime.MinValue)
+							loaded.Add((i, lastWriteUtc));
 					}
 					if (loaded.Count == 0)
-						return (loaded, rows: resultRows);
-					// Correct order: Mean, P0.1, P1, P5, P10, P50, P90, P95, P99, P99.9
-					// Add Displayed FPS percentiles
-					foreach (var percentileLabel in PercentileLabels)
+						return resultRows;
+
+					void AddStatsRows(string prefix, string column, bool isFps)
 					{
-						string rowLabel = $"Displayed {percentileLabel} FPS";
-						string recordingA = "-";
-						string recordingB = loaded.Count < 2 ? string.Empty : "-";
-						for (int c = 0; c < loaded.Count; c++)
+						Metrics[] m = new Metrics[loaded.Count];
+						for (int i = 0; i < loaded.Count; i++)
 						{
-							var (item, lastWriteUtc, averages) = loaded[c];
-							string value = GetFpsPercentileValue(item.FilePath, lastWriteUtc, "MsBetweenDisplayChange", percentileLabel);
-							if (c == 0)
-								recordingA = value;
-							else
-								recordingB = value;
+							if (!TryGetMetricsCached(loaded[i].item.FilePath, loaded[i].lastWriteUtc, column, isFps, out var mm))
+								return;
+							m[i] = mm;
 						}
-						resultRows.Add(new ResultRow { Metric = rowLabel, RecordingA = recordingA, RecordingB = recordingB });
+						foreach (var label in MetricLabels)
+						{
+							string a = FormatStat(NumericMetric(m[0], label), isFps);
+							string b = loaded.Count < 2 ? "" : FormatStat(NumericMetric(m[1], label), isFps);
+							resultRows.Add(new ResultRow { Metric = $"{prefix} {label} FPS", RecordingA = a, RecordingB = b });
+						}
 					}
-					// Add Displayed FPS time series stats
-			resultRows.AddRange((ResultRow[])
-			[
-			CreateTimeSeriesStatRow("Displayed CV", "MsBetweenDisplayChange", loaded, s => s.cv),
-			CreateTimeSeriesStatRow("Displayed RMSSD", "MsBetweenDisplayChange", loaded, s => s.rmssd),
-			CreateTimeSeriesStatRow("Displayed Stepwise-Relative", "MsBetweenDisplayChange", loaded, s => s.stepwiseRelSD)
-			]);
-			// Add MsBetweenDisplayChange stats
-			resultRows.Add(CreateMetricRow("Average MsBetweenDisplayChange", "MsBetweenDisplayChange", loaded));
-			resultRows.AddRange((ResultRow[])
-			[
-			CreateTimeSeriesStatRow("MsBetweenDisplayChange SD", "MsBetweenDisplayChange", loaded, s => s.stdDev),
-			CreateTimeSeriesStatRow("MsBetweenDisplayChange CV", "MsBetweenDisplayChange", loaded, s => s.cv),
-			CreateTimeSeriesStatRow("MsBetweenDisplayChange RMSSD", "MsBetweenDisplayChange", loaded, s => s.rmssd),
-			CreateTimeSeriesStatRow("MsBetweenDisplayChange Stepwise-Relative", "MsBetweenDisplayChange", loaded, s => s.stepwiseRelSD)
-			]);
-					// Add Rendered FPS percentiles
-					foreach (var percentileLabel in PercentileLabels)
+					AddStatsRows("Displayed", "MsBetweenDisplayChange", isFps: true);
+					AddStatsRows("Rendered", "MsBetweenPresents", isFps: true);
+
+					void AddMsStats(string prefix, string column)
 					{
-						string rowLabel = $"Rendered {percentileLabel} FPS";
-						string recordingA = "-";
-						string recordingB = loaded.Count < 2 ? string.Empty : "-";
-						for (int c = 0; c < loaded.Count; c++)
+						Metrics[] m = new Metrics[loaded.Count];
+						for (int i = 0; i < loaded.Count; i++)
 						{
-							var (item, lastWriteUtc, averages) = loaded[c];
-							string value = GetFpsPercentileValue(item.FilePath, lastWriteUtc, "MsBetweenPresents", percentileLabel);
-							if (c == 0)
-								recordingA = value;
-							else
-								recordingB = value;
+							if (!TryGetMetricsCached(loaded[i].item.FilePath, loaded[i].lastWriteUtc, column, isFps: false, out var mm))
+								return;
+							m[i] = mm;
 						}
-						resultRows.Add(new ResultRow { Metric = rowLabel, RecordingA = recordingA, RecordingB = recordingB });
+						foreach (var label in MetricLabels)
+						{
+							string a = FormatStat(NumericMetric(m[0], label), isFps: false);
+							string b = loaded.Count < 2 ? "" : FormatStat(NumericMetric(m[1], label), isFps: false);
+							resultRows.Add(new ResultRow { Metric = $"{prefix} {label} (ms)", RecordingA = a, RecordingB = b });
+						}
+						string fmtSd(double v) => v == 0 ? "—" : v.ToString("0.####", CultureInfo.InvariantCulture);
+						string fmtRel(double v) => v == 0 ? "—" : v.ToString("0.#####", CultureInfo.InvariantCulture);
+						string aSd = fmtSd(m[0].StdDev);
+						string bSd = loaded.Count < 2 ? "" : fmtSd(m[1].StdDev);
+						resultRows.Add(new ResultRow { Metric = $"{prefix} SD (ms)", RecordingA = aSd, RecordingB = bSd });
+						string aCv = fmtRel(m[0].Cv);
+						string bCv = loaded.Count < 2 ? "" : fmtRel(m[1].Cv);
+						resultRows.Add(new ResultRow { Metric = $"{prefix} CV", RecordingA = aCv, RecordingB = bCv });
+						string aRmssd = fmtSd(m[0].Rmssd);
+						string bRmssd = loaded.Count < 2 ? "" : fmtSd(m[1].Rmssd);
+						resultRows.Add(new ResultRow { Metric = $"{prefix} RMSSD (ms)", RecordingA = aRmssd, RecordingB = bRmssd });
+						string aSr = fmtRel(m[0].StepwiseRelSD);
+						string bSr = loaded.Count < 2 ? "" : fmtRel(m[1].StepwiseRelSD);
+						resultRows.Add(new ResultRow { Metric = $"{prefix} Stepwise-Relative", RecordingA = aSr, RecordingB = bSr });
 					}
-					// Add Rendered FPS time series stats
-			resultRows.AddRange((ResultRow[])
-			[
-			CreateTimeSeriesStatRow("Rendered CV", "MsBetweenPresents", loaded, s => s.cv),
-			CreateTimeSeriesStatRow("Rendered RMSSD", "MsBetweenPresents", loaded, s => s.rmssd),
-			CreateTimeSeriesStatRow("Rendered Stepwise-Relative", "MsBetweenPresents", loaded, s => s.stepwiseRelSD)
-			]);
-					// Add MsBetweenPresents stats
-					resultRows.Add(CreateMetricRow("Average MsBetweenPresents", "MsBetweenPresents", loaded));
-			resultRows.AddRange((ResultRow[])
-			[
-			CreateTimeSeriesStatRow("MsBetweenPresents SD", "MsBetweenPresents", loaded, s => s.stdDev),
-			CreateTimeSeriesStatRow("MsBetweenPresents CV", "MsBetweenPresents", loaded, s => s.cv),
-			CreateTimeSeriesStatRow("MsBetweenPresents RMSSD", "MsBetweenPresents", loaded, s => s.rmssd),
-			CreateTimeSeriesStatRow("MsBetweenPresents Stepwise-Relative", "MsBetweenPresents", loaded, s => s.stepwiseRelSD)
-			]);
-					// Add MsGPUBusy stats
-					resultRows.Add(CreateMetricRow("Average MsGPUBusy", "MsGPUBusy", loaded));
-			resultRows.AddRange((ResultRow[])
-			[
-			CreateTimeSeriesStatRow("MsGPUBusy SD", "MsGPUBusy", loaded, s => s.stdDev),
-			CreateTimeSeriesStatRow("MsGPUBusy CV", "MsGPUBusy", loaded, s => s.cv),
-			CreateTimeSeriesStatRow("MsGPUBusy RMSSD", "MsGPUBusy", loaded, s => s.rmssd),
-			CreateTimeSeriesStatRow("MsGPUBusy Stepwise-Relative", "MsGPUBusy", loaded, s => s.stepwiseRelSD)
-			]);
-					// Add MsUntilDisplayed stats
-					resultRows.Add(CreateMetricRow("Average MsUntilDisplayed", "MsUntilDisplayed", loaded));
-			resultRows.AddRange((ResultRow[])
-			[
-			CreateTimeSeriesStatRow("MsUntilDisplayed SD", "MsUntilDisplayed", loaded, s => s.stdDev),
-			CreateTimeSeriesStatRow("MsUntilDisplayed CV", "MsUntilDisplayed", loaded, s => s.cv),
-			CreateTimeSeriesStatRow("MsUntilDisplayed RMSSD", "MsUntilDisplayed", loaded, s => s.rmssd),
-			CreateTimeSeriesStatRow("MsUntilDisplayed Stepwise-Relative", "MsUntilDisplayed", loaded, s => s.stepwiseRelSD)
-			]);
+					AddMsStats("MsBetweenDisplayChange", "MsBetweenDisplayChange");
+					AddMsStats("MsBetweenPresents", "MsBetweenPresents");
+					AddMsStats("MsGPUBusy", "MsGPUBusy");
+					AddMsStats("MsUntilDisplayed", "MsUntilDisplayed");
+
 					ApplyResultComparisons(resultRows, loaded.Count == 2);
-					return (loaded, rows: GroupResultRows(resultRows));
-					// Helper functions
-					ResultRow CreateMetricRow(string label, string metric, List<(RecordingItem item, DateTime lastWriteUtc, Dictionary<string, double> averages)> items)
-					{
-						string a = "-", b = items.Count < 2 ? string.Empty : "-";
-						for (int i = 0; i < items.Count; i++)
-						{
-							var (item, lw, avg) = items[i];
-							string val = HasResultMetric(item.FilePath, lw, metric)
-								? FormatStat(GetMetricAverage(item.FilePath, lw, metric, avg), metric)
-								: "-";
-							if (i == 0) a = val; else b = val;
-						}
-						return new ResultRow { Metric = label, RecordingA = a, RecordingB = b };
-					}
-					ResultRow CreateTimeSeriesStatRow(string label, string metric, List<(RecordingItem item, DateTime lastWriteUtc, Dictionary<string, double> averages)> items, Func<(double stepwiseRelSD, double cv, double rmssd, double stdDev), double> selector)
-					{
-						string a = "-", b = items.Count < 2 ? string.Empty : "-";
-						for (int i = 0; i < items.Count; i++)
-						{
-							var (item, lw, avg) = items[i];
-							string val = LoadTimeSeriesStats(item.FilePath, lw, metric, out var stats)
-								? FormatTimeSeriesStat(selector(stats), label)
-								: "-";
-							if (i == 0) a = val; else b = val;
-						}
-						return new ResultRow { Metric = label, RecordingA = a, RecordingB = b };
-					}
+					return GroupResultRows(resultRows);
 				});
 		if (ViewModel.ActiveTab != "Results")
 			return;
-		var (loadedItems, resultRows) = builtRows;
-		if (loadedItems.Count == 0)
+		if (builtRows.Count == 0)
 		{
 			ViewModel.ResultsRows = [];
 			return;
 		}
-		ViewModel.ResultsRows = [.. resultRows];
+		ViewModel.ResultsRows = [.. builtRows];
 		ResultsTreeGrid.ExpandAllNodes();
 	}
-	private string GetFpsPercentileValue(string filePath, DateTime lastWriteUtc, string msMetricColumn, string percentileLabel)
+	private bool TryGetMetricsCached(string filePath, DateTime lastWriteUtc, string column, bool isFps, out Metrics metrics)
 	{
-		var cacheKey = (filePath, lastWriteUtc, msMetricColumn);
+		var cacheKey = (filePath, lastWriteUtc, column);
 		lock (_cacheLock)
 		{
-			_sortedFpsCache.TryGetValue(cacheKey, out var cached);
-			if (cached is not null)
-				return FormatFpsPercentile(cached, percentileLabel);
+			if (_metricsCache.TryGetValue(cacheKey, out var cached))
+			{
+				metrics = cached;
+				return true;
+			}
 		}
-		if (!LoadMetricColumn(filePath, lastWriteUtc, msMetricColumn, out var msValues))
-			return "-";
-		var fpsValues = msValues.Where(value => value > 0).Select(value => 1000.0 / value).Order().ToArray();
-		if (fpsValues.Length == 0)
-			return "-";
+		if (!LoadMetricColumn(filePath, lastWriteUtc, column, out var values))
+		{
+			metrics = null;
+			return false;
+		}
+		var array = isFps
+			? values.Where(v => v > 0).Select(v => 1000.0 / v).ToArray()
+			: values.ToArray();
+		if (array.Length == 0)
+		{
+			metrics = null;
+			return false;
+		}
+		metrics = BenchmarkStatistics.CalculateMetrics(array, isFps);
 		lock (_cacheLock)
-			_sortedFpsCache[cacheKey] = fpsValues;
-		return FormatFpsPercentile(fpsValues, percentileLabel);
-
-		static string FormatFpsPercentile(double[] fpsValues, string percentileLabel)
-		{
-			double value;
-			if (percentileLabel == "Mean")
-			{
-				value = fpsValues.Average();
-			}
-			else
-			{
-				double percentile = double.Parse(percentileLabel.Replace("P", ""), CultureInfo.InvariantCulture);
-				if (!TryGetPercentileFromSorted(fpsValues, percentile, out value))
-					return "-";
-			}
-			return FormatStat(value, "Displayed FPS");
-		}
+			_metricsCache[cacheKey] = metrics;
+		return true;
 	}
-	private bool HasResultMetric(string filePath, DateTime lastWriteUtc, string metric)
-			=> IsFpsMetric(metric)
-				? HasMetricColumn(filePath, lastWriteUtc, GetFpsSourceColumn(metric))
-				: HasMetricColumn(filePath, lastWriteUtc, metric);
-	/// <summary>
-	/// Returns the average value for a metric. FPS metrics are derived from their
-	/// underlying millisecond column (1000 / avg ms).
-	/// </summary>
-	private double GetMetricAverage(string filePath, DateTime lastWriteUtc, string metric, Dictionary<string, double> averages)
+	private string GetMetricValue(string filePath, DateTime lastWriteUtc, string column, bool isFps, string label)
 	{
-		string sourceColumn = GetFpsSourceColumn(metric);
-		if (IsFpsMetric(metric))
+		if (!TryGetMetricsCached(filePath, lastWriteUtc, column, isFps, out var metrics))
+			return "-";
+		double value = label switch
 		{
-			if (LoadMetricColumn(filePath, lastWriteUtc, sourceColumn, out var values))
-			{
-				List<double> fpsValues = [.. values.Where(v => v > 0).Select(v => 1000.0 / v)];
-				return fpsValues.Count > 0 ? fpsValues.Average() : 0;
-			}
-			return 0;
-		}
-		return averages.TryGetValue(metric, out var v) ? v : 0;
+			"0.1% Low" => metrics.Low01,
+			"1% Low" => metrics.Low1,
+			"Avg (Arithmetic)" => metrics.AvgArithmetic,
+			"Avg (Harmonic)" => metrics.AvgHarmonic,
+			"Min" => metrics.Min,
+			"Max" => metrics.Max,
+			"P0.1" => metrics.P01,
+			"P1" => metrics.P1,
+			"P5" => metrics.P5,
+			"P50 (Median)" => metrics.P50Median,
+			"P95" => metrics.P95,
+			"P99" => metrics.P99,
+			_ => 0
+		};
+		return value == 0 ? "—" : value.ToString(isFps ? "0.###" : "0.####", CultureInfo.InvariantCulture);
 	}
-	private static string FormatTimeSeriesStat(double value, string statLabel)
+	private bool HasResultMetric(string filePath, DateTime lastWriteUtc, string column)
+	{
+		return HasMetricColumn(filePath, lastWriteUtc, column);
+	}
+	private static double NumericMetric(Metrics m, string label) => label switch
+	{
+		"0.1% Low" => m.Low01,
+		"1% Low" => m.Low1,
+		"Avg (Arithmetic)" => m.AvgArithmetic,
+		"Avg (Harmonic)" => m.AvgHarmonic,
+		"Min" => m.Min,
+		"Max" => m.Max,
+		"P0.1" => m.P01,
+		"P1" => m.P1,
+		"P5" => m.P5,
+		"P50 (Median)" => m.P50Median,
+		"P95" => m.P95,
+		"P99" => m.P99,
+		_ => 0
+	};
+	private static string FormatStat(double value, bool isFps)
 	{
 		if (value == 0)
 			return "—";
-		if (statLabel.Contains("Rel.", StringComparison.OrdinalIgnoreCase) ||
-					statLabel.StartsWith("CV", StringComparison.OrdinalIgnoreCase))
-		{
-			return value.ToString("0.#####", CultureInfo.InvariantCulture);
-		}
-		return value.ToString("0.####", CultureInfo.InvariantCulture);
-	}
-	private static string FormatStat(double value, string metric)
-	{
-		if (value == 0)
-			return "—";
-		if (IsFpsMetric(metric))
-			return value.ToString("0.###", CultureInfo.InvariantCulture);
-		// Default ms-like formatting
-		return value.ToString("0.####", CultureInfo.InvariantCulture);
+		return value.ToString(isFps ? "0.###" : "0.####", CultureInfo.InvariantCulture);
 	}
 	// ── CSV loading / stats ──────────────────────────────────────────────────
 	private bool HasMetricColumn(string filePath, DateTime lastWriteUtc, string metric)
@@ -1375,7 +1306,6 @@ public sealed partial class BenchmarksPage : Page
 				if (string.IsNullOrEmpty(h))
 					continue;
 				headerIndex[h] = i;
-				headerIndex[NormalizeHeader(h)] = i;
 				if (string.Equals(h, "Render Queue Depth", StringComparison.OrdinalIgnoreCase))
 					headerIndex["Render Queue Depth (RQD)"] = i;
 				if (string.Equals(h, "Render Queue Depth (RQD)", StringComparison.OrdinalIgnoreCase))
@@ -1421,7 +1351,7 @@ public sealed partial class BenchmarksPage : Page
 				var cols = ParseCsvLine(line);
 				if (idx < 0 || idx >= cols.Count)
 					continue;
-				if (TryParseDouble(cols[idx], out var v))
+				if (double.TryParse(cols[idx], NumberStyles.Float, CultureInfo.InvariantCulture, out var v))
 					list.Add(v);
 			}
 			lock (_cacheLock)
@@ -1478,7 +1408,7 @@ public sealed partial class BenchmarksPage : Page
 				{
 					var column = columns[index];
 					if (column.Index < values.Count &&
-						TryParseDouble(values[column.Index], out double value))
+						double.TryParse(values[column.Index], NumberStyles.Float, CultureInfo.InvariantCulture, out double value))
 						column.Values.Add(value);
 				}
 			}
@@ -1497,99 +1427,12 @@ public sealed partial class BenchmarksPage : Page
 	}
 	private static bool ResolveHeaderIndex(Dictionary<string, int> headerIndex, string metric, out int idx)
 	{
-		idx = -1;
-		if (headerIndex.TryGetValue(metric, out idx))
-			return true;
-		var normalized = NormalizeHeader(metric);
-		if (string.IsNullOrEmpty(normalized))
-			return false;
-		return headerIndex.TryGetValue(normalized, out idx);
+		return headerIndex.TryGetValue(metric, out idx);
 	}
-	private bool LoadNumericAverages(string filePath, DateTime lastWriteUtc, out Dictionary<string, double> averages)
+
+	private bool TryGetMetricsCached(string filePath, DateTime lastWriteUtc, string metric, out Metrics metrics)
 	{
-		averages = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
-		if (!File.Exists(filePath))
-			return false;
-		var cacheKey = (filePath, lastWriteUtc);
-		lock (_cacheLock)
-		{
-			if (_averagesCache.TryGetValue(cacheKey, out var cached))
-			{
-				averages = cached;
-				return cached.Count > 0;
-			}
-		}
-		if (!GetHeaderIndex(filePath, lastWriteUtc, out var headerIndex) || headerIndex.Count == 0)
-			return false;
-
-		Dictionary<string, (int Index, List<double> Values)> columns = new(StringComparer.OrdinalIgnoreCase);
-		ReadOnlySpan<string> resultMetrics = ["MsBetweenDisplayChange", "MsBetweenPresents", "MsGPUBusy", "MsUntilDisplayed"];
-		foreach (var metric in resultMetrics)
-		{
-			if (ResolveHeaderIndex(headerIndex, metric, out int index))
-				columns[metric] = (index, new List<double>(4096));
-		}
-		if (columns.Count == 0)
-			return false;
-
-		try
-		{
-			using var reader = new StreamReader(filePath);
-			_ = reader.ReadLine();
-			while (!reader.EndOfStream)
-			{
-				var line = reader.ReadLine();
-				if (string.IsNullOrWhiteSpace(line))
-					continue;
-				var cols = ParseCsvLine(line);
-				foreach (var column in columns.Values)
-				{
-					if (column.Index < cols.Count && TryParseDouble(cols[column.Index], out var value))
-						column.Values.Add(value);
-				}
-			}
-
-			foreach (var (metric, column) in columns)
-			{
-				if (column.Values.Count > 0)
-					averages[metric] = column.Values.Average();
-			}
-			lock (_cacheLock)
-			{
-				_averagesCache[cacheKey] = averages;
-				foreach (var (metric, column) in columns)
-					_columnCache[(filePath, lastWriteUtc, metric)] = column.Values;
-			}
-			return averages.Count > 0;
-		}
-		catch
-		{
-			return false;
-		}
-	}
-	private bool LoadTimeSeriesStats(string filePath, DateTime lastWriteUtc, string metric, out (double stepwiseRelSD, double cv, double rmssd, double stdDev) stats)
-	{
-		stats = (0, 0, 0, 0);
-		var cacheKey = (filePath, lastWriteUtc, metric);
-		lock (_cacheLock)
-		{
-			if (_statsCache.TryGetValue(cacheKey, out var cached))
-			{
-				stats = cached;
-				return true;
-			}
-		}
-		if (!LoadMetricColumn(filePath, lastWriteUtc, metric, out var values))
-			return false;
-		if (!TryComputeTimeSeriesStats(values, out stats))
-		{
-			lock (_cacheLock)
-				_statsCache[cacheKey] = stats;
-			return false;
-		}
-		lock (_cacheLock)
-			_statsCache[cacheKey] = stats;
-		return true;
+		return TryGetMetricsCached(filePath, lastWriteUtc, metric, isFps: false, out metrics);
 	}
 	// ── Process name ─────────────────────────────────────────────────────────
 	private void ProcessAutoSuggestBox_GotFocus(object sender, RoutedEventArgs e)

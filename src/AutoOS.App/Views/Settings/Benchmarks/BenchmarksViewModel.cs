@@ -14,7 +14,7 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 	private bool _selectedRecordingsHaveSameProcess;
 	private string _processName = string.Empty;
 	private double _recordingDuration = 30;
-	private double _recordingDelay = 10;
+	private double _recordingDelay = 5;
 	private bool _isRecording;
 	private string _analysisChartType = "Bar";
 	private readonly HashSet<string> _recordableProcesses = new(StringComparer.OrdinalIgnoreCase);
@@ -139,23 +139,75 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 
 	public event Action MetricToggled;
 
-	private bool _showMean = true;
-	private bool _showP01 = true;
-	private bool _showP1 = true;
-	private bool _showP5 = true;
-	private bool _showP10 = true;
-	private bool _showP50 = true;
-	private bool _showP90 = true;
-	private bool _showP95 = true;
-	private bool _showP99 = true;
-	private bool _showP999 = true;
+	private bool _showLow01 = true;
+	private bool _showLow1 = true;
+	private bool _showAvgArithmetic = true;
+	private bool _showAvgHarmonic = true;
+	private bool _showMin;
+	private bool _showMax;
+	private bool _showP01;
+	private bool _showP1;
+	private bool _showP5;
+	private bool _showP50Median = true;
+	private bool _showP95;
+	private bool _showP99;
 
-	public bool ShowMean
+	public bool ShowLow01
 	{
-		get => _showMean;
+		get => _showLow01;
 		set
 		{
-			if (SetProperty(ref _showMean, value))
+			if (SetProperty(ref _showLow01, value))
+				MetricToggled?.Invoke();
+		}
+	}
+
+	public bool ShowLow1
+	{
+		get => _showLow1;
+		set
+		{
+			if (SetProperty(ref _showLow1, value))
+				MetricToggled?.Invoke();
+		}
+	}
+
+	public bool ShowAvgArithmetic
+	{
+		get => _showAvgArithmetic;
+		set
+		{
+			if (SetProperty(ref _showAvgArithmetic, value))
+				MetricToggled?.Invoke();
+		}
+	}
+
+	public bool ShowAvgHarmonic
+	{
+		get => _showAvgHarmonic;
+		set
+		{
+			if (SetProperty(ref _showAvgHarmonic, value))
+				MetricToggled?.Invoke();
+		}
+	}
+
+	public bool ShowMin
+	{
+		get => _showMin;
+		set
+		{
+			if (SetProperty(ref _showMin, value))
+				MetricToggled?.Invoke();
+		}
+	}
+
+	public bool ShowMax
+	{
+		get => _showMax;
+		set
+		{
+			if (SetProperty(ref _showMax, value))
 				MetricToggled?.Invoke();
 		}
 	}
@@ -190,32 +242,12 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 		}
 	}
 
-	public bool ShowP10
+	public bool ShowP50Median
 	{
-		get => _showP10;
+		get => _showP50Median;
 		set
 		{
-			if (SetProperty(ref _showP10, value))
-				MetricToggled?.Invoke();
-		}
-	}
-
-	public bool ShowP50
-	{
-		get => _showP50;
-		set
-		{
-			if (SetProperty(ref _showP50, value))
-				MetricToggled?.Invoke();
-		}
-	}
-
-	public bool ShowP90
-	{
-		get => _showP90;
-		set
-		{
-			if (SetProperty(ref _showP90, value))
+			if (SetProperty(ref _showP50Median, value))
 				MetricToggled?.Invoke();
 		}
 	}
@@ -240,28 +272,20 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 		}
 	}
 
-	public bool ShowP999
-	{
-		get => _showP999;
-		set
-		{
-			if (SetProperty(ref _showP999, value))
-				MetricToggled?.Invoke();
-		}
-	}
-
 	public bool IsMetricEnabled(string metric) => metric switch
 	{
-		"Mean" => ShowMean,
+		"0.1% Low" => ShowLow01,
+		"1% Low" => ShowLow1,
+		"Avg (Arithmetic)" => ShowAvgArithmetic,
+		"Avg (Harmonic)" => ShowAvgHarmonic,
+		"Min" => ShowMin,
+		"Max" => ShowMax,
 		"P0.1" => ShowP01,
 		"P1" => ShowP1,
 		"P5" => ShowP5,
-		"P10" => ShowP10,
-		"P50" => ShowP50,
-		"P90" => ShowP90,
+		"P50 (Median)" => ShowP50Median,
 		"P95" => ShowP95,
 		"P99" => ShowP99,
-		"P99.9" => ShowP999,
 		_ => true
 	};
 

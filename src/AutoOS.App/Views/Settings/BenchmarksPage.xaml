@@ -171,9 +171,49 @@
                             <AppBarElementContainer Margin="0,0,4,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
                                                     Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}">
-                                <ToggleButton Content="Mean"
-                                              IsChecked="{x:Bind ViewModel.ShowMean, Mode=TwoWay}" />
+                                <ToggleButton Content="0.1% Low"
+                                              IsChecked="{x:Bind ViewModel.ShowLow01, Mode=TwoWay}" />
                             </AppBarElementContainer>
+                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="1% Low"
+                                              IsChecked="{x:Bind ViewModel.ShowLow1, Mode=TwoWay}" />
+                            </AppBarElementContainer>
+
+                            <AppBarSeparator Margin="4,0"
+                                             Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}" />
+
+                            <AppBarElementContainer Margin="0,0,4,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="Avg (Arithmetic)"
+                                              IsChecked="{x:Bind ViewModel.ShowAvgArithmetic, Mode=TwoWay}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="Avg (Harmonic)"
+                                              IsChecked="{x:Bind ViewModel.ShowAvgHarmonic, Mode=TwoWay}" />
+                            </AppBarElementContainer>
+
+                            <AppBarSeparator Margin="4,0"
+                                             Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}" />
+
+
+                            <AppBarElementContainer Margin="0,0,4,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="Min"
+                                              IsChecked="{x:Bind ViewModel.ShowMin, Mode=TwoWay}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="Max"
+                                              IsChecked="{x:Bind ViewModel.ShowMax, Mode=TwoWay}" />
+                            </AppBarElementContainer>
+
+                            <AppBarSeparator Margin="4,0"
+                                             Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}" />
+
                             <AppBarElementContainer Margin="0,0,4,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
                                                     Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}">
@@ -195,20 +235,8 @@
                             <AppBarElementContainer Margin="0,0,4,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
                                                     Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}">
-                                <ToggleButton Content="P10"
-                                              IsChecked="{x:Bind ViewModel.ShowP10, Mode=TwoWay}" />
-                            </AppBarElementContainer>
-                            <AppBarElementContainer Margin="0,0,4,0"
-                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
-                                                    Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}">
-                                <ToggleButton Content="P50"
-                                              IsChecked="{x:Bind ViewModel.ShowP50, Mode=TwoWay}" />
-                            </AppBarElementContainer>
-                            <AppBarElementContainer Margin="0,0,4,0"
-                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
-                                                    Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}">
-                                <ToggleButton Content="P90"
-                                              IsChecked="{x:Bind ViewModel.ShowP90, Mode=TwoWay}" />
+                                <ToggleButton Content="P50 (Median)"
+                                              IsChecked="{x:Bind ViewModel.ShowP50Median, Mode=TwoWay}" />
                             </AppBarElementContainer>
                             <AppBarElementContainer Margin="0,0,4,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
@@ -216,16 +244,10 @@
                                 <ToggleButton Content="P95"
                                               IsChecked="{x:Bind ViewModel.ShowP95, Mode=TwoWay}" />
                             </AppBarElementContainer>
-                            <AppBarElementContainer Margin="0,0,4,0"
-                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
                                                     Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}">
                                 <ToggleButton Content="P99"
                                               IsChecked="{x:Bind ViewModel.ShowP99, Mode=TwoWay}" />
-                            </AppBarElementContainer>
-                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
-                                                    Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}">
-                                <ToggleButton Content="P99.9"
-                                              IsChecked="{x:Bind ViewModel.ShowP999, Mode=TwoWay}" />
                             </AppBarElementContainer>
 
                             <!--  Line / Scatter Metrics  -->
@@ -233,7 +255,7 @@
                                                     ToolTipService.ToolTip="Graph 2 Metric"
                                                     Visibility="{x:Bind ViewModel.MetricVisibility, Mode=OneWay}">
                                 <ComboBox x:Name="Metric1ComboBox"
-                                          MinWidth="150"
+                                          MinWidth="215"
                                           SelectedIndex="0"
                                           SelectionChanged="MetricComboBox_SelectionChanged">
                                     <x:String>MsBetweenDisplayChange</x:String>
