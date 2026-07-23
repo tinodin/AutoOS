@@ -13,7 +13,7 @@ public sealed partial class BenchmarksPage : Page
 	public BenchmarksViewModel ViewModel { get; } = new();
 
 	private static readonly string RecordingsDirectory = Path.Combine(PathHelper.GetAppDataFolderPath(), "Benchmarks");
-	private static readonly string[] MetricLabels = ["0.1% Low", "1% Low", "Average (Arithmetic)", "Average (Harmonic)", "Minimum", "Maximum", "P0.1", "P1", "P5", "P50 (Median)", "P95", "P99"];
+	private static readonly string[] MetricLabels = ["0.1% Low Avg", "1% Low Avg", "Average (Arithmetic)", "Average (Harmonic)", "Minimum", "Maximum", "P0.1", "P1", "P5", "P50 (Median)", "P95", "P99"];
 	private const string AggregateDurationColumn = "AutoOSAggregateDurationSeconds";
 	private const string AggregateSourcesColumn = "AutoOSAggregateSources";
 	private GlobalKeyboardHook _globalKeyboardHook;
@@ -39,7 +39,7 @@ public sealed partial class BenchmarksPage : Page
 	private sealed record CachedFile(string Path, DateTime LastWriteUtc, Dictionary<string, int> HeaderIndex);
 	private readonly Dictionary<string, CachedFile> _headerCache = new(StringComparer.OrdinalIgnoreCase);
 	private readonly Dictionary<(string path, DateTime lastWriteUtc, string metric), List<double>> _columnCache = [];
-	private readonly Dictionary<(string path, DateTime lastWriteUtc, string metric), Metrics> _metricsCache = [];
+	private readonly Dictionary<(string path, DateTime lastWriteUtc, string metric, bool isFps), Metrics> _metricsCache = [];
 	private readonly Dictionary<string, ChartPresentation> _analysisPresentationCache = new(StringComparer.OrdinalIgnoreCase);
 	private readonly Lock _cacheLock = new();
 	public BenchmarksPage()
@@ -121,14 +121,14 @@ public sealed partial class BenchmarksPage : Page
 		}
 	}
 
-	private void ResultsTreeGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+	private void StatisticsTreeGrid_SizeChanged(object sender, SizeChangedEventArgs e)
 	{
 		if (e.NewSize.Width > 0)
 		{
-			foreach (var col in ResultsTreeGrid.Columns)
+			foreach (var col in StatisticsTreeGrid.Columns)
 				col.Width = double.NaN;
-			ResultsTreeGrid.InvalidateMeasure();
-			ResultsTreeGrid.UpdateLayout();
+			StatisticsTreeGrid.InvalidateMeasure();
+			StatisticsTreeGrid.UpdateLayout();
 		}
 	}
 
@@ -467,13 +467,13 @@ public sealed partial class BenchmarksPage : Page
 		ViewModel.SetSelectedRecordings(items);
 		ViewModel.ClearAnalysis();
 		ViewModel.RefreshChartColors();
-		ViewModel.ResultsRows.Clear();
+		ViewModel.StatisticsRows.Clear();
 		if (items.Count is 0 or > 2)
 			return;
 		if (ViewModel.ActiveTab == "Analysis")
 			await RenderAnalysisChartsForSelection(items);
-		else if (ViewModel.ActiveTab == "Results")
-			await RefreshResultsTable();
+		else if (ViewModel.ActiveTab == "Statistics")
+			await RefreshStatisticsTable();
 	}
 	private async void RecordingsTreeGrid_CurrentCellEndEdit(object sender, CurrentCellEndEditEventArgs e)
 	{
@@ -820,7 +820,7 @@ public sealed partial class BenchmarksPage : Page
 	{
 		return new(StringComparer.OrdinalIgnoreCase)
 		{
-			["0.1% Low"] = m.Low01, ["1% Low"] = m.Low1,
+			["0.1% Low Avg"] = m.Low01, ["1% Low Avg"] = m.Low1,
 			["Avg (Arithmetic)"] = m.AvgArithmetic, ["Avg (Harmonic)"] = m.AvgHarmonic,
 			["Min"] = m.Min, ["Max"] = m.Max,
 			["P0.1"] = m.P01, ["P1"] = m.P1, ["P5"] = m.P5,
@@ -829,7 +829,7 @@ public sealed partial class BenchmarksPage : Page
 	}
 	private static ChartPresentation BuildChartPresentation(AnalysisModel model)
 	{
-		string[] order = ["0.1% Low", "1% Low", "Avg (Arithmetic)", "Avg (Harmonic)", "Min", "Max", "P0.1", "P1", "P5", "P50 (Median)", "P95", "P99"];
+		string[] order = ["0.1% Low Avg", "1% Low Avg", "Avg (Arithmetic)", "Avg (Harmonic)", "Min", "Max", "P0.1", "P1", "P5", "P50 (Median)", "P95", "P99"];
 		List<BarPoint> displayedFpsBars1 = [];
 		List<BarPoint> renderedFpsBars1 = [];
 		List<BarPoint> displayedFpsBars2 = [];
@@ -1021,15 +1021,15 @@ public sealed partial class BenchmarksPage : Page
 		_lastChartPresentation = null;
 		ViewModel.ClearAnalysis();
 	}
-	// ── Results tab ──────────────────────────────────────────────────────────
+	// ── Statistics tab ──────────────────────────────────────────────────────────
 	private static void ApplyResultComparisons(IEnumerable<ResultRow> rows, bool comparisonEnabled)
 	{
 		if (!comparisonEnabled)
 			return;
 		foreach (var row in rows)
 		{
-			if (!double.TryParse(row.RecordingA, NumberStyles.Float, CultureInfo.InvariantCulture, out double recordingA) ||
-				!double.TryParse(row.RecordingB, NumberStyles.Float, CultureInfo.InvariantCulture, out double recordingB) ||
+			if (!TryParseNumeric(row.RecordingA, out double recordingA) ||
+				!TryParseNumeric(row.RecordingB, out double recordingB) ||
 				recordingA == recordingB)
 			{
 				continue;
@@ -1039,6 +1039,22 @@ public sealed partial class BenchmarksPage : Page
 			row.RecordingAComparison = recordingAIsBetter ? ResultComparison.Better : ResultComparison.Worse;
 			row.RecordingBComparison = recordingAIsBetter ? ResultComparison.Worse : ResultComparison.Better;
 		}
+	}
+	private static bool TryParseNumeric(string value, out double result)
+	{
+		if (string.IsNullOrEmpty(value))
+		{
+			result = 0;
+			return false;
+		}
+		var trimmed = value.AsSpan();
+		if (trimmed.EndsWith(" FPS".AsSpan(), StringComparison.Ordinal))
+			trimmed = trimmed[..^4];
+		else if (trimmed.EndsWith(" ms".AsSpan(), StringComparison.Ordinal))
+			trimmed = trimmed[..^3];
+		else if (trimmed.EndsWith("%".AsSpan(), StringComparison.Ordinal))
+			trimmed = trimmed[..^1];
+		return double.TryParse(trimmed, NumberStyles.Float, CultureInfo.InvariantCulture, out result);
 	}
 	private static List<ResultRow> GroupResultRows(IEnumerable<ResultRow> rows)
 	{
@@ -1101,69 +1117,107 @@ public sealed partial class BenchmarksPage : Page
 			{
 				"Rendered FPS" => "Measures how fast the game creates frames before they are sent to your screen.",
 				"Displayed FPS" => "Measures how fast frames actually change on your screen.",
-				"MsBetweenPresents" => "The time it takes the game engine to push out each new frame. Lower values mean a more responsive engine.",
-				"MsBetweenDisplayChange" => "The time it takes for a new image to physically appear on your screen. Lower values mean visually smoother motion.",
-				"MsGPUBusy" => "How long the graphics card works on a single frame. Higher values cause noticeable input lag.",
-				"MsUntilDisplayed" => "The delay between the game finishing a frame and it appearing on screen. High values mean lag caused by the GPU.",
+				"MsBetweenPresents" => "The time it takes the game engine to push out each new frame.",
+				"MsBetweenDisplayChange" => "The time it takes for a new image to physically appear on your screen.",
+				"MsGPUBusy" => "How long the graphics card works on a single frame.",
+				"MsUntilDisplayed" => "The delay between the game finishing a frame and it appearing on screen.",
 				_ => "Benchmark statistic."
 			};
 		}
 
-		if (metric.StartsWith("0.1% Low", StringComparison.Ordinal))
+		if (metric.StartsWith("0.1% Low Avg", StringComparison.Ordinal))
 			return "Average FPS across the worst-performing 0.1% of frames. Higher values indicate smoother performance.";
-		if (metric.StartsWith("1% Low", StringComparison.Ordinal))
+		if (metric.StartsWith("1% Low Avg", StringComparison.Ordinal))
 			return "Average FPS across the worst-performing 1% of frames. Higher values indicate smoother performance";
 		if (metric.StartsWith("Average (Arithmetic)", StringComparison.Ordinal))
-			return "Conventional average FPS. Every sampled frame contributes equally.";
+		{
+			if (metric.EndsWith(" FPS", StringComparison.Ordinal))
+				return "Conventional average FPS. Every sampled frame contributes equally.";
+			return "Conventional average frametime. Every sampled frame contributes equally.";
+		}
 		if (metric.StartsWith("Average (Harmonic)", StringComparison.Ordinal))
-			return "Frame-duration-weighted average FPS. Long, low-FPS frames have more influence, making lag spikes more visible.";
+		{
+			if (metric.EndsWith(" FPS", StringComparison.Ordinal))
+				return "Frame-duration-weighted average FPS. Long, low-FPS frames have more influence, making lag spikes more visible.";
+			return "Frame-duration-weighted average frametime. Long, slow frames have more influence, making spikes more visible.";
+		}
 		if (metric.StartsWith("Minimum", StringComparison.Ordinal))
-			return "Lowest sampled FPS value in the recording.";
+		{
+			if (metric.EndsWith(" FPS", StringComparison.Ordinal))
+				return "Lowest sampled FPS value in the recording.";
+			return "Shortest single frametime in the recording.";
+		}
 		if (metric.StartsWith("Maximum", StringComparison.Ordinal))
-			return "Highest sampled FPS value in the recording.";
+		{
+			if (metric.EndsWith(" FPS", StringComparison.Ordinal))
+				return "Highest sampled FPS value in the recording.";
+			return "Longest single frametime in the recording.";
+		}
 		if (metric.StartsWith("P0.1", StringComparison.Ordinal))
 			return "FPS threshold containing the bottom 0.1% of sampled frames.";
 		if (metric.StartsWith("P1", StringComparison.Ordinal))
 			return "FPS threshold containing the bottom 1% of sampled frames.";
 		if (metric.StartsWith("P50", StringComparison.Ordinal))
-			return "FPS threshold containing 50% of the sampled frames.";
+		{
+			if (metric.EndsWith(" FPS", StringComparison.Ordinal))
+				return "FPS threshold containing 50% of the sampled frames.";
+			return "Frametime threshold below which 50% of all frames fall. Represents typical frame duration.";
+		}
 		if (metric.StartsWith("P5", StringComparison.Ordinal))
 			return "FPS threshold containing the bottom 5% of sampled frames.";
 		if (metric.StartsWith("P95", StringComparison.Ordinal))
-			return "FPS threshold containing 95% of the sampled frames.";
+		{
+			if (metric.EndsWith(" FPS", StringComparison.Ordinal))
+				return "FPS threshold containing 95% of the sampled frames.";
+			return "Frametime threshold below which 95% of all frames fall. Captures moderate spikes.";
+		}
+		if (metric.StartsWith("P99.", StringComparison.Ordinal))
+			return "Frametime threshold below which 99.9% of all frames fall. Captures extreme peak delays.";
 		if (metric.StartsWith("P99", StringComparison.Ordinal))
-			return "FPS threshold containing 99% of the sampled frames.";
-		if (metric.StartsWith("SD", StringComparison.Ordinal))
+		{
+			if (metric.EndsWith(" FPS", StringComparison.Ordinal))
+				return "FPS threshold containing 99% of the sampled frames.";
+			return "Frametime threshold below which 99% of all frames fall. Captures severe hitches.";
+		}
+		if (metric.StartsWith("Standard Deviation", StringComparison.Ordinal))
+		{
+			if (group is "Displayed FPS" or "Rendered FPS")
+				return "Standard deviation: Measures how widely FPS values are spread around the average. Lower values indicate more consistent frame rates.";
 			return "Standard deviation: Measures how far individual frametimes typically stray from the average frametime. Lower values indicate more consistent performance. Measured in ms.";
-		if (metric.StartsWith("CV", StringComparison.Ordinal))
-			return "Coefficient of variation: Standard deviation divided by the mean. Useful for comparing stutter severity across different performance levels. Lower values indicate better frametime stability";
-		if (metric.StartsWith("RMSSD", StringComparison.Ordinal))
+		}
+		if (metric.StartsWith("Coefficient of Variation", StringComparison.Ordinal))
+		{
+			if (group is "Displayed FPS" or "Rendered FPS")
+				return "Coefficient of variation: Standard deviation divided by the arithmetic mean (StDev / Avg). Useful for comparing FPS consistency across different performance levels. Lower values indicate more stable FPS.";
+			return "Coefficient of variation: Standard deviation divided by the arithmetic mean (StDev / Avg). Useful for comparing stutter severity across different performance levels. Lower values indicate better frametime stability";
+		}
+		if (metric.StartsWith("Root mean square", StringComparison.Ordinal))
 			return "Root mean square of successive differences: Measures frame pacing by comparing the timing of adjacent frames. Lower values indicate smoother frame pacing. Measured in ms.";
 		if (metric.StartsWith("Stepwise-Relative", StringComparison.Ordinal))
 			return "Typical percentage change in rendering time from one frame to the next. Lower values indicate lower spike severity.";
 		return "Benchmark statistic.";
 	}
-	private async Task RefreshResultsTable()
+	private async Task RefreshStatisticsTable()
 	{
-		if (ViewModel.ActiveTab != "Results")
+		if (ViewModel.ActiveTab != "Statistics")
 			return;
 		var selected = GetSelectedRecordings();
 		bool showRecordingB = selected.Count == 2;
-		bool containsRecordingB = ResultsTreeGrid.Columns.Contains(ResultsRecordingBColumn);
+		bool containsRecordingB = StatisticsTreeGrid.Columns.Contains(StatisticsRecordingBColumn);
 		if (showRecordingB && !containsRecordingB)
-			ResultsTreeGrid.Columns.Add(ResultsRecordingBColumn);
+			StatisticsTreeGrid.Columns.Add(StatisticsRecordingBColumn);
 		else if (!showRecordingB && containsRecordingB)
-			ResultsTreeGrid.Columns.Remove(ResultsRecordingBColumn);
+			StatisticsTreeGrid.Columns.Remove(StatisticsRecordingBColumn);
 		if (selected.Count == 0)
 		{
-			ViewModel.ResultsRows.Clear();
+			ViewModel.StatisticsRows.Clear();
 			ViewModel.RecordingAHeader = "Recording A";
 			ViewModel.RecordingBHeader = "Recording B";
 			return;
 		}
 		if (selected.Count > 2)
 		{
-			ViewModel.ResultsRows.Clear();
+			ViewModel.StatisticsRows.Clear();
 			ViewModel.RecordingAHeader = "Recording A";
 			ViewModel.RecordingBHeader = "Recording B";
 			return;
@@ -1202,21 +1256,15 @@ public sealed partial class BenchmarksPage : Page
 							value == 0 ? "—" : value.ToString(format, CultureInfo.InvariantCulture);
 						resultRows.Add(new ResultRow
 						{
-							Metric = $"{prefix} CV",
+							Metric = $"{prefix} Standard Deviation (STDEV)",
+							RecordingA = FormatFpsPacing(m[0].StdDev, "0.###"),
+							RecordingB = loaded.Count < 2 ? "" : FormatFpsPacing(m[1].StdDev, "0.###")
+						});
+						resultRows.Add(new ResultRow
+						{
+							Metric = $"{prefix} Coefficient of Variation (CV)",
 							RecordingA = FormatFpsPacing(m[0].Cv, "0.#####"),
 							RecordingB = loaded.Count < 2 ? "" : FormatFpsPacing(m[1].Cv, "0.#####")
-						});
-						resultRows.Add(new ResultRow
-						{
-							Metric = $"{prefix} RMSSD",
-							RecordingA = FormatFpsPacing(m[0].Rmssd, "0.####"),
-							RecordingB = loaded.Count < 2 ? "" : FormatFpsPacing(m[1].Rmssd, "0.####")
-						});
-						resultRows.Add(new ResultRow
-						{
-							Metric = $"{prefix} Stepwise-Relative",
-							RecordingA = FormatFpsPacing(m[0].StepwiseRelSD, "0.#####"),
-							RecordingB = loaded.Count < 2 ? "" : FormatFpsPacing(m[1].StepwiseRelSD, "0.#####")
 						});
 					}
 					AddStatsRows("Displayed", "MsBetweenDisplayChange", isFps: true);
@@ -1231,20 +1279,27 @@ public sealed partial class BenchmarksPage : Page
 								return;
 							m[i] = mm;
 						}
-						string fmtSd(double v) => v == 0 ? "—" : v.ToString("0.####", CultureInfo.InvariantCulture);
+						string fmtMs(double v) => FormatStat(v, isFps: false);
+						string fmtSd(double v) => v == 0 ? "—" : v.ToString("0.####", CultureInfo.InvariantCulture) + " ms";
 						string fmtRel(double v) => v == 0 ? "—" : v.ToString("0.#####", CultureInfo.InvariantCulture);
-						string aSd = fmtSd(m[0].StdDev);
-						string bSd = loaded.Count < 2 ? "" : fmtSd(m[1].StdDev);
-						resultRows.Add(new ResultRow { Metric = $"{prefix} SD", RecordingA = aSd, RecordingB = bSd });
-						string aCv = fmtRel(m[0].Cv);
-						string bCv = loaded.Count < 2 ? "" : fmtRel(m[1].Cv);
-						resultRows.Add(new ResultRow { Metric = $"{prefix} CV", RecordingA = aCv, RecordingB = bCv });
-						string aRmssd = fmtSd(m[0].Rmssd);
-						string bRmssd = loaded.Count < 2 ? "" : fmtSd(m[1].Rmssd);
-						resultRows.Add(new ResultRow { Metric = $"{prefix} RMSSD", RecordingA = aRmssd, RecordingB = bRmssd });
+						resultRows.Add(new ResultRow { Metric = $"{prefix} Average (Arithmetic)", RecordingA = fmtMs(m[0].AvgArithmetic), RecordingB = loaded.Count < 2 ? "" : fmtMs(m[1].AvgArithmetic) });
+						resultRows.Add(new ResultRow { Metric = $"{prefix} P50 (Median)", RecordingA = fmtMs(m[0].P50Median), RecordingB = loaded.Count < 2 ? "" : fmtMs(m[1].P50Median) });
+						resultRows.Add(new ResultRow { Metric = $"{prefix} P95", RecordingA = fmtMs(m[0].P5), RecordingB = loaded.Count < 2 ? "" : fmtMs(m[1].P5) });
+						resultRows.Add(new ResultRow { Metric = $"{prefix} P99", RecordingA = fmtMs(m[0].P1), RecordingB = loaded.Count < 2 ? "" : fmtMs(m[1].P1) });
+						resultRows.Add(new ResultRow { Metric = $"{prefix} P99.9", RecordingA = fmtMs(m[0].P01), RecordingB = loaded.Count < 2 ? "" : fmtMs(m[1].P01) });
+						resultRows.Add(new ResultRow { Metric = $"{prefix} Maximum", RecordingA = fmtMs(m[0].Max), RecordingB = loaded.Count < 2 ? "" : fmtMs(m[1].Max) });
+						resultRows.Add(new ResultRow { Metric = $"{prefix} Minimum", RecordingA = fmtMs(m[0].Min), RecordingB = loaded.Count < 2 ? "" : fmtMs(m[1].Min) });
+						string fmtPct(double v) => v == 0 ? "—" : v.ToString("0.0") + "%";
+						string aRmssdPct = m[0].AvgArithmetic != 0 ? fmtPct(m[0].Rmssd / m[0].AvgArithmetic * 100) : "—";
+						string bRmssdPct = loaded.Count < 2 ? "" : (m[1].AvgArithmetic != 0 ? fmtPct(m[1].Rmssd / m[1].AvgArithmetic * 100) : "—");
+						resultRows.Add(new ResultRow { Metric = $"{prefix} Root mean square of successive differences (RMSSD)", RecordingA = aRmssdPct, RecordingB = bRmssdPct });
 						string aSr = fmtRel(m[0].StepwiseRelSD);
 						string bSr = loaded.Count < 2 ? "" : fmtRel(m[1].StepwiseRelSD);
 						resultRows.Add(new ResultRow { Metric = $"{prefix} Stepwise-Relative", RecordingA = aSr, RecordingB = bSr });
+						resultRows.Add(new ResultRow { Metric = $"{prefix} Standard Deviation (STDEV)", RecordingA = fmtSd(m[0].StdDev), RecordingB = loaded.Count < 2 ? "" : fmtSd(m[1].StdDev) });
+						string aCv = fmtRel(m[0].Cv);
+						string bCv = loaded.Count < 2 ? "" : fmtRel(m[1].Cv);
+						resultRows.Add(new ResultRow { Metric = $"{prefix} Coefficient of Variation (CV)", RecordingA = aCv, RecordingB = bCv });
 					}
 					AddMsStats("MsBetweenDisplayChange", "MsBetweenDisplayChange");
 					AddMsStats("MsBetweenPresents", "MsBetweenPresents");
@@ -1254,19 +1309,19 @@ public sealed partial class BenchmarksPage : Page
 					ApplyResultComparisons(resultRows, loaded.Count == 2);
 					return GroupResultRows(resultRows);
 				});
-		if (ViewModel.ActiveTab != "Results")
+		if (ViewModel.ActiveTab != "Statistics")
 			return;
 		if (builtRows.Count == 0)
 		{
-			ViewModel.ResultsRows = [];
+			ViewModel.StatisticsRows = [];
 			return;
 		}
-		ViewModel.ResultsRows = [.. builtRows];
-		ResultsTreeGrid.ExpandAllNodes();
+		ViewModel.StatisticsRows = [.. builtRows];
+		StatisticsTreeGrid.ExpandAllNodes();
 	}
 	private bool TryGetMetricsCached(string filePath, DateTime lastWriteUtc, string column, bool isFps, out Metrics metrics)
 	{
-		var cacheKey = (filePath, lastWriteUtc, column);
+		var cacheKey = (filePath, lastWriteUtc, column, isFps);
 		lock (_cacheLock)
 		{
 			if (_metricsCache.TryGetValue(cacheKey, out var cached))
@@ -1321,8 +1376,8 @@ public sealed partial class BenchmarksPage : Page
 	}
 	private static double NumericMetric(Metrics m, string label) => label switch
 	{
-		"0.1% Low" => m.Low01,
-		"1% Low" => m.Low1,
+		"0.1% Low Avg" => m.Low01,
+		"1% Low Avg" => m.Low1,
 		"Average (Arithmetic)" => m.AvgArithmetic,
 		"Average (Harmonic)" => m.AvgHarmonic,
 		"Minimum" => m.Min,
@@ -1339,7 +1394,7 @@ public sealed partial class BenchmarksPage : Page
 	{
 		if (value == 0)
 			return "—";
-		return value.ToString(isFps ? "0.###" : "0.####", CultureInfo.InvariantCulture);
+		return value.ToString(isFps ? "0.###" : "0.####", CultureInfo.InvariantCulture) + (isFps ? " FPS" : " ms");
 	}
 	// ── CSV loading / stats ──────────────────────────────────────────────────
 	private bool HasMetricColumn(string filePath, DateTime lastWriteUtc, string metric)
@@ -1557,13 +1612,13 @@ public sealed partial class BenchmarksPage : Page
 			if (selected.Count is > 0 and <= 2)
 				await RenderAnalysisChartsForSelection(selected);
 		}
-		else if (ReferenceEquals(selectedItem, ResultsTab))
+		else if (ReferenceEquals(selectedItem, StatisticsTab))
 		{
-			ViewModel.ActiveTab = "Results";
+			ViewModel.ActiveTab = "Statistics";
 			var selected = GetSelectedRecordings();
 			ViewModel.SetSelectedRecordings(selected);
 			if (selected.Count is > 0 and <= 2)
-				await RefreshResultsTable();
+				await RefreshStatisticsTable();
 		}
 	}
 	private static void ReapplyColorPickerTemplate(DevWinUI.DropdownColorPicker picker, Windows.UI.Color color)

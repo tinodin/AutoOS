@@ -49,12 +49,12 @@
 
             <!--  Command Bar  -->
             <controls:TabbedCommandBar x:Name="BenchmarksSelectorBar"
-                                        Margin="0,48,0,0"
-                                        SelectedItem="{x:Bind RecordingsTab}"
-                                        SelectionChanged="BenchmarksSelectorBar_SelectionChanged"
-                                        common:CommandBarExtensions.ApplyOverflowIndent="True"
-                                        common:CommandBarExtensions.CommandAlignment="Left"
-                                        common:CommandBarExtensions.OverflowButtonAlignment="Right">
+                                       Margin="0,48,0,0"
+                                       common:CommandBarExtensions.ApplyOverflowIndent="True"
+                                       common:CommandBarExtensions.CommandAlignment="Left"
+                                       common:CommandBarExtensions.OverflowButtonAlignment="Right"
+                                       SelectedItem="{x:Bind RecordingsTab}"
+                                       SelectionChanged="BenchmarksSelectorBar_SelectionChanged">
                 <controls:TabbedCommandBar.MenuItems>
 
                     <!--  Recordings  -->
@@ -174,12 +174,12 @@
                             <AppBarElementContainer Margin="0,0,4,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
                                                     Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}">
-                                <ToggleButton Content="0.1% Low"
+                                <ToggleButton Content="0.1% Low Avg"
                                               IsChecked="{x:Bind ViewModel.ShowLow01, Mode=TwoWay}" />
                             </AppBarElementContainer>
                             <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
                                                     Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}">
-                                <ToggleButton Content="1% Low"
+                                <ToggleButton Content="1% Low Avg"
                                               IsChecked="{x:Bind ViewModel.ShowLow1, Mode=TwoWay}" />
                             </AppBarElementContainer>
 
@@ -304,7 +304,7 @@
                     </controls:TabbedCommandBarItem>
 
                     <!--  Statistics  -->
-                    <controls:TabbedCommandBarItem x:Name="ResultsTab"
+                    <controls:TabbedCommandBarItem x:Name="StatisticsTab"
                                                    Header="Statistics" />
                 </controls:TabbedCommandBar.MenuItems>
             </controls:TabbedCommandBar>
@@ -741,13 +741,13 @@
             </dev:Case>
 
             <!--  Statistics  -->
-            <dev:Case Value="Results">
-                <dev:SwitchPresenter x:Name="ResultsSwitchPresenter"
-                                     Value="{x:Bind ViewModel.ResultsState, Mode=OneWay}">
+            <dev:Case Value="Statistics">
+                <dev:SwitchPresenter x:Name="StatisticsSwitchPresenter"
+                                     Value="{x:Bind ViewModel.StatisticsState, Mode=OneWay}">
                     <dev:Case Value="Content">
 
                         <!--  Statistics TreeGrid  -->
-                        <sfgrid:SfTreeGrid x:Name="ResultsTreeGrid"
+                        <sfgrid:SfTreeGrid x:Name="StatisticsTreeGrid"
                                            VerticalAlignment="Stretch"
                                            AutoExpandMode="AllNodesExpanded"
                                            AutoGenerateColumns="False"
@@ -756,15 +756,16 @@
                                            ExpanderColumn="Metric"
                                            GridLinesVisibility="Both"
                                            HeaderLinesVisibility="Both"
-                                           ItemsSource="{x:Bind ViewModel.ResultsRows, Mode=OneWay}"
-                                           SizeChanged="ResultsTreeGrid_SizeChanged">
+                                           ItemsSource="{x:Bind ViewModel.StatisticsRows, Mode=OneWay}"
+                                           SizeChanged="StatisticsTreeGrid_SizeChanged">
                             <sfgrid:SfTreeGrid.ColumnSizer>
                                 <common:TreeGridStarColumnSizer />
                             </sfgrid:SfTreeGrid.ColumnSizer>
                             <sfgrid:SfTreeGrid.Columns>
 
                                 <!--  Metric  -->
-                                <sfgrid:TreeGridTemplateColumn HeaderText="Metric"
+                                <sfgrid:TreeGridTemplateColumn common:StarRatio.ColumnRatio="2"
+                                                               HeaderText="Metric"
                                                                MappingName="Metric">
                                     <sfgrid:TreeGridTemplateColumn.CellTemplate>
                                         <DataTemplate x:DataType="local:ResultRow">
@@ -780,12 +781,14 @@
 
                                 <!--  Recording A  -->
                                 <sfgrid:TreeGridTextColumn x:Name="RecordingAColumn"
+                                                           common:StarRatio.ColumnRatio="1"
                                                            CellStyleSelector="{StaticResource RecordingACellStyleSelector}"
                                                            HeaderText="{x:Bind ViewModel.RecordingAHeader, Mode=OneWay}"
                                                            MappingName="RecordingA" />
 
                                 <!--  Recording B  -->
-                                <sfgrid:TreeGridTextColumn x:Name="ResultsRecordingBColumn"
+                                <sfgrid:TreeGridTextColumn x:Name="StatisticsRecordingBColumn"
+                                                           common:StarRatio.ColumnRatio="1"
                                                            CellStyleSelector="{StaticResource RecordingBCellStyleSelector}"
                                                            HeaderText="{x:Bind ViewModel.RecordingBHeader, Mode=OneWay}"
                                                            MappingName="RecordingB" />

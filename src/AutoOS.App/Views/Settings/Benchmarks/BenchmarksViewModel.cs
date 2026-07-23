@@ -9,7 +9,7 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 	private string _activeTab = "Recordings";
 	private string _recordingState = "Empty";
 	private string _analysisState = "Empty";
-	private string _resultsState = "Empty";
+	private string _statisticsState = "Empty";
 	private int _selectedRecordingCount;
 	private bool _selectedRecordingsHaveSameProcess;
 	private string _processName = string.Empty;
@@ -20,7 +20,7 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 	private readonly HashSet<string> _recordableProcesses = new(StringComparer.OrdinalIgnoreCase);
 	private ObservableCollection<string> _processSuggestions = [];
 	private ObservableCollection<RecordingItem> _recordings = [];
-	private ObservableCollection<ResultRow> _resultsRows = [];
+	private ObservableCollection<ResultRow> _statisticsRows = [];
 	private ObservableCollection<BarPoint> _fpsBarSeries = [];
 	private ObservableCollection<BarPoint> _fpsRenderedBarSeries = [];
 	private ObservableCollection<BarPoint> _fpsBarSeries2 = [];
@@ -67,10 +67,10 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 		private set => SetProperty(ref _analysisState, value);
 	}
 
-	public string ResultsState
+	public string StatisticsState
 	{
-		get => _resultsState;
-		private set => SetProperty(ref _resultsState, value);
+		get => _statisticsState;
+		private set => SetProperty(ref _statisticsState, value);
 	}
 
 	public ObservableCollection<RecordingItem> Recordings
@@ -79,10 +79,10 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 		private set => SetProperty(ref _recordings, value);
 	}
 
-	public ObservableCollection<ResultRow> ResultsRows
+	public ObservableCollection<ResultRow> StatisticsRows
 	{
-		get => _resultsRows;
-		set => SetProperty(ref _resultsRows, value);
+		get => _statisticsRows;
+		set => SetProperty(ref _statisticsRows, value);
 	}
 
 	public ObservableCollection<string> ProcessSuggestions
@@ -556,7 +556,7 @@ public sealed partial class BenchmarksViewModel : ObservableObject
 			> 2 => "Error",
 			_ => "Content"
 		};
-		ResultsState = AnalysisState;
+		StatisticsState = AnalysisState;
 		OnPropertyChanged(nameof(IsAggregateEnabled));
 		OnPropertyChanged(nameof(IsAnalysisToolbarEnabled));
 		OnPropertyChanged(nameof(IsSecondColorPickerEnabled));
