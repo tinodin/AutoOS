@@ -49,9 +49,12 @@
 
             <!--  Command Bar  -->
             <controls:TabbedCommandBar x:Name="BenchmarksSelectorBar"
-                                       Margin="0,48,0,0"
-                                       SelectedItem="{x:Bind RecordingsTab}"
-                                       SelectionChanged="BenchmarksSelectorBar_SelectionChanged">
+                                        Margin="0,48,0,0"
+                                        SelectedItem="{x:Bind RecordingsTab}"
+                                        SelectionChanged="BenchmarksSelectorBar_SelectionChanged"
+                                        common:CommandBarExtensions.ApplyOverflowIndent="True"
+                                        common:CommandBarExtensions.CommandAlignment="Left"
+                                        common:CommandBarExtensions.OverflowButtonAlignment="Right">
                 <controls:TabbedCommandBar.MenuItems>
 
                     <!--  Recordings  -->

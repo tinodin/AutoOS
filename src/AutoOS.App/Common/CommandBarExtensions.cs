@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using CommunityToolkit.WinUI.Controls;
 
 namespace AutoOS.Common;
 
@@ -57,88 +58,111 @@ public static class CommandBarExtensions
         obj.SetValue(OverflowButtonAlignmentProperty, value);
     }
 
-    private static void OnApplyOverflowIndentChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    private static void ForEachCommandBar(DependencyObject dependencyObject, Action<CommandBar> action)
     {
-        if (d is not CommandBar commandBar)
-            return;
-
-        bool newValue = (bool)e.NewValue;
-
-        if (newValue)
+        if (dependencyObject is CommandBar commandBar)
         {
-            commandBar.Opening += CommandBar_Opening;
-            commandBar.Closed += CommandBar_Closed;
-            
-            if (commandBar.IsOpen)
+            action(commandBar);
+        }
+        else if (dependencyObject is TabbedCommandBar tabbedCommandBar)
+        {
+            if (tabbedCommandBar.IsLoaded)
             {
-                ApplyOverflowContainerMargins(commandBar);
-            }
-
-            if (commandBar.IsLoaded)
-            {
-                UpdateCommandAlignment(commandBar, GetCommandAlignment(commandBar));
-                UpdateOverflowButtonAlignment(commandBar, GetOverflowButtonAlignment(commandBar));
+                foreach (var item in tabbedCommandBar.MenuItems.OfType<TabbedCommandBarItem>())
+                    action(item);
             }
             else
             {
                 RoutedEventHandler loadedHandler = null;
                 loadedHandler = (sender, args) =>
                 {
+                    tabbedCommandBar.Loaded -= loadedHandler;
+                    foreach (var item in tabbedCommandBar.MenuItems.OfType<TabbedCommandBarItem>())
+                        action(item);
+                };
+                tabbedCommandBar.Loaded += loadedHandler;
+            }
+        }
+    }
+
+    private static void OnApplyOverflowIndentChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
+    {
+        bool newValue = (bool)args.NewValue;
+
+        ForEachCommandBar(dependencyObject, commandBar =>
+        {
+            if (newValue)
+            {
+                commandBar.Opening += CommandBar_Opening;
+                commandBar.Closed += CommandBar_Closed;
+
+                if (commandBar.IsOpen)
+                    ApplyOverflowContainerMargins(commandBar);
+
+                if (commandBar.IsLoaded)
+                {
+                    UpdateCommandAlignment(commandBar, GetCommandAlignment(dependencyObject));
+                    UpdateOverflowButtonAlignment(commandBar, GetOverflowButtonAlignment(dependencyObject));
+                }
+                else
+                {
+                    RoutedEventHandler loadedHandler = null;
+                    loadedHandler = (sender, eventArgs) =>
+                    {
+                        commandBar.Loaded -= loadedHandler;
+                        UpdateCommandAlignment(commandBar, GetCommandAlignment(dependencyObject));
+                        UpdateOverflowButtonAlignment(commandBar, GetOverflowButtonAlignment(dependencyObject));
+                    };
+                    commandBar.Loaded += loadedHandler;
+                }
+            }
+            else
+            {
+                commandBar.Opening -= CommandBar_Opening;
+                commandBar.Closed -= CommandBar_Closed;
+                RestoreOverflowContainerMargins(commandBar);
+            }
+        });
+    }
+
+    private static void OnCommandAlignmentChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
+    {
+        var alignment = (HorizontalAlignment)args.NewValue;
+        ForEachCommandBar(dependencyObject, commandBar =>
+        {
+            if (commandBar.IsLoaded)
+                UpdateCommandAlignment(commandBar, alignment);
+            else
+            {
+                RoutedEventHandler loadedHandler = null;
+                loadedHandler = (sender, eventArgs) =>
+                {
                     commandBar.Loaded -= loadedHandler;
-                    UpdateCommandAlignment(commandBar, GetCommandAlignment(commandBar));
-                    UpdateOverflowButtonAlignment(commandBar, GetOverflowButtonAlignment(commandBar));
+                    UpdateCommandAlignment(commandBar, alignment);
                 };
                 commandBar.Loaded += loadedHandler;
             }
-        }
-        else
-        {
-            commandBar.Opening -= CommandBar_Opening;
-            commandBar.Closed -= CommandBar_Closed;
-            RestoreOverflowContainerMargins(commandBar);
-        }
+        });
     }
 
-    private static void OnCommandAlignmentChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    private static void OnOverflowButtonAlignmentChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
     {
-        if (d is not CommandBar commandBar)
-            return;
-
-        if (commandBar.IsLoaded)
+        var alignment = (HorizontalAlignment)args.NewValue;
+        ForEachCommandBar(dependencyObject, commandBar =>
         {
-            UpdateCommandAlignment(commandBar, (HorizontalAlignment)e.NewValue);
-        }
-        else
-        {
-            RoutedEventHandler loadedHandler = null;
-            loadedHandler = (sender, args) =>
+            if (commandBar.IsLoaded)
+                UpdateOverflowButtonAlignment(commandBar, alignment);
+            else
             {
-                commandBar.Loaded -= loadedHandler;
-                UpdateCommandAlignment(commandBar, GetCommandAlignment(commandBar));
-            };
-            commandBar.Loaded += loadedHandler;
-        }
-    }
-
-    private static void OnOverflowButtonAlignmentChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-    {
-        if (d is not CommandBar commandBar)
-            return;
-
-        if (commandBar.IsLoaded)
-        {
-            UpdateOverflowButtonAlignment(commandBar, (HorizontalAlignment)e.NewValue);
-        }
-        else
-        {
-            RoutedEventHandler loadedHandler = null;
-            loadedHandler = (sender, args) =>
-            {
-                commandBar.Loaded -= loadedHandler;
-                UpdateOverflowButtonAlignment(commandBar, GetOverflowButtonAlignment(commandBar));
-            };
-            commandBar.Loaded += loadedHandler;
-        }
+                RoutedEventHandler loadedHandler = null;
+                loadedHandler = (sender, eventArgs) =>
+                {
+                    commandBar.Loaded -= loadedHandler;
+                    UpdateOverflowButtonAlignment(commandBar, alignment);
+                };
+                commandBar.Loaded += loadedHandler;
+            }
+        });
     }
 
     private static void UpdateCommandAlignment(CommandBar commandBar, HorizontalAlignment alignment)
@@ -163,16 +187,17 @@ public static class CommandBarExtensions
         catch { }
     }
 
-    private static T FindVisualChild<T>(DependencyObject obj, string name) where T : DependencyObject
+    private static T FindVisualChild<T>(DependencyObject parent, string childName) where T : DependencyObject
     {
-        for (int i = 0; i < Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChildrenCount(obj); i++)
+        int count = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChildrenCount(parent);
+        for (int index = 0; index < count; index++)
         {
-            var child = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(obj, i);
-            if (child is T t && (child as FrameworkElement)?.Name == name)
+            var child = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(parent, index);
+            if (child is T matched && (child as FrameworkElement)?.Name == childName)
             {
-                return t;
+                return matched;
             }
-            var childOfChild = FindVisualChild<T>(child, name);
+            var childOfChild = FindVisualChild<T>(child, childName);
             if (childOfChild != null)
             {
                 return childOfChild;
@@ -181,20 +206,16 @@ public static class CommandBarExtensions
         return null;
     }
 
-    private static void CommandBar_Opening(object sender, object e)
+    private static void CommandBar_Opening(object sender, object eventArgs)
     {
         if (sender is CommandBar commandBar)
-        {
             ApplyOverflowContainerMargins(commandBar);
-        }
     }
 
-    private static void CommandBar_Closed(object sender, object e)
+    private static void CommandBar_Closed(object sender, object eventArgs)
     {
         if (sender is CommandBar commandBar)
-        {
             RestoreOverflowContainerMargins(commandBar);
-        }
     }
 
     private static void ApplyOverflowContainerMargins(CommandBar commandBar)
@@ -203,17 +224,14 @@ public static class CommandBarExtensions
 
         foreach (var container in commandBar.PrimaryCommands.OfType<AppBarElementContainer>())
         {
-            if (container.IsInOverflow)
-            {
-                margins.TryAdd(container, container.Margin);
+            if (container.IsInOverflow && margins.TryAdd(container, container.Margin))
                 container.Margin = new Thickness(32, 0, 0, 0);
-            }
         }
 
         foreach (var container in commandBar.SecondaryCommands.OfType<AppBarElementContainer>())
         {
-            margins.TryAdd(container, container.Margin);
-            container.Margin = new Thickness(32, 0, 0, 0);
+            if (margins.TryAdd(container, container.Margin))
+                container.Margin = new Thickness(32, 0, 0, 0);
         }
     }
 
@@ -222,9 +240,7 @@ public static class CommandBarExtensions
         if (_marginsMap.TryGetValue(commandBar, out var margins))
         {
             foreach (var (container, margin) in margins)
-            {
                 container.Margin = margin;
-            }
             margins.Clear();
         }
     }
