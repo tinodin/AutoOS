@@ -1045,7 +1045,8 @@ public static partial class EpicGamesHelper
 					string productId = null;
 					if (offerResponse.IsSuccess)
 					{
-						var searchElement = JsonNode.Parse(offerResponse.Body)?["data"]?["Catalog"]?["searchStore"]?["elements"]?[0];
+						var elements = JsonNode.Parse(offerResponse.Body)?["data"]?["Catalog"]?["searchStore"]?["elements"]?.AsArray();
+						var searchElement = elements != null && elements.Count > 0 ? elements[0] : null;
 
 						offerId = searchElement?["id"]?.GetValue<string>();
 
@@ -1201,7 +1202,10 @@ public static partial class EpicGamesHelper
 					var keyImages = manifestData[catalogItemId]?["keyImages"]?.AsArray() ?? [];
 
 					// get artifactid
-					string artifactId = manifestData[catalogItemId]?["releaseInfo"]?[0]?["appId"]?.ToString();
+					var releaseInfo = manifestData[catalogItemId]?["releaseInfo"]?.AsArray();
+					string artifactId = releaseInfo != null && releaseInfo.Count > 0 ? releaseInfo[0]?["appId"]?.ToString() : null;
+					if (string.IsNullOrEmpty(artifactId))
+						await LogHelper.LogError(new InvalidOperationException($"Failed to get artifactId for {catalogItemId}"), null, $"Failed to get artifactId for game {itemJson?["DisplayName"]?.ToString()}, {catalogItemId}");
 
 					// read playtime json data
 					var totalSeconds = playTimeData?.GetValueOrDefault(artifactId) ?? 0;
