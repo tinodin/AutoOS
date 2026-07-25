@@ -225,13 +225,13 @@ public static class CommandBarExtensions
         foreach (var container in commandBar.PrimaryCommands.OfType<AppBarElementContainer>())
         {
             if (container.IsInOverflow && margins.TryAdd(container, container.Margin))
-                container.Margin = new Thickness(32, 0, 0, 0);
+                container.Margin = new Thickness(32, 0, 32, 4);
         }
 
         foreach (var container in commandBar.SecondaryCommands.OfType<AppBarElementContainer>())
         {
             if (margins.TryAdd(container, container.Margin))
-                container.Margin = new Thickness(32, 0, 0, 0);
+                container.Margin = new Thickness(32, 0, 32, 4);
         }
     }
 
