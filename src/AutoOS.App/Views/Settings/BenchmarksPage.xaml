@@ -201,7 +201,6 @@
                             <AppBarSeparator Margin="4,0"
                                              Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}" />
 
-
                             <AppBarElementContainer Margin="0,0,4,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
                                                     Visibility="{x:Bind ViewModel.BarMetricsVisibility, Mode=OneWay}">
