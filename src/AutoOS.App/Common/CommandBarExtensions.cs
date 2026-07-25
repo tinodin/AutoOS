@@ -12,6 +12,7 @@ public static class CommandBarExtensions
         public Dictionary<AppBarElementContainer, Thickness> Margins { get; } = [];
         public List<(UIElement Element, long Token)> VisibilityTokens { get; } = [];
         public Windows.Foundation.Collections.VectorChangedEventHandler<ICommandBarElement> VectorChangedHandler { get; set; }
+        public SizeChangedEventHandler SizeChangedHandler { get; set; }
         public bool RefreshQueued { get; set; }
         public bool RefreshDirty { get; set; }
     }
@@ -108,6 +109,7 @@ public static class CommandBarExtensions
                 if (commandBar.IsOpen)
                     ApplyOverflowContainerMargins(commandBar);
 
+                AttachSizeChangedTracking(commandBar);
                 AttachVisibilityTracking(commandBar);
 
                 if (commandBar.IsLoaded)
@@ -123,6 +125,7 @@ public static class CommandBarExtensions
                         commandBar.Loaded -= loadedHandler;
                         UpdateCommandAlignment(commandBar, GetCommandAlignment(dependencyObject));
                         UpdateOverflowButtonAlignment(commandBar, GetOverflowButtonAlignment(dependencyObject));
+                        AttachSizeChangedTracking(commandBar);
                         AttachVisibilityTracking(commandBar);
                     };
                     commandBar.Loaded += loadedHandler;
@@ -132,6 +135,7 @@ public static class CommandBarExtensions
             {
                 commandBar.Opening -= CommandBar_Opening;
                 commandBar.Closed -= CommandBar_Closed;
+                DetachSizeChangedTracking(commandBar);
                 DetachVisibilityTracking(commandBar);
                 RestoreOverflowContainerMargins(commandBar);
             }
@@ -206,6 +210,28 @@ public static class CommandBarExtensions
         }
 
         UnhookVisibilityCallbacks(state);
+    }
+
+    private static void AttachSizeChangedTracking(CommandBar commandBar)
+    {
+        var state = _stateMap.GetOrCreateValue(commandBar);
+        if (state.SizeChangedHandler is null)
+        {
+            state.SizeChangedHandler = (_, _) => QueueOverflowRefresh(commandBar);
+            commandBar.SizeChanged += state.SizeChangedHandler;
+        }
+    }
+
+    private static void DetachSizeChangedTracking(CommandBar commandBar)
+    {
+        if (!_stateMap.TryGetValue(commandBar, out var state))
+            return;
+
+        if (state.SizeChangedHandler is not null)
+        {
+            commandBar.SizeChanged -= state.SizeChangedHandler;
+            state.SizeChangedHandler = null;
+        }
     }
 
     private static void HookVisibilityCallbacks(CommandBar commandBar)
