@@ -88,6 +88,8 @@ public class ApplicationSelection
 	public bool XboxAccessories { get; set; }
 	public bool VisualStudio { get; set; }
 	public bool VisualStudioCode { get; set; }
+	public bool Kiro { get; set; }
+	public bool SublimeText { get; set; }
 	public bool Antigravity { get; set; }
 	public bool Cursor { get; set; }
 	public bool Devin { get; set; }
@@ -120,6 +122,7 @@ public class ApplicationSelection
 	public bool FlexASIO { get; set; }
 	public bool ASIO4ALL { get; set; }
 	public bool ArturiaMidiControlCenter { get; set; }
+	public bool Voicemeeter { get; set; }
 	public bool DaVinciResolve { get; set; }
 	public bool Blender { get; set; }
 	public bool CapCut { get; set; }
@@ -128,6 +131,9 @@ public class ApplicationSelection
 	public bool MPV { get; set; }
 	public bool VLC { get; set; }
 	public bool MediaInfo { get; set; }
+	public bool Netflix { get; set; }
+	public bool DisneyPlus { get; set; }
+	public bool PrimeVideo { get; set; }
 	public bool Word { get; set; }
 	public bool Excel { get; set; }
 	public bool PowerPoint { get; set; }
@@ -150,6 +156,8 @@ public class ApplicationSelection
 	public bool AutoHotkey { get; set; }
 	public bool EmEditor { get; set; }
 	public bool WinDbg { get; set; }
+	public bool Deluge { get; set; }
+	public bool FreeDownloadManager { get; set; }
 }
 
 public static class ApplicationStage
@@ -239,6 +247,8 @@ public static class ApplicationStage
 
 		bool VisualStudio = selection?.VisualStudio ?? PreparingStage.VisualStudio;
 		bool VisualStudioCode = selection?.VisualStudioCode ?? PreparingStage.VisualStudioCode;
+		bool Kiro = selection?.Kiro ?? PreparingStage.Kiro;
+		bool SublimeText = selection?.SublimeText ?? PreparingStage.SublimeText;
 		bool Antigravity = selection?.Antigravity ?? PreparingStage.Antigravity;
 		bool Cursor = selection?.Cursor ?? PreparingStage.Cursor;
 		bool Devin = selection?.Devin ?? PreparingStage.Devin;
@@ -274,6 +284,7 @@ public static class ApplicationStage
 		bool FlexASIO = selection?.FlexASIO ?? PreparingStage.FlexASIO;
 		bool ASIO4ALL = selection?.ASIO4ALL ?? PreparingStage.ASIO4ALL;
 		bool ArturiaMidiControlCenter = selection?.ArturiaMidiControlCenter ?? PreparingStage.ArturiaMidiControlCenter;
+		bool Voicemeeter = selection?.Voicemeeter ?? PreparingStage.Voicemeeter;
 
 		bool DaVinciResolve = selection?.DaVinciResolve ?? PreparingStage.DaVinciResolve;
 		bool Blender = selection?.Blender ?? PreparingStage.Blender;
@@ -284,6 +295,9 @@ public static class ApplicationStage
 		bool MPV = selection?.MPV ?? PreparingStage.MPV;
 		bool VLC = selection?.VLC ?? PreparingStage.VLC;
 		bool MediaInfo = selection?.MediaInfo ?? PreparingStage.MediaInfo;
+		bool Netflix = selection?.Netflix ?? PreparingStage.Netflix;
+		bool DisneyPlus = selection?.DisneyPlus ?? PreparingStage.DisneyPlus;
+		bool PrimeVideo = selection?.PrimeVideo ?? PreparingStage.PrimeVideo;
 
 		bool Word = selection?.Word ?? PreparingStage.Word;
 		bool Excel = selection?.Excel ?? PreparingStage.Excel;
@@ -308,6 +322,8 @@ public static class ApplicationStage
 		bool AutoHotkey = selection?.AutoHotkey ?? PreparingStage.AutoHotkey;
 		bool EmEditor = selection?.EmEditor ?? PreparingStage.EmEditor;
 		bool WinDbg = selection?.WinDbg ?? PreparingStage.WinDbg;
+		bool Deluge = selection?.Deluge ?? PreparingStage.Deluge;
+		bool FreeDownloadManager = selection?.FreeDownloadManager ?? PreparingStage.FreeDownloadManager;
 
 		string rockstarGamesLauncherVersion = "";
 		string spotifyVersion = "";
@@ -1412,6 +1428,20 @@ public static class ApplicationStage
 			// pin visual studio code to the taskbar
 			("Pinning Visual Studio Code to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Visual Studio Code", "Visual Studio Code.lnk")), () => VisualStudioCode == true),
 
+			// download kiro
+			("Downloading Kiro", async () => await DownloadHelper.Download("https://prod.download.desktop.kiro.dev/releases/stable/win32-x64/signed/1.0.182/kiro-ide-1.0.182-stable-win32-x64.exe", Path.GetTempPath(), "kiro-ide-win32-x64.exe", reporter: reporter), () => Kiro == true),
+
+			// install kiro
+			("Installing Kiro", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "kiro-ide-win32-x64.exe"), Arguments = "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Kiro == true),
+			("Cleaning up Kiro files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "kiro-ide-win32-x64.exe")), () => Kiro == true),
+
+			// download sublime text
+			("Downloading Sublime Text", async () => await DownloadHelper.Download("https://download.sublimetext.com/sublime_text_build_4200_x64_setup.exe", Path.GetTempPath(), "sublime_text_x64_setup.exe", reporter: reporter), () => SublimeText == true),
+
+			// install sublime text
+			("Installing Sublime Text", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "sublime_text_x64_setup.exe"), Arguments = "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => SublimeText == true),
+			("Cleaning up Sublime Text files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "sublime_text_x64_setup.exe")), () => SublimeText == true),
+
 			// download antigravity ide
 			("Downloading Antigravity IDE", async () => await DownloadHelper.Download("https://edgedl.me.gvt1.com/edgedl/release2/j0qc3/antigravity/stable/2.1.1-6123990880747520/windows-x64/Antigravity%20IDE.exe", Path.GetTempPath(), "Antigravity.exe", reporter: reporter), () => Antigravity == true),
 
@@ -1832,6 +1862,15 @@ public static class ApplicationStage
 			// remove midi control center desktop shortcut
 			("Removing Arturia MIDI Control Center desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "MIDI Control Center.lnk")), () => ArturiaMidiControlCenter == true),
 
+			// download voicemeeter
+			("Downloading Voicemeeter", async () => await DownloadHelper.Download("https://download.vb-audio.com/Download_CABLE/VoicemeeterSetup_v1122.zip", Path.GetTempPath(), "VoicemeeterSetup.zip", reporter: reporter), () => Voicemeeter == true),
+
+			// install voicemeeter
+			("Installing Voicemeeter", async () => await ExtractHelper.Extract(Path.Combine(Path.GetTempPath(), "VoicemeeterSetup.zip"), Path.Combine(Path.GetTempPath(), "VoicemeeterSetup")), () => Voicemeeter == true),
+			("Installing Voicemeeter", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "VoicemeeterSetup", "voicemeetersetup.exe"), Arguments = "-i -h", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Voicemeeter == true),
+			("Cleaning up Voicemeeter files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "VoicemeeterSetup.zip")), () => Voicemeeter == true),
+			("Cleaning up Voicemeeter files", async () => Directory.Delete(Path.Combine(Path.GetTempPath(), "VoicemeeterSetup"), true), () => Voicemeeter == true),
+
 			// download davinci resolve
 			("Downloading DaVinci Resolve", async () => await DownloadHelper.Download(new[] { "https://github.com/tinodin/AutoOS-Resources/releases/download/v1.0.0.0/DaVinci_Resolve_21.0_Windows.part1.rar", "https://github.com/tinodin/AutoOS-Resources/releases/download/v1.0.0.0/DaVinci_Resolve_21.0_Windows.part2.rar" }, Path.GetTempPath(), new[] { "DaVinci_Resolve.part1.rar", "DaVinci_Resolve.part2.rar" }, reporter: reporter), () => DaVinciResolve == true),
 
@@ -1909,6 +1948,24 @@ public static class ApplicationStage
 
 			// install mediainfo
 			("Installing MediaInfo", async () => await StoreHelper.Install("MediaArea.net.MediaInfo_9bzbd7xajy7ar"), () => MediaInfo == true),
+
+			// download netflix
+			("Downloading Netflix", async () => await StoreHelper.Download("4DF9E0F8.Netflix_mcm4njqhnhss8", reporter: reporter), () => Netflix == true),
+
+			// install netflix
+			("Installing Netflix", async () => await StoreHelper.Install("4DF9E0F8.Netflix_mcm4njqhnhss8"), () => Netflix == true),
+
+			// download disney+
+			("Downloading Disney+", async () => await StoreHelper.Download("Disney.37853FC22B2CE_6rarf9sa4v8jt", reporter: reporter), () => DisneyPlus == true),
+
+			// install disney+
+			("Installing Disney+", async () => await StoreHelper.Install("Disney.37853FC22B2CE_6rarf9sa4v8jt"), () => DisneyPlus == true),
+
+			// download prime video
+			("Downloading Prime Video", async () => await StoreHelper.Download("AmazonVideo.PrimeVideo_pwbj9vvecjh7j", reporter: reporter), () => PrimeVideo == true),
+
+			// install prime video
+			("Installing Prime Video", async () => await StoreHelper.Install("AmazonVideo.PrimeVideo_pwbj9vvecjh7j"), () => PrimeVideo == true),
 
 			// download office
 			("Downloading Office", async () => await DownloadHelper.Download("https://officecdn.microsoft.com/pr/wsus/setup.exe", Path.GetTempPath(), "setup.exe", reporter: reporter), () => Word == true || Excel == true || PowerPoint == true || OneNote == true || Teams == true || Outlook == true || OneDrive == true),
@@ -2208,8 +2265,25 @@ public static class ApplicationStage
 			("Downloading WinDbg", async () => await StoreHelper.Download("Microsoft.WinDbg_8wekyb3d8bbwe", reporter: reporter), () => WinDbg == true),
 
 			// install windbg
-			("Installing WinDbg", async () => await StoreHelper.Install("Microsoft.WinDbg_8wekyb3d8bbwe"), () => WinDbg == true)
-		};
+			("Installing WinDbg", async () => await StoreHelper.Install("Microsoft.WinDbg_8wekyb3d8bbwe"), () => WinDbg == true),
+
+			// download deluge
+			("Downloading Deluge", async () => await DownloadHelper.Download("http://download.deluge-torrent.org/windows/deluge-2.2.0-win64-setup.exe", Path.GetTempPath(), "deluge-win64-setup.exe", reporter: reporter), () => Deluge == true),
+
+			// install deluge
+			("Installing Deluge", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "deluge-win64-setup.exe"), Arguments = "/S", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Deluge == true),
+			("Cleaning up Deluge files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "deluge-win64-setup.exe")), () => Deluge == true),
+
+			// download free download manager
+			("Downloading Free Download Manager", async () => await DownloadHelper.Download("https://files2.freedownloadmanager.org/6/latest/fdm_x64_setup.exe", Path.GetTempPath(), "fdm_x64_setup.exe", reporter: reporter), () => FreeDownloadManager == true),
+
+			// install free download manager
+			("Installing Free Download Manager", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "fdm_x64_setup.exe"), Arguments = "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => FreeDownloadManager == true),
+			("Cleaning up Free Download Manager files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "fdm_x64_setup.exe")), () => FreeDownloadManager == true),
+
+            // remove free download manager desktop shortcut
+			("Removing Free Download Manager desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Free Download Manager.lnk")), () => FreeDownloadManager == true),
+        };
 
 		if (selection != null)
 		{
