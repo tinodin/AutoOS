@@ -225,8 +225,10 @@ $restartRequired = $false
 
 $services = @(
 	@{ Path = "HKLM:\SYSTEM\CurrentControlSet\Services\cdrom"; Name = "Start"; Value = 1 },
+	@{ Path = "HKLM:\SYSTEM\CurrentControlSet\Services\CompositeBus"; Name = "Start"; Value = 3 },
 	@{ Path = "HKLM:\SYSTEM\CurrentControlSet\Services\defragsvc"; Name = "Start"; Value = 3 },
 	@{ Path = "HKLM:\SYSTEM\CurrentControlSet\Services\spaceport"; Name = "Start"; Value = 0 },
+	@{ Path = "HKLM:\SYSTEM\CurrentControlSet\Services\umbus"; Name = "Start"; Value = 3 },
 	@{ Path = "HKLM:\SYSTEM\CurrentControlSet\Services\vdrvroot"; Name = "Start"; Value = 0 },
 	@{ Path = "HKLM:\SYSTEM\CurrentControlSet\Services\vds"; Name = "Start"; Value = 3 }
 )
@@ -245,11 +247,19 @@ foreach ($service in $services) {
 	}
 }
 
-$virtualDriveEnumerator = Get-PnpDevice -FriendlyName 'Microsoft Virtual Drive Enumerator' -ErrorAction SilentlyContinue
-if ($virtualDriveEnumerator -and $virtualDriveEnumerator.Status -ne 'OK') {
-	Write-Host "Enabling Microsoft Virtual Drive Enumerator..."
-	$virtualDriveEnumerator | Enable-PnpDevice -Confirm:$false | Out-Null
-	$restartRequired = $true
+$pnpDeviceNames = @(
+	'Microsoft Virtual Drive Enumerator',
+	'Composite Bus Enumerator',
+	'UMBus Root Bus Enumerator'
+)
+
+foreach ($deviceName in $pnpDeviceNames) {
+	$device = Get-PnpDevice -FriendlyName $deviceName -ErrorAction SilentlyContinue
+	if ($device -and $device.Status -ne 'OK') {
+		Write-Host "Enabling $deviceName..."
+		$device | Enable-PnpDevice -Confirm:$false | Out-Null
+		$restartRequired = $true
+	}
 }
 
 if ($restartRequired) {
@@ -513,7 +523,7 @@ try {
 	}
 
 	Write-Host "Copying install.wim..."
-	$TempWim = Join-Path ([System.IO.Path]::GetFullPath($env:TEMP)) "install.wim"
+	$TempWim = "$env:TEMP\install.wim"
 	Copy-Item -Path $WimPath -Destination $TempWim -Force
 	& "$env:SystemRoot\System32\attrib.exe" -r $TempWim
 } finally {
@@ -551,9 +561,7 @@ foreach ($Image in $Images) {
 
 Write-Host "Applying Windows image to $TargetDrive..."
 DISM /Apply-Image /ImageFile:$TempWim /Index:1 /ApplyDir:$TargetDrive
-if (Test-Path -LiteralPath $TempWim) {
-	Remove-Item -LiteralPath $TempWim -Force -ErrorAction SilentlyContinue
-}
+Remove-Item $TempWim -Force
 
 Write-Host "`n===== Step 6: Install Drivers =====`n" -ForegroundColor Yellow
 Write-Host "Installing drivers from $DriversDir..."
