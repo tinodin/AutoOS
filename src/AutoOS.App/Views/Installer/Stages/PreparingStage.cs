@@ -119,6 +119,8 @@ public static partial class PreparingStage
 
 	public static bool VisualStudio;
 	public static bool VisualStudioCode;
+	public static bool Kiro;
+	public static bool SublimeText;
 	public static bool Antigravity;
 	public static bool Cursor;
 	public static bool Devin;
@@ -154,6 +156,7 @@ public static partial class PreparingStage
 	public static bool FlexASIO;
 	public static bool ASIO4ALL;
 	public static bool ArturiaMidiControlCenter;
+	public static bool Voicemeeter;
 
 	public static bool DaVinciResolve;
 	public static bool Blender;
@@ -164,6 +167,9 @@ public static partial class PreparingStage
 	public static bool MPV;
 	public static bool VLC;
 	public static bool MediaInfo;
+	public static bool Netflix;
+	public static bool DisneyPlus;
+	public static bool PrimeVideo;
 
 	public static bool Word;
 	public static bool Excel;
@@ -188,6 +194,8 @@ public static partial class PreparingStage
 	public static bool AutoHotkey;
 	public static bool EmEditor;
 	public static bool WinDbg;
+	public static bool Deluge;
+	public static bool FreeDownloadManager;
 
 	public static List<GpuInfo> GPUs { get; set; } = [];
 	public static bool MSI;
@@ -521,6 +529,8 @@ public static partial class PreparingStage
 
 			VisualStudio = (localSettings.Values["Development"]?.ToString().Contains("Visual Studio") ?? false);
 			VisualStudioCode = (localSettings.Values["Development"]?.ToString().Contains("Visual Studio Code") ?? false);
+			Kiro = (localSettings.Values["Development"]?.ToString().Contains("Kiro") ?? false);
+			SublimeText = (localSettings.Values["Development"]?.ToString().Contains("Sublime Text") ?? false);
 			Antigravity = (localSettings.Values["Development"]?.ToString().Contains("Antigravity IDE") ?? false);
 			Cursor = (localSettings.Values["Development"]?.ToString().Contains("Cursor") ?? false);
 			Devin = (localSettings.Values["Development"]?.ToString().Contains("Devin") ?? false);
@@ -556,6 +566,7 @@ public static partial class PreparingStage
 			FlexASIO = (localSettings.Values["Music Production"]?.ToString().Contains("FlexASIO") ?? false);
 			ASIO4ALL = (localSettings.Values["Music Production"]?.ToString().Contains("ASIO4ALL") ?? false);
 			ArturiaMidiControlCenter = (localSettings.Values["Music Production"]?.ToString().Contains("Arturia MIDI Control Center") ?? false);
+			Voicemeeter = (localSettings.Values["Music Production"]?.ToString().Contains("Voicemeeter") ?? false);
 
 			DaVinciResolve = (localSettings.Values["Video Production"]?.ToString().Contains("DaVinci Resolve") ?? false);
 			Blender = (localSettings.Values["Video Production"]?.ToString().Contains("Blender") ?? false);
@@ -566,6 +577,9 @@ public static partial class PreparingStage
 			MPV = (localSettings.Values["Multimedia"]?.ToString().Contains("mpv") ?? false);
 			VLC = (localSettings.Values["Multimedia"]?.ToString().Contains("VLC") ?? false);
 			MediaInfo = (localSettings.Values["Multimedia"]?.ToString().Contains("MediaInfo") ?? false);
+			Netflix = (localSettings.Values["Multimedia"]?.ToString().Contains("Netflix") ?? false);
+			DisneyPlus = (localSettings.Values["Multimedia"]?.ToString().Contains("Disney+") ?? false);
+			PrimeVideo = (localSettings.Values["Multimedia"]?.ToString().Contains("Prime Video") ?? false);
 
 			Word = (localSettings.Values["Office"]?.ToString().Contains("Word") ?? false);
 			Excel = (localSettings.Values["Office"]?.ToString().Contains("Excel") ?? false);
@@ -590,6 +604,8 @@ public static partial class PreparingStage
 			AutoHotkey = (localSettings.Values["Miscellaneous"]?.ToString().Contains("AutoHotkey") ?? false);
 			EmEditor = (localSettings.Values["Miscellaneous"]?.ToString().Contains("EmEditor") ?? false);
 			WinDbg = (localSettings.Values["Miscellaneous"]?.ToString().Contains("WinDbg") ?? false);
+			Deluge = (localSettings.Values["Miscellaneous"]?.ToString().Contains("Deluge") ?? false);
+			FreeDownloadManager = (localSettings.Values["Miscellaneous"]?.ToString().Contains("Free Download Manager") ?? false);
 
 			var gpuArray = JsonNode.Parse(localSettings.Values["GPUs"]?.ToString() ?? "[]")?.AsArray();
 			if (gpuArray != null)
