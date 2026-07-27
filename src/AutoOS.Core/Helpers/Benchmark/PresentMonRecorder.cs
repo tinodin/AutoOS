@@ -1,16 +1,16 @@
 using System.Diagnostics;
 using System.Globalization;
 
-namespace AutoOS.Views.Settings.Benchmarks;
+namespace AutoOS.Core.Helpers.Benchmark;
 
-internal enum PresentMonRecordingResult
+public enum PresentMonRecordingResult
 {
 	Saved,
 	Stopped,
 	NotSaved
 }
 
-internal sealed class PresentMonRecorder
+public sealed class PresentMonRecorder
 {
 	private Process _process;
 	private bool _stopRequested;

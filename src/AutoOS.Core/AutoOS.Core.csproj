@@ -24,6 +24,7 @@
 	<PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" />
 	<PackageReference Include="System.ServiceProcess.ServiceController" />
 	<PackageReference Include="LevelDBSharp" />
+	<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" />
 	<PackageReference Include="ValveKeyValue" />
   </ItemGroup>
 

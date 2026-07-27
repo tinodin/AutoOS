@@ -1,13 +1,12 @@
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Threading;
 using Microsoft.Diagnostics.Tracing;
 using Microsoft.Diagnostics.Tracing.Parsers;
 using Microsoft.Diagnostics.Tracing.Session;
 
-namespace AutoOS.Views.Settings.Benchmarks;
+namespace AutoOS.Core.Helpers.Benchmark;
 
-internal sealed partial class PresentMonProcessDiscovery : IDisposable
+public sealed partial class PresentMonProcessDiscovery : IDisposable
 {
 	private static readonly Guid DxgKrnlProvider = new("802EC45A-1E99-4B83-9920-87C98277BA9D");
 	private static readonly Guid DxgiProvider = new("CA11C036-0102-4A2D-A6AD-F03CFED5D3C9");
