@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using AutoOS.Core.Helpers.Benchmark;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.UI.Xaml.Media;
 
@@ -269,7 +270,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		}
 	}
 
-	public bool IsMetricEnabled(string metric) => metric switch
+		public bool IsStatisticEnabled(string statistic) => statistic switch
 	{
 		"0.1% Low Avg" => ShowLow01,
 		"1% Low Avg" => ShowLow1,
@@ -294,24 +295,20 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 			if (SetProperty(ref _analysisChartType, value))
 			{
 				OnPropertyChanged(nameof(MetricVisibility));
-				OnPropertyChanged(nameof(BarMetricsVisibility));
+				OnPropertyChanged(nameof(BarStatisticsVisibility));
 			}
 		}
 	}
 
-	public Visibility MetricVisibility =>
-		(AnalysisChartType is "Bar" or "Column") ? Visibility.Collapsed : Visibility.Visible;
+	public Visibility MetricVisibility => (AnalysisChartType is "Bar" or "Column") ? Visibility.Collapsed : Visibility.Visible;
 
-	public Visibility BarMetricsVisibility =>
-		(AnalysisChartType is "Bar" or "Column") ? Visibility.Visible : Visibility.Collapsed;
+	public Visibility BarStatisticsVisibility => (AnalysisChartType is "Bar" or "Column") ? Visibility.Visible : Visibility.Collapsed;
 
-	public bool CanRecord =>
-		IsRecording ||
-		(!string.IsNullOrWhiteSpace(ProcessName) &&
-			_recordableProcesses.Contains(ProcessName.Trim()) &&
-			RecordingDuration >= 3 &&
-			RecordingDelay >= 0);
+	public string GetStatisticTooltip(string key) => BenchmarkCsv.StatisticDescriptions.TryGetValue(key, out var desc) ? desc : string.Empty;
 
+	public string GetMetricTooltip(string key) => BenchmarkCsv.MetricDescriptions.TryGetValue(key, out var desc) ? desc : string.Empty;
+
+	public bool CanRecord => IsRecording || (!string.IsNullOrWhiteSpace(ProcessName) && _recordableProcesses.Contains(ProcessName.Trim()) && RecordingDuration >= 3 && RecordingDelay >= 0);
 	public string RecordLabel => IsRecording ? "Recording..." : "Record";
 	public List<object> ShortcutKeys { get; } = ["Shift", "F11"];
 	public bool IsAggregateEnabled => _selectedRecordingCount > 1 && _selectedRecordingsHaveSameProcess;
@@ -631,17 +628,17 @@ public sealed partial class RecordingItem : ObservableObject
 [WinRT.GeneratedBindableCustomProperty]
 public sealed partial class ResultRow : ObservableObject
 {
-	private string _metric = string.Empty;
+	private string _statistic = string.Empty;
 	private string _tooltip = string.Empty;
 	private string _recordingA = string.Empty;
 	private string _recordingB = string.Empty;
 	private ResultComparison _recordingAComparison;
 	private ResultComparison _recordingBComparison;
 
-	public string Metric
+	public string Statistic
 	{
-		get => _metric;
-		set => SetProperty(ref _metric, value);
+		get => _statistic;
+		set => SetProperty(ref _statistic, value);
 	}
 
 	public string Tooltip
