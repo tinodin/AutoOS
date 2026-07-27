@@ -118,7 +118,6 @@
                             <AppBarElementContainer>
                                 <AutoSuggestBox x:Name="ProcessAutoSuggestBox"
                                                 MinWidth="200"
-                                                GotFocus="ProcessAutoSuggestBox_GotFocus"
                                                 ItemsSource="{x:Bind ViewModel.ProcessSuggestions, Mode=OneWay}"
                                                 PlaceholderText="Select a process..."
                                                 SuggestionChosen="ProcessAutoSuggestBox_SuggestionChosen"

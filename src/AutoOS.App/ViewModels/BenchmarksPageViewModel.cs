@@ -14,11 +14,12 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	private int _selectedRecordingCount;
 	private bool _selectedRecordingsHaveSameProcess;
 	private string _processName = string.Empty;
-	private double _recordingDuration = 30;
+	private double _recordingDuration = 60;
 	private double _recordingDelay = 5;
 	private bool _isRecording;
 	private string _analysisChartType = "Bar";
 	private readonly HashSet<string> _recordableProcesses = new(StringComparer.OrdinalIgnoreCase);
+	private bool _selectedProcessIsRecordable;
 	private ObservableCollection<string> _processSuggestions = [];
 	private ObservableCollection<RecordingItem> _recordings = [];
 	private ObservableCollection<ResultRow> _statisticsRows = [];
@@ -96,6 +97,9 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		{
 			if (SetProperty(ref _processName, value))
 			{
+				_selectedProcessIsRecordable =
+					!string.IsNullOrWhiteSpace(value) &&
+					_recordableProcesses.Contains(value.Trim());
 				FilterProcessSuggestions(value);
 				OnPropertyChanged(nameof(CanRecord));
 			}
@@ -308,7 +312,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 
 	public string GetMetricTooltip(string key) => BenchmarkCsv.MetricDescriptions.TryGetValue(key, out var desc) ? desc : string.Empty;
 
-	public bool CanRecord => IsRecording || (!string.IsNullOrWhiteSpace(ProcessName) && _recordableProcesses.Contains(ProcessName.Trim()) && RecordingDuration >= 3 && RecordingDelay >= 0);
+	public bool CanRecord => IsRecording || (!string.IsNullOrWhiteSpace(ProcessName) && _selectedProcessIsRecordable && RecordingDuration >= 3 && RecordingDelay >= 0);
 	public string RecordLabel => IsRecording ? "Recording..." : "Record";
 	public List<object> ShortcutKeys { get; } = ["Shift", "F11"];
 	public bool IsAggregateEnabled => _selectedRecordingCount > 1 && _selectedRecordingsHaveSameProcess;
@@ -321,16 +325,11 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 
 	public void SetRecordableProcesses(IEnumerable<string> processNames)
 	{
-		bool selectedProcessWasRecordable =
-			!string.IsNullOrWhiteSpace(ProcessName) &&
-			_recordableProcesses.Contains(ProcessName.Trim());
 		_recordableProcesses.Clear();
 		_recordableProcesses.UnionWith(processNames);
-		if (selectedProcessWasRecordable && !_recordableProcesses.Contains(ProcessName.Trim()))
-		{
-			ProcessName = string.Empty;
-			return;
-		}
+		_selectedProcessIsRecordable =
+			!string.IsNullOrWhiteSpace(ProcessName) &&
+			_recordableProcesses.Contains(ProcessName.Trim());
 		FilterProcessSuggestions(ProcessName);
 		OnPropertyChanged(nameof(CanRecord));
 	}

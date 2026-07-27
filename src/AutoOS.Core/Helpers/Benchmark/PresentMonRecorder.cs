@@ -46,7 +46,7 @@ public sealed class PresentMonRecorder
 			WindowStyle = ProcessWindowStyle.Hidden
 		};
 		startInfo.ArgumentList.Add("--process_name");
-		startInfo.ArgumentList.Add(processName);
+		startInfo.ArgumentList.Add(GetCanonicalProcessName(processName));
 		startInfo.ArgumentList.Add("--timed");
 		startInfo.ArgumentList.Add(durationSeconds.ToString(CultureInfo.InvariantCulture));
 		startInfo.ArgumentList.Add("--terminate_after_timed");
@@ -85,5 +85,31 @@ public sealed class PresentMonRecorder
 		_stopRequested = true;
 		if (_process != null && !_process.HasExited)
 			_process.Kill(entireProcessTree: true);
+	}
+
+	private static string GetCanonicalProcessName(string processName)
+	{
+		Process[] matches = Process.GetProcessesByName(Path.GetFileNameWithoutExtension(processName));
+		try
+		{
+			foreach (Process process in matches)
+			{
+				try
+				{
+					if (!process.HasExited)
+						return $"{process.ProcessName}.exe";
+				}
+				catch (InvalidOperationException)
+				{
+				}
+			}
+		}
+		finally
+		{
+			foreach (Process process in matches)
+				process.Dispose();
+		}
+
+		return processName;
 	}
 }

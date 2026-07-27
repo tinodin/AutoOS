@@ -33,21 +33,6 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 	private const uint DxgiStatusNoDesktopAccess = 0x087A0005;
 	private const uint DxgiStatusModeChangeInProgress = 0x087A0008;
 	private const uint RedirectedCompositionModel = 7;
-	private static readonly HashSet<string> GraphicsRuntimeModules = new(StringComparer.OrdinalIgnoreCase)
-	{
-		"d3d9.dll",
-		"d3d10.dll",
-		"d3d11.dll",
-		"d3d12.dll",
-		"dxgi.dll",
-		"vulkan-1.dll",
-		"opengl32.dll"
-	};
-	private static readonly HashSet<string> CompositionFrameworkModules = new(StringComparer.OrdinalIgnoreCase)
-	{
-		"Microsoft.UI.Xaml.dll",
-		"Windows.UI.Xaml.dll"
-	};
 	private static readonly HashSet<string> ExcludedProcessNames = new(StringComparer.OrdinalIgnoreCase)
 	{
 		"ApplicationFrameHost.exe",
@@ -263,51 +248,6 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 			return;
 
 		RememberRunningProcess(processId);
-		ClassifyProcess(processId);
-	}
-
-	private void ClassifyProcess(int processId)
-	{
-		string name;
-		try
-		{
-			using Process process = Process.GetProcessById(processId);
-			if (process.HasExited ||
-				!TryGetProcessName(process, out name) ||
-				ExcludedProcessNames.Contains(name))
-			{
-				return;
-			}
-		}
-		catch (ArgumentException)
-		{
-			return;
-		}
-		catch (InvalidOperationException)
-		{
-			return;
-		}
-		catch (Win32Exception)
-		{
-			return;
-		}
-
-		List<Process> matchingProcesses = [.. Process.GetProcessesByName(
-			Path.GetFileNameWithoutExtension(name))];
-		bool isCandidate = IsSnapshotCandidate(matchingProcesses);
-		foreach (Process process in matchingProcesses)
-			process.Dispose();
-
-		bool processListChanged;
-		lock (_sync)
-		{
-			_runningProcesses[processId] = new ProcessIdentity(name);
-			processListChanged = isCandidate
-				? _snapshotCandidates.Add(name)
-				: _snapshotCandidates.Remove(name);
-		}
-		if (processListChanged)
-			ProcessesChanged?.Invoke(this, EventArgs.Empty);
 	}
 
 	private void ProcessDxgiEvent(TraceEvent presentEvent)
@@ -446,6 +386,8 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 		}
 		lock (_sync)
 		{
+			if (!_started)
+				return;
 			_snapshotCandidates.Clear();
 			_snapshotCandidates.UnionWith(candidates);
 		}
@@ -453,32 +395,7 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 
 	private static bool IsSnapshotCandidate(List<Process> processes)
 	{
-		if (!processes.Any(HasVisibleMainWindow))
-			return false;
-
-		bool hasGraphicsRuntime = false;
-		foreach (Process process in processes)
-		{
-			try
-			{
-				foreach (ProcessModule module in process.Modules)
-				{
-					if (CompositionFrameworkModules.Contains(module.ModuleName))
-						return false;
-					hasGraphicsRuntime |= GraphicsRuntimeModules.Contains(module.ModuleName);
-				}
-			}
-			catch (InvalidOperationException)
-			{
-			}
-			catch (Win32Exception)
-			{
-			}
-			catch (NotSupportedException)
-			{
-			}
-		}
-		return hasGraphicsRuntime;
+		return processes.Any(HasVisibleMainWindow);
 	}
 
 	private static bool TryGetProcessName(Process process, out string name)

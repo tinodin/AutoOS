@@ -9,6 +9,7 @@ using Syncfusion.UI.Xaml.TreeGrid;
 using System.Text.Json;
 using Windows.System;
 using Syncfusion.UI.Xaml.DataGrid;
+using Microsoft.UI.Xaml.Input;
 
 namespace AutoOS.Views.Settings;
 
@@ -22,6 +23,7 @@ public sealed partial class BenchmarksPage : Page
 	private List<RecordingItem> _selectedRecordings = [];
 	private ChartPresentation _lastChartPresentation;
 	private CancellationTokenSource _statsCts = new();
+	private CancellationTokenSource _processRefreshCts;
 	private GlobalKeyboardHook _globalKeyboardHook;
 	private VirtualKeyModifiers _currentModifiers = VirtualKeyModifiers.Shift;
 	private VirtualKey _currentKey = VirtualKey.F11;
@@ -31,13 +33,19 @@ public sealed partial class BenchmarksPage : Page
 	public BenchmarksPage()
 	{
 		InitializeComponent();
+		ProcessAutoSuggestBox.AddHandler(
+			PointerPressedEvent,
+			new PointerEventHandler(ProcessAutoSuggestBox_PointerPressed),
+			handledEventsToo: true);
+		ProcessAutoSuggestBox.RegisterPropertyChangedCallback(
+			AutoSuggestBox.IsSuggestionListOpenProperty,
+			ProcessAutoSuggestBox_IsSuggestionListOpenChanged);
 		LoadRecordings();
 	}
 
 	protected override void OnNavigatedTo(NavigationEventArgs e)
 	{
 		base.OnNavigatedTo(e);
-		PresentingProcesses.Start();
 		_globalKeyboardHook = new GlobalKeyboardHook();
 		_globalKeyboardHook.KeyDown += OnGlobalKeyDown;
 		_globalKeyboardHook.Start();
@@ -48,6 +56,7 @@ public sealed partial class BenchmarksPage : Page
 	protected override void OnNavigatedFrom(NavigationEventArgs e)
 	{
 		base.OnNavigatedFrom(e);
+		StopProcessDiscovery();
 		if (_globalKeyboardHook != null)
 		{
 			_globalKeyboardHook.KeyDown -= OnGlobalKeyDown;
@@ -503,16 +512,55 @@ public sealed partial class BenchmarksPage : Page
 		}
 	}
 
-	private void ProcessAutoSuggestBox_GotFocus(object sender, RoutedEventArgs e)
+	private async void ProcessAutoSuggestBox_PointerPressed(object sender, PointerRoutedEventArgs e)
 	{
+		if (ProcessAutoSuggestBox.IsSuggestionListOpen)
+			return;
+
+		StopProcessDiscovery();
 		ProcessAutoSuggestBox.IsSuggestionListOpen = ViewModel.ProcessSuggestions.Count > 0;
+		_processRefreshCts = new CancellationTokenSource();
+		CancellationToken cancellationToken = _processRefreshCts.Token;
+
+		try
+		{
+			List<string> processes = await Task.Run(() =>
+			{
+				PresentingProcesses.Start();
+				return PresentingProcesses.GetRecordableProcesses(refreshRunningProcesses: true);
+			}, cancellationToken);
+			if (!cancellationToken.IsCancellationRequested && ViewModel.ActiveTab == "Recordings")
+			{
+				ViewModel.SetRecordableProcesses(processes);
+				ProcessAutoSuggestBox.IsSuggestionListOpen = ViewModel.ProcessSuggestions.Count > 0;
+				if (!ProcessAutoSuggestBox.IsSuggestionListOpen)
+					StopProcessDiscovery();
+			}
+		}
+		catch (OperationCanceledException)
+		{
+		}
+	}
+
+	private void ProcessAutoSuggestBox_IsSuggestionListOpenChanged(DependencyObject sender, DependencyProperty dp)
+	{
+		if (!ProcessAutoSuggestBox.IsSuggestionListOpen)
+			StopProcessDiscovery();
+	}
+
+	private void StopProcessDiscovery()
+	{
+		_processRefreshCts?.Cancel();
+		_processRefreshCts?.Dispose();
+		_processRefreshCts = null;
+		PresentingProcesses.Dispose();
 	}
 
 	private void PresentingProcesses_ProcessesChanged(object sender, EventArgs e)
 	{
 		DispatcherQueue.TryEnqueue(() =>
 		{
-			if (ViewModel.ActiveTab == "Recordings")
+			if (ViewModel.ActiveTab == "Recordings" && ProcessAutoSuggestBox.IsSuggestionListOpen)
 				ViewModel.SetRecordableProcesses(PresentingProcesses.GetRecordableProcesses());
 		});
 	}
@@ -532,25 +580,27 @@ public sealed partial class BenchmarksPage : Page
 		ViewModel.ProcessName = sender.Text;
 	}
 
-	private async void BenchmarksSelectorBar_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
+	private void BenchmarksSelectorBar_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
 	{
 		var selectedItem = args.SelectedItem ?? sender.SelectedItem;
 
 		if (ReferenceEquals(selectedItem, RecordingsTab))
 		{
 			ViewModel.ActiveTab = "Recordings";
-			PresentingProcesses.Start();
-			ViewModel.SetRecordableProcesses(PresentingProcesses.GetRecordableProcesses(refreshRunningProcesses: true));
 		}
 		else if (ReferenceEquals(selectedItem, AnalysisTab))
 		{
+			StopProcessDiscovery();
 			ViewModel.ActiveTab = "Analysis";
 			ViewModel.AnalysisChartType = "Bar";
 			if (_selectedRecordings.Count is > 0 and <= 2)
 				ReplayAnimation();
 		}
 		else if (ReferenceEquals(selectedItem, StatisticsTab))
+		{
+			StopProcessDiscovery();
 			ViewModel.ActiveTab = "Statistics";
+		}
 	}
 
 	private void RebuildCharts(List<RecordingItem> items)
@@ -907,7 +957,7 @@ public sealed partial class BenchmarksPage : Page
 		add("Maximum", fmtMs(m0.Max), m1 == null ? "" : fmtMs(m1.Max));
 		add("Minimum", fmtMs(m0.Min), m1 == null ? "" : fmtMs(m1.Min));
 
-		string fmtPct(double v) => v == 0 ? "\u2014" : v.ToString("0.0") + "%";
+		string fmtPct(double v) => v == 0 ? "\u2014" : v.ToString("0.0", CultureInfo.InvariantCulture) + "%";
 		string aRmssdPct = m0.AvgArithmetic != 0 ? fmtPct(m0.Rmssd / m0.AvgArithmetic * 100) : "\u2014";
 		string bRmssdPct = m1 == null ? "" : (m1.AvgArithmetic != 0 ? fmtPct(m1.Rmssd / m1.AvgArithmetic * 100) : "\u2014");
 		add("Root mean square of successive differences (RMSSD)", aRmssdPct, bRmssdPct);
