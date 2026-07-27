@@ -20,6 +20,9 @@ public sealed partial class BenchmarksPage : Page
 	private static readonly string RecordingsDirectory = Path.Combine(PathHelper.GetAppDataFolderPath(), "Benchmarks");
 	private sealed record AnalysisModel(List<(string recordingName, List<SeriesPoint> points)> MetricSeries, List<(string recordingName, Metrics displayedStats, Metrics renderedStats)> FpsStatsSeries);
 	private sealed record ChartPresentation(List<BarPoint> DisplayedFpsBars1, List<BarPoint> RenderedFpsBars1, List<BarPoint> DisplayedFpsBars2, List<BarPoint> RenderedFpsBars2, bool ShowRenderedFps1, string DisplayedFpsLabel1, string RenderedFpsLabel1, string DisplayedFpsLabel2, string RenderedFpsLabel2, List<SeriesPoint> MetricPts1, List<SeriesPoint> MetricPts2, string MetricLabel1, string MetricLabel2, string FpsYAxisLabel, string FpsLabelFormat, string MetricYAxisLabel);
+	private sealed record CachedRecordingMetadata(long Length, DateTime LastWriteTimeUtc, string Process, string PresentationMode, double DurationSeconds, List<string> SourceFileNames);
+	private static readonly Lock RecordingMetadataCacheLock = new();
+	private static readonly Dictionary<string, CachedRecordingMetadata> RecordingMetadataCache = new(StringComparer.OrdinalIgnoreCase);
 	private readonly PresentMonRecorder _recorder = new();
 	private List<RecordingItem> _selectedRecordings = [];
 	private ChartPresentation _lastChartPresentation;
@@ -72,41 +75,51 @@ public sealed partial class BenchmarksPage : Page
 
 	private void LoadRecordings()
 	{
+		List<RecordingItem> recordings = DiscoverRecordings();
+		ViewModel.SetRecordings(recordings);
+		_selectedRecordings = GetSelectedRecordings();
+		ViewModel.SetSelectedRecordings(_selectedRecordings);
+	}
+
+	private static List<RecordingItem> DiscoverRecordings()
+	{
 		List<RecordingItem> recordings = [];
 		Dictionary<RecordingItem, List<string>> aggregateSources = [];
 
 		if (!Directory.Exists(RecordingsDirectory))
 		{
 			Directory.CreateDirectory(RecordingsDirectory);
-			ViewModel.SetRecordings(recordings);
-			ViewModel.SetSelectedRecordings([]);
-			_selectedRecordings = [];
-			return;
+			return recordings;
 		}
 
-		List<string> csvFiles = [.. Directory.GetFiles(RecordingsDirectory, "*.csv").OrderByDescending(File.GetLastWriteTime)];
+		List<FileInfo> csvFiles = [.. new DirectoryInfo(RecordingsDirectory)
+			.EnumerateFiles("*.csv")
+			.OrderByDescending(file => file.LastWriteTime)];
 
-		if (csvFiles.Count == 0)
+		if (csvFiles.Count > 0)
 		{
-			ViewModel.SetRecordings(recordings);
-		}
-		else
-		{
-			foreach (var file in csvFiles)
-			{
-				var info = new FileInfo(file);
-				var (process, presentationMode, durationSeconds, sourceFileNames) = LoadRecordingMetadata(file, info);
-				var recording = new RecordingItem
+			var loadedRecordings = csvFiles
+				.AsParallel()
+				.AsOrdered()
+				.Select(info =>
 				{
-					FilePath = file,
-					FileName = info.Name,
-					Title = Path.GetFileNameWithoutExtension(info.Name),
-					Process = process,
-					PresentationMode = presentationMode,
-					DurationSeconds = durationSeconds,
-					Date = info.LastWriteTime,
-					Time = info.LastWriteTime.TimeOfDay
-				};
+					var (process, presentationMode, durationSeconds, sourceFileNames) = LoadRecordingMetadataCached(info);
+					return (Recording: new RecordingItem
+					{
+						FilePath = info.FullName,
+						FileName = info.Name,
+						Title = Path.GetFileNameWithoutExtension(info.Name),
+						Process = process,
+						PresentationMode = presentationMode,
+						DurationSeconds = durationSeconds,
+						Date = info.LastWriteTime,
+						Time = info.LastWriteTime.TimeOfDay
+					}, SourceFileNames: sourceFileNames);
+				})
+				.ToList();
+
+			foreach (var (recording, sourceFileNames) in loadedRecordings)
+			{
 				recordings.Add(recording);
 				if (sourceFileNames.Count > 0)
 					aggregateSources[recording] = sourceFileNames;
@@ -125,11 +138,10 @@ public sealed partial class BenchmarksPage : Page
 					}
 				}
 			}
-			ViewModel.SetRecordings(recordings.Where(recording => !childRecordings.Contains(recording)));
+			return [.. recordings.Where(recording => !childRecordings.Contains(recording))];
 		}
 
-		_selectedRecordings = GetSelectedRecordings();
-		ViewModel.SetSelectedRecordings(_selectedRecordings);
+		return recordings;
 	}
 
 	private void RecordingsTreeGrid_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -985,9 +997,7 @@ public sealed partial class BenchmarksPage : Page
 		add("Minimum", fmtMs(m0.Min), m1 == null ? "" : fmtMs(m1.Min));
 
 		string fmtPct(double v) => v == 0 ? "\u2014" : v.ToString("0.0", CultureInfo.InvariantCulture) + "%";
-		string aRmssdPct = m0.AvgArithmetic != 0 ? fmtPct(m0.Rmssd / m0.AvgArithmetic * 100) : "\u2014";
-		string bRmssdPct = m1 == null ? "" : (m1.AvgArithmetic != 0 ? fmtPct(m1.Rmssd / m1.AvgArithmetic * 100) : "\u2014");
-		add("Root mean square of successive differences (RMSSD)", aRmssdPct, bRmssdPct);
+		add("Root mean square of successive differences (RMSSD)", fmtMs(m0.Rmssd), m1 == null ? "" : fmtMs(m1.Rmssd));
 		add("Stepwise-Relative", fmtPct(m0.StepwiseRelSD * 100), m1 == null ? "" : fmtPct(m1.StepwiseRelSD * 100));
 		add("Standard Deviation (STDEV)", fmtSd(m0.StdDev), m1 == null ? "" : fmtSd(m1.StdDev));
 		add("Coefficient of Variation (CV)", fmtRel(m0.Cv), m1 == null ? "" : fmtRel(m1.Cv));
@@ -1094,6 +1104,32 @@ public sealed partial class BenchmarksPage : Page
 			});
 		}
 		return groups;
+	}
+
+	private static (string Process, string PresentationMode, double DurationSeconds, List<string> SourceFileNames) LoadRecordingMetadataCached(FileInfo info)
+	{
+		lock (RecordingMetadataCacheLock)
+		{
+			if (RecordingMetadataCache.TryGetValue(info.FullName, out CachedRecordingMetadata cached) &&
+				cached.Length == info.Length && cached.LastWriteTimeUtc == info.LastWriteTimeUtc)
+			{
+				return (cached.Process, cached.PresentationMode, cached.DurationSeconds, cached.SourceFileNames);
+			}
+		}
+
+		var metadata = LoadRecordingMetadata(info.FullName, info);
+		var cacheEntry = new CachedRecordingMetadata(
+			info.Length,
+			info.LastWriteTimeUtc,
+			metadata.Process,
+			metadata.PresentationMode,
+			metadata.DurationSeconds,
+			metadata.SourceFileNames);
+		lock (RecordingMetadataCacheLock)
+		{
+			RecordingMetadataCache[info.FullName] = cacheEntry;
+		}
+		return metadata;
 	}
 
 	private static (string Process, string PresentationMode, double DurationSeconds, List<string> SourceFileNames) LoadRecordingMetadata(string filePath, FileInfo info)
