@@ -88,11 +88,11 @@ public class ApplicationSelection
 	public bool XboxAccessories { get; set; }
 	public bool VisualStudio { get; set; }
 	public bool VisualStudioCode { get; set; }
-	public bool Kiro { get; set; }
-	public bool SublimeText { get; set; }
 	public bool Antigravity { get; set; }
 	public bool Cursor { get; set; }
 	public bool Devin { get; set; }
+	public bool Kiro { get; set; }
+	public bool SublimeText { get; set; }
 	public bool IDEA { get; set; }
 	public bool WinMerge { get; set; }
 	public bool Git { get; set; }
@@ -127,13 +127,13 @@ public class ApplicationSelection
 	public bool Blender { get; set; }
 	public bool CapCut { get; set; }
 	public bool LosslessCut { get; set; }
+	public bool Netflix { get; set; }
+	public bool DisneyPlus { get; set; }
+	public bool PrimeVideo { get; set; }
 	public bool MpcQt { get; set; }
 	public bool MPV { get; set; }
 	public bool VLC { get; set; }
 	public bool MediaInfo { get; set; }
-	public bool Netflix { get; set; }
-	public bool DisneyPlus { get; set; }
-	public bool PrimeVideo { get; set; }
 	public bool Word { get; set; }
 	public bool Excel { get; set; }
 	public bool PowerPoint { get; set; }
@@ -247,11 +247,11 @@ public static class ApplicationStage
 
 		bool VisualStudio = selection?.VisualStudio ?? PreparingStage.VisualStudio;
 		bool VisualStudioCode = selection?.VisualStudioCode ?? PreparingStage.VisualStudioCode;
-		bool Kiro = selection?.Kiro ?? PreparingStage.Kiro;
-		bool SublimeText = selection?.SublimeText ?? PreparingStage.SublimeText;
 		bool Antigravity = selection?.Antigravity ?? PreparingStage.Antigravity;
 		bool Cursor = selection?.Cursor ?? PreparingStage.Cursor;
 		bool Devin = selection?.Devin ?? PreparingStage.Devin;
+		bool Kiro = selection?.Kiro ?? PreparingStage.Kiro;
+		bool SublimeText = selection?.SublimeText ?? PreparingStage.SublimeText;
 		bool IDEA = selection?.IDEA ?? PreparingStage.IDEA;
 		bool WinMerge = selection?.WinMerge ?? PreparingStage.WinMerge;
 		bool Git = selection?.Git ?? PreparingStage.Git;
@@ -291,13 +291,13 @@ public static class ApplicationStage
 		bool CapCut = selection?.CapCut ?? PreparingStage.CapCut;
 		bool LosslessCut = selection?.LosslessCut ?? PreparingStage.LosslessCut;
 
+		bool Netflix = selection?.Netflix ?? PreparingStage.Netflix;
+		bool DisneyPlus = selection?.DisneyPlus ?? PreparingStage.DisneyPlus;
+		bool PrimeVideo = selection?.PrimeVideo ?? PreparingStage.PrimeVideo;
 		bool MpcQt = selection?.MpcQt ?? PreparingStage.MpcQt;
 		bool MPV = selection?.MPV ?? PreparingStage.MPV;
 		bool VLC = selection?.VLC ?? PreparingStage.VLC;
 		bool MediaInfo = selection?.MediaInfo ?? PreparingStage.MediaInfo;
-		bool Netflix = selection?.Netflix ?? PreparingStage.Netflix;
-		bool DisneyPlus = selection?.DisneyPlus ?? PreparingStage.DisneyPlus;
-		bool PrimeVideo = selection?.PrimeVideo ?? PreparingStage.PrimeVideo;
 
 		bool Word = selection?.Word ?? PreparingStage.Word;
 		bool Excel = selection?.Excel ?? PreparingStage.Excel;
@@ -1428,20 +1428,6 @@ public static class ApplicationStage
 			// pin visual studio code to the taskbar
 			("Pinning Visual Studio Code to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Visual Studio Code", "Visual Studio Code.lnk")), () => VisualStudioCode == true),
 
-			// download kiro
-			("Downloading Kiro", async () => await DownloadHelper.Download("https://prod.download.desktop.kiro.dev/releases/stable/win32-x64/signed/1.0.182/kiro-ide-1.0.182-stable-win32-x64.exe", Path.GetTempPath(), "kiro-ide-win32-x64.exe", reporter: reporter), () => Kiro == true),
-
-			// install kiro
-			("Installing Kiro", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "kiro-ide-win32-x64.exe"), Arguments = "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Kiro == true),
-			("Cleaning up Kiro files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "kiro-ide-win32-x64.exe")), () => Kiro == true),
-
-			// download sublime text
-			("Downloading Sublime Text", async () => await DownloadHelper.Download("https://download.sublimetext.com/sublime_text_build_4200_x64_setup.exe", Path.GetTempPath(), "sublime_text_x64_setup.exe", reporter: reporter), () => SublimeText == true),
-
-			// install sublime text
-			("Installing Sublime Text", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "sublime_text_x64_setup.exe"), Arguments = "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => SublimeText == true),
-			("Cleaning up Sublime Text files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "sublime_text_x64_setup.exe")), () => SublimeText == true),
-
 			// download antigravity ide
 			("Downloading Antigravity IDE", async () => await DownloadHelper.Download("https://edgedl.me.gvt1.com/edgedl/release2/j0qc3/antigravity/stable/2.1.1-6123990880747520/windows-x64/Antigravity%20IDE.exe", Path.GetTempPath(), "Antigravity.exe", reporter: reporter), () => Antigravity == true),
 
@@ -1471,6 +1457,20 @@ public static class ApplicationStage
 
 			// pin devin to the taskbar
 			("Pinning Devin to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Devin", "Devin.lnk")), () => Devin == true),
+
+			// download kiro
+			("Downloading Kiro", async () => await DownloadHelper.Download("https://prod.download.desktop.kiro.dev/releases/stable/win32-x64/signed/1.0.182/kiro-ide-1.0.182-stable-win32-x64.exe", Path.GetTempPath(), "kiro-ide-win32-x64.exe", reporter: reporter), () => Kiro == true),
+
+			// install kiro
+			("Installing Kiro", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "kiro-ide-win32-x64.exe"), Arguments = "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Kiro == true),
+			("Cleaning up Kiro files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "kiro-ide-win32-x64.exe")), () => Kiro == true),
+
+			// download sublime text
+			("Downloading Sublime Text", async () => await DownloadHelper.Download("https://download.sublimetext.com/sublime_text_build_4200_x64_setup.exe", Path.GetTempPath(), "sublime_text_x64_setup.exe", reporter: reporter), () => SublimeText == true),
+
+			// install sublime text
+			("Installing Sublime Text", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "sublime_text_x64_setup.exe"), Arguments = "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => SublimeText == true),
+			("Cleaning up Sublime Text files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "sublime_text_x64_setup.exe")), () => SublimeText == true),
 
 			// download intellij idea
 			("Downloading IntelliJ IDEA", async () => await DownloadHelper.Download("https://download.jetbrains.com/idea/idea-2026.1.3.exe", Path.GetTempPath(), "idea.exe", reporter: reporter), () => IDEA == true),
@@ -1917,6 +1917,24 @@ public static class ApplicationStage
 			("Installing LosslessCut", async () => await Task.Delay(500), () => LosslessCut == true),
 			("Cleaning up LosslessCut files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "LosslessCut-win-x64.7z")), () => LosslessCut == true),
 
+			// download netflix
+			("Downloading Netflix", async () => await StoreHelper.Download("4DF9E0F8.Netflix_mcm4njqhnhss8", reporter: reporter), () => Netflix == true),
+
+			// install netflix
+			("Installing Netflix", async () => await StoreHelper.Install("4DF9E0F8.Netflix_mcm4njqhnhss8"), () => Netflix == true),
+
+			// download disney+
+			("Downloading Disney+", async () => await StoreHelper.Download("Disney.37853FC22B2CE_6rarf9sa4v8jt", reporter: reporter), () => DisneyPlus == true),
+
+			// install disney+
+			("Installing Disney+", async () => await StoreHelper.Install("Disney.37853FC22B2CE_6rarf9sa4v8jt"), () => DisneyPlus == true),
+
+			// download prime video
+			("Downloading Prime Video", async () => await StoreHelper.Download("AmazonVideo.PrimeVideo_pwbj9vvecjh7j", reporter: reporter), () => PrimeVideo == true),
+
+			// install prime video
+			("Installing Prime Video", async () => await StoreHelper.Install("AmazonVideo.PrimeVideo_pwbj9vvecjh7j"), () => PrimeVideo == true),
+
 			// download mpc-qt
 			("Downloading MPC-QT", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/mpc-qt/mpc-qt/releases")).RootElement.EnumerateArray().First(release => !release.GetProperty("prerelease").GetBoolean() && release.GetProperty("assets").EnumerateArray().Any(asset => asset.GetProperty("name").GetString().StartsWith("mpc-qt-win-x64-") && asset.GetProperty("name").GetString().EndsWith("-installer.exe"))).GetProperty("assets").EnumerateArray().First(asset => asset.GetProperty("name").GetString().StartsWith("mpc-qt-win-x64-") && asset.GetProperty("name").GetString().EndsWith("-installer.exe")).GetProperty("browser_download_url").GetString(), Path.GetTempPath(), "mpc-qt-win-x64-installer.exe", reporter: reporter), () => MpcQt == true),
 
@@ -1948,24 +1966,6 @@ public static class ApplicationStage
 
 			// install mediainfo
 			("Installing MediaInfo", async () => await StoreHelper.Install("MediaArea.net.MediaInfo_9bzbd7xajy7ar"), () => MediaInfo == true),
-
-			// download netflix
-			("Downloading Netflix", async () => await StoreHelper.Download("4DF9E0F8.Netflix_mcm4njqhnhss8", reporter: reporter), () => Netflix == true),
-
-			// install netflix
-			("Installing Netflix", async () => await StoreHelper.Install("4DF9E0F8.Netflix_mcm4njqhnhss8"), () => Netflix == true),
-
-			// download disney+
-			("Downloading Disney+", async () => await StoreHelper.Download("Disney.37853FC22B2CE_6rarf9sa4v8jt", reporter: reporter), () => DisneyPlus == true),
-
-			// install disney+
-			("Installing Disney+", async () => await StoreHelper.Install("Disney.37853FC22B2CE_6rarf9sa4v8jt"), () => DisneyPlus == true),
-
-			// download prime video
-			("Downloading Prime Video", async () => await StoreHelper.Download("AmazonVideo.PrimeVideo_pwbj9vvecjh7j", reporter: reporter), () => PrimeVideo == true),
-
-			// install prime video
-			("Installing Prime Video", async () => await StoreHelper.Install("AmazonVideo.PrimeVideo_pwbj9vvecjh7j"), () => PrimeVideo == true),
 
 			// download office
 			("Downloading Office", async () => await DownloadHelper.Download("https://officecdn.microsoft.com/pr/wsus/setup.exe", Path.GetTempPath(), "setup.exe", reporter: reporter), () => Word == true || Excel == true || PowerPoint == true || OneNote == true || Teams == true || Outlook == true || OneDrive == true),

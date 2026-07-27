@@ -119,11 +119,11 @@ public static partial class PreparingStage
 
 	public static bool VisualStudio;
 	public static bool VisualStudioCode;
-	public static bool Kiro;
-	public static bool SublimeText;
 	public static bool Antigravity;
 	public static bool Cursor;
 	public static bool Devin;
+	public static bool Kiro;
+	public static bool SublimeText;
 	public static bool IDEA;
 	public static bool WinMerge;
 	public static bool Git;
@@ -163,13 +163,13 @@ public static partial class PreparingStage
 	public static bool CapCut;
 	public static bool LosslessCut;
 
+	public static bool Netflix;
+	public static bool DisneyPlus;
+	public static bool PrimeVideo;
 	public static bool MpcQt;
 	public static bool MPV;
 	public static bool VLC;
 	public static bool MediaInfo;
-	public static bool Netflix;
-	public static bool DisneyPlus;
-	public static bool PrimeVideo;
 
 	public static bool Word;
 	public static bool Excel;
@@ -529,11 +529,11 @@ public static partial class PreparingStage
 
 			VisualStudio = (localSettings.Values["Development"]?.ToString().Contains("Visual Studio") ?? false);
 			VisualStudioCode = (localSettings.Values["Development"]?.ToString().Contains("Visual Studio Code") ?? false);
-			Kiro = (localSettings.Values["Development"]?.ToString().Contains("Kiro") ?? false);
-			SublimeText = (localSettings.Values["Development"]?.ToString().Contains("Sublime Text") ?? false);
 			Antigravity = (localSettings.Values["Development"]?.ToString().Contains("Antigravity IDE") ?? false);
 			Cursor = (localSettings.Values["Development"]?.ToString().Contains("Cursor") ?? false);
 			Devin = (localSettings.Values["Development"]?.ToString().Contains("Devin") ?? false);
+			Kiro = (localSettings.Values["Development"]?.ToString().Contains("Kiro") ?? false);
+			SublimeText = (localSettings.Values["Development"]?.ToString().Contains("Sublime Text") ?? false);
 			IDEA = (localSettings.Values["Development"]?.ToString().Contains("IntelliJ IDEA") ?? false);
 			WinMerge = (localSettings.Values["Development"]?.ToString().Contains("WinMerge") ?? false);
 			Git = (localSettings.Values["Development"]?.ToString().Contains("Git") ?? false);
@@ -573,13 +573,13 @@ public static partial class PreparingStage
 			CapCut = (localSettings.Values["Video Production"]?.ToString().Contains("CapCut") ?? false);
 			LosslessCut = (localSettings.Values["Video Production"]?.ToString().Contains("LosslessCut") ?? false);
 
+			Netflix = (localSettings.Values["Multimedia"]?.ToString().Contains("Netflix") ?? false);
+			DisneyPlus = (localSettings.Values["Multimedia"]?.ToString().Contains("Disney+") ?? false);
+			PrimeVideo = (localSettings.Values["Multimedia"]?.ToString().Contains("Prime Video") ?? false);
 			MpcQt = (localSettings.Values["Multimedia"]?.ToString().Contains("MPC-QT") ?? false);
 			MPV = (localSettings.Values["Multimedia"]?.ToString().Contains("mpv") ?? false);
 			VLC = (localSettings.Values["Multimedia"]?.ToString().Contains("VLC") ?? false);
 			MediaInfo = (localSettings.Values["Multimedia"]?.ToString().Contains("MediaInfo") ?? false);
-			Netflix = (localSettings.Values["Multimedia"]?.ToString().Contains("Netflix") ?? false);
-			DisneyPlus = (localSettings.Values["Multimedia"]?.ToString().Contains("Disney+") ?? false);
-			PrimeVideo = (localSettings.Values["Multimedia"]?.ToString().Contains("Prime Video") ?? false);
 
 			Word = (localSettings.Values["Office"]?.ToString().Contains("Word") ?? false);
 			Excel = (localSettings.Values["Office"]?.ToString().Contains("Excel") ?? false);

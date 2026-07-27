@@ -124,11 +124,11 @@ public sealed partial class ApplicationsPage : Page
 		{
 			new() { Text = "Visual Studio", ImageSource = "ms-appx:///Assets/Fluent/VisualStudio.png" },
 			new() { Text = "Visual Studio Code", ImageSource = "ms-appx:///Assets/Fluent/VisualStudioCode.png" },
-			new() { Text = "Kiro", ImageSource = "ms-appx:///Assets/Fluent/Kiro.png" },
-			new() { Text = "Sublime Text", ImageSource = "ms-appx:///Assets/Fluent/SublimeText.png" },
 			new() { Text = "Antigravity IDE", ImageSource = "ms-appx:///Assets/Fluent/Antigravity.png" },
 			new() { Text = "Cursor", ImageSource = "ms-appx:///Assets/Fluent/Cursor.png" },
 			new() { Text = "Devin", ImageSource = "ms-appx:///Assets/Fluent/Devin.png" },
+			new() { Text = "Kiro", ImageSource = "ms-appx:///Assets/Fluent/Kiro.png" },
+			new() { Text = "Sublime Text", ImageSource = "ms-appx:///Assets/Fluent/SublimeText.png" },
 			new() { Text = "IntelliJ IDEA", ImageSource = "ms-appx:///Assets/Fluent/IDEA.png" },
 			new() { Text = "WinMerge", ImageSource = "ms-appx:///Assets/Fluent/WinMerge.png" },
 			new() { Text = "Git", ImageSource = "ms-appx:///Assets/Fluent/Git.png" },
@@ -184,13 +184,13 @@ public sealed partial class ApplicationsPage : Page
 
 		Multimedia.ItemsSource = new List<GridViewItem>
 		{
+			new() { Text = "Netflix", ImageSource = "ms-appx:///Assets/Fluent/Netflix.png" },
+			new() { Text = "Disney+", ImageSource = "ms-appx:///Assets/Fluent/Disney+.png" },
+			new() { Text = "Prime Video", ImageSource = "ms-appx:///Assets/Fluent/PrimeVideo.png" },
 			new() { Text = "MPC-QT", ImageSource = "ms-appx:///Assets/Fluent/MpcQt.png" },
 			new() { Text = "mpv", ImageSource = "ms-appx:///Assets/Fluent/MPV.png" },
 			new() { Text = "VLC", ImageSource = "ms-appx:///Assets/Fluent/VLC.png" },
-			new() { Text = "MediaInfo", ImageSource = "ms-appx:///Assets/Fluent/MediaInfo.png" },
-			new() { Text = "Netflix", ImageSource = "ms-appx:///Assets/Fluent/Netflix.png" },
-			new() { Text = "Disney+", ImageSource = "ms-appx:///Assets/Fluent/Disney+.png" },
-			new() { Text = "Prime Video", ImageSource = "ms-appx:///Assets/Fluent/PrimeVideo.png" }
+			new() { Text = "MediaInfo", ImageSource = "ms-appx:///Assets/Fluent/MediaInfo.png" }
 		};
 
 		Office.ItemsSource = new List<GridViewItem>
