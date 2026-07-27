@@ -465,6 +465,41 @@
                         </StackPanel>
                     </dev:Case>
 
+                    <!--  Recording Countdown  -->
+                    <dev:Case Value="Countdown">
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="12">
+                            <FontIcon HorizontalAlignment="Center"
+                                      FontSize="48"
+                                      Foreground="{ThemeResource SystemAccentColor}"
+                                      Glyph="&#xE823;" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       Style="{StaticResource SubtitleTextBlockStyle}"
+                                       Text="Recording starts in" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       FontSize="72"
+                                       FontWeight="SemiBold"
+                                       Text="{x:Bind ViewModel.RecordingCountdown, Mode=OneWay}" />
+                        </StackPanel>
+                    </dev:Case>
+
+                    <!--  Recording In Progress  -->
+                    <dev:Case Value="Recording">
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="16">
+                            <FontIcon HorizontalAlignment="Center"
+                                      FontSize="64"
+                                      Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                      Glyph="&#xE7C8;" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       FontSize="40"
+                                       FontWeight="SemiBold"
+                                       Text="Recording" />
+                        </StackPanel>
+                    </dev:Case>
+
                 </dev:SwitchPresenter>
             </dev:Case>
 

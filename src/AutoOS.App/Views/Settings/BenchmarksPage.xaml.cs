@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using AutoOS.Core.Helpers.Benchmark;
 using AutoOS.Core.Helpers.Picker;
@@ -24,6 +25,7 @@ public sealed partial class BenchmarksPage : Page
 	private ChartPresentation _lastChartPresentation;
 	private CancellationTokenSource _statsCts = new();
 	private CancellationTokenSource _processRefreshCts;
+	private volatile bool _isInitialProcessRefresh;
 	private GlobalKeyboardHook _globalKeyboardHook;
 	private VirtualKeyModifiers _currentModifiers = VirtualKeyModifiers.Shift;
 	private VirtualKey _currentKey = VirtualKey.F11;
@@ -305,7 +307,25 @@ public sealed partial class BenchmarksPage : Page
 
 		try
 		{
-			recordingResult = await _recorder.RecordAsync(presentMonPath, RecordingsDirectory, processName, duration, delay);
+			if (delay > 0)
+				ViewModel.ShowRecordingCountdown(delay);
+			else
+				ViewModel.ShowRecording();
+
+			Task<PresentMonRecordingResult> recordingTask = _recorder.RecordAsync(presentMonPath, RecordingsDirectory, processName, duration, delay);
+			if (delay > 0)
+			{
+				var delayTimer = Stopwatch.StartNew();
+				while (!recordingTask.IsCompleted && delayTimer.Elapsed < TimeSpan.FromSeconds(delay))
+				{
+					int remainingSeconds = Math.Max(1, (int)Math.Ceiling(delay - delayTimer.Elapsed.TotalSeconds));
+					ViewModel.ShowRecordingCountdown(remainingSeconds);
+					await Task.WhenAny(recordingTask, Task.Delay(100));
+				}
+				if (!recordingTask.IsCompleted)
+					ViewModel.ShowRecording();
+			}
+			recordingResult = await recordingTask;
 		}
 		catch (Exception ex)
 		{
@@ -514,12 +534,12 @@ public sealed partial class BenchmarksPage : Page
 
 	private async void ProcessAutoSuggestBox_PointerPressed(object sender, PointerRoutedEventArgs e)
 	{
-		if (ProcessAutoSuggestBox.IsSuggestionListOpen)
+		if (ProcessAutoSuggestBox.IsSuggestionListOpen || _processRefreshCts != null)
 			return;
 
 		StopProcessDiscovery();
-		ProcessAutoSuggestBox.IsSuggestionListOpen = ViewModel.ProcessSuggestions.Count > 0;
 		_processRefreshCts = new CancellationTokenSource();
+		_isInitialProcessRefresh = true;
 		CancellationToken cancellationToken = _processRefreshCts.Token;
 
 		try
@@ -540,6 +560,10 @@ public sealed partial class BenchmarksPage : Page
 		catch (OperationCanceledException)
 		{
 		}
+		finally
+		{
+			_isInitialProcessRefresh = false;
+		}
 	}
 
 	private void ProcessAutoSuggestBox_IsSuggestionListOpenChanged(DependencyObject sender, DependencyProperty dp)
@@ -558,6 +582,9 @@ public sealed partial class BenchmarksPage : Page
 
 	private void PresentingProcesses_ProcessesChanged(object sender, EventArgs e)
 	{
+		if (_isInitialProcessRefresh)
+			return;
+
 		DispatcherQueue.TryEnqueue(() =>
 		{
 			if (ViewModel.ActiveTab == "Recordings" && ProcessAutoSuggestBox.IsSuggestionListOpen)
@@ -923,8 +950,8 @@ public sealed partial class BenchmarksPage : Page
 		rows.Add(new ResultRow
 		{
 			Statistic = $"{prefix} Standard Deviation (STDEV)",
-			RecordingA = fmt(m0.StdDev, "0.###"),
-			RecordingB = m1 == null ? "" : fmt(m1.StdDev, "0.###")
+			RecordingA = fmt(m0.StdDev, "0.###") + " FPS",
+			RecordingB = m1 == null ? "" : fmt(m1.StdDev, "0.###") + " FPS"
 		});
 		rows.Add(new ResultRow
 		{
@@ -961,7 +988,7 @@ public sealed partial class BenchmarksPage : Page
 		string aRmssdPct = m0.AvgArithmetic != 0 ? fmtPct(m0.Rmssd / m0.AvgArithmetic * 100) : "\u2014";
 		string bRmssdPct = m1 == null ? "" : (m1.AvgArithmetic != 0 ? fmtPct(m1.Rmssd / m1.AvgArithmetic * 100) : "\u2014");
 		add("Root mean square of successive differences (RMSSD)", aRmssdPct, bRmssdPct);
-		add("Stepwise-Relative", fmtRel(m0.StepwiseRelSD), m1 == null ? "" : fmtRel(m1.StepwiseRelSD));
+		add("Stepwise-Relative", fmtPct(m0.StepwiseRelSD * 100), m1 == null ? "" : fmtPct(m1.StepwiseRelSD * 100));
 		add("Standard Deviation (STDEV)", fmtSd(m0.StdDev), m1 == null ? "" : fmtSd(m1.StdDev));
 		add("Coefficient of Variation (CV)", fmtRel(m0.Cv), m1 == null ? "" : fmtRel(m1.Cv));
 

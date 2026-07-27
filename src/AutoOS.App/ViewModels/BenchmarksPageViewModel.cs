@@ -17,6 +17,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	private double _recordingDuration = 60;
 	private double _recordingDelay = 5;
 	private bool _isRecording;
+	private int _recordingCountdown;
 	private string _analysisChartType = "Bar";
 	private readonly HashSet<string> _recordableProcesses = new(StringComparer.OrdinalIgnoreCase);
 	private bool _selectedProcessIsRecordable;
@@ -137,6 +138,12 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 				OnPropertyChanged(nameof(RecordLabel));
 			}
 		}
+	}
+
+	public int RecordingCountdown
+	{
+		get => _recordingCountdown;
+		private set => SetProperty(ref _recordingCountdown, value);
 	}
 
 	public event Action MetricToggled;
@@ -323,6 +330,17 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	public bool HasSecondRecording => _selectedRecordingCount == 2;
 	public Visibility HasSecondRecordingVisibility => _selectedRecordingCount == 2 ? Visibility.Visible : Visibility.Collapsed;
 
+	public void ShowRecordingCountdown(int seconds)
+	{
+		RecordingCountdown = seconds;
+		RecordingState = "Countdown";
+	}
+
+	public void ShowRecording()
+	{
+		RecordingState = "Recording";
+	}
+
 	public void SetRecordableProcesses(IEnumerable<string> processNames)
 	{
 		_recordableProcesses.Clear();
@@ -336,10 +354,17 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 
 	private void FilterProcessSuggestions(string query)
 	{
-		ProcessSuggestions = [.. _recordableProcesses
+		List<string> suggestions = [.. _recordableProcesses
 			.Where(name => string.IsNullOrWhiteSpace(query) ||
 				name.Contains(query.Trim(), StringComparison.OrdinalIgnoreCase))
 			.OrderBy(name => name, StringComparer.OrdinalIgnoreCase)];
+
+		if (ProcessSuggestions.SequenceEqual(suggestions, StringComparer.OrdinalIgnoreCase))
+			return;
+
+		ProcessSuggestions.Clear();
+		foreach (string suggestion in suggestions)
+			ProcessSuggestions.Add(suggestion);
 	}
 
 	public ObservableCollection<BarPoint> BarColumnChartDisplayedData1
