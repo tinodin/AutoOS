@@ -349,6 +349,14 @@
                                                          Color="{x:Bind ViewModel.ChartColor2, Mode=TwoWay}">
                                 </dev:DropdownColorPicker>
                             </AppBarElementContainer>
+
+                            <AppBarSeparator Margin="4,0" />
+
+                            <!--  Download  -->
+                            <AppBarButton Click="DownloadAnalysis_Click"
+                                          Icon="{dev:FontIcon Glyph=&#xE896;}"
+                                          IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                          Label="Download" />
                         </controls:TabbedCommandBarItem.PrimaryCommands>
                     </controls:TabbedCommandBarItem>
 
@@ -380,6 +388,14 @@
                                                      Text="+/-" />
                                 </dev:SelectorBarSegmented>
                             </AppBarElementContainer>
+
+                            <AppBarSeparator Margin="4,0" />
+
+                            <!--  Download  -->
+                            <AppBarButton Click="DownloadStatistics_Click"
+                                          Icon="{dev:FontIcon Glyph=&#xE896;}"
+                                          IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                          Label="Download" />
                         </controls:TabbedCommandBarItem.PrimaryCommands>
                     </controls:TabbedCommandBarItem>
                 </controls:TabbedCommandBar.MenuItems>

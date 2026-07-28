@@ -1,8 +1,10 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Runtime.InteropServices.WindowsRuntime;
 using AutoOS.Core.Helpers.Benchmark;
 using AutoOS.Core.Helpers.Picker;
 using AutoOS.Core.Models;
+using AutoOS.Helpers.Picker;
 using AutoOS.Views.Settings.Benchmarks;
 using Syncfusion.UI.Xaml.Charts;
 using Syncfusion.UI.Xaml.Grids;
@@ -11,6 +13,10 @@ using System.Text.Json;
 using Windows.System;
 using Syncfusion.UI.Xaml.DataGrid;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media.Imaging;
+using Windows.Graphics.Imaging;
+using Windows.Storage;
+using Windows.UI.ViewManagement;
 
 namespace AutoOS.Views.Settings;
 
@@ -943,6 +949,81 @@ public sealed partial class BenchmarksPage : Page
 		if (_lastChartPresentation != null)
 		{
 			BindBarColumnChart(_lastChartPresentation);
+		}
+	}
+
+	private async void DownloadAnalysis_Click(object sender, RoutedEventArgs e)
+	{
+		UIElement chart = ViewModel.AnalysisChartType switch
+		{
+			"Bar" => FpsChart,
+			"Column" => ColumnFpsChart,
+			"Line" => LineFpsChart,
+			"Scatter" => ScatterFpsChart,
+			_ => null
+		};
+		if (chart != null)
+			await SaveElementAsPngAsync(chart, $"Benchmark-{ViewModel.AnalysisChartType}");
+	}
+
+	private async void DownloadStatistics_Click(object sender, RoutedEventArgs e)
+	{
+		await SaveElementAsPngAsync(StatisticsTreeGrid, "Benchmark-Statistics");
+	}
+
+	private async Task SaveElementAsPngAsync(UIElement element, string suggestedFileName)
+	{
+		var picker = new SavePicker(App.MainWindow)
+		{
+			DefaultFileExtension = "PNG image",
+			ShowAllFilesOption = false,
+			SuggestedFileName = suggestedFileName,
+			Title = "Save benchmark image"
+		};
+		picker.FileTypeChoices.Add("PNG image", ["*.png"]);
+
+		string filePath = picker.PickSaveFile();
+		if (string.IsNullOrWhiteSpace(filePath))
+			return;
+		if (!filePath.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+			filePath += ".png";
+
+		var bitmap = new RenderTargetBitmap();
+		await bitmap.RenderAsync(element);
+		if (bitmap.PixelWidth == 0 || bitmap.PixelHeight == 0)
+			return;
+
+		var pixels = await bitmap.GetPixelsAsync();
+		byte[] pixelData = pixels.ToArray();
+		FlattenTransparency(pixelData, new UISettings().GetColorValue(UIColorType.Background));
+		StorageFolder folder = await StorageFolder.GetFolderFromPathAsync(Path.GetDirectoryName(filePath));
+		StorageFile file = await folder.CreateFileAsync(Path.GetFileName(filePath), CreationCollisionOption.ReplaceExisting);
+		using var stream = await file.OpenAsync(FileAccessMode.ReadWrite);
+		BitmapEncoder encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
+		encoder.SetPixelData(
+			BitmapPixelFormat.Bgra8,
+			BitmapAlphaMode.Premultiplied,
+			(uint)bitmap.PixelWidth,
+			(uint)bitmap.PixelHeight,
+			96,
+			96,
+			pixelData);
+		await encoder.FlushAsync();
+	}
+
+	private static void FlattenTransparency(byte[] pixels, Windows.UI.Color background)
+	{
+		for (int i = 0; i < pixels.Length; i += 4)
+		{
+			int alpha = pixels[i + 3];
+			if (alpha < 255)
+			{
+				int inverseAlpha = 255 - alpha;
+				pixels[i] = (byte)(pixels[i] + background.B * inverseAlpha / 255);
+				pixels[i + 1] = (byte)(pixels[i + 1] + background.G * inverseAlpha / 255);
+				pixels[i + 2] = (byte)(pixels[i + 2] + background.R * inverseAlpha / 255);
+				pixels[i + 3] = 255;
+			}
 		}
 	}
 
