@@ -38,13 +38,6 @@ public sealed partial class BenchmarksPage : Page
 	public BenchmarksPage()
 	{
 		InitializeComponent();
-		ProcessAutoSuggestBox.AddHandler(
-			PointerPressedEvent,
-			new PointerEventHandler(ProcessAutoSuggestBox_PointerPressed),
-			handledEventsToo: true);
-		ProcessAutoSuggestBox.RegisterPropertyChangedCallback(
-			AutoSuggestBox.IsSuggestionListOpenProperty,
-			ProcessAutoSuggestBox_IsSuggestionListOpenChanged);
 		LoadRecordings();
 	}
 
@@ -56,6 +49,8 @@ public sealed partial class BenchmarksPage : Page
 		_globalKeyboardHook.Start();
 		PresentingProcesses.ProcessesChanged += PresentingProcesses_ProcessesChanged;
 		ViewModel.MetricToggled += OnMetricToggled;
+		ProcessAutoSuggestBox.AddHandler(PointerPressedEvent, new PointerEventHandler(ProcessAutoSuggestBox_PointerPressed), true);
+		ProcessAutoSuggestBox.RegisterPropertyChangedCallback(AutoSuggestBox.IsSuggestionListOpenProperty, ProcessAutoSuggestBox_IsSuggestionListOpenChanged);
 	}
 
 	protected override void OnNavigatedFrom(NavigationEventArgs e)
@@ -75,73 +70,68 @@ public sealed partial class BenchmarksPage : Page
 
 	private void LoadRecordings()
 	{
-		List<RecordingItem> recordings = DiscoverRecordings();
-		ViewModel.SetRecordings(recordings);
-		_selectedRecordings = GetSelectedRecordings();
-		ViewModel.SetSelectedRecordings(_selectedRecordings);
-	}
-
-	private static List<RecordingItem> DiscoverRecordings()
-	{
 		List<RecordingItem> recordings = [];
 		Dictionary<RecordingItem, List<string>> aggregateSources = [];
 
 		if (!Directory.Exists(RecordingsDirectory))
 		{
 			Directory.CreateDirectory(RecordingsDirectory);
-			return recordings;
 		}
-
-		List<FileInfo> csvFiles = [.. new DirectoryInfo(RecordingsDirectory)
-			.EnumerateFiles("*.csv")
-			.OrderByDescending(file => file.LastWriteTime)];
-
-		if (csvFiles.Count > 0)
+		else
 		{
-			var loadedRecordings = csvFiles
-				.AsParallel()
-				.AsOrdered()
-				.Select(info =>
-				{
-					var (process, presentationMode, durationSeconds, sourceFileNames) = LoadRecordingMetadataCached(info);
-					return (Recording: new RecordingItem
-					{
-						FilePath = info.FullName,
-						FileName = info.Name,
-						Title = Path.GetFileNameWithoutExtension(info.Name),
-						Process = process,
-						PresentationMode = presentationMode,
-						DurationSeconds = durationSeconds,
-						Date = info.LastWriteTime,
-						Time = info.LastWriteTime.TimeOfDay
-					}, SourceFileNames: sourceFileNames);
-				})
-				.ToList();
+			List<FileInfo> csvFiles = [.. new DirectoryInfo(RecordingsDirectory)
+				.EnumerateFiles("*.csv")
+				.OrderByDescending(file => file.LastWriteTime)];
 
-			foreach (var (recording, sourceFileNames) in loadedRecordings)
+			if (csvFiles.Count > 0)
 			{
-				recordings.Add(recording);
-				if (sourceFileNames.Count > 0)
-					aggregateSources[recording] = sourceFileNames;
-			}
-
-			Dictionary<string, RecordingItem> recordingsByFileName = recordings.ToDictionary(recording => recording.FileName, StringComparer.OrdinalIgnoreCase);
-			HashSet<RecordingItem> childRecordings = [];
-			foreach (var (aggregate, sourceFileNames) in aggregateSources)
-			{
-				foreach (string sourceFileName in sourceFileNames.Distinct(StringComparer.OrdinalIgnoreCase))
-				{
-					if (recordingsByFileName.TryGetValue(sourceFileName, out RecordingItem source) && !ReferenceEquals(source, aggregate))
+				var loadedRecordings = csvFiles
+					.AsParallel()
+					.AsOrdered()
+					.Select(info =>
 					{
-						aggregate.Children.Add(source);
-						childRecordings.Add(source);
+						var (process, presentationMode, durationSeconds, sourceFileNames) = LoadRecordingMetadataCached(info);
+						return (Recording: new RecordingItem
+						{
+							FilePath = info.FullName,
+							FileName = info.Name,
+							Title = Path.GetFileNameWithoutExtension(info.Name),
+							Process = process,
+							PresentationMode = presentationMode,
+							DurationSeconds = durationSeconds,
+							Date = info.LastWriteTime,
+							Time = info.LastWriteTime.TimeOfDay
+						}, SourceFileNames: sourceFileNames);
+					})
+					.ToList();
+
+				foreach (var (recording, sourceFileNames) in loadedRecordings)
+				{
+					recordings.Add(recording);
+					if (sourceFileNames.Count > 0)
+						aggregateSources[recording] = sourceFileNames;
+				}
+
+				Dictionary<string, RecordingItem> recordingsByFileName = recordings.ToDictionary(recording => recording.FileName, StringComparer.OrdinalIgnoreCase);
+				HashSet<RecordingItem> childRecordings = [];
+				foreach (var (aggregate, sourceFileNames) in aggregateSources)
+				{
+					foreach (string sourceFileName in sourceFileNames.Distinct(StringComparer.OrdinalIgnoreCase))
+					{
+						if (recordingsByFileName.TryGetValue(sourceFileName, out RecordingItem source) && !ReferenceEquals(source, aggregate))
+						{
+							aggregate.Children.Add(source);
+							childRecordings.Add(source);
+						}
 					}
 				}
+				recordings = [.. recordings.Where(recording => !childRecordings.Contains(recording))];
 			}
-			return [.. recordings.Where(recording => !childRecordings.Contains(recording))];
 		}
 
-		return recordings;
+		ViewModel.SetRecordings(recordings);
+		_selectedRecordings = GetSelectedRecordings();
+		ViewModel.SetSelectedRecordings(_selectedRecordings);
 	}
 
 	private void RecordingsTreeGrid_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -1138,7 +1128,8 @@ public sealed partial class BenchmarksPage : Page
 		string presentationMode = string.Empty;
 		double durationSeconds = Math.Max(0, (info.LastWriteTime - info.CreationTime).TotalSeconds);
 		List<string> sourceFileNames = [];
-		using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+		
+		using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, 4096, FileOptions.SequentialScan);
 		using var reader = new StreamReader(fs);
 		var headerLine = reader.ReadLine();
 		var firstLine = reader.ReadLine();
@@ -1146,20 +1137,24 @@ public sealed partial class BenchmarksPage : Page
 			return (process, presentationMode, durationSeconds, sourceFileNames);
 		var headers = BenchmarkCsv.ParseCsvLine(headerLine);
 		var firstValues = BenchmarkCsv.ParseCsvLine(firstLine);
+		
 		string lastLine = firstLine;
-		const int tailBytes = 64 * 1024;
-		using var tailStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-		long tailStart = Math.Max(0, tailStream.Length - tailBytes);
-		tailStream.Seek(tailStart, SeekOrigin.Begin);
-		using var tailReader = new StreamReader(tailStream);
-		if (tailStart > 0)
-			tailReader.ReadLine();
-		while (!tailReader.EndOfStream)
+		const int tailBytes = 1024;
+		if (fs.Length > firstLine.Length + headerLine.Length + 4)
 		{
-			var line = tailReader.ReadLine();
-			if (!string.IsNullOrWhiteSpace(line))
-				lastLine = line;
+			long tailStart = Math.Max(0, fs.Length - tailBytes);
+			fs.Seek(tailStart, SeekOrigin.Begin);
+			reader.DiscardBufferedData();
+			if (tailStart > 0)
+				reader.ReadLine();
+			while (!reader.EndOfStream)
+			{
+				var line = reader.ReadLine();
+				if (!string.IsNullOrWhiteSpace(line))
+					lastLine = line;
+			}
 		}
+		
 		var lastValues = BenchmarkCsv.ParseCsvLine(lastLine);
 		int applicationIndex = headers.FindIndex(h => string.Equals(h, "Application", StringComparison.OrdinalIgnoreCase));
 		if (applicationIndex >= 0 && applicationIndex < firstValues.Count && !string.IsNullOrWhiteSpace(firstValues[applicationIndex]))
