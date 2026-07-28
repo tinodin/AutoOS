@@ -550,7 +550,13 @@
                                                         IsTransposed="True"
                                                         RightTapped="Chart_RightTapped">
                                     <chart:SfCartesianChart.Legend>
-                                        <chart:ChartLegend ToggleSeriesVisibility="True" />
+                                        <chart:ChartLegend ToggleSeriesVisibility="True">
+                                            <chart:ChartLegend.Header>
+                                                <TextBlock HorizontalAlignment="Center"
+                                                           Style="{StaticResource BodyLargeTextBlockStyle}"
+                                                           Text="{x:Bind ViewModel.AnalysisProcessText, Mode=OneWay}" />
+                                            </chart:ChartLegend.Header>
+                                        </chart:ChartLegend>
                                     </chart:SfCartesianChart.Legend>
 
                                     <!--  X Axis (FPS)  -->
@@ -654,7 +660,13 @@
                                 <chart:SfCartesianChart x:Name="ColumnChart"
                                                         RightTapped="Chart_RightTapped">
                                     <chart:SfCartesianChart.Legend>
-                                        <chart:ChartLegend ToggleSeriesVisibility="True" />
+                                        <chart:ChartLegend ToggleSeriesVisibility="True">
+                                            <chart:ChartLegend.Header>
+                                                <TextBlock HorizontalAlignment="Center"
+                                                           Style="{StaticResource BodyLargeTextBlockStyle}"
+                                                           Text="{x:Bind ViewModel.AnalysisProcessText, Mode=OneWay}" />
+                                            </chart:ChartLegend.Header>
+                                        </chart:ChartLegend>
                                     </chart:SfCartesianChart.Legend>
 
                                     <!--  X Axis (Statistics)  -->
@@ -753,7 +765,13 @@
                                 <chart:SfCartesianChart x:Name="LineChart"
                                                         RightTapped="Chart_RightTapped">
                                     <chart:SfCartesianChart.Legend>
-                                        <chart:ChartLegend ToggleSeriesVisibility="True" />
+                                        <chart:ChartLegend ToggleSeriesVisibility="True">
+                                            <chart:ChartLegend.Header>
+                                                <TextBlock HorizontalAlignment="Center"
+                                                           Style="{StaticResource BodyLargeTextBlockStyle}"
+                                                           Text="{x:Bind ViewModel.AnalysisProcessText, Mode=OneWay}" />
+                                            </chart:ChartLegend.Header>
+                                        </chart:ChartLegend>
                                     </chart:SfCartesianChart.Legend>
 
                                     <!--  X Axis (Frame Index)  -->
@@ -802,7 +820,13 @@
                                 <chart:SfCartesianChart x:Name="ScatterChart"
                                                         RightTapped="Chart_RightTapped">
                                     <chart:SfCartesianChart.Legend>
-                                        <chart:ChartLegend ToggleSeriesVisibility="True" />
+                                        <chart:ChartLegend ToggleSeriesVisibility="True">
+                                            <chart:ChartLegend.Header>
+                                                <TextBlock HorizontalAlignment="Center"
+                                                           Style="{StaticResource BodyLargeTextBlockStyle}"
+                                                           Text="{x:Bind ViewModel.AnalysisProcessText, Mode=OneWay}" />
+                                            </chart:ChartLegend.Header>
+                                        </chart:ChartLegend>
                                     </chart:SfCartesianChart.Legend>
 
                                     <!--  X Axis (Frame Index)  -->
@@ -892,6 +916,27 @@
                                        FontSize="12"
                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                        Text="Maximum of 2 recordings supported for analysis"
+                                       TextAlignment="Center" />
+                        </StackPanel>
+                    </dev:Case>
+
+                    <!--  Different Processes  -->
+                    <dev:Case Value="ProcessMismatch">
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="12">
+                            <FontIcon HorizontalAlignment="Center"
+                                      FontSize="48"
+                                      Foreground="{ThemeResource SystemFillColorCritical}"
+                                      Glyph="&#xE783;" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       Text="Recordings use different processes"
+                                       TextAlignment="Center" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       FontSize="12"
+                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                       Text="Select recordings from the same process to compare them"
                                        TextAlignment="Center" />
                         </StackPanel>
                     </dev:Case>
@@ -1000,6 +1045,27 @@
                                        FontSize="12"
                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                        Text="Maximum of 2 recordings supported for statistics"
+                                       TextAlignment="Center" />
+                        </StackPanel>
+                    </dev:Case>
+
+                    <!--  Different Processes  -->
+                    <dev:Case Value="ProcessMismatch">
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="12">
+                            <FontIcon HorizontalAlignment="Center"
+                                      FontSize="48"
+                                      Foreground="{ThemeResource SystemFillColorCritical}"
+                                      Glyph="&#xE783;" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       Text="Recordings use different processes"
+                                       TextAlignment="Center" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       FontSize="12"
+                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                       Text="Select recordings from the same process to compare them"
                                        TextAlignment="Center" />
                         </StackPanel>
                     </dev:Case>

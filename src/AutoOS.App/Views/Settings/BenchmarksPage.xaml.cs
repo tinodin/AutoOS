@@ -230,7 +230,7 @@ public sealed partial class BenchmarksPage : Page
 		ViewModel.StatisticsRows.Clear();
 		ViewModel.AnalysisChartType = "Bar";
 
-		if (_selectedRecordings.Count is 0 or > 2)
+		if (!ViewModel.IsAnalysisToolbarEnabled)
 			return;
 
 		RebuildCharts(_selectedRecordings);
@@ -728,7 +728,7 @@ public sealed partial class BenchmarksPage : Page
 			StopProcessDiscovery();
 			ViewModel.ActiveTab = "Analysis";
 			ViewModel.AnalysisChartType = "Bar";
-			if (_selectedRecordings.Count is > 0 and <= 2)
+			if (ViewModel.IsAnalysisToolbarEnabled)
 				ReplayAnimation();
 		}
 		else if (ReferenceEquals(selectedItem, StatisticsTab))
@@ -1011,7 +1011,7 @@ public sealed partial class BenchmarksPage : Page
 			filePath += $".{extension}";
 
 		var bitmap = new RenderTargetBitmap();
-		await bitmap.RenderAsync(chart);
+		await bitmap.RenderAsync(element);
 		if (bitmap.PixelWidth == 0 || bitmap.PixelHeight == 0)
 			return;
 
