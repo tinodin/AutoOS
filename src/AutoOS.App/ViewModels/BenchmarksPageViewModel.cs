@@ -48,6 +48,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	private string _lineScatterChartLabel2 = string.Empty;
 	private string _recordingAHeader = "Recording A";
 	private string _recordingBHeader = "Recording B";
+	private string _deltaHeader = "Delta (%)";
 
 	public string ActiveTab
 	{
@@ -529,6 +530,12 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		set => SetProperty(ref _recordingBHeader, value);
 	}
 
+	public string DeltaHeader
+	{
+		get => _deltaHeader;
+		set => SetProperty(ref _deltaHeader, value);
+	}
+
 	public void SetRecordings(IEnumerable<RecordingItem> recordings)
 	{
 		Recordings = new ObservableCollection<RecordingItem>(recordings);
@@ -656,8 +663,10 @@ public sealed partial class ResultRow : ObservableObject
 	private string _tooltip = string.Empty;
 	private string _recordingA = string.Empty;
 	private string _recordingB = string.Empty;
+	private string _delta = string.Empty;
 	private ResultComparison _recordingAComparison;
 	private ResultComparison _recordingBComparison;
+	private ResultComparison _deltaComparison;
 
 	public string Statistic
 	{
@@ -683,6 +692,12 @@ public sealed partial class ResultRow : ObservableObject
 		set => SetProperty(ref _recordingB, value);
 	}
 
+	public string Delta
+	{
+		get => _delta;
+		set => SetProperty(ref _delta, value);
+	}
+
 	public ResultComparison RecordingAComparison
 	{
 		get => _recordingAComparison;
@@ -693,6 +708,12 @@ public sealed partial class ResultRow : ObservableObject
 	{
 		get => _recordingBComparison;
 		set => SetProperty(ref _recordingBComparison, value);
+	}
+
+	public ResultComparison DeltaComparison
+	{
+		get => _deltaComparison;
+		set => SetProperty(ref _deltaComparison, value);
 	}
 
 	public ObservableCollection<ResultRow> Children { get; } = [];
@@ -708,6 +729,7 @@ public enum ResultComparison
 public sealed partial class ResultCellStyleSelector : StyleSelector
 {
 	public bool IsRecordingA { get; set; }
+	public bool IsDelta { get; set; }
 	public Style SuccessStyle { get; set; }
 	public Style CriticalStyle { get; set; }
 
@@ -716,7 +738,9 @@ public sealed partial class ResultCellStyleSelector : StyleSelector
 		if (item is not ResultRow row)
 			return null;
 
-		var comparison = IsRecordingA ? row.RecordingAComparison : row.RecordingBComparison;
+		var comparison = IsDelta
+			? row.DeltaComparison
+			: IsRecordingA ? row.RecordingAComparison : row.RecordingBComparison;
 		return comparison switch
 		{
 			ResultComparison.Better => SuccessStyle,

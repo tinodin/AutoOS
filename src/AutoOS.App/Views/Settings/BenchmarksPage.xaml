@@ -33,7 +33,11 @@
                                        IsRecordingA="True"
                                        SuccessStyle="{StaticResource SuccessCellStyle}" />
         <local:ResultCellStyleSelector x:Key="RecordingBCellStyleSelector"
+                                        CriticalStyle="{StaticResource CriticalCellStyle}"
+                                        SuccessStyle="{StaticResource SuccessCellStyle}" />
+        <local:ResultCellStyleSelector x:Key="DeltaCellStyleSelector"
                                        CriticalStyle="{StaticResource CriticalCellStyle}"
+                                       IsDelta="True"
                                        SuccessStyle="{StaticResource SuccessCellStyle}" />
     </Page.Resources>
     <Grid>
@@ -350,7 +354,34 @@
 
                     <!--  Statistics  -->
                     <controls:TabbedCommandBarItem x:Name="StatisticsTab"
-                                                   Header="Statistics" />
+                                                   Header="Statistics">
+                        <controls:TabbedCommandBarItem.PrimaryCommands>
+                            <!--  Baseline Recording  -->
+                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.HasSecondRecording, Mode=OneWay}">
+                                <ComboBox x:Name="StatisticsBaselineComboBox"
+                                          MinWidth="180"
+                                          PlaceholderText="Baseline recording"
+                                          SelectionChanged="StatisticsBaselineComboBox_SelectionChanged"
+                                          ToolTipService.ToolTip="Baseline recording" />
+                            </AppBarElementContainer>
+
+                            <AppBarSeparator Margin="4,0" />
+
+                            <!--  Delta Format  -->
+                            <AppBarElementContainer x:Name="StatisticsDeltaModeContainer"
+                                                    IsEnabled="False"
+                                                    ToolTipService.ToolTip="Delta format">
+                                <dev:SelectorBarSegmented x:Name="StatisticsDeltaModeSelector"
+                                                          SelectionChanged="StatisticsDeltaModeSelector_SelectionChanged">
+                                    <SelectorBarItem x:Name="PercentDeltaItem"
+                                                     IsSelected="True"
+                                                     Text="%" />
+                                    <SelectorBarItem x:Name="AbsoluteDeltaItem"
+                                                     Text="+/-" />
+                                </dev:SelectorBarSegmented>
+                            </AppBarElementContainer>
+                        </controls:TabbedCommandBarItem.PrimaryCommands>
+                    </controls:TabbedCommandBarItem>
                 </controls:TabbedCommandBar.MenuItems>
             </controls:TabbedCommandBar>
         </StackPanel>
@@ -871,17 +902,25 @@
                                 </sfgrid:TreeGridTemplateColumn>
 
                                 <!--  Recording A  -->
-                                <sfgrid:TreeGridTextColumn common:StarRatio.ColumnRatio="1"
+                                <sfgrid:TreeGridTextColumn x:Name="StatisticsRecordingAColumn"
+                                                           common:StarRatio.ColumnRatio="1"
                                                            CellStyleSelector="{StaticResource RecordingACellStyleSelector}"
                                                            HeaderText="{x:Bind ViewModel.RecordingAHeader, Mode=OneWay}"
                                                            MappingName="RecordingA" />
 
                                 <!--  Recording B  -->
-                                <sfgrid:TreeGridTextColumn x:Name="StatisticsRecordingBColumn"
+                                 <sfgrid:TreeGridTextColumn x:Name="StatisticsRecordingBColumn"
+                                                            common:StarRatio.ColumnRatio="1"
+                                                            CellStyleSelector="{StaticResource RecordingBCellStyleSelector}"
+                                                            HeaderText="{x:Bind ViewModel.RecordingBHeader, Mode=OneWay}"
+                                                            MappingName="RecordingB" />
+
+                                <!--  Delta  -->
+                                <sfgrid:TreeGridTextColumn x:Name="StatisticsDeltaColumn"
                                                            common:StarRatio.ColumnRatio="1"
-                                                           CellStyleSelector="{StaticResource RecordingBCellStyleSelector}"
-                                                           HeaderText="{x:Bind ViewModel.RecordingBHeader, Mode=OneWay}"
-                                                           MappingName="RecordingB" />
+                                                           CellStyleSelector="{StaticResource DeltaCellStyleSelector}"
+                                                           HeaderText="{x:Bind ViewModel.DeltaHeader, Mode=OneWay}"
+                                                           MappingName="Delta" />
                             </sfgrid:SfTreeGrid.Columns>
                         </sfgrid:SfTreeGrid>
                     </dev:Case>
