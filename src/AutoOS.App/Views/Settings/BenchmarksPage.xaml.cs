@@ -164,7 +164,7 @@ public sealed partial class BenchmarksPage : Page
 		ViewModel.StatisticsRows.Clear();
 		ViewModel.AnalysisChartType = "Bar";
 
-		if (_selectedRecordings.Count is 0 or > 2)
+		if (!ViewModel.IsAnalysisToolbarEnabled)
 			return;
 
 		RebuildCharts(_selectedRecordings);
@@ -635,7 +635,7 @@ public sealed partial class BenchmarksPage : Page
 			row.DeltaComparison = ResultComparison.None;
 		}
 
-		ApplyResultComparisons(rows, _selectedRecordings.Count == 2);
+		ApplyResultComparisons(rows, ViewModel.CanCompareSelectedRecordings);
 		if (_statisticsBaselineIndex is 0 or 1)
 			ApplyResultDeltas(rows, _statisticsBaselineIndex, _showPercentDelta);
 		ConfigureStatisticsColumns();
@@ -704,7 +704,7 @@ public sealed partial class BenchmarksPage : Page
 			StopProcessDiscovery();
 			ViewModel.ActiveTab = "Analysis";
 			ViewModel.AnalysisChartType = "Bar";
-			if (_selectedRecordings.Count is > 0 and <= 2)
+			if (ViewModel.IsAnalysisToolbarEnabled)
 				ReplayAnimation();
 		}
 		else if (ReferenceEquals(selectedItem, StatisticsTab))
@@ -970,7 +970,26 @@ public sealed partial class BenchmarksPage : Page
 		}
 	}
 
-	private async Task SaveAsPngAsync(SfCartesianChart chart, string suggestedFileName)
+	private async void DownloadAnalysis_Click(object sender, RoutedEventArgs e)
+	{
+		UIElement chart = ViewModel.AnalysisChartType switch
+		{
+			"Bar" => BarChart,
+			"Column" => ColumnChart,
+			"Line" => LineChart,
+			"Scatter" => ScatterChart,
+			_ => null
+		};
+		if (chart != null)
+			await SaveElementAsPngAsync(chart, $"Benchmark-{ViewModel.AnalysisChartType}");
+	}
+
+	private async void DownloadStatistics_Click(object sender, RoutedEventArgs e)
+	{
+		await SaveElementAsPngAsync(StatisticsTreeGrid, "Benchmark-Statistics");
+	}
+
+	private async Task SaveElementAsPngAsync(UIElement element, string suggestedFileName)
 	{
 		var picker = new SavePicker(App.MainWindow)
 		{
@@ -988,7 +1007,7 @@ public sealed partial class BenchmarksPage : Page
 			filePath += ".png";
 
 		var bitmap = new RenderTargetBitmap();
-		await bitmap.RenderAsync(chart);
+		await bitmap.RenderAsync(element);
 		if (bitmap.PixelWidth == 0 || bitmap.PixelHeight == 0)
 			return;
 
@@ -1037,7 +1056,7 @@ public sealed partial class BenchmarksPage : Page
 				Text = "Save as PNG",
 				Icon = new FontIcon { Glyph = "\uE896" }
 			};
-			saveItem.Click += async (s, args) => await SaveAsPngAsync(chart, $"Benchmark-{chartType}");
+			saveItem.Click += async (s, args) => await SaveElementAsPngAsync(chart, $"Benchmark-{chartType}");
 			flyout.Items.Add(saveItem);
 			flyout.ShowAt(chart, e.GetPosition(chart));
 		}

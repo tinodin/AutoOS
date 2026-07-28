@@ -541,22 +541,7 @@
             <dev:Case Value="Analysis">
                 <dev:SwitchPresenter Value="{x:Bind ViewModel.AnalysisState, Mode=OneWay}">
                     <dev:Case Value="Content">
-                        <Grid x:Name="AnalysisContent">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
-
-                            <StackPanel Margin="0,0,0,8"
-                                        HorizontalAlignment="Center"
-                                        Spacing="4">
-                                <TextBlock HorizontalAlignment="Center"
-                                           Style="{StaticResource BodyLargeTextBlockStyle}"
-                                           Text="{x:Bind ViewModel.AnalysisProcessText, Mode=OneWay}" />
-                            </StackPanel>
-
-                            <dev:SwitchPresenter Grid.Row="1"
-                                                 Value="{x:Bind ViewModel.AnalysisChartType, Mode=OneWay}">
+                        <dev:SwitchPresenter Value="{x:Bind ViewModel.AnalysisChartType, Mode=OneWay}">
                             <dev:Case Value="Bar">
 
                                 <!--  Bar Chart  -->
@@ -564,7 +549,13 @@
                                                         IsTransposed="True"
                                                         RightTapped="Chart_RightTapped">
                                     <chart:SfCartesianChart.Legend>
-                                        <chart:ChartLegend ToggleSeriesVisibility="True" />
+                                        <chart:ChartLegend ToggleSeriesVisibility="True">
+                                            <chart:ChartLegend.Header>
+                                                <TextBlock HorizontalAlignment="Center"
+                                                           Style="{StaticResource BodyLargeTextBlockStyle}"
+                                                           Text="{x:Bind ViewModel.AnalysisProcessText, Mode=OneWay}" />
+                                            </chart:ChartLegend.Header>
+                                        </chart:ChartLegend>
                                     </chart:SfCartesianChart.Legend>
 
                                     <!--  X Axis (FPS)  -->
@@ -668,7 +659,13 @@
                                 <chart:SfCartesianChart x:Name="ColumnChart"
                                                         RightTapped="Chart_RightTapped">
                                     <chart:SfCartesianChart.Legend>
-                                        <chart:ChartLegend ToggleSeriesVisibility="True" />
+                                        <chart:ChartLegend ToggleSeriesVisibility="True">
+                                            <chart:ChartLegend.Header>
+                                                <TextBlock HorizontalAlignment="Center"
+                                                           Style="{StaticResource BodyLargeTextBlockStyle}"
+                                                           Text="{x:Bind ViewModel.AnalysisProcessText, Mode=OneWay}" />
+                                            </chart:ChartLegend.Header>
+                                        </chart:ChartLegend>
                                     </chart:SfCartesianChart.Legend>
 
                                     <!--  X Axis (Statistics)  -->
@@ -767,7 +764,13 @@
                                 <chart:SfCartesianChart x:Name="LineChart"
                                                         RightTapped="Chart_RightTapped">
                                     <chart:SfCartesianChart.Legend>
-                                        <chart:ChartLegend ToggleSeriesVisibility="True" />
+                                        <chart:ChartLegend ToggleSeriesVisibility="True">
+                                            <chart:ChartLegend.Header>
+                                                <TextBlock HorizontalAlignment="Center"
+                                                           Style="{StaticResource BodyLargeTextBlockStyle}"
+                                                           Text="{x:Bind ViewModel.AnalysisProcessText, Mode=OneWay}" />
+                                            </chart:ChartLegend.Header>
+                                        </chart:ChartLegend>
                                     </chart:SfCartesianChart.Legend>
 
                                     <!--  X Axis (Frame Index)  -->
@@ -816,7 +819,13 @@
                                 <chart:SfCartesianChart x:Name="ScatterChart"
                                                         RightTapped="Chart_RightTapped">
                                     <chart:SfCartesianChart.Legend>
-                                        <chart:ChartLegend ToggleSeriesVisibility="True" />
+                                        <chart:ChartLegend ToggleSeriesVisibility="True">
+                                            <chart:ChartLegend.Header>
+                                                <TextBlock HorizontalAlignment="Center"
+                                                           Style="{StaticResource BodyLargeTextBlockStyle}"
+                                                           Text="{x:Bind ViewModel.AnalysisProcessText, Mode=OneWay}" />
+                                            </chart:ChartLegend.Header>
+                                        </chart:ChartLegend>
                                     </chart:SfCartesianChart.Legend>
 
                                     <!--  X Axis (Frame Index)  -->
@@ -865,8 +874,7 @@
                                     </chart:SfCartesianChart.Series>
                                 </chart:SfCartesianChart>
                             </dev:Case>
-                            </dev:SwitchPresenter>
-                        </Grid>
+                        </dev:SwitchPresenter>
                     </dev:Case>
 
                     <!--  No Recordings  -->
