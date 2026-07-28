@@ -878,49 +878,49 @@ public sealed partial class BenchmarksPage : Page
 		ViewModel.BarColumnChartDisplayedData2 = hasSecondRecording ? [.. series2Data] : null;
 		ViewModel.BarColumnChartRenderedData2 = hasSecondRecording ? [.. series2RenderedData] : null;
 
-		if (FpsChart != null)
+		if (BarChart != null)
 		{
-			FpsChart.Series.Clear();
-			FpsChart.Series.Add(FpsChart1Series);
+			BarChart.Series.Clear();
+			BarChart.Series.Add(BarDisplayedFpsSeries1);
 			if (presentation.ShowRenderedFps1)
-				FpsChart.Series.Add(FpsRenderedChart1Series);
+				BarChart.Series.Add(BarRenderedFpsSeries1);
 			if (hasSecondRecording)
-				FpsChart.Series.Add(FpsChart2Series);
+				BarChart.Series.Add(BarDisplayedFpsSeries2);
 			if (hasSecondRecording)
-				FpsChart.Series.Add(FpsRenderedChart2Series);
+				BarChart.Series.Add(BarRenderedFpsSeries2);
 
-			FpsChart1Series.ShowDataLabels = false;
-			FpsChart1Series.ShowDataLabels = true;
-			FpsRenderedChart1Series.ShowDataLabels = false;
-			FpsRenderedChart1Series.ShowDataLabels = presentation.ShowRenderedFps1;
-			FpsChart2Series.ShowDataLabels = false;
-			FpsChart2Series.ShowDataLabels = hasSecondRecording;
-			FpsRenderedChart2Series.ShowDataLabels = false;
-			FpsRenderedChart2Series.ShowDataLabels = hasSecondRecording;
+			BarDisplayedFpsSeries1.ShowDataLabels = false;
+			BarDisplayedFpsSeries1.ShowDataLabels = true;
+			BarRenderedFpsSeries1.ShowDataLabels = false;
+			BarRenderedFpsSeries1.ShowDataLabels = presentation.ShowRenderedFps1;
+			BarDisplayedFpsSeries2.ShowDataLabels = false;
+			BarDisplayedFpsSeries2.ShowDataLabels = hasSecondRecording;
+			BarRenderedFpsSeries2.ShowDataLabels = false;
+			BarRenderedFpsSeries2.ShowDataLabels = hasSecondRecording;
 
-			FpsChart.IsTransposed = false;
-			FpsChart.IsTransposed = true;
+			BarChart.IsTransposed = false;
+			BarChart.IsTransposed = true;
 		}
 
-		if (ColumnFpsChart != null)
+		if (ColumnChart != null)
 		{
-			ColumnFpsChart.Series.Clear();
-			ColumnFpsChart.Series.Add(ColumnFpsChart1Series);
+			ColumnChart.Series.Clear();
+			ColumnChart.Series.Add(ColumnDisplayedFpsSeries1);
 			if (presentation.ShowRenderedFps1)
-				ColumnFpsChart.Series.Add(ColumnFpsRenderedChart1Series);
+				ColumnChart.Series.Add(ColumnRenderedFpsSeries1);
 			if (hasSecondRecording)
-				ColumnFpsChart.Series.Add(ColumnFpsChart2Series);
+				ColumnChart.Series.Add(ColumnDisplayedFpsSeries2);
 			if (hasSecondRecording)
-				ColumnFpsChart.Series.Add(ColumnFpsRenderedChart2Series);
+				ColumnChart.Series.Add(ColumnRenderedFpsSeries2);
 
-			ColumnFpsChart1Series.ShowDataLabels = false;
-			ColumnFpsChart1Series.ShowDataLabels = true;
-			ColumnFpsRenderedChart1Series.ShowDataLabels = false;
-			ColumnFpsRenderedChart1Series.ShowDataLabels = presentation.ShowRenderedFps1;
-			ColumnFpsChart2Series.ShowDataLabels = false;
-			ColumnFpsChart2Series.ShowDataLabels = hasSecondRecording;
-			ColumnFpsRenderedChart2Series.ShowDataLabels = false;
-			ColumnFpsRenderedChart2Series.ShowDataLabels = hasSecondRecording;
+			ColumnDisplayedFpsSeries1.ShowDataLabels = false;
+			ColumnDisplayedFpsSeries1.ShowDataLabels = true;
+			ColumnRenderedFpsSeries1.ShowDataLabels = false;
+			ColumnRenderedFpsSeries1.ShowDataLabels = presentation.ShowRenderedFps1;
+			ColumnDisplayedFpsSeries2.ShowDataLabels = false;
+			ColumnDisplayedFpsSeries2.ShowDataLabels = hasSecondRecording;
+			ColumnRenderedFpsSeries2.ShowDataLabels = false;
+			ColumnRenderedFpsSeries2.ShowDataLabels = hasSecondRecording;
 		}
 	}
 
@@ -931,6 +931,40 @@ public sealed partial class BenchmarksPage : Page
 		ViewModel.LineScatterChartLabel2 = presentation.MetricLabel2;
 		ViewModel.LineScatterChartData1 = [.. presentation.MetricPts1];
 		ViewModel.LineScatterChartData2 = [.. presentation.MetricPts2];
+
+		double globalMinY = double.MaxValue, globalMaxY = double.MinValue;
+		double globalMaxX = 0;
+		foreach (var pt in presentation.MetricPts1.Concat(presentation.MetricPts2))
+		{
+			if (pt.Value < globalMinY) globalMinY = pt.Value;
+			if (pt.Value > globalMaxY) globalMaxY = pt.Value;
+			if (pt.Index > globalMaxX) globalMaxX = pt.Index;
+		}
+		if (globalMinY != double.MaxValue && globalMaxY != double.MinValue)
+		{
+			double padding = (globalMaxY - globalMinY) * 0.05;
+			if (padding == 0) padding = 1;
+			globalMinY = Math.Min(0, globalMinY - padding);
+			globalMaxY += padding;
+
+			if (LineChartYAxis != null)
+			{
+				LineChartYAxis.Minimum = globalMinY;
+				LineChartYAxis.Maximum = globalMaxY;
+			}
+			if (ScatterChartYAxis != null)
+			{
+				ScatterChartYAxis.Minimum = globalMinY;
+				ScatterChartYAxis.Maximum = globalMaxY;
+			}
+		}
+		if (globalMaxX > 0)
+		{
+			if (LineChartXAxis != null)
+				LineChartXAxis.Maximum = globalMaxX;
+			if (ScatterChartXAxis != null)
+				ScatterChartXAxis.Maximum = globalMaxX;
+		}
 	}
 
 	private void OnMetricToggled()
@@ -945,10 +979,10 @@ public sealed partial class BenchmarksPage : Page
 	{
 		UIElement chart = ViewModel.AnalysisChartType switch
 		{
-			"Bar" => FpsChart,
-			"Column" => ColumnFpsChart,
-			"Line" => LineFpsChart,
-			"Scatter" => ScatterFpsChart,
+			"Bar" => BarChart,
+			"Column" => ColumnChart,
+			"Line" => LineChart,
+			"Scatter" => ScatterChart,
 			_ => null
 		};
 		if (chart != null)
