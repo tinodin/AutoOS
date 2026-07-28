@@ -222,6 +222,7 @@ public sealed partial class BenchmarksPage : Page
 	{
 		_selectedRecordings = GetSelectedRecordings();
 		ViewModel.SetSelectedRecordings(_selectedRecordings);
+		ViewModel.IsRenameEnabled = RecordingsTreeGrid.SelectedItems.Count > 0;
 		StatisticsBaselineComboBox.ItemsSource = new[] { "None" }.Concat(_selectedRecordings.Select(recording => recording.Title)).ToList();
 		StatisticsBaselineComboBox.SelectedIndex = 0;
 		ViewModel.IsDeltaModeEnabled = false;
@@ -235,6 +236,11 @@ public sealed partial class BenchmarksPage : Page
 
 		RebuildCharts(_selectedRecordings);
 		await UpdateStatisticsTable();
+	}
+
+	private void RecordingsTreeGrid_CurrentCellActivated(object sender, CurrentCellActivatedEventArgs e)
+	{
+		ViewModel.IsRenameEnabled = RecordingsTreeGrid.CurrentItem != null;
 	}
 
 	private void StatisticsTreeGrid_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -998,9 +1004,10 @@ public sealed partial class BenchmarksPage : Page
 	{
 		var picker = new SavePicker(App.MainWindow)
 		{
-			DefaultFileExtension = $"{extension} image",
+			DefaultFileExtension = $"{extension}",
 			ShowAllFilesOption = false,
 			SuggestedFileName = suggestedFileName,
+			InitialDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"),
 		};
 		picker.FileTypeChoices.Add($"{extension} image", [$"*.{extension}"]);
 
@@ -1055,6 +1062,47 @@ public sealed partial class BenchmarksPage : Page
 		if (sender is SfCartesianChart chart)
 		{
 			string chartType = ViewModel.AnalysisChartType;
+			bool isBarChart = chartType is "Bar" or "Column";
+			string[] stats;
+			if (isBarChart)
+			{
+				bool disp1, rend1, disp2, rend2;
+				if (chart == BarChart)
+				{
+					disp1 = BarDisplayedFpsSeries1.Visibility == Visibility.Visible;
+					rend1 = BarRenderedFpsSeries1.Visibility == Visibility.Visible;
+					disp2 = _selectedRecordings.Count > 1 && BarDisplayedFpsSeries2.Visibility == Visibility.Visible;
+					rend2 = _selectedRecordings.Count > 1 && BarRenderedFpsSeries2.Visibility == Visibility.Visible;
+				}
+				else
+				{
+					disp1 = ColumnDisplayedFpsSeries1.Visibility == Visibility.Visible;
+					rend1 = ColumnRenderedFpsSeries1.Visibility == Visibility.Visible;
+					disp2 = _selectedRecordings.Count > 1 && ColumnDisplayedFpsSeries2.Visibility == Visibility.Visible;
+					rend2 = _selectedRecordings.Count > 1 && ColumnRenderedFpsSeries2.Visibility == Visibility.Visible;
+				}
+				stats = new string[_selectedRecordings.Count];
+				for (int i = 0; i < _selectedRecordings.Count; i++)
+				{
+					var s = new List<string>();
+					bool isFirst = i == 0;
+					if ((isFirst && disp1) || (!isFirst && disp2)) s.Add("Displayed FPS");
+					if ((isFirst && rend1) || (!isFirst && rend2)) s.Add("Rendered FPS");
+					stats[i] = string.Join(", ", s);
+				}
+			}
+			else
+			{
+				stats = [.. _selectedRecordings.Select((r, i) =>
+				{
+					if (i < chart.Series.Count && chart.Series[i].Visibility == Visibility.Visible)
+						return (Metric1ComboBox.SelectedItem as ComboBoxItem)?.Content as string ?? string.Empty;
+					return string.Empty;
+				})];
+			}
+			string recordingNames = string.Join(" vs ", _selectedRecordings.Select((r, i) => string.IsNullOrEmpty(stats[i]) ? r.Title : $"{r.Title} ({stats[i]})"));
+			string chartLabel = $"{chartType} Chart";
+			string fileName = $"{recordingNames} - {chartLabel}";
 			var flyout = new MenuFlyout();
 
 			var jpegItem = new MenuFlyoutItem
@@ -1062,7 +1110,7 @@ public sealed partial class BenchmarksPage : Page
 				Text = "Save as JPG",
 				Icon = new FontIcon { Glyph = "\uE896" }
 			};
-			jpegItem.Click += async (s, args) => await SaveChartAsync(chart, $"Benchmark-{chartType}", BitmapEncoder.JpegEncoderId, "jpg", true);
+			jpegItem.Click += async (s, args) => await SaveChartAsync(chart, fileName, BitmapEncoder.JpegEncoderId, "jpg", true);
 			flyout.Items.Add(jpegItem);
 
 			var pngItem = new MenuFlyoutItem
@@ -1070,7 +1118,7 @@ public sealed partial class BenchmarksPage : Page
 				Text = "Save as PNG",
 				Icon = new FontIcon { Glyph = "\uE896" }
 			};
-			pngItem.Click += async (s, args) => await SaveChartAsync(chart, $"Benchmark-{chartType}", BitmapEncoder.PngEncoderId, "png", false);
+			pngItem.Click += async (s, args) => await SaveChartAsync(chart, fileName, BitmapEncoder.PngEncoderId, "png", false);
 			flyout.Items.Add(pngItem);
 
 			flyout.ShowAt(chart, e.GetPosition(chart));

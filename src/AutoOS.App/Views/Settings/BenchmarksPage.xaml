@@ -406,6 +406,7 @@
                                            CheckBoxSelectionMode="SynchronizeSelection"
                                            ChildPropertyName="Children"
                                            ColumnWidthMode="Star"
+                                           CurrentCellActivated="RecordingsTreeGrid_CurrentCellActivated"
                                            CurrentCellEndEdit="RecordingsTreeGrid_CurrentCellEndEdit"
                                            EditTrigger="OnDoubleTap"
                                            GridLinesVisibility="Both"

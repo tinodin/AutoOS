@@ -12,6 +12,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	private string _analysisState = "Empty";
 	private string _statisticsState = "Empty";
 	private int _selectedRecordingCount;
+	private bool _isRenameEnabled;
 	private bool _selectedRecordingsHaveSameProcess;
 	private string _processName = string.Empty;
 	private double _recordingDuration = 60;
@@ -336,7 +337,11 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	public bool IsAnalysisToolbarEnabled => _selectedRecordingCount is > 0 and <= 2 && _selectedRecordingsHaveSameProcess;
 	public bool CanCompareSelectedRecordings => _selectedRecordingCount == 2 && _selectedRecordingsHaveSameProcess;
 	public bool IsSecondColorPickerEnabled => _selectedRecordingCount == 2;
-	public bool IsRenameEnabled => _selectedRecordingCount > 0;
+	public bool IsRenameEnabled
+	{
+		get => _isRenameEnabled;
+		set => SetProperty(ref _isRenameEnabled, value);
+	}
 	public bool IsDeleteEnabled => _selectedRecordingCount > 0;
 	public bool HasSecondRecording => _selectedRecordingCount == 2;
 	public Visibility HasSecondRecordingVisibility => _selectedRecordingCount == 2 ? Visibility.Visible : Visibility.Collapsed;
@@ -587,7 +592,6 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		OnPropertyChanged(nameof(IsAnalysisToolbarEnabled));
 		OnPropertyChanged(nameof(CanCompareSelectedRecordings));
 		OnPropertyChanged(nameof(IsSecondColorPickerEnabled));
-		OnPropertyChanged(nameof(IsRenameEnabled));
 		OnPropertyChanged(nameof(IsDeleteEnabled));
 		OnPropertyChanged(nameof(HasSecondRecording));
 		OnPropertyChanged(nameof(HasSecondRecordingVisibility));
