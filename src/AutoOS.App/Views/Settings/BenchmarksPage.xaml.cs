@@ -1096,7 +1096,7 @@ public sealed partial class BenchmarksPage : Page
 			StatisticsTreeGrid.Columns.Add(StatisticsDeltaColumn);
 
 		if (baselineIndex >= 0)
-			ViewModel.DeltaHeader = $"{_selectedRecordings[baselineIndex].Title} (Delta)";
+			ViewModel.DeltaHeader = $"{_selectedRecordings[baselineIndex == 0 ? 1 : 0].Title} (Delta)";
 		else
 			ViewModel.DeltaHeader = ViewModel.IsPercentDelta ? "Delta (%)" : "Delta (+/-)";
 		ViewModel.RecordingAHeader = _selectedRecordings.Count >= 1 ? _selectedRecordings[0].Title + (baselineIndex == 0 ? " (Baseline)" : string.Empty) : "Recording A";
