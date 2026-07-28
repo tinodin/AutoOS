@@ -24,7 +24,7 @@ public sealed partial class BenchmarksPage : Page
 {
 	public BenchmarksPageViewModel ViewModel { get; } = new();
 	private static readonly string RecordingsDirectory = Path.Combine(PathHelper.GetAppDataFolderPath(), "Benchmarks");
-	private sealed record AnalysisModel(List<(string recordingName, List<SeriesPoint> points)> MetricSeries, List<(string recordingName, Metrics displayedStats, Metrics renderedStats)> FpsStatsSeries);
+	private sealed record AnalysisModel(string MetricName, List<(string recordingName, List<SeriesPoint> points)> MetricSeries, List<(string recordingName, Metrics displayedStats, Metrics renderedStats)> FpsStatsSeries);
 	private sealed record ChartPresentation(List<BarPoint> DisplayedFpsBars1, List<BarPoint> RenderedFpsBars1, List<BarPoint> DisplayedFpsBars2, List<BarPoint> RenderedFpsBars2, bool ShowRenderedFps1, string DisplayedFpsLabel1, string RenderedFpsLabel1, string DisplayedFpsLabel2, string RenderedFpsLabel2, List<SeriesPoint> MetricPts1, List<SeriesPoint> MetricPts2, string MetricLabel1, string MetricLabel2, string FpsYAxisLabel, string FpsLabelFormat, string MetricYAxisLabel);
 	private sealed record CachedRecordingMetadata(long Length, DateTime LastWriteTimeUtc, string Process, string PresentationMode, double DurationSeconds, List<string> SourceFileNames);
 	private static readonly Lock RecordingMetadataCacheLock = new();
@@ -784,7 +784,7 @@ public sealed partial class BenchmarksPage : Page
 			fpsStatsSeries.Add((item.FileName, analysis.DisplayedFps, analysis.RenderedFps));
 		}
 
-		return ToChartPresentation(new AnalysisModel(metricSeries, fpsStatsSeries));
+		return ToChartPresentation(new AnalysisModel(metric, metricSeries, fpsStatsSeries));
 	}
 
 	private static ChartPresentation ToChartPresentation(AnalysisModel model)
@@ -841,12 +841,12 @@ public sealed partial class BenchmarksPage : Page
 				if (seriesIdx == 0)
 				{
 					metricPts1 = points;
-					metricLabel1 = recordingName;
+					metricLabel1 = $"{recordingName} \u00b7 {model.MetricName}";
 				}
 				else
 				{
 					metricPts2 = points;
-					metricLabel2 = recordingName;
+					metricLabel2 = $"{recordingName} \u00b7 {model.MetricName}";
 				}
 				seriesIdx++;
 			}
