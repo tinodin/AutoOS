@@ -26,18 +26,12 @@ public sealed partial class BenchmarksPage : Page
 	private static readonly string RecordingsDirectory = Path.Combine(PathHelper.GetAppDataFolderPath(), "Benchmarks");
 	private sealed record AnalysisModel(string MetricName, List<(string recordingName, List<SeriesPoint> points)> MetricSeries, List<(string recordingName, Metrics displayedStats, Metrics renderedStats)> FpsStatsSeries);
 	private sealed record ChartPresentation(List<BarPoint> DisplayedFpsBars1, List<BarPoint> RenderedFpsBars1, List<BarPoint> DisplayedFpsBars2, List<BarPoint> RenderedFpsBars2, bool ShowRenderedFps1, string DisplayedFpsLabel1, string RenderedFpsLabel1, string DisplayedFpsLabel2, string RenderedFpsLabel2, List<SeriesPoint> MetricPts1, List<SeriesPoint> MetricPts2, string MetricLabel1, string MetricLabel2, string FpsYAxisLabel, string FpsLabelFormat, string MetricYAxisLabel);
-	private sealed record CachedRecordingMetadata(long Length, DateTime LastWriteTimeUtc, string Process, string PresentationMode, double DurationSeconds, List<string> SourceFileNames);
-	private static readonly Lock RecordingMetadataCacheLock = new();
-	private static readonly Dictionary<string, CachedRecordingMetadata> RecordingMetadataCache = new(StringComparer.OrdinalIgnoreCase);
 	private readonly PresentMonRecorder _recorder = new();
 	private List<RecordingItem> _selectedRecordings = [];
 	private ChartPresentation _lastChartPresentation;
 	private CancellationTokenSource _statsCts = new();
 	private CancellationTokenSource _processRefreshCts;
 	private volatile bool _isInitialProcessRefresh;
-	private int _statisticsBaselineIndex = -1;
-	private bool _showPercentDelta = true;
-	private bool _updatingStatisticsToolbar;
 	private GlobalKeyboardHook _globalKeyboardHook;
 	private VirtualKeyModifiers _currentModifiers = VirtualKeyModifiers.Shift;
 	private VirtualKey _currentKey = VirtualKey.F11;
@@ -99,8 +93,17 @@ public sealed partial class BenchmarksPage : Page
 					.AsOrdered()
 					.Select(info =>
 					{
-						var (process, presentationMode, durationSeconds, sourceFileNames) = LoadRecordingMetadataCached(info);
-						return (Recording: new RecordingItem
+						string process = Path.GetFileNameWithoutExtension(info.Name);
+						string presentationMode = string.Empty;
+						double durationSeconds = Math.Max(0, (info.LastWriteTime - info.CreationTime).TotalSeconds);
+						List<string> sourceFileNames = [];
+
+						using var fs = new FileStream(info.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, 4096, FileOptions.SequentialScan);
+						using var reader = new StreamReader(fs);
+						var headerLine = reader.ReadLine();
+						var firstLine = reader.ReadLine();
+
+						RecordingItem result = new()
 						{
 							FilePath = info.FullName,
 							FileName = info.Name,
@@ -110,7 +113,68 @@ public sealed partial class BenchmarksPage : Page
 							DurationSeconds = durationSeconds,
 							Date = info.LastWriteTime,
 							Time = info.LastWriteTime.TimeOfDay
-						}, SourceFileNames: sourceFileNames);
+						};
+
+						if (string.IsNullOrWhiteSpace(headerLine) || string.IsNullOrWhiteSpace(firstLine))
+							return (Recording: result, SourceFileNames: sourceFileNames);
+
+						var headers = BenchmarkCsv.ParseCsvLine(headerLine);
+						var firstValues = BenchmarkCsv.ParseCsvLine(firstLine);
+
+						string lastLine = firstLine;
+						const int tailBytes = 1024;
+						if (fs.Length > firstLine.Length + headerLine.Length + 4)
+						{
+							long tailStart = Math.Max(0, fs.Length - tailBytes);
+							fs.Seek(tailStart, SeekOrigin.Begin);
+							reader.DiscardBufferedData();
+							if (tailStart > 0)
+								reader.ReadLine();
+							while (!reader.EndOfStream)
+							{
+								var line = reader.ReadLine();
+								if (!string.IsNullOrWhiteSpace(line))
+									lastLine = line;
+							}
+						}
+
+						var lastValues = BenchmarkCsv.ParseCsvLine(lastLine);
+						int applicationIndex = headers.FindIndex(h => string.Equals(h, "Application", StringComparison.OrdinalIgnoreCase));
+						if (applicationIndex >= 0 && applicationIndex < firstValues.Count && !string.IsNullOrWhiteSpace(firstValues[applicationIndex]))
+							result.Process = firstValues[applicationIndex];
+						int presentModeIndex = headers.FindIndex(header => string.Equals(header, "PresentMode", StringComparison.OrdinalIgnoreCase));
+						if (presentModeIndex >= 0 && presentModeIndex < firstValues.Count && !string.IsNullOrWhiteSpace(firstValues[presentModeIndex]))
+							result.PresentationMode = firstValues[presentModeIndex];
+						bool hasCsvDuration = false;
+						int aggregateDurationIndex = headers.FindIndex(h => string.Equals(h, "AutoOSAggregateDurationSeconds", StringComparison.OrdinalIgnoreCase));
+						if (aggregateDurationIndex >= 0 && aggregateDurationIndex < firstValues.Count &&
+							double.TryParse(firstValues[aggregateDurationIndex], NumberStyles.Float, CultureInfo.InvariantCulture, out double aggregateDuration))
+						{
+							result.DurationSeconds = Math.Max(0, aggregateDuration);
+							hasCsvDuration = true;
+						}
+						int aggregateSourcesIndex = headers.FindIndex(h => string.Equals(h, "AutoOSAggregateSources", StringComparison.OrdinalIgnoreCase));
+						if (aggregateSourcesIndex >= 0 && aggregateSourcesIndex < firstValues.Count && !string.IsNullOrWhiteSpace(firstValues[aggregateSourcesIndex]))
+						{
+							byte[] sourceJson = Convert.FromBase64String(firstValues[aggregateSourcesIndex]);
+							sourceFileNames = [.. JsonSerializer.Deserialize(sourceJson, BenchmarksJsonContext.Default.ListString) ?? []];
+						}
+						int dateTimeIndex = headers.FindIndex(h => string.Equals(h, "TimeInDateTime", StringComparison.OrdinalIgnoreCase));
+						if (!hasCsvDuration && dateTimeIndex >= 0 && dateTimeIndex < firstValues.Count && dateTimeIndex < lastValues.Count &&
+							DateTime.TryParse(firstValues[dateTimeIndex], CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var start) &&
+							DateTime.TryParse(lastValues[dateTimeIndex], CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var end))
+						{
+							result.DurationSeconds = Math.Max(0, (end - start).TotalSeconds);
+							hasCsvDuration = true;
+						}
+						int timeSecondsIndex = headers.FindIndex(h => string.Equals(h, "TimeInSeconds", StringComparison.OrdinalIgnoreCase));
+						if (!hasCsvDuration && timeSecondsIndex >= 0 && timeSecondsIndex < firstValues.Count && timeSecondsIndex < lastValues.Count &&
+							double.TryParse(firstValues[timeSecondsIndex], NumberStyles.Float, CultureInfo.InvariantCulture, out double firstTimeSeconds) &&
+							double.TryParse(lastValues[timeSecondsIndex], NumberStyles.Float, CultureInfo.InvariantCulture, out double lastTimeSeconds))
+						{
+							result.DurationSeconds = Math.Max(0, lastTimeSeconds - firstTimeSeconds);
+						}
+						return (Recording: result, SourceFileNames: sourceFileNames);
 					})
 					.ToList();
 
@@ -158,7 +222,9 @@ public sealed partial class BenchmarksPage : Page
 	{
 		_selectedRecordings = GetSelectedRecordings();
 		ViewModel.SetSelectedRecordings(_selectedRecordings);
-		UpdateStatisticsToolbar();
+		StatisticsBaselineComboBox.ItemsSource = new[] { "None" }.Concat(_selectedRecordings.Select(recording => recording.Title)).ToList();
+		StatisticsBaselineComboBox.SelectedIndex = 0;
+		ViewModel.IsDeltaModeEnabled = false;
 		ViewModel.ClearAnalysis();
 		ViewModel.RefreshChartColors();
 		ViewModel.StatisticsRows.Clear();
@@ -578,50 +644,17 @@ public sealed partial class BenchmarksPage : Page
 		}
 	}
 
-	private void UpdateStatisticsToolbar()
-	{
-		_updatingStatisticsToolbar = true;
-		_statisticsBaselineIndex = -1;
-		StatisticsBaselineComboBox.ItemsSource = new[] { "None" }.Concat(_selectedRecordings.Select(recording => recording.Title)).ToList();
-		StatisticsBaselineComboBox.SelectedIndex = 0;
-		SetDeltaModeEnabled(false);
-		_updatingStatisticsToolbar = false;
-	}
-
 	private void StatisticsBaselineComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
 	{
-		if (_updatingStatisticsToolbar)
-			return;
-
-		_statisticsBaselineIndex = StatisticsBaselineComboBox.SelectedIndex - 1;
-		SetDeltaModeEnabled(_statisticsBaselineIndex >= 0);
+		ViewModel.IsDeltaModeEnabled = StatisticsBaselineComboBox.SelectedIndex >= 1;
 		RefreshStatisticsDelta();
 	}
 
 	private void StatisticsDeltaModeSelector_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
 	{
-		if (_updatingStatisticsToolbar)
-			return;
-
-		bool showPercentDelta = sender.SelectedItem is SelectorBarItem { Text: "%" };
-		if (_showPercentDelta == showPercentDelta)
-			return;
-
-		_showPercentDelta = showPercentDelta;
-		if (_statisticsBaselineIndex >= 0)
+		ViewModel.IsPercentDelta = sender.SelectedItem == PercentDeltaItem;
+		if (StatisticsBaselineComboBox.SelectedIndex >= 1)
 			RefreshStatisticsDelta();
-	}
-
-	private void SetDeltaModeEnabled(bool isEnabled)
-	{
-		bool wasUpdatingToolbar = _updatingStatisticsToolbar;
-		_updatingStatisticsToolbar = true;
-		PercentDeltaItem.IsSelected = isEnabled && _showPercentDelta;
-		AbsoluteDeltaItem.IsSelected = isEnabled && !_showPercentDelta;
-		StatisticsDeltaModeContainer.IsEnabled = isEnabled;
-		StatisticsDeltaModeSelector.IsEnabled = isEnabled;
-		StatisticsDeltaModeContainer.Opacity = isEnabled ? 1 : 0.45;
-		_updatingStatisticsToolbar = wasUpdatingToolbar;
 	}
 
 	private void RefreshStatisticsDelta()
@@ -636,8 +669,9 @@ public sealed partial class BenchmarksPage : Page
 		}
 
 		ApplyResultComparisons(rows, _selectedRecordings.Count == 2);
-		if (_statisticsBaselineIndex is 0 or 1)
-			ApplyResultDeltas(rows, _statisticsBaselineIndex, _showPercentDelta);
+		int baselineIdx = StatisticsBaselineComboBox.SelectedIndex - 1;
+		if (baselineIdx is 0 or 1)
+			ApplyResultDeltas(rows, baselineIdx, ViewModel.IsPercentDelta);
 		ConfigureStatisticsColumns();
 	}
 
@@ -685,16 +719,6 @@ public sealed partial class BenchmarksPage : Page
 	private void BenchmarksSelectorBar_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
 	{
 		var selectedItem = args.SelectedItem ?? sender.SelectedItem;
-		if (!ReferenceEquals(selectedItem, StatisticsTab) && ViewModel.ActiveTab == "Statistics")
-		{
-			_updatingStatisticsToolbar = true;
-			StatisticsBaselineComboBox.SelectedIndex = 0;
-			_updatingStatisticsToolbar = false;
-			_statisticsBaselineIndex = -1;
-			SetDeltaModeEnabled(false);
-			RefreshStatisticsDelta();
-		}
-
 		if (ReferenceEquals(selectedItem, RecordingsTab))
 		{
 			ViewModel.ActiveTab = "Recordings";
@@ -970,22 +994,21 @@ public sealed partial class BenchmarksPage : Page
 		}
 	}
 
-	private async Task SaveAsPngAsync(SfCartesianChart chart, string suggestedFileName)
+	private async Task SaveChartAsync(SfCartesianChart chart, string suggestedFileName, Guid encoderId, string extension, bool flattenBackground)
 	{
 		var picker = new SavePicker(App.MainWindow)
 		{
-			DefaultFileExtension = "PNG image",
+			DefaultFileExtension = $"{extension} image",
 			ShowAllFilesOption = false,
 			SuggestedFileName = suggestedFileName,
-			Title = "Save benchmark image"
 		};
-		picker.FileTypeChoices.Add("PNG image", ["*.png"]);
+		picker.FileTypeChoices.Add($"{extension} image", [$"*.{extension}"]);
 
 		string filePath = picker.PickSaveFile();
 		if (string.IsNullOrWhiteSpace(filePath))
 			return;
-		if (!filePath.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
-			filePath += ".png";
+		if (!filePath.EndsWith($".{extension}", StringComparison.OrdinalIgnoreCase))
+			filePath += $".{extension}";
 
 		var bitmap = new RenderTargetBitmap();
 		await bitmap.RenderAsync(chart);
@@ -994,11 +1017,28 @@ public sealed partial class BenchmarksPage : Page
 
 		var pixels = await bitmap.GetPixelsAsync();
 		byte[] pixelData = pixels.ToArray();
-		FlattenTransparency(pixelData, new UISettings().GetColorValue(UIColorType.Background));
+
+		if (flattenBackground)
+		{
+			var background = new UISettings().GetColorValue(UIColorType.Background);
+			for (int i = 0; i < pixelData.Length; i += 4)
+			{
+				int alpha = pixelData[i + 3];
+				if (alpha < 255)
+				{
+					int inverseAlpha = 255 - alpha;
+					pixelData[i] = (byte)(pixelData[i] + background.B * inverseAlpha / 255);
+					pixelData[i + 1] = (byte)(pixelData[i + 1] + background.G * inverseAlpha / 255);
+					pixelData[i + 2] = (byte)(pixelData[i + 2] + background.R * inverseAlpha / 255);
+					pixelData[i + 3] = 255;
+				}
+			}
+		}
+
 		StorageFolder folder = await StorageFolder.GetFolderFromPathAsync(Path.GetDirectoryName(filePath));
 		StorageFile file = await folder.CreateFileAsync(Path.GetFileName(filePath), CreationCollisionOption.ReplaceExisting);
 		using var stream = await file.OpenAsync(FileAccessMode.ReadWrite);
-		BitmapEncoder encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
+		BitmapEncoder encoder = await BitmapEncoder.CreateAsync(encoderId, stream);
 		encoder.SetPixelData(
 			BitmapPixelFormat.Bgra8,
 			BitmapAlphaMode.Premultiplied,
@@ -1008,22 +1048,6 @@ public sealed partial class BenchmarksPage : Page
 			96,
 			pixelData);
 		await encoder.FlushAsync();
-
-		static void FlattenTransparency(byte[] pixels, Windows.UI.Color background)
-		{
-			for (int i = 0; i < pixels.Length; i += 4)
-			{
-				int alpha = pixels[i + 3];
-				if (alpha < 255)
-				{
-					int inverseAlpha = 255 - alpha;
-					pixels[i] = (byte)(pixels[i] + background.B * inverseAlpha / 255);
-					pixels[i + 1] = (byte)(pixels[i + 1] + background.G * inverseAlpha / 255);
-					pixels[i + 2] = (byte)(pixels[i + 2] + background.R * inverseAlpha / 255);
-					pixels[i + 3] = 255;
-				}
-			}
-		}
 	}
 
 	private void Chart_RightTapped(object sender, RightTappedRoutedEventArgs e)
@@ -1032,13 +1056,23 @@ public sealed partial class BenchmarksPage : Page
 		{
 			string chartType = ViewModel.AnalysisChartType;
 			var flyout = new MenuFlyout();
-			var saveItem = new MenuFlyoutItem
+
+			var jpegItem = new MenuFlyoutItem
+			{
+				Text = "Save as JPG",
+				Icon = new FontIcon { Glyph = "\uE896" }
+			};
+			jpegItem.Click += async (s, args) => await SaveChartAsync(chart, $"Benchmark-{chartType}", BitmapEncoder.JpegEncoderId, "jpg", true);
+			flyout.Items.Add(jpegItem);
+
+			var pngItem = new MenuFlyoutItem
 			{
 				Text = "Save as PNG",
 				Icon = new FontIcon { Glyph = "\uE896" }
 			};
-			saveItem.Click += async (s, args) => await SaveAsPngAsync(chart, $"Benchmark-{chartType}");
-			flyout.Items.Add(saveItem);
+			pngItem.Click += async (s, args) => await SaveChartAsync(chart, $"Benchmark-{chartType}", BitmapEncoder.PngEncoderId, "png", false);
+			flyout.Items.Add(pngItem);
+
 			flyout.ShowAt(chart, e.GetPosition(chart));
 		}
 	}
@@ -1046,9 +1080,8 @@ public sealed partial class BenchmarksPage : Page
 	private void ConfigureStatisticsColumns()
 	{
 		bool showRecordingB = _selectedRecordings.Count == 2;
-		int baselineIndex = showRecordingB && _statisticsBaselineIndex is 0 or 1
-			? _statisticsBaselineIndex
-			: -1;
+		int baselineIdx = StatisticsBaselineComboBox.SelectedIndex - 1;
+		int baselineIndex = showRecordingB && baselineIdx is 0 or 1 ? baselineIdx : -1;
 
 		StatisticsTreeGrid.Columns.Remove(StatisticsRecordingAColumn);
 		StatisticsTreeGrid.Columns.Remove(StatisticsRecordingBColumn);
@@ -1062,13 +1095,12 @@ public sealed partial class BenchmarksPage : Page
 		if (baselineIndex >= 0)
 			StatisticsTreeGrid.Columns.Add(StatisticsDeltaColumn);
 
-		ViewModel.DeltaHeader = _showPercentDelta ? "Delta (%)" : "Delta (+/-)";
-		ViewModel.RecordingAHeader = _selectedRecordings.Count >= 1
-			? _selectedRecordings[0].Title + (baselineIndex == 0 ? " (Baseline)" : string.Empty)
-			: "Recording A";
-		ViewModel.RecordingBHeader = _selectedRecordings.Count >= 2
-			? _selectedRecordings[1].Title + (baselineIndex == 1 ? " (Baseline)" : string.Empty)
-			: "Recording B";
+		if (baselineIndex >= 0)
+			ViewModel.DeltaHeader = $"{_selectedRecordings[baselineIndex].Title} (Delta)";
+		else
+			ViewModel.DeltaHeader = ViewModel.IsPercentDelta ? "Delta (%)" : "Delta (+/-)";
+		ViewModel.RecordingAHeader = _selectedRecordings.Count >= 1 ? _selectedRecordings[0].Title + (baselineIndex == 0 ? " (Baseline)" : string.Empty) : "Recording A";
+		ViewModel.RecordingBHeader = _selectedRecordings.Count >= 2 ? _selectedRecordings[1].Title + (baselineIndex == 1 ? " (Baseline)" : string.Empty) : "Recording B";
 	}
 
 	private async Task UpdateStatisticsTable()
@@ -1252,6 +1284,12 @@ public sealed partial class BenchmarksPage : Page
 			return double.TryParse(trimmed, NumberStyles.Float, CultureInfo.InvariantCulture, out result);
 		}
 
+		static string signed(double v, string f, string u)
+		{
+			string s = v > 0 ? "+ " : v < 0 ? "- " : "";
+			return s + Math.Abs(v).ToString(f, CultureInfo.InvariantCulture) + u;
+		}
+
 		foreach (ResultRow row in rows)
 		{
 			string baselineText = baselineIndex == 0 ? row.RecordingA : row.RecordingB;
@@ -1278,25 +1316,19 @@ public sealed partial class BenchmarksPage : Page
 				if (baseline == 0)
 					continue;
 				delta = delta / Math.Abs(baseline) * 100;
-				row.Delta = FormatSignedDelta(delta, "0.##", "%");
+				row.Delta = signed(delta, "0.##", "%");
 				continue;
 			}
 
 			if (baselineText.EndsWith(" FPS", StringComparison.Ordinal))
-				row.Delta = FormatSignedDelta(delta, "0.###", " FPS");
+				row.Delta = signed(delta, "0.###", " FPS");
 			else if (baselineText.EndsWith(" ms", StringComparison.Ordinal))
-				row.Delta = FormatSignedDelta(delta, "0.####", " ms");
+				row.Delta = signed(delta, "0.####", " ms");
 			else if (baselineText.EndsWith('%'))
-				row.Delta = FormatSignedDelta(delta, "0.0", " pp");
+				row.Delta = signed(delta, "0.0", " pp");
 			else
-				row.Delta = FormatSignedDelta(delta, "0.#####", string.Empty);
+				row.Delta = signed(delta, "0.#####", string.Empty);
 		}
-	}
-
-	private static string FormatSignedDelta(double value, string format, string unit)
-	{
-		string sign = value > 0 ? "+" : string.Empty;
-		return sign + value.ToString(format, CultureInfo.InvariantCulture) + unit;
 	}
 
 	private static List<ResultRow> GroupResultRows(IEnumerable<ResultRow> rows)
@@ -1329,8 +1361,7 @@ public sealed partial class BenchmarksPage : Page
 			return metric;
 		}
 
-		static string getGroupTooltip(string group) =>
-			BenchmarkCsv.MetricDescriptions.TryGetValue(group, out var tip) ? tip : "Benchmark statistic.";
+		static string getGroupTooltip(string group) => BenchmarkCsv.MetricDescriptions.TryGetValue(group, out var tip) ? tip : "Benchmark statistic.";
 
 		List<ResultRow> groups = [];
 		var groupLookup = new Dictionary<string, ResultRow>(StringComparer.Ordinal);
@@ -1369,104 +1400,6 @@ public sealed partial class BenchmarksPage : Page
 			});
 		}
 		return groups;
-	}
-
-	private static (string Process, string PresentationMode, double DurationSeconds, List<string> SourceFileNames) LoadRecordingMetadataCached(FileInfo info)
-	{
-		lock (RecordingMetadataCacheLock)
-		{
-			if (RecordingMetadataCache.TryGetValue(info.FullName, out CachedRecordingMetadata cached) &&
-				cached.Length == info.Length && cached.LastWriteTimeUtc == info.LastWriteTimeUtc)
-			{
-				return (cached.Process, cached.PresentationMode, cached.DurationSeconds, cached.SourceFileNames);
-			}
-		}
-
-		var metadata = LoadRecordingMetadata(info.FullName, info);
-		var cacheEntry = new CachedRecordingMetadata(
-			info.Length,
-			info.LastWriteTimeUtc,
-			metadata.Process,
-			metadata.PresentationMode,
-			metadata.DurationSeconds,
-			metadata.SourceFileNames);
-		lock (RecordingMetadataCacheLock)
-		{
-			RecordingMetadataCache[info.FullName] = cacheEntry;
-		}
-		return metadata;
-	}
-
-	private static (string Process, string PresentationMode, double DurationSeconds, List<string> SourceFileNames) LoadRecordingMetadata(string filePath, FileInfo info)
-	{
-		string process = Path.GetFileNameWithoutExtension(info.Name);
-		string presentationMode = string.Empty;
-		double durationSeconds = Math.Max(0, (info.LastWriteTime - info.CreationTime).TotalSeconds);
-		List<string> sourceFileNames = [];
-		
-		using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, 4096, FileOptions.SequentialScan);
-		using var reader = new StreamReader(fs);
-		var headerLine = reader.ReadLine();
-		var firstLine = reader.ReadLine();
-		if (string.IsNullOrWhiteSpace(headerLine) || string.IsNullOrWhiteSpace(firstLine))
-			return (process, presentationMode, durationSeconds, sourceFileNames);
-		var headers = BenchmarkCsv.ParseCsvLine(headerLine);
-		var firstValues = BenchmarkCsv.ParseCsvLine(firstLine);
-		
-		string lastLine = firstLine;
-		const int tailBytes = 1024;
-		if (fs.Length > firstLine.Length + headerLine.Length + 4)
-		{
-			long tailStart = Math.Max(0, fs.Length - tailBytes);
-			fs.Seek(tailStart, SeekOrigin.Begin);
-			reader.DiscardBufferedData();
-			if (tailStart > 0)
-				reader.ReadLine();
-			while (!reader.EndOfStream)
-			{
-				var line = reader.ReadLine();
-				if (!string.IsNullOrWhiteSpace(line))
-					lastLine = line;
-			}
-		}
-		
-		var lastValues = BenchmarkCsv.ParseCsvLine(lastLine);
-		int applicationIndex = headers.FindIndex(h => string.Equals(h, "Application", StringComparison.OrdinalIgnoreCase));
-		if (applicationIndex >= 0 && applicationIndex < firstValues.Count && !string.IsNullOrWhiteSpace(firstValues[applicationIndex]))
-			process = firstValues[applicationIndex];
-		int presentModeIndex = headers.FindIndex(header => string.Equals(header, "PresentMode", StringComparison.OrdinalIgnoreCase));
-		if (presentModeIndex >= 0 && presentModeIndex < firstValues.Count && !string.IsNullOrWhiteSpace(firstValues[presentModeIndex]))
-			presentationMode = firstValues[presentModeIndex];
-		bool hasCsvDuration = false;
-		int aggregateDurationIndex = headers.FindIndex(h => string.Equals(h, "AutoOSAggregateDurationSeconds", StringComparison.OrdinalIgnoreCase));
-		if (aggregateDurationIndex >= 0 && aggregateDurationIndex < firstValues.Count &&
-			double.TryParse(firstValues[aggregateDurationIndex], NumberStyles.Float, CultureInfo.InvariantCulture, out double aggregateDuration))
-		{
-			durationSeconds = Math.Max(0, aggregateDuration);
-			hasCsvDuration = true;
-		}
-		int aggregateSourcesIndex = headers.FindIndex(h => string.Equals(h, "AutoOSAggregateSources", StringComparison.OrdinalIgnoreCase));
-		if (aggregateSourcesIndex >= 0 && aggregateSourcesIndex < firstValues.Count && !string.IsNullOrWhiteSpace(firstValues[aggregateSourcesIndex]))
-		{
-			byte[] sourceJson = Convert.FromBase64String(firstValues[aggregateSourcesIndex]);
-			sourceFileNames = [.. JsonSerializer.Deserialize(sourceJson, BenchmarksJsonContext.Default.ListString) ?? []];
-		}
-		int dateTimeIndex = headers.FindIndex(h => string.Equals(h, "TimeInDateTime", StringComparison.OrdinalIgnoreCase));
-		if (!hasCsvDuration && dateTimeIndex >= 0 && dateTimeIndex < firstValues.Count && dateTimeIndex < lastValues.Count &&
-			DateTime.TryParse(firstValues[dateTimeIndex], CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var start) &&
-			DateTime.TryParse(lastValues[dateTimeIndex], CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var end))
-		{
-			durationSeconds = Math.Max(0, (end - start).TotalSeconds);
-			hasCsvDuration = true;
-		}
-		int timeSecondsIndex = headers.FindIndex(h => string.Equals(h, "TimeInSeconds", StringComparison.OrdinalIgnoreCase));
-		if (!hasCsvDuration && timeSecondsIndex >= 0 && timeSecondsIndex < firstValues.Count && timeSecondsIndex < lastValues.Count &&
-			double.TryParse(firstValues[timeSecondsIndex], NumberStyles.Float, CultureInfo.InvariantCulture, out double firstTimeSeconds) &&
-			double.TryParse(lastValues[timeSecondsIndex], NumberStyles.Float, CultureInfo.InvariantCulture, out double lastTimeSeconds))
-		{
-			durationSeconds = Math.Max(0, lastTimeSeconds - firstTimeSeconds);
-		}
-		return (process, presentationMode, durationSeconds, sourceFileNames);
 	}
 
 	private List<RecordingItem> GetSelectedRecordings()

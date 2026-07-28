@@ -358,28 +358,29 @@
                                                    Header="Statistics">
                         <controls:TabbedCommandBarItem.PrimaryCommands>
 
-                            <!--  Baseline Recording  -->
-                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.HasSecondRecording, Mode=OneWay}">
+                            <!--  Baseline  -->
+                            <AppBarElementContainer Margin="4,0,0,0"
+                                                    IsEnabled="{x:Bind ViewModel.HasSecondRecording, Mode=OneWay}">
                                 <ComboBox x:Name="StatisticsBaselineComboBox"
-                                          MinWidth="180"
+                                          MinWidth="200"
                                           PlaceholderText="Baseline recording"
                                           SelectionChanged="StatisticsBaselineComboBox_SelectionChanged"
-                                          ToolTipService.ToolTip="Baseline recording" />
+                                          ToolTipService.ToolTip="Baseline" />
                             </AppBarElementContainer>
 
                             <AppBarSeparator Margin="4,0" />
 
                             <!--  Delta Format  -->
-                            <AppBarElementContainer x:Name="StatisticsDeltaModeContainer"
-                                                    IsEnabled="False"
+                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsDeltaModeEnabled, Mode=OneWay}"
                                                     ToolTipService.ToolTip="Delta format">
-                                <dev:SelectorBarSegmented x:Name="StatisticsDeltaModeSelector"
+                                <dev:SelectorBarSegmented IsEnabled="{x:Bind ViewModel.IsDeltaModeEnabled, Mode=OneWay}"
                                                           SelectionChanged="StatisticsDeltaModeSelector_SelectionChanged">
+                                    <SelectorBarItem IsSelected="True"
+                                                     Text="+/-"
+                                                     ToolTipService.ToolTip="Absolute delta" />
                                     <SelectorBarItem x:Name="PercentDeltaItem"
-                                                     IsSelected="True"
-                                                     Text="%" />
-                                    <SelectorBarItem x:Name="AbsoluteDeltaItem"
-                                                     Text="+/-" />
+                                                     Text="%"
+                                                     ToolTipService.ToolTip="Percent delta" />
                                 </dev:SelectorBarSegmented>
                             </AppBarElementContainer>
 
@@ -829,13 +830,13 @@
 
                                         <!--  Metric Series 1  -->
                                         <chart:FastScatterBitmapSeries EnableAnimation="True"
-                                                                        Fill="{x:Bind ViewModel.ChartColorBrush1, Mode=OneWay}"
-                                                                        ItemsSource="{x:Bind ViewModel.LineScatterChartData1, Mode=OneWay}"
-                                                                        Label="{x:Bind ViewModel.LineScatterChartLabel1, Mode=OneWay}"
-                                                                        PointHeight="5"
-                                                                        PointWidth="5"
-                                                                        XBindingPath="Index"
-                                                                        YBindingPath="Value" />
+                                                                       Fill="{x:Bind ViewModel.ChartColorBrush1, Mode=OneWay}"
+                                                                       ItemsSource="{x:Bind ViewModel.LineScatterChartData1, Mode=OneWay}"
+                                                                       Label="{x:Bind ViewModel.LineScatterChartLabel1, Mode=OneWay}"
+                                                                       PointHeight="5"
+                                                                       PointWidth="5"
+                                                                       XBindingPath="Index"
+                                                                       YBindingPath="Value" />
 
                                         <!--  Metric Series 2  -->
                                         <chart:FastScatterBitmapSeries EnableAnimation="True"

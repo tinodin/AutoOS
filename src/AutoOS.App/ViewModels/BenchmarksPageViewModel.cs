@@ -48,7 +48,9 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	private string _lineScatterChartLabel2 = string.Empty;
 	private string _recordingAHeader = "Recording A";
 	private string _recordingBHeader = "Recording B";
-	private string _deltaHeader = "Delta (%)";
+	private string _deltaHeader;
+	private bool _isDeltaModeEnabled;
+	private bool _isPercentDelta;
 
 	public string ActiveTab
 	{
@@ -534,6 +536,18 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	{
 		get => _deltaHeader;
 		set => SetProperty(ref _deltaHeader, value);
+	}
+
+	public bool IsDeltaModeEnabled
+	{
+		get => _isDeltaModeEnabled;
+		set => SetProperty(ref _isDeltaModeEnabled, value);
+	}
+
+	public bool IsPercentDelta
+	{
+		get => _isPercentDelta;
+		set => SetProperty(ref _isPercentDelta, value);
 	}
 
 	public void SetRecordings(IEnumerable<RecordingItem> recordings)
