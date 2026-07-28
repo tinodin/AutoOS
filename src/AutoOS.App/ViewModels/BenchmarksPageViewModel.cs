@@ -738,9 +738,7 @@ public sealed partial class ResultCellStyleSelector : StyleSelector
 		if (item is not ResultRow row)
 			return null;
 
-		var comparison = IsDelta
-			? row.DeltaComparison
-			: IsRecordingA ? row.RecordingAComparison : row.RecordingBComparison;
+		var comparison = IsDelta ? row.DeltaComparison : IsRecordingA ? row.RecordingAComparison : row.RecordingBComparison;
 		return comparison switch
 		{
 			ResultComparison.Better => SuccessStyle,

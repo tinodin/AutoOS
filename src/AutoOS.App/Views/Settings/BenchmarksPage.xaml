@@ -33,8 +33,8 @@
                                        IsRecordingA="True"
                                        SuccessStyle="{StaticResource SuccessCellStyle}" />
         <local:ResultCellStyleSelector x:Key="RecordingBCellStyleSelector"
-                                        CriticalStyle="{StaticResource CriticalCellStyle}"
-                                        SuccessStyle="{StaticResource SuccessCellStyle}" />
+                                       CriticalStyle="{StaticResource CriticalCellStyle}"
+                                       SuccessStyle="{StaticResource SuccessCellStyle}" />
         <local:ResultCellStyleSelector x:Key="DeltaCellStyleSelector"
                                        CriticalStyle="{StaticResource CriticalCellStyle}"
                                        IsDelta="True"
@@ -213,15 +213,15 @@
                             <AppBarElementContainer Margin="0,0,4,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
                                                     Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
-                                 <ToggleButton Content="0.1% Low Avg"
-                                               IsChecked="{x:Bind ViewModel.ShowLow01, Mode=TwoWay}"
-                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('0.1% Low Avg')}" />
-                             </AppBarElementContainer>
-                             <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
-                                                     Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
-                                 <ToggleButton Content="1% Low Avg"
-                                               IsChecked="{x:Bind ViewModel.ShowLow1, Mode=TwoWay}"
-                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('1% Low Avg')}" />
+                                <ToggleButton Content="0.1% Low Avg"
+                                              IsChecked="{x:Bind ViewModel.ShowLow01, Mode=TwoWay}"
+                                              ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('0.1% Low Avg')}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="1% Low Avg"
+                                              IsChecked="{x:Bind ViewModel.ShowLow1, Mode=TwoWay}"
+                                              ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('1% Low Avg')}" />
                             </AppBarElementContainer>
 
                             <AppBarSeparator Margin="4,0"
@@ -230,15 +230,15 @@
                             <AppBarElementContainer Margin="0,0,4,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
                                                     Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
-                                 <ToggleButton Content="Avg (Arithmetic)"
-                                               IsChecked="{x:Bind ViewModel.ShowAvgArithmetic, Mode=TwoWay}"
-                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('Avg (Arithmetic)')}" />
-                             </AppBarElementContainer>
-                             <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
-                                                     Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
-                                 <ToggleButton Content="Avg (Harmonic)"
-                                               IsChecked="{x:Bind ViewModel.ShowAvgHarmonic, Mode=TwoWay}"
-                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('Avg (Harmonic)')}" />
+                                <ToggleButton Content="Avg (Arithmetic)"
+                                              IsChecked="{x:Bind ViewModel.ShowAvgArithmetic, Mode=TwoWay}"
+                                              ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('Avg (Arithmetic)')}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="Avg (Harmonic)"
+                                              IsChecked="{x:Bind ViewModel.ShowAvgHarmonic, Mode=TwoWay}"
+                                              ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('Avg (Harmonic)')}" />
                             </AppBarElementContainer>
 
                             <AppBarSeparator Margin="4,0"
@@ -247,15 +247,15 @@
                             <AppBarElementContainer Margin="0,0,4,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
                                                     Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
-                                 <ToggleButton Content="Min"
-                                               IsChecked="{x:Bind ViewModel.ShowMin, Mode=TwoWay}"
-                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('Min')}" />
-                             </AppBarElementContainer>
-                             <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
-                                                     Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
-                                 <ToggleButton Content="Max"
-                                               IsChecked="{x:Bind ViewModel.ShowMax, Mode=TwoWay}"
-                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('Max')}" />
+                                <ToggleButton Content="Min"
+                                              IsChecked="{x:Bind ViewModel.ShowMin, Mode=TwoWay}"
+                                              ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('Min')}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="Max"
+                                              IsChecked="{x:Bind ViewModel.ShowMax, Mode=TwoWay}"
+                                              ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('Max')}" />
                             </AppBarElementContainer>
 
                             <AppBarSeparator Margin="4,0"
@@ -264,43 +264,43 @@
                             <AppBarElementContainer Margin="0,0,4,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
                                                     Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
-                                 <ToggleButton Content="P0.1"
-                                               IsChecked="{x:Bind ViewModel.ShowP01, Mode=TwoWay}"
-                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P0.1')}" />
-                             </AppBarElementContainer>
-                             <AppBarElementContainer Margin="0,0,4,0"
-                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
-                                                     Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
-                                 <ToggleButton Content="P1"
-                                               IsChecked="{x:Bind ViewModel.ShowP1, Mode=TwoWay}"
-                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P1')}" />
+                                <ToggleButton Content="P0.1"
+                                              IsChecked="{x:Bind ViewModel.ShowP01, Mode=TwoWay}"
+                                              ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P0.1')}" />
                             </AppBarElementContainer>
                             <AppBarElementContainer Margin="0,0,4,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
                                                     Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
-                                 <ToggleButton Content="P5"
-                                               IsChecked="{x:Bind ViewModel.ShowP5, Mode=TwoWay}"
-                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P5')}" />
-                             </AppBarElementContainer>
-                             <AppBarElementContainer Margin="0,0,4,0"
-                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
-                                                     Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
-                                 <ToggleButton Content="P50 (Median)"
-                                               IsChecked="{x:Bind ViewModel.ShowP50Median, Mode=TwoWay}"
-                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P50 (Median)')}" />
+                                <ToggleButton Content="P1"
+                                              IsChecked="{x:Bind ViewModel.ShowP1, Mode=TwoWay}"
+                                              ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P1')}" />
                             </AppBarElementContainer>
                             <AppBarElementContainer Margin="0,0,4,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
                                                     Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
-                                 <ToggleButton Content="P95"
-                                               IsChecked="{x:Bind ViewModel.ShowP95, Mode=TwoWay}"
-                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P95')}" />
-                             </AppBarElementContainer>
-                             <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
-                                                     Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
-                                 <ToggleButton Content="P99"
-                                               IsChecked="{x:Bind ViewModel.ShowP99, Mode=TwoWay}"
-                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P99')}" />
+                                <ToggleButton Content="P5"
+                                              IsChecked="{x:Bind ViewModel.ShowP5, Mode=TwoWay}"
+                                              ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P5')}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer Margin="0,0,4,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="P50 (Median)"
+                                              IsChecked="{x:Bind ViewModel.ShowP50Median, Mode=TwoWay}"
+                                              ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P50 (Median)')}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer Margin="0,0,4,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="P95"
+                                              IsChecked="{x:Bind ViewModel.ShowP95, Mode=TwoWay}"
+                                              ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P95')}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="P99"
+                                              IsChecked="{x:Bind ViewModel.ShowP99, Mode=TwoWay}"
+                                              ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P99')}" />
                             </AppBarElementContainer>
 
                             <!--  Line / Scatter Statistics  -->
@@ -311,13 +311,13 @@
                                           SelectedIndex="0"
                                           SelectionChanged="MetricComboBox_SelectionChanged">
                                     <ComboBoxItem Content="MsBetweenDisplayChange"
-                                                   ToolTipService.ToolTip="{x:Bind ViewModel.GetMetricTooltip('MsBetweenDisplayChange')}" />
-                                     <ComboBoxItem Content="MsBetweenPresents"
-                                                   ToolTipService.ToolTip="{x:Bind ViewModel.GetMetricTooltip('MsBetweenPresents')}" />
-                                     <ComboBoxItem Content="MsGPUBusy"
-                                                   ToolTipService.ToolTip="{x:Bind ViewModel.GetMetricTooltip('MsGPUBusy')}" />
-                                     <ComboBoxItem Content="MsUntilDisplayed"
-                                                   ToolTipService.ToolTip="{x:Bind ViewModel.GetMetricTooltip('MsUntilDisplayed')}" />
+                                                  ToolTipService.ToolTip="{x:Bind ViewModel.GetMetricTooltip('MsBetweenDisplayChange')}" />
+                                    <ComboBoxItem Content="MsBetweenPresents"
+                                                  ToolTipService.ToolTip="{x:Bind ViewModel.GetMetricTooltip('MsBetweenPresents')}" />
+                                    <ComboBoxItem Content="MsGPUBusy"
+                                                  ToolTipService.ToolTip="{x:Bind ViewModel.GetMetricTooltip('MsGPUBusy')}" />
+                                    <ComboBoxItem Content="MsUntilDisplayed"
+                                                  ToolTipService.ToolTip="{x:Bind ViewModel.GetMetricTooltip('MsUntilDisplayed')}" />
                                 </ComboBox>
                             </AppBarElementContainer>
 
@@ -364,6 +364,7 @@
                     <controls:TabbedCommandBarItem x:Name="StatisticsTab"
                                                    Header="Statistics">
                         <controls:TabbedCommandBarItem.PrimaryCommands>
+
                             <!--  Baseline Recording  -->
                             <AppBarElementContainer IsEnabled="{x:Bind ViewModel.HasSecondRecording, Mode=OneWay}">
                                 <ComboBox x:Name="StatisticsBaselineComboBox"
@@ -905,11 +906,11 @@
                                 <sfgrid:TreeGridTemplateColumn common:StarRatio.ColumnRatio="2"
                                                                HeaderText="Statistic"
                                                                MappingName="Statistic">
-                                     <sfgrid:TreeGridTemplateColumn.CellTemplate>
-                                         <DataTemplate x:DataType="local:ResultRow">
-                                             <TextBlock Margin="12,0"
-                                                        VerticalAlignment="Center"
-                                                        Text="{x:Bind Statistic, Mode=OneWay}"
+                                    <sfgrid:TreeGridTemplateColumn.CellTemplate>
+                                        <DataTemplate x:DataType="local:ResultRow">
+                                            <TextBlock Margin="12,0"
+                                                       VerticalAlignment="Center"
+                                                       Text="{x:Bind Statistic, Mode=OneWay}"
                                                        TextTrimming="CharacterEllipsis"
                                                        TextWrapping="NoWrap"
                                                        ToolTipService.ToolTip="{x:Bind Tooltip, Mode=OneWay}" />
@@ -925,11 +926,11 @@
                                                            MappingName="RecordingA" />
 
                                 <!--  Recording B  -->
-                                 <sfgrid:TreeGridTextColumn x:Name="StatisticsRecordingBColumn"
-                                                            common:StarRatio.ColumnRatio="1"
-                                                            CellStyleSelector="{StaticResource RecordingBCellStyleSelector}"
-                                                            HeaderText="{x:Bind ViewModel.RecordingBHeader, Mode=OneWay}"
-                                                            MappingName="RecordingB" />
+                                <sfgrid:TreeGridTextColumn x:Name="StatisticsRecordingBColumn"
+                                                           common:StarRatio.ColumnRatio="1"
+                                                           CellStyleSelector="{StaticResource RecordingBCellStyleSelector}"
+                                                           HeaderText="{x:Bind ViewModel.RecordingBHeader, Mode=OneWay}"
+                                                           MappingName="RecordingB" />
 
                                 <!--  Delta  -->
                                 <sfgrid:TreeGridTextColumn x:Name="StatisticsDeltaColumn"
