@@ -1,49 +1,50 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-	<RootNamespace>AutoOS.Core</RootNamespace>
-	<AssemblyName>AutoOS.Core</AssemblyName>
-	<TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
-	<TargetPlatformMinVersion>10.0.26100.0</TargetPlatformMinVersion>
-	<WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
-	<Platforms>x86;x64;ARM64</Platforms>
-	<RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
-	<LangVersion>Latest</LangVersion>
-	<ImplicitUsings>true</ImplicitUsings>
-	<Nullable>disable</Nullable>
-	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
+	<PropertyGroup>
+		<RootNamespace>AutoOS.Core</RootNamespace>
+		<AssemblyName>AutoOS.Core</AssemblyName>
+		<TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+		<TargetPlatformMinVersion>10.0.26100.0</TargetPlatformMinVersion>
+		<WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
+		<Platforms>x86;x64;ARM64</Platforms>
+		<RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+		<LangVersion>Latest</LangVersion>
+		<ImplicitUsings>true</ImplicitUsings>
+		<Nullable>disable</Nullable>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
 
-  <ItemGroup>
-	<PackageReference Include="DevWinUI" />
-	<PackageReference Include="Downloader" />
-	<PackageReference Include="Microsoft.Data.Sqlite" />
-	<PackageReference Include="Microsoft.Windows.CsWin32" />
-	<PackageReference Include="Newtonsoft.Json" />
-	<PackageReference Include="PhantomClient" />
-	<PackageReference Include="Snappier" />
-	<PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" />
-	<PackageReference Include="System.ServiceProcess.ServiceController" />
-	<PackageReference Include="LevelDBSharp" />
-	<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" />
-	<PackageReference Include="ValveKeyValue" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="DevWinUI" />
+		<PackageReference Include="Downloader" />
+		<PackageReference Include="Microsoft.Data.Sqlite" />
+		<PackageReference Include="Microsoft.Windows.CsWin32" />
+		<PackageReference Include="Newtonsoft.Json" />
+		<PackageReference Include="PhantomClient" />
+		<PackageReference Include="Sep" />
+		<PackageReference Include="Snappier" />
+		<PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" />
+		<PackageReference Include="System.ServiceProcess.ServiceController" />
+		<PackageReference Include="LevelDBSharp" />
+		<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" />
+		<PackageReference Include="ValveKeyValue" />
+	</ItemGroup>
 
-  <ItemGroup>
-	<Content Include="Helpers\ReadWrite\WinRing0x64.dll">
-	  <Link>WinRing0x64.dll</Link>
-	  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	</Content>
-	<Content Include="Helpers\ReadWrite\WinRing0x64.sys">
-	  <Link>WinRing0x64.sys</Link>
-	  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	</Content>
-	<Content Include="Helpers\ReadWrite\inpoutx64.dll">
-	  <Link>inpoutx64.dll</Link>
-	  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	</Content>
-	<Content Include="Helpers\ReadWrite\inpoutx64.sys">
-	  <Link>inpoutx64.sys</Link>
-	  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	</Content>
-  </ItemGroup>
+	<ItemGroup>
+		<Content Include="Helpers\ReadWrite\WinRing0x64.dll">
+			<Link>WinRing0x64.dll</Link>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Helpers\ReadWrite\WinRing0x64.sys">
+			<Link>WinRing0x64.sys</Link>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Helpers\ReadWrite\inpoutx64.dll">
+			<Link>inpoutx64.dll</Link>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Helpers\ReadWrite\inpoutx64.sys">
+			<Link>inpoutx64.sys</Link>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 </Project>

@@ -26,14 +26,15 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	private ObservableCollection<string> _processSuggestions = [];
 	private ObservableCollection<RecordingItem> _recordings = [];
 	private ObservableCollection<ResultRow> _statisticsRows = [];
+	private ObservableCollection<string> _baselineItems = ["None"];
 	private ObservableCollection<BarPoint> _barColumnChartDisplayedData1 = [];
 	private ObservableCollection<BarPoint> _barColumnChartRenderedData1 = [];
 	private ObservableCollection<BarPoint> _barColumnChartDisplayedData2 = [];
 	private ObservableCollection<BarPoint> _barColumnChartRenderedData2 = [];
 	private ObservableCollection<SeriesPoint> _lineScatterChartData1 = [];
 	private ObservableCollection<SeriesPoint> _lineScatterChartData2 = [];
-	private Windows.UI.Color _chartColor1 = Colors.DodgerBlue;
-	private Windows.UI.Color _chartColor2 = Colors.Orange;
+	private Windows.UI.Color _chartColor1;
+	private Windows.UI.Color _chartColor2;
 	private Windows.UI.Color _chartRenderedColor1;
 	private Windows.UI.Color _chartRenderedColor2;
 	private SolidColorBrush _chartColorBrush1;
@@ -52,7 +53,14 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	private string _recordingBHeader = "Recording B";
 	private string _deltaHeader;
 	private bool _isDeltaModeEnabled;
+	private int _baselineSelectedIndex;
 	private bool _isPercentDelta;
+
+	public BenchmarksPageViewModel()
+	{
+		ChartColor1 = Colors.DodgerBlue;
+		ChartColor2 = Colors.Orange;
+	}
 
 	public string ActiveTab
 	{
@@ -88,6 +96,12 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	{
 		get => _statisticsRows;
 		set => SetProperty(ref _statisticsRows, value);
+	}
+
+	public ObservableCollection<string> BaselineItems
+	{
+		get => _baselineItems;
+		private set => SetProperty(ref _baselineItems, value);
 	}
 
 	public ObservableCollection<string> ProcessSuggestions
@@ -563,27 +577,52 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		set => SetProperty(ref _isPercentDelta, value);
 	}
 
-	public void SetRecordings(IEnumerable<RecordingItem> recordings)
+	public int BaselineSelectedIndex
 	{
-		Recordings = new ObservableCollection<RecordingItem>(recordings);
-		RecordingState = Recordings.Count == 0 ? "Empty" : "Content";
+		get => _baselineSelectedIndex;
+		set => SetProperty(ref _baselineSelectedIndex, value);
 	}
 
-	public void SetSelectedRecordings(IReadOnlyCollection<RecordingItem> recordings)
+	public void SetRecordings(IReadOnlyList<RecordingItem> recordings)
 	{
-		RecordingItem recordingA = recordings.FirstOrDefault();
-		_selectedRecordingCount = recordings.Count;
-		_selectedRecordingsHaveSameProcess = recordings.Count > 0 &&
-			recordings.Select(recording => recording.Process)
-				.Distinct(StringComparer.OrdinalIgnoreCase)
-				.Count() == 1;
+		Recordings = new ObservableCollection<RecordingItem>(recordings);
+		RecordingState = recordings.Count == 0 ? "Empty" : "Content";
+	}
+
+	public void SetSelectedRecordings(IReadOnlyList<RecordingItem> recordings)
+	{
+		int count = recordings.Count;
+		RecordingItem recordingA = count > 0 ? recordings[0] : null;
+		_selectedRecordingCount = count;
+		IsRenameEnabled = count > 0;
+
+		bool sameProcess = count > 0;
+		if (sameProcess)
+		{
+			string firstProcess = recordingA.Process;
+			for (int i = 1; i < count; i++)
+			{
+				if (!string.Equals(recordings[i].Process, firstProcess, StringComparison.OrdinalIgnoreCase))
+				{
+					sameProcess = false;
+					break;
+				}
+			}
+		}
+		_selectedRecordingsHaveSameProcess = sameProcess;
+
+		IsDeltaModeEnabled = false;
+		AnalysisChartType = "Bar";
+		BaselineItems = new ObservableCollection<string>(["None", .. recordings.Select(r => r.Title)]);
+		BaselineSelectedIndex = 0;
+
 		AnalysisProcess = recordingA?.Process ?? string.Empty;
 
-		AnalysisState = recordings.Count switch
+		AnalysisState = count switch
 		{
 			0 => "Empty",
 			> 2 => "Error",
-			2 when !_selectedRecordingsHaveSameProcess => "ProcessMismatch",
+			2 when !sameProcess => "ProcessMismatch",
 			_ => "Content"
 		};
 
@@ -596,32 +635,6 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		OnPropertyChanged(nameof(HasSecondRecording));
 		OnPropertyChanged(nameof(HasSecondRecordingVisibility));
 	}
-
-	public void ClearAnalysis()
-	{
-		BarColumnChartDisplayedData1 = null;
-		BarColumnChartRenderedData1 = null;
-		BarColumnChartDisplayedData2 = null;
-		BarColumnChartRenderedData2 = null;
-		LineScatterChartData1 = [];
-		LineScatterChartData2 = [];
-		BarColumnChartDisplayedLabel1 = string.Empty;
-		BarColumnChartRenderedLabel1 = string.Empty;
-		BarColumnChartDisplayedLabel2 = string.Empty;
-		BarColumnChartRenderedLabel2 = string.Empty;
-		LineScatterChartLabel1 = string.Empty;
-		LineScatterChartLabel2 = string.Empty;
-		BarColumnRenderedVisible = false;
-	}
-
-	public void RefreshChartColors()
-	{
-		ChartColorBrush1 = new SolidColorBrush(ChartColor1);
-		ChartRenderedColor1 = DevWinUI.ColorHelper.GetInterpolatedColor(0.35, ChartColor1, Colors.White);
-		ChartColorBrush2 = new SolidColorBrush(ChartColor2);
-		ChartRenderedColor2 = DevWinUI.ColorHelper.GetInterpolatedColor(0.35, ChartColor2, Colors.White);
-	}
-
 }
 
 [WinRT.GeneratedBindableCustomProperty]

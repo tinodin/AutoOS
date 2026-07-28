@@ -361,11 +361,11 @@
                             <!--  Baseline  -->
                             <AppBarElementContainer Margin="4,0,0,0"
                                                     IsEnabled="{x:Bind ViewModel.HasSecondRecording, Mode=OneWay}">
-                                <ComboBox x:Name="StatisticsBaselineComboBox"
-                                          MinWidth="200"
-                                          PlaceholderText="Baseline recording"
-                                          SelectionChanged="StatisticsBaselineComboBox_SelectionChanged"
-                                          ToolTipService.ToolTip="Baseline" />
+                                 <ComboBox MinWidth="200"
+                                           ItemsSource="{x:Bind ViewModel.BaselineItems, Mode=OneWay}"
+                                           SelectedIndex="{x:Bind ViewModel.BaselineSelectedIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                           SelectionChanged="StatisticsBaselineComboBox_SelectionChanged"
+                                           ToolTipService.ToolTip="Baseline" />
                             </AppBarElementContainer>
 
                             <AppBarSeparator Margin="4,0" />
@@ -402,11 +402,11 @@
                         <sfgrid:SfTreeGrid x:Name="RecordingsTreeGrid"
                                            AllowEditing="True"
                                            AllowTriStateSorting="True"
+                                           AutoExpandMode="AllNodesExpanded"
                                            AutoGenerateColumns="False"
                                            CheckBoxSelectionMode="SynchronizeSelection"
                                            ChildPropertyName="Children"
                                            ColumnWidthMode="Star"
-                                           CurrentCellActivated="RecordingsTreeGrid_CurrentCellActivated"
                                            CurrentCellEndEdit="RecordingsTreeGrid_CurrentCellEndEdit"
                                            EditTrigger="OnDoubleTap"
                                            GridLinesVisibility="Both"
