@@ -350,13 +350,6 @@
                                 </dev:DropdownColorPicker>
                             </AppBarElementContainer>
 
-                            <AppBarSeparator Margin="4,0" />
-
-                            <!--  Download  -->
-                            <AppBarButton Click="DownloadAnalysis_Click"
-                                          Icon="{dev:FontIcon Glyph=&#xE896;}"
-                                          IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
-                                          Label="Download" />
                         </controls:TabbedCommandBarItem.PrimaryCommands>
                     </controls:TabbedCommandBarItem>
 
@@ -390,13 +383,6 @@
                                 </dev:SelectorBarSegmented>
                             </AppBarElementContainer>
 
-                            <AppBarSeparator Margin="4,0" />
-
-                            <!--  Download  -->
-                            <AppBarButton Click="DownloadStatistics_Click"
-                                          Icon="{dev:FontIcon Glyph=&#xE896;}"
-                                          IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
-                                          Label="Download" />
                         </controls:TabbedCommandBarItem.PrimaryCommands>
                     </controls:TabbedCommandBarItem>
                 </controls:TabbedCommandBar.MenuItems>
@@ -575,7 +561,8 @@
 
                                 <!--  Bar Chart  -->
                                 <chart:SfCartesianChart x:Name="BarChart"
-                                                        IsTransposed="True">
+                                                        IsTransposed="True"
+                                                        RightTapped="Chart_RightTapped">
                                     <chart:SfCartesianChart.Legend>
                                         <chart:ChartLegend ToggleSeriesVisibility="True" />
                                     </chart:SfCartesianChart.Legend>
@@ -678,7 +665,8 @@
                             <dev:Case Value="Column">
 
                                 <!--  Column Chart  -->
-                                <chart:SfCartesianChart x:Name="ColumnChart">
+                                <chart:SfCartesianChart x:Name="ColumnChart"
+                                                        RightTapped="Chart_RightTapped">
                                     <chart:SfCartesianChart.Legend>
                                         <chart:ChartLegend ToggleSeriesVisibility="True" />
                                     </chart:SfCartesianChart.Legend>
@@ -776,7 +764,8 @@
                                 </chart:SfCartesianChart>
                             </dev:Case>
                             <dev:Case Value="Line">
-                                <chart:SfCartesianChart x:Name="LineChart">
+                                <chart:SfCartesianChart x:Name="LineChart"
+                                                        RightTapped="Chart_RightTapped">
                                     <chart:SfCartesianChart.Legend>
                                         <chart:ChartLegend ToggleSeriesVisibility="True" />
                                     </chart:SfCartesianChart.Legend>
@@ -824,7 +813,8 @@
                                 </chart:SfCartesianChart>
                             </dev:Case>
                             <dev:Case Value="Scatter">
-                                <chart:SfCartesianChart x:Name="ScatterChart">
+                                <chart:SfCartesianChart x:Name="ScatterChart"
+                                                        RightTapped="Chart_RightTapped">
                                     <chart:SfCartesianChart.Legend>
                                         <chart:ChartLegend ToggleSeriesVisibility="True" />
                                     </chart:SfCartesianChart.Legend>

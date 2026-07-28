@@ -164,7 +164,7 @@ public sealed partial class BenchmarksPage : Page
 		ViewModel.StatisticsRows.Clear();
 		ViewModel.AnalysisChartType = "Bar";
 
-		if (!ViewModel.IsAnalysisToolbarEnabled)
+		if (_selectedRecordings.Count is 0 or > 2)
 			return;
 
 		RebuildCharts(_selectedRecordings);
@@ -582,9 +582,7 @@ public sealed partial class BenchmarksPage : Page
 	{
 		_updatingStatisticsToolbar = true;
 		_statisticsBaselineIndex = -1;
-		StatisticsBaselineComboBox.ItemsSource = new[] { "None" }
-			.Concat(_selectedRecordings.Select(recording => recording.Title))
-			.ToList();
+		StatisticsBaselineComboBox.ItemsSource = new[] { "None" }.Concat(_selectedRecordings.Select(recording => recording.Title)).ToList();
 		StatisticsBaselineComboBox.SelectedIndex = 0;
 		SetDeltaModeEnabled(false);
 		_updatingStatisticsToolbar = false;
@@ -637,20 +635,10 @@ public sealed partial class BenchmarksPage : Page
 			row.DeltaComparison = ResultComparison.None;
 		}
 
-		ApplyResultComparisons(rows, ViewModel.CanCompareSelectedRecordings);
+		ApplyResultComparisons(rows, _selectedRecordings.Count == 2);
 		if (_statisticsBaselineIndex is 0 or 1)
 			ApplyResultDeltas(rows, _statisticsBaselineIndex, _showPercentDelta);
 		ConfigureStatisticsColumns();
-	}
-
-	private void ResetStatisticsBaseline()
-	{
-		_updatingStatisticsToolbar = true;
-		StatisticsBaselineComboBox.SelectedIndex = 0;
-		_updatingStatisticsToolbar = false;
-		_statisticsBaselineIndex = -1;
-		SetDeltaModeEnabled(false);
-		RefreshStatisticsDelta();
 	}
 
 	private void ProcessAutoSuggestBox_IsSuggestionListOpenChanged(DependencyObject sender, DependencyProperty dp)
@@ -698,7 +686,14 @@ public sealed partial class BenchmarksPage : Page
 	{
 		var selectedItem = args.SelectedItem ?? sender.SelectedItem;
 		if (!ReferenceEquals(selectedItem, StatisticsTab) && ViewModel.ActiveTab == "Statistics")
-			ResetStatisticsBaseline();
+		{
+			_updatingStatisticsToolbar = true;
+			StatisticsBaselineComboBox.SelectedIndex = 0;
+			_updatingStatisticsToolbar = false;
+			_statisticsBaselineIndex = -1;
+			SetDeltaModeEnabled(false);
+			RefreshStatisticsDelta();
+		}
 
 		if (ReferenceEquals(selectedItem, RecordingsTab))
 		{
@@ -709,7 +704,7 @@ public sealed partial class BenchmarksPage : Page
 			StopProcessDiscovery();
 			ViewModel.ActiveTab = "Analysis";
 			ViewModel.AnalysisChartType = "Bar";
-			if (ViewModel.IsAnalysisToolbarEnabled)
+			if (_selectedRecordings.Count is > 0 and <= 2)
 				ReplayAnimation();
 		}
 		else if (ReferenceEquals(selectedItem, StatisticsTab))
@@ -975,17 +970,7 @@ public sealed partial class BenchmarksPage : Page
 		}
 	}
 
-	private async void DownloadAnalysis_Click(object sender, RoutedEventArgs e)
-	{
-		await SaveElementAsPngAsync(AnalysisContent, $"Benchmark-{ViewModel.AnalysisChartType}");
-	}
-
-	private async void DownloadStatistics_Click(object sender, RoutedEventArgs e)
-	{
-		await SaveElementAsPngAsync(StatisticsTreeGrid, "Benchmark-Statistics");
-	}
-
-	private async Task SaveElementAsPngAsync(UIElement element, string suggestedFileName)
+	private async Task SaveAsPngAsync(SfCartesianChart chart, string suggestedFileName)
 	{
 		var picker = new SavePicker(App.MainWindow)
 		{
@@ -1003,7 +988,7 @@ public sealed partial class BenchmarksPage : Page
 			filePath += ".png";
 
 		var bitmap = new RenderTargetBitmap();
-		await bitmap.RenderAsync(element);
+		await bitmap.RenderAsync(chart);
 		if (bitmap.PixelWidth == 0 || bitmap.PixelHeight == 0)
 			return;
 
@@ -1023,21 +1008,38 @@ public sealed partial class BenchmarksPage : Page
 			96,
 			pixelData);
 		await encoder.FlushAsync();
+
+		static void FlattenTransparency(byte[] pixels, Windows.UI.Color background)
+		{
+			for (int i = 0; i < pixels.Length; i += 4)
+			{
+				int alpha = pixels[i + 3];
+				if (alpha < 255)
+				{
+					int inverseAlpha = 255 - alpha;
+					pixels[i] = (byte)(pixels[i] + background.B * inverseAlpha / 255);
+					pixels[i + 1] = (byte)(pixels[i + 1] + background.G * inverseAlpha / 255);
+					pixels[i + 2] = (byte)(pixels[i + 2] + background.R * inverseAlpha / 255);
+					pixels[i + 3] = 255;
+				}
+			}
+		}
 	}
 
-	private static void FlattenTransparency(byte[] pixels, Windows.UI.Color background)
+	private void Chart_RightTapped(object sender, RightTappedRoutedEventArgs e)
 	{
-		for (int i = 0; i < pixels.Length; i += 4)
+		if (sender is SfCartesianChart chart)
 		{
-			int alpha = pixels[i + 3];
-			if (alpha < 255)
+			string chartType = ViewModel.AnalysisChartType;
+			var flyout = new MenuFlyout();
+			var saveItem = new MenuFlyoutItem
 			{
-				int inverseAlpha = 255 - alpha;
-				pixels[i] = (byte)(pixels[i] + background.B * inverseAlpha / 255);
-				pixels[i + 1] = (byte)(pixels[i + 1] + background.G * inverseAlpha / 255);
-				pixels[i + 2] = (byte)(pixels[i + 2] + background.R * inverseAlpha / 255);
-				pixels[i + 3] = 255;
-			}
+				Text = "Save as PNG",
+				Icon = new FontIcon { Glyph = "\uE896" }
+			};
+			saveItem.Click += async (s, args) => await SaveAsPngAsync(chart, $"Benchmark-{chartType}");
+			flyout.Items.Add(saveItem);
+			flyout.ShowAt(chart, e.GetPosition(chart));
 		}
 	}
 
