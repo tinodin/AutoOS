@@ -1011,7 +1011,7 @@ public sealed partial class BenchmarksPage : Page
 			filePath += $".{extension}";
 
 		var bitmap = new RenderTargetBitmap();
-		await bitmap.RenderAsync(element);
+		await bitmap.RenderAsync(chart);
 		if (bitmap.PixelWidth == 0 || bitmap.PixelHeight == 0)
 			return;
 

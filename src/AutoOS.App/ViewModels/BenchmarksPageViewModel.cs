@@ -19,6 +19,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	private bool _isRecording;
 	private int _recordingCountdown;
 	private string _analysisChartType = "Bar";
+	private string _analysisProcess;
 	private readonly HashSet<string> _recordableProcesses = new(StringComparer.OrdinalIgnoreCase);
 	private bool _selectedProcessIsRecordable;
 	private ObservableCollection<string> _processSuggestions = [];
@@ -314,6 +315,12 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		}
 	}
 
+	public string AnalysisProcess
+	{
+		get => _analysisProcess;
+		set => SetProperty(ref _analysisProcess, value);
+	}
+
 	public Visibility MetricVisibility => (AnalysisChartType is "Bar" or "Column") ? Visibility.Collapsed : Visibility.Visible;
 
 	public Visibility BarStatisticsVisibility => (AnalysisChartType is "Bar" or "Column") ? Visibility.Visible : Visibility.Collapsed;
@@ -565,7 +572,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 			recordings.Select(recording => recording.Process)
 				.Distinct(StringComparer.OrdinalIgnoreCase)
 				.Count() == 1;
-		AnalysisProcessText = recordingA?.Process ?? string.Empty;
+		AnalysisProcess = recordingA?.Process ?? string.Empty;
 
 		AnalysisState = recordings.Count switch
 		{
@@ -574,6 +581,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 			2 when !_selectedRecordingsHaveSameProcess => "ProcessMismatch",
 			_ => "Content"
 		};
+
 		StatisticsState = AnalysisState;
 		OnPropertyChanged(nameof(IsAggregateEnabled));
 		OnPropertyChanged(nameof(IsAnalysisToolbarEnabled));

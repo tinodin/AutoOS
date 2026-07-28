@@ -554,7 +554,7 @@
                                             <chart:ChartLegend.Header>
                                                 <TextBlock HorizontalAlignment="Center"
                                                            Style="{StaticResource BodyLargeTextBlockStyle}"
-                                                           Text="{x:Bind ViewModel.AnalysisProcessText, Mode=OneWay}" />
+                                                           Text="{x:Bind ViewModel.AnalysisProcess, Mode=OneWay}" />
                                             </chart:ChartLegend.Header>
                                         </chart:ChartLegend>
                                     </chart:SfCartesianChart.Legend>
@@ -664,7 +664,7 @@
                                             <chart:ChartLegend.Header>
                                                 <TextBlock HorizontalAlignment="Center"
                                                            Style="{StaticResource BodyLargeTextBlockStyle}"
-                                                           Text="{x:Bind ViewModel.AnalysisProcessText, Mode=OneWay}" />
+                                                           Text="{x:Bind ViewModel.AnalysisProcess, Mode=OneWay}" />
                                             </chart:ChartLegend.Header>
                                         </chart:ChartLegend>
                                     </chart:SfCartesianChart.Legend>
@@ -769,7 +769,7 @@
                                             <chart:ChartLegend.Header>
                                                 <TextBlock HorizontalAlignment="Center"
                                                            Style="{StaticResource BodyLargeTextBlockStyle}"
-                                                           Text="{x:Bind ViewModel.AnalysisProcessText, Mode=OneWay}" />
+                                                           Text="{x:Bind ViewModel.AnalysisProcess, Mode=OneWay}" />
                                             </chart:ChartLegend.Header>
                                         </chart:ChartLegend>
                                     </chart:SfCartesianChart.Legend>
@@ -824,7 +824,7 @@
                                             <chart:ChartLegend.Header>
                                                 <TextBlock HorizontalAlignment="Center"
                                                            Style="{StaticResource BodyLargeTextBlockStyle}"
-                                                           Text="{x:Bind ViewModel.AnalysisProcessText, Mode=OneWay}" />
+                                                           Text="{x:Bind ViewModel.AnalysisProcess, Mode=OneWay}" />
                                             </chart:ChartLegend.Header>
                                         </chart:ChartLegend>
                                     </chart:SfCartesianChart.Legend>
