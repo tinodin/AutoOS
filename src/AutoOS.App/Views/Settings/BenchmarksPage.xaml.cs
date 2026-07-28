@@ -29,6 +29,9 @@ public sealed partial class BenchmarksPage : Page
 	private CancellationTokenSource _statsCts = new();
 	private CancellationTokenSource _processRefreshCts;
 	private volatile bool _isInitialProcessRefresh;
+	private int _statisticsBaselineIndex = -1;
+	private bool _showPercentDelta = true;
+	private bool _updatingStatisticsToolbar;
 	private GlobalKeyboardHook _globalKeyboardHook;
 	private VirtualKeyModifiers _currentModifiers = VirtualKeyModifiers.Shift;
 	private VirtualKey _currentKey = VirtualKey.F11;
@@ -149,6 +152,7 @@ public sealed partial class BenchmarksPage : Page
 	{
 		_selectedRecordings = GetSelectedRecordings();
 		ViewModel.SetSelectedRecordings(_selectedRecordings);
+		UpdateStatisticsToolbar();
 		ViewModel.ClearAnalysis();
 		ViewModel.RefreshChartColors();
 		ViewModel.StatisticsRows.Clear();
@@ -568,6 +572,81 @@ public sealed partial class BenchmarksPage : Page
 		}
 	}
 
+	private void UpdateStatisticsToolbar()
+	{
+		_updatingStatisticsToolbar = true;
+		_statisticsBaselineIndex = -1;
+		StatisticsBaselineComboBox.ItemsSource = new[] { "None" }
+			.Concat(_selectedRecordings.Select(recording => recording.Title))
+			.ToList();
+		StatisticsBaselineComboBox.SelectedIndex = 0;
+		SetDeltaModeEnabled(false);
+		_updatingStatisticsToolbar = false;
+	}
+
+	private void StatisticsBaselineComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+	{
+		if (_updatingStatisticsToolbar)
+			return;
+
+		_statisticsBaselineIndex = StatisticsBaselineComboBox.SelectedIndex - 1;
+		SetDeltaModeEnabled(_statisticsBaselineIndex >= 0);
+		RefreshStatisticsDelta();
+	}
+
+	private void StatisticsDeltaModeSelector_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
+	{
+		if (_updatingStatisticsToolbar)
+			return;
+
+		bool showPercentDelta = sender.SelectedItem is SelectorBarItem { Text: "%" };
+		if (_showPercentDelta == showPercentDelta)
+			return;
+
+		_showPercentDelta = showPercentDelta;
+		if (_statisticsBaselineIndex >= 0)
+			RefreshStatisticsDelta();
+	}
+
+	private void SetDeltaModeEnabled(bool isEnabled)
+	{
+		bool wasUpdatingToolbar = _updatingStatisticsToolbar;
+		_updatingStatisticsToolbar = true;
+		PercentDeltaItem.IsSelected = isEnabled && _showPercentDelta;
+		AbsoluteDeltaItem.IsSelected = isEnabled && !_showPercentDelta;
+		StatisticsDeltaModeContainer.IsEnabled = isEnabled;
+		StatisticsDeltaModeSelector.IsEnabled = isEnabled;
+		StatisticsDeltaModeContainer.Opacity = isEnabled ? 1 : 0.45;
+		_updatingStatisticsToolbar = wasUpdatingToolbar;
+	}
+
+	private void RefreshStatisticsDelta()
+	{
+		List<ResultRow> rows = [.. ViewModel.StatisticsRows.SelectMany(group => group.Children)];
+		foreach (ResultRow row in rows)
+		{
+			row.Delta = string.Empty;
+			row.RecordingAComparison = ResultComparison.None;
+			row.RecordingBComparison = ResultComparison.None;
+			row.DeltaComparison = ResultComparison.None;
+		}
+
+		ApplyResultComparisons(rows, _selectedRecordings.Count == 2);
+		if (_statisticsBaselineIndex is 0 or 1)
+			ApplyResultDeltas(rows, _statisticsBaselineIndex, _showPercentDelta);
+		ConfigureStatisticsColumns();
+	}
+
+	private void ResetStatisticsBaseline()
+	{
+		_updatingStatisticsToolbar = true;
+		StatisticsBaselineComboBox.SelectedIndex = 0;
+		_updatingStatisticsToolbar = false;
+		_statisticsBaselineIndex = -1;
+		SetDeltaModeEnabled(false);
+		RefreshStatisticsDelta();
+	}
+
 	private void ProcessAutoSuggestBox_IsSuggestionListOpenChanged(DependencyObject sender, DependencyProperty dp)
 	{
 		if (!ProcessAutoSuggestBox.IsSuggestionListOpen)
@@ -612,6 +691,8 @@ public sealed partial class BenchmarksPage : Page
 	private void BenchmarksSelectorBar_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
 	{
 		var selectedItem = args.SelectedItem ?? sender.SelectedItem;
+		if (!ReferenceEquals(selectedItem, StatisticsTab) && ViewModel.ActiveTab == "Statistics")
+			ResetStatisticsBaseline();
 
 		if (ReferenceEquals(selectedItem, RecordingsTab))
 		{
@@ -854,6 +935,34 @@ public sealed partial class BenchmarksPage : Page
 		}
 	}
 
+	private void ConfigureStatisticsColumns()
+	{
+		bool showRecordingB = _selectedRecordings.Count == 2;
+		int baselineIndex = showRecordingB && _statisticsBaselineIndex is 0 or 1
+			? _statisticsBaselineIndex
+			: -1;
+
+		StatisticsTreeGrid.Columns.Remove(StatisticsRecordingAColumn);
+		StatisticsTreeGrid.Columns.Remove(StatisticsRecordingBColumn);
+		StatisticsTreeGrid.Columns.Remove(StatisticsDeltaColumn);
+		if (baselineIndex == 1)
+			StatisticsTreeGrid.Columns.Add(StatisticsRecordingBColumn);
+		else
+			StatisticsTreeGrid.Columns.Add(StatisticsRecordingAColumn);
+		if (baselineIndex < 0 && showRecordingB)
+			StatisticsTreeGrid.Columns.Add(StatisticsRecordingBColumn);
+		if (baselineIndex >= 0)
+			StatisticsTreeGrid.Columns.Add(StatisticsDeltaColumn);
+
+		ViewModel.DeltaHeader = _showPercentDelta ? "Delta (%)" : "Delta (+/-)";
+		ViewModel.RecordingAHeader = _selectedRecordings.Count >= 1
+			? _selectedRecordings[0].Title + (baselineIndex == 0 ? " (Baseline)" : string.Empty)
+			: "Recording A";
+		ViewModel.RecordingBHeader = _selectedRecordings.Count >= 2
+			? _selectedRecordings[1].Title + (baselineIndex == 1 ? " (Baseline)" : string.Empty)
+			: "Recording B";
+	}
+
 	private async Task UpdateStatisticsTable()
 	{
 		var oldCts = _statsCts;
@@ -861,13 +970,7 @@ public sealed partial class BenchmarksPage : Page
 		oldCts.Cancel();
 		var ct = _statsCts.Token;
 
-		bool showRecordingB = _selectedRecordings.Count == 2;
-		bool containsRecordingB = StatisticsTreeGrid.Columns.Contains(StatisticsRecordingBColumn);
-
-		if (showRecordingB && !containsRecordingB)
-			StatisticsTreeGrid.Columns.Add(StatisticsRecordingBColumn);
-		else if (!showRecordingB && containsRecordingB)
-			StatisticsTreeGrid.Columns.Remove(StatisticsRecordingBColumn);
+		ConfigureStatisticsColumns();
 
 		if (_selectedRecordings.Count == 0)
 		{
@@ -884,9 +987,6 @@ public sealed partial class BenchmarksPage : Page
 			ViewModel.RecordingBHeader = "Recording B";
 			return;
 		}
-
-		ViewModel.RecordingAHeader = _selectedRecordings.Count >= 1 ? _selectedRecordings[0].Title : "Recording A";
-		ViewModel.RecordingBHeader = _selectedRecordings.Count >= 2 ? _selectedRecordings[1].Title : "Recording B";
 
 		try
 		{
@@ -922,6 +1022,7 @@ public sealed partial class BenchmarksPage : Page
 			}
 
 			ViewModel.StatisticsRows = [.. builtRows];
+			RefreshStatisticsDelta();
 			StatisticsTreeGrid.ExpandAllNodes();
 		}
 		catch (OperationCanceledException)
@@ -1026,6 +1127,70 @@ public sealed partial class BenchmarksPage : Page
 		}
 	}
 
+	private static void ApplyResultDeltas(IEnumerable<ResultRow> rows, int baselineIndex, bool showPercentDelta)
+	{
+		static bool tryParse(string value, out double result)
+		{
+			result = 0;
+			if (string.IsNullOrEmpty(value))
+				return false;
+			var trimmed = value.AsSpan();
+			if (trimmed.EndsWith(" FPS".AsSpan(), StringComparison.Ordinal))
+				trimmed = trimmed[..^4];
+			else if (trimmed.EndsWith(" ms".AsSpan(), StringComparison.Ordinal))
+				trimmed = trimmed[..^3];
+			else if (trimmed.EndsWith("%".AsSpan(), StringComparison.Ordinal))
+				trimmed = trimmed[..^1];
+			return double.TryParse(trimmed, NumberStyles.Float, CultureInfo.InvariantCulture, out result);
+		}
+
+		foreach (ResultRow row in rows)
+		{
+			string baselineText = baselineIndex == 0 ? row.RecordingA : row.RecordingB;
+			string comparisonText = baselineIndex == 0 ? row.RecordingB : row.RecordingA;
+			if (!tryParse(baselineText, out double baseline) ||
+				!tryParse(comparisonText, out double comparison))
+			{
+				continue;
+			}
+
+			double delta = comparison - baseline;
+			if (delta != 0)
+			{
+				ResultComparison baselineComparison = delta > 0 ? ResultComparison.Worse : ResultComparison.Better;
+				if (baselineIndex == 0)
+					row.RecordingAComparison = baselineComparison;
+				else
+					row.RecordingBComparison = baselineComparison;
+				row.DeltaComparison = delta > 0 ? ResultComparison.Better : ResultComparison.Worse;
+			}
+
+			if (showPercentDelta)
+			{
+				if (baseline == 0)
+					continue;
+				delta = delta / Math.Abs(baseline) * 100;
+				row.Delta = FormatSignedDelta(delta, "0.##", "%");
+				continue;
+			}
+
+			if (baselineText.EndsWith(" FPS", StringComparison.Ordinal))
+				row.Delta = FormatSignedDelta(delta, "0.###", " FPS");
+			else if (baselineText.EndsWith(" ms", StringComparison.Ordinal))
+				row.Delta = FormatSignedDelta(delta, "0.####", " ms");
+			else if (baselineText.EndsWith('%'))
+				row.Delta = FormatSignedDelta(delta, "0.0", " pp");
+			else
+				row.Delta = FormatSignedDelta(delta, "0.#####", string.Empty);
+		}
+	}
+
+	private static string FormatSignedDelta(double value, string format, string unit)
+	{
+		string sign = value > 0 ? "+" : string.Empty;
+		return sign + value.ToString(format, CultureInfo.InvariantCulture) + unit;
+	}
+
 	private static List<ResultRow> GroupResultRows(IEnumerable<ResultRow> rows)
 	{
 		static string getGroup(string metric)
@@ -1089,8 +1254,10 @@ public sealed partial class BenchmarksPage : Page
 				Tooltip = tooltip,
 				RecordingA = row.RecordingA,
 				RecordingB = row.RecordingB,
+				Delta = row.Delta,
 				RecordingAComparison = row.RecordingAComparison,
-				RecordingBComparison = row.RecordingBComparison
+				RecordingBComparison = row.RecordingBComparison,
+				DeltaComparison = row.DeltaComparison
 			});
 		}
 		return groups;
