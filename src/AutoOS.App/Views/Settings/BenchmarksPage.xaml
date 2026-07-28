@@ -366,7 +366,7 @@
                         <controls:TabbedCommandBarItem.PrimaryCommands>
 
                             <!--  Baseline Recording  -->
-                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.HasSecondRecording, Mode=OneWay}">
+                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.CanCompareSelectedRecordings, Mode=OneWay}">
                                 <ComboBox x:Name="StatisticsBaselineComboBox"
                                           MinWidth="180"
                                           PlaceholderText="Baseline recording"
@@ -555,7 +555,22 @@
             <dev:Case Value="Analysis">
                 <dev:SwitchPresenter Value="{x:Bind ViewModel.AnalysisState, Mode=OneWay}">
                     <dev:Case Value="Content">
-                        <dev:SwitchPresenter Value="{x:Bind ViewModel.AnalysisChartType, Mode=OneWay}">
+                        <Grid x:Name="AnalysisContent">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Margin="0,0,0,8"
+                                        HorizontalAlignment="Center"
+                                        Spacing="4">
+                                <TextBlock HorizontalAlignment="Center"
+                                           Style="{StaticResource BodyLargeTextBlockStyle}"
+                                           Text="{x:Bind ViewModel.AnalysisProcessText, Mode=OneWay}" />
+                            </StackPanel>
+
+                            <dev:SwitchPresenter Grid.Row="1"
+                                                 Value="{x:Bind ViewModel.AnalysisChartType, Mode=OneWay}">
                             <dev:Case Value="Bar">
 
                                 <!--  Bar Chart  -->
@@ -860,7 +875,8 @@
                                     </chart:SfCartesianChart.Series>
                                 </chart:SfCartesianChart>
                             </dev:Case>
-                        </dev:SwitchPresenter>
+                            </dev:SwitchPresenter>
+                        </Grid>
                     </dev:Case>
 
                     <!--  No Recordings  -->
@@ -901,6 +917,27 @@
                                        FontSize="12"
                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                        Text="Maximum of 2 recordings supported for analysis"
+                                       TextAlignment="Center" />
+                        </StackPanel>
+                    </dev:Case>
+
+                    <!--  Different Processes  -->
+                    <dev:Case Value="ProcessMismatch">
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="12">
+                            <FontIcon HorizontalAlignment="Center"
+                                      FontSize="48"
+                                      Foreground="{ThemeResource SystemFillColorCritical}"
+                                      Glyph="&#xE783;" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       Text="Recordings use different processes"
+                                       TextAlignment="Center" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       FontSize="12"
+                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                       Text="Select recordings from the same process to compare them"
                                        TextAlignment="Center" />
                         </StackPanel>
                     </dev:Case>
@@ -1009,6 +1046,27 @@
                                        FontSize="12"
                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                        Text="Maximum of 2 recordings supported for statistics"
+                                       TextAlignment="Center" />
+                        </StackPanel>
+                    </dev:Case>
+
+                    <!--  Different Processes  -->
+                    <dev:Case Value="ProcessMismatch">
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="12">
+                            <FontIcon HorizontalAlignment="Center"
+                                      FontSize="48"
+                                      Foreground="{ThemeResource SystemFillColorCritical}"
+                                      Glyph="&#xE783;" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       Text="Recordings use different processes"
+                                       TextAlignment="Center" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       FontSize="12"
+                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                       Text="Select recordings from the same process to compare them"
                                        TextAlignment="Center" />
                         </StackPanel>
                     </dev:Case>

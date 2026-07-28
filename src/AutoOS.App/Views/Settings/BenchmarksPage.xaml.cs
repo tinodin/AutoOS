@@ -164,7 +164,7 @@ public sealed partial class BenchmarksPage : Page
 		ViewModel.StatisticsRows.Clear();
 		ViewModel.AnalysisChartType = "Bar";
 
-		if (_selectedRecordings.Count is 0 or > 2)
+		if (!ViewModel.IsAnalysisToolbarEnabled)
 			return;
 
 		RebuildCharts(_selectedRecordings);
@@ -637,7 +637,7 @@ public sealed partial class BenchmarksPage : Page
 			row.DeltaComparison = ResultComparison.None;
 		}
 
-		ApplyResultComparisons(rows, _selectedRecordings.Count == 2);
+		ApplyResultComparisons(rows, ViewModel.CanCompareSelectedRecordings);
 		if (_statisticsBaselineIndex is 0 or 1)
 			ApplyResultDeltas(rows, _statisticsBaselineIndex, _showPercentDelta);
 		ConfigureStatisticsColumns();
@@ -709,7 +709,7 @@ public sealed partial class BenchmarksPage : Page
 			StopProcessDiscovery();
 			ViewModel.ActiveTab = "Analysis";
 			ViewModel.AnalysisChartType = "Bar";
-			if (_selectedRecordings.Count is > 0 and <= 2)
+			if (ViewModel.IsAnalysisToolbarEnabled)
 				ReplayAnimation();
 		}
 		else if (ReferenceEquals(selectedItem, StatisticsTab))
@@ -977,16 +977,7 @@ public sealed partial class BenchmarksPage : Page
 
 	private async void DownloadAnalysis_Click(object sender, RoutedEventArgs e)
 	{
-		UIElement chart = ViewModel.AnalysisChartType switch
-		{
-			"Bar" => BarChart,
-			"Column" => ColumnChart,
-			"Line" => LineChart,
-			"Scatter" => ScatterChart,
-			_ => null
-		};
-		if (chart != null)
-			await SaveElementAsPngAsync(chart, $"Benchmark-{ViewModel.AnalysisChartType}");
+		await SaveElementAsPngAsync(AnalysisContent, $"Benchmark-{ViewModel.AnalysisChartType}");
 	}
 
 	private async void DownloadStatistics_Click(object sender, RoutedEventArgs e)

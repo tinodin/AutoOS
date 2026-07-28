@@ -49,6 +49,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	private string _recordingAHeader = "Recording A";
 	private string _recordingBHeader = "Recording B";
 	private string _deltaHeader = "Delta (%)";
+	private string _analysisProcessText = string.Empty;
 
 	public string ActiveTab
 	{
@@ -324,7 +325,8 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	public string RecordLabel => IsRecording ? "Recording..." : "Record";
 	public List<object> ShortcutKeys { get; } = ["Shift", "F11"];
 	public bool IsAggregateEnabled => _selectedRecordingCount > 1 && _selectedRecordingsHaveSameProcess;
-	public bool IsAnalysisToolbarEnabled => _selectedRecordingCount is > 0 and <= 2;
+	public bool IsAnalysisToolbarEnabled => _selectedRecordingCount is > 0 and <= 2 && _selectedRecordingsHaveSameProcess;
+	public bool CanCompareSelectedRecordings => _selectedRecordingCount == 2 && _selectedRecordingsHaveSameProcess;
 	public bool IsSecondColorPickerEnabled => _selectedRecordingCount == 2;
 	public bool IsRenameEnabled => _selectedRecordingCount > 0;
 	public bool IsDeleteEnabled => _selectedRecordingCount > 0;
@@ -536,6 +538,12 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		set => SetProperty(ref _deltaHeader, value);
 	}
 
+	public string AnalysisProcessText
+	{
+		get => _analysisProcessText;
+		private set => SetProperty(ref _analysisProcessText, value);
+	}
+
 	public void SetRecordings(IEnumerable<RecordingItem> recordings)
 	{
 		Recordings = new ObservableCollection<RecordingItem>(recordings);
@@ -544,21 +552,25 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 
 	public void SetSelectedRecordings(IReadOnlyCollection<RecordingItem> recordings)
 	{
+		RecordingItem recordingA = recordings.FirstOrDefault();
 		_selectedRecordingCount = recordings.Count;
 		_selectedRecordingsHaveSameProcess = recordings.Count > 0 &&
 			recordings.Select(recording => recording.Process)
 				.Distinct(StringComparer.OrdinalIgnoreCase)
 				.Count() == 1;
+		AnalysisProcessText = recordingA?.Process ?? string.Empty;
 
 		AnalysisState = recordings.Count switch
 		{
 			0 => "Empty",
 			> 2 => "Error",
+			2 when !_selectedRecordingsHaveSameProcess => "ProcessMismatch",
 			_ => "Content"
 		};
 		StatisticsState = AnalysisState;
 		OnPropertyChanged(nameof(IsAggregateEnabled));
 		OnPropertyChanged(nameof(IsAnalysisToolbarEnabled));
+		OnPropertyChanged(nameof(CanCompareSelectedRecordings));
 		OnPropertyChanged(nameof(IsSecondColorPickerEnabled));
 		OnPropertyChanged(nameof(IsRenameEnabled));
 		OnPropertyChanged(nameof(IsDeleteEnabled));
