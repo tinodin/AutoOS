@@ -966,7 +966,7 @@ public static class BiosSettingRecommendationsList
 		new BiosSettingRecommendation { SetupQuestion = "Win7 USB Wake Support", Type = "Option", RecommendedOption = "Disabled" },
 		new BiosSettingRecommendation { SetupQuestion = "Write CRC Enable", Type = "Option", RecommendedOption = "Disabled" },
 		new BiosSettingRecommendation { SetupQuestion = "X3D Gaming Mode", Type = "Option", RecommendedOption = "Disabled" },
-		new BiosSettingRecommendation { SetupQuestion = "X3D Turbo Mode", Type = "Option", RecommendedOption = "Disabled" },
+		new BiosSettingRecommendation { SetupQuestion = "X3D Turbo Mode", Type = "Option", RecommendedOption = "Disable" },
 		new BiosSettingRecommendation { SetupQuestion = "XHCI D3 Support", Type = "Option", RecommendedOption = "Disabled" },
 		new BiosSettingRecommendation { SetupQuestion = "xGMI encryption control", Type = "Option", RecommendedOption = "Disabled" },
 		new BiosSettingRecommendation { SetupQuestion = "ZEN5 Gaming Optimizations", Type = "Option", RecommendedOption = "Level 2" },
