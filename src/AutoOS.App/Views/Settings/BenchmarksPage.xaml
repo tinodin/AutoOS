@@ -121,7 +121,7 @@
                             <!--  Process  -->
                             <AppBarElementContainer>
                                 <AutoSuggestBox x:Name="ProcessAutoSuggestBox"
-                                                MinWidth="200"
+                                                MinWidth="250"
                                                 ItemsSource="{x:Bind ViewModel.ProcessSuggestions, Mode=OneWay}"
                                                 PlaceholderText="Select a process..."
                                                 SuggestionChosen="ProcessAutoSuggestBox_SuggestionChosen"
@@ -136,7 +136,7 @@
                             <!--  Duration  -->
                             <AppBarElementContainer>
                                 <NumberBox LargeChange="5"
-                                           Minimum="3"
+                                           Minimum="30"
                                            PlaceholderText="Duration (s)"
                                            SmallChange="1"
                                            SpinButtonPlacementMode="Inline"
@@ -148,7 +148,7 @@
                             <AppBarElementContainer Margin="2,0">
                                 <NumberBox LargeChange="5"
                                            Maximum="60"
-                                           Minimum="0"
+                                           Minimum="2"
                                            PlaceholderText="Delay (s)"
                                            SmallChange="1"
                                            SpinButtonPlacementMode="Inline"
@@ -165,6 +165,7 @@
                                               Keys="{x:Bind ViewModel.ShortcutKeys, Mode=OneWay}"
                                               PrimaryButtonClick="HotkeyShortcut_PrimaryButtonClick"
                                               Style="{StaticResource SmallShortcutStyle}"
+                                              ToolTipService.ToolTip="Recording Shortcut"
                                               UseAutoValidation="True" />
                             </AppBarElementContainer>
 
@@ -210,7 +211,7 @@
                             <AppBarSeparator Margin="4,0" />
 
                             <!--  Bar / Column Statistics  -->
-                            <AppBarElementContainer Margin="0,0,4,0"
+                            <AppBarElementContainer Margin="0,0,2,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
                                                     Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
                                 <ToggleButton Content="0.1% Low Avg"
@@ -227,7 +228,7 @@
                             <AppBarSeparator Margin="4,0"
                                              Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}" />
 
-                            <AppBarElementContainer Margin="0,0,4,0"
+                            <AppBarElementContainer Margin="0,0,2,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
                                                     Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
                                 <ToggleButton Content="Avg (Arithmetic)"
@@ -244,7 +245,7 @@
                             <AppBarSeparator Margin="4,0"
                                              Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}" />
 
-                            <AppBarElementContainer Margin="0,0,4,0"
+                            <AppBarElementContainer Margin="0,0,2,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
                                                     Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
                                 <ToggleButton Content="Min"
@@ -261,35 +262,35 @@
                             <AppBarSeparator Margin="4,0"
                                              Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}" />
 
-                            <AppBarElementContainer Margin="0,0,4,0"
+                            <AppBarElementContainer Margin="0,0,2,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
                                                     Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
                                 <ToggleButton Content="P0.1"
                                               IsChecked="{x:Bind ViewModel.ShowP01, Mode=TwoWay}"
                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P0.1')}" />
                             </AppBarElementContainer>
-                            <AppBarElementContainer Margin="0,0,4,0"
+                            <AppBarElementContainer Margin="0,0,2,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
                                                     Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
                                 <ToggleButton Content="P1"
                                               IsChecked="{x:Bind ViewModel.ShowP1, Mode=TwoWay}"
                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P1')}" />
                             </AppBarElementContainer>
-                            <AppBarElementContainer Margin="0,0,4,0"
+                            <AppBarElementContainer Margin="0,0,2,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
                                                     Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
                                 <ToggleButton Content="P5"
                                               IsChecked="{x:Bind ViewModel.ShowP5, Mode=TwoWay}"
                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P5')}" />
                             </AppBarElementContainer>
-                            <AppBarElementContainer Margin="0,0,4,0"
+                            <AppBarElementContainer Margin="0,0,2,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
                                                     Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
                                 <ToggleButton Content="P50 (Median)"
                                               IsChecked="{x:Bind ViewModel.ShowP50Median, Mode=TwoWay}"
                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P50 (Median)')}" />
                             </AppBarElementContainer>
-                            <AppBarElementContainer Margin="0,0,4,0"
+                            <AppBarElementContainer Margin="0,0,2,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
                                                     Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
                                 <ToggleButton Content="P95"
@@ -858,8 +859,8 @@
                                                                        Fill="{x:Bind ViewModel.RecordingAColorBrush, Mode=OneWay}"
                                                                        ItemsSource="{x:Bind ViewModel.LineScatterChartData1, Mode=OneWay}"
                                                                        Label="{x:Bind ViewModel.LineScatterChartLabel1, Mode=OneWay}"
-                                                                       PointHeight="5"
-                                                                       PointWidth="5"
+                                                                       PointHeight="2"
+                                                                       PointWidth="2"
                                                                        XBindingPath="Index"
                                                                        YBindingPath="Value" />
 
@@ -869,8 +870,8 @@
                                                                        IsVisibleOnLegend="{x:Bind ViewModel.HasTwoRecordings, Mode=OneWay}"
                                                                        ItemsSource="{x:Bind ViewModel.LineScatterChartData2, Mode=OneWay}"
                                                                        Label="{x:Bind ViewModel.LineScatterChartLabel2, Mode=OneWay}"
-                                                                       PointHeight="5"
-                                                                       PointWidth="5"
+                                                                       PointHeight="2"
+                                                                       PointWidth="2"
                                                                        XBindingPath="Index"
                                                                        YBindingPath="Value" />
                                     </chart:SfCartesianChart.Series>

@@ -434,7 +434,7 @@ public sealed partial class BenchmarksPage : Page
 		}
 		catch (Exception ex)
 		{
-			errorMessage = ex.Message;
+			await MessageBox.ShowErrorAsync(App.MainWindow, $"An error occurred while recording: {ex.Message}", "Recording Error");
 		}
 		finally
 		{
@@ -443,13 +443,7 @@ public sealed partial class BenchmarksPage : Page
 			LoadRecordings();
 			if (!string.IsNullOrWhiteSpace(errorMessage))
 			{
-				await new ContentDialog
-				{
-					Title = "Recording Error",
-					Content = errorMessage,
-					CloseButtonText = "OK",
-					XamlRoot = XamlRoot
-				}.ShowAsync();
+				
 			}
 		}
 
@@ -586,10 +580,10 @@ public sealed partial class BenchmarksPage : Page
 			row.DeltaComparison = null;
 		}
 
-		ApplyResultComparisons(rows, ViewModel.SelectedRecordings.Count == 2);
 		int baselineIdx = ViewModel.BaselineSelectedIndex - 1;
 		if (baselineIdx is 0 or 1)
 			ApplyResultDeltas(rows, baselineIdx, ViewModel.IsPercentDelta);
+		ApplyResultComparisons(rows, ViewModel.SelectedRecordings.Count == 2);
 		ConfigureStatisticsColumns();
 	}
 
@@ -1046,8 +1040,8 @@ public sealed partial class BenchmarksPage : Page
 		foreach (var label in BenchmarkCsv.StatisticLabels)
 		{
 			double av = BenchmarkCsv.GetStatistic(m0, label);
-			string a = av.ToString("0.###", CultureInfo.InvariantCulture) + " FPS";
-			string b = m1 == null ? "" : BenchmarkCsv.GetStatistic(m1, label).ToString("0.###", CultureInfo.InvariantCulture) + " FPS";
+			string a = av.ToString("0.###", CultureInfo.CurrentCulture) + " FPS";
+			string b = m1 == null ? "" : BenchmarkCsv.GetStatistic(m1, label).ToString("0.###", CultureInfo.CurrentCulture) + " FPS";
 			rows.Add(new ResultRow
 			{
 				Statistic = $"{prefix} {label} FPS",
@@ -1056,7 +1050,7 @@ public sealed partial class BenchmarksPage : Page
 			});
 		}
 
-		static string fmt(double value, string format) => value == 0 ? "\u2014" : value.ToString(format, CultureInfo.InvariantCulture);
+		static string fmt(double value, string format) => value == 0 ? "\u2014" : value.ToString(format, CultureInfo.CurrentCulture);
 
 		rows.Add(new ResultRow
 		{
@@ -1082,9 +1076,9 @@ public sealed partial class BenchmarksPage : Page
 
 		List<ResultRow> rows = [];
 
-		static string fmtMs(double value) => value.ToString("0.####", CultureInfo.InvariantCulture) + " ms";
-		static string fmtSd(double value) => value == 0 ? "\u2014" : value.ToString("0.####", CultureInfo.InvariantCulture) + " ms";
-		static string fmtRel(double value) => value == 0 ? "\u2014" : value.ToString("0.#####", CultureInfo.InvariantCulture);
+		static string fmtMs(double value) => value.ToString("0.####", CultureInfo.CurrentCulture) + " ms";
+		static string fmtSd(double value) => value == 0 ? "\u2014" : value.ToString("0.####", CultureInfo.CurrentCulture) + " ms";
+		static string fmtRel(double value) => value == 0 ? "\u2014" : value.ToString("0.#####", CultureInfo.CurrentCulture);
 
 		void add(string label, string recordingA, string recordingB) => rows.Add(new ResultRow { Statistic = $"{prefix} {label}", RecordingA = recordingA, RecordingB = recordingB });
 
@@ -1095,7 +1089,7 @@ public sealed partial class BenchmarksPage : Page
 		add("Maximum", fmtMs(m0.Max), m1 == null ? "" : fmtMs(m1.Max));
 		add("Minimum", fmtMs(m0.Min), m1 == null ? "" : fmtMs(m1.Min));
 
-		string fmtPct(double value) => value == 0 ? "\u2014" : value.ToString("0.0", CultureInfo.InvariantCulture) + "%";
+		string fmtPct(double value) => value == 0 ? "\u2014" : value.ToString("0.0", CultureInfo.CurrentCulture) + "%";
 		add("Root mean square of successive differences (RMSSD)", fmtMs(m0.Rmssd), m1 == null ? "" : fmtMs(m1.Rmssd));
 		add("Stepwise-Relative", fmtPct(m0.StepwiseRelSD * 100), m1 == null ? "" : fmtPct(m1.StepwiseRelSD * 100));
 		add("Standard Deviation (STDEV)", fmtSd(m0.StdDev), m1 == null ? "" : fmtSd(m1.StdDev));
@@ -1121,7 +1115,7 @@ public sealed partial class BenchmarksPage : Page
 				trimmed = trimmed[..^3];
 			else if (trimmed.EndsWith("%".AsSpan(), StringComparison.Ordinal))
 				trimmed = trimmed[..^1];
-			return double.TryParse(trimmed, NumberStyles.Float, CultureInfo.InvariantCulture, out result);
+			return double.TryParse(trimmed, NumberStyles.Float, CultureInfo.CurrentCulture, out result);
 		}
 
 		foreach (var row in rows)
@@ -1149,7 +1143,7 @@ public sealed partial class BenchmarksPage : Page
 				trimmed = trimmed[..^3];
 			else if (trimmed.EndsWith("%".AsSpan(), StringComparison.Ordinal))
 				trimmed = trimmed[..^1];
-			return double.TryParse(trimmed, NumberStyles.Float, CultureInfo.InvariantCulture, out result);
+			return double.TryParse(trimmed, NumberStyles.Float, CultureInfo.CurrentCulture, out result);
 		}
 
 		static string signed(double v, string f, string u)

@@ -929,15 +929,10 @@
                                                            Content="{Binding}"
                                                            FontWeight="Normal"
                                                            IsTabStop="False"
-                                                           VisualType="Small" />
+                                                           VisualType="SmallOutline" />
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
-
-                                <FontIcon Margin="0,0,2,0"
-                                          VerticalAlignment="Center"
-                                          FontSize="12"
-                                          Glyph="&#xE70F;" />
                             </StackPanel>
                         </Button>
                     </Grid>
