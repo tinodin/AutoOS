@@ -1,306 +1,286 @@
 using System.Collections.ObjectModel;
 using AutoOS.Core.Helpers.Benchmark;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Xaml.Media;
+using nietras.SeparatedValues;
 
 namespace AutoOS.Views.Settings.Benchmarks;
 
 public sealed partial class BenchmarksPageViewModel : ObservableObject
 {
-	private string _activeTab = "Recordings";
-	private string _recordingState = "Empty";
-	private string _analysisState = "Empty";
-	private string _statisticsState = "Empty";
-	private int _selectedRecordingCount;
-	private bool _isRenameEnabled;
-	private bool _selectedRecordingsHaveSameProcess;
-	private string _processName = string.Empty;
-	private double _recordingDuration = 60;
-	private double _recordingDelay = 5;
-	private bool _isRecording;
-	private int _recordingCountdown;
-	private string _analysisChartType = "Bar";
-	private string _analysisProcess;
+	[ObservableProperty]
+	public partial string ActiveTab { get; set; } = "Recordings";
+
+	[ObservableProperty]
+	public partial string RecordingState { get; set; } = "Empty";
+
+	[ObservableProperty]
+	public partial string AnalysisState { get; set; } = "Empty";
+
+	[ObservableProperty]
+	public partial string StatisticsState { get; set; } = "Empty";
+
+	[ObservableProperty]
+	public partial int RecordingCountdown { get; set; }
+	
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(IsAggregateEnabled))]
+	[NotifyPropertyChangedFor(nameof(IsAnalysisToolbarEnabled))]
+	[NotifyPropertyChangedFor(nameof(HasTwoRecordings))]
+	[NotifyPropertyChangedFor(nameof(HasTwoRecordingsVisibility))]
+	[NotifyPropertyChangedFor(nameof(IsDeleteEnabled))]
+	[NotifyCanExecuteChangedFor(nameof(AggregateCommand))]
+	public partial int SelectedRecordingCount { get; set; }
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(IsAggregateEnabled))]
+	[NotifyPropertyChangedFor(nameof(IsAnalysisToolbarEnabled))]
+	[NotifyPropertyChangedFor(nameof(HasTwoRecordings))]
+	[NotifyPropertyChangedFor(nameof(HasTwoRecordingsVisibility))]
+	[NotifyCanExecuteChangedFor(nameof(AggregateCommand))]
+	public partial bool SelectedRecordingsHaveSameProcess { get; set; }
+
+	public IReadOnlyList<RecordingItem> SelectedRecordings { get; set; } = new List<RecordingItem>();
 	private readonly HashSet<string> _recordableProcesses = new(StringComparer.OrdinalIgnoreCase);
 	private bool _selectedProcessIsRecordable;
-	private ObservableCollection<string> _processSuggestions = [];
-	private ObservableCollection<RecordingItem> _recordings = [];
-	private ObservableCollection<ResultRow> _statisticsRows = [];
-	private ObservableCollection<string> _baselineItems = ["None"];
-	private ObservableCollection<BarPoint> _barColumnChartDisplayedData1 = [];
-	private ObservableCollection<BarPoint> _barColumnChartRenderedData1 = [];
-	private ObservableCollection<BarPoint> _barColumnChartDisplayedData2 = [];
-	private ObservableCollection<BarPoint> _barColumnChartRenderedData2 = [];
-	private ObservableCollection<SeriesPoint> _lineScatterChartData1 = [];
-	private ObservableCollection<SeriesPoint> _lineScatterChartData2 = [];
-	private Windows.UI.Color _chartColor1;
-	private Windows.UI.Color _chartColor2;
-	private Windows.UI.Color _chartRenderedColor1;
-	private Windows.UI.Color _chartRenderedColor2;
-	private SolidColorBrush _chartColorBrush1;
-	private SolidColorBrush _chartColorBrush2;
-	private string _barColumnChartYAxisLabel = "FPS";
-	private string _lineScatterChartYAxisLabel = "Milliseconds (ms)";
-	private string _barColumnChartLabelFormat = "0.#";
-	private bool _barColumnRenderedVisible;
-	private string _barColumnChartDisplayedLabel1 = string.Empty;
-	private string _barColumnChartRenderedLabel1 = string.Empty;
-	private string _barColumnChartDisplayedLabel2 = string.Empty;
-	private string _barColumnChartRenderedLabel2 = string.Empty;
-	private string _lineScatterChartLabel1 = string.Empty;
-	private string _lineScatterChartLabel2 = string.Empty;
-	private string _recordingAHeader = "Recording A";
-	private string _recordingBHeader = "Recording B";
-	private string _deltaHeader;
-	private bool _isDeltaModeEnabled;
-	private int _baselineSelectedIndex;
-	private bool _isPercentDelta;
 
-	public BenchmarksPageViewModel()
-	{
-		ChartColor1 = Colors.DodgerBlue;
-		ChartColor2 = Colors.Orange;
-	}
+	[ObservableProperty]
+	public partial bool IsRenameEnabled { get; set; }
 
-	public string ActiveTab
-	{
-		get => _activeTab;
-		set => SetProperty(ref _activeTab, value);
-	}
+	[ObservableProperty]
+	public partial bool IsDeleteEnabled { get; set; }
 
-	public string RecordingState
+	[RelayCommand(CanExecute = nameof(IsAggregateEnabled))]
+	private void Aggregate()
 	{
-		get => _recordingState;
-		private set => SetProperty(ref _recordingState, value);
-	}
+		var selected = SelectedRecordings;
+		string processName = selected[0].Process;
 
-	public string AnalysisState
-	{
-		get => _analysisState;
-		private set => SetProperty(ref _analysisState, value);
-	}
-
-	public string StatisticsState
-	{
-		get => _statisticsState;
-		private set => SetProperty(ref _statisticsState, value);
-	}
-
-	public ObservableCollection<RecordingItem> Recordings
-	{
-		get => _recordings;
-		private set => SetProperty(ref _recordings, value);
-	}
-
-	public ObservableCollection<ResultRow> StatisticsRows
-	{
-		get => _statisticsRows;
-		set => SetProperty(ref _statisticsRows, value);
-	}
-
-	public ObservableCollection<string> BaselineItems
-	{
-		get => _baselineItems;
-		private set => SetProperty(ref _baselineItems, value);
-	}
-
-	public ObservableCollection<string> ProcessSuggestions
-	{
-		get => _processSuggestions;
-		private set => SetProperty(ref _processSuggestions, value);
-	}
-
-	public string ProcessName
-	{
-		get => _processName;
-		set
+		int aggregateNumber = 1;
+		string outPath;
+		do
 		{
-			if (SetProperty(ref _processName, value))
+			outPath = Path.Combine(RecordingsDirectory, $"Aggregate-{aggregateNumber++}.csv");
+		}
+		while (File.Exists(outPath));
+
+		List<string> headerCols;
+		using (var headerReader = Sep.Reader(o => o with { Sep = new Sep(','), Unescape = true }).FromFile(selected[0].FilePath))
+		{
+			headerCols = new List<string>(headerReader.Header.ColNames.Count);
+			for (int i = 0; i < headerReader.Header.ColNames.Count; i++)
+				headerCols.Add(headerReader.Header.ColNames[i]);
+		}
+
+		int applicationIndex = BenchmarkCsv.EnsureColumn(headerCols, "Application");
+		int aggregateDurationIndex = BenchmarkCsv.EnsureColumn(headerCols, "AggregateDurationSeconds");
+		int aggregateSourcesIndex = BenchmarkCsv.EnsureColumn(headerCols, "AggregateSources");
+		int columnCount = headerCols.Count;
+
+		List<double[]> sums = [];
+		List<int[]> counts = [];
+
+		List<string[]> fallbackRows = [];
+
+		for (int fileIndex = 0; fileIndex < selected.Count; fileIndex++)
+		{
+			using var reader = Sep.Reader(o => o with { Sep = new Sep(','), Unescape = true }).FromFile(selected[fileIndex].FilePath);
+			if (reader.Header.IsEmpty)
+				continue;
+
+			bool isFallbackFile = fileIndex == 0;
+			int rowIndex = 0;
+
+			while (reader.MoveNext())
 			{
-				_selectedProcessIsRecordable =
-					!string.IsNullOrWhiteSpace(value) &&
-					_recordableProcesses.Contains(value.Trim());
-				FilterProcessSuggestions(value);
-				OnPropertyChanged(nameof(CanRecord));
+				var row = reader.Current;
+
+				if (rowIndex == sums.Count)
+				{
+					sums.Add(new double[columnCount]);
+					counts.Add(new int[columnCount]);
+				}
+
+				double[] rowSums = sums[rowIndex];
+				int[] rowCounts = counts[rowIndex];
+
+				string[] rawRow = isFallbackFile ? new string[row.ColCount] : null;
+				int colLimit = Math.Min(row.ColCount, columnCount);
+
+				for (int column = 0; column < colLimit; column++)
+				{
+					if (row[column].TryParse(out double value))
+					{
+						rowSums[column] += value;
+						rowCounts[column]++;
+					}
+
+					if (isFallbackFile)
+						rawRow[column] = row[column].ToString();
+				}
+
+				if (isFallbackFile)
+				{
+					for (int column = colLimit; column < row.ColCount; column++)
+						rawRow[column] = row[column].ToString();
+					fallbackRows.Add(rawRow);
+				}
+
+				rowIndex++;
 			}
 		}
-	}
 
-	public double RecordingDuration
-	{
-		get => _recordingDuration;
-		set
-		{
-			if (SetProperty(ref _recordingDuration, value))
-				OnPropertyChanged(nameof(CanRecord));
-		}
-	}
+		int maxRows = sums.Count;
+		double meanDurationSeconds = selected.Average(recording => recording.DurationSeconds);
+		string aggregateSources = string.Join("|", selected.Select(recording => recording.FileName).Distinct(StringComparer.OrdinalIgnoreCase));
 
-	public double RecordingDelay
-	{
-		get => _recordingDelay;
-		set
-		{
-			if (SetProperty(ref _recordingDelay, value))
-				OnPropertyChanged(nameof(CanRecord));
-		}
-	}
+		using var writer = Sep.Writer(o => o with { Sep = new Sep(',') }).ToFile(outPath);
+		foreach (var col in headerCols)
+			writer.Header.Add(col);
 
-	public bool IsRecording
-	{
-		get => _isRecording;
-		set
+		for (int r = 0; r < maxRows; r++)
 		{
-			if (SetProperty(ref _isRecording, value))
+			using var row = writer.NewRow();
+			double[] rowSums = sums[r];
+			int[] rowCounts = counts[r];
+			string[] fallbackRow = r < fallbackRows.Count ? fallbackRows[r] : null;
+
+			for (int column = 0; column < columnCount; column++)
 			{
-				OnPropertyChanged(nameof(CanRecord));
-				OnPropertyChanged(nameof(RecordLabel));
+				if (column == applicationIndex)
+				{
+					row[headerCols[column]].Set(processName);
+					continue;
+				}
+				if (column == aggregateDurationIndex)
+				{
+					row[headerCols[column]].Format(meanDurationSeconds);
+					continue;
+				}
+				if (column == aggregateSourcesIndex)
+				{
+					row[headerCols[column]].Set(r == 0 ? aggregateSources : string.Empty);
+					continue;
+				}
+
+				if (rowCounts[column] > 0)
+					row[headerCols[column]].Format(rowSums[column] / rowCounts[column]);
+				else if (fallbackRow != null && column < fallbackRow.Length)
+					row[headerCols[column]].Set(fallbackRow[column]);
+				else
+					row[headerCols[column]].Set(string.Empty);
 			}
 		}
+
+		var aggregateRecording = new RecordingItem
+		{
+			FilePath = outPath,
+			FileName = Path.GetFileName(outPath),
+			Title = Path.GetFileNameWithoutExtension(outPath),
+			Process = processName,
+			PresentationMode = string.Empty,
+			DurationSeconds = meanDurationSeconds,
+			Date = DateTimeOffset.Now,
+			Time = DateTimeOffset.Now.TimeOfDay
+		};
+
+		HashSet<RecordingItem> childSet = [.. selected.Where(r => r.FilePath != outPath)];
+		foreach (var child in childSet)
+			aggregateRecording.Children.Add(child);
+
+		List<RecordingItem> updatedList = [aggregateRecording, .. Recordings.Where(r => !childSet.Contains(r))];
+		updatedList.Sort((a, b) => b.Date.CompareTo(a.Date));
+		SetRecordings(updatedList);
+		SetSelectedRecordings(new List<RecordingItem> { aggregateRecording });
 	}
 
-	public int RecordingCountdown
-	{
-		get => _recordingCountdown;
-		private set => SetProperty(ref _recordingCountdown, value);
-	}
+	[ObservableProperty]
+	public partial ObservableCollection<string> ProcessSuggestions { get; set; } = [];
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(CanRecord))]
+	public partial string ProcessName { get; set; } = string.Empty;
+
+	public bool CanRecord => IsRecording || (!string.IsNullOrWhiteSpace(ProcessName) && _selectedProcessIsRecordable && RecordingDuration >= 3 && RecordingDelay >= 0);
+	public string RecordLabel => IsRecording ? "Recording..." : "Record";
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(CanRecord))]
+	[NotifyPropertyChangedFor(nameof(RecordLabel))]
+	public partial bool IsRecording { get; set; }
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(CanRecord))]
+	public partial double RecordingDuration { get; set; } = 60;
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(CanRecord))]
+	public partial double RecordingDelay { get; set; } = 5;
+
+	public List<object> ShortcutKeys { get; } = ["Shift", "F11"];
+
+	[ObservableProperty]
+	public partial ObservableCollection<RecordingItem> Recordings { get; set; } = [];
+
+	public bool IsAnalysisToolbarEnabled => SelectedRecordingCount is > 0 and <= 2 && SelectedRecordingsHaveSameProcess;
+
+	public Visibility BarStatisticsVisibility => (AnalysisChartType is "Bar" or "Column") ? Visibility.Visible : Visibility.Collapsed;
+
+	public Visibility MetricVisibility => (AnalysisChartType is "Bar" or "Column") ? Visibility.Collapsed : Visibility.Visible;
+
+	[ObservableProperty]
+	public partial bool ShowLow01 { get; set; } = true;
+
+	[ObservableProperty]
+	public partial bool ShowLow1 { get; set; } = true;
+
+	[ObservableProperty]
+	public partial bool ShowAvgArithmetic { get; set; } = true;
+
+	[ObservableProperty]
+	public partial bool ShowAvgHarmonic { get; set; } = true;
+
+	[ObservableProperty]
+	public partial bool ShowMin { get; set; }
+
+	[ObservableProperty]
+	public partial bool ShowMax { get; set; }
+
+	[ObservableProperty]
+	public partial bool ShowP01 { get; set; }
+
+	[ObservableProperty]
+	public partial bool ShowP1 { get; set; }
+
+	[ObservableProperty]
+	public partial bool ShowP5 { get; set; }
+
+	[ObservableProperty]
+	public partial bool ShowP50Median { get; set; } = true;
+
+	[ObservableProperty]
+	public partial bool ShowP95 { get; set; }
+
+	[ObservableProperty]
+	public partial bool ShowP99 { get; set; }
 
 	public event Action MetricToggled;
 
-	private bool _showLow01 = true;
-	private bool _showLow1 = true;
-	private bool _showAvgArithmetic = true;
-	private bool _showAvgHarmonic = true;
-	private bool _showMin;
-	private bool _showMax;
-	private bool _showP01;
-	private bool _showP1;
-	private bool _showP5;
-	private bool _showP50Median = true;
-	private bool _showP95;
-	private bool _showP99;
+	partial void OnShowLow01Changed(bool value) => MetricToggled?.Invoke();
+	partial void OnShowLow1Changed(bool value) => MetricToggled?.Invoke();
+	partial void OnShowAvgArithmeticChanged(bool value) => MetricToggled?.Invoke();
+	partial void OnShowAvgHarmonicChanged(bool value) => MetricToggled?.Invoke();
+	partial void OnShowMinChanged(bool value) => MetricToggled?.Invoke();
+	partial void OnShowMaxChanged(bool value) => MetricToggled?.Invoke();
+	partial void OnShowP01Changed(bool value) => MetricToggled?.Invoke();
+	partial void OnShowP1Changed(bool value) => MetricToggled?.Invoke();
+	partial void OnShowP5Changed(bool value) => MetricToggled?.Invoke();
+	partial void OnShowP50MedianChanged(bool value) => MetricToggled?.Invoke();
+	partial void OnShowP95Changed(bool value) => MetricToggled?.Invoke();
+	partial void OnShowP99Changed(bool value) => MetricToggled?.Invoke();
 
-	public bool ShowLow01
-	{
-		get => _showLow01;
-		set
-		{
-			if (SetProperty(ref _showLow01, value))
-				MetricToggled?.Invoke();
-		}
-	}
-
-	public bool ShowLow1
-	{
-		get => _showLow1;
-		set
-		{
-			if (SetProperty(ref _showLow1, value))
-				MetricToggled?.Invoke();
-		}
-	}
-
-	public bool ShowAvgArithmetic
-	{
-		get => _showAvgArithmetic;
-		set
-		{
-			if (SetProperty(ref _showAvgArithmetic, value))
-				MetricToggled?.Invoke();
-		}
-	}
-
-	public bool ShowAvgHarmonic
-	{
-		get => _showAvgHarmonic;
-		set
-		{
-			if (SetProperty(ref _showAvgHarmonic, value))
-				MetricToggled?.Invoke();
-		}
-	}
-
-	public bool ShowMin
-	{
-		get => _showMin;
-		set
-		{
-			if (SetProperty(ref _showMin, value))
-				MetricToggled?.Invoke();
-		}
-	}
-
-	public bool ShowMax
-	{
-		get => _showMax;
-		set
-		{
-			if (SetProperty(ref _showMax, value))
-				MetricToggled?.Invoke();
-		}
-	}
-
-	public bool ShowP01
-	{
-		get => _showP01;
-		set
-		{
-			if (SetProperty(ref _showP01, value))
-				MetricToggled?.Invoke();
-		}
-	}
-
-	public bool ShowP1
-	{
-		get => _showP1;
-		set
-		{
-			if (SetProperty(ref _showP1, value))
-				MetricToggled?.Invoke();
-		}
-	}
-
-	public bool ShowP5
-	{
-		get => _showP5;
-		set
-		{
-			if (SetProperty(ref _showP5, value))
-				MetricToggled?.Invoke();
-		}
-	}
-
-	public bool ShowP50Median
-	{
-		get => _showP50Median;
-		set
-		{
-			if (SetProperty(ref _showP50Median, value))
-				MetricToggled?.Invoke();
-		}
-	}
-
-	public bool ShowP95
-	{
-		get => _showP95;
-		set
-		{
-			if (SetProperty(ref _showP95, value))
-				MetricToggled?.Invoke();
-		}
-	}
-
-	public bool ShowP99
-	{
-		get => _showP99;
-		set
-		{
-			if (SetProperty(ref _showP99, value))
-				MetricToggled?.Invoke();
-		}
-	}
-
-		public bool IsStatisticEnabled(string statistic) => statistic switch
+	public bool IsStatisticEnabled(string statistic) => statistic switch
 	{
 		"0.1% Low Avg" => ShowLow01,
 		"1% Low Avg" => ShowLow1,
@@ -317,48 +297,143 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		_ => true
 	};
 
-	public string AnalysisChartType
-	{
-		get => _analysisChartType;
-		set
-		{
-			if (SetProperty(ref _analysisChartType, value))
-			{
-				OnPropertyChanged(nameof(MetricVisibility));
-				OnPropertyChanged(nameof(BarStatisticsVisibility));
-			}
-		}
-	}
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(RecordingAColorBrush))]
+	[NotifyPropertyChangedFor(nameof(RecordingASecondaryColor))]
+	public partial Windows.UI.Color RecordingAColor { get; set; }
 
-	public string AnalysisProcess
-	{
-		get => _analysisProcess;
-		set => SetProperty(ref _analysisProcess, value);
-	}
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(RecordingBColorBrush))]
+	[NotifyPropertyChangedFor(nameof(RecordingBSecondaryColor))]
+	public partial Windows.UI.Color RecordingBColor { get; set; }
 
-	public Visibility MetricVisibility => (AnalysisChartType is "Bar" or "Column") ? Visibility.Collapsed : Visibility.Visible;
+	[ObservableProperty]
+	public partial Windows.UI.Color RecordingASecondaryColor { get; set; }
 
-	public Visibility BarStatisticsVisibility => (AnalysisChartType is "Bar" or "Column") ? Visibility.Visible : Visibility.Collapsed;
+	[ObservableProperty]
+	public partial Windows.UI.Color RecordingBSecondaryColor { get; set; }
+
+	[ObservableProperty]
+	public partial SolidColorBrush RecordingAColorBrush { get; set; }
+
+	[ObservableProperty]
+	public partial SolidColorBrush RecordingBColorBrush { get; set; }
+
+	public bool HasTwoRecordings => SelectedRecordingCount == 2 && SelectedRecordingsHaveSameProcess;
+	public Visibility HasTwoRecordingsVisibility => HasTwoRecordings ? Visibility.Visible : Visibility.Collapsed;
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(MetricVisibility))]
+	[NotifyPropertyChangedFor(nameof(BarStatisticsVisibility))]
+	public partial string AnalysisChartType { get; set; } = "Bar";
+
+	[ObservableProperty]
+	public partial string AnalysisProcess { get; set; }
+
+	[ObservableProperty]
+	public partial ObservableCollection<BarPoint> BarColumnChartDisplayedData1 { get; set; } = [];
+
+	[ObservableProperty]
+	public partial ObservableCollection<BarPoint> BarColumnChartRenderedData1 { get; set; } = [];
+
+	[ObservableProperty]
+	public partial ObservableCollection<BarPoint> BarColumnChartDisplayedData2 { get; set; } = [];
+
+	[ObservableProperty]
+	public partial ObservableCollection<BarPoint> BarColumnChartRenderedData2 { get; set; } = [];
+
+	[ObservableProperty]
+	public partial string BarColumnChartYAxisLabel { get; set; } = "FPS";
+
+	[ObservableProperty]
+	public partial string BarColumnChartLabelFormat { get; set; } = "0.#";
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(BarColumnRenderedVisibility))]
+	public partial bool BarColumnRenderedVisible { get; set; }
+
+	public Visibility BarColumnRenderedVisibility => BarColumnRenderedVisible ? Visibility.Visible : Visibility.Collapsed;
+
+	[ObservableProperty]
+	public partial string BarColumnChartDisplayedLabel1 { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial string BarColumnChartRenderedLabel1 { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial string BarColumnChartDisplayedLabel2 { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial string BarColumnChartRenderedLabel2 { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial ObservableCollection<SeriesPoint> LineScatterChartData1 { get; set; } = [];
+
+	[ObservableProperty]
+	public partial ObservableCollection<SeriesPoint> LineScatterChartData2 { get; set; } = [];
+
+	[ObservableProperty]
+	public partial string LineScatterChartLabel1 { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial string LineScatterChartLabel2 { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial string LineScatterChartYAxisLabel { get; set; } = "Milliseconds (ms)";
 
 	public string GetStatisticTooltip(string key) => BenchmarkCsv.StatisticDescriptions.TryGetValue(key, out var desc) ? desc : string.Empty;
 
 	public string GetMetricTooltip(string key) => BenchmarkCsv.MetricDescriptions.TryGetValue(key, out var desc) ? desc : string.Empty;
 
-	public bool CanRecord => IsRecording || (!string.IsNullOrWhiteSpace(ProcessName) && _selectedProcessIsRecordable && RecordingDuration >= 3 && RecordingDelay >= 0);
-	public string RecordLabel => IsRecording ? "Recording..." : "Record";
-	public List<object> ShortcutKeys { get; } = ["Shift", "F11"];
-	public bool IsAggregateEnabled => _selectedRecordingCount > 1 && _selectedRecordingsHaveSameProcess;
-	public bool IsAnalysisToolbarEnabled => _selectedRecordingCount is > 0 and <= 2 && _selectedRecordingsHaveSameProcess;
-	public bool CanCompareSelectedRecordings => _selectedRecordingCount == 2 && _selectedRecordingsHaveSameProcess;
-	public bool IsSecondColorPickerEnabled => _selectedRecordingCount == 2;
-	public bool IsRenameEnabled
+	[ObservableProperty]
+	public partial ObservableCollection<string> BaselineItems { get; set; } = ["None"];
+
+	[ObservableProperty]
+	public partial int BaselineSelectedIndex { get; set; }
+
+	[ObservableProperty]
+	public partial bool IsDeltaModeEnabled { get; set; }
+
+	[ObservableProperty]
+	public partial bool IsPercentDelta { get; set; }
+
+	[ObservableProperty]
+	public partial ObservableCollection<ResultRow> StatisticsRows { get; set; } = [];
+
+	[ObservableProperty]
+	public partial string RecordingAHeader { get; set; } = "Recording A";
+
+	[ObservableProperty]
+	public partial string RecordingBHeader { get; set; } = "Recording B";
+
+	[ObservableProperty]
+	public partial string DeltaHeader { get; set; }
+
+	public bool IsAggregateEnabled => SelectedRecordingCount > 1 && SelectedRecordingsHaveSameProcess;
+
+	public BenchmarksPageViewModel()
 	{
-		get => _isRenameEnabled;
-		set => SetProperty(ref _isRenameEnabled, value);
+		RecordingAColor = Colors.DodgerBlue;
+		RecordingBColor = Colors.Orange;
 	}
-	public bool IsDeleteEnabled => _selectedRecordingCount > 0;
-	public bool HasSecondRecording => _selectedRecordingCount == 2;
-	public Visibility HasSecondRecordingVisibility => _selectedRecordingCount == 2 ? Visibility.Visible : Visibility.Collapsed;
+
+	partial void OnProcessNameChanged(string value)
+	{
+		_selectedProcessIsRecordable = !string.IsNullOrWhiteSpace(value) && _recordableProcesses.Contains(value.Trim());
+		FilterProcessSuggestions(value);
+	}
+
+	partial void OnRecordingAColorChanged(Windows.UI.Color value)
+	{
+		RecordingAColorBrush = new SolidColorBrush(value);
+		RecordingASecondaryColor = DevWinUI.ColorHelper.GetInterpolatedColor(0.35, value, Colors.White);
+	}
+
+	partial void OnRecordingBColorChanged(Windows.UI.Color value)
+	{
+		RecordingBColorBrush = new SolidColorBrush(value);
+		RecordingBSecondaryColor = DevWinUI.ColorHelper.GetInterpolatedColor(0.35, value, Colors.White);
+	}
 
 	public void ShowRecordingCountdown(int seconds)
 	{
@@ -375,19 +450,14 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	{
 		_recordableProcesses.Clear();
 		_recordableProcesses.UnionWith(processNames);
-		_selectedProcessIsRecordable =
-			!string.IsNullOrWhiteSpace(ProcessName) &&
-			_recordableProcesses.Contains(ProcessName.Trim());
+		_selectedProcessIsRecordable = !string.IsNullOrWhiteSpace(ProcessName) && _recordableProcesses.Contains(ProcessName.Trim());
 		FilterProcessSuggestions(ProcessName);
 		OnPropertyChanged(nameof(CanRecord));
 	}
 
 	private void FilterProcessSuggestions(string query)
 	{
-		List<string> suggestions = [.. _recordableProcesses
-			.Where(name => string.IsNullOrWhiteSpace(query) ||
-				name.Contains(query.Trim(), StringComparison.OrdinalIgnoreCase))
-			.OrderBy(name => name, StringComparer.OrdinalIgnoreCase)];
+		List<string> suggestions = [.. _recordableProcesses.Where(name => string.IsNullOrWhiteSpace(query) || name.Contains(query.Trim(), StringComparison.OrdinalIgnoreCase)).OrderBy(name => name, StringComparer.OrdinalIgnoreCase)];
 
 		if (ProcessSuggestions.SequenceEqual(suggestions, StringComparer.OrdinalIgnoreCase))
 			return;
@@ -395,192 +465,6 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		ProcessSuggestions.Clear();
 		foreach (string suggestion in suggestions)
 			ProcessSuggestions.Add(suggestion);
-	}
-
-	public ObservableCollection<BarPoint> BarColumnChartDisplayedData1
-	{
-		get => _barColumnChartDisplayedData1;
-		set => SetProperty(ref _barColumnChartDisplayedData1, value);
-	}
-
-	public ObservableCollection<BarPoint> BarColumnChartRenderedData1
-	{
-		get => _barColumnChartRenderedData1;
-		set => SetProperty(ref _barColumnChartRenderedData1, value);
-	}
-
-	public ObservableCollection<BarPoint> BarColumnChartDisplayedData2
-	{
-		get => _barColumnChartDisplayedData2;
-		set => SetProperty(ref _barColumnChartDisplayedData2, value);
-	}
-
-	public ObservableCollection<BarPoint> BarColumnChartRenderedData2
-	{
-		get => _barColumnChartRenderedData2;
-		set => SetProperty(ref _barColumnChartRenderedData2, value);
-	}
-
-	public ObservableCollection<SeriesPoint> LineScatterChartData1
-	{
-		get => _lineScatterChartData1;
-		set => SetProperty(ref _lineScatterChartData1, value);
-	}
-
-	public ObservableCollection<SeriesPoint> LineScatterChartData2
-	{
-		get => _lineScatterChartData2;
-		set => SetProperty(ref _lineScatterChartData2, value);
-	}
-
-	public Windows.UI.Color ChartColor1
-	{
-		get => _chartColor1;
-		set
-		{
-			if (!SetProperty(ref _chartColor1, value))
-				return;
-			ChartColorBrush1 = new SolidColorBrush(value);
-			ChartRenderedColor1 = DevWinUI.ColorHelper.GetInterpolatedColor(0.35, value, Colors.White);
-		}
-	}
-
-	public Windows.UI.Color ChartColor2
-	{
-		get => _chartColor2;
-		set
-		{
-			if (!SetProperty(ref _chartColor2, value))
-				return;
-			ChartColorBrush2 = new SolidColorBrush(value);
-			ChartRenderedColor2 = DevWinUI.ColorHelper.GetInterpolatedColor(0.35, value, Colors.White);
-		}
-	}
-
-	public Windows.UI.Color ChartRenderedColor1
-	{
-		get => _chartRenderedColor1;
-		private set => SetProperty(ref _chartRenderedColor1, value);
-	}
-
-	public SolidColorBrush ChartColorBrush1
-	{
-		get => _chartColorBrush1;
-		private set => SetProperty(ref _chartColorBrush1, value);
-	}
-
-	public Windows.UI.Color ChartRenderedColor2
-	{
-		get => _chartRenderedColor2;
-		private set => SetProperty(ref _chartRenderedColor2, value);
-	}
-
-	public SolidColorBrush ChartColorBrush2
-	{
-		get => _chartColorBrush2;
-		private set => SetProperty(ref _chartColorBrush2, value);
-	}
-
-	public string BarColumnChartYAxisLabel
-	{
-		get => _barColumnChartYAxisLabel;
-		set => SetProperty(ref _barColumnChartYAxisLabel, value);
-	}
-
-	public string LineScatterChartYAxisLabel
-	{
-		get => _lineScatterChartYAxisLabel;
-		set => SetProperty(ref _lineScatterChartYAxisLabel, value);
-	}
-
-	public string BarColumnChartLabelFormat
-	{
-		get => _barColumnChartLabelFormat;
-		set => SetProperty(ref _barColumnChartLabelFormat, value);
-	}
-
-	public bool BarColumnRenderedVisible
-	{
-		get => _barColumnRenderedVisible;
-		set
-		{
-			if (SetProperty(ref _barColumnRenderedVisible, value))
-				OnPropertyChanged(nameof(BarColumnRenderedVisibility));
-		}
-	}
-
-	public Visibility BarColumnRenderedVisibility => BarColumnRenderedVisible ? Visibility.Visible : Visibility.Collapsed;
-
-	public string BarColumnChartDisplayedLabel1
-	{
-		get => _barColumnChartDisplayedLabel1;
-		set => SetProperty(ref _barColumnChartDisplayedLabel1, value);
-	}
-
-	public string BarColumnChartRenderedLabel1
-	{
-		get => _barColumnChartRenderedLabel1;
-		set => SetProperty(ref _barColumnChartRenderedLabel1, value);
-	}
-
-	public string BarColumnChartDisplayedLabel2
-	{
-		get => _barColumnChartDisplayedLabel2;
-		set => SetProperty(ref _barColumnChartDisplayedLabel2, value);
-	}
-
-	public string BarColumnChartRenderedLabel2
-	{
-		get => _barColumnChartRenderedLabel2;
-		set => SetProperty(ref _barColumnChartRenderedLabel2, value);
-	}
-
-	public string LineScatterChartLabel1
-	{
-		get => _lineScatterChartLabel1;
-		set => SetProperty(ref _lineScatterChartLabel1, value);
-	}
-
-	public string LineScatterChartLabel2
-	{
-		get => _lineScatterChartLabel2;
-		set => SetProperty(ref _lineScatterChartLabel2, value);
-	}
-
-	public string RecordingAHeader
-	{
-		get => _recordingAHeader;
-		set => SetProperty(ref _recordingAHeader, value);
-	}
-
-	public string RecordingBHeader
-	{
-		get => _recordingBHeader;
-		set => SetProperty(ref _recordingBHeader, value);
-	}
-
-	public string DeltaHeader
-	{
-		get => _deltaHeader;
-		set => SetProperty(ref _deltaHeader, value);
-	}
-
-	public bool IsDeltaModeEnabled
-	{
-		get => _isDeltaModeEnabled;
-		set => SetProperty(ref _isDeltaModeEnabled, value);
-	}
-
-	public bool IsPercentDelta
-	{
-		get => _isPercentDelta;
-		set => SetProperty(ref _isPercentDelta, value);
-	}
-
-	public int BaselineSelectedIndex
-	{
-		get => _baselineSelectedIndex;
-		set => SetProperty(ref _baselineSelectedIndex, value);
 	}
 
 	public void SetRecordings(IReadOnlyList<RecordingItem> recordings)
@@ -591,9 +475,10 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 
 	public void SetSelectedRecordings(IReadOnlyList<RecordingItem> recordings)
 	{
+		SelectedRecordings = recordings;
 		int count = recordings.Count;
 		RecordingItem recordingA = count > 0 ? recordings[0] : null;
-		_selectedRecordingCount = count;
+		SelectedRecordingCount = count;
 		IsRenameEnabled = count > 0;
 
 		bool sameProcess = count > 0;
@@ -609,7 +494,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 				}
 			}
 		}
-		_selectedRecordingsHaveSameProcess = sameProcess;
+		SelectedRecordingsHaveSameProcess = sameProcess;
 
 		IsDeltaModeEnabled = false;
 		AnalysisChartType = "Bar";
@@ -627,211 +512,108 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		};
 
 		StatisticsState = AnalysisState;
-		OnPropertyChanged(nameof(IsAggregateEnabled));
-		OnPropertyChanged(nameof(IsAnalysisToolbarEnabled));
-		OnPropertyChanged(nameof(CanCompareSelectedRecordings));
-		OnPropertyChanged(nameof(IsSecondColorPickerEnabled));
-		OnPropertyChanged(nameof(IsDeleteEnabled));
-		OnPropertyChanged(nameof(HasSecondRecording));
-		OnPropertyChanged(nameof(HasSecondRecordingVisibility));
 	}
+
+	private static string RecordingsDirectory => Path.Combine(PathHelper.GetAppDataFolderPath(), "Benchmarks");
 }
 
 [WinRT.GeneratedBindableCustomProperty]
 public sealed partial class RecordingItem : ObservableObject
 {
-	private string _filePath = string.Empty;
-	private string _fileName = string.Empty;
-	private string _title = string.Empty;
-	private string _process = string.Empty;
-	private string _presentationMode = string.Empty;
-	private double _durationSeconds;
-	private DateTimeOffset _date;
-	private TimeSpan _time;
+	[ObservableProperty]
+	public partial string FilePath { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial string FileName { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial string Title { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial string Process { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial string PresentationMode { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial double DurationSeconds { get; set; }
+
+	[ObservableProperty]
+	public partial DateTimeOffset Date { get; set; }
+
+	[ObservableProperty]
+	public partial TimeSpan Time { get; set; }
 
 	public ObservableCollection<RecordingItem> Children { get; } = [];
-
-	public string FilePath
-	{
-		get => _filePath;
-		set => SetProperty(ref _filePath, value);
-	}
-
-	public string FileName
-	{
-		get => _fileName;
-		set => SetProperty(ref _fileName, value);
-	}
-
-	public string Title
-	{
-		get => _title;
-		set => SetProperty(ref _title, value);
-	}
-
-	public string Process
-	{
-		get => _process;
-		set => SetProperty(ref _process, value);
-	}
-
-	public string PresentationMode
-	{
-		get => _presentationMode;
-		set => SetProperty(ref _presentationMode, value);
-	}
-
-	public double DurationSeconds
-	{
-		get => _durationSeconds;
-		set => SetProperty(ref _durationSeconds, value);
-	}
-
-	public DateTimeOffset Date
-	{
-		get => _date;
-		set => SetProperty(ref _date, value);
-	}
-
-	public TimeSpan Time
-	{
-		get => _time;
-		set => SetProperty(ref _time, value);
-	}
 }
 
 [WinRT.GeneratedBindableCustomProperty]
 public sealed partial class ResultRow : ObservableObject
 {
-	private string _statistic = string.Empty;
-	private string _tooltip = string.Empty;
-	private string _recordingA = string.Empty;
-	private string _recordingB = string.Empty;
-	private string _delta = string.Empty;
-	private ResultComparison _recordingAComparison;
-	private ResultComparison _recordingBComparison;
-	private ResultComparison _deltaComparison;
+	[ObservableProperty]
+	public partial string Statistic { get; set; } = string.Empty;
 
-	public string Statistic
-	{
-		get => _statistic;
-		set => SetProperty(ref _statistic, value);
-	}
+	[ObservableProperty]
+	public partial string Tooltip { get; set; } = string.Empty;
 
-	public string Tooltip
-	{
-		get => _tooltip;
-		set => SetProperty(ref _tooltip, value);
-	}
+	[ObservableProperty]
+	public partial string RecordingA { get; set; } = string.Empty;
 
-	public string RecordingA
-	{
-		get => _recordingA;
-		set => SetProperty(ref _recordingA, value);
-	}
+	[ObservableProperty]
+	public partial string RecordingB { get; set; } = string.Empty;
 
-	public string RecordingB
-	{
-		get => _recordingB;
-		set => SetProperty(ref _recordingB, value);
-	}
+	[ObservableProperty]
+	public partial string Delta { get; set; } = string.Empty;
 
-	public string Delta
-	{
-		get => _delta;
-		set => SetProperty(ref _delta, value);
-	}
+	[ObservableProperty]
+	public partial string RecordingAComparison { get; set; }
 
-	public ResultComparison RecordingAComparison
-	{
-		get => _recordingAComparison;
-		set => SetProperty(ref _recordingAComparison, value);
-	}
+	[ObservableProperty]
+	public partial string RecordingBComparison { get; set; }
 
-	public ResultComparison RecordingBComparison
-	{
-		get => _recordingBComparison;
-		set => SetProperty(ref _recordingBComparison, value);
-	}
-
-	public ResultComparison DeltaComparison
-	{
-		get => _deltaComparison;
-		set => SetProperty(ref _deltaComparison, value);
-	}
+	[ObservableProperty]
+	public partial string DeltaComparison { get; set; }
 
 	public ObservableCollection<ResultRow> Children { get; } = [];
 }
 
-public enum ResultComparison
-{
-	None,
-	Better,
-	Worse
-}
-
 public sealed partial class ResultCellStyleSelector : StyleSelector
 {
-	public bool IsRecordingA { get; set; }
-	public bool IsDelta { get; set; }
+	public string PropertyName { get; set; }
 	public Style SuccessStyle { get; set; }
 	public Style CriticalStyle { get; set; }
 
 	protected override Style SelectStyleCore(object item, DependencyObject container)
 	{
-		if (item is not ResultRow row)
+		if (item is not ResultRow row || PropertyName is null)
 			return null;
-
-		var comparison = IsDelta ? row.DeltaComparison : IsRecordingA ? row.RecordingAComparison : row.RecordingBComparison;
-		return comparison switch
+		var value = PropertyName switch
 		{
-			ResultComparison.Better => SuccessStyle,
-			ResultComparison.Worse => CriticalStyle,
+			"RecordingA" => row.RecordingAComparison,
+			"RecordingB" => row.RecordingBComparison,
+			"Delta" => row.DeltaComparison,
 			_ => null
 		};
+		return value == "Better" ? SuccessStyle : value == "Worse" ? CriticalStyle : null;
 	}
 }
 
 [WinRT.GeneratedBindableCustomProperty]
 public sealed partial class BarPoint : ObservableObject
 {
-	private string _label = string.Empty;
-	private double _value;
+	[ObservableProperty]
+	public partial string Label { get; set; } = string.Empty;
 
-	public string Label
-	{
-		get => _label;
-		set => SetProperty(ref _label, value);
-	}
-
-	public double Value
-	{
-		get => _value;
-		set => SetProperty(ref _value, value);
-	}
+	[ObservableProperty]
+	public partial double Value { get; set; }
 }
 
 [WinRT.GeneratedBindableCustomProperty]
 public sealed partial class SeriesPoint : ObservableObject
 {
-	private int _index;
-	private double _value;
+	[ObservableProperty]
+	public partial int Index { get; set; }
 
-	public int Index
-	{
-		get => _index;
-		set => SetProperty(ref _index, value);
-	}
-
-	public double Value
-	{
-		get => _value;
-		set => SetProperty(ref _value, value);
-	}
-}
-
-[System.Text.Json.Serialization.JsonSerializable(typeof(string[]))]
-[System.Text.Json.Serialization.JsonSerializable(typeof(List<string>))]
-internal sealed partial class BenchmarksJsonContext : System.Text.Json.Serialization.JsonSerializerContext
-{
+	[ObservableProperty]
+	public partial double Value { get; set; }
 }

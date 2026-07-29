@@ -2,7 +2,6 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices.WindowsRuntime;
-using System.Text.Json;
 using AutoOS.Core.Helpers.Benchmark;
 using AutoOS.Core.Helpers.Picker;
 using AutoOS.Core.Models;
@@ -159,10 +158,7 @@ public sealed partial class BenchmarksPage : Page
 					{
 						var sourceText = firstRow[aggSourcesIdx].ToString();
 						if (!string.IsNullOrWhiteSpace(sourceText))
-						{
-							byte[] sourceJson = Convert.FromBase64String(sourceText);
-							sourceFileNames = [.. JsonSerializer.Deserialize(sourceJson, BenchmarksJsonContext.Default.ListString) ?? []];
-						}
+							sourceFileNames = [.. sourceText.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)];
 					}
 
 					if (!hasCsvDuration && (dateTimeIdx >= 0 || timeSecondsIdx >= 0))
@@ -463,150 +459,6 @@ public sealed partial class BenchmarksPage : Page
 		_recorder.Stop();
 	}
 
-	private async void Aggregate_Click(object sender, RoutedEventArgs e)
-	{
-		var selected = GetSelectedRecordings();
-		string processName = selected[0].Process;
-
-		int aggregateNumber = 1;
-		string outPath;
-		do
-		{
-			outPath = Path.Combine(RecordingsDirectory, $"Aggregate-{aggregateNumber++}.csv");
-		}
-		while (File.Exists(outPath));
-
-		List<string> headerCols;
-		using (var headerReader = Sep.Reader(o => o with { Sep = new Sep(','), Unescape = true }).FromFile(selected[0].FilePath))
-		{
-			headerCols = new List<string>(headerReader.Header.ColNames.Count);
-			for (int i = 0; i < headerReader.Header.ColNames.Count; i++)
-				headerCols.Add(headerReader.Header.ColNames[i]);
-		}
-
-		int applicationIndex = BenchmarkCsv.EnsureColumn(headerCols, "Application");
-		int aggregateDurationIndex = BenchmarkCsv.EnsureColumn(headerCols, "AggregateDurationSeconds");
-		int aggregateSourcesIndex = BenchmarkCsv.EnsureColumn(headerCols, "AggregateSources");
-		int columnCount = headerCols.Count;
-
-		List<double[]> sums = [];
-		List<int[]> counts = [];
-
-		List<string[]> fallbackRows = [];
-
-		for (int fileIndex = 0; fileIndex < selected.Count; fileIndex++)
-		{
-			using var reader = Sep.Reader(o => o with { Sep = new Sep(','), Unescape = true }).FromFile(selected[fileIndex].FilePath);
-			if (reader.Header.IsEmpty)
-				continue;
-
-			bool isFallbackFile = fileIndex == 0;
-			int rowIndex = 0;
-
-			while (reader.MoveNext())
-			{
-				var row = reader.Current;
-
-				if (rowIndex == sums.Count)
-				{
-					sums.Add(new double[columnCount]);
-					counts.Add(new int[columnCount]);
-				}
-
-				double[] rowSums = sums[rowIndex];
-				int[] rowCounts = counts[rowIndex];
-
-				string[] rawRow = isFallbackFile ? new string[row.ColCount] : null;
-				int colLimit = Math.Min(row.ColCount, columnCount);
-
-				for (int column = 0; column < colLimit; column++)
-				{
-					if (row[column].TryParse(out double value))
-					{
-						rowSums[column] += value;
-						rowCounts[column]++;
-					}
-
-					if (isFallbackFile)
-						rawRow[column] = row[column].ToString();
-				}
-
-				if (isFallbackFile)
-				{
-					for (int column = colLimit; column < row.ColCount; column++)
-						rawRow[column] = row[column].ToString();
-					fallbackRows.Add(rawRow);
-				}
-
-				rowIndex++;
-			}
-		}
-
-		int maxRows = sums.Count;
-		double meanDurationSeconds = selected.Average(recording => recording.DurationSeconds);
-		string aggregateSources = Convert.ToBase64String(JsonSerializer.SerializeToUtf8Bytes([.. selected.Select(recording => recording.FileName).Distinct(StringComparer.OrdinalIgnoreCase)], BenchmarksJsonContext.Default.StringArray));
-
-		using var writer = Sep.Writer(o => o with { Sep = new Sep(',') }).ToFile(outPath);
-		foreach (var col in headerCols)
-			writer.Header.Add(col);
-
-		for (int r = 0; r < maxRows; r++)
-		{
-			using var row = writer.NewRow();
-			double[] rowSums = sums[r];
-			int[] rowCounts = counts[r];
-			string[] fallbackRow = r < fallbackRows.Count ? fallbackRows[r] : null;
-
-			for (int column = 0; column < columnCount; column++)
-			{
-				if (column == applicationIndex)
-				{
-					row[headerCols[column]].Set(processName);
-					continue;
-				}
-				if (column == aggregateDurationIndex)
-				{
-					row[headerCols[column]].Format(meanDurationSeconds);
-					continue;
-				}
-				if (column == aggregateSourcesIndex)
-				{
-					row[headerCols[column]].Set(r == 0 ? aggregateSources : string.Empty);
-					continue;
-				}
-
-				if (rowCounts[column] > 0)
-					row[headerCols[column]].Format(rowSums[column] / rowCounts[column]);
-				else if (fallbackRow != null && column < fallbackRow.Length)
-					row[headerCols[column]].Set(fallbackRow[column]);
-			else
-				row[headerCols[column]].Set(string.Empty);
-			}
-		}
-
-		var aggregateRecording = new RecordingItem
-		{
-			FilePath = outPath,
-			FileName = Path.GetFileName(outPath),
-			Title = Path.GetFileNameWithoutExtension(outPath),
-			Process = processName,
-			PresentationMode = string.Empty,
-			DurationSeconds = meanDurationSeconds,
-			Date = DateTimeOffset.Now,
-			Time = DateTimeOffset.Now.TimeOfDay
-		};
-
-		HashSet<RecordingItem> childSet = [.. selected.Where(r => r.FilePath != outPath)];
-		foreach (var child in childSet)
-			aggregateRecording.Children.Add(child);
-
-		List<RecordingItem> updatedList = [aggregateRecording, .. ViewModel.Recordings.Where(r => !childSet.Contains(r))];
-		updatedList.Sort((a, b) => b.Date.CompareTo(a.Date));
-		ViewModel.SetRecordings(updatedList);
-
-		_selectedRecordings = [aggregateRecording];
-		ViewModel.SetSelectedRecordings(_selectedRecordings);
-	}
 
 	private void MetricComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
 	{
@@ -720,9 +572,9 @@ public sealed partial class BenchmarksPage : Page
 		foreach (ResultRow row in rows)
 		{
 			row.Delta = string.Empty;
-			row.RecordingAComparison = ResultComparison.None;
-			row.RecordingBComparison = ResultComparison.None;
-			row.DeltaComparison = ResultComparison.None;
+			row.RecordingAComparison = null;
+			row.RecordingBComparison = null;
+			row.DeltaComparison = null;
 		}
 
 		ApplyResultComparisons(rows, _selectedRecordings.Count == 2);
@@ -1118,10 +970,8 @@ public sealed partial class BenchmarksPage : Page
 	{
 		if (sender is SfCartesianChart chart)
 		{
-			string chartType = ViewModel.AnalysisChartType;
-			bool isBarChart = chartType is "Bar" or "Column";
 			string[] stats;
-			if (isBarChart)
+			if (ViewModel.AnalysisChartType is "Bar" or "Column")
 			{
 				bool disp1, rend1, disp2, rend2;
 				if (chart == BarChart)
@@ -1158,7 +1008,7 @@ public sealed partial class BenchmarksPage : Page
 				})];
 			}
 			string recordingNames = string.Join(" vs ", _selectedRecordings.Select((r, i) => string.IsNullOrEmpty(stats[i]) ? r.Title : $"{r.Title} ({stats[i]})"));
-			string chartLabel = $"{chartType} Chart";
+			string chartLabel = $"{ViewModel.AnalysisChartType} Chart";
 			string fileName = $"{recordingNames} - {chartLabel}";
 			var flyout = new MenuFlyout();
 
@@ -1355,8 +1205,8 @@ public sealed partial class BenchmarksPage : Page
 				continue;
 			bool higherIsBetter = row.Statistic.EndsWith(" FPS", StringComparison.Ordinal);
 			bool recordingAIsBetter = higherIsBetter ? recordingA > recordingB : recordingA < recordingB;
-			row.RecordingAComparison = recordingAIsBetter ? ResultComparison.Better : ResultComparison.Worse;
-			row.RecordingBComparison = recordingAIsBetter ? ResultComparison.Worse : ResultComparison.Better;
+			row.RecordingAComparison = recordingAIsBetter ? "Better" : "Worse";
+			row.RecordingBComparison = recordingAIsBetter ? "Worse" : "Better";
 		}
 	}
 
@@ -1396,12 +1246,12 @@ public sealed partial class BenchmarksPage : Page
 			double delta = comparison - baseline;
 			if (delta != 0)
 			{
-				ResultComparison baselineComparison = delta > 0 ? ResultComparison.Worse : ResultComparison.Better;
+				string baselineComparison = delta > 0 ? "Worse" : "Better";
 				if (baselineIndex == 0)
 					row.RecordingAComparison = baselineComparison;
 				else
 					row.RecordingBComparison = baselineComparison;
-				row.DeltaComparison = delta > 0 ? ResultComparison.Better : ResultComparison.Worse;
+				row.DeltaComparison = delta > 0 ? "Better" : "Worse";
 			}
 
 			if (showPercentDelta)
