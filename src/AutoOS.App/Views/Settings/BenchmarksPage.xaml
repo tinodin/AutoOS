@@ -29,16 +29,16 @@
 
         <!--  Cell style selector  -->
         <local:ResultCellStyleSelector x:Key="RecordingACellStyleSelector"
-                                       PropertyName="RecordingA"
                                        CriticalStyle="{StaticResource CriticalCellStyle}"
+                                       PropertyName="RecordingA"
                                        SuccessStyle="{StaticResource SuccessCellStyle}" />
         <local:ResultCellStyleSelector x:Key="RecordingBCellStyleSelector"
-                                       PropertyName="RecordingB"
                                        CriticalStyle="{StaticResource CriticalCellStyle}"
+                                       PropertyName="RecordingB"
                                        SuccessStyle="{StaticResource SuccessCellStyle}" />
         <local:ResultCellStyleSelector x:Key="DeltaCellStyleSelector"
-                                       PropertyName="Delta"
                                        CriticalStyle="{StaticResource CriticalCellStyle}"
+                                       PropertyName="Delta"
                                        SuccessStyle="{StaticResource SuccessCellStyle}" />
     </Page.Resources>
     <Grid>
@@ -361,11 +361,11 @@
                             <!--  Baseline  -->
                             <AppBarElementContainer Margin="4,0,0,0"
                                                     IsEnabled="{x:Bind ViewModel.HasTwoRecordings, Mode=OneWay}">
-                                 <ComboBox MinWidth="200"
-                                           ItemsSource="{x:Bind ViewModel.BaselineItems, Mode=OneWay}"
-                                           SelectedIndex="{x:Bind ViewModel.BaselineSelectedIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                           SelectionChanged="StatisticsBaselineComboBox_SelectionChanged"
-                                           ToolTipService.ToolTip="Baseline" />
+                                <ComboBox MinWidth="200"
+                                          ItemsSource="{x:Bind ViewModel.BaselineItems, Mode=OneWay}"
+                                          SelectedIndex="{x:Bind ViewModel.BaselineSelectedIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                          SelectionChanged="StatisticsBaselineComboBox_SelectionChanged"
+                                          ToolTipService.ToolTip="Baseline" />
                             </AppBarElementContainer>
 
                             <AppBarSeparator Margin="4,0" />
@@ -779,8 +779,7 @@
                                     <chart:SfCartesianChart.XAxes>
                                         <chart:NumericalAxis x:Name="LineChartXAxis"
                                                              EdgeLabelsDrawingMode="Shift"
-                                                             Header="Frame Index"
-                                                             Minimum="0" />
+                                                             Header="Frame Index" />
                                     </chart:SfCartesianChart.XAxes>
 
                                     <!--  Y Axis (Milliseconds)  -->
@@ -834,8 +833,7 @@
                                     <chart:SfCartesianChart.XAxes>
                                         <chart:NumericalAxis x:Name="ScatterChartXAxis"
                                                              EdgeLabelsDrawingMode="Shift"
-                                                             Header="Frame Index"
-                                                             Minimum="0" />
+                                                             Header="Frame Index" />
                                     </chart:SfCartesianChart.XAxes>
 
                                     <!--  Y Axis (Milliseconds)  -->

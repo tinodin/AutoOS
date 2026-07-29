@@ -48,8 +48,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	[ObservableProperty]
 	public partial bool IsRenameEnabled { get; set; }
 
-	[ObservableProperty]
-	public partial bool IsDeleteEnabled { get; set; }
+	public bool IsDeleteEnabled => SelectedRecordingCount > 0;
 
 	[RelayCommand(CanExecute = nameof(IsAggregateEnabled))]
 	private void Aggregate()
@@ -495,7 +494,6 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 			}
 		}
 		SelectedRecordingsHaveSameProcess = sameProcess;
-
 		IsDeltaModeEnabled = false;
 		AnalysisChartType = "Bar";
 		BaselineItems = new ObservableCollection<string>(["None", .. recordings.Select(r => r.Title)]);
