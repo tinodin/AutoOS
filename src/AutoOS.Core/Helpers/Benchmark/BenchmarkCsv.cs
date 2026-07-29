@@ -122,16 +122,16 @@ public static class BenchmarkCsv
 		["Max"] = "Highest sampled value in the recording.",
 		["Minimum"] = "Lowest sampled value in the recording.",
 		["Maximum"] = "Highest sampled value in the recording.",
-		["P0.1"] = "Threshold containing the bottom 0.1% of sampled frames.",
-		["P1"] = "Threshold containing the bottom 1% of sampled frames.",
-		["P5"] = "Threshold containing the bottom 5% of sampled frames.",
+		["P0.1"] = "Value below which 0.1% of all frames fall. Captures severe spikes.",
+		["P1"] = "Value below which 1% of all frames fall. Captures moderate spikes.",
+		["P5"] = "Value below which 5% of all frames fall. Captures noticeable drops.",
 		["P50 (Median)"] = "Median value. Represents typical performance.",
-		["P95"] = "Threshold below which 95% of all frames fall. Captures moderate spikes.",
-		["P99"] = "Threshold below which 99% of all frames fall. Captures severe hitches.",
+		["P95"] = "Value below which 95% of all frames fall.",
+		["P99"] = "Value below which 99% of all frames fall.",
 		["Standard Deviation"] = "Measures how widely values are spread around the average. Lower is more consistent.",
 		["Coefficient of Variation"] = "Standard deviation divided by the mean. Useful for comparing consistency across different performance levels.",
-		["Root mean square of successive differences (RMSSD)"] = "Measures frame pacing by comparing timing of adjacent frames. Lower values indicate smoother pacing.",
-		["Stepwise-Relative"] = "Typical percentage change from one frame to the next. Lower values indicate lower spike severity."
+		["Root mean square of successive differences (RMSSD)"] = "Measures the magnitude of variations between consecutive frame times. Lower values indicate more consistent frame pacing.",
+		["Stepwise-Relative"] = "Median percentage change between consecutive frame times. Lower values indicate less severe spikes."
 	};
 
 	public static double GetStatistic(Metrics metric, string label) => label switch

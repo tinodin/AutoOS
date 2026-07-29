@@ -193,16 +193,16 @@
                                     <SelectorBarItem x:Name="BarChartItem"
                                                      IsSelected="True"
                                                      Text="Bar"
-                                                     ToolTipService.ToolTip="Horizontal bar chart comparing FPS metrics side by side" />
+                                                     ToolTipService.ToolTip="Horizontal bar chart comparing FPS statistics side by side." />
                                     <SelectorBarItem x:Name="ColumnChartItem"
                                                      Text="Column"
-                                                     ToolTipService.ToolTip="Vertical column chart comparing FPS metrics side by side" />
+                                                     ToolTipService.ToolTip="Vertical column chart comparing FPS statistics side by side." />
                                     <SelectorBarItem x:Name="LineChartItem"
                                                      Text="Line"
-                                                     ToolTipService.ToolTip="Line chart showing frame delivery times over the full recording" />
+                                                     ToolTipService.ToolTip="Line chart showing frame times over the full recording." />
                                     <SelectorBarItem x:Name="ScatterChartItem"
                                                      Text="Scatter"
-                                                     ToolTipService.ToolTip="Scatter plot of individual frame delivery times" />
+                                                     ToolTipService.ToolTip="Scatter plot showing individual frame times across the recording." />
                                 </dev:SelectorBarSegmented>
                             </AppBarElementContainer>
 
