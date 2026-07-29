@@ -156,6 +156,7 @@ public class ApplicationSelection
 	public bool AutoHotkey { get; set; }
 	public bool EmEditor { get; set; }
 	public bool WinDbg { get; set; }
+	public bool QBittorrent { get; set; }
 	public bool Deluge { get; set; }
 	public bool FreeDownloadManager { get; set; }
 }
@@ -322,6 +323,7 @@ public static class ApplicationStage
 		bool AutoHotkey = selection?.AutoHotkey ?? PreparingStage.AutoHotkey;
 		bool EmEditor = selection?.EmEditor ?? PreparingStage.EmEditor;
 		bool WinDbg = selection?.WinDbg ?? PreparingStage.WinDbg;
+		bool QBittorrent = selection?.QBittorrent ?? PreparingStage.QBittorrent;
 		bool Deluge = selection?.Deluge ?? PreparingStage.Deluge;
 		bool FreeDownloadManager = selection?.FreeDownloadManager ?? PreparingStage.FreeDownloadManager;
 
@@ -2267,6 +2269,13 @@ public static class ApplicationStage
 
 			// install windbg
 			("Installing WinDbg", async () => await StoreHelper.Install("Microsoft.WinDbg_8wekyb3d8bbwe"), () => WinDbg == true),
+
+			// download qbittorrent
+			("Downloading qBittorrent", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/qbittorrent/qBittorrent/releases")).RootElement.EnumerateArray().First(release => !release.GetProperty("prerelease").GetBoolean() && release.GetProperty("assets").EnumerateArray().Any(asset => asset.GetProperty("name").GetString().Contains("x64_setup.exe"))).GetProperty("assets").EnumerateArray().First(asset => asset.GetProperty("name").GetString().Contains("x64_setup.exe")).GetProperty("browser_download_url").GetString(), Path.GetTempPath(), "qbittorrent_x64_setup.exe", reporter: reporter), () => QBittorrent == true),
+
+			// install qbittorrent
+			("Installing qBittorrent", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "qbittorrent_x64_setup.exe"), Arguments = "/S", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => QBittorrent == true),
+			("Cleaning up qBittorrent files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "qbittorrent_x64_setup.exe")), () => QBittorrent == true),
 
 			// download deluge
 			("Downloading Deluge", async () => await DownloadHelper.Download("http://download.deluge-torrent.org/windows/deluge-2.2.0-win64-setup.exe", Path.GetTempPath(), "deluge-win64-setup.exe", reporter: reporter), () => Deluge == true),

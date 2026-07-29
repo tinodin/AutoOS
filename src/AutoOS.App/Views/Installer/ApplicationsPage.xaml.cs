@@ -221,6 +221,7 @@ public sealed partial class ApplicationsPage : Page
 			new() { Text = "AutoHotkey", ImageSource = "ms-appx:///Assets/Fluent/AutoHotkey.png" },
 			new() { Text = "EmEditor", ImageSource = "ms-appx:///Assets/Fluent/EmEditor.png" },
 			new() { Text = "WinDbg", ImageSource = "ms-appx:///Assets/Fluent/WinDbg.png" },
+			new() { Text = "qBittorrent", ImageSource = "ms-appx:///Assets/Fluent/QBittorrent.png" },
 			new() { Text = "Deluge", ImageSource = "ms-appx:///Assets/Fluent/Deluge.png" },
 			new() { Text = "Free Download Manager", ImageSource = "ms-appx:///Assets/Fluent/FreeDownloadManager.png" }
 		};

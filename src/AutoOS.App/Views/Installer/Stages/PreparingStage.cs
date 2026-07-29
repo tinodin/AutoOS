@@ -194,6 +194,7 @@ public static partial class PreparingStage
 	public static bool AutoHotkey;
 	public static bool EmEditor;
 	public static bool WinDbg;
+	public static bool QBittorrent;
 	public static bool Deluge;
 	public static bool FreeDownloadManager;
 
@@ -604,6 +605,7 @@ public static partial class PreparingStage
 			AutoHotkey = (localSettings.Values["Miscellaneous"]?.ToString().Contains("AutoHotkey") ?? false);
 			EmEditor = (localSettings.Values["Miscellaneous"]?.ToString().Contains("EmEditor") ?? false);
 			WinDbg = (localSettings.Values["Miscellaneous"]?.ToString().Contains("WinDbg") ?? false);
+			QBittorrent = (localSettings.Values["Miscellaneous"]?.ToString().Contains("qBittorrent") ?? false);
 			Deluge = (localSettings.Values["Miscellaneous"]?.ToString().Contains("Deluge") ?? false);
 			FreeDownloadManager = (localSettings.Values["Miscellaneous"]?.ToString().Contains("Free Download Manager") ?? false);
 

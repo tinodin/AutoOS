@@ -242,6 +242,7 @@ public sealed partial class ApplicationsPage : Page
 			new() { Text = "AutoHotkey", ImageSource = "ms-appx:///Assets/Fluent/AutoHotkey.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "AutoHotkey", "UX", "AutoHotkeyUX.exe")) },
 			new() { Text = "EmEditor", ImageSource = "ms-appx:///Assets/Fluent/EmEditor.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "Emurasoft.EmEditor64UWP_ws7rg9hnwrpxm")) },
 			new() { Text = "WinDbg", ImageSource = "ms-appx:///Assets/Fluent/WinDbg.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "Microsoft.WinDbg_8wekyb3d8bbwe")) },
+			new() { Text = "qBittorrent", ImageSource = "ms-appx:///Assets/Fluent/QBittorrent.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "qBittorrent", "qbittorrent.exe")) },
 			new() { Text = "Deluge", ImageSource = "ms-appx:///Assets/Fluent/Deluge.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Deluge", "Deluge.exe")) },
 			new() { Text = "Free Download Manager", ImageSource = "ms-appx:///Assets/Fluent/FreeDownloadManager.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Softdeluxe", "Free Download Manager", "fdm.exe")) }
 		};
@@ -426,6 +427,7 @@ public sealed partial class ApplicationsPage : Page
 		selection.AutoHotkey = selectedMiscellaneous.Contains("AutoHotkey");
 		selection.EmEditor = selectedMiscellaneous.Contains("EmEditor");
 		selection.WinDbg = selectedMiscellaneous.Contains("WinDbg");
+		selection.QBittorrent = selectedMiscellaneous.Contains("qBittorrent");
 		selection.Deluge = selectedMiscellaneous.Contains("Deluge");
 		selection.FreeDownloadManager = selectedMiscellaneous.Contains("Free Download Manager");
 
