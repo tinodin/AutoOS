@@ -4,9 +4,9 @@ using System.Globalization;
 using System.Runtime.InteropServices.WindowsRuntime;
 using AutoOS.Core.Helpers.Benchmark;
 using AutoOS.Core.Helpers.Picker;
-using AutoOS.Core.Models;
 using AutoOS.Helpers.Picker;
 using AutoOS.Views.Settings.Benchmarks;
+using CommunityToolkit.WinUI.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
 using nietras.SeparatedValues;
@@ -21,15 +21,29 @@ using Windows.UI.ViewManagement;
 
 namespace AutoOS.Views.Settings;
 
+public sealed record BarColumnChartData(
+	List<BarPoint> DisplayedFpsBars1,
+	List<BarPoint> RenderedFpsBars1,
+	List<BarPoint> DisplayedFpsBars2,
+	List<BarPoint> RenderedFpsBars2,
+	bool ShowRenderedFps1,
+	string DisplayedFpsLabel1, string RenderedFpsLabel1,
+	string DisplayedFpsLabel2, string RenderedFpsLabel2
+);
+
+public sealed record LineScatterChartData(
+	List<SeriesPoint> Pts1,
+	List<SeriesPoint> Pts2,
+	string Label1,
+	string Label2);
+
+public sealed record RecordingAnalysis(RecordingItem Recording, AnalysisResult Analysis);
+
 public sealed partial class BenchmarksPage : Page
 {
 	public BenchmarksPageViewModel ViewModel { get; } = new();
-	private static readonly string RecordingsDirectory = Path.Combine(PathHelper.GetAppDataFolderPath(), "Benchmarks");
-	private sealed record AnalysisModel(string MetricName, List<(string recordingName, List<SeriesPoint> points)> MetricSeries, List<(string recordingName, Metrics displayedStats, Metrics renderedStats)> FpsStatsSeries);
-	private sealed record ChartPresentation(List<BarPoint> DisplayedFpsBars1, List<BarPoint> RenderedFpsBars1, List<BarPoint> DisplayedFpsBars2, List<BarPoint> RenderedFpsBars2, bool ShowRenderedFps1, string DisplayedFpsLabel1, string RenderedFpsLabel1, string DisplayedFpsLabel2, string RenderedFpsLabel2, List<SeriesPoint> MetricPts1, List<SeriesPoint> MetricPts2, string MetricLabel1, string MetricLabel2, string FpsYAxisLabel, string FpsLabelFormat, string MetricYAxisLabel);
+
 	private readonly PresentMonRecorder _recorder = new();
-	private List<RecordingItem> _selectedRecordings = [];
-	private ChartPresentation _lastChartPresentation;
 	private CancellationTokenSource _processRefreshCts;
 	private volatile bool _isInitialProcessRefresh;
 	private GlobalKeyboardHook _globalKeyboardHook;
@@ -50,8 +64,8 @@ public sealed partial class BenchmarksPage : Page
 		_globalKeyboardHook = new GlobalKeyboardHook();
 		_globalKeyboardHook.KeyDown += OnGlobalKeyDown;
 		_globalKeyboardHook.Start();
+		ViewModel.StatisticToggled += Statistic_SelectionChanged;
 		PresentingProcesses.ProcessesChanged += PresentingProcesses_ProcessesChanged;
-		ViewModel.MetricToggled += OnMetricToggled;
 		ProcessAutoSuggestBox.AddHandler(PointerPressedEvent, new PointerEventHandler(ProcessAutoSuggestBox_PointerPressed), true);
 		ProcessAutoSuggestBox.RegisterPropertyChangedCallback(AutoSuggestBox.IsSuggestionListOpenProperty, ProcessAutoSuggestBox_IsSuggestionListOpenChanged);
 	}
@@ -67,32 +81,28 @@ public sealed partial class BenchmarksPage : Page
 			_globalKeyboardHook.Dispose();
 			_globalKeyboardHook = null;
 		}
+		ViewModel.StatisticToggled -= Statistic_SelectionChanged;
 		PresentingProcesses.ProcessesChanged -= PresentingProcesses_ProcessesChanged;
-		ViewModel.MetricToggled -= OnMetricToggled;
 	}
 
 	private void LoadRecordings()
 	{
-		if (!Directory.Exists(RecordingsDirectory))
+		if (!Directory.Exists(BenchmarkCsv.RecordingsDirectory))
 		{
-			Directory.CreateDirectory(RecordingsDirectory);
+			Directory.CreateDirectory(BenchmarkCsv.RecordingsDirectory);
 			ViewModel.SetRecordings([]);
-			_selectedRecordings = [];
-			ViewModel.SetSelectedRecordings(_selectedRecordings);
 			return;
 		}
 
-		List<FileInfo> csvFiles = [.. new DirectoryInfo(RecordingsDirectory).EnumerateFiles("*.csv")];
+		List<FileInfo> csvFiles = [.. new DirectoryInfo(BenchmarkCsv.RecordingsDirectory).EnumerateFiles("*.csv")];
 
 		if (csvFiles.Count == 0)
 		{
 			ViewModel.SetRecordings([]);
-			_selectedRecordings = [];
-			ViewModel.SetSelectedRecordings(_selectedRecordings);
 			return;
 		}
 
-		var sepReader = Sep.Reader(o => o with { Sep = new Sep(','), Unescape = true, ColNameComparer = StringComparer.OrdinalIgnoreCase });
+		var sepReader = Sep.Reader(options => options with { Sep = new Sep(','), Unescape = true, ColNameComparer = StringComparer.OrdinalIgnoreCase });
 
 		List<RecordingItem> recordings = new(csvFiles.Count);
 		Dictionary<RecordingItem, List<string>> aggregateSources = new();
@@ -200,8 +210,8 @@ public sealed partial class BenchmarksPage : Page
 					return (Recording: null, SourceFileNames: null);
 				}
 			})
-			.Where(r => r.Recording != null)
-			.Select(r => (r.Recording, SourceFileNames: r.SourceFileNames))
+			.Where(recording => recording.Recording != null)
+			.Select(recording => (recording.Recording, recording.SourceFileNames))
 			.ToList();
 
 		loadedRecordings.Sort((a, b) => b.Recording.Date.CompareTo(a.Recording.Date));
@@ -234,8 +244,6 @@ public sealed partial class BenchmarksPage : Page
 		}
 
 		ViewModel.SetRecordings(recordings);
-		_selectedRecordings = [];
-		ViewModel.SetSelectedRecordings(_selectedRecordings);
 	}
 
 	private void RecordingsTreeGrid_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -251,10 +259,9 @@ public sealed partial class BenchmarksPage : Page
 
 	private void RecordingsTreeGrid_SelectionChanged(object sender, GridSelectionChangedEventArgs e)
 	{
-		_selectedRecordings = GetSelectedRecordings();
-		ViewModel.SetSelectedRecordings(_selectedRecordings);
-		RebuildCharts(_selectedRecordings);
-		UpdateStatisticsTable();
+		ViewModel.SetSelectedRecordings(RecordingsTreeGrid.SelectedItems.OfType<RecordingItem>().Append(RecordingsTreeGrid.SelectedItem as RecordingItem).Where(recording => recording is not null).DistinctBy(recording => recording.FilePath, StringComparer.OrdinalIgnoreCase).ToList());
+		BuildAnalysis();
+		BuildStatistics();
 	}
 
 	private void StatisticsTreeGrid_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -328,7 +335,7 @@ public sealed partial class BenchmarksPage : Page
 			return;
 
 		foreach (var file in files)
-			File.Copy(file.Path, Path.Combine(RecordingsDirectory, file.Name), true);
+			File.Copy(file.Path, Path.Combine(BenchmarkCsv.RecordingsDirectory, file.Name), true);
 
 		LoadRecordings();
 	}
@@ -343,9 +350,8 @@ public sealed partial class BenchmarksPage : Page
 		if (RecordingsTreeGrid.GetNodeAtRowIndex(e.RowColumnIndex.RowIndex)?.Item is not RecordingItem recording)
 			return;
 
-		var dir = Path.GetDirectoryName(recording.FilePath);
 		var ext = Path.GetExtension(recording.FilePath);
-		var newPath = Path.Combine(dir, recording.Title + ext);
+		var newPath = Path.Combine(Path.GetDirectoryName(recording.FilePath), recording.Title + ext);
 		if (newPath == recording.FilePath)
 			return;
 
@@ -358,7 +364,7 @@ public sealed partial class BenchmarksPage : Page
 
 	private async void DeleteRecording_Click(object sender, RoutedEventArgs e)
 	{
-		var selected = GetSelectedRecordings();
+		var selected = RecordingsTreeGrid.SelectedItems.OfType<RecordingItem>().Append(RecordingsTreeGrid.SelectedItem as RecordingItem).Where(recording => recording is not null).DistinctBy(recording => recording.FilePath, StringComparer.OrdinalIgnoreCase).ToList();
 		if (selected.Count == 0)
 			return;
 
@@ -399,7 +405,7 @@ public sealed partial class BenchmarksPage : Page
 		int duration = (int)ViewModel.RecordingDuration;
 		int delay = (int)ViewModel.RecordingDelay;
 		string processName = ViewModel.ProcessName.Trim();
-		string presentMonPath = Path.Combine(RecordingsDirectory, "PresentMon.exe");
+		string presentMonPath = Path.Combine(BenchmarkCsv.RecordingsDirectory, "PresentMon.exe");
 		string errorMessage = string.Empty;
 		PresentMonRecordingResult recordingResult = PresentMonRecordingResult.Stopped;
 
@@ -410,7 +416,7 @@ public sealed partial class BenchmarksPage : Page
 			else
 				ViewModel.ShowRecording();
 
-			Task<PresentMonRecordingResult> recordingTask = _recorder.RecordAsync(presentMonPath, RecordingsDirectory, processName, duration, delay);
+			Task<PresentMonRecordingResult> recordingTask = _recorder.RecordAsync(presentMonPath, BenchmarkCsv.RecordingsDirectory, processName, duration, delay);
 			if (delay > 0)
 			{
 				var delayTimer = Stopwatch.StartNew();
@@ -459,13 +465,17 @@ public sealed partial class BenchmarksPage : Page
 		_recorder.Stop();
 	}
 
+	private void Statistic_SelectionChanged()
+	{
+		var presentation = BuildBarColumnChartData(ViewModel.CachedAnalysis);
+		BindBarColumnChart(presentation);
+	}
 
 	private void MetricComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
 	{
 		var metric = (Metric1ComboBox.SelectedItem as ComboBoxItem)?.Content as string ?? string.Empty;
-		var presentation = BuildChartData(_selectedRecordings, metric);
-		if (presentation != null)
-			BindLineScatterChart(presentation);
+		var data = BuildLineScatterChartData(ViewModel.CachedAnalysis, metric);
+		BindLineScatterChart(data.Pts1, data.Pts2, data.Label1, data.Label2);
 	}
 
 	private void HotkeyShortcut_PrimaryButtonClick(object sender, ContentDialogButtonClickEventArgs e)
@@ -482,10 +492,9 @@ public sealed partial class BenchmarksPage : Page
 			string keyName = item switch
 			{
 				KeyVisualInfo kvi => kvi.KeyName ?? string.Empty,
-				string s => s,
 				_ => item?.ToString() ?? string.Empty
 			};
-			VirtualKey virtKey = item is KeyVisualInfo k ? k.Key.GetValueOrDefault() : VirtualKey.None;
+			VirtualKey virtKey = item is KeyVisualInfo keyVisual ? keyVisual.Key.GetValueOrDefault() : VirtualKey.None;
 
 			if (keyName.Contains("Ctrl", StringComparison.OrdinalIgnoreCase))
 				_currentModifiers |= VirtualKeyModifiers.Control;
@@ -562,8 +571,7 @@ public sealed partial class BenchmarksPage : Page
 	private void StatisticsDeltaModeSelector_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
 	{
 		ViewModel.IsPercentDelta = sender.SelectedItem == PercentDeltaItem;
-		if (ViewModel.BaselineSelectedIndex >= 1)
-			RefreshStatisticsDelta();
+		RefreshStatisticsDelta();
 	}
 
 	private void RefreshStatisticsDelta()
@@ -577,7 +585,7 @@ public sealed partial class BenchmarksPage : Page
 			row.DeltaComparison = null;
 		}
 
-		ApplyResultComparisons(rows, _selectedRecordings.Count == 2);
+		ApplyResultComparisons(rows, ViewModel.SelectedRecordings.Count == 2);
 		int baselineIdx = ViewModel.BaselineSelectedIndex - 1;
 		if (baselineIdx is 0 or 1)
 			ApplyResultDeltas(rows, baselineIdx, ViewModel.IsPercentDelta);
@@ -627,95 +635,49 @@ public sealed partial class BenchmarksPage : Page
 
 	private void BenchmarksSelectorBar_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
 	{
-		var selectedItem = args.SelectedItem ?? sender.SelectedItem;
-		if (ReferenceEquals(selectedItem, RecordingsTab))
+		switch (args.SelectedItem ?? sender.SelectedItem)
 		{
-			ViewModel.ActiveTab = "Recordings";
-		}
-		else if (ReferenceEquals(selectedItem, AnalysisTab))
-		{
-			StopProcessDiscovery();
-			ViewModel.ActiveTab = "Analysis";
-			ViewModel.AnalysisChartType = "Bar";
-			if (ViewModel.IsAnalysisToolbarEnabled)
-				ReplayAnimation();
-		}
-		else if (ReferenceEquals(selectedItem, StatisticsTab))
-		{
-			StopProcessDiscovery();
-			ViewModel.ActiveTab = "Statistics";
+			case TabbedCommandBarItem item when item == RecordingsTab:
+				ViewModel.ActiveTab = "Recordings";
+				break;
+
+			case TabbedCommandBarItem item when item == AnalysisTab:
+				StopProcessDiscovery();
+				ViewModel.ActiveTab = "Analysis";
+				ViewModel.AnalysisChartType = "Bar";
+				if (ViewModel.IsAnalysisToolbarEnabled)
+					ReplayAnimation();
+				break;
+
+			case TabbedCommandBarItem item when item == StatisticsTab:
+				StopProcessDiscovery();
+				ViewModel.ActiveTab = "Statistics";
+				break;
 		}
 	}
 
-	private void RebuildCharts(List<RecordingItem> items)
+	private void BuildAnalysis()
 	{
-		if (items.Count is 0 or > 2)
-		{
-			_lastChartPresentation = null;
+		if (ViewModel.SelectedRecordings.Count is 0 or > 2)
 			return;
-		}
 
-		var metric = (Metric1ComboBox.SelectedItem as ComboBoxItem)?.Content as string ?? string.Empty;
-		var presentation = BuildChartData(items, metric);
-		if (presentation == null)
-		{
-			_lastChartPresentation = null;
-			return;
-		}
+		var results = ViewModel.SelectedRecordings
+			.Select(recording => (Item: recording, Result: RecordingAnalyzer.Analyze(recording.FilePath)))
+			.Where(recording => recording.Result != null)
+			.Select(recording => new RecordingAnalysis(recording.Item, recording.Result))
+			.ToList();
 
+		ViewModel.CachedAnalysis = results;
+
+		var metric = (Metric1ComboBox.SelectedItem as ComboBoxItem)?.Content as string;
+		var presentation = BuildBarColumnChartData(results);
 		BindBarColumnChart(presentation);
-		BindLineScatterChart(presentation);
+
+		var data = BuildLineScatterChartData(results, metric);
+		BindLineScatterChart(data.Pts1, data.Pts2, data.Label1, data.Label2);
 	}
 
-	private static ChartPresentation BuildChartData(List<RecordingItem> items, string metric)
-	{
-		var results = new List<(RecordingItem item, RecordingAnalyzer.AnalysisResult analysis)>();
-		foreach (var item in items)
-		{
-			var result = RecordingAnalyzer.Analyze(item.FilePath);
-			if (result != null)
-				results.Add((item, result));
-		}
-
-		if (results.Count == 0)
-			return null;
-
-		if (results.All(r => r.analysis.MsBetweenDisplayChange.Count == 0 && r.analysis.MsBetweenPresents.Count == 0))
-			return null;
-
-		string metricColumn = metric switch
-		{
-			"Displayed FPS" => "MsBetweenDisplayChange",
-			"Rendered FPS" => "MsBetweenPresents",
-			_ => metric
-		};
-
-		List<(string recordingName, List<SeriesPoint> points)> metricSeries = [];
-		List<(string recordingName, Metrics displayedStats, Metrics renderedStats)> fpsStatsSeries = [];
-
-		foreach (var (item, analysis) in results)
-		{
-			IReadOnlyList<double> rawValues = metricColumn switch
-			{
-				"MsBetweenDisplayChange" => analysis.MsBetweenDisplayChange,
-				"MsBetweenPresents" => analysis.MsBetweenPresents,
-				"MsGPUBusy" => analysis.MsGPUBusy,
-				"MsUntilDisplayed" => analysis.MsUntilDisplayed,
-				_ => []
-			};
-
-			var points = new List<SeriesPoint>(rawValues.Count);
-			for (int i = 0; i < rawValues.Count; i++)
-				points.Add(new SeriesPoint { Index = i + 1, Value = rawValues[i] });
-			metricSeries.Add((item.FileName, points));
-
-			fpsStatsSeries.Add((item.FileName, analysis.DisplayedFps, analysis.RenderedFps));
-		}
-
-		return ToChartPresentation(new AnalysisModel(metric, metricSeries, fpsStatsSeries));
-	}
-
-	private static ChartPresentation ToChartPresentation(AnalysisModel model)
+	private static BarColumnChartData BuildBarColumnChartData(List<RecordingAnalysis> results)
 	{
 		List<BarPoint> displayedFpsBars1 = [];
 		List<BarPoint> renderedFpsBars1 = [];
@@ -727,99 +689,111 @@ public sealed partial class BenchmarksPage : Page
 		string displayedFpsLabel2 = string.Empty;
 		string renderedFpsLabel2 = string.Empty;
 
-		if (model.FpsStatsSeries.Count > 0)
+		int fpsSeriesIdx = 0;
+		foreach (var result in results)
 		{
-			int seriesIdx = 0;
-			foreach (var (recordingName, displayedStats, renderedStats) in model.FpsStatsSeries)
+			List<BarPoint> displayedTarget = fpsSeriesIdx == 0 ? displayedFpsBars1 : displayedFpsBars2;
+			List<BarPoint> renderedTarget = fpsSeriesIdx == 0 ? renderedFpsBars1 : renderedFpsBars2;
+
+			foreach (string percentile in BenchmarkCsv.StatisticLabelsShort)
 			{
-				List<BarPoint> displayedTarget = seriesIdx == 0 ? displayedFpsBars1 : displayedFpsBars2;
-				List<BarPoint> renderedTarget = seriesIdx == 0 ? renderedFpsBars1 : renderedFpsBars2;
-
-				foreach (string percentile in BenchmarkCsv.StatisticLabelsShort)
-				{
-					displayedTarget.Add(new BarPoint { Label = percentile, Value = BenchmarkCsv.GetStatistic(displayedStats, percentile) });
-					renderedTarget.Add(new BarPoint { Label = percentile, Value = BenchmarkCsv.GetStatistic(renderedStats, percentile) });
-				}
-
-				if (seriesIdx == 0)
-				{
-					displayedFpsLabel1 = $"{recordingName} \u00b7 Displayed FPS";
-					renderedFpsLabel1 = $"{recordingName} \u00b7 Rendered FPS";
-					showRenderedFps1 = renderedTarget.Count > 0;
-				}
-				else
-				{
-					displayedFpsLabel2 = $"{recordingName} \u00b7 Displayed FPS";
-					renderedFpsLabel2 = $"{recordingName} \u00b7 Rendered FPS";
-				}
-				seriesIdx++;
+				displayedTarget.Add(new BarPoint { Label = percentile, Value = BenchmarkCsv.GetStatistic(result.Analysis.DisplayedFps, percentile) });
+				renderedTarget.Add(new BarPoint { Label = percentile, Value = BenchmarkCsv.GetStatistic(result.Analysis.RenderedFps, percentile) });
 			}
+
+			if (fpsSeriesIdx == 0)
+			{
+				displayedFpsLabel1 = $"{result.Recording.FileName} · Displayed FPS";
+				renderedFpsLabel1 = $"{result.Recording.FileName} · Rendered FPS";
+				showRenderedFps1 = renderedTarget.Count > 0;
+			}
+			else
+			{
+				displayedFpsLabel2 = $"{result.Recording.FileName} · Displayed FPS";
+				renderedFpsLabel2 = $"{result.Recording.FileName} · Rendered FPS";
+			}
+			fpsSeriesIdx++;
 		}
 
+		return new BarColumnChartData(displayedFpsBars1, renderedFpsBars1, displayedFpsBars2, renderedFpsBars2, showRenderedFps1, displayedFpsLabel1, renderedFpsLabel1, displayedFpsLabel2, renderedFpsLabel2);
+	}
+
+	private static LineScatterChartData BuildLineScatterChartData(List<RecordingAnalysis> results, string metric)
+	{
 		List<SeriesPoint> metricPts1 = [];
 		List<SeriesPoint> metricPts2 = [];
 		string metricLabel1 = string.Empty;
 		string metricLabel2 = string.Empty;
 
-		if (model.MetricSeries.Count > 0)
+		int index = 0;
+		foreach (var result in results)
 		{
-			int seriesIdx = 0;
-			foreach (var (recordingName, points) in model.MetricSeries)
+			IReadOnlyList<double> rawValues = metric switch
 			{
-				if (seriesIdx == 0)
-				{
-					metricPts1 = points;
-					metricLabel1 = $"{recordingName} \u00b7 {model.MetricName}";
-				}
-				else
-				{
-					metricPts2 = points;
-					metricLabel2 = $"{recordingName} \u00b7 {model.MetricName}";
-				}
-				seriesIdx++;
+				"MsBetweenDisplayChange" => result.Analysis.MsBetweenDisplayChange,
+				"MsBetweenPresents" => result.Analysis.MsBetweenPresents,
+				"MsGPUBusy" => result.Analysis.MsGPUBusy,
+				"MsUntilDisplayed" => result.Analysis.MsUntilDisplayed,
+				_ => []
+			};
+
+			var points = new List<SeriesPoint>(rawValues.Count);
+			for (int i = 0; i < rawValues.Count; i++)
+				points.Add(new SeriesPoint { Index = i + 1, Value = rawValues[i] });
+
+			if (index == 0)
+			{
+				metricPts1 = points;
+				metricLabel1 = $"{result.Recording.FileName} · {metric}";
 			}
+			else
+			{
+				metricPts2 = points;
+				metricLabel2 = $"{result.Recording.FileName} · {metric}";
+			}
+			index++;
 		}
 
-		return new ChartPresentation(displayedFpsBars1, renderedFpsBars1, displayedFpsBars2, renderedFpsBars2, showRenderedFps1, displayedFpsLabel1, renderedFpsLabel1, displayedFpsLabel2, renderedFpsLabel2, metricPts1, metricPts2, metricLabel1, metricLabel2, "FPS", "0.#", "Milliseconds (ms)");
+		return new LineScatterChartData(metricPts1, metricPts2, metricLabel1, metricLabel2);
 	}
 
-	private void BindBarColumnChart(ChartPresentation presentation)
+	private void BindBarColumnChart(BarColumnChartData presentation)
 	{
-		_lastChartPresentation = presentation;
+		bool hasSecondRecording = ViewModel.HasTwoRecordings;
+
 		ViewModel.BarColumnChartDisplayedData1 = null;
 		ViewModel.BarColumnChartRenderedData1 = null;
 		ViewModel.BarColumnChartDisplayedData2 = null;
 		ViewModel.BarColumnChartRenderedData2 = null;
-		ViewModel.BarColumnChartYAxisLabel = presentation.FpsYAxisLabel;
-		ViewModel.BarColumnChartLabelFormat = presentation.FpsLabelFormat;
 		ViewModel.BarColumnChartDisplayedLabel1 = presentation.DisplayedFpsLabel1;
 		ViewModel.BarColumnChartRenderedLabel1 = presentation.RenderedFpsLabel1;
 		ViewModel.BarColumnChartDisplayedLabel2 = presentation.DisplayedFpsLabel2;
 		ViewModel.BarColumnChartRenderedLabel2 = presentation.RenderedFpsLabel2;
 		ViewModel.BarColumnRenderedVisible = presentation.ShowRenderedFps1;
 
-		var series1Data = presentation.DisplayedFpsBars1.Where(b => ViewModel.IsStatisticEnabled(b.Label)).ToList();
-		var series1RenderedData = presentation.RenderedFpsBars1.Where(b => ViewModel.IsStatisticEnabled(b.Label)).ToList();
-		var series2Data = presentation.DisplayedFpsBars2.Where(b => ViewModel.IsStatisticEnabled(b.Label)).ToList();
-		var series2RenderedData = presentation.RenderedFpsBars2.Where(b => ViewModel.IsStatisticEnabled(b.Label)).ToList();
+		var displayed1 = presentation.DisplayedFpsBars1.Where(bar => ViewModel.IsStatisticEnabled(bar.Label)).ToList();
+		var rendered1 = presentation.RenderedFpsBars1.Where(bar => ViewModel.IsStatisticEnabled(bar.Label)).ToList();
+		var displayed2 = presentation.DisplayedFpsBars2.Where(bar => ViewModel.IsStatisticEnabled(bar.Label)).ToList();
+		var rendered2 = presentation.RenderedFpsBars2.Where(bar => ViewModel.IsStatisticEnabled(bar.Label)).ToList();
 
-		bool hasSecondRecording = _selectedRecordings.Count == 2;
-
-		ViewModel.BarColumnChartDisplayedData1 = [.. series1Data];
-		ViewModel.BarColumnChartRenderedData1 = presentation.ShowRenderedFps1 ? [.. series1RenderedData] : null;
-		ViewModel.BarColumnChartDisplayedData2 = hasSecondRecording ? [.. series2Data] : null;
-		ViewModel.BarColumnChartRenderedData2 = hasSecondRecording ? [.. series2RenderedData] : null;
+		ViewModel.BarColumnChartDisplayedData1 = [.. displayed1];
+		ViewModel.BarColumnChartRenderedData1 = presentation.ShowRenderedFps1 ? [.. rendered1] : null;
+		ViewModel.BarColumnChartDisplayedData2 = hasSecondRecording ? [.. displayed2] : null;
+		ViewModel.BarColumnChartRenderedData2 = hasSecondRecording ? [.. rendered2] : null;
 
 		if (BarChart != null)
 		{
 			BarChart.Series.Clear();
 			BarChart.Series.Add(BarDisplayedFpsSeries1);
+
 			if (presentation.ShowRenderedFps1)
 				BarChart.Series.Add(BarRenderedFpsSeries1);
+
 			if (hasSecondRecording)
+			{
 				BarChart.Series.Add(BarDisplayedFpsSeries2);
-			if (hasSecondRecording)
 				BarChart.Series.Add(BarRenderedFpsSeries2);
+			}
 
 			BarDisplayedFpsSeries1.ShowDataLabels = false;
 			BarDisplayedFpsSeries1.ShowDataLabels = true;
@@ -838,12 +812,15 @@ public sealed partial class BenchmarksPage : Page
 		{
 			ColumnChart.Series.Clear();
 			ColumnChart.Series.Add(ColumnDisplayedFpsSeries1);
+
 			if (presentation.ShowRenderedFps1)
 				ColumnChart.Series.Add(ColumnRenderedFpsSeries1);
+
 			if (hasSecondRecording)
+			{
 				ColumnChart.Series.Add(ColumnDisplayedFpsSeries2);
-			if (hasSecondRecording)
 				ColumnChart.Series.Add(ColumnRenderedFpsSeries2);
+			}
 
 			ColumnDisplayedFpsSeries1.ShowDataLabels = false;
 			ColumnDisplayedFpsSeries1.ShowDataLabels = true;
@@ -856,57 +833,14 @@ public sealed partial class BenchmarksPage : Page
 		}
 	}
 
-	private void BindLineScatterChart(ChartPresentation presentation)
+	private void BindLineScatterChart(List<SeriesPoint> metricPts1, List<SeriesPoint> metricPts2, string metricLabel1, string metricLabel2)
 	{
 		ViewModel.LineScatterChartData1 = [];
 		ViewModel.LineScatterChartData2 = [];
-		ViewModel.LineScatterChartYAxisLabel = presentation.MetricYAxisLabel;
-		ViewModel.LineScatterChartLabel1 = presentation.MetricLabel1;
-		ViewModel.LineScatterChartLabel2 = presentation.MetricLabel2;
-		ViewModel.LineScatterChartData1 = [.. presentation.MetricPts1];
-		ViewModel.LineScatterChartData2 = [.. presentation.MetricPts2];
-
-		double globalMinY = double.MaxValue, globalMaxY = double.MinValue;
-		double globalMaxX = 0;
-		foreach (var pt in presentation.MetricPts1.Concat(presentation.MetricPts2))
-		{
-			if (pt.Value < globalMinY) globalMinY = pt.Value;
-			if (pt.Value > globalMaxY) globalMaxY = pt.Value;
-			if (pt.Index > globalMaxX) globalMaxX = pt.Index;
-		}
-		if (globalMinY != double.MaxValue && globalMaxY != double.MinValue)
-		{
-			double padding = (globalMaxY - globalMinY) * 0.05;
-			if (padding == 0) padding = 1;
-			globalMinY = Math.Min(0, globalMinY - padding);
-			globalMaxY += padding;
-
-			if (LineChartYAxis != null)
-			{
-				LineChartYAxis.Minimum = globalMinY;
-				LineChartYAxis.Maximum = globalMaxY;
-			}
-			if (ScatterChartYAxis != null)
-			{
-				ScatterChartYAxis.Minimum = globalMinY;
-				ScatterChartYAxis.Maximum = globalMaxY;
-			}
-		}
-		if (globalMaxX > 0)
-		{
-			if (LineChartXAxis != null)
-				LineChartXAxis.Maximum = globalMaxX;
-			if (ScatterChartXAxis != null)
-				ScatterChartXAxis.Maximum = globalMaxX;
-		}
-	}
-
-	private void OnMetricToggled()
-	{
-		if (_lastChartPresentation != null)
-		{
-			BindBarColumnChart(_lastChartPresentation);
-		}
+		ViewModel.LineScatterChartLabel1 = metricLabel1;
+		ViewModel.LineScatterChartLabel2 = metricLabel2;
+		ViewModel.LineScatterChartData1 = [.. metricPts1];
+		ViewModel.LineScatterChartData2 = [.. metricPts2];
 	}
 
 	private static async Task SaveChartAsync(SfCartesianChart chart, string suggestedFileName, Guid encoderId, string extension, bool flattenBackground)
@@ -955,14 +889,7 @@ public sealed partial class BenchmarksPage : Page
 		StorageFile file = await folder.CreateFileAsync(Path.GetFileName(filePath), CreationCollisionOption.ReplaceExisting);
 		using var stream = await file.OpenAsync(FileAccessMode.ReadWrite);
 		BitmapEncoder encoder = await BitmapEncoder.CreateAsync(encoderId, stream);
-		encoder.SetPixelData(
-			BitmapPixelFormat.Bgra8,
-			BitmapAlphaMode.Premultiplied,
-			(uint)bitmap.PixelWidth,
-			(uint)bitmap.PixelHeight,
-			96,
-			96,
-			pixelData);
+		encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied, (uint)bitmap.PixelWidth, (uint)bitmap.PixelHeight, 96, 96, pixelData);
 		await encoder.FlushAsync();
 	}
 
@@ -973,41 +900,41 @@ public sealed partial class BenchmarksPage : Page
 			string[] stats;
 			if (ViewModel.AnalysisChartType is "Bar" or "Column")
 			{
-				bool disp1, rend1, disp2, rend2;
+				bool displayed1, rendered1, displayed2, rendered2;
 				if (chart == BarChart)
 				{
-					disp1 = BarDisplayedFpsSeries1.Visibility == Visibility.Visible;
-					rend1 = BarRenderedFpsSeries1.Visibility == Visibility.Visible;
-					disp2 = _selectedRecordings.Count > 1 && BarDisplayedFpsSeries2.Visibility == Visibility.Visible;
-					rend2 = _selectedRecordings.Count > 1 && BarRenderedFpsSeries2.Visibility == Visibility.Visible;
+					displayed1 = BarDisplayedFpsSeries1.Visibility == Visibility.Visible;
+					rendered1 = BarRenderedFpsSeries1.Visibility == Visibility.Visible;
+					displayed2 = ViewModel.SelectedRecordings.Count > 1 && BarDisplayedFpsSeries2.Visibility == Visibility.Visible;
+					rendered2 = ViewModel.SelectedRecordings.Count > 1 && BarRenderedFpsSeries2.Visibility == Visibility.Visible;
 				}
 				else
 				{
-					disp1 = ColumnDisplayedFpsSeries1.Visibility == Visibility.Visible;
-					rend1 = ColumnRenderedFpsSeries1.Visibility == Visibility.Visible;
-					disp2 = _selectedRecordings.Count > 1 && ColumnDisplayedFpsSeries2.Visibility == Visibility.Visible;
-					rend2 = _selectedRecordings.Count > 1 && ColumnRenderedFpsSeries2.Visibility == Visibility.Visible;
+					displayed1 = ColumnDisplayedFpsSeries1.Visibility == Visibility.Visible;
+					rendered1 = ColumnRenderedFpsSeries1.Visibility == Visibility.Visible;
+					displayed2 = ViewModel.SelectedRecordings.Count > 1 && ColumnDisplayedFpsSeries2.Visibility == Visibility.Visible;
+					rendered2 = ViewModel.SelectedRecordings.Count > 1 && ColumnRenderedFpsSeries2.Visibility == Visibility.Visible;
 				}
-				stats = new string[_selectedRecordings.Count];
-				for (int i = 0; i < _selectedRecordings.Count; i++)
+				stats = new string[ViewModel.SelectedRecordings.Count];
+				for (int i = 0; i < ViewModel.SelectedRecordings.Count; i++)
 				{
 					var s = new List<string>();
 					bool isFirst = i == 0;
-					if ((isFirst && disp1) || (!isFirst && disp2)) s.Add("Displayed FPS");
-					if ((isFirst && rend1) || (!isFirst && rend2)) s.Add("Rendered FPS");
+					if ((isFirst && displayed1) || (!isFirst && displayed2)) s.Add("Displayed FPS");
+					if ((isFirst && rendered1) || (!isFirst && rendered2)) s.Add("Rendered FPS");
 					stats[i] = string.Join(", ", s);
 				}
 			}
 			else
 			{
-				stats = [.. _selectedRecordings.Select((r, i) =>
+				stats = [.. ViewModel.SelectedRecordings.Select((recording, index) =>
 				{
-					if (i < chart.Series.Count && chart.Series[i].Visibility == Visibility.Visible)
+					if (index < chart.Series.Count && chart.Series[index].Visibility == Visibility.Visible)
 						return (Metric1ComboBox.SelectedItem as ComboBoxItem)?.Content as string ?? string.Empty;
 					return string.Empty;
 				})];
 			}
-			string recordingNames = string.Join(" vs ", _selectedRecordings.Select((r, i) => string.IsNullOrEmpty(stats[i]) ? r.Title : $"{r.Title} ({stats[i]})"));
+			string recordingNames = string.Join(" vs ", ViewModel.SelectedRecordings.Select((recording, index) => string.IsNullOrEmpty(stats[index]) ? recording.Title : $"{recording.Title} ({stats[index]})"));
 			string chartLabel = $"{ViewModel.AnalysisChartType} Chart";
 			string fileName = $"{recordingNames} - {chartLabel}";
 			var flyout = new MenuFlyout();
@@ -1017,7 +944,7 @@ public sealed partial class BenchmarksPage : Page
 				Text = "Save as JPG",
 				Icon = new FontIcon { Glyph = "\uE896" }
 			};
-			jpegItem.Click += async (s, args) => await SaveChartAsync(chart, fileName, BitmapEncoder.JpegEncoderId, "jpg", true);
+			jpegItem.Click += async (sender, args) => await SaveChartAsync(chart, fileName, BitmapEncoder.JpegEncoderId, "jpg", true);
 			flyout.Items.Add(jpegItem);
 
 			var pngItem = new MenuFlyoutItem
@@ -1025,7 +952,7 @@ public sealed partial class BenchmarksPage : Page
 				Text = "Save as PNG",
 				Icon = new FontIcon { Glyph = "\uE896" }
 			};
-			pngItem.Click += async (s, args) => await SaveChartAsync(chart, fileName, BitmapEncoder.PngEncoderId, "png", false);
+			pngItem.Click += async (sender, args) => await SaveChartAsync(chart, fileName, BitmapEncoder.PngEncoderId, "png", false);
 			flyout.Items.Add(pngItem);
 
 			flyout.ShowAt(chart, e.GetPosition(chart));
@@ -1034,7 +961,7 @@ public sealed partial class BenchmarksPage : Page
 
 	private void ConfigureStatisticsColumns()
 	{
-		bool showRecordingB = _selectedRecordings.Count == 2;
+		bool showRecordingB = ViewModel.SelectedRecordings.Count == 2;
 		int baselineIdx = ViewModel.BaselineSelectedIndex - 1;
 		int baselineIndex = showRecordingB && baselineIdx is 0 or 1 ? baselineIdx : -1;
 
@@ -1051,18 +978,18 @@ public sealed partial class BenchmarksPage : Page
 			StatisticsTreeGrid.Columns.Add(StatisticsDeltaColumn);
 
 		if (baselineIndex >= 0)
-			ViewModel.DeltaHeader = $"{_selectedRecordings[baselineIndex == 0 ? 1 : 0].Title} (Delta)";
+			ViewModel.DeltaHeader = $"{ViewModel.SelectedRecordings[baselineIndex == 0 ? 1 : 0].Title} (Delta)";
 		else
 			ViewModel.DeltaHeader = ViewModel.IsPercentDelta ? "Delta (%)" : "Delta (+/-)";
-		ViewModel.RecordingAHeader = _selectedRecordings.Count >= 1 ? _selectedRecordings[0].Title + (baselineIndex == 0 ? " (Baseline)" : string.Empty) : "Recording A";
-		ViewModel.RecordingBHeader = _selectedRecordings.Count >= 2 ? _selectedRecordings[1].Title + (baselineIndex == 1 ? " (Baseline)" : string.Empty) : "Recording B";
+		ViewModel.RecordingAHeader = ViewModel.SelectedRecordings.Count >= 1 ? ViewModel.SelectedRecordings[0].Title + (baselineIndex == 0 ? " (Baseline)" : string.Empty) : "Recording A";
+		ViewModel.RecordingBHeader = ViewModel.SelectedRecordings.Count >= 2 ? ViewModel.SelectedRecordings[1].Title + (baselineIndex == 1 ? " (Baseline)" : string.Empty) : "Recording B";
 	}
 
-	private void UpdateStatisticsTable()
+	private void BuildStatistics()
 	{
 		ConfigureStatisticsColumns();
 
-		if (_selectedRecordings.Count == 0)
+		if (ViewModel.SelectedRecordings.Count == 0)
 		{
 			ViewModel.StatisticsRows.Clear();
 			ViewModel.RecordingAHeader = "Recording A";
@@ -1070,7 +997,7 @@ public sealed partial class BenchmarksPage : Page
 			return;
 		}
 
-		if (_selectedRecordings.Count > 2)
+		if (ViewModel.SelectedRecordings.Count > 2)
 		{
 			ViewModel.StatisticsRows.Clear();
 			ViewModel.RecordingAHeader = "Recording A";
@@ -1078,27 +1005,22 @@ public sealed partial class BenchmarksPage : Page
 			return;
 		}
 
-		var files = _selectedRecordings.Take(2).Select(recording => recording.FilePath).ToArray();
-		var results = new RecordingAnalyzer.AnalysisResult[files.Length];
-		for (int i = 0; i < files.Length; i++)
+		var results = ViewModel.CachedAnalysis;
+		if (results.Count == 0)
 		{
-			results[i] = RecordingAnalyzer.Analyze(files[i]);
-			if (results[i] == null)
-			{
-				ViewModel.StatisticsRows = [];
-				return;
-			}
+			ViewModel.StatisticsRows = [];
+			return;
 		}
 
 		List<ResultRow> rows = [];
-		rows.AddRange(BuildFpsStatRows("Displayed", results, results[0]?.DisplayedFps, results.Length > 1 ? results[1]?.DisplayedFps : null));
-		rows.AddRange(BuildFpsStatRows("Rendered", results, results[0]?.RenderedFps, results.Length > 1 ? results[1]?.RenderedFps : null));
-		rows.AddRange(BuildLatencyStatRows("MsBetweenDisplayChange", results, r => r.MsBetweenDisplayChangeStats));
-		rows.AddRange(BuildLatencyStatRows("MsBetweenPresents", results, r => r.MsBetweenPresentsStats));
-		rows.AddRange(BuildLatencyStatRows("MsGPUBusy", results, r => r.MsGpuBusyStats));
-		rows.AddRange(BuildLatencyStatRows("MsUntilDisplayed", results, r => r.MsUntilDisplayedStats));
+		rows.AddRange(BuildFpsStatRows("Displayed", results, result => result.Analysis.DisplayedFps));
+		rows.AddRange(BuildFpsStatRows("Rendered", results, result => result.Analysis.RenderedFps));
+		rows.AddRange(BuildLatencyStatRows("MsBetweenDisplayChange", results, result => result.Analysis.MsBetweenDisplayChangeStats));
+		rows.AddRange(BuildLatencyStatRows("MsBetweenPresents", results, result => result.Analysis.MsBetweenPresentsStats));
+		rows.AddRange(BuildLatencyStatRows("MsGPUBusy", results, result => result.Analysis.MsGpuBusyStats));
+		rows.AddRange(BuildLatencyStatRows("MsUntilDisplayed", results, result => result.Analysis.MsUntilDisplayedStats));
 
-		ApplyResultComparisons(rows, results.Length == 2);
+		ApplyResultComparisons(rows, results.Count == 2);
 		var builtRows = GroupResultRows(rows);
 
 		if (builtRows.Count == 0)
@@ -1112,10 +1034,12 @@ public sealed partial class BenchmarksPage : Page
 		StatisticsTreeGrid.ExpandAllNodes();
 	}
 
-	private static List<ResultRow> BuildFpsStatRows(string prefix, RecordingAnalyzer.AnalysisResult[] results, Metrics m0, Metrics m1)
+	private static List<ResultRow> BuildFpsStatRows(string prefix, List<RecordingAnalysis> results, Func<RecordingAnalysis, Metrics> selector)
 	{
+		var m0 = results.Count > 0 ? selector(results[0]) : null;
 		if (m0 == null || m0.AvgArithmetic == 0)
 			return [];
+		var m1 = results.Count > 1 ? selector(results[1]) : null;
 
 		List<ResultRow> rows = [];
 		foreach (var label in BenchmarkCsv.StatisticLabels)
@@ -1148,20 +1072,20 @@ public sealed partial class BenchmarksPage : Page
 		return rows;
 	}
 
-	private static List<ResultRow> BuildLatencyStatRows(string prefix, RecordingAnalyzer.AnalysisResult[] results, Func<RecordingAnalyzer.AnalysisResult, Metrics> selector)
+	private static List<ResultRow> BuildLatencyStatRows(string prefix, List<RecordingAnalysis> results, Func<RecordingAnalysis, Metrics> selector)
 	{
-		var m0 = results.Length > 0 ? selector(results[0]) : null;
-		var m1 = results.Length > 1 ? selector(results[1]) : null;
+		var m0 = results.Count > 0 ? selector(results[0]) : null;
+		var m1 = results.Count > 1 ? selector(results[1]) : null;
 		if (m0 == null || m0.AvgArithmetic == 0)
 			return [];
 
 		List<ResultRow> rows = [];
 
-		static string fmtMs(double v) => v.ToString("0.####", CultureInfo.InvariantCulture) + " ms";
-		static string fmtSd(double v) => v == 0 ? "\u2014" : v.ToString("0.####", CultureInfo.InvariantCulture) + " ms";
-		static string fmtRel(double v) => v == 0 ? "\u2014" : v.ToString("0.#####", CultureInfo.InvariantCulture);
+		static string fmtMs(double value) => value.ToString("0.####", CultureInfo.InvariantCulture) + " ms";
+		static string fmtSd(double value) => value == 0 ? "\u2014" : value.ToString("0.####", CultureInfo.InvariantCulture) + " ms";
+		static string fmtRel(double value) => value == 0 ? "\u2014" : value.ToString("0.#####", CultureInfo.InvariantCulture);
 
-		void add(string label, string a, string b) => rows.Add(new ResultRow { Statistic = $"{prefix} {label}", RecordingA = a, RecordingB = b });
+		void add(string label, string recordingA, string recordingB) => rows.Add(new ResultRow { Statistic = $"{prefix} {label}", RecordingA = recordingA, RecordingB = recordingB });
 
 		add("Average (Arithmetic)", fmtMs(m0.AvgArithmetic), m1 == null ? "" : fmtMs(m1.AvgArithmetic));
 		add("P50 (Median)", fmtMs(m0.P50Median), m1 == null ? "" : fmtMs(m1.P50Median));
@@ -1170,7 +1094,7 @@ public sealed partial class BenchmarksPage : Page
 		add("Maximum", fmtMs(m0.Max), m1 == null ? "" : fmtMs(m1.Max));
 		add("Minimum", fmtMs(m0.Min), m1 == null ? "" : fmtMs(m1.Min));
 
-		string fmtPct(double v) => v == 0 ? "\u2014" : v.ToString("0.0", CultureInfo.InvariantCulture) + "%";
+		string fmtPct(double value) => value == 0 ? "\u2014" : value.ToString("0.0", CultureInfo.InvariantCulture) + "%";
 		add("Root mean square of successive differences (RMSSD)", fmtMs(m0.Rmssd), m1 == null ? "" : fmtMs(m1.Rmssd));
 		add("Stepwise-Relative", fmtPct(m0.StepwiseRelSD * 100), m1 == null ? "" : fmtPct(m1.StepwiseRelSD * 100));
 		add("Standard Deviation (STDEV)", fmtSd(m0.StdDev), m1 == null ? "" : fmtSd(m1.StdDev));
@@ -1310,8 +1234,8 @@ public sealed partial class BenchmarksPage : Page
 		var groupLookup = new Dictionary<string, ResultRow>(StringComparer.Ordinal);
 		foreach (var row in rows)
 		{
-			var groupName = getGroup(row		.Statistic);
-			var childLabel = getChildLabel(row		.Statistic, groupName);
+			var groupName = getGroup(row.Statistic);
+			var childLabel = getChildLabel(row.Statistic, groupName);
 			if (!groupLookup.TryGetValue(groupName, out var group))
 			{
 				group = new ResultRow
@@ -1343,18 +1267,5 @@ public sealed partial class BenchmarksPage : Page
 			});
 		}
 		return groups;
-	}
-
-	private List<RecordingItem> GetSelectedRecordings()
-	{
-		if (RecordingsTreeGrid is null)
-			return [];
-
-		List<RecordingItem> selected = RecordingsTreeGrid.SelectedItems is null ? [] : [.. RecordingsTreeGrid.SelectedItems.OfType<RecordingItem>()];
-
-		if (selected.Count == 0 && RecordingsTreeGrid.SelectedItem is RecordingItem item)
-			selected.Add(item);
-
-		return [.. selected.DistinctBy(recording => recording.FilePath, StringComparer.OrdinalIgnoreCase)];
 	}
 }

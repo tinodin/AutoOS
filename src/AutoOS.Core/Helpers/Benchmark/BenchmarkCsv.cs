@@ -1,12 +1,15 @@
 using System.Buffers;
 using System.Text;
 using AutoOS.Core.Models;
+using DevWinUI;
 using Microsoft.Win32.SafeHandles;
 
 namespace AutoOS.Core.Helpers.Benchmark;
 
 public static class BenchmarkCsv
 {
+	public static string RecordingsDirectory => Path.Combine(PathHelper.GetAppDataFolderPath(), "Benchmarks");
+	
 	public static string ReadLastLine(string path, long length)
 	{
 		if (length == 0)

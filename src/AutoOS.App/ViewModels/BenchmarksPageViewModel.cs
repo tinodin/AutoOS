@@ -42,6 +42,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	public partial bool SelectedRecordingsHaveSameProcess { get; set; }
 
 	public IReadOnlyList<RecordingItem> SelectedRecordings { get; set; } = new List<RecordingItem>();
+	public List<RecordingAnalysis> CachedAnalysis { get; set; } = [];
 	private readonly HashSet<string> _recordableProcesses = new(StringComparer.OrdinalIgnoreCase);
 	private bool _selectedProcessIsRecordable;
 
@@ -60,12 +61,12 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		string outPath;
 		do
 		{
-			outPath = Path.Combine(RecordingsDirectory, $"Aggregate-{aggregateNumber++}.csv");
+			outPath = Path.Combine(BenchmarkCsv.RecordingsDirectory, $"Aggregate-{aggregateNumber++}.csv");
 		}
 		while (File.Exists(outPath));
 
 		List<string> headerCols;
-		using (var headerReader = Sep.Reader(o => o with { Sep = new Sep(','), Unescape = true }).FromFile(selected[0].FilePath))
+		using (var headerReader = Sep.Reader(options => options with { Sep = new Sep(','), Unescape = true }).FromFile(selected[0].FilePath))
 		{
 			headerCols = new List<string>(headerReader.Header.ColNames.Count);
 			for (int i = 0; i < headerReader.Header.ColNames.Count; i++)
@@ -84,7 +85,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 
 		for (int fileIndex = 0; fileIndex < selected.Count; fileIndex++)
 		{
-			using var reader = Sep.Reader(o => o with { Sep = new Sep(','), Unescape = true }).FromFile(selected[fileIndex].FilePath);
+			using var reader = Sep.Reader(options => options with { Sep = new Sep(','), Unescape = true }).FromFile(selected[fileIndex].FilePath);
 			if (reader.Header.IsEmpty)
 				continue;
 
@@ -134,7 +135,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		double meanDurationSeconds = selected.Average(recording => recording.DurationSeconds);
 		string aggregateSources = string.Join("|", selected.Select(recording => recording.FileName).Distinct(StringComparer.OrdinalIgnoreCase));
 
-		using var writer = Sep.Writer(o => o with { Sep = new Sep(',') }).ToFile(outPath);
+		using var writer = Sep.Writer(options => options with { Sep = new Sep(',') }).ToFile(outPath);
 		foreach (var col in headerCols)
 			writer.Header.Add(col);
 
@@ -184,11 +185,11 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 			Time = DateTimeOffset.Now.TimeOfDay
 		};
 
-		HashSet<RecordingItem> childSet = [.. selected.Where(r => r.FilePath != outPath)];
+		HashSet<RecordingItem> childSet = [.. selected.Where(recording => recording.FilePath != outPath)];
 		foreach (var child in childSet)
 			aggregateRecording.Children.Add(child);
 
-		List<RecordingItem> updatedList = [aggregateRecording, .. Recordings.Where(r => !childSet.Contains(r))];
+		List<RecordingItem> updatedList = [aggregateRecording, .. Recordings.Where(recording => !childSet.Contains(recording))];
 		updatedList.Sort((a, b) => b.Date.CompareTo(a.Date));
 		SetRecordings(updatedList);
 		SetSelectedRecordings(new List<RecordingItem> { aggregateRecording });
@@ -264,20 +265,20 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	[ObservableProperty]
 	public partial bool ShowP99 { get; set; }
 
-	public event Action MetricToggled;
+	public event Action StatisticToggled;
 
-	partial void OnShowLow01Changed(bool value) => MetricToggled?.Invoke();
-	partial void OnShowLow1Changed(bool value) => MetricToggled?.Invoke();
-	partial void OnShowAvgArithmeticChanged(bool value) => MetricToggled?.Invoke();
-	partial void OnShowAvgHarmonicChanged(bool value) => MetricToggled?.Invoke();
-	partial void OnShowMinChanged(bool value) => MetricToggled?.Invoke();
-	partial void OnShowMaxChanged(bool value) => MetricToggled?.Invoke();
-	partial void OnShowP01Changed(bool value) => MetricToggled?.Invoke();
-	partial void OnShowP1Changed(bool value) => MetricToggled?.Invoke();
-	partial void OnShowP5Changed(bool value) => MetricToggled?.Invoke();
-	partial void OnShowP50MedianChanged(bool value) => MetricToggled?.Invoke();
-	partial void OnShowP95Changed(bool value) => MetricToggled?.Invoke();
-	partial void OnShowP99Changed(bool value) => MetricToggled?.Invoke();
+	partial void OnShowLow01Changed(bool value) => StatisticToggled?.Invoke();
+	partial void OnShowLow1Changed(bool value) => StatisticToggled?.Invoke();
+	partial void OnShowAvgArithmeticChanged(bool value) => StatisticToggled?.Invoke();
+	partial void OnShowAvgHarmonicChanged(bool value) => StatisticToggled?.Invoke();
+	partial void OnShowMinChanged(bool value) => StatisticToggled?.Invoke();
+	partial void OnShowMaxChanged(bool value) => StatisticToggled?.Invoke();
+	partial void OnShowP01Changed(bool value) => StatisticToggled?.Invoke();
+	partial void OnShowP1Changed(bool value) => StatisticToggled?.Invoke();
+	partial void OnShowP5Changed(bool value) => StatisticToggled?.Invoke();
+	partial void OnShowP50MedianChanged(bool value) => StatisticToggled?.Invoke();
+	partial void OnShowP95Changed(bool value) => StatisticToggled?.Invoke();
+	partial void OnShowP99Changed(bool value) => StatisticToggled?.Invoke();
 
 	public bool IsStatisticEnabled(string statistic) => statistic switch
 	{
@@ -342,12 +343,6 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	public partial ObservableCollection<BarPoint> BarColumnChartRenderedData2 { get; set; } = [];
 
 	[ObservableProperty]
-	public partial string BarColumnChartYAxisLabel { get; set; } = "FPS";
-
-	[ObservableProperty]
-	public partial string BarColumnChartLabelFormat { get; set; } = "0.#";
-
-	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(BarColumnRenderedVisibility))]
 	public partial bool BarColumnRenderedVisible { get; set; }
 
@@ -376,9 +371,6 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 
 	[ObservableProperty]
 	public partial string LineScatterChartLabel2 { get; set; } = string.Empty;
-
-	[ObservableProperty]
-	public partial string LineScatterChartYAxisLabel { get; set; } = "Milliseconds (ms)";
 
 	public string GetStatisticTooltip(string key) => BenchmarkCsv.StatisticDescriptions.TryGetValue(key, out var desc) ? desc : string.Empty;
 
@@ -496,7 +488,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		SelectedRecordingsHaveSameProcess = sameProcess;
 		IsDeltaModeEnabled = false;
 		AnalysisChartType = "Bar";
-		BaselineItems = new ObservableCollection<string>(["None", .. recordings.Select(r => r.Title)]);
+		BaselineItems = new ObservableCollection<string>(["None", .. recordings.Select(recording => recording.Title)]);
 		BaselineSelectedIndex = 0;
 
 		AnalysisProcess = recordingA?.Process ?? string.Empty;
@@ -511,8 +503,6 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 
 		StatisticsState = AnalysisState;
 	}
-
-	private static string RecordingsDirectory => Path.Combine(PathHelper.GetAppDataFolderPath(), "Benchmarks");
 }
 
 [WinRT.GeneratedBindableCustomProperty]
