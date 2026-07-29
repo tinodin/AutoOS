@@ -1,28 +1,87 @@
+using System.Buffers;
+using System.Text;
 using AutoOS.Core.Models;
+using Microsoft.Win32.SafeHandles;
 
 namespace AutoOS.Core.Helpers.Benchmark;
 
 public static class BenchmarkCsv
 {
-	public static List<string> ParseCsvLine(string line)
+	public static string ReadLastLine(string path, long length)
 	{
-		if (string.IsNullOrEmpty(line))
-			return [];
-		var result = new List<string>();
-		bool inQuotes = false;
-		int start = 0;
-		for (int i = 0; i < line.Length; i++)
+		if (length == 0)
+			return string.Empty;
+
+		const int InitialTail = 8 * 1024;
+		int tail = (int)Math.Min(InitialTail, length);
+
+		using SafeFileHandle handle = File.OpenHandle(path, FileMode.Open, FileAccess.Read, FileShare.Read, FileOptions.RandomAccess);
+
+		byte[] buffer = ArrayPool<byte>.Shared.Rent(tail);
+		try
 		{
-			if (line[i] == '"')
-				inQuotes = !inQuotes;
-			else if (line[i] == ',' && !inQuotes)
+			while (true)
 			{
-				result.Add(line[start..i].Trim('"'));
-				start = i + 1;
+				if (buffer.Length < tail)
+				{
+					ArrayPool<byte>.Shared.Return(buffer);
+					buffer = ArrayPool<byte>.Shared.Rent(tail);
+				}
+
+				int read = RandomAccess.Read(handle, buffer.AsSpan(0, tail), length - tail);
+
+				int end = read;
+				while (end > 0 && (buffer[end - 1] == (byte)'\n' || buffer[end - 1] == (byte)'\r'))
+					end--;
+
+				int start = end;
+				while (start > 0 && buffer[start - 1] != (byte)'\n')
+					start--;
+
+				if (start > 0 || tail >= length)
+					return Encoding.UTF8.GetString(buffer, start, end - start);
+
+				tail = (int)Math.Min((long)tail * 2, length);
 			}
 		}
-		result.Add(line[start..].Trim('"'));
-		return result;
+		finally
+		{
+			ArrayPool<byte>.Shared.Return(buffer);
+		}
+	}
+
+	public static ReadOnlySpan<char> GetField(ReadOnlySpan<char> line, int fieldIndex)
+	{
+		if (fieldIndex < 0)
+			return default;
+
+		int start = 0;
+		int currentIndex = 0;
+
+		for (int i = 0; i <= line.Length; i++)
+		{
+			if (i == line.Length || line[i] == ',')
+			{
+				if (currentIndex == fieldIndex)
+					return line[start..i];
+
+				start = i + 1;
+				currentIndex++;
+			}
+		}
+
+		return default;
+	}
+
+	public static int EnsureColumn(List<string> headerCols, string columnName)
+	{
+		int index = headerCols.FindIndex(header => string.Equals(header, columnName, StringComparison.OrdinalIgnoreCase));
+		if (index >= 0)
+			return index;
+
+		index = headerCols.Count;
+		headerCols.Add(columnName);
+		return index;
 	}
 
 	public static readonly Dictionary<string, string> MetricDescriptions = new(StringComparer.OrdinalIgnoreCase)
@@ -72,20 +131,20 @@ public static class BenchmarkCsv
 		["Stepwise-Relative"] = "Median percentage change between consecutive frame times. Lower values indicate less severe spikes."
 	};
 
-	public static double GetStatistic(Metrics m, string label) => label switch
+	public static double GetStatistic(Metrics metric, string label) => label switch
 	{
-		"0.1% Low Avg" => m.Low01,
-		"1% Low Avg" => m.Low1,
-		"Average (Arithmetic)" or "Avg (Arithmetic)" => m.AvgArithmetic,
-		"Average (Harmonic)" or "Avg (Harmonic)" => m.AvgHarmonic,
-		"Minimum" or "Min" => m.Min,
-		"Maximum" or "Max" => m.Max,
-		"P0.1" => m.P01,
-		"P1" => m.P1,
-		"P5" => m.P5,
-		"P50 (Median)" => m.P50Median,
-		"P95" => m.P95,
-		"P99" => m.P99,
+		"0.1% Low Avg" => metric.Low01,
+		"1% Low Avg" => metric.Low1,
+		"Average (Arithmetic)" or "Avg (Arithmetic)" => metric.AvgArithmetic,
+		"Average (Harmonic)" or "Avg (Harmonic)" => metric.AvgHarmonic,
+		"Minimum" or "Min" => metric.Min,
+		"Maximum" or "Max" => metric.Max,
+		"P0.1" => metric.P01,
+		"P1" => metric.P1,
+		"P5" => metric.P5,
+		"P50 (Median)" => metric.P50Median,
+		"P95" => metric.P95,
+		"P99" => metric.P99,
 		_ => 0
 	};
 }

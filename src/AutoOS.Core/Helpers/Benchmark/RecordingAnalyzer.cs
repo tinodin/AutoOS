@@ -1,11 +1,10 @@
 using AutoOS.Core.Models;
+using nietras.SeparatedValues;
 
 namespace AutoOS.Core.Helpers.Benchmark;
 
 public static class RecordingAnalyzer
 {
-    private static string[] ColumnNames => [.. BenchmarkCsv.MetricDescriptions.Keys.Where(key => !key.Contains("FPS", StringComparison.Ordinal))];
-
     public sealed record AnalysisResult(
         string FilePath,
         string FileName,
@@ -27,49 +26,33 @@ public static class RecordingAnalyzer
         if (!info.Exists)
             return null;
 
-        Dictionary<string, int> headerIndex;
-        using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
-        using (var reader = new StreamReader(fs))
-        {
-            var headerLine = reader.ReadLine();
-            if (string.IsNullOrWhiteSpace(headerLine))
-                return null;
-            var headers = BenchmarkCsv.ParseCsvLine(headerLine);
-            headerIndex = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-            for (int i = 0; i < headers.Count; i++)
-                headerIndex[headers[i].Trim()] = i;
-        }
+        List<double> displayChange = new(4096);
+        List<double> presents = new(4096);
+        List<double> gpuBusy = new(4096);
+        List<double> untilDisplayed = new(4096);
 
-        int[] colIndices = new int[ColumnNames.Length];
-        for (int i = 0; i < ColumnNames.Length; i++)
-        {
-            if (!headerIndex.TryGetValue(ColumnNames[i], out int idx))
-                colIndices[i] = -1;
-            else
-                colIndices[i] = idx;
-        }
+        using var reader = Sep.Reader(o => o with { Sep = new Sep(','), Unescape = true, ColNameComparer = StringComparer.OrdinalIgnoreCase }).FromFile(filePath);
 
-        List<double>[] columns = [new(4096), new(4096), new(4096), new(4096)];
+        reader.Header.TryIndexOf("MsBetweenDisplayChange", out int idxDisplayChange);
+        reader.Header.TryIndexOf("MsBetweenPresents", out int idxPresents);
+        reader.Header.TryIndexOf("MsGPUBusy", out int idxGpuBusy);
+        reader.Header.TryIndexOf("MsUntilDisplayed", out int idxUntilDisplayed);
 
-        using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
-        using (var reader = new StreamReader(fs))
+        while (reader.MoveNext())
         {
-            reader.ReadLine();
-            while (!reader.EndOfStream)
-            {
-                var line = reader.ReadLine();
-                if (string.IsNullOrWhiteSpace(line))
-                    continue;
-                var values = BenchmarkCsv.ParseCsvLine(line);
-                for (int i = 0; i < ColumnNames.Length; i++)
-                {
-                    if (colIndices[i] < 0 || colIndices[i] >= values.Count)
-                        continue;
-                    if (double.TryParse(values[colIndices[i]], System.Globalization.NumberStyles.Float,
-                        System.Globalization.CultureInfo.InvariantCulture, out double v))
-                        columns[i].Add(v);
-                }
-            }
+            var row = reader.Current;
+            if (idxDisplayChange >= 0 && idxDisplayChange < row.ColCount &&
+                row[idxDisplayChange].TryParse(out double displayChangeValue))
+                displayChange.Add(displayChangeValue);
+            if (idxPresents >= 0 && idxPresents < row.ColCount &&
+                row[idxPresents].TryParse(out double presentsValue))
+                presents.Add(presentsValue);
+            if (idxGpuBusy >= 0 && idxGpuBusy < row.ColCount &&
+                row[idxGpuBusy].TryParse(out double gpuBusyValue))
+                gpuBusy.Add(gpuBusyValue);
+            if (idxUntilDisplayed >= 0 && idxUntilDisplayed < row.ColCount &&
+                row[idxUntilDisplayed].TryParse(out double untilDisplayedValue))
+                untilDisplayed.Add(untilDisplayedValue);
         }
 
         static Metrics computeFps(List<double> raw) => raw.Count == 0 ? new Metrics() : BenchmarkStatistics.CalculateMetrics([.. raw.Where(v => v > 0).Select(v => 1000.0 / v)], isFpsMetric: true);
@@ -79,16 +62,16 @@ public static class RecordingAnalyzer
         return new AnalysisResult(
             FilePath: filePath,
             FileName: info.Name,
-            MsBetweenDisplayChange: columns[0],
-            MsBetweenPresents: columns[1],
-            MsGPUBusy: columns[2],
-            MsUntilDisplayed: columns[3],
-            DisplayedFps: computeFps(columns[0]),
-            RenderedFps: computeFps(columns[1]),
-            MsBetweenDisplayChangeStats: computeLatency(columns[0]),
-            MsBetweenPresentsStats: computeLatency(columns[1]),
-            MsGpuBusyStats: computeLatency(columns[2]),
-            MsUntilDisplayedStats: computeLatency(columns[3])
+            MsBetweenDisplayChange: displayChange,
+            MsBetweenPresents: presents,
+            MsGPUBusy: gpuBusy,
+            MsUntilDisplayed: untilDisplayed,
+            DisplayedFps: computeFps(displayChange),
+            RenderedFps: computeFps(presents),
+            MsBetweenDisplayChangeStats: computeLatency(displayChange),
+            MsBetweenPresentsStats: computeLatency(presents),
+            MsGpuBusyStats: computeLatency(gpuBusy),
+            MsUntilDisplayedStats: computeLatency(untilDisplayed)
         );
     }
 }
