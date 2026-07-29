@@ -123,6 +123,7 @@ public static partial class PreparingStage
 	public static bool Cursor;
 	public static bool Devin;
 	public static bool Kiro;
+	public static bool OpenCode;
 	public static bool SublimeText;
 	public static bool IDEA;
 	public static bool WinMerge;
@@ -534,6 +535,7 @@ public static partial class PreparingStage
 			Cursor = (localSettings.Values["Development"]?.ToString().Contains("Cursor") ?? false);
 			Devin = (localSettings.Values["Development"]?.ToString().Contains("Devin") ?? false);
 			Kiro = (localSettings.Values["Development"]?.ToString().Contains("Kiro") ?? false);
+			OpenCode = (localSettings.Values["Development"]?.ToString().Contains("OpenCode") ?? false);
 			SublimeText = (localSettings.Values["Development"]?.ToString().Contains("Sublime Text") ?? false);
 			IDEA = (localSettings.Values["Development"]?.ToString().Contains("IntelliJ IDEA") ?? false);
 			WinMerge = (localSettings.Values["Development"]?.ToString().Contains("WinMerge") ?? false);

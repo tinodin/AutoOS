@@ -92,6 +92,7 @@ public class ApplicationSelection
 	public bool Cursor { get; set; }
 	public bool Devin { get; set; }
 	public bool Kiro { get; set; }
+	public bool OpenCode { get; set; }
 	public bool SublimeText { get; set; }
 	public bool IDEA { get; set; }
 	public bool WinMerge { get; set; }
@@ -252,6 +253,7 @@ public static class ApplicationStage
 		bool Cursor = selection?.Cursor ?? PreparingStage.Cursor;
 		bool Devin = selection?.Devin ?? PreparingStage.Devin;
 		bool Kiro = selection?.Kiro ?? PreparingStage.Kiro;
+		bool OpenCode = selection?.OpenCode ?? PreparingStage.OpenCode;
 		bool SublimeText = selection?.SublimeText ?? PreparingStage.SublimeText;
 		bool IDEA = selection?.IDEA ?? PreparingStage.IDEA;
 		bool WinMerge = selection?.WinMerge ?? PreparingStage.WinMerge;
@@ -1466,6 +1468,13 @@ public static class ApplicationStage
 			// install kiro
 			("Installing Kiro", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "kiro-ide-win32-x64.exe"), Arguments = "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Kiro == true),
 			("Cleaning up Kiro files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "kiro-ide-win32-x64.exe")), () => Kiro == true),
+
+			// download opencode
+			("Downloading OpenCode", async () => await DownloadHelper.Download("https://opencode.ai/download/stable/windows-x64-nsis", Path.GetTempPath(), "OpenCode Desktop Installer.exe", reporter: reporter), () => OpenCode == true),
+
+			// install opencode
+			("Installing OpenCode", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "OpenCode Desktop Installer.exe"), Arguments = "/S", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => OpenCode == true),
+			("Cleaning up OpenCode files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "OpenCode Desktop Installer.exe")), () => OpenCode == true),
 
 			// download sublime text
 			("Downloading Sublime Text", async () => await DownloadHelper.Download("https://download.sublimetext.com/sublime_text_build_4200_x64_setup.exe", Path.GetTempPath(), "sublime_text_x64_setup.exe", reporter: reporter), () => SublimeText == true),

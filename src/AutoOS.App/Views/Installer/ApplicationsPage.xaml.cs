@@ -128,6 +128,7 @@ public sealed partial class ApplicationsPage : Page
 			new() { Text = "Cursor", ImageSource = "ms-appx:///Assets/Fluent/Cursor.png" },
 			new() { Text = "Devin", ImageSource = "ms-appx:///Assets/Fluent/Devin.png" },
 			new() { Text = "Kiro", ImageSource = "ms-appx:///Assets/Fluent/Kiro.png" },
+			new() { Text = "OpenCode", ImageSource = "ms-appx:///Assets/Fluent/OpenCode.png" },
 			new() { Text = "Sublime Text", ImageSource = "ms-appx:///Assets/Fluent/SublimeText.png" },
 			new() { Text = "IntelliJ IDEA", ImageSource = "ms-appx:///Assets/Fluent/IDEA.png" },
 			new() { Text = "WinMerge", ImageSource = "ms-appx:///Assets/Fluent/WinMerge.png" },
