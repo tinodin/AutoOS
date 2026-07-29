@@ -2284,6 +2284,7 @@ public static class ApplicationStage
 
             // remove free download manager desktop shortcut
 			("Removing Free Download Manager desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Free Download Manager.lnk")), () => FreeDownloadManager == true),
+			("Disabling Free Download Manager startup entry", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", "Free Download Manager", new byte[] { 0x03 }, RegistryValueKind.Binary), () => FreeDownloadManager == true),
         };
 
 		if (selection != null)
