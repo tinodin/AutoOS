@@ -1,6 +1,6 @@
 using System.Buffers;
 using System.Text;
-using AutoOS.Core.Models;
+using AutoOS.Core.Helpers.Benchmark.Models;
 using DevWinUI;
 using Microsoft.Win32.SafeHandles;
 

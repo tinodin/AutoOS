@@ -1,4 +1,4 @@
-using AutoOS.Core.Models;
+using AutoOS.Core.Helpers.Benchmark.Models;
 using nietras.SeparatedValues;
 
 namespace AutoOS.Core.Helpers.Benchmark;

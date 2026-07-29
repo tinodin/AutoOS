@@ -1,4 +1,4 @@
-using AutoOS.Core.Models;
+using AutoOS.Core.Helpers.Benchmark.Models;
 
 namespace AutoOS.Core.Helpers.Benchmark;
 

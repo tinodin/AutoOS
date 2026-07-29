@@ -1,4 +1,4 @@
-namespace AutoOS.Core.Models;
+namespace AutoOS.Core.Helpers.Benchmark.Models;
 
 public class Metrics
 {
