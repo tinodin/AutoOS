@@ -1,1119 +1,871 @@
-﻿using AutoOS.Core.Helpers.Picker;
+using AutoOS.Core.Helpers.Picker;
 using AutoOS.Core.Helpers.Power;
 using AutoOS.Helpers.Picker;
-using AutoOS.Views.Settings.Power;
-using Microsoft.UI.Text;
-using System.Collections.ObjectModel;
+using AutoOS.ViewModels;
+using Microsoft.UI.Xaml.Input;
+using Syncfusion.UI.Xaml.Data;
+using Syncfusion.UI.Xaml.DataGrid;
+using Syncfusion.UI.Xaml.Grids;
+using Syncfusion.UI.Xaml.TreeGrid;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Windows.ApplicationModel.DataTransfer;
+using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.System.Power;
-using Windows.Win32;
+using Windows.System;
 
-namespace AutoOS.Views.Settings
+namespace AutoOS.Views.Settings;
+
+public sealed partial class PowerPage : Page
 {
-	public sealed partial class PowerPage : Page
+	private bool _isChangingPowerPlans;
+	private bool _isChangingViewMode;
+	private bool _cancelCurrentEdit;
+	private string _editingMappingName;
+
+	public PowerPageViewModel ViewModel { get; } = new();
+
+	public PowerPage()
 	{
-		private bool isInitializingPowerPlans = true;
+		InitializeComponent();
+		ViewModel.RefreshFilterAction = RefreshSearchFilter;
+		LoadPowerPlans();
+	}
 
-		private readonly ObservableCollection<PowerPlan> _powerPlans = [];
-		private readonly ObservableCollection<PowerPlan> _comparePlans = [];
-		private readonly ObservableCollection<PowerSubgroup> _allSubgroups = [];
-		public ObservableCollection<PowerSubgroup> Subgroups { get; } = [];
-		public ObservableCollection<PowerCompareSubgroup> CompareSubgroups { get; } = [];
-		private PowerCompareSubgroup _identicalPlansPlaceholder;
-
-		public PowerPage()
+	private void LoadPowerPlans(Guid? selectedGuid = null)
+	{
+		ViewModel.SetIsLoaded(false);
+		_isChangingPowerPlans = true;
+		try
 		{
-			InitializeComponent();
-			LoadPowerPlans();
-			ActiveTreeView.UpdateLayout();
-			Loaded += PowerPage_Loaded;
-		}
+			(List<PowerPlan> plans, Guid activeGuid) = ReadPowerPlans();
 
-		private void PowerPage_Loaded(object sender, RoutedEventArgs e)
-		{
-			CompareTreeView.Opacity = 0;
-			CompareTreeView.IsHitTestVisible = false;
-		}
-
-		private unsafe void LoadPowerPlans()
-		{
-			isInitializingPowerPlans = true;
-			_powerPlans.Clear();
-			_comparePlans.Clear();
-
-			var plansList = new List<PowerPlan>();
-			uint index = 0;
-
-			uint size = (uint)sizeof(Guid);
-			byte* pBuffer = stackalloc byte[(int)size];
-			while (true)
+			bool hasTarget = selectedGuid.HasValue || activeGuid != Guid.Empty;
+			Guid targetGuid = selectedGuid ?? activeGuid;
+			ViewModel.SetPlans(plans, targetGuid, hasTarget);
+			PowerPlan selectedPlan = ViewModel.ActivePlan;
+			if (selectedPlan == null)
 			{
-				uint res;
-				{
-					res = (uint)PInvoke.PowerEnumerate(default, null, null, POWER_DATA_ACCESSOR.ACCESS_SCHEME, index++, new Span<byte>(pBuffer, (int)size), ref size);
-				}
-				if (res != 0) break;
-
-				Guid schemeGuid = new(new ReadOnlySpan<byte>(pBuffer, (int)size));
-				plansList.Add(new PowerPlan
-				{
-					Guid = schemeGuid,
-					Name = PowerHelper.ReadFriendlyName(schemeGuid, null, null),
-					Description = PowerHelper.ReadDescription(schemeGuid)
-				});
+				PowerPlanComboBox.SelectedItem = null;
+				ComparePowerPlanComboBox.SelectedItem = ViewModel.ComparePlan;
+				return;
 			}
 
-			Guid* activePtr;
-			PInvoke.PowerGetActiveScheme(default, out activePtr);
-			Guid activeScheme = activePtr != null ? *activePtr : Guid.Empty;
-			if (activePtr != null) PInvoke.LocalFree((HLOCAL)activePtr);
-
-			foreach (var plan in plansList.OrderBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase))
+			if (selectedPlan.Guid != activeGuid && PowerHelper.PowerSetActiveScheme(selectedPlan.Guid) != 0)
 			{
-				_powerPlans.Add(plan);
-				_comparePlans.Add(plan);
+				ViewModel.SetPlans(plans, activeGuid);
+				selectedPlan = ViewModel.ActivePlan;
 			}
 
-			var selectPlanToCompare = new PowerPlan
+			IReadOnlyList<PowerSubgroupState> settings = LoadPowerPlanSettings(selectedPlan.Guid);
+			ViewModel.LoadActivePlan(selectedPlan, settings);
+			PowerPlanComboBox.SelectedItem = selectedPlan;
+			ComparePowerPlanComboBox.SelectedItem = ViewModel.ComparePlan;
+			ViewChanges.IsChecked = false;
+			UpdateColumnEditing();
+		}
+		finally
+		{
+			_isChangingPowerPlans = false;
+		}
+	}
+
+	private static unsafe (List<PowerPlan> Plans, Guid ActiveGuid) ReadPowerPlans()
+	{
+		List<PowerPlan> plans = [];
+		uint index = 0;
+		uint guidSize = (uint)sizeof(Guid);
+		byte* buffer = stackalloc byte[(int)guidSize];
+
+		while (true)
+		{
+			uint size = guidSize;
+			uint result = (uint)PInvoke.PowerEnumerate(default, null, null, POWER_DATA_ACCESSOR.ACCESS_SCHEME, index++, new Span<byte>(buffer, (int)guidSize), ref size);
+			if (result != 0)
+				break;
+
+			Guid guid = new(new ReadOnlySpan<byte>(buffer, (int)guidSize));
+			plans.Add(new PowerPlan
 			{
-				Guid = Guid.Empty,
-				Name = "Select plan to compare",
-				Description = "Select a power plan to compare against the active plan."
+				Guid = guid,
+				Name = PowerHelper.ReadFriendlyName(guid, null, null),
+				Description = PowerHelper.ReadDescription(guid)
+			});
+		}
+
+		Guid* activePointer;
+		WIN32_ERROR activeResult = PInvoke.PowerGetActiveScheme(default, out activePointer);
+		Guid activeGuid = activeResult == WIN32_ERROR.ERROR_SUCCESS && activePointer != null ? *activePointer : Guid.Empty;
+		if (activePointer != null)
+			PInvoke.LocalFree((HLOCAL)activePointer);
+
+		return (plans, activeGuid);
+	}
+
+	private unsafe IReadOnlyList<PowerSubgroupState> LoadPowerPlanSettings(Guid scheme)
+	{
+		Guid noneSubgroupGuid = new("fea3413e-7e05-4911-9a71-700331f1c294");
+		List<PowerSubgroupState> subgroups = [];
+		var noneSubgroup = new PowerSubgroupState
+		{
+			Guid = noneSubgroupGuid,
+			Name = "None"
+		};
+		foreach (var setting in EnumerateSettings(scheme, noneSubgroupGuid, null))
+			noneSubgroup.Settings.Add(setting);
+		subgroups.Add(noneSubgroup);
+
+		uint subgroupIndex = 0;
+		uint guidSize = (uint)Marshal.SizeOf<Guid>();
+		byte* subgroupBuffer = stackalloc byte[(int)guidSize];
+
+		while (true)
+		{
+			uint size = guidSize;
+			uint result = (uint)PInvoke.PowerEnumerate(default, (Guid?)scheme, null, POWER_DATA_ACCESSOR.ACCESS_SUBGROUP, subgroupIndex++, new Span<byte>(subgroupBuffer, (int)guidSize), ref size);
+			if (result != 0)
+				break;
+
+			Guid subgroupGuid = new(new ReadOnlySpan<byte>(subgroupBuffer, (int)guidSize));
+			string name = subgroupGuid == new Guid("9596fb26-9850-41fd-ac3e-f7c3c00afd4b") ? "Multimedia settings" : PowerHelper.ReadFriendlyName(scheme, subgroupGuid, null);
+			if (string.IsNullOrWhiteSpace(name))
+				continue;
+
+			var subgroup = new PowerSubgroupState
+			{
+				Guid = subgroupGuid,
+				Name = name,
+				Description = PowerHelper.ReadDescription(scheme, subgroupGuid)
 			};
-
-			_comparePlans.Insert(0, selectPlanToCompare);
-			PowerPlanComboBox.ItemsSource = _powerPlans;
-			PowerPlanComboBox.SelectedItem = _powerPlans.FirstOrDefault(p => p.Guid == activeScheme);
-			ComparePowerPlanComboBox.ItemsSource = _comparePlans;
-			ComparePowerPlanComboBox.SelectedItem = selectPlanToCompare;
-			isInitializingPowerPlans = false;
-
-			if (PowerPlanComboBox.SelectedItem is PowerPlan active)
-				LoadPowerPlanSettings(active.Guid);
+			foreach (var setting in EnumerateSettings(scheme, subgroupGuid, subgroupGuid))
+				subgroup.Settings.Add(setting);
+			if (subgroup.Settings.Count > 0)
+				subgroups.Add(subgroup);
 		}
 
-		private unsafe void LoadPowerPlanSettings(Guid scheme)
+		return [noneSubgroup, .. subgroups.Where(subgroup => subgroup != noneSubgroup)];
+	}
+
+	private static unsafe IReadOnlyList<PowerSettingState> EnumerateSettings(Guid scheme, Guid subgroupGuid, Guid? enumerationSubgroup)
+	{
+		List<PowerSettingState> settings = [];
+		uint settingIndex = 0;
+		uint guidSize = (uint)Marshal.SizeOf<Guid>();
+		byte* settingBuffer = stackalloc byte[(int)guidSize];
+
+		while (true)
 		{
-			var allSubgroupsList = new List<PowerSubgroup>();
-			var compareSubgroupsList = new List<PowerCompareSubgroup>();
+			uint size = guidSize;
+			uint result = (uint)PInvoke.PowerEnumerate(default, (Guid?)scheme, enumerationSubgroup, POWER_DATA_ACCESSOR.ACCESS_INDIVIDUAL_SETTING, settingIndex++, new Span<byte>(settingBuffer, (int)guidSize), ref size);
+			if (result != 0)
+				break;
 
-			Guid noneSubgroupGuid = new("fea3413e-7e05-4911-9a71-700331f1c294");
-			uint guidSize = (uint)Marshal.SizeOf<Guid>();
-			var noneSubgroup = new PowerSubgroup
+			Guid settingGuid = new(new ReadOnlySpan<byte>(settingBuffer, (int)guidSize));
+			if (!PowerHelper.TryReadAcValueIndex(scheme, subgroupGuid, settingGuid, out uint acValue) ||
+				!PowerHelper.TryReadDcValueIndex(scheme, subgroupGuid, settingGuid, out uint dcValue))
 			{
-				Guid = noneSubgroupGuid,
-				Name = "None"
+				continue;
+			}
+
+			uint? minimum = PowerHelper.TryReadValueMin(subgroupGuid, settingGuid, out uint minimumValue) ? minimumValue : null;
+			uint? maximum = PowerHelper.TryReadValueMax(subgroupGuid, settingGuid, out uint maximumValue) ? maximumValue : null;
+			uint? increment = PowerHelper.TryReadValueIncrement(subgroupGuid, settingGuid, out uint incrementValue) ? incrementValue : null;
+			var setting = new PowerSettingState
+			{
+				SubgroupGuid = subgroupGuid,
+				Guid = settingGuid,
+				Name = PowerHelper.ReadFriendlyName(scheme, subgroupGuid, settingGuid),
+				Description = PowerHelper.ReadDescription(scheme, subgroupGuid, settingGuid),
+				AcValue = acValue,
+				DcValue = dcValue,
+				OriginalAcValue = acValue,
+				OriginalDcValue = dcValue,
+				Minimum = minimum,
+				Maximum = maximum,
+				Increment = increment,
+				Unit = PowerHelper.ReadValueUnitsSpecifier(subgroupGuid, settingGuid)
 			};
-
-			var noneCompareSubgroup = new PowerCompareSubgroup
-			{
-				Guid = noneSubgroupGuid,
-				Name = "None",
-				IsExpanded = true,
-				IsVisible = true
-			};
-
-			uint settingIndex = 0;
-			uint res;
-			byte* pSetBuffer = stackalloc byte[(int)guidSize];
-
-			while (true)
-			{
-				uint size = guidSize;
-
-				{
-					res = (uint)PInvoke.PowerEnumerate(default, (Guid?)scheme, null, POWER_DATA_ACCESSOR.ACCESS_INDIVIDUAL_SETTING, settingIndex++, new Span<byte>(pSetBuffer, (int)guidSize), ref size);
-				}
-				if (res != 0) break;
-
-				Guid settingGuid = new(new ReadOnlySpan<byte>(pSetBuffer, (int)guidSize));
-				var setting = new PowerSetting
-				{
-					SubgroupGuid = noneSubgroupGuid,
-					Guid = settingGuid,
-					Name = PowerHelper.ReadFriendlyName(scheme, noneSubgroupGuid, settingGuid),
-					Description = PowerHelper.ReadDescription(scheme, noneSubgroupGuid, settingGuid),
-					AcValueIndex = PowerHelper.ReadAcValueIndex(scheme, noneSubgroupGuid, settingGuid),
-					DcValueIndex = PowerHelper.ReadDcValueIndex(scheme, noneSubgroupGuid, settingGuid),
-					Min = PowerHelper.ReadValueMin(noneSubgroupGuid, settingGuid),
-					Max = PowerHelper.ReadValueMax(noneSubgroupGuid, settingGuid),
-					Increment = PowerHelper.ReadValueIncrement(noneSubgroupGuid, settingGuid),
-					Unit = PowerHelper.ReadValueUnitsSpecifier(noneSubgroupGuid, settingGuid)
-				};
-
-
-				var friendlyAc = setting.AcValueIndex.ToString();
-				var friendlyDc = setting.DcValueIndex.ToString();
-
-				if (setting.IsOption)
-				{
-					friendlyAc = PowerHelper.ReadPossibleFriendlyName(noneSubgroupGuid, settingGuid, setting.AcValueIndex);
-					friendlyDc = PowerHelper.ReadPossibleFriendlyName(noneSubgroupGuid, settingGuid, setting.DcValueIndex);
-				}
-
-				setting.FriendlyAcValue = friendlyAc;
-				setting.FriendlyDcValue = friendlyDc;
-
-				noneSubgroup.Settings.Add(setting);
-
-				var compareSetting = new PowerCompareSetting
-				{
-					SubgroupGuid = noneSubgroupGuid,
-					Guid = settingGuid,
-					Name = setting.Name,
-					Description = setting.Description,
-					Min = setting.Min,
-					Max = setting.Max,
-					Increment = setting.Increment,
-					Unit = setting.Unit,
-					Plan1AcValue = setting.AcValueIndex,
-					Plan1DcValue = setting.DcValueIndex,
-					Plan1AcFriendlyValue = friendlyAc,
-					Plan1DcFriendlyValue = friendlyDc,
-					Plan2AcValue = 0,
-					Plan2DcValue = 0,
-					Plan2AcFriendlyValue = "",
-					Plan2DcFriendlyValue = "",
-					IsAcDifferent = false,
-					IsDcDifferent = false,
-					IsVisible = true
-				};
-			}
-
-			allSubgroupsList.Add(noneSubgroup);
-			compareSubgroupsList.Add(noneCompareSubgroup);
-
-			uint subgroupIndex = 0;
-			byte* pSgBuffer = stackalloc byte[(int)guidSize];
-			byte* pInnerSetBuffer = stackalloc byte[(int)guidSize];
-
-			while (true)
-			{
-				uint size = guidSize;
-
-				{
-					res = (uint)PInvoke.PowerEnumerate(default, (Guid?)scheme, null, POWER_DATA_ACCESSOR.ACCESS_SUBGROUP, subgroupIndex++, new Span<byte>(pSgBuffer, (int)guidSize), ref size);
-				}
-				if (res != 0) break;
-
-				Guid subgroupGuid = new(new ReadOnlySpan<byte>(pSgBuffer, (int)guidSize));
-				PowerSubgroup subgroup = new()
-				{
-					Guid = subgroupGuid,
-					Name = subgroupGuid == new Guid("9596fb26-9850-41fd-ac3e-f7c3c00afd4b") ? "Multimedia settings" : PowerHelper.ReadFriendlyName(scheme, subgroupGuid, null)
-				};
-
-				if (string.IsNullOrWhiteSpace(subgroup.Name))
-				{
-					continue;
-				}
-
-				PowerCompareSubgroup compareSubgroup = new()
-				{
-					Guid = subgroupGuid,
-					Name = subgroup.Name,
-					IsExpanded = true,
-					IsVisible = true
-				};
-
-
-				uint settingIdx = 0;
-				while (true)
-				{
-					size = guidSize;
-					{
-						res = (uint)PInvoke.PowerEnumerate(default, (Guid?)scheme, (Guid?)subgroupGuid, POWER_DATA_ACCESSOR.ACCESS_INDIVIDUAL_SETTING, settingIdx++, new Span<byte>(pInnerSetBuffer, (int)guidSize), ref size);
-					}
-					if (res != 0) break;
-
-					Guid settingGuid = new(new ReadOnlySpan<byte>(pInnerSetBuffer, (int)guidSize));
-					var setting = new PowerSetting
-					{
-						SubgroupGuid = subgroupGuid,
-						Guid = settingGuid,
-						Name = PowerHelper.ReadFriendlyName(scheme, subgroupGuid, settingGuid),
-						Description = PowerHelper.ReadDescription(scheme, subgroupGuid, settingGuid),
-						AcValueIndex = PowerHelper.ReadAcValueIndex(scheme, subgroupGuid, settingGuid),
-						DcValueIndex = PowerHelper.ReadDcValueIndex(scheme, subgroupGuid, settingGuid),
-						Min = PowerHelper.ReadValueMin(subgroupGuid, settingGuid),
-						Max = PowerHelper.ReadValueMax(subgroupGuid, settingGuid),
-						Increment = PowerHelper.ReadValueIncrement(subgroupGuid, settingGuid),
-						Unit = PowerHelper.ReadValueUnitsSpecifier(subgroupGuid, settingGuid)
-					};
-
-
-					var friendlyAc = setting.AcValueIndex.ToString();
-					var friendlyDc = setting.DcValueIndex.ToString();
-
-					if (setting.IsOption)
-					{
-						friendlyAc = PowerHelper.ReadPossibleFriendlyName(subgroupGuid, settingGuid, setting.AcValueIndex);
-						friendlyDc = PowerHelper.ReadPossibleFriendlyName(subgroupGuid, settingGuid, setting.DcValueIndex);
-					}
-
-					setting.FriendlyAcValue = friendlyAc;
-					setting.FriendlyDcValue = friendlyDc;
-
-					subgroup.Settings.Add(setting);
-
-					var compareSetting = new PowerCompareSetting
-					{
-						SubgroupGuid = subgroupGuid,
-						Guid = settingGuid,
-						Name = setting.Name,
-						Description = setting.Description,
-						Min = setting.Min,
-						Max = setting.Max,
-						Increment = setting.Increment,
-						Unit = setting.Unit,
-						Plan1AcValue = setting.AcValueIndex,
-						Plan1DcValue = setting.DcValueIndex,
-						Plan1AcFriendlyValue = friendlyAc,
-						Plan1DcFriendlyValue = friendlyDc,
-						Plan2AcValue = 0,
-						Plan2DcValue = 0,
-						Plan2AcFriendlyValue = "",
-						Plan2DcFriendlyValue = "",
-						IsAcDifferent = false,
-						IsDcDifferent = false,
-						IsVisible = true
-					};
-					compareSubgroup.Settings.Add(compareSetting);
-				}
-
-
-				allSubgroupsList.Add(subgroup);
-				compareSubgroupsList.Add(compareSubgroup);
-			}
-
-
-
-			_allSubgroups.Clear();
-			Subgroups.Clear();
-			CompareSubgroups.Clear();
-
-			foreach (var sg in allSubgroupsList)
-			{
-				var sortedSettings = sg.Settings.OrderBy(s => s.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
-				sg.Settings.Clear();
-				foreach (var setting in sortedSettings)
-				{
-					sg.Settings.Add(setting);
-				}
-
-				_allSubgroups.Add(sg);
-				Subgroups.Add(sg);
-			}
-
-			foreach (var csg in compareSubgroupsList)
-			{
-				var sortedSettings = csg.Settings.OrderBy(s => s.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
-				csg.Settings.Clear();
-				foreach (var setting in sortedSettings)
-				{
-					csg.Settings.Add(setting);
-				}
-				CompareSubgroups.Add(csg);
-			}
+			if (string.IsNullOrWhiteSpace(setting.Name))
+				setting.Name = settingGuid.ToString();
+			setting.PrimeDisplayData();
+			settings.Add(setting);
 		}
 
-		private readonly PowerSubgroup noResultItem = new()
+		return settings;
+	}
+
+	private async void PowerPlanComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+	{
+		if (_isChangingPowerPlans || PowerPlanComboBox.SelectedItem is not PowerPlan selectedPlan || selectedPlan == ViewModel.ActivePlan)
+			return;
+
+		_isChangingPowerPlans = true;
+		try
 		{
-			Name = "No result found",
-			Settings = [],
-			IsVisible = true,
-			FontWeight = FontWeights.Normal
+			if (!TryEndCurrentEdit() || !await ResolvePendingChangesAsync())
+			{
+				PowerPlanComboBox.SelectedItem = ViewModel.ActivePlan;
+				return;
+			}
+
+			uint activationResult = PowerHelper.PowerSetActiveScheme(selectedPlan.Guid);
+			if (activationResult != 0)
+			{
+				await ShowDialogAsync("Unable to activate power plan", $"Windows returned error {activationResult}.");
+				PowerPlanComboBox.SelectedItem = ViewModel.ActivePlan;
+				return;
+			}
+			ViewModel.SetIsLoaded(false);
+			IReadOnlyList<PowerSubgroupState> settings = LoadPowerPlanSettings(selectedPlan.Guid);
+			ViewModel.LoadActivePlan(selectedPlan, settings);
+			ComparePowerPlanComboBox.SelectedItem = ViewModel.ComparePlan;
+			ViewChanges.IsChecked = false;
+			UpdateColumnEditing();
+		}
+		finally
+		{
+			_isChangingPowerPlans = false;
+		}
+	}
+
+	private void ComparePowerPlanComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+	{
+		if (_isChangingPowerPlans || ComparePowerPlanComboBox.SelectedItem is not PowerPlan selectedPlan)
+			return;
+
+		if (!TryEndCurrentEdit())
+		{
+			_isChangingPowerPlans = true;
+			ComparePowerPlanComboBox.SelectedItem = ViewModel.ComparePlan;
+			_isChangingPowerPlans = false;
+			return;
+		}
+
+		if (!selectedPlan.IsPlaceholder && ViewChanges.IsChecked == true)
+		{
+			_isChangingViewMode = true;
+			ViewChanges.IsChecked = false;
+			_isChangingViewMode = false;
+		}
+
+		ViewModel.SetComparePlan(selectedPlan);
+		UpdateColumnEditing();
+	}
+
+	private void Search_AcceleratorInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+	{
+		Search.Focus(FocusState.Programmatic);
+		args.Handled = true;
+	}
+
+	private void Search_TextChanged(object sender, TextChangedEventArgs e)
+	{
+		ViewModel.SearchText = Search.Text;
+		Search.Focus(FocusState.Programmatic);
+	}
+
+	private void Undo_Click(object sender, RoutedEventArgs e)
+	{
+		if (!TryEndCurrentEdit())
+			return;
+		ViewModel.Undo();
+	}
+
+	private void Redo_Click(object sender, RoutedEventArgs e)
+	{
+		if (!TryEndCurrentEdit())
+			return;
+		ViewModel.Redo();
+	}
+
+	private void ViewChanges_Checked(object sender, RoutedEventArgs e)
+	{
+		SetViewChanges(true);
+	}
+
+	private void ViewChanges_Unchecked(object sender, RoutedEventArgs e)
+	{
+		SetViewChanges(false);
+	}
+
+	private void SetViewChanges(bool value)
+	{
+		if (_isChangingViewMode)
+			return;
+
+		if (!TryEndCurrentEdit())
+		{
+			_isChangingViewMode = true;
+			ViewChanges.IsChecked = !value;
+			_isChangingViewMode = false;
+			return;
+		}
+
+		if (value)
+		{
+			_isChangingPowerPlans = true;
+			ComparePowerPlanComboBox.SelectedItem = ViewModel.ComparePlans.FirstOrDefault(plan => plan.IsPlaceholder);
+			_isChangingPowerPlans = false;
+		}
+
+		ViewModel.SetViewChanges(value);
+		UpdateColumnEditing();
+		DispatcherQueue.TryEnqueue(() => GetVisibleTreeGrid()?.ExpandAllNodes());
+	}
+
+	private async void SaveChanges_Click(object sender, RoutedEventArgs e)
+	{
+		if (!TryEndCurrentEdit())
+			return;
+		await SaveChangesAsync();
+	}
+
+	private async Task<bool> SaveChangesAsync()
+	{
+		PowerSaveResult result = ViewModel.SaveChanges();
+		if (result.Succeeded)
+		{
+			return true;
+		}
+
+		await ShowDialogAsync("Unable to save power settings", result.ErrorMessage);
+		return false;
+	}
+
+	private async Task<bool> ResolvePendingChangesAsync()
+	{
+		if (ViewModel.ModifiedCount == 0)
+			return true;
+
+		var dialog = new ContentDialog
+		{
+			Title = "Unsaved power settings",
+			Content = "Save your power setting changes before continuing?",
+			PrimaryButtonText = "Save",
+			SecondaryButtonText = "Discard",
+			CloseButtonText = "Cancel",
+			DefaultButton = ContentDialogButton.Primary,
+			XamlRoot = XamlRoot
 		};
 
-		private readonly PowerCompareSubgroup noResultCompareItem = new()
+		ContentDialogResult result = await dialog.ShowAsync();
+		if (result == ContentDialogResult.Primary)
+			return await SaveChangesAsync();
+		if (result == ContentDialogResult.Secondary)
 		{
-			Name = "No result found",
-			Settings = [],
-			IsVisible = true,
-			FontWeight = FontWeights.Normal
+			ViewModel.DiscardChanges();
+			return true;
+		}
+		return false;
+	}
+
+	private async void Restore_Click(object sender, RoutedEventArgs e)
+	{
+		if (!TryEndCurrentEdit())
+			return;
+
+		var dialog = new ContentDialog
+		{
+			Title = "Restore power plans",
+			Content = "Are you sure you want to restore the default power schemes?",
+			PrimaryButtonText = "Restore",
+			CloseButtonText = "Cancel",
+			DefaultButton = ContentDialogButton.Close,
+			XamlRoot = XamlRoot
 		};
+		if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+			return;
+		if (!await ResolvePendingChangesAsync())
+			return;
 
-		private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
+		uint restoreResult = PowerHelper.RestoreDefaultPowerSchemes();
+		if (restoreResult != 0)
 		{
-			if (ComparePowerPlanComboBox.SelectedItem is PowerPlan comparePlanEmpty && comparePlanEmpty.Guid == Guid.Empty && CompareTreeView.Visibility == Visibility.Visible)
-				CompareTreeView.Visibility = Visibility.Collapsed;
+			await ShowDialogAsync("Unable to restore power plans", $"Windows returned error {restoreResult}.");
+			return;
+		}
+		LoadPowerPlans();
+	}
 
-			string query = Search.Text.Trim();
-			bool anyVisible = false;
+	private async void Import_Click(object sender, RoutedEventArgs e)
+	{
+		if (!TryEndCurrentEdit())
+			return;
 
-			foreach (var subgroup in _allSubgroups)
-			{
-				foreach (var setting in subgroup.Settings)
-				{
-					setting.IsVisible = string.IsNullOrEmpty(query) ||
-										setting.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase) ||
-										setting.Guid.ToString().Contains(query, StringComparison.CurrentCultureIgnoreCase) ||
-										setting.SubgroupGuid.ToString().Contains(query, StringComparison.CurrentCultureIgnoreCase);
-				}
+		var picker = new FilePicker(App.MainWindow)
+		{
+			ShowAllFilesOption = false
+		};
+		picker.FileTypeChoices.Add("Power Scheme Files", ["*.pow"]);
+		var file = await picker.PickSingleFileAsync();
+		if (file == null)
+			return;
+		if (!await ResolvePendingChangesAsync())
+			return;
 
-				subgroup.IsVisible = subgroup.Settings.Any(s => s.IsVisible);
-
-				if (subgroup.IsVisible) anyVisible = true;
-			}
-
-			if (!anyVisible)
-			{
-				if (!Subgroups.Contains(noResultItem))
-					Subgroups.Add(noResultItem);
-			}
-			else
-			{
-				Subgroups.Remove(noResultItem);
-			}
-
-			if (ComparePowerPlanComboBox.SelectedItem is PowerPlan comparePlan && comparePlan.Guid != Guid.Empty)
-			{
-				bool anyCompareVisible = false;
-				foreach (var subgroup in CompareSubgroups)
-				{
-					if (subgroup == _identicalPlansPlaceholder || subgroup == noResultCompareItem) continue;
-
-					foreach (var setting in subgroup.Settings)
-					{
-						bool isDifferent = setting.IsAcDifferent || setting.IsDcDifferent;
-
-						bool matchesSearch = string.IsNullOrEmpty(query) ||
-											setting.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase) ||
-											setting.Guid.ToString().Contains(query, StringComparison.CurrentCultureIgnoreCase) ||
-											setting.SubgroupGuid.ToString().Contains(query, StringComparison.CurrentCultureIgnoreCase);
-
-						setting.IsVisible = isDifferent && matchesSearch;
-					}
-
-					subgroup.IsVisible = subgroup.Settings.Any(s => s.IsVisible);
-					if (subgroup.IsVisible) anyCompareVisible = true;
-				}
-
-				if (!anyCompareVisible && !CompareSubgroups.Contains(_identicalPlansPlaceholder))
-				{
-					if (!CompareSubgroups.Contains(noResultCompareItem))
-						CompareSubgroups.Add(noResultCompareItem);
-				}
-				else
-				{
-					CompareSubgroups.Remove(noResultCompareItem);
-				}
-			}
+		Guid importedGuid = ImportPowerSchemeUnsafe(file.Path);
+		if (importedGuid == Guid.Empty)
+		{
+			await ShowDialogAsync("Unable to import power plan", "Windows could not import the selected power scheme.");
+			return;
 		}
 
-		private async void PowerPlanComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+		uint activationResult = PowerHelper.PowerSetActiveScheme(importedGuid);
+		if (activationResult != 0)
 		{
-			if (isInitializingPowerPlans) return;
-
-			if (PowerPlanComboBox.SelectedItem is PowerPlan selectedPlan)
-			{
-				var schemeGuid = selectedPlan.Guid;
-				PowerHelper.PowerSetActiveScheme(schemeGuid);
-
-				foreach (var subgroup in _allSubgroups)
-				{
-					foreach (var setting in subgroup.Settings)
-					{
-						setting.AcValueIndex = PowerHelper.ReadAcValueIndex(schemeGuid, subgroup.Guid, setting.Guid);
-						setting.DcValueIndex = PowerHelper.ReadDcValueIndex(schemeGuid, subgroup.Guid, setting.Guid);
-
-						if (setting.IsOption)
-						{
-							setting.FriendlyAcValue = PowerHelper.ReadPossibleFriendlyName(subgroup.Guid, setting.Guid, setting.AcValueIndex);
-							setting.FriendlyDcValue = PowerHelper.ReadPossibleFriendlyName(subgroup.Guid, setting.Guid, setting.DcValueIndex);
-						}
-						else
-						{
-							setting.FriendlyAcValue = setting.AcValueIndex.ToString();
-							setting.FriendlyDcValue = setting.DcValueIndex.ToString();
-						}
-					}
-				}
-
-				if (ComparePowerPlanComboBox.SelectedItem is PowerPlan comparePlan && comparePlan.Guid != Guid.Empty)
-				{
-					await UpdateCompareData(comparePlan);
-					ActiveTreeView.Visibility = Visibility.Collapsed;
-					ActiveTreeView.Opacity = 0;
-					ActiveTreeView.IsHitTestVisible = false;
-					CompareTreeView.Opacity = 1;
-					CompareTreeView.IsHitTestVisible = true;
-				}
-				else
-				{
-					ActiveTreeView.Visibility = Visibility.Visible;
-					ActiveTreeView.Opacity = 1;
-					ActiveTreeView.IsHitTestVisible = true;
-					CompareTreeView.Opacity = 0;
-					CompareTreeView.IsHitTestVisible = false;
-				}
-
-				SearchBox_TextChanged(null, null);
-			}
-		}
-
-		private async void ComparePowerPlanComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-		{
-			if (isInitializingPowerPlans) return;
-
-			if (ComparePowerPlanComboBox.SelectedItem is PowerPlan comparePlan && comparePlan.Guid != Guid.Empty)
-			{
-				await UpdateCompareData(comparePlan);
-				ActiveTreeView.Visibility = Visibility.Collapsed;
-				ActiveTreeView.Opacity = 0;
-				ActiveTreeView.IsHitTestVisible = false;
-				CompareTreeView.Opacity = 1;
-				CompareTreeView.IsHitTestVisible = true;
-				CompareTreeView.Visibility = Visibility.Visible;
-			}
-			else
-			{
-				ActiveTreeView.Visibility = Visibility.Visible;
-				ActiveTreeView.Opacity = 1;
-				ActiveTreeView.IsHitTestVisible = true;
-				CompareTreeView.Opacity = 0;
-				CompareTreeView.IsHitTestVisible = false;
-				CompareTreeView.Visibility = Visibility.Collapsed;
-			}
-
-			SearchBox_TextChanged(null, null);
-		}
-
-		private async Task UpdateCompareData(PowerPlan comparePlan)
-		{
-			if (comparePlan == null || comparePlan.Guid == Guid.Empty)
-			{
-				foreach (var sg in CompareSubgroups)
-				{
-					sg.IsVisible = true;
-					foreach (var setting in sg.Settings)
-						setting.IsVisible = true;
-				}
-
-				if (_identicalPlansPlaceholder != null && CompareSubgroups.Contains(_identicalPlansPlaceholder))
-					CompareSubgroups.Remove(_identicalPlansPlaceholder);
-
-				return;
-			}
-
-			var activePlan = PowerPlanComboBox.SelectedItem as PowerPlan;
-			if (activePlan == null)
-				return;
-
-			foreach (var sg in CompareSubgroups)
-			{
-				if (sg == _identicalPlansPlaceholder) continue;
-				foreach (var setting in sg.Settings)
-				{
-					uint p1Ac = PowerHelper.ReadAcValueIndex(activePlan.Guid, setting.SubgroupGuid, setting.Guid);
-					uint p1Dc = PowerHelper.ReadDcValueIndex(activePlan.Guid, setting.SubgroupGuid, setting.Guid);
-					uint p2Ac = PowerHelper.ReadAcValueIndex(comparePlan.Guid, setting.SubgroupGuid, setting.Guid);
-					uint p2Dc = PowerHelper.ReadDcValueIndex(comparePlan.Guid, setting.SubgroupGuid, setting.Guid);
-
-					setting.Plan1AcFriendlyValue = setting.IsOption ? PowerHelper.ReadPossibleFriendlyName(setting.SubgroupGuid, setting.Guid, p1Ac) : p1Ac.ToString();
-					setting.Plan1DcFriendlyValue = setting.IsOption ? PowerHelper.ReadPossibleFriendlyName(setting.SubgroupGuid, setting.Guid, p1Dc) : p1Dc.ToString();
-					setting.Plan2AcFriendlyValue = setting.IsOption ? PowerHelper.ReadPossibleFriendlyName(setting.SubgroupGuid, setting.Guid, p2Ac) : p2Ac.ToString();
-					setting.Plan2DcFriendlyValue = setting.IsOption ? PowerHelper.ReadPossibleFriendlyName(setting.SubgroupGuid, setting.Guid, p2Dc) : p2Dc.ToString();
-
-					setting.Plan1AcValue = p1Ac;
-					setting.Plan1DcValue = p1Dc;
-					setting.Plan2AcValue = p2Ac;
-					setting.Plan2DcValue = p2Dc;
-
-					setting.IsAcDifferent = p1Ac != p2Ac;
-					setting.IsDcDifferent = p1Dc != p2Dc;
-					setting.IsVisible = setting.IsAcDifferent || setting.IsDcDifferent;
-
-				}
-			}
-
-			if (_identicalPlansPlaceholder == null)
-			{
-				_identicalPlansPlaceholder = new PowerCompareSubgroup
-				{
-					Name = "Power plans are identical",
-					FontWeight = FontWeights.Normal,
-					IsVisible = true
-				};
-			}
-
-			bool anyDifferent = false;
-
-			foreach (var sg in CompareSubgroups)
-			{
-				if (sg == _identicalPlansPlaceholder) continue;
-				sg.IsVisible = sg.Settings.Any(s => s.IsVisible);
-				if (sg.IsVisible) anyDifferent = true;
-			}
-
-			if (!anyDifferent)
-			{
-				_identicalPlansPlaceholder.IsVisible = true;
-				if (!CompareSubgroups.Contains(_identicalPlansPlaceholder))
-					CompareSubgroups.Add(_identicalPlansPlaceholder);
-			}
-			else
-			{
-				CompareSubgroups.Remove(_identicalPlansPlaceholder);
-			}
-		}
-
-		private async void Edit_Click(object sender, RoutedEventArgs e)
-		{
-			if (PowerPlanComboBox.SelectedItem is not PowerPlan plan)
-				return;
-
-			var nameTextBox = new Microsoft.UI.Xaml.Controls.TextBox
-			{
-				Text = plan.Name,
-				Margin = new Thickness(0, 0, 0, 8)
-			};
-
-			var descriptionBox = new DevWinUI.TextBox
-			{
-				AcceptsReturn = true,
-				Text = plan.Description
-			};
-
-			var panel = new StackPanel
-			{
-				Spacing = 4
-			};
-
-			panel.Children.Add(new TextBlock { Text = "Name:" });
-			panel.Children.Add(nameTextBox);
-			panel.Children.Add(new TextBlock { Text = "Description:" });
-			panel.Children.Add(descriptionBox);
-
-			var dialog = new ContentDialog
-			{
-				Title = "Edit Power Plan",
-				Content = panel,
-				PrimaryButtonText = "Apply",
-				CloseButtonText = "Cancel",
-				DefaultButton = ContentDialogButton.Close,
-				XamlRoot = XamlRoot
-			};
-
-			var result = await dialog.ShowAsync();
-			if (result != ContentDialogResult.Primary)
-				return;
-
-			var selectedCompare = ComparePowerPlanComboBox.SelectedItem;
-
-			PowerHelper.WriteSchemeFriendlyName(plan.Guid, nameTextBox.Text);
-			PowerHelper.WriteSchemeDescription(plan.Guid, descriptionBox.Text);
-
-			_powerPlans.Remove(plan);
-			_comparePlans.Remove(plan);
-
-			plan.Name = nameTextBox.Text;
-			plan.Description = descriptionBox.Text;
-
-			int powerIndex = _powerPlans.Count(p => string.Compare(p.Name, plan.Name, StringComparison.CurrentCultureIgnoreCase) < 0);
-			_powerPlans.Insert(powerIndex, plan);
-
-			int compareIndex = _comparePlans.Count(p => p.Guid == Guid.Empty || string.Compare(p.Name, plan.Name, StringComparison.CurrentCultureIgnoreCase) < 0);
-			_comparePlans.Insert(compareIndex, plan);
-
-			PowerPlanComboBox.SelectedItem = plan;
-			ComparePowerPlanComboBox.SelectedItem = selectedCompare;
-		}
-
-		private async void Duplicate_Click(object sender, RoutedEventArgs e)
-		{
-			if (PowerPlanComboBox.SelectedItem is not PowerPlan plan)
-				return;
-
-			var dialog = new ContentDialog
-			{
-				Title = "Duplicate Power Plan",
-				Content = @$"Are you sure you want to duplicate ""{plan.Name}""?",
-				PrimaryButtonText = "Duplicate",
-				CloseButtonText = "Cancel",
-				DefaultButton = ContentDialogButton.Close,
-				XamlRoot = XamlRoot
-			};
-
-			var result = await dialog.ShowAsync();
-			if (result != ContentDialogResult.Primary)
-				return;
-
-			int i = 1;
-			while (_powerPlans.Any(p => string.Equals(p.Name, i == 1 ? $"{plan.Name} - Copy" : $"{plan.Name} - Copy ({i})", StringComparison.CurrentCultureIgnoreCase)))
-				i++;
-
-			var newPlan = new PowerPlan
-			{
-				Guid = PowerHelper.DuplicateScheme(plan.Guid, i == 1 ? $"{plan.Name} - Copy" : $"{plan.Name} - Copy ({i})", plan.Description),
-				Name = i == 1 ? $"{plan.Name} - Copy" : $"{plan.Name} - Copy ({i})",
-				Description = plan.Description
-			};
-
-			int powerIndex = _powerPlans.Count(p => string.Compare(p.Name, newPlan.Name, StringComparison.CurrentCultureIgnoreCase) < 0);
-			_powerPlans.Insert(powerIndex, newPlan);
-
-			int compareIndex = _comparePlans.Count(p => p.Guid == Guid.Empty || string.Compare(p.Name, newPlan.Name, StringComparison.CurrentCultureIgnoreCase) < 0);
-			_comparePlans.Insert(compareIndex, newPlan);
-
-			PowerPlanComboBox.SelectedItem = newPlan;
-		}
-
-		private async void Restore_Click(object sender, RoutedEventArgs e)
-		{
-			var dialog = new ContentDialog
-			{
-				Title = "Restore power plans",
-				Content = "Are you sure you want to restore the default power schemes?.",
-				PrimaryButtonText = "Restore",
-				CloseButtonText = "Cancel",
-				DefaultButton = ContentDialogButton.Close,
-				XamlRoot = XamlRoot
-			};
-
-			var result = await dialog.ShowAsync();
-			if (result != ContentDialogResult.Primary)
-				return;
-
-			PowerHelper.RestoreDefaultPowerSchemes();
+			await ShowDialogAsync("Unable to activate imported power plan", $"Windows returned error {activationResult}.");
 			LoadPowerPlans();
+			return;
 		}
+		LoadPowerPlans(importedGuid);
+	}
 
-		private async void Delete_Click(object sender, RoutedEventArgs e)
+	private async void Edit_Click(object sender, RoutedEventArgs e)
+	{
+		if (!TryEndCurrentEdit() || PowerPlanComboBox.SelectedItem is not PowerPlan plan)
+			return;
+
+		var nameTextBox = new Microsoft.UI.Xaml.Controls.TextBox
 		{
-			if (PowerPlanComboBox.SelectedItem is not PowerPlan plan)
-				return;
-
-			if (_powerPlans.Count <= 1)
-			{
-				var errorDialog = new ContentDialog
-				{
-					Title = "Unable to delete power plan",
-					Content = "At least one other power plan must exist.",
-					CloseButtonText = "OK",
-					DefaultButton = ContentDialogButton.Close,
-					XamlRoot = XamlRoot
-				};
-				await errorDialog.ShowAsync();
-				return;
-			}
-
-			var dialog = new ContentDialog
-			{
-				Title = "Delete power plan",
-				Content = $"Are you sure that you want to delete \"{plan.Name}\"?",
-				PrimaryButtonText = "Yes",
-				CloseButtonText = "No",
-				DefaultButton = ContentDialogButton.Close,
-				XamlRoot = XamlRoot
-			};
-
-			var result = await dialog.ShowAsync();
-			if (result != ContentDialogResult.Primary)
-				return;
-
-			int currentIndex = _powerPlans.IndexOf(plan);
-
-			PowerPlan nextSelection;
-			if (currentIndex > 0)
-				nextSelection = _powerPlans[currentIndex - 1];
-			else
-				nextSelection = _powerPlans[currentIndex + 1];
-
-			PowerPlanComboBox.SelectedItem = nextSelection;
-
-			PowerHelper.DeleteScheme(plan.Guid);
-
-			_powerPlans.Remove(plan);
-			_comparePlans.Remove(_comparePlans.FirstOrDefault(p => p.Guid == plan.Guid));
-
-			PowerPlanComboBox.SelectedItem = nextSelection;
-			ComparePowerPlanComboBox.SelectedItem = _comparePlans.First(p => p.Guid == Guid.Empty);
-		}
-
-		private static unsafe Guid ImportPowerSchemeUnsafe(string filePath)
+			Text = plan.Name,
+			Margin = new Thickness(0, 0, 0, 8)
+		};
+		var descriptionBox = new DevWinUI.TextBox
 		{
-			Guid* destSchemePtr = null;
-			uint res = (uint)PInvoke.PowerImportPowerScheme(default, filePath, ref destSchemePtr);
-			if (res != 0 || destSchemePtr == null)
-				return Guid.Empty;
+			AcceptsReturn = true,
+			Text = plan.Description
+		};
+		var panel = new StackPanel { Spacing = 4 };
+		panel.Children.Add(new TextBlock { Text = "Name:" });
+		panel.Children.Add(nameTextBox);
+		panel.Children.Add(new TextBlock { Text = "Description:" });
+		panel.Children.Add(descriptionBox);
 
-			try
-			{
-				return *destSchemePtr;
-			}
-			finally
-			{
-				PInvoke.LocalFree((HLOCAL)destSchemePtr);
-			}
-		}
-
-		private async void Import_Click(object sender, RoutedEventArgs e)
+		var dialog = new ContentDialog
 		{
-			var picker = new FilePicker(App.MainWindow)
-			{
-				ShowAllFilesOption = false
-			};
-			picker.FileTypeChoices.Add("Power Scheme Files", ["*.pow"]);
+			Title = "Edit Power Plan",
+			Content = panel,
+			PrimaryButtonText = "Apply",
+			CloseButtonText = "Cancel",
+			DefaultButton = ContentDialogButton.Close,
+			XamlRoot = XamlRoot
+		};
+		if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+			return;
 
-			var file = await picker.PickSingleFileAsync();
-			if (file == null)
-				return;
+		bool nameSaved = PowerHelper.WriteSchemeFriendlyName(plan.Guid, nameTextBox.Text);
+		bool descriptionSaved = PowerHelper.WriteSchemeDescription(plan.Guid, descriptionBox.Text);
+		plan.Name = PowerHelper.ReadFriendlyName(plan.Guid, null, null);
+		plan.Description = PowerHelper.ReadDescription(plan.Guid);
+		ViewModel.NotifyPlanHeaders();
+		if (!nameSaved || !descriptionSaved)
+			await ShowDialogAsync("Unable to update power plan", "Windows did not save all power plan metadata.");
+	}
 
-			Guid importedGuid = ImportPowerSchemeUnsafe(file.Path);
-			if (importedGuid == Guid.Empty)
-				return;
+	private async void Duplicate_Click(object sender, RoutedEventArgs e)
+	{
+		if (!TryEndCurrentEdit() || PowerPlanComboBox.SelectedItem is not PowerPlan plan)
+			return;
 
-			var plan = new PowerPlan
-			{
-				Guid = importedGuid,
-				Name = PowerHelper.ReadFriendlyName(importedGuid, null, null),
-				Description = PowerHelper.ReadDescription(importedGuid)
-			};
-
-			int powerIndex = _powerPlans.Count(p => string.Compare(p.Name, plan.Name, StringComparison.CurrentCultureIgnoreCase) < 0);
-			_powerPlans.Insert(powerIndex, plan);
-
-			int compareIndex = _comparePlans.Count(p => p.Guid == Guid.Empty || string.Compare(p.Name, plan.Name, StringComparison.CurrentCultureIgnoreCase) < 0);
-			_comparePlans.Insert(compareIndex, plan);
-
-			PowerPlanComboBox.SelectedItem = plan;
-			ComparePowerPlanComboBox.SelectedItem = _comparePlans.FirstOrDefault(p => p.Guid == Guid.Empty);
-		}
-
-		private async void Export_Click(object sender, RoutedEventArgs e)
+		var dialog = new ContentDialog
 		{
-			if (PowerPlanComboBox.SelectedItem is not PowerPlan plan)
-				return;
+			Title = "Duplicate Power Plan",
+			Content = @$"Are you sure you want to duplicate ""{plan.Name}""?",
+			PrimaryButtonText = "Duplicate",
+			CloseButtonText = "Cancel",
+			DefaultButton = ContentDialogButton.Close,
+			XamlRoot = XamlRoot
+		};
+		if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+			return;
+		if (!await ResolvePendingChangesAsync())
+			return;
 
-			var picker = new SavePicker(App.MainWindow)
-			{
-				ShowAllFilesOption = false,
-				SuggestedFileName = plan.Name
-			};
-			picker.FileTypeChoices.Add("Power Scheme Files", ["*.pow"]);
-
-			var file = await picker.PickSaveFileAsync();
-			if (file == null)
-				return;
-
-			var psi = new ProcessStartInfo
-			{
-				FileName = "powercfg.exe",
-				Arguments = @$"-export ""{file.Path}.pow"" {plan.Guid:D}",
-				UseShellExecute = false,
-				CreateNoWindow = true
-			};
-
-			using var proc = Process.Start(psi);
-			if (proc != null)
-				await proc.WaitForExitAsync();
-		}
-
-		private async void TreeView_ItemInvoked(object sender, TreeViewItemInvokedEventArgs args)
+		int number = 1;
+		string name;
+		do
 		{
-			switch (args.InvokedItem)
-			{
-				case PowerSubgroup subgroup:
-					subgroup.IsExpanded = !subgroup.IsExpanded;
-					break;
-
-				case PowerSetting setting:
-					var activePlan = PowerPlanComboBox.SelectedItem as PowerPlan;
-					Guid activeScheme = activePlan.Guid;
-
-					var dialog = new PowerDialog(setting);
-
-					var contentDialog = new ContentDialog
-					{
-						Content = dialog,
-						PrimaryButtonText = "Apply",
-						CloseButtonText = "Cancel",
-						DefaultButton = ContentDialogButton.Close,
-						XamlRoot = XamlRoot,
-						Title = setting.Name
-					};
-					contentDialog.Resources["ContentDialogMaxWidth"] = 600;
-
-					var result = await contentDialog.ShowAsync();
-					if (result != ContentDialogResult.Primary) return;
-
-					uint newAcValue = dialog.GetAcValue();
-					uint newDcValue = dialog.GetDcValue();
-
-					PowerHelper.WriteACValueIndex(activeScheme, setting.SubgroupGuid, setting.Guid, newAcValue);
-					PowerHelper.WriteDCValueIndex(activeScheme, setting.SubgroupGuid, setting.Guid, newDcValue);
-					PowerHelper.PowerSetActiveScheme(activeScheme);
-
-					setting.AcValueIndex = newAcValue;
-					setting.DcValueIndex = newDcValue;
-					setting.FriendlyAcValue = setting.IsOption ? PowerHelper.ReadPossibleFriendlyName(setting.SubgroupGuid, setting.Guid, newAcValue) : newAcValue.ToString();
-					setting.FriendlyDcValue = setting.IsOption ? PowerHelper.ReadPossibleFriendlyName(setting.SubgroupGuid, setting.Guid, newDcValue) : newDcValue.ToString();
-					break;
-			}
+			name = number == 1 ? $"{plan.Name} - Copy" : $"{plan.Name} - Copy ({number})";
+			number++;
 		}
+		while (ViewModel.PowerPlans.Any(item => item.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase)));
 
-		private async void CompareTreeView_ItemInvoked(object sender, TreeViewItemInvokedEventArgs args)
+		Guid guid = PowerHelper.DuplicateScheme(plan.Guid, name, plan.Description);
+		if (guid == Guid.Empty)
 		{
-			switch (args.InvokedItem)
-			{
-				case PowerCompareSubgroup subgroup:
-					subgroup.IsExpanded = !subgroup.IsExpanded;
-					break;
-
-				case PowerCompareSetting compareSettings:
-					var activePlan = PowerPlanComboBox.SelectedItem as PowerPlan;
-					Guid activeScheme = activePlan.Guid;
-
-					var proxySetting = new PowerSetting
-					{
-						SubgroupGuid = compareSettings.SubgroupGuid,
-						Guid = compareSettings.Guid,
-						Name = compareSettings.Name,
-						Description = compareSettings.Description,
-						Min = compareSettings.Min,
-						Max = compareSettings.Max,
-						Increment = compareSettings.Increment,
-						Unit = compareSettings.Unit,
-						AcValueIndex = compareSettings.Plan1AcValue,
-						DcValueIndex = compareSettings.Plan1DcValue
-					};
-
-					var dialog = new PowerDialog(proxySetting);
-
-					var contentDialog = new ContentDialog
-					{
-						Content = dialog,
-						PrimaryButtonText = "Apply",
-						CloseButtonText = "Cancel",
-						DefaultButton = ContentDialogButton.Close,
-						XamlRoot = XamlRoot,
-						Title = compareSettings.Name
-					};
-					contentDialog.Resources["ContentDialogMaxWidth"] = 600;
-
-					var result = await contentDialog.ShowAsync();
-					if (result != ContentDialogResult.Primary) return;
-
-					uint newAcValue = dialog.GetAcValue();
-					uint newDcValue = dialog.GetDcValue();
-
-					PowerHelper.WriteACValueIndex(activeScheme, compareSettings.SubgroupGuid, compareSettings.Guid, newAcValue);
-					PowerHelper.WriteDCValueIndex(activeScheme, compareSettings.SubgroupGuid, compareSettings.Guid, newDcValue);
-					PowerHelper.PowerSetActiveScheme(activeScheme);
-
-					compareSettings.Plan1AcValue = newAcValue;
-					compareSettings.Plan1DcValue = newDcValue;
-
-					compareSettings.Plan1AcFriendlyValue = compareSettings.IsOption ? PowerHelper.ReadPossibleFriendlyName(compareSettings.SubgroupGuid, compareSettings.Guid, newAcValue) : newAcValue.ToString();
-					compareSettings.Plan1DcFriendlyValue = compareSettings.IsOption ? PowerHelper.ReadPossibleFriendlyName(compareSettings.SubgroupGuid, compareSettings.Guid, newDcValue) : newDcValue.ToString();
-
-					compareSettings.IsAcDifferent = compareSettings.Plan1AcValue != compareSettings.Plan2AcValue;
-					compareSettings.IsDcDifferent = compareSettings.Plan1DcValue != compareSettings.Plan2DcValue;
-					compareSettings.IsVisible = compareSettings.IsAcDifferent || compareSettings.IsDcDifferent;
-
-					var settingsSubgroup = _allSubgroups.FirstOrDefault(sg => sg.Guid == compareSettings.SubgroupGuid);
-					var settings = settingsSubgroup?.Settings.FirstOrDefault(s => s.Guid == compareSettings.Guid);
-
-					if (settings != null)
-					{
-						settings.AcValueIndex = newAcValue;
-						settings.DcValueIndex = newDcValue;
-						settings.FriendlyAcValue = compareSettings.Plan1AcFriendlyValue;
-						settings.FriendlyDcValue = compareSettings.Plan1DcFriendlyValue;
-					}
-
-					if (_identicalPlansPlaceholder == null)
-					{
-						_identicalPlansPlaceholder = new PowerCompareSubgroup
-						{
-							Name = "Power plans are identical",
-							FontWeight = FontWeights.Normal,
-							IsVisible = true
-						};
-					}
-
-					bool anyDifferent = false;
-					foreach (var sg in CompareSubgroups)
-					{
-						if (sg == _identicalPlansPlaceholder) continue;
-						sg.IsVisible = sg.Settings.Any(s => s.IsVisible);
-						if (sg.IsVisible) anyDifferent = true;
-					}
-
-					if (!anyDifferent)
-					{
-						_identicalPlansPlaceholder.IsVisible = true;
-						if (!CompareSubgroups.Contains(_identicalPlansPlaceholder))
-							CompareSubgroups.Add(_identicalPlansPlaceholder);
-					}
-					else
-					{
-						CompareSubgroups.Remove(_identicalPlansPlaceholder);
-					}
-					break;
-			}
+			await ShowDialogAsync("Unable to duplicate power plan", "Windows could not duplicate the selected power scheme.");
+			return;
 		}
 
-		private void CopyGuid_Click(object sender, RoutedEventArgs e)
+		uint activationResult = PowerHelper.PowerSetActiveScheme(guid);
+		if (activationResult != 0)
 		{
-			if (sender is FrameworkElement { DataContext: PowerModelItem item })
-			{
-				var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
-				dataPackage.SetText(item.Guid.ToString());
-				Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
-			}
-			else if (sender is FrameworkElement { DataContext: PowerCompareModelItem compareItem })
-			{
-				var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
-				dataPackage.SetText(compareItem.Guid.ToString());
-				Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
-			}
+			await ShowDialogAsync("Unable to activate duplicated power plan", $"Windows returned error {activationResult}.");
+			LoadPowerPlans();
+			return;
 		}
+		LoadPowerPlans(guid);
+	}
 
-		private void CopyName_Click(object sender, RoutedEventArgs e)
+	private async void Delete_Click(object sender, RoutedEventArgs e)
+	{
+		if (!TryEndCurrentEdit() || PowerPlanComboBox.SelectedItem is not PowerPlan plan)
+			return;
+
+		if (ViewModel.PowerPlans.Count <= 1)
 		{
-			if (sender is FrameworkElement { DataContext: PowerModelItem item })
-			{
-				var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
-				dataPackage.SetText(item.Name ?? string.Empty);
-				Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
-			}
-			else if (sender is FrameworkElement { DataContext: PowerCompareModelItem compareItem })
-			{
-				var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
-				dataPackage.SetText(compareItem.Name ?? string.Empty);
-				Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
-			}
+			await ShowDialogAsync("Unable to delete power plan", "At least one other power plan must exist.");
+			return;
 		}
 
-		private void CopyDescription_Click(object sender, RoutedEventArgs e)
+		var dialog = new ContentDialog
 		{
-			if (sender is FrameworkElement { DataContext: PowerModelItem item })
-			{
-				var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
-				dataPackage.SetText(item.Description ?? string.Empty);
-				Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
-			}
-			else if (sender is FrameworkElement { DataContext: PowerCompareModelItem compareItem })
-			{
-				var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
-				dataPackage.SetText(compareItem.Description ?? string.Empty);
-				Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
-			}
-		}
+			Title = "Delete power plan",
+			Content = $"Are you sure that you want to delete \"{plan.Name}\"?",
+			PrimaryButtonText = "Yes",
+			CloseButtonText = "No",
+			DefaultButton = ContentDialogButton.Close,
+			XamlRoot = XamlRoot
+		};
+		if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+			return;
+		if (!await ResolvePendingChangesAsync())
+			return;
 
-		private void CopyAcValue_Click(object sender, RoutedEventArgs e)
+		int index = ViewModel.PowerPlans.IndexOf(plan);
+		PowerPlan nextPlan = index > 0 ? ViewModel.PowerPlans[index - 1] : ViewModel.PowerPlans[index + 1];
+		uint activationResult = PowerHelper.PowerSetActiveScheme(nextPlan.Guid);
+		if (activationResult != 0)
 		{
-			if (sender is FrameworkElement { DataContext: PowerSetting item })
-			{
-				var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
-				string text = !string.IsNullOrWhiteSpace(item.FriendlyAcValue) ? item.FriendlyAcValue : item.AcValueIndex.ToString();
-				dataPackage.SetText(text);
-				Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
-			}
-			else if (sender is FrameworkElement { DataContext: PowerCompareSetting compareItem })
-			{
-				var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
-				string text = !string.IsNullOrWhiteSpace(compareItem.Plan1AcFriendlyValue) ? compareItem.Plan1AcFriendlyValue : compareItem.Plan1AcValue.ToString();
-				dataPackage.SetText(text);
-				Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
-			}
+			await ShowDialogAsync("Unable to activate replacement power plan", $"Windows returned error {activationResult}.");
+			return;
 		}
-
-		private void CopyDcValue_Click(object sender, RoutedEventArgs e)
+		if (!PowerHelper.DeleteScheme(plan.Guid))
 		{
-			if (sender is FrameworkElement { DataContext: PowerSetting item })
-			{
-				var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
-				string text = !string.IsNullOrWhiteSpace(item.FriendlyDcValue) ? item.FriendlyDcValue : item.DcValueIndex.ToString();
-				dataPackage.SetText(text);
-				Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
-			}
-			else if (sender is FrameworkElement { DataContext: PowerCompareSetting compareItem })
-			{
-				var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
-				string text = !string.IsNullOrWhiteSpace(compareItem.Plan1DcFriendlyValue) ? compareItem.Plan1DcFriendlyValue : compareItem.Plan1DcValue.ToString();
-				dataPackage.SetText(text);
-				Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
-			}
+			PowerHelper.PowerSetActiveScheme(plan.Guid);
+			await ShowDialogAsync("Unable to delete power plan", "Windows could not delete the selected power scheme.");
+			return;
 		}
-		private void CopyAcValueDescription_Click(object sender, RoutedEventArgs e)
+
+		LoadPowerPlans(nextPlan.Guid);
+	}
+
+	private async void Export_Click(object sender, RoutedEventArgs e)
+	{
+		if (PowerPlanComboBox.SelectedItem is not PowerPlan plan)
+			return;
+
+		var picker = new SavePicker(App.MainWindow)
 		{
-			if (sender is FrameworkElement { DataContext: PowerSetting item })
-			{
-				var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
-				string text;
-				if (item.IsOption)
-				{
-					text = PowerHelper.ReadPossibleDescription(item.SubgroupGuid, item.Guid, item.AcValueIndex);
-				}
-				else
-				{
-					string unit = !string.IsNullOrWhiteSpace(item.Unit) ? char.ToUpper(item.Unit[0]) + item.Unit[1..] : string.Empty;
-					text = $"Range: {item.Min} - {item.Max}\nIncrement: {item.Increment}\nUnit: {unit}";
-				}
+			ShowAllFilesOption = false,
+			SuggestedFileName = plan.Name
+		};
+		picker.FileTypeChoices.Add("Power Scheme Files", ["*.pow"]);
+		var file = await picker.PickSaveFileAsync();
+		if (file == null)
+			return;
 
-				dataPackage.SetText(text ?? string.Empty);
-				Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
-			}
-			else if (sender is FrameworkElement { DataContext: PowerCompareSetting compareItem })
-			{
-				var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
-				string text;
-				if (compareItem.IsOption)
-				{
-					text = PowerHelper.ReadPossibleDescription(compareItem.SubgroupGuid, compareItem.Guid, compareItem.Plan1AcValue);
-				}
-				else
-				{
-					string unit = !string.IsNullOrWhiteSpace(compareItem.Unit) ? char.ToUpper(compareItem.Unit[0]) + compareItem.Unit[1..] : string.Empty;
-					text = $"Range: {compareItem.Min} - {compareItem.Max}\nIncrement: {compareItem.Increment}\nUnit: {unit}";
-				}
-
-				dataPackage.SetText(text ?? string.Empty);
-				Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
-			}
-		}
-
-		private void CopyDcValueDescription_Click(object sender, RoutedEventArgs e)
+		string path = file.Path.EndsWith(".pow", StringComparison.OrdinalIgnoreCase) ? file.Path : $"{file.Path}.pow";
+		var startInfo = new ProcessStartInfo
 		{
-			if (sender is FrameworkElement { DataContext: PowerSetting item })
-			{
-				var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
-				string text;
-				if (item.IsOption)
-				{
-					text = PowerHelper.ReadPossibleDescription(item.SubgroupGuid, item.Guid, item.DcValueIndex);
-				}
-				else
-				{
-					string unit = !string.IsNullOrWhiteSpace(item.Unit) ? char.ToUpper(item.Unit[0]) + item.Unit[1..] : string.Empty;
-					text = $"Range: {item.Min} - {item.Max}\nIncrement: {item.Increment}\nUnit: {unit}";
-				}
+			FileName = "powercfg.exe",
+			Arguments = @$"-export ""{path}"" {plan.Guid:D}",
+			UseShellExecute = false,
+			CreateNoWindow = true
+		};
+		using var process = Process.Start(startInfo);
+		if (process != null)
+		{
+			await process.WaitForExitAsync();
+			if (process.ExitCode != 0)
+				await ShowDialogAsync("Unable to export power plan", $"powercfg returned exit code {process.ExitCode}.");
+		}
+	}
 
-				dataPackage.SetText(text ?? string.Empty);
-				Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
-			}
-			else if (sender is FrameworkElement { DataContext: PowerCompareSetting compareItem })
-			{
-				var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
-				string text;
-				if (compareItem.IsOption)
-				{
-					text = PowerHelper.ReadPossibleDescription(compareItem.SubgroupGuid, compareItem.Guid, compareItem.Plan1DcValue);
-				}
-				else
-				{
-					string unit = !string.IsNullOrWhiteSpace(compareItem.Unit) ? char.ToUpper(compareItem.Unit[0]) + compareItem.Unit[1..] : string.Empty;
-					text = $"Range: {compareItem.Min} - {compareItem.Max}\nIncrement: {compareItem.Increment}\nUnit: {unit}";
-				}
+	private static unsafe Guid ImportPowerSchemeUnsafe(string filePath)
+	{
+		Guid* destination = null;
+		uint result = (uint)PInvoke.PowerImportPowerScheme(default, filePath, ref destination);
+		if (result != 0 || destination == null)
+			return Guid.Empty;
 
-				dataPackage.SetText(text ?? string.Empty);
-				Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
+		try
+		{
+			return *destination;
+		}
+		finally
+		{
+			PInvoke.LocalFree((HLOCAL)destination);
+		}
+	}
+
+	private void PowerTreeGrid_Loaded(object sender, RoutedEventArgs e)
+	{
+		if (sender is SfTreeGrid treeGrid)
+			treeGrid.View?.Filter = ViewModel.MatchesFilter;
+		UpdateColumnEditing();
+	}
+
+	private void PowerTreeGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+	{
+		if (e.NewSize.Width <= 0 || e.NewSize.Width == e.PreviousSize.Width)
+			return;
+
+		if (sender is not SfTreeGrid treeGrid)
+			return;
+
+		foreach (var column in treeGrid.Columns)
+			column.Width = double.NaN;
+		treeGrid.InvalidateMeasure();
+		treeGrid.UpdateLayout();
+	}
+
+	private void PowerTreeGrid_CurrentCellBeginEdit(object sender, TreeGridCurrentCellBeginEditEventArgs e)
+	{
+		if (sender is not SfTreeGrid treeGrid)
+			return;
+
+		var node = treeGrid.GetNodeAtRowIndex(e.RowColumnIndex.RowIndex)?.Item as PowerTreeNode ?? treeGrid.CurrentItem as PowerTreeNode;
+		if (node is not { NodeKind: PowerNodeKind.Setting, HasValues: true })
+		{
+			e.Cancel = true;
+			return;
+		}
+
+		_cancelCurrentEdit = false;
+		_editingMappingName = e.Column?.MappingName;
+		ViewModel.BeginEdit(node, _editingMappingName);
+	}
+
+	private void PowerTreeGrid_CurrentCellEndEdit(object sender, CurrentCellEndEditEventArgs e)
+	{
+		if (sender is not SfTreeGrid treeGrid)
+			return;
+
+		var node = treeGrid.GetNodeAtRowIndex(e.RowColumnIndex.RowIndex)?.Item as PowerTreeNode ?? treeGrid.CurrentItem as PowerTreeNode;
+		if (_cancelCurrentEdit)
+			ViewModel.CancelEdit(node);
+		else
+		{
+			bool changed = ViewModel.CommitEdit(node, _editingMappingName);
+			if (!changed && node?.HasErrors == true)
+				ViewModel.CancelEdit(node);
+			else if (changed)
+				DispatcherQueue.TryEnqueue(ViewModel.RefreshAfterEdit);
+		}
+		_cancelCurrentEdit = false;
+		_editingMappingName = null;
+	}
+
+	private void EditControl_KeyDown(object sender, KeyRoutedEventArgs e)
+	{
+		if (e.Key != VirtualKey.Escape || sender is ComboBox { IsDropDownOpen: true })
+			return;
+
+		_cancelCurrentEdit = true;
+		ViewModel.CancelEdit(GetVisibleTreeGrid()?.CurrentItem as PowerTreeNode);
+	}
+
+	private void EditControl_Loaded(object sender, RoutedEventArgs e)
+	{
+		if (sender is Control control)
+			control.Focus(FocusState.Programmatic);
+		if (sender is Microsoft.UI.Xaml.Controls.TextBox textBox)
+			textBox.SelectAll();
+	}
+
+	private void PowerTreeGrid_CellToolTipOpening(object sender, TreeGridCellToolTipOpeningEventArgs e)
+	{
+		if (e.Record is not PowerTreeNode node)
+		{
+			e.ToolTip.Visibility = Visibility.Collapsed;
+			return;
+		}
+
+		string content = e.Column?.MappingName switch
+		{
+			nameof(PowerTreeNode.DisplayName) => node.Description,
+			nameof(PowerTreeNode.DisplayAc) => node.AcToolTip,
+			nameof(PowerTreeNode.DisplayDc) => node.DcToolTip,
+			nameof(PowerTreeNode.DisplayCompareAc) => node.CompareAcToolTip,
+			nameof(PowerTreeNode.DisplayCompareDc) => node.CompareDcToolTip,
+			nameof(PowerTreeNode.DisplayOriginalAc) => node.OriginalAcToolTip,
+			nameof(PowerTreeNode.DisplayOriginalDc) => node.OriginalDcToolTip,
+			_ => null
+		};
+		if (string.IsNullOrWhiteSpace(content))
+		{
+			e.ToolTip.Visibility = Visibility.Collapsed;
+			return;
+		}
+
+		e.ToolTip.Content = content;
+		e.ToolTip.Visibility = Visibility.Visible;
+	}
+
+	private void PowerTreeGrid_TreeGridContextFlyoutOpening(object sender, TreeGridContextFlyoutEventArgs e)
+	{
+		if (sender is not SfTreeGrid treeGrid)
+			return;
+
+		if (e.ContextFlyoutType == Syncfusion.UI.Xaml.TreeGrid.ContextFlyoutType.HeaderCell)
+		{
+			CreateHeaderContextMenu(e, treeGrid);
+			return;
+		}
+
+		var node = treeGrid.GetNodeAtRowIndex(e.RowColumnIndex.RowIndex)?.Item as PowerTreeNode;
+		if (node == null)
+		{
+			e.ContextFlyout.Items.Clear();
+			return;
+		}
+
+		e.ContextFlyout.Items.Clear();
+		if (node.NodeKind == PowerNodeKind.Subgroup)
+		{
+			AddCopyItem(e.ContextFlyout, "Copy GUID", node.Guid.ToString());
+			AddCopyItem(e.ContextFlyout, "Copy Name", node.DisplayName);
+			return;
+		}
+		if (node.Setting == null)
+			return;
+		AddCopyItem(e.ContextFlyout, "Copy GUID", node.Setting.Guid.ToString());
+		AddCopyItem(e.ContextFlyout, "Copy Name", node.Setting.Name);
+		AddCopyItem(e.ContextFlyout, "Copy Description", node.Setting.Description);
+		if (!node.HasValues)
+			return;
+		AddCopyItem(e.ContextFlyout, "Copy AC Value", node.DisplayAc);
+		AddCopyItem(e.ContextFlyout, "Copy AC Value Description", node.AcToolTip);
+		AddCopyItem(e.ContextFlyout, "Copy DC Value", node.DisplayDc);
+		AddCopyItem(e.ContextFlyout, "Copy DC Value Description", node.DcToolTip);
+		if (node.ProjectionKind == PowerProjectionKind.Comparison)
+		{
+			AddCopyItem(e.ContextFlyout, "Copy Compare AC Value", node.DisplayCompareAc);
+			AddCopyItem(e.ContextFlyout, "Copy Compare DC Value", node.DisplayCompareDc);
+		}
+		else if (node.ProjectionKind == PowerProjectionKind.ViewChanges)
+		{
+			AddCopyItem(e.ContextFlyout, "Copy Original AC Value", node.DisplayOriginalAc);
+			AddCopyItem(e.ContextFlyout, "Copy Original DC Value", node.DisplayOriginalDc);
+		}
+	}
+
+	private void CreateHeaderContextMenu(TreeGridContextFlyoutEventArgs e, SfTreeGrid treeGrid)
+	{
+		var column = treeGrid.Columns[treeGrid.ResolveToGridVisibleColumnIndex(e.RowColumnIndex.ColumnIndex)];
+		e.ContextFlyout.Items.Clear();
+		if (column == null || !column.AllowSorting)
+			return;
+
+		bool isAscending = treeGrid.SortColumnDescriptions.Any(description => description.ColumnName == column.MappingName && description.SortDirection == SortDirection.Ascending);
+		bool isDescending = treeGrid.SortColumnDescriptions.Any(description => description.ColumnName == column.MappingName && description.SortDirection == SortDirection.Descending);
+		var ascending = new RadioMenuFlyoutItem
+		{
+			Text = "Sort Ascending",
+			GroupName = "PowerSortGroup",
+			IsChecked = isAscending && !isDescending
+		};
+		ascending.Click += (_, _) => SetSort(treeGrid, column.MappingName, SortDirection.Ascending);
+		e.ContextFlyout.Items.Add(ascending);
+
+		var descending = new RadioMenuFlyoutItem
+		{
+			Text = "Sort Descending",
+			GroupName = "PowerSortGroup",
+			IsChecked = isDescending
+		};
+		descending.Click += (_, _) => SetSort(treeGrid, column.MappingName, SortDirection.Descending);
+		e.ContextFlyout.Items.Add(descending);
+		e.ContextFlyout.Items.Add(new MenuFlyoutSeparator());
+		var clear = new MenuFlyoutItem { Text = "Clear Sorting" };
+		clear.Click += (_, _) => treeGrid.SortColumnDescriptions.Clear();
+		e.ContextFlyout.Items.Add(clear);
+	}
+
+	private static void SetSort(SfTreeGrid treeGrid, string mappingName, SortDirection direction)
+	{
+		treeGrid.SortColumnDescriptions.Clear();
+		treeGrid.SortColumnDescriptions.Add(new SortColumnDescription
+		{
+			ColumnName = mappingName,
+			SortDirection = direction
+		});
+	}
+
+	private static void AddCopyItem(MenuFlyout flyout, string label, string text)
+	{
+		var item = new MenuFlyoutItem { Text = label };
+		item.Click += (_, _) => CopyText(text);
+		flyout.Items.Add(item);
+	}
+
+	private static void CopyText(string text)
+	{
+		var package = new DataPackage();
+		package.SetText(text ?? string.Empty);
+		Clipboard.SetContent(package);
+	}
+
+	private void RefreshSearchFilter()
+	{
+		foreach (var treeGrid in GetTreeGrids())
+		{
+			treeGrid.View?.Filter = ViewModel.MatchesFilter;
+			treeGrid.View?.RefreshFilter();
+		}
+	}
+
+	private bool TryEndCurrentEdit()
+	{
+		SfTreeGrid treeGrid = GetVisibleTreeGrid();
+		if (treeGrid?.SelectionController?.CurrentCellManager?.CurrentCell?.IsEditing != true)
+		{
+			if (ViewModel.HasValidationErrors)
+				ViewModel.CancelEdit(null);
+			return true;
+		}
+		return treeGrid.SelectionController.CurrentCellManager.EndEdit();
+	}
+
+	private void UpdateColumnEditing()
+	{
+		foreach (var treeGrid in GetTreeGrids())
+		{
+			foreach (var column in treeGrid.Columns)
+			{
+				column.AllowEditing = ViewModel.IsLoaded && (column.MappingName is nameof(PowerTreeNode.DisplayAc) or nameof(PowerTreeNode.DisplayDc));
 			}
 		}
+	}
+
+	private IEnumerable<SfTreeGrid> GetTreeGrids()
+	{
+		if (PowerTreeGrid != null)
+			yield return PowerTreeGrid;
+		if (ComparePowerTreeGrid != null)
+			yield return ComparePowerTreeGrid;
+		if (ChangesPowerTreeGrid != null)
+			yield return ChangesPowerTreeGrid;
+	}
+
+	private SfTreeGrid GetVisibleTreeGrid() => ViewModel.Mode switch
+	{
+		PowerPageMode.Comparison => ComparePowerTreeGrid,
+		PowerPageMode.ViewChanges => ChangesPowerTreeGrid,
+		_ => PowerTreeGrid
+	};
+
+	private async Task ShowDialogAsync(string title, string content)
+	{
+		await new ContentDialog
+		{
+			Title = title,
+			Content = content,
+			CloseButtonText = "OK",
+			DefaultButton = ContentDialogButton.Close,
+			XamlRoot = XamlRoot
+		}.ShowAsync();
 	}
 }
