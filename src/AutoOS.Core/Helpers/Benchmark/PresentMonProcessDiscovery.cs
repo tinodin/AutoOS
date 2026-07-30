@@ -104,7 +104,7 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 
 		try
 		{
-			_session = new TraceEventSession($"AutoOS.PresentDiscovery.{Environment.ProcessId}")
+			_session = new TraceEventSession($"PresentDiscovery.{Environment.ProcessId}")
 			{
 				StopOnDispose = true
 			};
@@ -124,8 +124,6 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 			};
 			traceThread.Start();
 
-			// PresentMon requests process capture-state so processes that started
-			// before the trace session are emitted as ProcessRundown events.
 			_session.CaptureState(KernelProcessProvider, ProcessKeyword);
 			_session.CaptureState(DxgiProvider, DxgiKeyword);
 		}
@@ -160,14 +158,16 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 
 	private static void ProcessEvents(TraceEventSession session)
 	{
+		var defaultListener = Trace.Listeners.OfType<DefaultTraceListener>().FirstOrDefault();
+		if (defaultListener != null)
+			Trace.Listeners.Remove(defaultListener);
+
 		try
 		{
 			session.Source.Process();
 		}
 		catch
-		{
-			// Disposing a live ETW session ends this blocking read by throwing.
-		}
+		{	}
 	}
 
 	private void ProcessTraceEvent(TraceEvent traceEvent)
@@ -247,7 +247,12 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 		if (eventId != ProcessStartEventId && eventId != ProcessRundownEventId)
 			return;
 
-		RememberRunningProcess(processId);
+		int nameIdx = Array.IndexOf(processEvent.PayloadNames, "ImageName");
+		string processName = nameIdx >= 0 ? processEvent.PayloadString(nameIdx) : null;
+		if (processName is not null)
+			RememberRunningProcess(processId, processName);
+		else
+			RememberRunningProcess(processId);
 	}
 
 	private void ProcessDxgiEvent(TraceEvent presentEvent)
@@ -271,8 +276,7 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 		if (eventId != DxgiPresentStopEventId && eventId != DxgiPresentMultiplaneOverlayStopEventId)
 			return;
 
-		if (!CompleteRuntimePresent(DxgiProvider, presentEvent, out int processId) ||
-			!TryReadUInt32(presentEvent, "Result", out uint result) ||
+		if (!CompleteRuntimePresent(DxgiProvider, presentEvent, out int processId) || !TryReadUInt32(presentEvent, "Result", out uint result) ||
 			(result & 0x80000000) != 0 ||
 			result == DxgiStatusOccluded ||
 			result == DxgiStatusNoDesktopAccess ||
@@ -293,9 +297,7 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 			return;
 		}
 
-		if (eventId != D3D9PresentStopEventId ||
-			!CompleteRuntimePresent(D3D9Provider, presentEvent, out int processId) ||
-			!TryReadUInt32(presentEvent, "Result", out uint result) ||
+		if (eventId != D3D9PresentStopEventId || !CompleteRuntimePresent(D3D9Provider, presentEvent, out int processId) || !TryReadUInt32(presentEvent, "Result", out uint result) ||
 			(result & 0x80000000) != 0)
 		{
 			return;
@@ -325,9 +327,7 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 	private void ProcessDxgKrnlEvent(TraceEvent presentEvent)
 	{
 		int eventId = (int)presentEvent.ID;
-		if ((eventId != PresentHistoryStartEventId && eventId != PresentHistoryDetailedStartEventId) ||
-			!TryReadUInt32(presentEvent, "Model", out uint model) ||
-			!TryGetProcessIdentity(presentEvent.ProcessID, out ProcessIdentity identity))
+		if ((eventId != PresentHistoryStartEventId && eventId != PresentHistoryDetailedStartEventId) || !TryReadUInt32(presentEvent, "Model", out uint model) || !TryGetProcessIdentity(presentEvent.ProcessID, out ProcessIdentity identity))
 		{
 			return;
 		}
@@ -363,9 +363,7 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 
 		foreach (Process process in Process.GetProcesses())
 		{
-			if (!TryGetProcessName(process, out string name) ||
-				ExcludedProcessNames.Contains(name) ||
-				process.Id == Environment.ProcessId)
+			if (!TryGetProcessName(process, out string name) || ExcludedProcessNames.Contains(name) || process.Id == Environment.ProcessId)
 			{
 				process.Dispose();
 				continue;
@@ -405,9 +403,7 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 		try
 		{
 			string processName = process.ProcessName;
-			name = processName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
-				? processName
-				: $"{processName}.exe";
+			name = processName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? processName : $"{processName}.exe";
 			return true;
 		}
 		catch (InvalidOperationException)
@@ -415,6 +411,10 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 			return false;
 		}
 		catch (Win32Exception)
+		{
+			return false;
+		}
+		catch (ArgumentException)
 		{
 			return false;
 		}
@@ -430,13 +430,15 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 		{
 			return false;
 		}
+		catch (ArgumentException)
+		{
+			return false;
+		}
 	}
 
 	private void RememberRunningProcess(int processId)
 	{
-		if (processId <= 4 || processId == Environment.ProcessId ||
-			!TryGetProcessIdentity(processId, out ProcessIdentity identity) ||
-			ExcludedProcessNames.Contains(identity.Name))
+		if (processId <= 4 || processId == Environment.ProcessId || !TryGetProcessIdentity(processId, out ProcessIdentity identity) || ExcludedProcessNames.Contains(identity.Name))
 		{
 			return;
 		}
@@ -447,11 +449,23 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 		}
 	}
 
+	private void RememberRunningProcess(int processId, string processName)
+	{
+		string name = processName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? processName : $"{processName}.exe";
+		if (processId <= 4 || processId == Environment.ProcessId || ExcludedProcessNames.Contains(name))
+		{
+			return;
+		}
+
+		lock (_sync)
+		{
+			_runningProcesses[processId] = new ProcessIdentity(name);
+		}
+	}
+
 	private void RememberPresentingProcess(int processId)
 	{
-		if (processId <= 4 || processId == Environment.ProcessId ||
-			!TryGetProcessIdentity(processId, out ProcessIdentity identity) ||
-			ExcludedProcessNames.Contains(identity.Name))
+		if (processId <= 4 || processId == Environment.ProcessId || !TryGetProcessIdentity(processId, out ProcessIdentity identity) || ExcludedProcessNames.Contains(identity.Name))
 		{
 			return;
 		}
@@ -459,8 +473,7 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 		bool isNewProcessName;
 		lock (_sync)
 		{
-			isNewProcessName = !_presentingProcesses.Values.Any(process =>
-				string.Equals(process.Name, identity.Name, StringComparison.OrdinalIgnoreCase));
+			isNewProcessName = !_presentingProcesses.Values.Any(process => string.Equals(process.Name, identity.Name, StringComparison.OrdinalIgnoreCase));
 			_runningProcesses[processId] = identity;
 			_presentingProcesses[processId] = identity;
 		}
@@ -479,9 +492,7 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 				return false;
 
 			string processName = process.ProcessName;
-			string name = processName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
-				? processName
-				: $"{processName}.exe";
+			string name = processName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? processName : $"{processName}.exe";
 			identity = new ProcessIdentity(name);
 			return true;
 		}

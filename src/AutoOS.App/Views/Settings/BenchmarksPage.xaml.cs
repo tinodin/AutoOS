@@ -627,7 +627,7 @@ public sealed partial class BenchmarksPage : Page
 	private void ProcessComboBox_DropDownOpened(object sender, object e)
 	{
 		PresentingProcesses.Start();
-		ViewModel.SetRecordableProcesses(PresentingProcesses.GetRecordableProcesses(refreshRunningProcesses: true));
+		ViewModel.SetRecordableProcesses(PresentingProcesses.GetRecordableProcesses(true));
 		PresentingProcesses.ProcessesChanged += ProcessDiscovery_ProcessesChanged;
 	}
 
