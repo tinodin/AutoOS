@@ -6,7 +6,7 @@ using AutoOS.Core.Helpers.Benchmark;
 using AutoOS.Core.Helpers.Benchmark.Models;
 using AutoOS.Core.Helpers.Picker;
 using AutoOS.Helpers.Picker;
-using AutoOS.Views.Settings.Benchmarks;
+using AutoOS.ViewModels;
 using CommunityToolkit.WinUI.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
@@ -19,6 +19,9 @@ using Windows.Graphics.Imaging;
 using Windows.Storage;
 using Windows.System;
 using Windows.UI.ViewManagement;
+using Windows.Win32;
+using Windows.Win32.Foundation;
+using Windows.Win32.Media.Audio;
 
 namespace AutoOS.Views.Settings;
 
@@ -44,18 +47,18 @@ public sealed partial class BenchmarksPage : Page
 {
 	public BenchmarksPageViewModel ViewModel { get; } = new();
 
-	private readonly PresentMonRecorder _recorder = new();
-	private CancellationTokenSource _processRefreshCts;
-	private volatile bool _isInitialProcessRefresh;
-	private GlobalKeyboardHook _globalKeyboardHook;
-	private VirtualKeyModifiers _currentModifiers = VirtualKeyModifiers.Shift;
-	private VirtualKey _currentKey = VirtualKey.F11;
-
 	internal PresentMonProcessDiscovery PresentingProcesses { get; } = new();
+	private GlobalKeyboardHook _globalKeyboardHook;
+	private VirtualKeyModifiers _currentModifiers;
+	private VirtualKey _currentKey;
+
+	private Process _activeProcess;
+	private CancellationTokenSource _recordingCts;
 
 	public BenchmarksPage()
 	{
 		InitializeComponent();
+		ApplyShortcut(ViewModel.ShortcutKeys);
 		LoadRecordings();
 	}
 
@@ -66,9 +69,6 @@ public sealed partial class BenchmarksPage : Page
 		_globalKeyboardHook.KeyDown += OnGlobalKeyDown;
 		_globalKeyboardHook.Start();
 		ViewModel.StatisticToggled += Statistic_SelectionChanged;
-		PresentingProcesses.ProcessesChanged += PresentingProcesses_ProcessesChanged;
-		ProcessAutoSuggestBox.AddHandler(PointerPressedEvent, new PointerEventHandler(ProcessAutoSuggestBox_PointerPressed), true);
-		ProcessAutoSuggestBox.RegisterPropertyChangedCallback(AutoSuggestBox.IsSuggestionListOpenProperty, ProcessAutoSuggestBox_IsSuggestionListOpenChanged);
 	}
 
 	protected override void OnNavigatedFrom(NavigationEventArgs e)
@@ -83,7 +83,6 @@ public sealed partial class BenchmarksPage : Page
 			_globalKeyboardHook = null;
 		}
 		ViewModel.StatisticToggled -= Statistic_SelectionChanged;
-		PresentingProcesses.ProcessesChanged -= PresentingProcesses_ProcessesChanged;
 	}
 
 	private void LoadRecordings()
@@ -265,17 +264,6 @@ public sealed partial class BenchmarksPage : Page
 		BuildStatistics();
 	}
 
-	private void StatisticsTreeGrid_SizeChanged(object sender, SizeChangedEventArgs e)
-	{
-		if (e.NewSize.Width > 0)
-		{
-			foreach (var col in StatisticsTreeGrid.Columns)
-				col.Width = double.NaN;
-			StatisticsTreeGrid.InvalidateMeasure();
-			StatisticsTreeGrid.UpdateLayout();
-		}
-	}
-
 	private void AnalysisChartTypeSelector_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
 	{
 		var oldChartType = ViewModel.AnalysisChartType;
@@ -294,33 +282,6 @@ public sealed partial class BenchmarksPage : Page
 		ReplayAnimation();
 	}
 
-	private void ReplayAnimation()
-	{
-		if (ViewModel.AnalysisChartType is "Bar" or "Column")
-		{
-			var oldDisplayedData1 = ViewModel.BarColumnChartDisplayedData1;
-			var oldRenderedData1 = ViewModel.BarColumnChartRenderedData1;
-			var oldDisplayedData2 = ViewModel.BarColumnChartDisplayedData2;
-			var oldRenderedData2 = ViewModel.BarColumnChartRenderedData2;
-			ViewModel.BarColumnChartDisplayedData1 = [];
-			ViewModel.BarColumnChartRenderedData1 = [];
-			ViewModel.BarColumnChartDisplayedData2 = [];
-			ViewModel.BarColumnChartRenderedData2 = [];
-			ViewModel.BarColumnChartDisplayedData1 = oldDisplayedData1;
-			ViewModel.BarColumnChartRenderedData1 = oldRenderedData1;
-			ViewModel.BarColumnChartDisplayedData2 = oldDisplayedData2;
-			ViewModel.BarColumnChartRenderedData2 = oldRenderedData2;
-		}
-		else
-		{
-			var oldData1 = ViewModel.LineScatterChartData1;
-			var oldData2 = ViewModel.LineScatterChartData2;
-			ViewModel.LineScatterChartData1 = [];
-			ViewModel.LineScatterChartData2 = [];
-			ViewModel.LineScatterChartData1 = oldData1;
-			ViewModel.LineScatterChartData2 = oldData2;
-		}
-	}
 
 	private async void AddRecording_Click(object sender, RoutedEventArgs e)
 	{
@@ -389,67 +350,191 @@ public sealed partial class BenchmarksPage : Page
 		LoadRecordings();
 	}
 
+	private void HotkeyShortcut_PrimaryButtonClick(object sender, ContentDialogButtonClickEventArgs e)
+	{
+		HotkeyShortcut.UpdatePreviewKeys();
+		HotkeyShortcut.CloseContentDialog();
+		ApplyShortcut(HotkeyShortcut.Keys);
+	}
+
+	private void OnGlobalKeyDown(object sender, KeyboardHookEventArgs e)
+	{
+		if (e.Key == _currentKey &&
+			e.IsCtrl == _currentModifiers.HasFlag(VirtualKeyModifiers.Control) &&
+			e.IsShift == _currentModifiers.HasFlag(VirtualKeyModifiers.Shift) &&
+			e.IsAlt == _currentModifiers.HasFlag(VirtualKeyModifiers.Menu) &&
+			e.IsWindows == _currentModifiers.HasFlag(VirtualKeyModifiers.Windows))
+		{
+			DispatcherQueue.TryEnqueue(() =>
+			{
+				if (ViewModel.IsRecording)
+					Record.IsChecked = false;
+				else if (!string.IsNullOrWhiteSpace(ViewModel.ProcessName))
+					Record.IsChecked = true;
+			});
+		}
+	}
+	
+	private void ApplyShortcut(IEnumerable<object> keys)
+	{
+		_currentModifiers = VirtualKeyModifiers.None;
+		_currentKey = VirtualKey.None;
+
+		foreach (var key in keys)
+		{
+			string keyName;
+			VirtualKey? virtKey = null;
+
+			if (key is KeyVisualInfo info)
+			{
+				keyName = info.KeyName ?? string.Empty;
+				virtKey = info.Key;
+			}
+			else
+			{
+				keyName = key?.ToString() ?? string.Empty;
+			}
+
+			if (keyName.Contains("Ctrl", StringComparison.OrdinalIgnoreCase))
+				_currentModifiers |= VirtualKeyModifiers.Control;
+			else if (keyName.Contains("Shift", StringComparison.OrdinalIgnoreCase))
+				_currentModifiers |= VirtualKeyModifiers.Shift;
+			else if (keyName.Contains("Alt", StringComparison.OrdinalIgnoreCase))
+				_currentModifiers |= VirtualKeyModifiers.Menu;
+			else if (keyName.Contains("Win", StringComparison.OrdinalIgnoreCase))
+				_currentModifiers |= VirtualKeyModifiers.Windows;
+			else if (virtKey.HasValue && virtKey.Value != VirtualKey.None)
+				_currentKey = virtKey.Value;
+			else if (Enum.TryParse<VirtualKey>(keyName, ignoreCase: true, out var parsed) &&
+				parsed != VirtualKey.None)
+				_currentKey = parsed;
+		}
+	}
+
 	private async void Record_Checked(object sender, RoutedEventArgs e)
 	{
-		if (ViewModel.IsRecording)
-			return;
-
-		if (!ViewModel.CanRecord)
-		{
-			Record.IsChecked = false;
-			return;
-		}
+		_recordingCts?.Cancel();
+		var cts = new CancellationTokenSource();
+		_recordingCts = cts;
 
 		ViewModel.IsRecording = true;
 		Record.IsChecked = true;
 
-		int duration = (int)ViewModel.RecordingDuration;
 		int delay = (int)ViewModel.RecordingDelay;
-		string processName = ViewModel.ProcessName.Trim();
-		string presentMonPath = Path.Combine(BenchmarkCsv.RecordingsDirectory, "PresentMon.exe");
-		string errorMessage = string.Empty;
-		PresentMonRecordingResult recordingResult = PresentMonRecordingResult.Stopped;
+		int duration = (int)ViewModel.RecordingDuration;
+
+		ViewModel.ShowRecordingCountdown(delay);
+
+		var delayTcs = new TaskCompletionSource();
+		var countdownTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
+		long start = Stopwatch.GetTimestamp();
+		countdownTimer.Tick += (s, args) =>
+		{
+			if (cts.IsCancellationRequested)
+			{
+				countdownTimer.Stop();
+				delayTcs.TrySetResult();
+				return;
+			}
+			double elapsed = (Stopwatch.GetTimestamp() - start) / (double)Stopwatch.Frequency;
+			if (elapsed < delay)
+				ViewModel.RecordingCountdown = Math.Max(0, delay - elapsed);
+			else
+			{
+				countdownTimer.Stop();
+				delayTcs.TrySetResult();
+			}
+		};
+		countdownTimer.Start();
+		await delayTcs.Task;
+
+		if (cts.IsCancellationRequested)
+		{
+			if (_activeProcess == null)
+			{
+				ViewModel.IsRecording = false;
+				Record.IsChecked = false;
+			}
+			return;
+		}
+
+		int recordingNumber = 1;
+		string outputPath;
+		do
+		{
+			outputPath = Path.Combine(BenchmarkCsv.RecordingsDirectory, $"Recording-{recordingNumber++}.csv");
+		}
+		while (File.Exists(outputPath));
+
+		Directory.CreateDirectory(BenchmarkCsv.RecordingsDirectory);
+
+		var startInfo = new ProcessStartInfo
+		{
+			FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "PresentMon", "PresentMon-x64.exe"),
+			Arguments = @$"-session_name AutoOS_{Guid.NewGuid():N} -process_name ""{ViewModel.ProcessName}"" -timed {duration} -terminate_after_timed -date_time -track_gpu_video -track_frame_type -track_hw_measurements -track_app_timing -track_pc_latency -output_file ""{outputPath}""",
+			RedirectStandardOutput = true,
+			RedirectStandardError = true,
+			CreateNoWindow = true
+		};
+
+		var process = Process.Start(startInfo);
+		_activeProcess = process;
+
+		var stdOutTask = process.StandardOutput.ReadToEndAsync();
+		var stdErrTask = process.StandardError.ReadToEndAsync();
+
+		ViewModel.ShowRecording();
+
+		start = Stopwatch.GetTimestamp();
+		var recordingTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+		recordingTimer.Tick += (s, args) =>
+		{
+			if (cts.IsCancellationRequested)
+			{
+				recordingTimer.Stop();
+				return;
+			}
+			double elapsed = (Stopwatch.GetTimestamp() - start) / (double)Stopwatch.Frequency;
+			ViewModel.RecordingRemaining = Math.Max(0, duration - elapsed);
+			if (process.HasExited)
+				recordingTimer.Stop();
+		};
+		recordingTimer.Start();
 
 		try
 		{
-			if (delay > 0)
-				ViewModel.ShowRecordingCountdown(delay);
-			else
-				ViewModel.ShowRecording();
+			await process.WaitForExitAsync();
 
-			Task<PresentMonRecordingResult> recordingTask = _recorder.RecordAsync(presentMonPath, BenchmarkCsv.RecordingsDirectory, processName, duration, delay);
-			if (delay > 0)
+			if (cts.IsCancellationRequested)
 			{
-				var delayTimer = Stopwatch.StartNew();
-				while (!recordingTask.IsCompleted && delayTimer.Elapsed < TimeSpan.FromSeconds(delay))
-				{
-					int remainingSeconds = Math.Max(1, (int)Math.Ceiling(delay - delayTimer.Elapsed.TotalSeconds));
-					ViewModel.ShowRecordingCountdown(remainingSeconds);
-					await Task.WhenAny(recordingTask, Task.Delay(100));
-				}
-				if (!recordingTask.IsCompleted)
-					ViewModel.ShowRecording();
+				if (File.Exists(outputPath))
+					File.Delete(outputPath);
+				return;
 			}
-			recordingResult = await recordingTask;
+
+			if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
+			{
+				string stdOut = await stdOutTask;
+				string stdErr = await stdErrTask;
+				throw new InvalidOperationException($"PresentMon exited (code {process.ExitCode}) without producing a recording file.\nstdout: {stdOut}\nstderr: {stdErr}");
+			}
+			PInvoke.PlaySound(@"C:\Windows\Media\Alarm09.wav", null, SND_FLAGS.SND_FILENAME | SND_FLAGS.SND_ASYNC);
 		}
 		catch (Exception ex)
 		{
 			await MessageBox.ShowErrorAsync(App.MainWindow, $"An error occurred while recording: {ex.Message}", "Recording Error");
+			return;
 		}
 		finally
 		{
-			ViewModel.IsRecording = false;
-			Record.IsChecked = false;
-			LoadRecordings();
-			if (!string.IsNullOrWhiteSpace(errorMessage))
+			recordingTimer.Stop();
+			if (_activeProcess == process)
 			{
-				
+				_activeProcess = null;
+				ViewModel.IsRecording = false;
+				Record.IsChecked = false;
 			}
-		}
-
-		if (string.IsNullOrWhiteSpace(errorMessage) && recordingResult == PresentMonRecordingResult.NotSaved)
-		{
-			await MessageBox.ShowErrorAsync(App.MainWindow, "Process either wasn't in foreground or cannot be recorded with PresentMon", "Recording failed");
+			LoadRecordings();
 		}
 	}
 
@@ -457,7 +542,26 @@ public sealed partial class BenchmarksPage : Page
 	{
 		if (!ViewModel.IsRecording)
 			return;
-		_recorder.Stop();
+		_recordingCts?.Cancel();
+		if (_activeProcess is { HasExited: false })
+		{
+			var found = false;
+			var hwnd = HWND.Null;
+			while ((hwnd = PInvoke.FindWindowEx((HWND)(IntPtr)(-3), hwnd, "PresentMon", "PresentMonWnd")) != HWND.Null)
+			{
+				PInvoke.GetWindowThreadProcessId(hwnd, out uint pid);
+				if (pid == _activeProcess.Id)
+				{
+					PInvoke.PostMessage(hwnd, PInvoke.WM_CLOSE, 0, 0);
+					found = true;
+					break;
+				}
+			}
+			if (!found)
+				_activeProcess.Kill(true);
+		}
+		ViewModel.IsRecording = false;
+		ViewModel.RecordingState = ViewModel.Recordings.Count == 0 ? "Empty" : "Content";
 	}
 
 	private void Statistic_SelectionChanged()
@@ -473,87 +577,14 @@ public sealed partial class BenchmarksPage : Page
 		BindLineScatterChart(data.Pts1, data.Pts2, data.Label1, data.Label2);
 	}
 
-	private void HotkeyShortcut_PrimaryButtonClick(object sender, ContentDialogButtonClickEventArgs e)
+	private void StatisticsTreeGrid_SizeChanged(object sender, SizeChangedEventArgs e)
 	{
-		HotkeyShortcut.UpdatePreviewKeys();
-		HotkeyShortcut.CloseContentDialog();
-		if (HotkeyShortcut.Keys == null) return;
-
-		_currentModifiers = VirtualKeyModifiers.None;
-		_currentKey = VirtualKey.None;
-
-		foreach (var item in HotkeyShortcut.Keys)
+		if (e.NewSize.Width > 0)
 		{
-			string keyName = item switch
-			{
-				KeyVisualInfo kvi => kvi.KeyName ?? string.Empty,
-				_ => item?.ToString() ?? string.Empty
-			};
-			VirtualKey virtKey = item is KeyVisualInfo keyVisual ? keyVisual.Key.GetValueOrDefault() : VirtualKey.None;
-
-			if (keyName.Contains("Ctrl", StringComparison.OrdinalIgnoreCase))
-				_currentModifiers |= VirtualKeyModifiers.Control;
-			else if (keyName.Contains("Shift", StringComparison.OrdinalIgnoreCase))
-				_currentModifiers |= VirtualKeyModifiers.Shift;
-			else if (keyName.Contains("Alt", StringComparison.OrdinalIgnoreCase))
-				_currentModifiers |= VirtualKeyModifiers.Menu;
-			else if (keyName.Contains("Win", StringComparison.OrdinalIgnoreCase))
-				_currentModifiers |= VirtualKeyModifiers.Windows;
-			else if (virtKey != VirtualKey.None)
-				_currentKey = virtKey;
-			else if (Enum.TryParse<VirtualKey>(keyName, ignoreCase: true, out var parsed) &&
-				parsed != VirtualKey.None)
-				_currentKey = parsed;
-		}
-	}
-
-	private void OnGlobalKeyDown(object sender, KeyboardHookEventArgs e)
-	{
-		if (e.Key == _currentKey &&
-			e.IsCtrl == _currentModifiers.HasFlag(VirtualKeyModifiers.Control) &&
-			e.IsShift == _currentModifiers.HasFlag(VirtualKeyModifiers.Shift) &&
-			e.IsAlt == _currentModifiers.HasFlag(VirtualKeyModifiers.Menu) &&
-			e.IsWindows == _currentModifiers.HasFlag(VirtualKeyModifiers.Windows))
-		{
-			DispatcherQueue.TryEnqueue(() =>
-			{
-				if (ViewModel.CanRecord)
-					Record_Checked(this, null);
-			});
-		}
-	}
-
-	private async void ProcessAutoSuggestBox_PointerPressed(object sender, PointerRoutedEventArgs e)
-	{
-		if (ProcessAutoSuggestBox.IsSuggestionListOpen || _processRefreshCts != null)
-			return;
-
-		StopProcessDiscovery();
-		_processRefreshCts = new CancellationTokenSource();
-		_isInitialProcessRefresh = true;
-		CancellationToken cancellationToken = _processRefreshCts.Token;
-
-		try
-		{
-			List<string> processes = await Task.Run(() =>
-			{
-				PresentingProcesses.Start();
-				return PresentingProcesses.GetRecordableProcesses(refreshRunningProcesses: true);
-			}, cancellationToken);
-			if (!cancellationToken.IsCancellationRequested && ViewModel.ActiveTab == "Recordings")
-			{
-				ViewModel.SetRecordableProcesses(processes);
-				ProcessAutoSuggestBox.IsSuggestionListOpen = ViewModel.ProcessSuggestions.Count > 0;
-				if (!ProcessAutoSuggestBox.IsSuggestionListOpen)
-					StopProcessDiscovery();
-			}
-		}
-		catch (OperationCanceledException)
-		{
-		}
-		finally
-		{
-			_isInitialProcessRefresh = false;
+			foreach (var col in StatisticsTreeGrid.Columns)
+				col.Width = double.NaN;
+			StatisticsTreeGrid.InvalidateMeasure();
+			StatisticsTreeGrid.UpdateLayout();
 		}
 	}
 
@@ -587,49 +618,40 @@ public sealed partial class BenchmarksPage : Page
 		ConfigureStatisticsColumns();
 	}
 
-	private void ProcessAutoSuggestBox_IsSuggestionListOpenChanged(DependencyObject sender, DependencyProperty dp)
-	{
-		if (!ProcessAutoSuggestBox.IsSuggestionListOpen)
-			StopProcessDiscovery();
-	}
-
 	private void StopProcessDiscovery()
 	{
-		_processRefreshCts?.Cancel();
-		_processRefreshCts?.Dispose();
-		_processRefreshCts = null;
+		PresentingProcesses.ProcessesChanged -= ProcessDiscovery_ProcessesChanged;
 		PresentingProcesses.Dispose();
 	}
 
-	private void PresentingProcesses_ProcessesChanged(object sender, EventArgs e)
+	private void ProcessComboBox_DropDownOpened(object sender, object e)
 	{
-		if (_isInitialProcessRefresh)
-			return;
+		PresentingProcesses.Start();
+		ViewModel.SetRecordableProcesses(PresentingProcesses.GetRecordableProcesses(refreshRunningProcesses: true));
+		PresentingProcesses.ProcessesChanged += ProcessDiscovery_ProcessesChanged;
+	}
 
+	private void ProcessComboBox_DropDownClosed(object sender, object e)
+	{
+		StopProcessDiscovery();
+	}
+
+	private void ProcessDiscovery_ProcessesChanged(object sender, EventArgs e)
+	{
 		DispatcherQueue.TryEnqueue(() =>
 		{
-			if (ViewModel.ActiveTab == "Recordings" && ProcessAutoSuggestBox.IsSuggestionListOpen)
-				ViewModel.SetRecordableProcesses(PresentingProcesses.GetRecordableProcesses());
+			ViewModel.SetRecordableProcesses(PresentingProcesses.GetRecordableProcesses());
 		});
-	}
-
-	private void ProcessAutoSuggestBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
-	{
-		if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput)
-		{
-			ViewModel.ProcessName = sender.Text;
-			sender.IsSuggestionListOpen = ViewModel.ProcessSuggestions.Count > 0;
-		}
-	}
-
-	private void ProcessAutoSuggestBox_SuggestionChosen(AutoSuggestBox sender, AutoSuggestBoxSuggestionChosenEventArgs args)
-	{
-		sender.Text = args.SelectedItem as string ?? string.Empty;
-		ViewModel.ProcessName = sender.Text;
 	}
 
 	private void BenchmarksSelectorBar_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
 	{
+		if (ViewModel.IsRecording && (args.SelectedItem is not TabbedCommandBarItem selectedItem || selectedItem != RecordingsTab))
+		{
+			BenchmarksSelectorBar.SelectedItem = RecordingsTab;
+			return;
+		}
+
 		switch (args.SelectedItem ?? sender.SelectedItem)
 		{
 			case TabbedCommandBarItem item when item == RecordingsTab:
@@ -637,7 +659,6 @@ public sealed partial class BenchmarksPage : Page
 				break;
 
 			case TabbedCommandBarItem item when item == AnalysisTab:
-				StopProcessDiscovery();
 				ViewModel.ActiveTab = "Analysis";
 				ViewModel.AnalysisChartType = "Bar";
 				if (ViewModel.IsAnalysisToolbarEnabled)
@@ -645,9 +666,36 @@ public sealed partial class BenchmarksPage : Page
 				break;
 
 			case TabbedCommandBarItem item when item == StatisticsTab:
-				StopProcessDiscovery();
 				ViewModel.ActiveTab = "Statistics";
 				break;
+		}
+	}
+
+	private void ReplayAnimation()
+	{
+		if (ViewModel.AnalysisChartType is "Bar" or "Column")
+		{
+			var oldDisplayedData1 = ViewModel.BarColumnChartDisplayedData1;
+			var oldRenderedData1 = ViewModel.BarColumnChartRenderedData1;
+			var oldDisplayedData2 = ViewModel.BarColumnChartDisplayedData2;
+			var oldRenderedData2 = ViewModel.BarColumnChartRenderedData2;
+			ViewModel.BarColumnChartDisplayedData1 = [];
+			ViewModel.BarColumnChartRenderedData1 = [];
+			ViewModel.BarColumnChartDisplayedData2 = [];
+			ViewModel.BarColumnChartRenderedData2 = [];
+			ViewModel.BarColumnChartDisplayedData1 = oldDisplayedData1;
+			ViewModel.BarColumnChartRenderedData1 = oldRenderedData1;
+			ViewModel.BarColumnChartDisplayedData2 = oldDisplayedData2;
+			ViewModel.BarColumnChartRenderedData2 = oldRenderedData2;
+		}
+		else
+		{
+			var oldData1 = ViewModel.LineScatterChartData1;
+			var oldData2 = ViewModel.LineScatterChartData2;
+			ViewModel.LineScatterChartData1 = [];
+			ViewModel.LineScatterChartData2 = [];
+			ViewModel.LineScatterChartData1 = oldData1;
+			ViewModel.LineScatterChartData2 = oldData2;
 		}
 	}
 

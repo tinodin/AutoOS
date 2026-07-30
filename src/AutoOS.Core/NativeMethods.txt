@@ -41,6 +41,8 @@ EnumDisplaySettings
 EnumServicesStatusEx
 FileOpenDialog
 FileSaveDialog
+FindWindowEx
+GetWindowThreadProcessId
 GetAdaptersAddresses
 GetDpiForWindow
 GetPwrCapabilities
@@ -73,6 +75,7 @@ OpenProcessToken
 OpenSCManager
 OpenService
 PKEY_AudioEndpoint_FormFactor
+PlaySound
 PKEY_AudioEngine_DeviceFormat
 PKEY_Device_FriendlyName
 PROCESS_ACCESS_RIGHTS

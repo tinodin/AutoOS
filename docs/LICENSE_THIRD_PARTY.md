@@ -51,17 +51,21 @@ This project is licensed under the **GNU General Public License v3.0**. See the 
    - Changes: Added command line options for preinstall
    - Fork: [tinodin/RadeonSoftwareSlimmer](https://github.com/tinodin/RadeonSoftwareSlimmer)
 
-3. **Service List Builder**
+3. **PresentMon**
+   - Licensed under the **MIT License**.
+   - Source: [GameTechDev/PresentMon](https://github.com/GameTechDev/PresentMon)
+
+4. **Service List Builder**
    - Licensed under the **GNU General Public License v3.0**.
    - Source: [valleyofdoom/service-list-builder](https://github.com/valleyofdoom/service-list-builder)
    - Changes: Removed `shutdown /r /t 0` from created lists, added `--output-dir` switch because of MSIX restrictions.
    - Fork: [tinodin/service-list-builder](https://github.com/tinodin/service-list-builder)
 
-4. **ClassicWindowSwitcher**
+5. **ClassicWindowSwitcher**
    - Licensed under the **GNU General Public License v2.0**.
    - Source: [Ingan121/ClassicWindowSwitcher](https://github.com/Ingan121/ClassicWindowSwitcher)
 
-5. **Custom Resolution Utility (CRU)**
+6. **Custom Resolution Utility (CRU)**
 ```
 Copyright (C) 2012-2022 ToastyX
 https://monitortests.com/custom-resolution-utility
@@ -79,7 +83,7 @@ OTHER LIABILITY IN CONNECTION WITH THE USE OF THE SOFTWARE.
 ```
 - Source: [Custom Resolution Utility (CRU)](https://monitortests.com/custom-resolution-utility)
 
-5. **7-Zip**
+7. **7-Zip**
 ```
   7-Zip
   ~~~~~

@@ -1,11 +1,12 @@
 using System.Collections.ObjectModel;
 using AutoOS.Core.Helpers.Benchmark;
+using AutoOS.Views.Settings;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Xaml.Media;
 using nietras.SeparatedValues;
 
-namespace AutoOS.Views.Settings.Benchmarks;
+namespace AutoOS.ViewModels;
 
 public sealed partial class BenchmarksPageViewModel : ObservableObject
 {
@@ -21,9 +22,6 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	[ObservableProperty]
 	public partial string StatisticsState { get; set; } = "Empty";
 
-	[ObservableProperty]
-	public partial int RecordingCountdown { get; set; }
-	
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(IsAggregateEnabled))]
 	[NotifyPropertyChangedFor(nameof(IsAnalysisToolbarEnabled))]
@@ -44,7 +42,6 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	public IReadOnlyList<RecordingItem> SelectedRecordings { get; set; } = new List<RecordingItem>();
 	public List<RecordingAnalysis> CachedAnalysis { get; set; } = [];
 	private readonly HashSet<string> _recordableProcesses = new(StringComparer.OrdinalIgnoreCase);
-	private bool _selectedProcessIsRecordable;
 
 	[ObservableProperty]
 	public partial bool IsRenameEnabled { get; set; }
@@ -202,23 +199,40 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	[NotifyPropertyChangedFor(nameof(CanRecord))]
 	public partial string ProcessName { get; set; } = string.Empty;
 
-	public bool CanRecord => IsRecording || (!string.IsNullOrWhiteSpace(ProcessName) && _selectedProcessIsRecordable && RecordingDuration >= 3 && RecordingDelay >= 0);
-	public string RecordLabel => IsRecording ? "Recording..." : "Record";
-
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(CanRecord))]
-	[NotifyPropertyChangedFor(nameof(RecordLabel))]
-	public partial bool IsRecording { get; set; }
+	public partial double RecordingDelay { get; set; } = 5;
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(CanRecord))]
 	public partial double RecordingDuration { get; set; } = 60;
 
+	public List<object> ShortcutKeys { get; } = ["Ctrl", "Shift", "R"];
+
+	public bool CanRecord => IsRecording || (!string.IsNullOrWhiteSpace(ProcessName));
+	public string RecordLabel => IsRecording ? "Cancel" : "Record";
+	public string RecordIconGlyph => IsRecording ? "\uE711" : "\uE7C8";
+
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(CanRecord))]
-	public partial double RecordingDelay { get; set; } = 5;
+	[NotifyPropertyChangedFor(nameof(RecordLabel))]
+	[NotifyPropertyChangedFor(nameof(RecordIconGlyph))]
+	public partial bool IsRecording { get; set; }
 
-	public List<object> ShortcutKeys { get; } = ["Shift", "F11"];
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(CountdownProgress))]
+	[NotifyPropertyChangedFor(nameof(CountdownSecondsLeft))]
+	public partial double RecordingCountdown { get; set; }
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(RecordingProgress))]
+	[NotifyPropertyChangedFor(nameof(RecordingSecondsLeft))]
+	public partial double RecordingRemaining { get; set; }
+
+	public double RecordingProgress => (RecordingRemaining / RecordingDuration) * 100;
+	public double CountdownProgress => (RecordingCountdown / RecordingDelay) * 100;
+	public int CountdownSecondsLeft => (int)Math.Ceiling(RecordingCountdown);
+	public int RecordingSecondsLeft => (int)Math.Ceiling(RecordingRemaining);
 
 	[ObservableProperty]
 	public partial ObservableCollection<RecordingItem> Recordings { get; set; } = [];
@@ -408,12 +422,6 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		RecordingBColor = Colors.Orange;
 	}
 
-	partial void OnProcessNameChanged(string value)
-	{
-		_selectedProcessIsRecordable = !string.IsNullOrWhiteSpace(value) && _recordableProcesses.Contains(value.Trim());
-		FilterProcessSuggestions(value);
-	}
-
 	partial void OnRecordingAColorChanged(Windows.UI.Color value)
 	{
 		RecordingAColorBrush = new SolidColorBrush(value);
@@ -435,27 +443,27 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	public void ShowRecording()
 	{
 		RecordingState = "Recording";
+		RecordingRemaining = RecordingDuration;
 	}
 
 	public void SetRecordableProcesses(IEnumerable<string> processNames)
 	{
 		_recordableProcesses.Clear();
 		_recordableProcesses.UnionWith(processNames);
-		_selectedProcessIsRecordable = !string.IsNullOrWhiteSpace(ProcessName) && _recordableProcesses.Contains(ProcessName.Trim());
-		FilterProcessSuggestions(ProcessName);
-		OnPropertyChanged(nameof(CanRecord));
+		FilterProcessSuggestions(string.Empty);
 	}
 
 	private void FilterProcessSuggestions(string query)
 	{
-		List<string> suggestions = [.. _recordableProcesses.Where(name => string.IsNullOrWhiteSpace(query) || name.Contains(query.Trim(), StringComparison.OrdinalIgnoreCase)).OrderBy(name => name, StringComparer.OrdinalIgnoreCase)];
+		var suggestions = _recordableProcesses
+			.Where(name => string.IsNullOrWhiteSpace(query) || name.Contains(query.Trim(), StringComparison.OrdinalIgnoreCase))
+			.OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+			.ToList();
 
 		if (ProcessSuggestions.SequenceEqual(suggestions, StringComparer.OrdinalIgnoreCase))
 			return;
 
-		ProcessSuggestions.Clear();
-		foreach (string suggestion in suggestions)
-			ProcessSuggestions.Add(suggestion);
+		ProcessSuggestions = new ObservableCollection<string>(suggestions);
 	}
 
 	public void SetRecordings(IReadOnlyList<RecordingItem> recordings)

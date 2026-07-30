@@ -5,14 +5,21 @@
       xmlns:chart="using:Syncfusion.UI.Xaml.Charts"
       xmlns:common="using:AutoOS.Common"
       xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+      xmlns:converters="using:CommunityToolkit.WinUI.Converters"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:dev="using:DevWinUI"
-      xmlns:local="using:AutoOS.Views.Settings.Benchmarks"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:sfdata="using:Syncfusion.UI.Xaml.DataGrid"
       xmlns:sfgrid="using:Syncfusion.UI.Xaml.TreeGrid"
+      xmlns:viewmodel="using:AutoOS.ViewModels"
       mc:Ignorable="d">
     <Page.Resources>
+
+        <!--  Inverse Bool Converter  -->
+        <converters:BoolToObjectConverter x:Key="InverseBoolConverter"
+                                          FalseValue="True"
+                                          TrueValue="False" />
+
         <!--  Critical  -->
         <Style x:Key="CriticalCellStyle"
                TargetType="sfgrid:TreeGridCell">
@@ -28,18 +35,18 @@
         </Style>
 
         <!--  Cell style selector  -->
-        <local:ResultCellStyleSelector x:Key="RecordingACellStyleSelector"
-                                       CriticalStyle="{StaticResource CriticalCellStyle}"
-                                       PropertyName="RecordingA"
-                                       SuccessStyle="{StaticResource SuccessCellStyle}" />
-        <local:ResultCellStyleSelector x:Key="RecordingBCellStyleSelector"
-                                       CriticalStyle="{StaticResource CriticalCellStyle}"
-                                       PropertyName="RecordingB"
-                                       SuccessStyle="{StaticResource SuccessCellStyle}" />
-        <local:ResultCellStyleSelector x:Key="DeltaCellStyleSelector"
-                                       CriticalStyle="{StaticResource CriticalCellStyle}"
-                                       PropertyName="Delta"
-                                       SuccessStyle="{StaticResource SuccessCellStyle}" />
+        <viewmodel:ResultCellStyleSelector x:Key="RecordingACellStyleSelector"
+                                           CriticalStyle="{StaticResource CriticalCellStyle}"
+                                           PropertyName="RecordingA"
+                                           SuccessStyle="{StaticResource SuccessCellStyle}" />
+        <viewmodel:ResultCellStyleSelector x:Key="RecordingBCellStyleSelector"
+                                           CriticalStyle="{StaticResource CriticalCellStyle}"
+                                           PropertyName="RecordingB"
+                                           SuccessStyle="{StaticResource SuccessCellStyle}" />
+        <viewmodel:ResultCellStyleSelector x:Key="DeltaCellStyleSelector"
+                                           CriticalStyle="{StaticResource CriticalCellStyle}"
+                                           PropertyName="Delta"
+                                           SuccessStyle="{StaticResource SuccessCellStyle}" />
     </Page.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -69,6 +76,7 @@
 
                             <!--  Add  -->
                             <AppBarButton Click="AddRecording_Click"
+                                          IsEnabled="{x:Bind ViewModel.IsRecording, Mode=OneWay, Converter={StaticResource InverseBoolConverter}}"
                                           Label="Add">
                                 <AppBarButton.Content>
                                     <dev:ThemedIcon Style="{StaticResource App.ThemedIcons.New.Item}" />
@@ -119,41 +127,41 @@
                             <AppBarSeparator Margin="4,0" />
 
                             <!--  Process  -->
-                            <AppBarElementContainer>
-                                <AutoSuggestBox x:Name="ProcessAutoSuggestBox"
-                                                MinWidth="250"
-                                                ItemsSource="{x:Bind ViewModel.ProcessSuggestions, Mode=OneWay}"
-                                                PlaceholderText="Select a process..."
-                                                SuggestionChosen="ProcessAutoSuggestBox_SuggestionChosen"
-                                                Text="{x:Bind ViewModel.ProcessName, Mode=TwoWay}"
-                                                TextChanged="ProcessAutoSuggestBox_TextChanged"
-                                                ToolTipService.ToolTip="Process" />
+                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsRecording, Mode=OneWay, Converter={StaticResource InverseBoolConverter}}">
+                                <ComboBox x:Name="ProcessComboBox"
+                                          MinWidth="265"
+                                          DropDownClosed="ProcessComboBox_DropDownClosed"
+                                          DropDownOpened="ProcessComboBox_DropDownOpened"
+                                          ItemsSource="{x:Bind ViewModel.ProcessSuggestions, Mode=OneWay}"
+                                          PlaceholderText="Select a process..."
+                                          SelectedItem="{x:Bind ViewModel.ProcessName, Mode=TwoWay}"
+                                          ToolTipService.ToolTip="Process" />
                             </AppBarElementContainer>
 
                             <!--  Separator  -->
                             <AppBarSeparator Margin="4,0" />
 
-                            <!--  Duration  -->
-                            <AppBarElementContainer>
-                                <NumberBox LargeChange="5"
-                                           Minimum="30"
-                                           PlaceholderText="Duration (s)"
-                                           SmallChange="1"
-                                           SpinButtonPlacementMode="Inline"
-                                           ToolTipService.ToolTip="Duration (s)"
-                                           Value="{x:Bind ViewModel.RecordingDuration, Mode=TwoWay}" />
-                            </AppBarElementContainer>
-
                             <!--  Delay  -->
-                            <AppBarElementContainer Margin="2,0">
+                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsRecording, Mode=OneWay, Converter={StaticResource InverseBoolConverter}}">
                                 <NumberBox LargeChange="5"
-                                           Maximum="60"
+                                           Maximum="10"
                                            Minimum="2"
-                                           PlaceholderText="Delay (s)"
                                            SmallChange="1"
                                            SpinButtonPlacementMode="Inline"
                                            ToolTipService.ToolTip="Delay (s)"
                                            Value="{x:Bind ViewModel.RecordingDelay, Mode=TwoWay}" />
+                            </AppBarElementContainer>
+
+                            <!--  Duration  -->
+                            <AppBarElementContainer Margin="2,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsRecording, Mode=OneWay, Converter={StaticResource InverseBoolConverter}}">
+                                <NumberBox LargeChange="5"
+                                           Maximum="120"
+                                           Minimum="15"
+                                           SmallChange="1"
+                                           SpinButtonPlacementMode="Inline"
+                                           ToolTipService.ToolTip="Duration (s)"
+                                           Value="{x:Bind ViewModel.RecordingDuration, Mode=TwoWay}" />
                             </AppBarElementContainer>
 
                             <!--  Separator  -->
@@ -162,6 +170,7 @@
                             <!--  Hotkey  -->
                             <AppBarElementContainer>
                                 <dev:Shortcut x:Name="HotkeyShortcut"
+                                              Margin="0,0,2,0"
                                               Keys="{x:Bind ViewModel.ShortcutKeys, Mode=OneWay}"
                                               PrimaryButtonClick="HotkeyShortcut_PrimaryButtonClick"
                                               Style="{StaticResource SmallShortcutStyle}"
@@ -170,13 +179,20 @@
                             </AppBarElementContainer>
 
                             <!--  Record  -->
-                            <AppBarToggleButton x:Name="Record"
-                                                Checked="Record_Checked"
-                                                Icon="{dev:FontIcon Glyph=&#xE7C8;}"
-                                                IsEnabled="{x:Bind ViewModel.CanRecord, Mode=OneWay}"
-                                                Label="{x:Bind ViewModel.RecordLabel, Mode=OneWay}"
-                                                Unchecked="Record_Unchecked">
-                            </AppBarToggleButton>
+                            <AppBarElementContainer>
+                                <ToggleButton x:Name="Record"
+                                              Checked="Record_Checked"
+                                              IsEnabled="{x:Bind ViewModel.CanRecord, Mode=OneWay}"
+                                              Unchecked="Record_Unchecked">
+                                    <StackPanel Orientation="Horizontal"
+                                                Spacing="8">
+                                        <FontIcon FontSize="12"
+                                                  Glyph="{x:Bind ViewModel.RecordIconGlyph, Mode=OneWay}" />
+                                        <TextBlock Style="{StaticResource BodyTextBlockStyle}"
+                                                   Text="{x:Bind ViewModel.RecordLabel, Mode=OneWay}" />
+                                    </StackPanel>
+                                </ToggleButton>
+                            </AppBarElementContainer>
 
                         </controls:TabbedCommandBarItem.PrimaryCommands>
                     </controls:TabbedCommandBarItem>
@@ -505,37 +521,43 @@
 
                     <!--  Recording Countdown  -->
                     <dev:Case Value="Countdown">
-                        <StackPanel HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    Spacing="12">
-                            <FontIcon HorizontalAlignment="Center"
-                                      FontSize="48"
-                                      Foreground="{ThemeResource SystemAccentColor}"
-                                      Glyph="&#xE823;" />
-                            <TextBlock HorizontalAlignment="Center"
-                                       Style="{StaticResource SubtitleTextBlockStyle}"
-                                       Text="Recording starts in" />
-                            <TextBlock HorizontalAlignment="Center"
-                                       FontSize="72"
-                                       FontWeight="SemiBold"
-                                       Text="{x:Bind ViewModel.RecordingCountdown, Mode=OneWay}" />
-                        </StackPanel>
+                        <Grid>
+                            <ProgressRing Width="250"
+                                          Height="250"
+                                          Background="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                          IsIndeterminate="False"
+                                          Value="{x:Bind ViewModel.CountdownProgress, Mode=OneWay}" />
+                            <StackPanel HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Spacing="4">
+                                <TextBlock HorizontalAlignment="Center"
+                                           Style="{StaticResource TitleLargeTextBlockStyle}"
+                                           Text="{x:Bind ViewModel.CountdownSecondsLeft, Mode=OneWay}" />
+                                <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           Text="seconds" />
+                            </StackPanel>
+                        </Grid>
                     </dev:Case>
 
                     <!--  Recording In Progress  -->
                     <dev:Case Value="Recording">
-                        <StackPanel HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    Spacing="16">
-                            <FontIcon HorizontalAlignment="Center"
-                                      FontSize="64"
-                                      Foreground="{ThemeResource SystemFillColorCriticalBrush}"
-                                      Glyph="&#xE7C8;" />
-                            <TextBlock HorizontalAlignment="Center"
-                                       FontSize="40"
-                                       FontWeight="SemiBold"
-                                       Text="Recording" />
-                        </StackPanel>
+                        <Grid>
+                            <ProgressRing Width="250"
+                                          Height="250"
+                                          Background="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                          IsIndeterminate="False"
+                                          Value="{x:Bind ViewModel.RecordingProgress, Mode=OneWay}">
+                            </ProgressRing>
+                            <StackPanel HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Spacing="4">
+                                <TextBlock HorizontalAlignment="Center"
+                                           Style="{StaticResource TitleLargeTextBlockStyle}"
+                                           Text="{x:Bind ViewModel.RecordingSecondsLeft, Mode=OneWay}" />
+                                <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           Text="seconds remaining" />
+                            </StackPanel>
+                        </Grid>
                     </dev:Case>
 
                 </dev:SwitchPresenter>
@@ -974,7 +996,7 @@
                                                                HeaderText="Statistic"
                                                                MappingName="Statistic">
                                     <sfgrid:TreeGridTemplateColumn.CellTemplate>
-                                        <DataTemplate x:DataType="local:ResultRow">
+                                        <DataTemplate x:DataType="viewmodel:ResultRow">
                                             <TextBlock Margin="12,0"
                                                        VerticalAlignment="Center"
                                                        Text="{x:Bind Statistic, Mode=OneWay}"
