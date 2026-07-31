@@ -140,7 +140,7 @@
                                            SmallChange="1"
                                            SpinButtonPlacementMode="Inline"
                                            ToolTipService.ToolTip="Delay (s)"
-                                           Value="{x:Bind ViewModel.RecordingDelay, Mode=TwoWay}" />
+                                           Value="{x:Bind ViewModel.Delay, Mode=TwoWay}" />
                             </AppBarElementContainer>
 
                             <!--  Duration  -->
@@ -152,7 +152,7 @@
                                            SmallChange="1"
                                            SpinButtonPlacementMode="Inline"
                                            ToolTipService.ToolTip="Duration (s)"
-                                           Value="{x:Bind ViewModel.RecordingDuration, Mode=TwoWay}" />
+                                           Value="{x:Bind ViewModel.Duration, Mode=TwoWay}" />
                             </AppBarElementContainer>
 
                             <!--  Separator  -->
@@ -510,47 +510,46 @@
                         </StackPanel>
                     </dev:Case>
 
-                    <!--  Recording Countdown  -->
-                    <dev:Case Value="Countdown">
+                    <!--  Delay  -->
+                    <dev:Case Value="Delay">
                         <Grid>
                             <ProgressRing Width="250"
                                           Height="250"
                                           Background="{ThemeResource ControlStrokeColorDefaultBrush}"
                                           IsIndeterminate="False"
-                                          Value="{x:Bind ViewModel.CountdownProgress, Mode=OneWay}" />
+                                          Value="{x:Bind ViewModel.DelayProgress, Mode=OneWay}" />
                             <StackPanel HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         Spacing="4">
                                 <TextBlock HorizontalAlignment="Center"
                                            Style="{StaticResource TitleLargeTextBlockStyle}"
-                                           Text="{x:Bind ViewModel.CountdownSecondsLeft, Mode=OneWay}" />
+                                           Text="{x:Bind ViewModel.DelaySecondsLeft, Mode=OneWay}" />
                                 <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                           Text="seconds" />
+                                           Text="seconds until start" />
                             </StackPanel>
                         </Grid>
                     </dev:Case>
 
-                    <!--  Recording In Progress  -->
-                    <dev:Case Value="Recording">
+                    <!--  Duration  -->
+                    <dev:Case Value="Duration">
                         <Grid>
                             <ProgressRing Width="250"
                                           Height="250"
                                           Background="{ThemeResource ControlStrokeColorDefaultBrush}"
                                           IsIndeterminate="False"
-                                          Value="{x:Bind ViewModel.RecordingProgress, Mode=OneWay}">
+                                          Value="{x:Bind ViewModel.DurationProgress, Mode=OneWay}">
                             </ProgressRing>
                             <StackPanel HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         Spacing="4">
                                 <TextBlock HorizontalAlignment="Center"
                                            Style="{StaticResource TitleLargeTextBlockStyle}"
-                                           Text="{x:Bind ViewModel.RecordingSecondsLeft, Mode=OneWay}" />
+                                           Text="{x:Bind ViewModel.DurationSecondsLeft, Mode=OneWay}" />
                                 <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                            Text="seconds remaining" />
                             </StackPanel>
                         </Grid>
                     </dev:Case>
-
                 </dev:SwitchPresenter>
             </dev:Case>
 

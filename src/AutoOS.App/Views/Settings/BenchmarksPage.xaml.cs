@@ -421,10 +421,10 @@ public sealed partial class BenchmarksPage : Page
 		ViewModel.IsRecording = true;
 		Record.IsChecked = true;
 
-		int delay = (int)ViewModel.RecordingDelay;
-		int duration = (int)ViewModel.RecordingDuration;
+		int delay = (int)ViewModel.Delay;
+		int duration = (int)ViewModel.Duration;
 
-		ViewModel.ShowRecordingCountdown(delay);
+		ViewModel.ShowDelay(delay);
 
 		var delayTcs = new TaskCompletionSource();
 		var countdownTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
@@ -439,7 +439,7 @@ public sealed partial class BenchmarksPage : Page
 			}
 			double elapsed = (Stopwatch.GetTimestamp() - start) / (double)Stopwatch.Frequency;
 			if (elapsed < delay)
-				ViewModel.RecordingCountdown = Math.Max(0, delay - elapsed);
+				ViewModel.DelayRemaining = Math.Max(0, delay - elapsed);
 			else
 			{
 				countdownTimer.Stop();
@@ -484,7 +484,7 @@ public sealed partial class BenchmarksPage : Page
 		var stdOutTask = process.StandardOutput.ReadToEndAsync();
 		var stdErrTask = process.StandardError.ReadToEndAsync();
 
-		ViewModel.ShowRecording();
+		ViewModel.ShowDuration();
 
 		start = Stopwatch.GetTimestamp();
 		var recordingTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
@@ -496,7 +496,7 @@ public sealed partial class BenchmarksPage : Page
 				return;
 			}
 			double elapsed = (Stopwatch.GetTimestamp() - start) / (double)Stopwatch.Frequency;
-			ViewModel.RecordingRemaining = Math.Max(0, duration - elapsed);
+			ViewModel.DurationRemaining = Math.Max(0, duration - elapsed);
 			if (process.HasExited)
 				recordingTimer.Stop();
 		};
@@ -625,11 +625,13 @@ public sealed partial class BenchmarksPage : Page
 		PresentingProcesses.Dispose();
 	}
 
-	private void ProcessComboBox_DropDownOpened(object sender, object e)
+	private async void ProcessComboBox_DropDownOpened(object sender, object e)
 	{
 		PresentingProcesses.Start();
-		ViewModel.SetRecordableProcesses(PresentingProcesses.GetRecordableProcesses(true));
-		PresentingProcesses.ProcessesChanged += ProcessDiscovery_ProcessesChanged;
+		var processes = await Task.Run(() => PresentingProcesses.GetRecordableProcesses(true));
+		ViewModel.SetRecordableProcesses(processes);
+		if (ProcessComboBox.IsDropDownOpen)
+			PresentingProcesses.ProcessesChanged += ProcessDiscovery_ProcessesChanged;
 	}
 
 	private void ProcessComboBox_DropDownClosed(object sender, object e)

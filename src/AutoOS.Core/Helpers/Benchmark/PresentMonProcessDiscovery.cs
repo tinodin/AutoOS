@@ -216,19 +216,35 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 			}
 			if (stoppedProcessName is not null)
 			{
-				Process[] matchingProcesses = Process.GetProcessesByName(
-					Path.GetFileNameWithoutExtension(stoppedProcessName));
+				string nameWithoutExtension;
 				bool processIsStillRunning = false;
-				foreach (Process process in matchingProcesses)
+				try
 				{
-					try
+					nameWithoutExtension = Path.GetFileNameWithoutExtension(stoppedProcessName);
+					Process[] matchingProcesses = Process.GetProcessesByName(nameWithoutExtension);
+					foreach (Process process in matchingProcesses)
 					{
-						processIsStillRunning |= !process.HasExited;
+						try
+						{
+							processIsStillRunning |= !process.HasExited;
+						}
+						catch (InvalidOperationException)
+						{
+						}
+						catch (Win32Exception)
+						{
+						}
+						finally
+						{
+							process.Dispose();
+						}
 					}
-					catch (InvalidOperationException)
-					{
-					}
-					process.Dispose();
+				}
+				catch (ArgumentException)
+				{
+				}
+				catch (Win32Exception)
+				{
 				}
 				if (!processIsStillRunning)
 				{
@@ -481,8 +497,16 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 			ProcessesChanged?.Invoke(this, EventArgs.Empty);
 	}
 
-	private static bool TryGetProcessIdentity(int processId, out ProcessIdentity identity)
+	private bool TryGetProcessIdentity(int processId, out ProcessIdentity identity)
 	{
+		lock (_sync)
+		{
+			if (_runningProcesses.TryGetValue(processId, out identity))
+				return true;
+			if (!_started)
+				return false;
+		}
+
 		identity = default;
 
 		try

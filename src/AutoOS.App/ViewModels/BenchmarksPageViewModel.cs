@@ -202,11 +202,11 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(CanRecord))]
-	public partial double RecordingDelay { get; set; } = 5;
+	public partial double Delay { get; set; } = 5;
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(CanRecord))]
-	public partial double RecordingDuration { get; set; } = 60;
+	public partial double Duration { get; set; } = 60;
 
 	public List<object> ShortcutKeys { get; } = ["Ctrl", "Shift", "R"];
 
@@ -221,19 +221,19 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	public partial bool IsRecording { get; set; }
 
 	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(CountdownProgress))]
-	[NotifyPropertyChangedFor(nameof(CountdownSecondsLeft))]
-	public partial double RecordingCountdown { get; set; }
+	[NotifyPropertyChangedFor(nameof(DelayProgress))]
+	[NotifyPropertyChangedFor(nameof(DelaySecondsLeft))]
+	public partial double DelayRemaining { get; set; }
 
 	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(RecordingProgress))]
-	[NotifyPropertyChangedFor(nameof(RecordingSecondsLeft))]
-	public partial double RecordingRemaining { get; set; }
+	[NotifyPropertyChangedFor(nameof(DurationProgress))]
+	[NotifyPropertyChangedFor(nameof(DurationSecondsLeft))]
+	public partial double DurationRemaining { get; set; }
 
-	public double RecordingProgress => (RecordingRemaining / RecordingDuration) * 100;
-	public double CountdownProgress => (RecordingCountdown / RecordingDelay) * 100;
-	public int CountdownSecondsLeft => (int)Math.Ceiling(RecordingCountdown);
-	public int RecordingSecondsLeft => (int)Math.Ceiling(RecordingRemaining);
+	public double DurationProgress => (DurationRemaining / Duration) * 100;
+	public double DelayProgress => (DelayRemaining / Delay) * 100;
+	public int DelaySecondsLeft => (int)Math.Ceiling(DelayRemaining);
+	public int DurationSecondsLeft => (int)Math.Ceiling(DurationRemaining);
 
 	[ObservableProperty]
 	public partial ObservableCollection<RecordingItem> Recordings { get; set; } = [];
@@ -435,16 +435,16 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		RecordingBSecondaryColor = DevWinUI.ColorHelper.GetInterpolatedColor(0.35, value, Colors.White);
 	}
 
-	public void ShowRecordingCountdown(int seconds)
+	public void ShowDelay(int seconds)
 	{
-		RecordingCountdown = seconds;
-		RecordingState = "Countdown";
+		DelayRemaining = seconds;
+		RecordingState = "Delay";
 	}
 
-	public void ShowRecording()
+	public void ShowDuration()
 	{
-		RecordingState = "Recording";
-		RecordingRemaining = RecordingDuration;
+		RecordingState = "Duration";
+		DurationRemaining = Duration;
 	}
 
 	public void SetRecordableProcesses(IEnumerable<string> processNames)
@@ -464,7 +464,19 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		if (ProcessSuggestions.SequenceEqual(suggestions, StringComparer.OrdinalIgnoreCase))
 			return;
 
-		ProcessSuggestions = new ObservableCollection<string>(suggestions);
+		for (int i = ProcessSuggestions.Count - 1; i >= 0; i--)
+		{
+			if (!suggestions.Contains(ProcessSuggestions[i], StringComparer.OrdinalIgnoreCase))
+				ProcessSuggestions.RemoveAt(i);
+		}
+
+		int insertIndex = 0;
+		foreach (string suggestion in suggestions)
+		{
+			if (!ProcessSuggestions.Contains(suggestion, StringComparer.OrdinalIgnoreCase))
+				ProcessSuggestions.Insert(insertIndex, suggestion);
+			insertIndex++;
+		}
 	}
 
 	public void SetRecordings(IReadOnlyList<RecordingItem> recordings)
