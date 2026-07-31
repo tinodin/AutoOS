@@ -190,7 +190,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		List<RecordingItem> updatedList = [aggregateRecording, .. Recordings.Where(recording => !childSet.Contains(recording))];
 		updatedList.Sort((a, b) => b.Date.CompareTo(a.Date));
 		SetRecordings(updatedList);
-		SetSelectedRecordings(new List<RecordingItem> { aggregateRecording });
+		SetSelectedRecordings([]);
 	}
 
 	[ObservableProperty]
