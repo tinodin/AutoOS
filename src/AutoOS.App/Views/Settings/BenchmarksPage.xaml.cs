@@ -30,7 +30,6 @@ public sealed record BarColumnChartData(
 	List<BarPoint> RenderedFpsBars1,
 	List<BarPoint> DisplayedFpsBars2,
 	List<BarPoint> RenderedFpsBars2,
-	bool ShowRenderedFps1,
 	string DisplayedFpsLabel1, string RenderedFpsLabel1,
 	string DisplayedFpsLabel2, string RenderedFpsLabel2
 );
@@ -57,8 +56,6 @@ public sealed partial class BenchmarksPage : Page
 	public BenchmarksPage()
 	{
 		InitializeComponent();
-		ApplyShortcut(ViewModel.ShortcutKeys);
-		LoadRecordings();
 	}
 
 	protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -68,6 +65,8 @@ public sealed partial class BenchmarksPage : Page
 		_globalKeyboardHook.KeyDown += OnGlobalKeyDown;
 		_globalKeyboardHook.Start();
 		ViewModel.StatisticToggled += Statistic_SelectionChanged;
+		ApplyShortcut(ViewModel.ShortcutKeys);
+		_ = LoadRecordingsAsync();
 	}
 
 	protected override void OnNavigatedFrom(NavigationEventArgs e)
@@ -84,165 +83,168 @@ public sealed partial class BenchmarksPage : Page
 		ViewModel.StatisticToggled -= Statistic_SelectionChanged;
 	}
 
-	private void LoadRecordings()
+	private async Task LoadRecordingsAsync()
 	{
-		if (!Directory.Exists(BenchmarkCsv.RecordingsDirectory))
+		List<RecordingItem> finalRecordings = await Task.Run(() =>
 		{
-			Directory.CreateDirectory(BenchmarkCsv.RecordingsDirectory);
-			ViewModel.SetRecordings([]);
-			return;
-		}
-
-		List<FileInfo> csvFiles = [.. new DirectoryInfo(BenchmarkCsv.RecordingsDirectory).EnumerateFiles("*.csv")];
-
-		if (csvFiles.Count == 0)
-		{
-			ViewModel.SetRecordings([]);
-			return;
-		}
-
-		var sepReader = Sep.Reader(options => options with { Sep = new Sep(','), Unescape = true, ColNameComparer = StringComparer.OrdinalIgnoreCase });
-
-		List<RecordingItem> recordings = new(csvFiles.Count);
-		Dictionary<RecordingItem, List<string>> aggregateSources = new();
-
-		var loadedRecordings = csvFiles
-			.AsParallel()
-			.Select(info =>
+			if (!Directory.Exists(BenchmarkCsv.RecordingsDirectory))
 			{
-				try
-				{
-					double durationSeconds = Math.Max(0, (info.LastWriteTime - info.CreationTime).TotalSeconds);
-					string nameWithoutExtension = Path.GetFileNameWithoutExtension(info.Name);
-
-					RecordingItem result = new()
-					{
-						FilePath = info.FullName,
-						FileName = info.Name,
-						Title = nameWithoutExtension,
-						Process = nameWithoutExtension,
-						PresentationMode = string.Empty,
-						DurationSeconds = durationSeconds,
-						Date = info.LastWriteTime,
-						Time = info.LastWriteTime.TimeOfDay
-					};
-
-					List<string> sourceFileNames = [];
-
-					using var reader = sepReader.FromFile(info.FullName);
-
-					reader.Header.TryIndexOf("Application", out int appIdx);
-					reader.Header.TryIndexOf("PresentMode", out int presentModeIdx);
-					reader.Header.TryIndexOf("AggregateDurationSeconds", out int aggDurationIdx);
-					bool hasAggSources = reader.Header.TryIndexOf("AggregateSources", out int aggSourcesIdx);
-					reader.Header.TryIndexOf("TimeInDateTime", out int dateTimeIdx);
-					reader.Header.TryIndexOf("TimeInSeconds", out int timeSecondsIdx);
-
-					if (!reader.MoveNext())
-						return (Recording: result, SourceFileNames: sourceFileNames);
-
-					var firstRow = reader.Current;
-
-					if (appIdx >= 0)
-					{
-						string application = firstRow[appIdx].ToString();
-						if (!string.IsNullOrWhiteSpace(application))
-							result.Process = application;
-					}
-					if (presentModeIdx >= 0)
-					{
-						string presentMode = firstRow[presentModeIdx].ToString();
-						if (!string.IsNullOrWhiteSpace(presentMode))
-							result.PresentationMode = presentMode;
-					}
-
-					bool hasCsvDuration = false;
-					if (aggDurationIdx >= 0 && firstRow[aggDurationIdx].TryParse(out double aggregateDuration))
-					{
-						result.DurationSeconds = Math.Max(0, aggregateDuration);
-						hasCsvDuration = true;
-					}
-
-					if (hasAggSources && aggSourcesIdx >= 0)
-					{
-						var sourceText = firstRow[aggSourcesIdx].ToString();
-						if (!string.IsNullOrWhiteSpace(sourceText))
-							sourceFileNames = [.. sourceText.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)];
-					}
-
-					if (!hasCsvDuration && (dateTimeIdx >= 0 || timeSecondsIdx >= 0))
-					{
-						string firstDateTimeStr = dateTimeIdx >= 0 ? firstRow[dateTimeIdx].ToString() : null;
-						string firstTimeSecondsStr = timeSecondsIdx >= 0 ? firstRow[timeSecondsIdx].ToString() : null;
-
-						string lastLine = BenchmarkCsv.ReadLastLine(info.FullName, info.Length);
-						ReadOnlySpan<char> lastLineSpan = lastLine;
-
-						if (dateTimeIdx >= 0 && firstDateTimeStr != null)
-						{
-							var lastDateTimeSpan = BenchmarkCsv.GetField(lastLineSpan, dateTimeIdx);
-							if (!lastDateTimeSpan.IsEmpty &&
-								DateTime.TryParse(firstDateTimeStr, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var start) &&
-								DateTime.TryParse(lastDateTimeSpan, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var end))
-							{
-								result.DurationSeconds = Math.Max(0, (end - start).TotalSeconds);
-								hasCsvDuration = true;
-							}
-						}
-
-						if (!hasCsvDuration && timeSecondsIdx >= 0 && firstTimeSecondsStr != null &&
-							double.TryParse(firstTimeSecondsStr, NumberStyles.Float, CultureInfo.InvariantCulture, out double firstTimeSec))
-						{
-							var lastTimeSecondsSpan = BenchmarkCsv.GetField(lastLineSpan, timeSecondsIdx);
-							if (!lastTimeSecondsSpan.IsEmpty &&
-								double.TryParse(lastTimeSecondsSpan, NumberStyles.Float, CultureInfo.InvariantCulture, out double lastTimeSec))
-							{
-								result.DurationSeconds = Math.Max(0, lastTimeSec - firstTimeSec);
-							}
-						}
-					}
-
-					return (Recording: result, SourceFileNames: sourceFileNames);
-				}
-				catch (IOException)
-				{
-					return (Recording: null, SourceFileNames: null);
-				}
-			})
-			.Where(recording => recording.Recording != null)
-			.Select(recording => (recording.Recording, recording.SourceFileNames))
-			.ToList();
-
-		loadedRecordings.Sort((a, b) => b.Recording.Date.CompareTo(a.Recording.Date));
-
-		Dictionary<string, RecordingItem> recordingsByFileName = new(loadedRecordings.Count, StringComparer.OrdinalIgnoreCase);
-
-		foreach (var (recording, sourceFileNames) in loadedRecordings)
-		{
-			recordings.Add(recording);
-			recordingsByFileName[recording.FileName] = recording;
-			if (sourceFileNames.Count > 0)
-				aggregateSources[recording] = sourceFileNames;
-		}
-
-		if (aggregateSources.Count > 0)
-		{
-			HashSet<RecordingItem> childRecordings = [];
-			foreach (var (aggregate, sourceFileNames) in aggregateSources)
-			{
-				foreach (string sourceFileName in sourceFileNames.Distinct(StringComparer.OrdinalIgnoreCase))
-				{
-					if (recordingsByFileName.TryGetValue(sourceFileName, out RecordingItem source) && !ReferenceEquals(source, aggregate))
-					{
-						aggregate.Children.Add(source);
-						childRecordings.Add(source);
-					}
-				}
+				Directory.CreateDirectory(BenchmarkCsv.RecordingsDirectory);
+				return [];
 			}
-			recordings = [.. recordings.Where(recording => !childRecordings.Contains(recording))];
-		}
 
-		ViewModel.SetRecordings(recordings);
+			List<FileInfo> csvFiles = [.. new DirectoryInfo(BenchmarkCsv.RecordingsDirectory).EnumerateFiles("*.csv")];
+
+			if (csvFiles.Count == 0)
+			{
+				return [];
+			}
+
+			var sepReader = Sep.Reader(options => options with { Sep = new Sep(','), Unescape = true, ColNameComparer = StringComparer.OrdinalIgnoreCase });
+
+			List<RecordingItem> recordings = new(csvFiles.Count);
+			Dictionary<RecordingItem, List<string>> aggregateSources = new();
+
+			var loadedRecordings = csvFiles
+				.AsParallel()
+				.Select(info =>
+				{
+					try
+					{
+						double durationSeconds = Math.Max(0, (info.LastWriteTime - info.CreationTime).TotalSeconds);
+						string nameWithoutExtension = Path.GetFileNameWithoutExtension(info.Name);
+
+						RecordingItem result = new()
+						{
+							FilePath = info.FullName,
+							FileName = info.Name,
+							Title = nameWithoutExtension,
+							Process = nameWithoutExtension,
+							PresentationMode = string.Empty,
+							DurationSeconds = durationSeconds,
+							Date = info.LastWriteTime,
+							Time = info.LastWriteTime.TimeOfDay
+						};
+
+						List<string> sourceFileNames = [];
+
+						using var reader = sepReader.FromFile(info.FullName);
+
+						reader.Header.TryIndexOf("Application", out int appIdx);
+						reader.Header.TryIndexOf("PresentMode", out int presentModeIdx);
+						reader.Header.TryIndexOf("AggregateDurationSeconds", out int aggDurationIdx);
+						bool hasAggSources = reader.Header.TryIndexOf("AggregateSources", out int aggSourcesIdx);
+						reader.Header.TryIndexOf("TimeInDateTime", out int dateTimeIdx);
+						reader.Header.TryIndexOf("TimeInSeconds", out int timeSecondsIdx);
+
+						if (!reader.MoveNext())
+							return (Recording: result, SourceFileNames: sourceFileNames);
+
+						var firstRow = reader.Current;
+
+						if (appIdx >= 0)
+						{
+							string application = firstRow[appIdx].ToString();
+							if (!string.IsNullOrWhiteSpace(application))
+								result.Process = application;
+						}
+						if (presentModeIdx >= 0)
+						{
+							string presentMode = firstRow[presentModeIdx].ToString();
+							if (!string.IsNullOrWhiteSpace(presentMode))
+								result.PresentationMode = presentMode;
+						}
+
+						bool hasCsvDuration = false;
+						if (aggDurationIdx >= 0 && firstRow[aggDurationIdx].TryParse(out double aggregateDuration))
+						{
+							result.DurationSeconds = Math.Max(0, aggregateDuration);
+							hasCsvDuration = true;
+						}
+
+						if (hasAggSources && aggSourcesIdx >= 0)
+						{
+							var sourceText = firstRow[aggSourcesIdx].ToString();
+							if (!string.IsNullOrWhiteSpace(sourceText))
+								sourceFileNames = [.. sourceText.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)];
+						}
+
+						if (!hasCsvDuration && (dateTimeIdx >= 0 || timeSecondsIdx >= 0))
+						{
+							string firstDateTimeStr = dateTimeIdx >= 0 ? firstRow[dateTimeIdx].ToString() : null;
+							string firstTimeSecondsStr = timeSecondsIdx >= 0 ? firstRow[timeSecondsIdx].ToString() : null;
+
+							string lastLine = BenchmarkCsv.ReadLastLine(info.FullName, info.Length);
+							ReadOnlySpan<char> lastLineSpan = lastLine;
+
+							if (dateTimeIdx >= 0 && firstDateTimeStr != null)
+							{
+								var lastDateTimeSpan = BenchmarkCsv.GetField(lastLineSpan, dateTimeIdx);
+								if (!lastDateTimeSpan.IsEmpty &&
+									DateTime.TryParse(firstDateTimeStr, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var start) &&
+									DateTime.TryParse(lastDateTimeSpan, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var end))
+								{
+									result.DurationSeconds = Math.Max(0, (end - start).TotalSeconds);
+									hasCsvDuration = true;
+								}
+							}
+
+							if (!hasCsvDuration && timeSecondsIdx >= 0 && firstTimeSecondsStr != null &&
+								double.TryParse(firstTimeSecondsStr, NumberStyles.Float, CultureInfo.InvariantCulture, out double firstTimeSec))
+							{
+								var lastTimeSecondsSpan = BenchmarkCsv.GetField(lastLineSpan, timeSecondsIdx);
+								if (!lastTimeSecondsSpan.IsEmpty &&
+									double.TryParse(lastTimeSecondsSpan, NumberStyles.Float, CultureInfo.InvariantCulture, out double lastTimeSec))
+								{
+									result.DurationSeconds = Math.Max(0, lastTimeSec - firstTimeSec);
+								}
+							}
+						}
+
+						return (Recording: result, SourceFileNames: sourceFileNames);
+					}
+					catch (IOException)
+					{
+						return (Recording: null, SourceFileNames: null);
+					}
+				})
+				.Where(recording => recording.Recording != null)
+				.Select(recording => (recording.Recording, recording.SourceFileNames))
+				.ToList();
+
+			loadedRecordings.Sort((a, b) => b.Recording.Date.CompareTo(a.Recording.Date));
+
+			Dictionary<string, RecordingItem> recordingsByFileName = new(loadedRecordings.Count, StringComparer.OrdinalIgnoreCase);
+
+			foreach (var (recording, sourceFileNames) in loadedRecordings)
+			{
+				recordings.Add(recording);
+				recordingsByFileName[recording.FileName] = recording;
+				if (sourceFileNames.Count > 0)
+					aggregateSources[recording] = sourceFileNames;
+			}
+
+			if (aggregateSources.Count > 0)
+			{
+				HashSet<RecordingItem> childRecordings = [];
+				foreach (var (aggregate, sourceFileNames) in aggregateSources)
+				{
+					foreach (string sourceFileName in sourceFileNames.Distinct(StringComparer.OrdinalIgnoreCase))
+					{
+						if (recordingsByFileName.TryGetValue(sourceFileName, out RecordingItem source) && !ReferenceEquals(source, aggregate))
+						{
+							aggregate.Children.Add(source);
+							childRecordings.Add(source);
+						}
+					}
+				}
+				recordings = [.. recordings.Where(recording => !childRecordings.Contains(recording))];
+			}
+
+			return recordings;
+		});
+
+		ViewModel.SetRecordings(finalRecordings);
 	}
 
 	private void RecordingsTreeGrid_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -298,7 +300,7 @@ public sealed partial class BenchmarksPage : Page
 		foreach (var file in files)
 			File.Copy(file.Path, Path.Combine(BenchmarkCsv.RecordingsDirectory, file.Name), true);
 
-		LoadRecordings();
+		await LoadRecordingsAsync();
 	}
 
 	private void RenameRecording_Click(object sender, RoutedEventArgs e)
@@ -346,7 +348,7 @@ public sealed partial class BenchmarksPage : Page
 			File.Delete(recording.FilePath);
 		}
 
-		LoadRecordings();
+		await LoadRecordingsAsync();
 	}
 
 	private void HotkeyShortcut_PrimaryButtonClick(object sender, ContentDialogButtonClickEventArgs e)
@@ -533,7 +535,7 @@ public sealed partial class BenchmarksPage : Page
 				ViewModel.IsRecording = false;
 				Record.IsChecked = false;
 			}
-			LoadRecordings();
+			await LoadRecordingsAsync();
 		}
 	}
 
@@ -725,7 +727,6 @@ public sealed partial class BenchmarksPage : Page
 		List<BarPoint> renderedFpsBars1 = [];
 		List<BarPoint> displayedFpsBars2 = [];
 		List<BarPoint> renderedFpsBars2 = [];
-		bool showRenderedFps1 = false;
 		string displayedFpsLabel1 = string.Empty;
 		string renderedFpsLabel1 = string.Empty;
 		string displayedFpsLabel2 = string.Empty;
@@ -747,7 +748,6 @@ public sealed partial class BenchmarksPage : Page
 			{
 				displayedFpsLabel1 = $"{result.Recording.FileName} · Displayed FPS";
 				renderedFpsLabel1 = $"{result.Recording.FileName} · Rendered FPS";
-				showRenderedFps1 = renderedTarget.Count > 0;
 			}
 			else
 			{
@@ -757,7 +757,7 @@ public sealed partial class BenchmarksPage : Page
 			fpsSeriesIdx++;
 		}
 
-		return new BarColumnChartData(displayedFpsBars1, renderedFpsBars1, displayedFpsBars2, renderedFpsBars2, showRenderedFps1, displayedFpsLabel1, renderedFpsLabel1, displayedFpsLabel2, renderedFpsLabel2);
+		return new BarColumnChartData(displayedFpsBars1, renderedFpsBars1, displayedFpsBars2, renderedFpsBars2, displayedFpsLabel1, renderedFpsLabel1, displayedFpsLabel2, renderedFpsLabel2);
 	}
 
 	private static LineScatterChartData BuildLineScatterChartData(List<RecordingAnalysis> results, string metric)
@@ -811,7 +811,7 @@ public sealed partial class BenchmarksPage : Page
 		ViewModel.BarColumnChartRenderedLabel1 = presentation.RenderedFpsLabel1;
 		ViewModel.BarColumnChartDisplayedLabel2 = presentation.DisplayedFpsLabel2;
 		ViewModel.BarColumnChartRenderedLabel2 = presentation.RenderedFpsLabel2;
-		ViewModel.BarColumnRenderedVisible = presentation.ShowRenderedFps1;
+		ViewModel.BarColumnRenderedVisible = true;
 
 		var displayed1 = presentation.DisplayedFpsBars1.Where(bar => ViewModel.IsStatisticEnabled(bar.Label)).ToList();
 		var rendered1 = presentation.RenderedFpsBars1.Where(bar => ViewModel.IsStatisticEnabled(bar.Label)).ToList();
@@ -819,7 +819,7 @@ public sealed partial class BenchmarksPage : Page
 		var rendered2 = presentation.RenderedFpsBars2.Where(bar => ViewModel.IsStatisticEnabled(bar.Label)).ToList();
 
 		ViewModel.BarColumnChartDisplayedData1 = [.. displayed1];
-		ViewModel.BarColumnChartRenderedData1 = presentation.ShowRenderedFps1 ? [.. rendered1] : null;
+		ViewModel.BarColumnChartRenderedData1 = [.. rendered1];
 		ViewModel.BarColumnChartDisplayedData2 = hasSecondRecording ? [.. displayed2] : null;
 		ViewModel.BarColumnChartRenderedData2 = hasSecondRecording ? [.. rendered2] : null;
 
@@ -827,9 +827,7 @@ public sealed partial class BenchmarksPage : Page
 		{
 			BarChart.Series.Clear();
 			BarChart.Series.Add(BarDisplayedFpsSeries1);
-
-			if (presentation.ShowRenderedFps1)
-				BarChart.Series.Add(BarRenderedFpsSeries1);
+			BarChart.Series.Add(BarRenderedFpsSeries1);
 
 			if (hasSecondRecording)
 			{
@@ -840,7 +838,7 @@ public sealed partial class BenchmarksPage : Page
 			BarDisplayedFpsSeries1.ShowDataLabels = false;
 			BarDisplayedFpsSeries1.ShowDataLabels = true;
 			BarRenderedFpsSeries1.ShowDataLabels = false;
-			BarRenderedFpsSeries1.ShowDataLabels = presentation.ShowRenderedFps1;
+			BarRenderedFpsSeries1.ShowDataLabels = true;
 			BarDisplayedFpsSeries2.ShowDataLabels = false;
 			BarDisplayedFpsSeries2.ShowDataLabels = hasSecondRecording;
 			BarRenderedFpsSeries2.ShowDataLabels = false;
@@ -854,9 +852,7 @@ public sealed partial class BenchmarksPage : Page
 		{
 			ColumnChart.Series.Clear();
 			ColumnChart.Series.Add(ColumnDisplayedFpsSeries1);
-
-			if (presentation.ShowRenderedFps1)
-				ColumnChart.Series.Add(ColumnRenderedFpsSeries1);
+			ColumnChart.Series.Add(ColumnRenderedFpsSeries1);
 
 			if (hasSecondRecording)
 			{
@@ -867,7 +863,7 @@ public sealed partial class BenchmarksPage : Page
 			ColumnDisplayedFpsSeries1.ShowDataLabels = false;
 			ColumnDisplayedFpsSeries1.ShowDataLabels = true;
 			ColumnRenderedFpsSeries1.ShowDataLabels = false;
-			ColumnRenderedFpsSeries1.ShowDataLabels = presentation.ShowRenderedFps1;
+			ColumnRenderedFpsSeries1.ShowDataLabels = true;
 			ColumnDisplayedFpsSeries2.ShowDataLabels = false;
 			ColumnDisplayedFpsSeries2.ShowDataLabels = hasSecondRecording;
 			ColumnRenderedFpsSeries2.ShowDataLabels = false;

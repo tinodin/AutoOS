@@ -15,7 +15,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	public partial string ActiveTab { get; set; } = "Recordings";
 
 	[ObservableProperty]
-	public partial string RecordingState { get; set; } = "Empty";
+	public partial string RecordingState { get; set; } = "Content";
 
 	[ObservableProperty]
 	public partial string AnalysisState { get; set; } = "Empty";
