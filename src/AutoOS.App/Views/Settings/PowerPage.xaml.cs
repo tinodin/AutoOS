@@ -1,4 +1,4 @@
-using AutoOS.Core.Helpers.Picker;
+﻿using AutoOS.Core.Helpers.Picker;
 using AutoOS.Core.Helpers.Power;
 using AutoOS.Helpers.Picker;
 using AutoOS.ViewModels;
@@ -58,7 +58,7 @@ public sealed partial class PowerPage : Page
 				selectedPlan = ViewModel.ActivePlan;
 			}
 
-			IReadOnlyList<PowerSubgroupState> settings = LoadPowerPlanSettings(selectedPlan.Guid);
+			var settings = LoadPowerPlanSettings(selectedPlan.Guid);
 			ViewModel.LoadActivePlan(selectedPlan, settings);
 			PowerPlanComboBox.SelectedItem = selectedPlan;
 			ComparePowerPlanComboBox.SelectedItem = ViewModel.ComparePlan;
@@ -94,16 +94,15 @@ public sealed partial class PowerPage : Page
 			});
 		}
 
-		Guid* activePointer;
-		WIN32_ERROR activeResult = PInvoke.PowerGetActiveScheme(default, out activePointer);
-		Guid activeGuid = activeResult == WIN32_ERROR.ERROR_SUCCESS && activePointer != null ? *activePointer : Guid.Empty;
+        WIN32_ERROR activeResult = PInvoke.PowerGetActiveScheme(default, out var activePointer);
+        Guid activeGuid = activeResult == WIN32_ERROR.ERROR_SUCCESS && activePointer != null ? *activePointer : Guid.Empty;
 		if (activePointer != null)
 			PInvoke.LocalFree((HLOCAL)activePointer);
 
 		return (plans, activeGuid);
 	}
 
-	private unsafe IReadOnlyList<PowerSubgroupState> LoadPowerPlanSettings(Guid scheme)
+	private unsafe List<PowerSubgroupState> LoadPowerPlanSettings(Guid scheme)
 	{
 		Guid noneSubgroupGuid = new("fea3413e-7e05-4911-9a71-700331f1c294");
 		List<PowerSubgroupState> subgroups = [];
@@ -144,10 +143,12 @@ public sealed partial class PowerPage : Page
 				subgroups.Add(subgroup);
 		}
 
-		return [noneSubgroup, .. subgroups.Where(subgroup => subgroup != noneSubgroup)];
+		subgroups.Remove(noneSubgroup);
+		subgroups.Insert(0, noneSubgroup);
+		return subgroups;
 	}
 
-	private static unsafe IReadOnlyList<PowerSettingState> EnumerateSettings(Guid scheme, Guid subgroupGuid, Guid? enumerationSubgroup)
+	private static unsafe List<PowerSettingState> EnumerateSettings(Guid scheme, Guid subgroupGuid, Guid? enumerationSubgroup)
 	{
 		List<PowerSettingState> settings = [];
 		uint settingIndex = 0;
@@ -217,7 +218,7 @@ public sealed partial class PowerPage : Page
 				return;
 			}
 			ViewModel.SetIsLoaded(false);
-			IReadOnlyList<PowerSubgroupState> settings = LoadPowerPlanSettings(selectedPlan.Guid);
+			var settings = LoadPowerPlanSettings(selectedPlan.Guid);
 			ViewModel.LoadActivePlan(selectedPlan, settings);
 			ComparePowerPlanComboBox.SelectedItem = ViewModel.ComparePlan;
 			ViewChanges.IsChecked = false;
@@ -251,6 +252,8 @@ public sealed partial class PowerPage : Page
 
 		ViewModel.SetComparePlan(selectedPlan);
 		UpdateColumnEditing();
+		RefreshSearchFilter();
+		DispatcherQueue.TryEnqueue(() => GetVisibleTreeGrid()?.ExpandAllNodes());
 	}
 
 	private void Search_AcceleratorInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
@@ -311,6 +314,7 @@ public sealed partial class PowerPage : Page
 
 		ViewModel.SetViewChanges(value);
 		UpdateColumnEditing();
+		RefreshSearchFilter();
 		DispatcherQueue.TryEnqueue(() => GetVisibleTreeGrid()?.ExpandAllNodes());
 	}
 
@@ -715,14 +719,13 @@ public sealed partial class PowerPage : Page
 			return;
 		}
 
-		var node = treeGrid.GetNodeAtRowIndex(e.RowColumnIndex.RowIndex)?.Item as PowerTreeNode;
-		if (node == null)
-		{
-			e.ContextFlyout.Items.Clear();
-			return;
-		}
+        if (treeGrid.GetNodeAtRowIndex(e.RowColumnIndex.RowIndex)?.Item is not PowerTreeNode node)
+        {
+            e.ContextFlyout.Items.Clear();
+            return;
+        }
 
-		e.ContextFlyout.Items.Clear();
+        e.ContextFlyout.Items.Clear();
 		if (node.NodeKind == PowerNodeKind.Subgroup)
 		{
 			AddCopyItem(e.ContextFlyout, "Copy GUID", node.Guid.ToString());

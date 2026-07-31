@@ -422,10 +422,6 @@
                 <sfgrid:SfTreeGrid.ColumnSizer>
                     <common:TreeGridStarColumnSizer />
                 </sfgrid:SfTreeGrid.ColumnSizer>
-                <sfgrid:SfTreeGrid.SortColumnDescriptions>
-                    <grid:SortColumnDescription ColumnName="DisplayName"
-                                                SortDirection="Ascending" />
-                </sfgrid:SfTreeGrid.SortColumnDescriptions>
                 <sfgrid:SfTreeGrid.Columns>
                     <sfgrid:TreeGridTextColumn common:StarRatio.ColumnRatio="2"
                                                AllowEditing="False"
@@ -515,10 +511,6 @@
                         <sfgrid:SfTreeGrid.ColumnSizer>
                             <common:TreeGridStarColumnSizer />
                         </sfgrid:SfTreeGrid.ColumnSizer>
-                        <sfgrid:SfTreeGrid.SortColumnDescriptions>
-                            <grid:SortColumnDescription ColumnName="DisplayName"
-                                                        SortDirection="Ascending" />
-                        </sfgrid:SfTreeGrid.SortColumnDescriptions>
                         <sfgrid:SfTreeGrid.Columns>
                             <sfgrid:TreeGridTextColumn common:StarRatio.ColumnRatio="2"
                                                        AllowEditing="False"
@@ -637,10 +629,6 @@
                 <sfgrid:SfTreeGrid.ColumnSizer>
                     <common:TreeGridStarColumnSizer />
                 </sfgrid:SfTreeGrid.ColumnSizer>
-                <sfgrid:SfTreeGrid.SortColumnDescriptions>
-                    <grid:SortColumnDescription ColumnName="DisplayName"
-                                                SortDirection="Ascending" />
-                </sfgrid:SfTreeGrid.SortColumnDescriptions>
                 <sfgrid:SfTreeGrid.Columns>
                     <sfgrid:TreeGridTextColumn common:StarRatio.ColumnRatio="2"
                                                AllowEditing="False"
