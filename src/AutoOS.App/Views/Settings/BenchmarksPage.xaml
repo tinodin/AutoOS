@@ -210,6 +210,9 @@
                                     <SelectorBarItem x:Name="ScatterChartItem"
                                                      Text="Scatter"
                                                      ToolTipService.ToolTip="Scatter plot of the selected per-frame metric." />
+                                    <SelectorBarItem x:Name="PieChartItem"
+                                                     Text="Pie"
+                                                     ToolTipService.ToolTip="Pie chart showing stutter analysis." />
                                 </dev:SelectorBarSegmented>
                             </AppBarElementContainer>
 
@@ -219,92 +222,92 @@
                             <!--  Bar / Column Statistics  -->
                             <AppBarElementContainer Margin="0,0,2,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
-                                                    Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
+                                                    Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
                                 <ToggleButton Content="0.1% Low Avg"
                                               IsChecked="{x:Bind ViewModel.ShowLow01, Mode=TwoWay}"
                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('0.1% Low Avg')}" />
                             </AppBarElementContainer>
                             <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
-                                                    Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
+                                                    Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
                                 <ToggleButton Content="1% Low Avg"
                                               IsChecked="{x:Bind ViewModel.ShowLow1, Mode=TwoWay}"
                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('1% Low Avg')}" />
                             </AppBarElementContainer>
 
                             <AppBarSeparator Margin="4,0"
-                                             Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}" />
+                                             Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}" />
 
                             <AppBarElementContainer Margin="0,0,2,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
-                                                    Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
+                                                    Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
                                 <ToggleButton Content="Avg (Arithmetic)"
                                               IsChecked="{x:Bind ViewModel.ShowAvgArithmetic, Mode=TwoWay}"
                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('Avg (Arithmetic)')}" />
                             </AppBarElementContainer>
                             <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
-                                                    Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
+                                                    Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
                                 <ToggleButton Content="Avg (Harmonic)"
                                               IsChecked="{x:Bind ViewModel.ShowAvgHarmonic, Mode=TwoWay}"
                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('Avg (Harmonic)')}" />
                             </AppBarElementContainer>
 
                             <AppBarSeparator Margin="4,0"
-                                             Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}" />
+                                             Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}" />
 
                             <AppBarElementContainer Margin="0,0,2,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
-                                                    Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
+                                                    Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
                                 <ToggleButton Content="Min"
                                               IsChecked="{x:Bind ViewModel.ShowMin, Mode=TwoWay}"
                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('Min')}" />
                             </AppBarElementContainer>
                             <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
-                                                    Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
+                                                    Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
                                 <ToggleButton Content="Max"
                                               IsChecked="{x:Bind ViewModel.ShowMax, Mode=TwoWay}"
                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('Max')}" />
                             </AppBarElementContainer>
 
                             <AppBarSeparator Margin="4,0"
-                                             Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}" />
+                                             Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}" />
 
                             <AppBarElementContainer Margin="0,0,2,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
-                                                    Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
+                                                    Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
                                 <ToggleButton Content="P0.1"
                                               IsChecked="{x:Bind ViewModel.ShowP01, Mode=TwoWay}"
                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P0.1')}" />
                             </AppBarElementContainer>
                             <AppBarElementContainer Margin="0,0,2,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
-                                                    Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
+                                                    Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
                                 <ToggleButton Content="P1"
                                               IsChecked="{x:Bind ViewModel.ShowP1, Mode=TwoWay}"
                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P1')}" />
                             </AppBarElementContainer>
                             <AppBarElementContainer Margin="0,0,2,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
-                                                    Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
+                                                    Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
                                 <ToggleButton Content="P5"
                                               IsChecked="{x:Bind ViewModel.ShowP5, Mode=TwoWay}"
                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P5')}" />
                             </AppBarElementContainer>
                             <AppBarElementContainer Margin="0,0,2,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
-                                                    Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
+                                                    Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
                                 <ToggleButton Content="P50 (Median)"
                                               IsChecked="{x:Bind ViewModel.ShowP50Median, Mode=TwoWay}"
                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P50 (Median)')}" />
                             </AppBarElementContainer>
                             <AppBarElementContainer Margin="0,0,2,0"
                                                     IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
-                                                    Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
+                                                    Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
                                 <ToggleButton Content="P95"
                                               IsChecked="{x:Bind ViewModel.ShowP95, Mode=TwoWay}"
                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P95')}" />
                             </AppBarElementContainer>
                             <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
-                                                    Visibility="{x:Bind ViewModel.BarStatisticsVisibility, Mode=OneWay}">
+                                                    Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
                                 <ToggleButton Content="P99"
                                               IsChecked="{x:Bind ViewModel.ShowP99, Mode=TwoWay}"
                                               ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P99')}" />
@@ -326,6 +329,31 @@
                                     <ComboBoxItem Content="MsUntilDisplayed"
                                                   ToolTipService.ToolTip="{x:Bind ViewModel.GetMetricTooltip('MsUntilDisplayed')}" />
                                 </ComboBox>
+                            </AppBarElementContainer>
+
+                            <!--  Pie Thresholds  -->
+                            <AppBarElementContainer Margin="0,0,2,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.ThresholdsVisibility, Mode=OneWay}">
+                                <NumberBox LargeChange="5"
+                                           Minimum="1"
+                                           SmallChange="1"
+                                           SpinButtonPlacementMode="Inline"
+                                           ToolTipService.ToolTip="Low FPS threshold"
+                                           ValueChanged="LowFpsThresholdNumberBox_ValueChanged"
+                                           Value="{x:Bind ViewModel.LowFpsThreshold, Mode=TwoWay}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer Margin="0,0,2,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.ThresholdsVisibility, Mode=OneWay}">
+                                <NumberBox LargeChange="0.5"
+                                           Maximum="10"
+                                           Minimum="1"
+                                           SmallChange="0.1"
+                                           SpinButtonPlacementMode="Inline"
+                                           ToolTipService.ToolTip="Stutter factor"
+                                           ValueChanged="StutterFactorNumberBox_ValueChanged"
+                                           Value="{x:Bind ViewModel.StutterFactor, Mode=TwoWay}" />
                             </AppBarElementContainer>
 
                             <!--  Separator  -->
@@ -777,6 +805,8 @@
                                 </chart:SfCartesianChart>
                             </dev:Case>
                             <dev:Case Value="Line">
+
+                                <!--  Line Chart  -->
                                 <chart:SfCartesianChart x:Name="LineChart"
                                                         RightTapped="Chart_RightTapped">
                                     <chart:SfCartesianChart.Legend>
@@ -831,6 +861,8 @@
                                 </chart:SfCartesianChart>
                             </dev:Case>
                             <dev:Case Value="Scatter">
+
+                                <!--  Scatter Chart  -->
                                 <chart:SfCartesianChart x:Name="ScatterChart"
                                                         RightTapped="Chart_RightTapped">
                                     <chart:SfCartesianChart.Legend>
@@ -887,6 +919,95 @@
                                                                        YBindingPath="Value" />
                                     </chart:SfCartesianChart.Series>
                                 </chart:SfCartesianChart>
+                            </dev:Case>
+                            <dev:Case Value="Pie">
+
+                                <!--  Pie Chart  -->
+                                <Grid x:Name="PieChartContainer">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Row="0"
+                                               Grid.Column="0"
+                                               Grid.ColumnSpan="2"
+                                               Margin="0,5,0,0"
+                                               HorizontalAlignment="Center"
+                                               Style="{StaticResource BodyLargeTextBlockStyle}"
+                                               Text="{x:Bind ViewModel.AnalysisProcess, Mode=OneWay}" />
+
+                                    <!--  Pie Chart 1  -->
+                                    <chart:SfCircularChart x:Name="PieChart1"
+                                                           Grid.Row="1"
+                                                           Grid.Column="0"
+                                                           Grid.ColumnSpan="{x:Bind ViewModel.PieChartColumnSpan, Mode=OneWay}"
+                                                           RightTapped="Chart_RightTapped">
+                                        <chart:SfCircularChart.Legend>
+                                            <chart:ChartLegend ToggleSeriesVisibility="True">
+                                                <chart:ChartLegend.Header>
+                                                    <TextBlock FontSize="16"
+                                                               Style="{StaticResource BodyLargeTextBlockStyle}"
+                                                               Text="{x:Bind ViewModel.PieChartLabel1, Mode=OneWay}" />
+                                                </chart:ChartLegend.Header>
+                                            </chart:ChartLegend>
+                                        </chart:SfCircularChart.Legend>
+                                        <chart:SfCircularChart.Series>
+                                            <chart:PieSeries EnableAnimation="True"
+                                                             ExplodeOnTap="True"
+                                                             ItemsSource="{x:Bind ViewModel.PieChartData1, Mode=OneWay}"
+                                                             PaletteBrushes="{x:Bind ViewModel.PieChart1Palette, Mode=OneWay}"
+                                                             ShowDataLabels="True"
+                                                             XBindingPath="Label"
+                                                             YBindingPath="Value">
+                                                <chart:PieSeries.DataLabelSettings>
+                                                    <chart:CircularDataLabelSettings ConnectorHeight="24"
+                                                                                     Context="Percentage"
+                                                                                     Position="Outside"
+                                                                                     ShowConnectorLine="True"
+                                                                                     UseSeriesPalette="True" />
+                                                </chart:PieSeries.DataLabelSettings>
+                                            </chart:PieSeries>
+                                        </chart:SfCircularChart.Series>
+                                    </chart:SfCircularChart>
+
+                                    <!--  Pie Chart 2  -->
+                                    <chart:SfCircularChart x:Name="PieChart2"
+                                                           Grid.Row="1"
+                                                           Grid.Column="1"
+                                                           RightTapped="Chart_RightTapped"
+                                                           Visibility="{x:Bind ViewModel.HasTwoRecordingsVisibility, Mode=OneWay}">
+                                        <chart:SfCircularChart.Legend>
+                                            <chart:ChartLegend ToggleSeriesVisibility="True">
+                                                <chart:ChartLegend.Header>
+                                                    <TextBlock FontSize="16"
+                                                               Style="{StaticResource BodyLargeTextBlockStyle}"
+                                                               Text="{x:Bind ViewModel.PieChartLabel2, Mode=OneWay}" />
+                                                </chart:ChartLegend.Header>
+                                            </chart:ChartLegend>
+                                        </chart:SfCircularChart.Legend>
+                                        <chart:SfCircularChart.Series>
+                                            <chart:PieSeries EnableAnimation="True"
+                                                             ExplodeOnTap="True"
+                                                             ItemsSource="{x:Bind ViewModel.PieChartData2, Mode=OneWay}"
+                                                             PaletteBrushes="{x:Bind ViewModel.PieChart2Palette, Mode=OneWay}"
+                                                             ShowDataLabels="True"
+                                                             XBindingPath="Label"
+                                                             YBindingPath="Value">
+                                                <chart:PieSeries.DataLabelSettings>
+                                                    <chart:CircularDataLabelSettings ConnectorHeight="24"
+                                                                                     Context="Percentage"
+                                                                                     Position="Outside"
+                                                                                     ShowConnectorLine="True"
+                                                                                     UseSeriesPalette="True" />
+                                                </chart:PieSeries.DataLabelSettings>
+                                            </chart:PieSeries>
+                                        </chart:SfCircularChart.Series>
+                                    </chart:SfCircularChart>
+                                </Grid>
                             </dev:Case>
                         </dev:SwitchPresenter>
                     </dev:Case>

@@ -93,7 +93,7 @@ namespace AutoOS
 					}
 					else
 					{
-						WindowHelper.ResizeAndCenterWindowToPercentageOfWorkArea(MainWindow, 92);
+						WindowHelper.ResizeAndCenterWindowToPercentageOfWorkArea(MainWindow, 92.9);
 					}
 
 					MainWindow.AppWindow.Changed += (s, e) =>

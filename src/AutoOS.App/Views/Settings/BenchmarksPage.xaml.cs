@@ -36,9 +36,13 @@ public sealed record LineScatterChartData(
 	string Label1,
 	string Label2);
 
+public sealed record PiePoint(string Label, double Value);
+
+public sealed record PieChartData(List<PiePoint> Data1, List<PiePoint> Data2);
+
 public sealed record RecordingAnalysis(RecordingItem Recording, AnalysisResult Analysis);
 
-public sealed partial class BenchmarksPage : Page
+	public sealed partial class BenchmarksPage : Page
 {
 	public BenchmarksPageViewModel ViewModel { get; } = new();
 
@@ -410,6 +414,7 @@ public sealed partial class BenchmarksPage : Page
 			var item when item == ColumnChartItem => "Column",
 			var item when item == LineChartItem => "Line",
 			var item when item == ScatterChartItem => "Scatter",
+			var item when item == PieChartItem => "Pie",
 			_ => null
 		};
 
@@ -430,6 +435,22 @@ public sealed partial class BenchmarksPage : Page
 		var metric = (Metric1ComboBox.SelectedItem as ComboBoxItem)?.Content as string ?? string.Empty;
 		var data = BuildLineScatterChartData(ViewModel.CachedAnalysis, metric);
 		BindLineScatterChart(data.Pts1, data.Pts2, data.Label1, data.Label2);
+	}
+
+	private void LowFpsThresholdNumberBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+	{
+		if (double.IsNaN(args.NewValue) || ViewModel.AnalysisChartType != "Pie" || ViewModel.CachedAnalysis.Count == 0)
+			return;
+		var pieData = BuildPieChartData(ViewModel.CachedAnalysis, ViewModel.StutterFactor, args.NewValue);
+		BindPieChart(pieData);
+	}
+
+	private void StutterFactorNumberBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+	{
+		if (double.IsNaN(args.NewValue) || ViewModel.AnalysisChartType != "Pie" || ViewModel.CachedAnalysis.Count == 0)
+			return;
+		var pieData = BuildPieChartData(ViewModel.CachedAnalysis, Math.Round(args.NewValue, 1), ViewModel.LowFpsThreshold);
+		BindPieChart(pieData);
 	}
 
 	private void StatisticsBaselineComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -463,6 +484,9 @@ public sealed partial class BenchmarksPage : Page
 
 		var data = BuildLineScatterChartData(ViewModel.CachedAnalysis, metric);
 		BindLineScatterChart(data.Pts1, data.Pts2, data.Label1, data.Label2);
+
+		var pieData = BuildPieChartData(ViewModel.CachedAnalysis, ViewModel.StutterFactor, ViewModel.LowFpsThreshold);
+		BindPieChart(pieData);
 	}
 
 	private static BarColumnChartData BuildBarColumnChartData(List<RecordingAnalysis> results)
@@ -625,6 +649,48 @@ public sealed partial class BenchmarksPage : Page
 		ViewModel.LineScatterChartData2 = [.. metricPts2];
 	}
 
+	private static PieChartData BuildPieChartData(List<RecordingAnalysis> results, double stutterFactor, double lowFpsThreshold)
+	{
+		return new PieChartData(BuildPiePoints(results[0], stutterFactor, lowFpsThreshold), results.Count > 1 ? BuildPiePoints(results[1], stutterFactor, lowFpsThreshold) : null);
+	}
+
+	private static List<PiePoint> BuildPiePoints(RecordingAnalysis result, double stutterFactor, double lowFpsThreshold)
+	{
+		var sequence = result.Analysis.MsBetweenPresents;
+		var movingAverage = result.Analysis.StutterMovingAverage;
+		if (sequence.Count == 0 || movingAverage.Count != sequence.Count)
+			return [];
+
+		double stutterPercentage = RecordingAnalyzer.GetStutteringTimePercentage(sequence, movingAverage, stutterFactor);
+		double lowFpsPercentage = RecordingAnalyzer.GetLowFPSTimePercentage(sequence, movingAverage, stutterFactor, lowFpsThreshold);
+		double smoothPercentage = Math.Max(0, 100 - stutterPercentage - lowFpsPercentage);
+
+		double totalSeconds = sequence.Skip(1).Sum() / 1000;
+		double stutterSeconds = Math.Round(stutterPercentage / 100 * totalSeconds, 2, MidpointRounding.AwayFromZero);
+		double lowFpsSeconds = Math.Round(lowFpsPercentage / 100 * totalSeconds, 2, MidpointRounding.AwayFromZero);
+		double smoothSeconds = Math.Round(smoothPercentage / 100 * totalSeconds, 2, MidpointRounding.AwayFromZero);
+
+		static string formatTime(double seconds) => seconds.ToString("0.00", CultureInfo.InvariantCulture);
+		static string formatPercent(double percentage) => Math.Round(percentage, 1, MidpointRounding.AwayFromZero).ToString("0.#", CultureInfo.InvariantCulture);
+
+		return
+		[
+			new PiePoint($"Smooth: {formatTime(smoothSeconds)}s ({formatPercent(smoothPercentage)}%)", smoothSeconds),
+			new PiePoint($"Low FPS: {formatTime(lowFpsSeconds)}s ({formatPercent(lowFpsPercentage)}%)", lowFpsSeconds),
+			new PiePoint($"Stuttering: {formatTime(stutterSeconds)}s ({formatPercent(stutterPercentage)}%)", stutterSeconds)
+		];
+	}
+
+	private void BindPieChart(PieChartData pieData)
+	{
+		ViewModel.PieChartData1 = [];
+		ViewModel.PieChartData2 = [];
+		ViewModel.PieChartLabel1 = ViewModel.CachedAnalysis[0].Recording.FileName;
+		ViewModel.PieChartLabel2 = ViewModel.HasTwoRecordings ? ViewModel.CachedAnalysis[1].Recording.FileName : string.Empty;
+		ViewModel.PieChartData1 = [.. pieData.Data1];
+		ViewModel.PieChartData2 = pieData.Data2 is null ? [] : [.. pieData.Data2];
+	}
+
 	private void ReplayAnimation()
 	{
 		if (ViewModel.AnalysisChartType is "Bar" or "Column")
@@ -642,7 +708,8 @@ public sealed partial class BenchmarksPage : Page
 			ViewModel.BarColumnChartDisplayedData2 = oldDisplayedData2;
 			ViewModel.BarColumnChartRenderedData2 = oldRenderedData2;
 		}
-		else
+		
+		else if (ViewModel.AnalysisChartType is "Line" or "Scatter")
 		{
 			var oldData1 = ViewModel.LineScatterChartData1;
 			var oldData2 = ViewModel.LineScatterChartData2;
@@ -650,6 +717,15 @@ public sealed partial class BenchmarksPage : Page
 			ViewModel.LineScatterChartData2 = [];
 			ViewModel.LineScatterChartData1 = oldData1;
 			ViewModel.LineScatterChartData2 = oldData2;
+		}
+		else 
+		{
+			var oldData1 = ViewModel.PieChartData1;
+			var oldData2 = ViewModel.PieChartData2;
+			ViewModel.PieChartData1 = [];
+			ViewModel.PieChartData2 = [];
+			ViewModel.PieChartData1 = oldData1;
+			ViewModel.PieChartData2 = oldData2;
 		}
 	}
 
@@ -773,7 +849,7 @@ public sealed partial class BenchmarksPage : Page
 
 	private void Chart_RightTapped(object sender, RightTappedRoutedEventArgs e)
 	{
-		if (sender is not SfCartesianChart chart) return;
+		if (sender is not FrameworkElement chart) return;
 
 		string[] stats;
 		if (ViewModel.AnalysisChartType is "Bar" or "Column")
@@ -805,29 +881,37 @@ public sealed partial class BenchmarksPage : Page
 				stats[i] = string.Join(", ", new[] { displayed ? "Displayed FPS" : null, rendered ? "Rendered FPS" : null }.Where(x => x != null));
 			}
 		}
+		else if (ViewModel.AnalysisChartType == "Pie")
+		{
+			string lowFps = ViewModel.LowFpsThreshold.ToString("0.##", CultureInfo.InvariantCulture);
+			string stutter = ViewModel.StutterFactor.ToString("0.##", CultureInfo.InvariantCulture);
+			stats = [.. ViewModel.SelectedRecordings.Select(_ => $"Low FPS {lowFps}, Stutter {stutter}")];
+		}
 		else
 		{
-			stats = [.. ViewModel.SelectedRecordings.Select((recording, index) => index < chart.Series.Count && chart.Series[index].Visibility == Visibility.Visible ? (Metric1ComboBox.SelectedItem as ComboBoxItem)?.Content as string ?? string.Empty : string.Empty)];
+			stats = [.. ViewModel.SelectedRecordings.Select((recording, index) => chart is SfCartesianChart cartesian && index < cartesian.Series.Count && cartesian.Series[index].Visibility == Visibility.Visible ? (Metric1ComboBox.SelectedItem as ComboBoxItem)?.Content as string ?? string.Empty : string.Empty)];
 		}
 
 		string recordingNames = string.Join(" vs ", ViewModel.SelectedRecordings.Select((recording, index) => string.IsNullOrEmpty(stats[index]) ? recording.Title : $"{recording.Title} ({stats[index]})"));
 
 		string fileName = $"{recordingNames} - {ViewModel.AnalysisChartType} Chart";
 
+		var saveTarget = ViewModel.AnalysisChartType == "Pie" ? (FrameworkElement)PieChartContainer : chart;
+
 		var flyout = new MenuFlyout();
 
 		var jpegItem = new MenuFlyoutItem { Text = "Save as JPG", Icon = new FontIcon { Glyph = "\uE896" } };
-		jpegItem.Click += async (s, args) => await SaveChartAsync(chart, fileName, BitmapEncoder.JpegEncoderId, "jpg", true);
+		jpegItem.Click += async (s, args) => await SaveChartAsync(saveTarget, fileName, BitmapEncoder.JpegEncoderId, "jpg", true);
 		flyout.Items.Add(jpegItem);
 
 		var pngItem = new MenuFlyoutItem { Text = "Save as PNG", Icon = new FontIcon { Glyph = "\uE896" } };
-		pngItem.Click += async (s, args) => await SaveChartAsync(chart, fileName, BitmapEncoder.PngEncoderId, "png", false);
+		pngItem.Click += async (s, args) => await SaveChartAsync(saveTarget, fileName, BitmapEncoder.PngEncoderId, "png", false);
 		flyout.Items.Add(pngItem);
 
 		flyout.ShowAt(chart, e.GetPosition(chart));
 	}
 
-	private static async Task SaveChartAsync(SfCartesianChart chart, string suggestedFileName, Guid encoderId, string extension, bool flattenBackground)
+	private static async Task SaveChartAsync(FrameworkElement chart, string suggestedFileName, Guid encoderId, string extension, bool flattenBackground)
 	{
 		var picker = new SavePicker(App.MainWindow)
 		{

@@ -8,6 +8,7 @@ public sealed record AnalysisResult(
 	IReadOnlyList<double> MsBetweenPresents,
 	IReadOnlyList<double> MsGPUBusy,
 	IReadOnlyList<double> MsUntilDisplayed,
+	IReadOnlyList<double> StutterMovingAverage,
 	Metrics DisplayedFps,
 	Metrics RenderedFps,
 	Metrics MsBetweenDisplayChangeStats,
@@ -58,6 +59,7 @@ public static class RecordingAnalyzer
 			MsBetweenPresents: presents,
 			MsGPUBusy: gpuBusy,
 			MsUntilDisplayed: untilDisplayed,
+			StutterMovingAverage: ComputeMovingAverage(presents),
 			DisplayedFps: ComputeMetrics(displayChange, isFps: true),
 			RenderedFps: ComputeMetrics(presents, isFps: true),
 			MsBetweenDisplayChangeStats: ComputeMetrics(displayChange, isFps: false),
@@ -73,5 +75,74 @@ public static class RecordingAnalyzer
 			return new Metrics();
 		var values = isFps ? raw.Where(v => v > 0).Select(v => 1000.0 / v).ToArray() : [.. raw];
 		return BenchmarkStatistics.CalculateMetrics(values, isFpsMetric: isFps);
+	}
+
+	public static IReadOnlyList<double> ComputeMovingAverage(IReadOnlyList<double> sequence)
+	{
+		if (sequence.Count == 0)
+			return [];
+
+		int sampleSize = Convert.ToInt32(Math.Sqrt(sequence.Average()) * 10);
+		var result = new double[sequence.Count];
+
+		for (int i = 0; i < sequence.Count; i++)
+		{
+			int localIndex = i;
+			double localSum = 0;
+			int localCount = 0;
+
+			while (localIndex >= 0)
+			{
+				localSum += localIndex > 0 && sequence[localIndex] > sequence[localIndex - 1] * 3 ? sequence[localIndex - 1] : sequence[localIndex];
+				localCount++;
+
+				if (localCount >= sampleSize)
+					break;
+
+				localIndex--;
+			}
+
+			result[i] = localSum / localCount;
+		}
+
+		return result;
+	}
+
+	public static double GetLowFPSTimePercentage(IReadOnlyList<double> sequence, IReadOnlyList<double> movingAverage, double stutteringFactor, double lowFPSThreshold)
+	{
+		if (sequence.Count == 0 || movingAverage.Count != sequence.Count)
+			return 0;
+
+		double lowFPSTime = 0;
+		double totalTime = 0;
+
+		for (int i = 0; i < sequence.Count; i++)
+		{
+			totalTime += sequence[i];
+			if (sequence[i] <= 0)
+				continue;
+			if (sequence[i] <= stutteringFactor * movingAverage[i] && 1000 / sequence[i] < lowFPSThreshold)
+				lowFPSTime += sequence[i];
+		}
+
+		return totalTime == 0 ? 0 : 100 * lowFPSTime / totalTime;
+	}
+
+	public static double GetStutteringTimePercentage(IReadOnlyList<double> sequence, IReadOnlyList<double> movingAverage, double stutteringFactor)
+	{
+		if (sequence.Count == 0 || movingAverage.Count != sequence.Count)
+			return 0;
+
+		double stutteringTime = 0;
+		double totalTime = 0;
+
+		for (int i = 0; i < sequence.Count; i++)
+		{
+			totalTime += sequence[i];
+			if (sequence[i] > stutteringFactor * movingAverage[i])
+				stutteringTime += sequence[i];
+		}
+
+		return totalTime == 0 ? 0 : 100 * stutteringTime / totalTime;
 	}
 }

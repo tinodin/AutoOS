@@ -28,20 +28,22 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	public partial string StatisticsState { get; set; } = "Empty";
 
 	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(IsDeleteEnabled))]
 	[NotifyPropertyChangedFor(nameof(IsAggregateEnabled))]
 	[NotifyPropertyChangedFor(nameof(IsAnalysisToolbarEnabled))]
-	[NotifyPropertyChangedFor(nameof(HasTwoRecordings))]
 	[NotifyPropertyChangedFor(nameof(HasTwoRecordingsVisibility))]
-	[NotifyPropertyChangedFor(nameof(IsDeleteEnabled))]
-	[NotifyCanExecuteChangedFor(nameof(AggregateCommand))]
+	[NotifyPropertyChangedFor(nameof(HasTwoRecordings))]
+	[NotifyPropertyChangedFor(nameof(PieChartColumnSpan))]
 	[NotifyCanExecuteChangedFor(nameof(DeleteCommand))]
+	[NotifyCanExecuteChangedFor(nameof(AggregateCommand))]
 	public partial int SelectedRecordingCount { get; set; }
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(IsAggregateEnabled))]
 	[NotifyPropertyChangedFor(nameof(IsAnalysisToolbarEnabled))]
-	[NotifyPropertyChangedFor(nameof(HasTwoRecordings))]
 	[NotifyPropertyChangedFor(nameof(HasTwoRecordingsVisibility))]
+	[NotifyPropertyChangedFor(nameof(HasTwoRecordings))]
+	[NotifyPropertyChangedFor(nameof(PieChartColumnSpan))]
 	[NotifyCanExecuteChangedFor(nameof(AggregateCommand))]
 	public partial bool SelectedRecordingsHaveSameProcess { get; set; }
 
@@ -533,11 +535,11 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	public string RecordIconGlyph => IsRecording ? "\uE711" : "\uE7C8";
 
 	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(CanRecord))]
-	[NotifyPropertyChangedFor(nameof(RecordLabel))]
-	[NotifyPropertyChangedFor(nameof(RecordIconGlyph))]
 	[NotifyPropertyChangedFor(nameof(IsAddEnabled))]
 	[NotifyCanExecuteChangedFor(nameof(AddCommand))]
+	[NotifyPropertyChangedFor(nameof(CanRecord))]
+	[NotifyPropertyChangedFor(nameof(RecordIconGlyph))]
+	[NotifyPropertyChangedFor(nameof(RecordLabel))]
 	public partial bool IsRecording { get; set; }
 
 	[ObservableProperty]
@@ -560,9 +562,10 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 
 	public bool IsAnalysisToolbarEnabled => SelectedRecordingCount is > 0 and <= 2 && SelectedRecordingsHaveSameProcess;
 
-	public Visibility BarStatisticsVisibility => (AnalysisChartType is "Bar" or "Column") ? Visibility.Visible : Visibility.Collapsed;
+	public Visibility StatisticsVisibility => (AnalysisChartType is "Bar" or "Column") ? Visibility.Visible : Visibility.Collapsed;
 
-	public Visibility MetricVisibility => (AnalysisChartType is "Bar" or "Column") ? Visibility.Collapsed : Visibility.Visible;
+	public Visibility MetricVisibility => AnalysisChartType is "Line" or "Scatter" ? Visibility.Visible : Visibility.Collapsed;
+	public Visibility ThresholdsVisibility => AnalysisChartType == "Pie" ? Visibility.Visible : Visibility.Collapsed;
 
 	[ObservableProperty]
 	public partial bool ShowLow01 { get; set; } = true;
@@ -649,6 +652,18 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	public partial Windows.UI.Color RecordingBSecondaryColor { get; set; }
 
 	[ObservableProperty]
+	public partial Windows.UI.Color RecordingATertiaryColor { get; set; }
+
+	[ObservableProperty]
+	public partial Windows.UI.Color RecordingBTertiaryColor { get; set; }
+
+	[ObservableProperty]
+	public partial BrushCollection PieChart1Palette { get; set; }
+
+	[ObservableProperty]
+	public partial BrushCollection PieChart2Palette { get; set; }
+
+	[ObservableProperty]
 	public partial SolidColorBrush RecordingAColorBrush { get; set; }
 
 	[ObservableProperty]
@@ -656,10 +671,12 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 
 	public bool HasTwoRecordings => SelectedRecordingCount == 2 && SelectedRecordingsHaveSameProcess;
 	public Visibility HasTwoRecordingsVisibility => HasTwoRecordings ? Visibility.Visible : Visibility.Collapsed;
+	public int PieChartColumnSpan => HasTwoRecordings ? 1 : 2;
 
 	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(StatisticsVisibility))]
 	[NotifyPropertyChangedFor(nameof(MetricVisibility))]
-	[NotifyPropertyChangedFor(nameof(BarStatisticsVisibility))]
+	[NotifyPropertyChangedFor(nameof(ThresholdsVisibility))]
 	public partial string AnalysisChartType { get; set; } = "Bar";
 
 	[ObservableProperty]
@@ -706,6 +723,39 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 
 	[ObservableProperty]
 	public partial string LineScatterChartLabel2 { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial ObservableCollection<PiePoint> PieChartData1 { get; set; } = [];
+
+	[ObservableProperty]
+	public partial ObservableCollection<PiePoint> PieChartData2 { get; set; } = [];
+
+	[ObservableProperty]
+	public partial string PieChartLabel1 { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial string PieChartLabel2 { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial double LowFpsThreshold { get; set; } = 25;
+
+	partial void OnLowFpsThresholdChanged(double value)
+	{
+		if (double.IsNaN(value) || double.IsInfinity(value))
+			return;
+	}
+
+	[ObservableProperty]
+	public partial double StutterFactor { get; set; } = 2.5;
+
+	partial void OnStutterFactorChanged(double value)
+	{
+		if (double.IsNaN(value) || double.IsInfinity(value))
+			return;
+		double rounded = Math.Round(value, 1);
+		if (value != rounded)
+			StutterFactor = rounded;
+	}
 
 	public string GetStatisticTooltip(string key) => BenchmarkCsv.StatisticDescriptions.TryGetValue(key, out var desc) ? desc : string.Empty;
 
@@ -787,12 +837,26 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	{
 		RecordingAColorBrush = new SolidColorBrush(value);
 		RecordingASecondaryColor = DevWinUI.ColorHelper.GetInterpolatedColor(0.35, value, Colors.White);
+		RecordingATertiaryColor = DevWinUI.ColorHelper.GetInterpolatedColor(0.35, RecordingASecondaryColor, Colors.White);
+		PieChart1Palette = new BrushCollection
+		{
+			new SolidColorBrush(value),
+			new SolidColorBrush(RecordingASecondaryColor),
+			new SolidColorBrush(RecordingATertiaryColor)
+		};
 	}
 
 	partial void OnRecordingBColorChanged(Windows.UI.Color value)
 	{
 		RecordingBColorBrush = new SolidColorBrush(value);
 		RecordingBSecondaryColor = DevWinUI.ColorHelper.GetInterpolatedColor(0.35, value, Colors.White);
+		RecordingBTertiaryColor = DevWinUI.ColorHelper.GetInterpolatedColor(0.35, RecordingBSecondaryColor, Colors.White);
+		PieChart2Palette = new BrushCollection
+		{
+			new SolidColorBrush(value),
+			new SolidColorBrush(RecordingBSecondaryColor),
+			new SolidColorBrush(RecordingBTertiaryColor)
+		};
 	}
 
 	public void ShowDelay(int seconds)
