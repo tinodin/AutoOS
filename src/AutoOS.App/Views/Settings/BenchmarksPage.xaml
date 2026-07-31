@@ -15,8 +15,8 @@
       mc:Ignorable="d">
     <Page.Resources>
 
-        <!--  Inverse Bool Converter  -->
-        <converters:BoolToObjectConverter x:Key="InverseBoolConverter"
+        <!--  Inverse Bool to Objet Converter  -->
+        <converters:BoolToObjectConverter x:Key="InverseBoolToObjectConverter"
                                           FalseValue="True"
                                           TrueValue="False" />
 
@@ -35,17 +35,8 @@
         </Style>
 
         <!--  Cell style selector  -->
-        <viewmodel:ResultCellStyleSelector x:Key="RecordingACellStyleSelector"
+        <viewmodel:ResultCellStyleSelector x:Key="ResultCellStyleSelector"
                                            CriticalStyle="{StaticResource CriticalCellStyle}"
-                                           PropertyName="RecordingA"
-                                           SuccessStyle="{StaticResource SuccessCellStyle}" />
-        <viewmodel:ResultCellStyleSelector x:Key="RecordingBCellStyleSelector"
-                                           CriticalStyle="{StaticResource CriticalCellStyle}"
-                                           PropertyName="RecordingB"
-                                           SuccessStyle="{StaticResource SuccessCellStyle}" />
-        <viewmodel:ResultCellStyleSelector x:Key="DeltaCellStyleSelector"
-                                           CriticalStyle="{StaticResource CriticalCellStyle}"
-                                           PropertyName="Delta"
                                            SuccessStyle="{StaticResource SuccessCellStyle}" />
     </Page.Resources>
     <Grid>
@@ -76,7 +67,7 @@
 
                             <!--  Add  -->
                             <AppBarButton Click="AddRecording_Click"
-                                          IsEnabled="{x:Bind ViewModel.IsRecording, Mode=OneWay, Converter={StaticResource InverseBoolConverter}}"
+                                          IsEnabled="{x:Bind ViewModel.IsRecording, Mode=OneWay, Converter={StaticResource InverseBoolToObjectConverter}}"
                                           Label="Add">
                                 <AppBarButton.Content>
                                     <dev:ThemedIcon Style="{StaticResource App.ThemedIcons.New.Item}" />
@@ -127,7 +118,7 @@
                             <AppBarSeparator Margin="4,0" />
 
                             <!--  Process  -->
-                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsRecording, Mode=OneWay, Converter={StaticResource InverseBoolConverter}}">
+                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsRecording, Mode=OneWay, Converter={StaticResource InverseBoolToObjectConverter}}">
                                 <ComboBox x:Name="ProcessComboBox"
                                           MinWidth="265"
                                           DropDownClosed="ProcessComboBox_DropDownClosed"
@@ -142,7 +133,7 @@
                             <AppBarSeparator Margin="4,0" />
 
                             <!--  Delay  -->
-                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsRecording, Mode=OneWay, Converter={StaticResource InverseBoolConverter}}">
+                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsRecording, Mode=OneWay, Converter={StaticResource InverseBoolToObjectConverter}}">
                                 <NumberBox LargeChange="5"
                                            Maximum="10"
                                            Minimum="2"
@@ -154,7 +145,7 @@
 
                             <!--  Duration  -->
                             <AppBarElementContainer Margin="2,0"
-                                                    IsEnabled="{x:Bind ViewModel.IsRecording, Mode=OneWay, Converter={StaticResource InverseBoolConverter}}">
+                                                    IsEnabled="{x:Bind ViewModel.IsRecording, Mode=OneWay, Converter={StaticResource InverseBoolToObjectConverter}}">
                                 <NumberBox LargeChange="5"
                                            Maximum="120"
                                            Minimum="15"
@@ -1010,21 +1001,21 @@
                                 <!--  Recording A  -->
                                 <sfgrid:TreeGridTextColumn x:Name="StatisticsRecordingAColumn"
                                                            common:StarRatio.ColumnRatio="1"
-                                                           CellStyleSelector="{StaticResource RecordingACellStyleSelector}"
+                                                           CellStyleSelector="{StaticResource ResultCellStyleSelector}"
                                                            HeaderText="{x:Bind ViewModel.RecordingAHeader, Mode=OneWay}"
                                                            MappingName="RecordingA" />
 
                                 <!--  Recording B  -->
                                 <sfgrid:TreeGridTextColumn x:Name="StatisticsRecordingBColumn"
                                                            common:StarRatio.ColumnRatio="1"
-                                                           CellStyleSelector="{StaticResource RecordingBCellStyleSelector}"
+                                                           CellStyleSelector="{StaticResource ResultCellStyleSelector}"
                                                            HeaderText="{x:Bind ViewModel.RecordingBHeader, Mode=OneWay}"
                                                            MappingName="RecordingB" />
 
                                 <!--  Delta  -->
                                 <sfgrid:TreeGridTextColumn x:Name="StatisticsDeltaColumn"
                                                            common:StarRatio.ColumnRatio="1"
-                                                           CellStyleSelector="{StaticResource DeltaCellStyleSelector}"
+                                                           CellStyleSelector="{StaticResource ResultCellStyleSelector}"
                                                            HeaderText="{x:Bind ViewModel.DeltaHeader, Mode=OneWay}"
                                                            MappingName="Delta" />
                             </sfgrid:SfTreeGrid.Columns>

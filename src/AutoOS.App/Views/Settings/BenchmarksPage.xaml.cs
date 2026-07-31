@@ -51,7 +51,6 @@ public sealed partial class BenchmarksPage : Page
 	private GlobalKeyboardHook _globalKeyboardHook;
 	private VirtualKeyModifiers _currentModifiers;
 	private VirtualKey _currentKey;
-
 	private Process _activeProcess;
 	private CancellationTokenSource _recordingCts;
 
@@ -1213,12 +1212,14 @@ public sealed partial class BenchmarksPage : Page
 			double delta = comparison - baseline;
 			if (delta != 0)
 			{
-				string baselineComparison = delta > 0 ? "Worse" : "Better";
+				bool higherIsBetter = row.Statistic.EndsWith(" FPS", StringComparison.Ordinal);
+				bool comparisonIsBetter = higherIsBetter ? delta > 0 : delta < 0;
+				string baselineComparison = comparisonIsBetter ? "Worse" : "Better";
 				if (baselineIndex == 0)
 					row.RecordingAComparison = baselineComparison;
 				else
 					row.RecordingBComparison = baselineComparison;
-				row.DeltaComparison = delta > 0 ? "Better" : "Worse";
+				row.DeltaComparison = comparisonIsBetter ? "Better" : "Worse";
 			}
 
 			if (showPercentDelta)

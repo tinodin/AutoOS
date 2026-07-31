@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Xaml.Media;
 using nietras.SeparatedValues;
+using Syncfusion.UI.Xaml.TreeGrid;
 
 namespace AutoOS.ViewModels;
 
@@ -575,19 +576,18 @@ public sealed partial class ResultRow : ObservableObject
 
 public sealed partial class ResultCellStyleSelector : StyleSelector
 {
-	public string PropertyName { get; set; }
 	public Style SuccessStyle { get; set; }
 	public Style CriticalStyle { get; set; }
 
 	protected override Style SelectStyleCore(object item, DependencyObject container)
 	{
-		if (item is not ResultRow row || PropertyName is null)
+		if (item is not ResultRow row || container is not TreeGridCell cell)
 			return null;
-		var value = PropertyName switch
+		var value = cell.ColumnBase?.TreeGridColumn.MappingName switch
 		{
-			"RecordingA" => row.RecordingAComparison,
-			"RecordingB" => row.RecordingBComparison,
-			"Delta" => row.DeltaComparison,
+			nameof(ResultRow.RecordingA) => row.RecordingAComparison,
+			nameof(ResultRow.RecordingB) => row.RecordingBComparison,
+			nameof(ResultRow.Delta) => row.DeltaComparison,
 			_ => null
 		};
 		return value == "Better" ? SuccessStyle : value == "Worse" ? CriticalStyle : null;
