@@ -397,7 +397,7 @@
                             <!--  Baseline  -->
                             <AppBarElementContainer Margin="4,0,0,0"
                                                     IsEnabled="{x:Bind ViewModel.HasTwoRecordings, Mode=OneWay}">
-                                <ComboBox MinWidth="200"
+                                <ComboBox MinWidth="250"
                                           ItemsSource="{x:Bind ViewModel.BaselineItems, Mode=OneWay}"
                                           SelectedIndex="{x:Bind ViewModel.BaselineSelectedIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                           SelectionChanged="StatisticsBaselineComboBox_SelectionChanged"
