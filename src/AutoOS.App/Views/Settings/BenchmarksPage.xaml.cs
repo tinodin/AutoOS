@@ -520,8 +520,16 @@ public sealed partial class BenchmarksPage : Page
 		ViewModel.SetSelectedRecordings(RecordingsTreeGrid.SelectedItems.OfType<RecordingItem>().Append(RecordingsTreeGrid.SelectedItem as RecordingItem).Where(recording => recording is not null).DistinctBy(recording => recording.FilePath, StringComparer.OrdinalIgnoreCase).ToList());
 		
 		if (ViewModel.SelectedRecordings.Count is 0 or > 2)
-			return; 
-		
+			return;
+
+		var results = ViewModel.SelectedRecordings
+			.Select(recording => (Item: recording, Result: RecordingAnalyzer.Analyze(recording.FilePath)))
+			.Where(recording => recording.Result != null)
+			.Select(recording => new RecordingAnalysis(recording.Item, recording.Result))
+			.ToList();
+
+		ViewModel.CachedAnalysis = results;
+
 		BuildAnalysis();
 		BuildStatistics();
 	}
@@ -536,7 +544,24 @@ public sealed partial class BenchmarksPage : Page
 		if (newPath == recording.FilePath)
 			return;
 
-		File.Move(recording.FilePath, newPath);
+		if (File.Exists(newPath))
+		{
+			recording.Title = Path.GetFileNameWithoutExtension(recording.FilePath);
+			await MessageBox.ShowErrorAsync(App.MainWindow, "A recording with this name already exists.", "Rename Failed");
+			return;
+		}
+
+		try
+		{
+			File.Move(recording.FilePath, newPath);
+		}
+		catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+		{
+			recording.Title = Path.GetFileNameWithoutExtension(recording.FilePath);
+			await MessageBox.ShowErrorAsync(App.MainWindow, $"Could not rename the recording: {ex.Message}", "Rename Failed");
+			return;
+		}
+
 		recording.FilePath = newPath;
 		recording.FileName = recording.Title + ext;
 
@@ -599,19 +624,11 @@ public sealed partial class BenchmarksPage : Page
 
 	private void BuildAnalysis()
 	{
-		var results = ViewModel.SelectedRecordings
-			.Select(recording => (Item: recording, Result: RecordingAnalyzer.Analyze(recording.FilePath)))
-			.Where(recording => recording.Result != null)
-			.Select(recording => new RecordingAnalysis(recording.Item, recording.Result))
-			.ToList();
-
-		ViewModel.CachedAnalysis = results;
-
 		var metric = (Metric1ComboBox.SelectedItem as ComboBoxItem)?.Content as string;
-		var presentation = BuildBarColumnChartData(results);
+		var presentation = BuildBarColumnChartData(ViewModel.CachedAnalysis);
 		BindBarColumnChart(presentation);
 
-		var data = BuildLineScatterChartData(results, metric);
+		var data = BuildLineScatterChartData(ViewModel.CachedAnalysis, metric);
 		BindLineScatterChart(data.Pts1, data.Pts2, data.Label1, data.Label2);
 	}
 
@@ -817,10 +834,8 @@ public sealed partial class BenchmarksPage : Page
 		List<ResultRow> groups = [];
 		foreach (var (name, selector, statistics) in BenchmarkCsv.StatisticGroups)
 		{
-			var m0 = results.Count > 0 ? selector(results[0].Analysis) : null;
-			if (m0 == null || m0.AvgArithmetic == 0)
-				continue;
-			var m1 = results.Count > 1 ? selector(results[1].Analysis) : null;
+		var m0 = selector(results[0].Analysis);
+		var m1 = results.Count > 1 ? selector(results[1].Analysis) : null;
 
 			var group = new ResultRow
 			{
