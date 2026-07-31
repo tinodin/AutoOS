@@ -1,4 +1,3 @@
-using System.Buffers;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -8,7 +7,6 @@ using AutoOS.ViewModels;
 using CommunityToolkit.WinUI.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
-using nietras.SeparatedValues;
 using Syncfusion.UI.Xaml.Charts;
 using Syncfusion.UI.Xaml.DataGrid;
 using Syncfusion.UI.Xaml.Grids;
@@ -46,8 +44,6 @@ public sealed partial class BenchmarksPage : Page
 
 	internal PresentMonProcessDiscovery PresentingProcesses { get; } = new();
 	private GlobalKeyboardHook _globalKeyboardHook;
-	private VirtualKeyModifiers _currentModifiers;
-	private VirtualKey _currentKey;
 	private Process _activeProcess;
 	private CancellationTokenSource _recordingCts;
 
@@ -63,10 +59,8 @@ public sealed partial class BenchmarksPage : Page
 		_globalKeyboardHook.KeyDown += OnGlobalKeyDown;
 		_globalKeyboardHook.Start();
 		ViewModel.StatisticToggled += Statistic_SelectionChanged;
-		ViewModel.ReloadRecordings = LoadRecordingsAsync;
-		_currentModifiers = ViewModel.ShortcutModifiers;
-		_currentKey = ViewModel.ShortcutKey;
-		_ = LoadRecordingsAsync();
+		ViewModel.LoadSettings();
+		_ = ViewModel.LoadRecordingsAsync();
 	}
 
 	protected override void OnNavigatedFrom(NavigationEventArgs e)
@@ -80,170 +74,6 @@ public sealed partial class BenchmarksPage : Page
 			_globalKeyboardHook = null;
 		}
 		ViewModel.StatisticToggled -= Statistic_SelectionChanged;
-	}
-
-	private async Task LoadRecordingsAsync()
-	{
-		List<RecordingItem> finalRecordings = await Task.Run(() =>
-		{
-			if (!Directory.Exists(BenchmarkCsv.RecordingsDirectory))
-			{
-				Directory.CreateDirectory(BenchmarkCsv.RecordingsDirectory);
-				return [];
-			}
-
-			List<FileInfo> csvFiles = [.. new DirectoryInfo(BenchmarkCsv.RecordingsDirectory).EnumerateFiles("*.csv")];
-
-			if (csvFiles.Count == 0)
-			{
-				return [];
-			}
-
-			var sepReader = Sep.Reader(options => options with { Sep = new Sep(','), Unescape = true, ColNameComparer = StringComparer.OrdinalIgnoreCase });
-
-			List<RecordingItem> recordings = new(csvFiles.Count);
-			Dictionary<RecordingItem, List<string>> aggregateSources = new();
-
-			var loadedRecordings = csvFiles
-				.AsParallel()
-				.Select(info =>
-				{
-					try
-					{
-						double durationSeconds = Math.Max(0, (info.LastWriteTime - info.CreationTime).TotalSeconds);
-						string nameWithoutExtension = Path.GetFileNameWithoutExtension(info.Name);
-
-						RecordingItem result = new()
-						{
-							FilePath = info.FullName,
-							FileName = info.Name,
-							Title = nameWithoutExtension,
-							Process = nameWithoutExtension,
-							PresentationMode = string.Empty,
-							DurationSeconds = durationSeconds,
-							Date = info.LastWriteTime,
-							Time = info.LastWriteTime.TimeOfDay
-						};
-
-						List<string> sourceFileNames = [];
-
-						using var reader = sepReader.FromFile(info.FullName);
-
-						reader.Header.TryIndexOf("Application", out int appIdx);
-						reader.Header.TryIndexOf("PresentMode", out int presentModeIdx);
-						reader.Header.TryIndexOf("AggregateDurationSeconds", out int aggDurationIdx);
-						bool hasAggSources = reader.Header.TryIndexOf("AggregateSources", out int aggSourcesIdx);
-						reader.Header.TryIndexOf("TimeInDateTime", out int dateTimeIdx);
-						reader.Header.TryIndexOf("TimeInSeconds", out int timeSecondsIdx);
-
-						if (!reader.MoveNext())
-							return (Recording: result, SourceFileNames: sourceFileNames);
-
-						var firstRow = reader.Current;
-
-						if (appIdx >= 0)
-						{
-							string application = firstRow[appIdx].ToString();
-							if (!string.IsNullOrWhiteSpace(application))
-								result.Process = application;
-						}
-						if (presentModeIdx >= 0)
-						{
-							string presentMode = firstRow[presentModeIdx].ToString();
-							if (!string.IsNullOrWhiteSpace(presentMode))
-								result.PresentationMode = presentMode;
-						}
-
-						bool hasCsvDuration = false;
-						if (aggDurationIdx >= 0 && firstRow[aggDurationIdx].TryParse(out double aggregateDuration))
-						{
-							result.DurationSeconds = Math.Max(0, aggregateDuration);
-							hasCsvDuration = true;
-						}
-
-						if (hasAggSources && aggSourcesIdx >= 0)
-						{
-							var sourceText = firstRow[aggSourcesIdx].ToString();
-							if (!string.IsNullOrWhiteSpace(sourceText))
-								sourceFileNames = [.. sourceText.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)];
-						}
-
-						if (!hasCsvDuration && (dateTimeIdx >= 0 || timeSecondsIdx >= 0))
-						{
-							string firstDateTimeStr = dateTimeIdx >= 0 ? firstRow[dateTimeIdx].ToString() : null;
-							string firstTimeSecondsStr = timeSecondsIdx >= 0 ? firstRow[timeSecondsIdx].ToString() : null;
-
-							string lastLine = BenchmarkCsv.ReadLastLine(info.FullName, info.Length);
-							ReadOnlySpan<char> lastLineSpan = lastLine;
-
-							if (dateTimeIdx >= 0 && firstDateTimeStr != null)
-							{
-								var lastDateTimeSpan = BenchmarkCsv.GetField(lastLineSpan, dateTimeIdx);
-								if (!lastDateTimeSpan.IsEmpty &&
-									DateTime.TryParse(firstDateTimeStr, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var start) &&
-									DateTime.TryParse(lastDateTimeSpan, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var end))
-								{
-									result.DurationSeconds = Math.Max(0, (end - start).TotalSeconds);
-									hasCsvDuration = true;
-								}
-							}
-
-							if (!hasCsvDuration && timeSecondsIdx >= 0 && firstTimeSecondsStr != null &&
-								double.TryParse(firstTimeSecondsStr, NumberStyles.Float, CultureInfo.InvariantCulture, out double firstTimeSec))
-							{
-								var lastTimeSecondsSpan = BenchmarkCsv.GetField(lastLineSpan, timeSecondsIdx);
-								if (!lastTimeSecondsSpan.IsEmpty &&
-									double.TryParse(lastTimeSecondsSpan, NumberStyles.Float, CultureInfo.InvariantCulture, out double lastTimeSec))
-								{
-									result.DurationSeconds = Math.Max(0, lastTimeSec - firstTimeSec);
-								}
-							}
-						}
-
-						return (Recording: result, SourceFileNames: sourceFileNames);
-					}
-					catch (IOException)
-					{
-						return (Recording: null, SourceFileNames: null);
-					}
-				})
-				.Where(recording => recording.Recording != null)
-				.Select(recording => (recording.Recording, recording.SourceFileNames))
-				.ToList();
-
-			loadedRecordings.Sort((a, b) => b.Recording.Date.CompareTo(a.Recording.Date));
-
-			Dictionary<string, RecordingItem> recordingsByFileName = new(loadedRecordings.Count, StringComparer.OrdinalIgnoreCase);
-
-			foreach (var (recording, sourceFileNames) in loadedRecordings)
-			{
-				recordings.Add(recording);
-				recordingsByFileName[recording.FileName] = recording;
-				if (sourceFileNames.Count > 0)
-					aggregateSources[recording] = sourceFileNames;
-			}
-
-			if (aggregateSources.Count > 0)
-			{
-				HashSet<RecordingItem> childRecordings = [];
-				foreach (var (aggregate, sourceFileNames) in aggregateSources)
-				{
-					foreach (string sourceFileName in sourceFileNames.Distinct(StringComparer.OrdinalIgnoreCase))
-					{
-						if (recordingsByFileName.TryGetValue(sourceFileName, out RecordingItem source) && !ReferenceEquals(source, aggregate))
-						{
-							aggregate.Children.Add(source);
-							childRecordings.Add(source);
-						}
-					}
-				}
-				recordings = [.. recordings.Where(recording => !childRecordings.Contains(recording))];
-			}
-
-			return recordings;
-		});
-
-		ViewModel.SetRecordings(finalRecordings);
 	}
 
 	private void BenchmarksSelectorBar_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
@@ -306,47 +136,50 @@ public sealed partial class BenchmarksPage : Page
 		HotkeyShortcut.UpdatePreviewKeys();
 		HotkeyShortcut.CloseContentDialog();
 
-		_currentModifiers = VirtualKeyModifiers.None;
-		_currentKey = VirtualKey.None;
+		var modifiers = VirtualKeyModifiers.None;
+		var key = VirtualKey.None;
 
-		foreach (var key in HotkeyShortcut.Keys)
+		foreach (var keyItem in HotkeyShortcut.Keys)
 		{
 			string keyName;
 			VirtualKey? virtKey = null;
 
-			if (key is KeyVisualInfo info)
+			if (keyItem is KeyVisualInfo info)
 			{
 				keyName = info.KeyName ?? string.Empty;
 				virtKey = info.Key;
 			}
 			else
 			{
-				keyName = key?.ToString() ?? string.Empty;
+				keyName = keyItem?.ToString() ?? string.Empty;
 			}
 
 			if (keyName.Contains("Ctrl", StringComparison.OrdinalIgnoreCase))
-				_currentModifiers |= VirtualKeyModifiers.Control;
+				modifiers |= VirtualKeyModifiers.Control;
 			else if (keyName.Contains("Shift", StringComparison.OrdinalIgnoreCase))
-				_currentModifiers |= VirtualKeyModifiers.Shift;
+				modifiers |= VirtualKeyModifiers.Shift;
 			else if (keyName.Contains("Alt", StringComparison.OrdinalIgnoreCase))
-				_currentModifiers |= VirtualKeyModifiers.Menu;
+				modifiers |= VirtualKeyModifiers.Menu;
 			else if (keyName.Contains("Win", StringComparison.OrdinalIgnoreCase))
-				_currentModifiers |= VirtualKeyModifiers.Windows;
+				modifiers |= VirtualKeyModifiers.Windows;
 			else if (virtKey.HasValue && virtKey.Value != VirtualKey.None)
-				_currentKey = virtKey.Value;
+				key = virtKey.Value;
 			else if (Enum.TryParse<VirtualKey>(keyName, ignoreCase: true, out var parsed) &&
 				parsed != VirtualKey.None)
-				_currentKey = parsed;
+				key = parsed;
 		}
+
+		ViewModel.ShortcutModifiers = modifiers;
+		ViewModel.ShortcutKey = key;
 	}
 
 	private void OnGlobalKeyDown(object sender, KeyboardHookEventArgs e)
 	{
-		if (e.Key == _currentKey &&
-			e.IsCtrl == _currentModifiers.HasFlag(VirtualKeyModifiers.Control) &&
-			e.IsShift == _currentModifiers.HasFlag(VirtualKeyModifiers.Shift) &&
-			e.IsAlt == _currentModifiers.HasFlag(VirtualKeyModifiers.Menu) &&
-			e.IsWindows == _currentModifiers.HasFlag(VirtualKeyModifiers.Windows))
+		if (e.Key == ViewModel.ShortcutKey &&
+			e.IsCtrl == ViewModel.ShortcutModifiers.HasFlag(VirtualKeyModifiers.Control) &&
+			e.IsShift == ViewModel.ShortcutModifiers.HasFlag(VirtualKeyModifiers.Shift) &&
+			e.IsAlt == ViewModel.ShortcutModifiers.HasFlag(VirtualKeyModifiers.Menu) &&
+			e.IsWindows == ViewModel.ShortcutModifiers.HasFlag(VirtualKeyModifiers.Windows))
 		{
 			DispatcherQueue.TryEnqueue(() =>
 			{
@@ -474,7 +307,7 @@ public sealed partial class BenchmarksPage : Page
 				ViewModel.IsRecording = false;
 				Record.IsChecked = false;
 			}
-			await LoadRecordingsAsync();
+			await ViewModel.LoadRecordingsAsync();
 		}
 	}
 

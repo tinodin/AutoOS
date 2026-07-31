@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using AutoOS.Core.Helpers.Benchmark;
 using AutoOS.Core.Helpers.Picker;
 using AutoOS.Views.Settings;
@@ -7,6 +8,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Xaml.Media;
 using nietras.SeparatedValues;
 using Syncfusion.UI.Xaml.TreeGrid;
+using Windows.Storage;
 using Windows.System;
 
 namespace AutoOS.ViewModels;
@@ -46,13 +48,221 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	public IReadOnlyList<RecordingItem> SelectedRecordings { get; set; } = new List<RecordingItem>();
 	public List<RecordingAnalysis> CachedAnalysis { get; set; } = [];
 	private readonly HashSet<string> _recordableProcesses = new(StringComparer.OrdinalIgnoreCase);
+	private readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
+	
+	public async Task LoadRecordingsAsync()
+	{
+		List<RecordingItem> finalRecordings = await Task.Run(() =>
+		{
+			if (!Directory.Exists(BenchmarkCsv.RecordingsDirectory))
+			{
+				Directory.CreateDirectory(BenchmarkCsv.RecordingsDirectory);
+				return [];
+			}
+
+			List<FileInfo> csvFiles = [.. new DirectoryInfo(BenchmarkCsv.RecordingsDirectory).EnumerateFiles("*.csv")];
+
+			if (csvFiles.Count == 0)
+			{
+				return [];
+			}
+
+			var sepReader = Sep.Reader(options => options with { Sep = new Sep(','), Unescape = true, ColNameComparer = StringComparer.OrdinalIgnoreCase });
+
+			List<RecordingItem> recordings = new(csvFiles.Count);
+			Dictionary<RecordingItem, List<string>> aggregateSources = new();
+
+			var loadedRecordings = csvFiles
+				.AsParallel()
+				.Select(info =>
+				{
+					try
+					{
+						double durationSeconds = Math.Max(0, (info.LastWriteTime - info.CreationTime).TotalSeconds);
+						string nameWithoutExtension = Path.GetFileNameWithoutExtension(info.Name);
+
+						RecordingItem result = new()
+						{
+							FilePath = info.FullName,
+							FileName = info.Name,
+							Title = nameWithoutExtension,
+							Process = nameWithoutExtension,
+							PresentationMode = string.Empty,
+							DurationSeconds = durationSeconds,
+							Date = info.LastWriteTime,
+							Time = info.LastWriteTime.TimeOfDay
+						};
+
+						List<string> sourceFileNames = [];
+
+						using var reader = sepReader.FromFile(info.FullName);
+
+						reader.Header.TryIndexOf("Application", out int appIdx);
+						reader.Header.TryIndexOf("PresentMode", out int presentModeIdx);
+						reader.Header.TryIndexOf("AggregateDurationSeconds", out int aggDurationIdx);
+						bool hasAggSources = reader.Header.TryIndexOf("AggregateSources", out int aggSourcesIdx);
+						reader.Header.TryIndexOf("TimeInDateTime", out int dateTimeIdx);
+						reader.Header.TryIndexOf("TimeInSeconds", out int timeSecondsIdx);
+
+						if (!reader.MoveNext())
+							return (Recording: result, SourceFileNames: sourceFileNames);
+
+						var firstRow = reader.Current;
+
+						if (appIdx >= 0)
+						{
+							string application = firstRow[appIdx].ToString();
+							if (!string.IsNullOrWhiteSpace(application))
+								result.Process = application;
+						}
+						if (presentModeIdx >= 0)
+						{
+							string presentMode = firstRow[presentModeIdx].ToString();
+							if (!string.IsNullOrWhiteSpace(presentMode))
+								result.PresentationMode = presentMode;
+						}
+
+						bool hasCsvDuration = false;
+						if (aggDurationIdx >= 0 && firstRow[aggDurationIdx].TryParse(out double aggregateDuration))
+						{
+							result.DurationSeconds = Math.Max(0, aggregateDuration);
+							hasCsvDuration = true;
+						}
+
+						if (hasAggSources && aggSourcesIdx >= 0)
+						{
+							var sourceText = firstRow[aggSourcesIdx].ToString();
+							if (!string.IsNullOrWhiteSpace(sourceText))
+								sourceFileNames = [.. sourceText.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)];
+						}
+
+						if (!hasCsvDuration && (dateTimeIdx >= 0 || timeSecondsIdx >= 0))
+						{
+							string firstDateTimeStr = dateTimeIdx >= 0 ? firstRow[dateTimeIdx].ToString() : null;
+							string firstTimeSecondsStr = timeSecondsIdx >= 0 ? firstRow[timeSecondsIdx].ToString() : null;
+
+							string lastLine = BenchmarkCsv.ReadLastLine(info.FullName, info.Length);
+							ReadOnlySpan<char> lastLineSpan = lastLine;
+
+							if (dateTimeIdx >= 0 && firstDateTimeStr != null)
+							{
+								var lastDateTimeSpan = BenchmarkCsv.GetField(lastLineSpan, dateTimeIdx);
+								if (!lastDateTimeSpan.IsEmpty &&
+									DateTime.TryParse(firstDateTimeStr, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var start) &&
+									DateTime.TryParse(lastDateTimeSpan, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var end))
+								{
+									result.DurationSeconds = Math.Max(0, (end - start).TotalSeconds);
+									hasCsvDuration = true;
+								}
+							}
+
+							if (!hasCsvDuration && timeSecondsIdx >= 0 && firstTimeSecondsStr != null &&
+								double.TryParse(firstTimeSecondsStr, NumberStyles.Float, CultureInfo.InvariantCulture, out double firstTimeSec))
+							{
+								var lastTimeSecondsSpan = BenchmarkCsv.GetField(lastLineSpan, timeSecondsIdx);
+								if (!lastTimeSecondsSpan.IsEmpty &&
+									double.TryParse(lastTimeSecondsSpan, NumberStyles.Float, CultureInfo.InvariantCulture, out double lastTimeSec))
+								{
+									result.DurationSeconds = Math.Max(0, lastTimeSec - firstTimeSec);
+								}
+							}
+						}
+
+						return (Recording: result, SourceFileNames: sourceFileNames);
+					}
+					catch (IOException)
+					{
+						return (Recording: null, SourceFileNames: null);
+					}
+				})
+				.Where(recording => recording.Recording != null)
+				.Select(recording => (recording.Recording, recording.SourceFileNames))
+				.ToList();
+
+			loadedRecordings.Sort((a, b) => b.Recording.Date.CompareTo(a.Recording.Date));
+
+			Dictionary<string, RecordingItem> recordingsByFileName = new(loadedRecordings.Count, StringComparer.OrdinalIgnoreCase);
+
+			foreach (var (recording, sourceFileNames) in loadedRecordings)
+			{
+				recordings.Add(recording);
+				recordingsByFileName[recording.FileName] = recording;
+				if (sourceFileNames.Count > 0)
+					aggregateSources[recording] = sourceFileNames;
+			}
+
+			if (aggregateSources.Count > 0)
+			{
+				HashSet<RecordingItem> childRecordings = [];
+				foreach (var (aggregate, sourceFileNames) in aggregateSources)
+				{
+					foreach (string sourceFileName in sourceFileNames.Distinct(StringComparer.OrdinalIgnoreCase))
+					{
+						if (recordingsByFileName.TryGetValue(sourceFileName, out RecordingItem source) && !ReferenceEquals(source, aggregate))
+						{
+							aggregate.Children.Add(source);
+							childRecordings.Add(source);
+						}
+					}
+				}
+				recordings = [.. recordings.Where(recording => !childRecordings.Contains(recording))];
+			}
+
+			return recordings;
+		});
+
+		SetRecordings(finalRecordings);
+	}
+
+	public void SetRecordings(IReadOnlyList<RecordingItem> recordings)
+	{
+		Recordings = new ObservableCollection<RecordingItem>(recordings);
+		RecordingState = recordings.Count == 0 ? "Empty" : "Content";
+	}
+
+	public void SetSelectedRecordings(IReadOnlyList<RecordingItem> recordings)
+	{
+		SelectedRecordings = recordings;
+		int count = recordings.Count;
+		RecordingItem recordingA = count > 0 ? recordings[0] : null;
+		SelectedRecordingCount = count;
+		IsRenameEnabled = count > 0;
+
+		bool sameProcess = count > 0;
+		if (sameProcess)
+		{
+			string firstProcess = recordingA.Process;
+			for (int i = 1; i < count; i++)
+			{
+				if (!string.Equals(recordings[i].Process, firstProcess, StringComparison.OrdinalIgnoreCase))
+				{
+					sameProcess = false;
+					break;
+				}
+			}
+		}
+		SelectedRecordingsHaveSameProcess = sameProcess;
+		AnalysisChartType = "Bar";
+		BaselineItems = new ObservableCollection<string>(["None", .. recordings.Select(recording => recording.Title)]);
+		BaselineSelectedIndex = 0;
+
+		AnalysisProcess = recordingA?.Process ?? string.Empty;
+
+		AnalysisState = count switch
+		{
+			0 => "Empty",
+			> 2 => "Error",
+			2 when !sameProcess => "ProcessMismatch",
+			_ => "Content"
+		};
+
+		StatisticsState = AnalysisState;
+	}
 
 	[ObservableProperty]
 	public partial bool IsRenameEnabled { get; set; }
 
 	public bool IsAddEnabled => !IsRecording;
-
-	public Func<Task> ReloadRecordings { get; set; }
 
 	[RelayCommand(CanExecute = nameof(IsAddEnabled))]
 	private async Task AddAsync()
@@ -71,7 +281,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		foreach (var file in files)
 			File.Copy(file.Path, Path.Combine(BenchmarkCsv.RecordingsDirectory, file.Name), true);
 
-		ReloadRecordings?.Invoke();
+		await LoadRecordingsAsync();
 	}
 	
 	public bool IsDeleteEnabled => SelectedRecordingCount > 0;
@@ -108,7 +318,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 			}
 		}
 
-		ReloadRecordings?.Invoke();
+		await LoadRecordingsAsync();
 	}
 
 	[RelayCommand(CanExecute = nameof(IsAggregateEnabled))]
@@ -269,13 +479,56 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(CanRecord))]
 	public partial double Duration { get; set; } = 60;
+	  
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(ShortcutKeys))]
+	public partial VirtualKeyModifiers ShortcutModifiers { get; set; } = VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift;
 
-	public List<object> ShortcutKeys { get; } = ["Ctrl", "Shift", "R"];
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(ShortcutKeys))]
+	public partial VirtualKey ShortcutKey { get; set; } = VirtualKey.R;
 
-	public VirtualKeyModifiers ShortcutModifiers { get; } = VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift;
-	public VirtualKey ShortcutKey { get; } = VirtualKey.R;
+	public List<object> ShortcutKeys
+	{
+		get
+		{
+			var keys = new List<object>();
+			if (ShortcutModifiers.HasFlag(VirtualKeyModifiers.Control)) keys.Add("Ctrl");
+			if (ShortcutModifiers.HasFlag(VirtualKeyModifiers.Shift)) keys.Add("Shift");
+			if (ShortcutModifiers.HasFlag(VirtualKeyModifiers.Menu)) keys.Add("Alt");
+			if (ShortcutModifiers.HasFlag(VirtualKeyModifiers.Windows)) keys.Add("Win");
+			if (ShortcutKey != VirtualKey.None) keys.Add(ShortcutKey.ToString());
+			return keys;
+		}
+	}
 
-	public bool CanRecord => IsRecording || (!string.IsNullOrWhiteSpace(ProcessName));
+	partial void OnDelayChanged(double value) => localSettings.Values["BenchmarkDelay"] = value;
+	partial void OnDurationChanged(double value) => localSettings.Values["BenchmarkDuration"] = value;
+	partial void OnShortcutModifiersChanged(VirtualKeyModifiers value) => localSettings.Values["BenchmarkShortcut"] = $"{ShortcutModifiers}|{ShortcutKey}";
+	partial void OnShortcutKeyChanged(VirtualKey value) => localSettings.Values["BenchmarkShortcut"] = $"{ShortcutModifiers}|{ShortcutKey}";
+
+	public void LoadSettings()
+	{
+		if (localSettings.Values.TryGetValue("BenchmarkDelay", out var delayObj) && delayObj is double delay)
+			Delay = delay;
+
+		if (localSettings.Values.TryGetValue("BenchmarkDuration", out var durationObj) && durationObj is double duration)
+			Duration = duration;
+
+		if (localSettings.Values.TryGetValue("BenchmarkShortcut", out var shortcutObj) && shortcutObj is string shortcut && !string.IsNullOrWhiteSpace(shortcut))
+		{
+			var parts = shortcut.Split('|');
+			if (parts.Length == 2 &&
+				Enum.TryParse<VirtualKeyModifiers>(parts[0], out var modifiers) &&
+				Enum.TryParse<VirtualKey>(parts[1], out var key))
+			{
+				ShortcutModifiers = modifiers;
+				ShortcutKey = key;
+			}
+		}
+	}
+
+	public bool CanRecord => IsRecording || (!string.IsNullOrWhiteSpace(ProcessName) && !double.IsNaN(Delay) && !double.IsNaN(Duration));
 	public string RecordLabel => IsRecording ? "Cancel" : "Record";
 	public string RecordIconGlyph => IsRecording ? "\uE711" : "\uE7C8";
 
@@ -474,10 +727,15 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	public partial ObservableCollection<ResultRow> StatisticsRows { get; set; } = [];
 
 	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(RecordingAColorTooltip))]
 	public partial string RecordingAHeader { get; set; } = "Recording A";
 
 	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(RecordingBColorTooltip))]
 	public partial string RecordingBHeader { get; set; } = "Recording B";
+
+	public string RecordingAColorTooltip => $"{RecordingAHeader} Color";
+	public string RecordingBColorTooltip => $"{RecordingBHeader} Color";
 
 	[ObservableProperty]
 	public partial string DeltaHeader { get; set; }
@@ -581,50 +839,6 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		}
 	}
 
-	public void SetRecordings(IReadOnlyList<RecordingItem> recordings)
-	{
-		Recordings = new ObservableCollection<RecordingItem>(recordings);
-		RecordingState = recordings.Count == 0 ? "Empty" : "Content";
-	}
-
-	public void SetSelectedRecordings(IReadOnlyList<RecordingItem> recordings)
-	{
-		SelectedRecordings = recordings;
-		int count = recordings.Count;
-		RecordingItem recordingA = count > 0 ? recordings[0] : null;
-		SelectedRecordingCount = count;
-		IsRenameEnabled = count > 0;
-
-		bool sameProcess = count > 0;
-		if (sameProcess)
-		{
-			string firstProcess = recordingA.Process;
-			for (int i = 1; i < count; i++)
-			{
-				if (!string.Equals(recordings[i].Process, firstProcess, StringComparison.OrdinalIgnoreCase))
-				{
-					sameProcess = false;
-					break;
-				}
-			}
-		}
-		SelectedRecordingsHaveSameProcess = sameProcess;
-		AnalysisChartType = "Bar";
-		BaselineItems = new ObservableCollection<string>(["None", .. recordings.Select(recording => recording.Title)]);
-		BaselineSelectedIndex = 0;
-
-		AnalysisProcess = recordingA?.Process ?? string.Empty;
-
-		AnalysisState = count switch
-		{
-			0 => "Empty",
-			> 2 => "Error",
-			2 when !sameProcess => "ProcessMismatch",
-			_ => "Content"
-		};
-
-		StatisticsState = AnalysisState;
-	}
 }
 
 [WinRT.GeneratedBindableCustomProperty]

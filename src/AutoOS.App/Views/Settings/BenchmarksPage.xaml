@@ -123,7 +123,7 @@
                                           DropDownClosed="ProcessComboBox_DropDownClosed"
                                           DropDownOpened="ProcessComboBox_DropDownOpened"
                                           ItemsSource="{x:Bind ViewModel.ProcessSuggestions, Mode=OneWay}"
-                                          PlaceholderText="Select a process..."
+                                          PlaceholderText="Select a process to record..."
                                           SelectedItem="{x:Bind ViewModel.ProcessName, Mode=TwoWay}"
                                           ToolTipService.ToolTip="Process" />
                             </AppBarElementContainer>
@@ -333,7 +333,7 @@
 
                             <!--  Recording A Color Picker  -->
                             <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
-                                                    ToolTipService.ToolTip="Recording A Color">
+                                                    ToolTipService.ToolTip="{x:Bind ViewModel.RecordingAColorTooltip, Mode=OneWay}">
                                 <dev:DropdownColorPicker VerticalAlignment="Bottom"
                                                          ColorSpectrumShape="Ring"
                                                          IsAlphaEnabled="True"
@@ -346,7 +346,7 @@
 
                             <!--  Recording B Color Picker  -->
                             <AppBarElementContainer Margin="4,0,0,0"
-                                                    ToolTipService.ToolTip="Recording B Color"
+                                                    ToolTipService.ToolTip="{x:Bind ViewModel.RecordingBColorTooltip, Mode=OneWay}"
                                                     Visibility="{x:Bind ViewModel.HasTwoRecordingsVisibility, Mode=OneWay}">
                                 <dev:DropdownColorPicker VerticalAlignment="Bottom"
                                                          ColorSpectrumShape="Ring"
