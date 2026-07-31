@@ -1,4 +1,4 @@
-﻿using PhantomClientCore.Native;
+using PhantomClientCore.Native;
 using System.Runtime.InteropServices;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
@@ -103,7 +103,7 @@ internal sealed class TlsClient
 	{
 		var array = new JsonArray();
 		foreach (var value in values)
-			array.Add(value);
+			array.Add(JsonValue.Create(value));
 
 		return array;
 	}

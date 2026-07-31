@@ -1,4 +1,4 @@
-# 📘 AutoOS Installer User Guide
+﻿# 📘 AutoOS Installer User Guide
 
 ### Home
 Quick access for links:
@@ -64,7 +64,6 @@ Start the AutoOS Installation:
 - Click on the `hyperlink` to open `Windows Security` if prompted and disable `Real-time protection` and `Tamper protection`.
 - Now everything will be configured **automatically**.
 - This process will usually take around **15-45 minutes** depending on your internet speed.
-- You will be asked to log in for some apps, close the app to skip.
 
 > [!NOTE]  
 > You may experience a blank screen in the App after installing the Graphics Driver.<br/>

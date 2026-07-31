@@ -1,24 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
-		<OutputType>WinExe</OutputType>
-		<RootNamespace>AutoOS</RootNamespace>
-		<AssemblyName>AutoOS</AssemblyName>
-		<ApplicationManifest>app.manifest</ApplicationManifest>
-		<PublishProfile>win-$(Platform).pubxml</PublishProfile>
-		<UseWinUI>true</UseWinUI>
-		<WinUISDKReferences>false</WinUISDKReferences>
-		<EnableMsixTooling>true</EnableMsixTooling>
-		<TrimMode>partial</TrimMode>
-		<WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
-		<IsAotCompatible>true</IsAotCompatible>
-		<CsWinRTAotWarningLevel>2</CsWinRTAotWarningLevel>
-		<WindowsPackageType>MSIX</WindowsPackageType>
-		<ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
-		<Version>1.4.6.1</Version>
-		<!--Remove git hash from assembly informational version in .NET >= 8, Example: false = 1.0.0, true = 1.0.0+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-->
-		<IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
-	</PropertyGroup>
+  <PropertyGroup>
+	<OutputType>WinExe</OutputType>
+	<RootNamespace>AutoOS</RootNamespace>
+	<AssemblyName>AutoOS</AssemblyName>
+	<ApplicationManifest>app.manifest</ApplicationManifest>
+	<PublishProfile>win-$(Platform).pubxml</PublishProfile>
+	<UseWinUI>true</UseWinUI>
+	<WinUISDKReferences>false</WinUISDKReferences>
+	<EnableMsixTooling>true</EnableMsixTooling>
+	<TrimMode>partial</TrimMode>
+	<WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+	<IsAotCompatible>true</IsAotCompatible>
+	<CsWinRTAotWarningLevel>2</CsWinRTAotWarningLevel>
+	<WindowsPackageType>MSIX</WindowsPackageType>
+	<ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
+	<Version>1.4.6.2</Version>
+	<!--Remove git hash from assembly informational version in .NET >= 8, Example: false = 1.0.0, true = 1.0.0+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-->
+	<IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
 
 	<!-- Publish Properties -->
 	<PropertyGroup>

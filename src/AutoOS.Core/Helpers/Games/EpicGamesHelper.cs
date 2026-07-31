@@ -1,4 +1,4 @@
-﻿using AutoOS.Core.Common;
+using AutoOS.Core.Common;
 using AutoOS.Core.Helpers.Games.Clients;
 using AutoOS.Core.Helpers.Logging;
 using DevWinUI;
@@ -29,7 +29,7 @@ public static partial class EpicGamesHelper
 
 	private static readonly HttpClient httpClient = new();
 	private static readonly HttpClient loginClient = new();
-	private static readonly TlsClient tlsClient = new();
+	private static readonly Lazy<TlsClient> tlsClient = new(() => new TlsClient());
 
 	private const string ClientId = "34a02cf8f4414e29b15921876da36f9a";
 
@@ -977,6 +977,7 @@ public static partial class EpicGamesHelper
 							{
 								["Provider"] = provider,
 								["bIsApplication"] = true,
+								["AppCategories"] = new JsonArray(JsonValue.Create("games")),
 								["CatalogItemId"] = json["CatalogID"]?.GetValue<string>(),
 								["CatalogNamespace"] = json["Namespace"]?.GetValue<string>(),
 								["AppName"] = json["AppName"]?.GetValue<string>(),
@@ -1022,7 +1023,7 @@ public static partial class EpicGamesHelper
 					if (!Directory.Exists(installLocation))
 						return;
 
-					var offerResponse = await tlsClient.PostAsync(
+					var offerResponse = await tlsClient.Value.PostAsync(
 						"https://store.epicgames.com/graphql",
 						new JsonObject
 						{
@@ -1044,7 +1045,8 @@ public static partial class EpicGamesHelper
 					string productId = null;
 					if (offerResponse.IsSuccess)
 					{
-						var searchElement = JsonNode.Parse(offerResponse.Body)?["data"]?["Catalog"]?["searchStore"]?["elements"]?[0];
+						var elements = JsonNode.Parse(offerResponse.Body)?["data"]?["Catalog"]?["searchStore"]?["elements"]?.AsArray();
+						var searchElement = elements != null && elements.Count > 0 ? elements[0] : null;
 
 						offerId = searchElement?["id"]?.GetValue<string>();
 
@@ -1140,7 +1142,7 @@ public static partial class EpicGamesHelper
 					{
 						try
 						{
-							var ratingResponse = await tlsClient.PostAsync(
+							var ratingResponse = await tlsClient.Value.PostAsync(
 								"https://store.epicgames.com/graphql",
 								new JsonObject
 								{
@@ -1164,7 +1166,7 @@ public static partial class EpicGamesHelper
 					{
 						try
 						{
-							var productOfferResponse = await tlsClient.GetAsync(productOfferUrl);
+							var productOfferResponse = await tlsClient.Value.GetAsync(productOfferUrl);
 							productOfferData = productOfferResponse.IsSuccess ? JsonNode.Parse(productOfferResponse.Body) : JsonNode.Parse("{}");
 						}
 						catch (Exception ex)
@@ -1177,7 +1179,7 @@ public static partial class EpicGamesHelper
 					{
 						try
 						{
-							var ageRatingResponse = await tlsClient.GetAsync(ageRatingUrl);
+							var ageRatingResponse = await tlsClient.Value.GetAsync(ageRatingUrl);
 							ageRatingData = ageRatingResponse.IsSuccess ? JsonNode.Parse(ageRatingResponse.Body) : JsonNode.Parse("{}");
 						}
 						catch (Exception ex)
@@ -1200,7 +1202,10 @@ public static partial class EpicGamesHelper
 					var keyImages = manifestData[catalogItemId]?["keyImages"]?.AsArray() ?? [];
 
 					// get artifactid
-					string artifactId = manifestData[catalogItemId]?["releaseInfo"]?[0]?["appId"]?.ToString();
+					var releaseInfo = manifestData[catalogItemId]?["releaseInfo"]?.AsArray();
+					string artifactId = releaseInfo != null && releaseInfo.Count > 0 ? releaseInfo[0]?["appId"]?.ToString() : null;
+					if (string.IsNullOrEmpty(artifactId))
+						await LogHelper.LogError(new InvalidOperationException($"Failed to get artifactId for {catalogItemId}"), null, $"Failed to get artifactId for game {itemJson?["DisplayName"]?.ToString()}, {catalogItemId}");
 
 					// read playtime json data
 					var totalSeconds = playTimeData?.GetValueOrDefault(artifactId) ?? 0;
@@ -1242,36 +1247,127 @@ public static partial class EpicGamesHelper
 					if (screenshots.Count == 0 && !string.IsNullOrEmpty(productSlug))
 					{
 						var cmsUrl = $"https://store-content-ipv4.ak.epicgames.com/api/en-US/content/products/{productSlug}";
-						var cmsResponse = await tlsClient.GetAsync(cmsUrl).ConfigureAwait(false);
+						var cmsResponse = await tlsClient.Value.GetAsync(cmsUrl).ConfigureAwait(false);
 						if (cmsResponse.IsSuccess)
 						{
 							var cmsJson = JsonNode.Parse(cmsResponse.Body);
 							var pages = cmsJson?["pages"]?.AsArray();
 							if (pages != null)
 							{
-								foreach (var page in pages)
+								var sortedPages = pages.OrderByDescending(page => page?["type"]?.GetValue<string>() == "productHome").ToList();
+								foreach (var page in sortedPages)
 								{
 									var carouselItems = page?["data"]?["carousel"]?["items"]?.AsArray();
-									if (carouselItems != null && carouselItems.Count > 0)
+									if (carouselItems != null)
 									{
 										foreach (var item in carouselItems)
 										{
-											var videoNode = item?["video"];
-											bool isVideo = videoNode != null && videoNode["recipes"] != null;
-											if (!isVideo)
+											if (item == null) continue;
+
+											string src = item["image"]?["src"]?.GetValue<string>();
+											if (!string.IsNullOrEmpty(src))
 											{
-												string src = item?["image"]?["src"]?.GetValue<string>();
-												if (!string.IsNullOrEmpty(src))
+												if (!screenshots.Contains(src))
+												{
+													screenshots.Add(src);
+												}
+												continue;
+											}
+
+											var videoNode = item["video"];
+											if (videoNode != null)
+											{
+												string poster = videoNode["poster"]?.GetValue<string>();
+												if (!string.IsNullOrEmpty(poster))
+												{
+													if (!screenshots.Contains(poster))
+													{
+														screenshots.Add(poster);
+													}
+													continue;
+												}
+
+												string videoThumb = videoNode["thumbnail"]?.GetValue<string>();
+												if (!string.IsNullOrEmpty(videoThumb))
+												{
+													if (!screenshots.Contains(videoThumb))
+													{
+														screenshots.Add(videoThumb);
+													}
+													continue;
+												}
+
+												string recipesStr = videoNode["recipes"]?.GetValue<string>();
+												if (!string.IsNullOrEmpty(recipesStr))
+												{
+													var recipesJson = JsonNode.Parse(recipesStr);
+													if (recipesJson != null)
+													{
+														string thumbnail = recipesJson["thumbnail"]?.GetValue<string>();
+														if (!string.IsNullOrEmpty(thumbnail))
+														{
+															if (!screenshots.Contains(thumbnail))
+															{
+																screenshots.Add(thumbnail);
+															}
+															continue;
+														}
+
+														if (recipesJson is JsonObject obj)
+														{
+															foreach (var kvp in obj)
+															{
+																if (kvp.Value is JsonArray recipeArray)
+																{
+																	foreach (var recipe in recipeArray)
+																	{
+																		var outputs = recipe?["outputs"]?.AsArray();
+																		if (outputs != null)
+																		{
+																			foreach (var output in outputs)
+																			{
+																				if (output?["key"]?.GetValue<string>() == "thumbnail")
+																				{
+																					string url = output["url"]?.GetValue<string>();
+																					if (!string.IsNullOrEmpty(url))
+																					{
+																						if (!screenshots.Contains(url))
+																						{
+																							screenshots.Add(url);
+																						}
+																					}
+																				}
+																			}
+																		}
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+
+									var galleryImages = page?["data"]?["gallery"]?["galleryImages"]?.AsArray();
+									if (galleryImages != null)
+									{
+										foreach (var img in galleryImages)
+										{
+											string src = img?["src"]?.GetValue<string>();
+											if (!string.IsNullOrEmpty(src))
+											{
+												if (!screenshots.Contains(src))
 												{
 													screenshots.Add(src);
 												}
 											}
 										}
+									}
 
-										if (screenshots.Count > 0)
-										{
-											break;
-										}
+									if (screenshots.Count > 0)
+									{
+										break;
 									}
 								}
 							}

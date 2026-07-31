@@ -64,6 +64,7 @@ IMMDevice
 IMMDeviceCollection
 IMMDeviceEnumerator
 IPropertyStore
+IsBadReadPtr
 LPARAM
 LocalFree
 LookupPrivilegeValue

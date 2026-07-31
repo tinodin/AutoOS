@@ -1,4 +1,4 @@
-using AutoOS.Common;
+﻿using AutoOS.Common;
 using AutoOS.Views.Installer.Stages;
 using AutoOS.Views.Updater;
 using System.Collections.ObjectModel;
@@ -135,6 +135,8 @@ public sealed partial class ApplicationsPage : Page
 			new() { Text = "Antigravity IDE", ImageSource = "ms-appx:///Assets/Fluent/Antigravity.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Antigravity IDE", "Antigravity IDE.exe")) },
 			new() { Text = "Cursor", ImageSource = "ms-appx:///Assets/Fluent/Cursor.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "cursor", "Cursor.exe")) },
 			new() { Text = "Devin", ImageSource = "ms-appx:///Assets/Fluent/Devin.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Devin", "Devin.exe"))},
+			new() { Text = "Kiro", ImageSource = "ms-appx:///Assets/Fluent/Kiro.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Kiro", "Kiro.exe")) },
+			new() { Text = "Sublime Text", ImageSource = "ms-appx:///Assets/Fluent/SublimeText.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Sublime Text", "sublime_text.exe")) },
 			new() { Text = "IntelliJ IDEA", ImageSource = "ms-appx:///Assets/Fluent/IDEA.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "JetBrains", "IntelliJ IDEA 2026.1.3", "bin", "idea64.exe")) },
 			new() { Text = "WinMerge", ImageSource = "ms-appx:///Assets/Fluent/WinMerge.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "WinMerge", "WinMergeU.exe"))},
 			new() { Text = "Git", ImageSource = "ms-appx:///Assets/Fluent/Git.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Git", "bin", "git.exe")) },
@@ -181,7 +183,8 @@ public sealed partial class ApplicationsPage : Page
 			new() { Text = "Audacity", ImageSource = "ms-appx:///Assets/Fluent/Audacity.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Audacity", "Audacity.exe")) },
 			new() { Text = "FlexASIO", ImageSource = "ms-appx:///Assets/Fluent/FlexASIO.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "FlexASIO")) },
 			new() { Text = "ASIO4ALL", ImageSource = "ms-appx:///Assets/Fluent/ASIO4ALL.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "ASIO4ALL v2", "a4apanel.exe")) },
-			new() { Text = "Arturia MIDI Control Center", ImageSource = "ms-appx:///Assets/Fluent/ArturiaMidiControlCenter.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Arturia", "MIDI Control Center", "MIDI Control Center.exe")) }
+			new() { Text = "Arturia MIDI Control Center", ImageSource = "ms-appx:///Assets/Fluent/ArturiaMidiControlCenter.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Arturia", "MIDI Control Center", "MIDI Control Center.exe")) },
+			new() { Text = "Voicemeeter", ImageSource = "ms-appx:///Assets/Fluent/Voicemeeter.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "VB", "Voicemeeter", "voicemeeter.exe")) }
 		};
 		foreach (var item in musicProductionList.Where(item => !item.IsInstalled))
 			musicProductionItems.Add(item);
@@ -198,6 +201,9 @@ public sealed partial class ApplicationsPage : Page
 
 		var multimediaList = new List<GridViewItem>
 		{
+			new() { Text = "Netflix", ImageSource = "ms-appx:///Assets/Fluent/Netflix.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "4DF9E0F8.Netflix_mcm4njqhnhss8")) },
+			new() { Text = "Disney+", ImageSource = "ms-appx:///Assets/Fluent/Disney+.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "Disney.37853FC22B2CE_6rarf9sa4v8jt")) },
+			new() { Text = "Prime Video", ImageSource = "ms-appx:///Assets/Fluent/PrimeVideo.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "AmazonVideo.PrimeVideo_pwbj9vvecjh7j")) },
 			new() { Text = "MPC-QT", ImageSource = "ms-appx:///Assets/Fluent/MpcQt.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "MPC-QT", "mpc-qt.exe")) },
 			new() { Text = "mpv", ImageSource = "ms-appx:///Assets/Fluent/MPV.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "mpv", "mpv.exe")) },
 			new() { Text = "VLC", ImageSource = "ms-appx:///Assets/Fluent/VLC.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "VideoLAN", "VLC", "vlc.exe")) },
@@ -235,7 +241,9 @@ public sealed partial class ApplicationsPage : Page
 			new() { Text = "Moonlight", ImageSource = "ms-appx:///Assets/Fluent/Moonlight.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Moonlight Game Streaming", "Moonlight.exe")) },
 			new() { Text = "AutoHotkey", ImageSource = "ms-appx:///Assets/Fluent/AutoHotkey.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "AutoHotkey", "UX", "AutoHotkeyUX.exe")) },
 			new() { Text = "EmEditor", ImageSource = "ms-appx:///Assets/Fluent/EmEditor.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "Emurasoft.EmEditor64UWP_ws7rg9hnwrpxm")) },
-			new() { Text = "WinDbg", ImageSource = "ms-appx:///Assets/Fluent/WinDbg.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "Microsoft.WinDbg_8wekyb3d8bbwe")) }
+			new() { Text = "WinDbg", ImageSource = "ms-appx:///Assets/Fluent/WinDbg.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "Microsoft.WinDbg_8wekyb3d8bbwe")) },
+			new() { Text = "Deluge", ImageSource = "ms-appx:///Assets/Fluent/Deluge.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Deluge", "Deluge.exe")) },
+			new() { Text = "Free Download Manager", ImageSource = "ms-appx:///Assets/Fluent/FreeDownloadManager.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Softdeluxe", "Free Download Manager", "fdm.exe")) }
 		};
 		foreach (var item in miscellaneousList.Where(item => !item.IsInstalled))
 			miscellaneousItems.Add(item);
@@ -332,6 +340,8 @@ public sealed partial class ApplicationsPage : Page
 		selection.Antigravity = selectedDev.Contains("Antigravity IDE");
 		selection.Cursor = selectedDev.Contains("Cursor");
 		selection.Devin = selectedDev.Contains("Devin");
+		selection.Kiro = selectedDev.Contains("Kiro");
+		selection.SublimeText = selectedDev.Contains("Sublime Text");
 		selection.IDEA = selectedDev.Contains("IntelliJ IDEA");
 		selection.WinMerge = selectedDev.Contains("WinMerge");
 		selection.Git = selectedDev.Contains("Git");
@@ -370,6 +380,7 @@ public sealed partial class ApplicationsPage : Page
 		selection.FlexASIO = selectedMusicProduction.Contains("FlexASIO");
 		selection.ASIO4ALL = selectedMusicProduction.Contains("ASIO4ALL");
 		selection.ArturiaMidiControlCenter = selectedMusicProduction.Contains("Arturia MIDI Control Center");
+		selection.Voicemeeter = selectedMusicProduction.Contains("Voicemeeter");
 
 		var selectedVideoProductionItems = VideoProduction.SelectedItems.Cast<GridViewItem>().ToList();
 		var selectedVideoProduction = selectedVideoProductionItems.Select(item => item.Text).ToList();
@@ -380,10 +391,13 @@ public sealed partial class ApplicationsPage : Page
 
 		var selectedMultimediaItems = Multimedia.SelectedItems.Cast<GridViewItem>().ToList();
 		var selectedMultimedia = selectedMultimediaItems.Select(item => item.Text).ToList();
-		selection.MediaInfo = selectedMultimedia.Contains("MediaInfo");
+		selection.Netflix = selectedMultimedia.Contains("Netflix");
+		selection.DisneyPlus = selectedMultimedia.Contains("Disney+");
+		selection.PrimeVideo = selectedMultimedia.Contains("Prime Video");
 		selection.MpcQt = selectedMultimedia.Contains("MPC-QT");
 		selection.MPV = selectedMultimedia.Contains("mpv");
 		selection.VLC = selectedMultimedia.Contains("VLC");
+		selection.MediaInfo = selectedMultimedia.Contains("MediaInfo");
 
 		var selectedOfficeItems = Office.SelectedItems.Cast<GridViewItem>().ToList();
 		var selectedOffice = selectedOfficeItems.Select(item => item.Text).ToList();
@@ -412,6 +426,8 @@ public sealed partial class ApplicationsPage : Page
 		selection.AutoHotkey = selectedMiscellaneous.Contains("AutoHotkey");
 		selection.EmEditor = selectedMiscellaneous.Contains("EmEditor");
 		selection.WinDbg = selectedMiscellaneous.Contains("WinDbg");
+		selection.Deluge = selectedMiscellaneous.Contains("Deluge");
+		selection.FreeDownloadManager = selectedMiscellaneous.Contains("Free Download Manager");
 
 		var updateDialog = new UpdateDialog();
 		var reporter = new UpdateDialogReporter(updateDialog);

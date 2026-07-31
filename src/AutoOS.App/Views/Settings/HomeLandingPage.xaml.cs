@@ -34,13 +34,25 @@ namespace AutoOS.Views.Settings
 		public HomeLandingPage()
 		{
 			InitializeComponent();
-			#if !DEBUG
-				Loaded += CheckForUpdates;
-			#endif
+			Loaded += CheckForUpdates;
 		}
 
 		private async void CheckForUpdates(object sender, RoutedEventArgs e)
 		{
+            if (!(Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList")?.GetSubKeyNames()?.Any(sid => new[] { "AutoOS", "user" }.Contains(Path.GetFileName(Registry.GetValue($@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\{sid}", "ProfileImagePath", null) as string), StringComparer.OrdinalIgnoreCase)) == true))
+            {
+				var dialog = new ContentDialog
+				{
+					Title = "Unsupported System",
+					Content = "AutoOS App is only supported on AutoOS.",
+					CloseButtonText = "OK",
+					DefaultButton = ContentDialogButton.Close,
+					XamlRoot = XamlRoot
+				};
+				await dialog.ShowAsync();
+				Application.Current.Exit();
+			}
+
 			var (major, minor, build, ubr) = OSHelper.GetWindowsVersion();
 			if (build < 26200)
 			{
@@ -227,6 +239,7 @@ namespace AutoOS.Views.Settings
 				}
 			}
 
+			#if !DEBUG
 			try
 			{
 				var json = await httpClient.GetStringAsync("https://api.github.com/repos/tinodin/AutoOS/releases");
@@ -291,6 +304,7 @@ namespace AutoOS.Views.Settings
 				await PackageStage.PackageActions(downloadUrl, msixDialog);
 			}
 			catch { }
+			#endif
 		}
 	}
 }

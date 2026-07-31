@@ -135,7 +135,7 @@ public static partial class DeviceHelper
 				deviceId = pnpDeviceId.Substring(pnpDeviceId.IndexOf("PID_") + 4, 4).ToLowerInvariant();
 			string registryPath = $@"SYSTEM\CurrentControlSet\Control\Class\{GetDeviceRegistryPropertyString(deviceInfoSetHandle, &deviceInfoData, SPDRP_DRIVER)}";
 
-			string driverVersion = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(registryPath).GetValue("DriverVersion")?.ToString();
+			string driverVersion = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(registryPath)?.GetValue("DriverVersion")?.ToString();
 
 			uint msiSupported = 2, msiLimit = 0, devicePolicy = 0, devicePriority = 0;
 			ulong assignmentSetOverride = 0;
@@ -585,30 +585,55 @@ public static partial class DeviceHelper
 
 		if (device.BaseAddress == 0) return false;
 
-		hw.ReadMemory32(device.BaseAddress + 0x18, out uint rtsoff);
+		if (!hw.ReadMemory32(device.BaseAddress + 0x18, out uint rtsoff))
+			throw new Exception("Failed to read RTSOFF register at base address 0x" + device.BaseAddress.ToString("X"));
+
+		if (rtsoff == 0xFFFFFFFF || rtsoff == 0)
+			throw new Exception($"Invalid RTSOFF value (0x{rtsoff:X8}) read from controller base address 0x{device.BaseAddress:X}.");
+
 		ulong runtime = device.BaseAddress + (rtsoff & ~0x1Fu);
 
-		hw.ReadMemory32(device.BaseAddress + 0x04, out uint hcs1);
+		if (!hw.ReadMemory32(device.BaseAddress + 0x04, out uint hcs1))
+			throw new Exception("Failed to read HCS1 register at base address 0x" + device.BaseAddress.ToString("X"));
+
+		if (hcs1 == 0xFFFFFFFF)
+			throw new Exception($"Invalid HCS1 value (0x{hcs1:X8}) read from controller base address 0x{device.BaseAddress:X}.");
+
 		int max = (int)((hcs1 >> 8) & 0x7FF);
+		if (max > 128)
+			throw new Exception($"Sanity check failed: unusually large number of interrupters ({max}) read from HCS1 (0x{hcs1:X8}).");
 
 		for (int i = 0; i < max; i++)
 		{
-			hw.ReadMemory32(runtime + 0x24 + (0x20 * (ulong)i), out uint imod);
+			if (!hw.ReadMemory32(runtime + 0x24 + (0x20 * (ulong)i), out uint imod))
+				throw new Exception("Failed to read IMOD register at index " + i);
 			if (imod != 0) return true;
 		}
 
 		return false;
 	}
 
-	public async static void ToggleImod(DeviceInfo device, bool enable)
+	public static void ToggleImod(DeviceInfo device, bool enable)
 	{
 		using var hw = new ReadWriteHelper();
 		if (device.BaseAddress == 0) return;
 
-		hw.ReadMemory32(device.BaseAddress + 0x18, out uint rtsoff);
+		if (!hw.ReadMemory32(device.BaseAddress + 0x18, out uint rtsoff))
+			throw new Exception("Failed to read RTSOFF register at base address 0x" + device.BaseAddress.ToString("X"));
+
+		if (rtsoff == 0xFFFFFFFF || rtsoff == 0)
+			throw new Exception($"Invalid RTSOFF value (0x{rtsoff:X8}) read from controller base address 0x{device.BaseAddress:X}.");
+
 		ulong runtime = device.BaseAddress + (rtsoff & ~0x1Fu);
-		hw.ReadMemory32(device.BaseAddress + 0x04, out uint hcs1);
+		if (!hw.ReadMemory32(device.BaseAddress + 0x04, out uint hcs1))
+			throw new Exception("Failed to read HCS1 register at base address 0x" + device.BaseAddress.ToString("X"));
+
+		if (hcs1 == 0xFFFFFFFF)
+			throw new Exception($"Invalid HCS1 value (0x{hcs1:X8}) read from controller base address 0x{device.BaseAddress:X}.");
+
 		int max = (int)((hcs1 >> 8) & 0x7FF);
+		if (max > 128)
+			throw new Exception($"Sanity check failed: unusually large number of interrupters ({max}) read from HCS1 (0x{hcs1:X8}).");
 
 		var json = ApplicationData.Current.LocalSettings.Values["XHCIs"]?.ToString();
 		var array = !string.IsNullOrEmpty(json) ? JsonNode.Parse(json)?.AsArray() : [];
@@ -637,13 +662,19 @@ public static partial class DeviceHelper
 			var intervals = (obj["Intervals"]?.AsObject()) ?? throw new Exception("No saved intervals found.");
 			foreach (var kvp in intervals)
 				if (ulong.TryParse(kvp.Key, out ulong addr) && uint.TryParse(kvp.Value?.ToString(), out uint val))
-					hw.WriteMemory32(addr, val);
+				{
+					if (!hw.WriteMemory32(addr, val))
+						throw new Exception("Failed to write memory address 0x" + addr.ToString("X"));
+				}
 		}
 		else
 		{
 			SaveImod(device, hw);
 			for (int i = 0; i < max; i++)
-				hw.WriteMemory32(runtime + 0x24 + (0x20 * (ulong)i), 0);
+			{
+				if (!hw.WriteMemory32(runtime + 0x24 + (0x20 * (ulong)i), 0))
+					throw new Exception("Failed to write memory address 0x" + (runtime + 0x24 + (0x20 * (ulong)i)).ToString("X"));
+			}
 		}
 	}
 
@@ -654,16 +685,29 @@ public static partial class DeviceHelper
 
 		if (device.BaseAddress == 0 || !GetIMODState(device, hw)) return;
 
-		hw.ReadMemory32(device.BaseAddress + 0x18, out uint rtsoff);
+		if (!hw.ReadMemory32(device.BaseAddress + 0x18, out uint rtsoff))
+			throw new Exception("Failed to read RTSOFF register at base address 0x" + device.BaseAddress.ToString("X"));
+
+		if (rtsoff == 0xFFFFFFFF || rtsoff == 0)
+			throw new Exception($"Invalid RTSOFF value (0x{rtsoff:X8}) read from controller base address 0x{device.BaseAddress:X}.");
+
 		ulong runtime = device.BaseAddress + (rtsoff & ~0x1Fu);
-		hw.ReadMemory32(device.BaseAddress + 0x04, out uint hcs1);
+		if (!hw.ReadMemory32(device.BaseAddress + 0x04, out uint hcs1))
+			throw new Exception("Failed to read HCS1 register at base address 0x" + device.BaseAddress.ToString("X"));
+
+		if (hcs1 == 0xFFFFFFFF)
+			throw new Exception($"Invalid HCS1 value (0x{hcs1:X8}) read from controller base address 0x{device.BaseAddress:X}.");
+
 		int max = (int)((hcs1 >> 8) & 0x7FF);
+		if (max > 128)
+			throw new Exception($"Sanity check failed: unusually large number of interrupters ({max}) read from HCS1 (0x{hcs1:X8}).");
 
 		var intervals = new JsonObject();
 		for (int i = 0; i < max; i++)
 		{
 			ulong addr = runtime + 0x24 + (0x20 * (ulong)i);
-			hw.ReadMemory32(addr, out uint val);
+			if (!hw.ReadMemory32(addr, out uint val))
+				throw new Exception("Failed to read memory address 0x" + addr.ToString("X"));
 			intervals[addr.ToString()] = val;
 		}
 

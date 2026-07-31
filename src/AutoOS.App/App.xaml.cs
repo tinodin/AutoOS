@@ -10,7 +10,9 @@ using Windows.Graphics;
 using Windows.Storage;
 using WinRT.Interop;
 
-namespace AutoOS
+namespace AutoOS;
+
+public partial class App : Application
 {
 	public partial class App : Application
 	{

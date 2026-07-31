@@ -1,4 +1,4 @@
-using Windows.Storage;
+﻿using Windows.Storage;
 using WinRT;
 
 namespace AutoOS.Views.Installer;
@@ -127,6 +127,8 @@ public sealed partial class ApplicationsPage : Page
 			new() { Text = "Antigravity IDE", ImageSource = "ms-appx:///Assets/Fluent/Antigravity.png" },
 			new() { Text = "Cursor", ImageSource = "ms-appx:///Assets/Fluent/Cursor.png" },
 			new() { Text = "Devin", ImageSource = "ms-appx:///Assets/Fluent/Devin.png" },
+			new() { Text = "Kiro", ImageSource = "ms-appx:///Assets/Fluent/Kiro.png" },
+			new() { Text = "Sublime Text", ImageSource = "ms-appx:///Assets/Fluent/SublimeText.png" },
 			new() { Text = "IntelliJ IDEA", ImageSource = "ms-appx:///Assets/Fluent/IDEA.png" },
 			new() { Text = "WinMerge", ImageSource = "ms-appx:///Assets/Fluent/WinMerge.png" },
 			new() { Text = "Git", ImageSource = "ms-appx:///Assets/Fluent/Git.png" },
@@ -168,7 +170,8 @@ public sealed partial class ApplicationsPage : Page
 			new() { Text = "Audacity", ImageSource = "ms-appx:///Assets/Fluent/Audacity.png" },
 			new() { Text = "FlexASIO", ImageSource = "ms-appx:///Assets/Fluent/FlexASIO.png" },
 			new() { Text = "ASIO4ALL", ImageSource = "ms-appx:///Assets/Fluent/ASIO4ALL.png" },
-			new() { Text = "Arturia MIDI Control Center", ImageSource = "ms-appx:///Assets/Fluent/ArturiaMidiControlCenter.png" }
+			new() { Text = "Arturia MIDI Control Center", ImageSource = "ms-appx:///Assets/Fluent/ArturiaMidiControlCenter.png" },
+			new() { Text = "Voicemeeter", ImageSource = "ms-appx:///Assets/Fluent/Voicemeeter.png" }
 		};
 
 		VideoProduction.ItemsSource = new List<GridViewItem>
@@ -181,6 +184,9 @@ public sealed partial class ApplicationsPage : Page
 
 		Multimedia.ItemsSource = new List<GridViewItem>
 		{
+			new() { Text = "Netflix", ImageSource = "ms-appx:///Assets/Fluent/Netflix.png" },
+			new() { Text = "Disney+", ImageSource = "ms-appx:///Assets/Fluent/Disney+.png" },
+			new() { Text = "Prime Video", ImageSource = "ms-appx:///Assets/Fluent/PrimeVideo.png" },
 			new() { Text = "MPC-QT", ImageSource = "ms-appx:///Assets/Fluent/MpcQt.png" },
 			new() { Text = "mpv", ImageSource = "ms-appx:///Assets/Fluent/MPV.png" },
 			new() { Text = "VLC", ImageSource = "ms-appx:///Assets/Fluent/VLC.png" },
@@ -214,7 +220,9 @@ public sealed partial class ApplicationsPage : Page
 			new() { Text = "Moonlight", ImageSource = "ms-appx:///Assets/Fluent/Moonlight.png" },
 			new() { Text = "AutoHotkey", ImageSource = "ms-appx:///Assets/Fluent/AutoHotkey.png" },
 			new() { Text = "EmEditor", ImageSource = "ms-appx:///Assets/Fluent/EmEditor.png" },
-			new() { Text = "WinDbg", ImageSource = "ms-appx:///Assets/Fluent/WinDbg.png" }
+			new() { Text = "WinDbg", ImageSource = "ms-appx:///Assets/Fluent/WinDbg.png" },
+			new() { Text = "Deluge", ImageSource = "ms-appx:///Assets/Fluent/Deluge.png" },
+			new() { Text = "Free Download Manager", ImageSource = "ms-appx:///Assets/Fluent/FreeDownloadManager.png" }
 		};
 	}
 

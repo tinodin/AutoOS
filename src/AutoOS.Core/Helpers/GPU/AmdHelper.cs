@@ -1,4 +1,4 @@
-using AutoOS.Core.Common;
+﻿using AutoOS.Core.Common;
 using AutoOS.Core.Helpers.Download;
 using AutoOS.Core.Helpers.Extract;
 using AutoOS.Core.Helpers.GPU.Models;
@@ -22,12 +22,13 @@ public static partial class AmdHelper
 
 		var endpoints = new[]
 		{
-			"https://www2.ati.com/drivers/installer/json/DrvDldDetails_Consumer_Legacy_Win10.json",
-			"https://www2.ati.com/drivers/installer/json/DrvDldDetails_Consumer_WHQL_Win11.json",
-			"https://www2.ati.com/drivers/installer/json/DrvDldDetails_Consumer_WHQL_Win11_p.json",
-			"https://www2.ati.com/drivers/installer/json/drvdlddetails_ws_maintenance_win11.json",
-			"https://www2.ati.com/drivers/installer/json/DrvDldDetails_WS_Legacy_Win10.json"
-		};
+		"https://www2.ati.com/drivers/installer/json/DrvDldDetails_Consumer_Legacy_Win10.json",
+		"https://www2.ati.com/drivers/installer/json/DrvDldDetails_Consumer_WHQL_Win11.json",
+		"https://www2.ati.com/drivers/installer/json/DrvDldDetails_Consumer_WHQL_Win11_p.json",
+		"https://www2.ati.com/drivers/installer/json/drvdlddetails_ws_maintenance_win11.json",
+		"https://www2.ati.com/drivers/installer/json/DrvDldDetails_WS_Legacy_Win10.json",
+		"https://www2.ati.com/drivers/installer/json/DrvDldDetails_Consumer_WHQL_Win7.json"
+	};
 
 		httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Referer", "http://support.amd.com");
 		httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "*/*");
@@ -38,8 +39,11 @@ public static partial class AmdHelper
 		var jsonTasks = endpoints.Select(endpoint => httpClient.GetStringAsync(endpoint));
 		var responses = await Task.WhenAll(jsonTasks);
 
-		foreach (var json in responses)
+		for (int i = 0; i < responses.Length; i++)
 		{
+			var json = responses[i];
+			var currentEndpoint = endpoints[i];
+
 			var builds = JsonNode.Parse(json).AsArray();
 			if (builds == null) continue;
 
@@ -57,7 +61,16 @@ public static partial class AmdHelper
 						continue;
 
 					newestVersion = string.Join(".", build["externalbuildversion"].ToString().Split('.').Take(3));
-					newestDownloadUrl = build["fullbuild"]?.ToString();
+
+					if (currentEndpoint.EndsWith("DrvDldDetails_Consumer_WHQL_Win7.json", StringComparison.OrdinalIgnoreCase))
+					{
+						newestDownloadUrl = "https://www2.ati.com/drivers/radeon-software-adrenalin-2020-22.6.1-win10-win11-64bit-legacyasics-june23-2022-legacy.exe";
+					}
+					else
+					{
+						newestDownloadUrl = build["fullbuild"]?.ToString();
+					}
+
 					break;
 				}
 
@@ -84,7 +97,8 @@ public static partial class AmdHelper
 			($@"Stripping AMD driver {newestVersion}", async () => await Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RadeonSoftwareSlimmer", "RadeonSoftwareSlimmer.exe"), $@"--extracted-installer ""{Path.Combine(Path.GetTempPath(), "AMD", "driver")}"" --config ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RadeonSoftwareSlimmer", "config.ini")}""") { CreateNoWindow = true })!.WaitForExitAsync(), null),
 
 			// install amd driver
-			(gpu.IsInstalled ? $"Updating to AMD driver {newestVersion}" : $"Installing AMD driver {newestVersion}", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "AMD", "driver", "Setup.exe"), Arguments = "-install", UseShellExecute = false, CreateNoWindow = true })!.WaitForExitAsync(), null),
+			(gpu.IsInstalled ? $"Updating to AMD driver {newestVersion}" : $"Installing AMD driver {newestVersion}", async () => { var path = Path.Combine(Path.GetTempPath(), "AMD", "driver", "Packages", "Apps", "VC22RTx64", "vcredist_x64", "VC_redist.x64.exe"); if (File.Exists(path)) await Process.Start(new ProcessStartInfo(path, "/install /quiet /norestart") { CreateNoWindow = true })!.WaitForExitAsync(); }, null),
+            (gpu.IsInstalled ? $"Updating to AMD driver {newestVersion}" : $"Installing AMD driver {newestVersion}", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "AMD", "driver", "Setup.exe"), Arguments = "-install", UseShellExecute = false, CreateNoWindow = true })!.WaitForExitAsync(), null),
 			(gpu.IsInstalled ? $"Updating to AMD driver {newestVersion}" : $"Installing AMD driver {newestVersion}", async () => await Task.Delay(3000), null),
 			(gpu.IsInstalled ? $"Updating to AMD driver {newestVersion}" : $"Installing AMD driver {newestVersion}", async () => GpuHelper.RefreshGpu(gpu), null),
 			("Cleaning up AMD files", async () => { try { Directory.Delete(Path.Combine(Path.GetTempPath(), "AMD"), true); } catch {} }, null)

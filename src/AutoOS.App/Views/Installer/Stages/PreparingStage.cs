@@ -122,6 +122,8 @@ public static partial class PreparingStage
 	public static bool Antigravity;
 	public static bool Cursor;
 	public static bool Devin;
+	public static bool Kiro;
+	public static bool SublimeText;
 	public static bool IDEA;
 	public static bool WinMerge;
 	public static bool Git;
@@ -154,12 +156,16 @@ public static partial class PreparingStage
 	public static bool FlexASIO;
 	public static bool ASIO4ALL;
 	public static bool ArturiaMidiControlCenter;
+	public static bool Voicemeeter;
 
 	public static bool DaVinciResolve;
 	public static bool Blender;
 	public static bool CapCut;
 	public static bool LosslessCut;
 
+	public static bool Netflix;
+	public static bool DisneyPlus;
+	public static bool PrimeVideo;
 	public static bool MpcQt;
 	public static bool MPV;
 	public static bool VLC;
@@ -188,6 +194,8 @@ public static partial class PreparingStage
 	public static bool AutoHotkey;
 	public static bool EmEditor;
 	public static bool WinDbg;
+	public static bool Deluge;
+	public static bool FreeDownloadManager;
 
 	public static List<GpuInfo> GPUs { get; set; } = [];
 	public static bool MSI;
@@ -524,6 +532,8 @@ public static partial class PreparingStage
 			Antigravity = (localSettings.Values["Development"]?.ToString().Contains("Antigravity IDE") ?? false);
 			Cursor = (localSettings.Values["Development"]?.ToString().Contains("Cursor") ?? false);
 			Devin = (localSettings.Values["Development"]?.ToString().Contains("Devin") ?? false);
+			Kiro = (localSettings.Values["Development"]?.ToString().Contains("Kiro") ?? false);
+			SublimeText = (localSettings.Values["Development"]?.ToString().Contains("Sublime Text") ?? false);
 			IDEA = (localSettings.Values["Development"]?.ToString().Contains("IntelliJ IDEA") ?? false);
 			WinMerge = (localSettings.Values["Development"]?.ToString().Contains("WinMerge") ?? false);
 			Git = (localSettings.Values["Development"]?.ToString().Contains("Git") ?? false);
@@ -556,12 +566,16 @@ public static partial class PreparingStage
 			FlexASIO = (localSettings.Values["Music Production"]?.ToString().Contains("FlexASIO") ?? false);
 			ASIO4ALL = (localSettings.Values["Music Production"]?.ToString().Contains("ASIO4ALL") ?? false);
 			ArturiaMidiControlCenter = (localSettings.Values["Music Production"]?.ToString().Contains("Arturia MIDI Control Center") ?? false);
+			Voicemeeter = (localSettings.Values["Music Production"]?.ToString().Contains("Voicemeeter") ?? false);
 
 			DaVinciResolve = (localSettings.Values["Video Production"]?.ToString().Contains("DaVinci Resolve") ?? false);
 			Blender = (localSettings.Values["Video Production"]?.ToString().Contains("Blender") ?? false);
 			CapCut = (localSettings.Values["Video Production"]?.ToString().Contains("CapCut") ?? false);
 			LosslessCut = (localSettings.Values["Video Production"]?.ToString().Contains("LosslessCut") ?? false);
 
+			Netflix = (localSettings.Values["Multimedia"]?.ToString().Contains("Netflix") ?? false);
+			DisneyPlus = (localSettings.Values["Multimedia"]?.ToString().Contains("Disney+") ?? false);
+			PrimeVideo = (localSettings.Values["Multimedia"]?.ToString().Contains("Prime Video") ?? false);
 			MpcQt = (localSettings.Values["Multimedia"]?.ToString().Contains("MPC-QT") ?? false);
 			MPV = (localSettings.Values["Multimedia"]?.ToString().Contains("mpv") ?? false);
 			VLC = (localSettings.Values["Multimedia"]?.ToString().Contains("VLC") ?? false);
@@ -590,6 +604,8 @@ public static partial class PreparingStage
 			AutoHotkey = (localSettings.Values["Miscellaneous"]?.ToString().Contains("AutoHotkey") ?? false);
 			EmEditor = (localSettings.Values["Miscellaneous"]?.ToString().Contains("EmEditor") ?? false);
 			WinDbg = (localSettings.Values["Miscellaneous"]?.ToString().Contains("WinDbg") ?? false);
+			Deluge = (localSettings.Values["Miscellaneous"]?.ToString().Contains("Deluge") ?? false);
+			FreeDownloadManager = (localSettings.Values["Miscellaneous"]?.ToString().Contains("Free Download Manager") ?? false);
 
 			var gpuArray = JsonNode.Parse(localSettings.Values["GPUs"]?.ToString() ?? "[]")?.AsArray();
 			if (gpuArray != null)

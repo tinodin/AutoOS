@@ -18,7 +18,7 @@ namespace AutoOS.Views.Settings;
 public sealed partial class BiosSettingPage : Page
 {
 	private readonly string nvram = Path.Combine(PathHelper.GetAppDataFolderPath(), "SCEWIN", "nvram.txt");
-	private readonly string backupFolder = Path.Combine(PathHelper.GetAppDataFolderPath(), "SCEWIN", "Backups");
+	private readonly string backupDirectory = Path.Combine(PathHelper.GetAppDataFolderPath(), "SCEWIN", "Backups");
 	public BiosSettingViewModel ViewModel { get; } = new();
 
 	public BiosSettingPage()
@@ -143,12 +143,12 @@ public sealed partial class BiosSettingPage : Page
 		}
 
 		// backup
-		if (!Directory.Exists(backupFolder))
-			Directory.CreateDirectory(backupFolder);
+		if (!Directory.Exists(backupDirectory))
+			Directory.CreateDirectory(backupDirectory);
 
 		var currentLines = await File.ReadAllLinesAsync(nvram);
 
-		var existingBackups = Directory.GetFiles(backupFolder, "*.txt").OrderByDescending(file => Path.GetFileName(file)).ToList();
+		var existingBackups = Directory.GetFiles(backupDirectory, "*.txt").OrderByDescending(file => Path.GetFileName(file)).ToList();
 
 		bool needsBackup = true;
 
@@ -203,7 +203,7 @@ public sealed partial class BiosSettingPage : Page
 
 		if (needsBackup)
 		{
-			await File.WriteAllLinesAsync(Path.Combine(backupFolder, $"{DateTime.Now.ToLocalTime():yyyy-MM-dd_HH-mm-ss}.txt"), currentLines);
+			await File.WriteAllLinesAsync(Path.Combine(backupDirectory, $"{DateTime.Now.ToLocalTime():yyyy-MM-dd_HH-mm-ss}.txt"), currentLines);
 		}
 
 		// parse
@@ -349,7 +349,7 @@ public sealed partial class BiosSettingPage : Page
 		var picker = new FilePicker(App.MainWindow)
 		{
 			ShowAllFilesOption = false,
-			InitialDirectory = backupFolder
+			InitialDirectory = backupDirectory
 		};
 		picker.FileTypeChoices.Add("NVRAM Backup", ["*.txt"]);
 		var file = await picker.PickSingleFileAsync();

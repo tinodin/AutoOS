@@ -1,6 +1,4 @@
-﻿// Credit: LuSlower
-// https://github.com/LuSlower/chiptool
-// Modified: Uses [LibraryImport] instead of [DllImport]
+using Windows.Win32;
 
 namespace AutoOS.Core.Helpers.ReadWrite;
 
@@ -134,6 +132,12 @@ public partial class ReadWriteHelper : IDisposable
 		IntPtr pLinAddr = InpOut.MapPhysToLin((IntPtr)address, (uint)buffer.Length, out nint hMapping);
 		if (pLinAddr == IntPtr.Zero) return false;
 
+		if (PInvoke.IsBadReadPtr((void*)pLinAddr, (nuint)buffer.Length))
+		{
+			_ = InpOut.UnmapPhysicalMemory(hMapping, pLinAddr);
+			return false;
+		}
+
 		try
 		{
 			fixed (byte* pBuffer = buffer)
@@ -141,6 +145,10 @@ public partial class ReadWriteHelper : IDisposable
 				Buffer.MemoryCopy((void*)pLinAddr, pBuffer, buffer.Length, buffer.Length);
 			}
 			return true;
+		}
+		catch
+		{
+			return false;
 		}
 		finally
 		{
@@ -161,6 +169,10 @@ public partial class ReadWriteHelper : IDisposable
 			}
 			return true;
 		}
+		catch
+		{
+			return false;
+		}
 		finally
 		{
 			_ = InpOut.UnmapPhysicalMemory(hMapping, pLinAddr);
@@ -179,9 +191,9 @@ public partial class ReadWriteHelper : IDisposable
 		return false;
 	}
 
-	public void WriteMemory32(ulong address, uint value)
+	public bool WriteMemory32(ulong address, uint value)
 	{
-		WriteMemory(address, BitConverter.GetBytes(value));
+		return WriteMemory(address, BitConverter.GetBytes(value));
 	}
 
 	public static ulong GetBits(ulong value, string bitRange)

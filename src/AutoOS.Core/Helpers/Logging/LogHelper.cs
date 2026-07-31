@@ -42,6 +42,7 @@ public static partial class LogHelper
 
 	public static async Task Log(IEnumerable<GpuInfo> selectedGpus = null, bool bios = false)
 	{
+		#if !DEBUG
 		var embed = await GetOverview(selectedGpus, null, null, true);
 		var webhookPayload = new JsonObject
 		{
@@ -67,10 +68,12 @@ public static partial class LogHelper
 		{
 			await httpClient.PostAsync(webhook, multipart);
 		}
+		#endif
 	}
 
 	public static async Task LogError(Exception ex, IEnumerable<GpuInfo> selectedGpus = null, string actionTitle = null)
 	{
+		#if !DEBUG
 		var embed = await GetOverview(selectedGpus, ex, actionTitle);
 		var webhookPayload = new JsonObject
 		{
@@ -107,10 +110,12 @@ public static partial class LogHelper
 		{
 			await httpClient.PostAsync(Secrets.Error, multipart);
 		}
+		#endif
 	}
 
 	public static async Task LogNetworkSettings(IEnumerable<GpuInfo> selectedGpus = null)
 	{
+		#if !DEBUG
 		var embed = await GetOverview(selectedGpus, null, null, true);
 		var webhookPayload = new JsonObject
 		{
@@ -179,6 +184,7 @@ public static partial class LogHelper
 			multipart.Add(new ByteArrayContent(Encoding.UTF8.GetBytes(sb.ToString())), "file", "network_settings.md");
 			await httpClient.PostAsync(Secrets.Network, multipart);
 		}
+		#endif
 	}
 
 	private static async Task<JsonObject> GetOverview(IEnumerable<GpuInfo> selectedGpus = null, Exception ex = null, string actionTitle = null, bool includeGames = false)
@@ -186,9 +192,6 @@ public static partial class LogHelper
 		var discordAccounts = DiscordHelper.GetLocalAccounts();
 		if (discordAccounts.Count == 0)
 			discordAccounts = DiscordHelper.GetOtherAccounts();
-
-		var epicAccounts = EpicGamesHelper.GetEpicGamesAccounts();
-		var steamAccounts = SteamHelper.GetSteamAccounts();
 
 		string cpuName = Microsoft.Win32.Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\CentralProcessor\0", "ProcessorNameString", "")?.ToString() ?? "";
 		string manufacturer = Microsoft.Win32.Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\BIOS", "BaseBoardManufacturer", "")?.ToString() ?? "";
@@ -251,7 +254,7 @@ public static partial class LogHelper
 			if (localSettings.Values.TryGetValue($"LastPlayed_{game.Title}", out var val) && val is long ts && ts > 0)
 			{
 				DateTimeOffset lastPlayedDate = DateTimeOffset.FromUnixTimeSeconds(ts).ToLocalTime();
-				lastPlayedGame = $" ({lastPlayedDate:dd MMM yyyy â€” HH:mm:ss})";
+				lastPlayedGame = $" ({lastPlayedDate:dd MMM yyyy - HH:mm:ss})";
 			}
 			return $"{game.Title} ({game.Launcher}) ({game.PlayTime}){lastPlayedGame}";
 		}).ToList();
@@ -266,8 +269,8 @@ public static partial class LogHelper
 		bool startParsed = DateTimeOffset.TryParse(startStr, out DateTimeOffset start);
 		bool endParsed = DateTimeOffset.TryParse(endStr, out DateTimeOffset end);
 
-		string startFormatted = startParsed ? start.ToLocalTime().ToString("dddd, dd MMM yyyy â€” HH:mm:ss") : (startStr ?? "N/A");
-		string endFormatted = endParsed ? end.ToLocalTime().ToString("dddd, dd MMM yyyy â€” HH:mm:ss") : (endStr ?? "N/A");
+		string startFormatted = startParsed ? start.ToLocalTime().ToString("dddd, dd MMM yyyy - HH:mm:ss") : (startStr ?? "N/A");
+		string endFormatted = endParsed ? end.ToLocalTime().ToString("dddd, dd MMM yyyy - HH:mm:ss") : (endStr ?? "N/A");
 
 		if (startParsed && endParsed)
 		{
@@ -329,8 +332,6 @@ public static partial class LogHelper
 		}
 
 		AddField("Discord", discordAccounts.Count > 0 ? string.Join("\n", discordAccounts.Select(account => $"{account.Username} <@{account.UserId}> [{account.Origin}]{(account.IsActive ? " [Active]" : "")}{(account.IsMember ? " [Member]" : "")}")) : "N/A");
-		AddField("Epic Games", epicAccounts != null && epicAccounts.Count > 0 ? string.Join("\n", epicAccounts.Select(a => $"{a.DisplayName}{(a.IsActive ? " [Active]" : "")}")) : "N/A");
-		AddField("Steam", steamAccounts != null && steamAccounts.Count > 0 ? string.Join("\n", steamAccounts.Select(a => $"[{a.AccountName}](https://steamcommunity.com/profiles/{a.Steam64Id}){(a.AllowAutoLogin ? " [Active]" : "")}")) : "N/A");
 		AddField("Motherboard", motherboard);
 		AddField("CPU", cpuName);
 		AddField("RAM", ram);
@@ -367,6 +368,7 @@ public static partial class LogHelper
 
 	public static async Task LogFallbackError(Exception ex)
 	{
+		#if !DEBUG
 		try
 		{
 			string webhook = Secrets.Error;
@@ -399,6 +401,7 @@ public static partial class LogHelper
 			await client.PostAsync(webhook, multipart);
 		}
 		catch { }
+		#endif
 	}
 
 	[GeneratedRegex(@"(?:(\d+)h)?\s*(\d+)m", RegexOptions.Compiled)]

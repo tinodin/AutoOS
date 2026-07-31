@@ -56,6 +56,20 @@ namespace AutoOS.Views.Installer
 				
 			#endif
 
+			if (!(Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList")?.GetSubKeyNames()?.Any(sid => string.Equals(Path.GetFileName(Registry.GetValue($@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\{sid}", "ProfileImagePath", null) as string), "AutoOS", StringComparison.OrdinalIgnoreCase)) == true))
+			{
+				var dialog = new ContentDialog
+				{
+					Title = "Unsupported System",
+					Content = "AutoOS App is only supported on AutoOS.",
+					CloseButtonText = "OK",
+					DefaultButton = ContentDialogButton.Close,
+					XamlRoot = XamlRoot
+				};
+				await dialog.ShowAsync();
+				Application.Current.Exit();
+			}
+
 			// enable app access to location
 			await RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "SystemSettingsAdminFlows.exe"), Arguments = "SetCamSystemGlobal location 1", CreateNoWindow = true });
 			RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy", "LetAppsAccessLocation", 1, RegistryValueKind.DWord);
