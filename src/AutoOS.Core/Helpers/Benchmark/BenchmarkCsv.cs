@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Globalization;
 using System.Text;
 using AutoOS.Core.Helpers.Benchmark.Models;
 using DevWinUI;
@@ -148,6 +149,58 @@ public static class BenchmarkCsv
 		"P50 (Median)" => metric.P50Median,
 		"P95" => metric.P95,
 		"P99" => metric.P99,
+		"Standard Deviation" => metric.StdDev,
+		"Coefficient of Variation" => metric.Cv,
+		"Root mean square of successive differences (RMSSD)" => metric.Rmssd,
+		"Stepwise-Relative" => metric.StepwiseRelSD * 100,
 		_ => 0
 	};
+
+
+	public readonly record struct StatisticDefinition(string Label, string Description, string Format, string Suffix, string DeltaSuffix, bool HigherIsBetter)
+	{
+		public string FormatValue(double value) => value.ToString(Format, CultureInfo.CurrentCulture) + Suffix;
+	}
+
+	public static readonly Dictionary<string, StatisticDefinition> FpsStatistics = new()
+	{
+		["0.1% Low Avg"] = new("0.1% Low Avg FPS", StatisticDescriptions["0.1% Low Avg"], "0.###", " FPS", " FPS", HigherIsBetter: true),
+		["1% Low Avg"] = new("1% Low Avg FPS", StatisticDescriptions["1% Low Avg"], "0.###", " FPS", " FPS", HigherIsBetter: true),
+		["Average (Arithmetic)"] = new("Average (Arithmetic) FPS", StatisticDescriptions["Average (Arithmetic)"], "0.###", " FPS", " FPS", HigherIsBetter: true),
+		["Average (Harmonic)"] = new("Average (Harmonic) FPS", StatisticDescriptions["Average (Harmonic)"], "0.###", " FPS", " FPS", HigherIsBetter: true),
+		["Minimum"] = new("Minimum FPS", StatisticDescriptions["Minimum"], "0.###", " FPS", " FPS", HigherIsBetter: true),
+		["Maximum"] = new("Maximum FPS", StatisticDescriptions["Maximum"], "0.###", " FPS", " FPS", HigherIsBetter: true),
+		["P0.1"] = new("P0.1 FPS", StatisticDescriptions["P0.1"], "0.###", " FPS", " FPS", HigherIsBetter: true),
+		["P1"] = new("P1 FPS", StatisticDescriptions["P1"], "0.###", " FPS", " FPS", HigherIsBetter: true),
+		["P5"] = new("P5 FPS", StatisticDescriptions["P5"], "0.###", " FPS", " FPS", HigherIsBetter: true),
+		["P50 (Median)"] = new("P50 (Median) FPS", StatisticDescriptions["P50 (Median)"], "0.###", " FPS", " FPS", HigherIsBetter: true),
+		["P95"] = new("P95 FPS", StatisticDescriptions["P95"], "0.###", " FPS", " FPS", HigherIsBetter: true),
+		["P99"] = new("P99 FPS", StatisticDescriptions["P99"], "0.###", " FPS", " FPS", HigherIsBetter: true),
+		["Standard Deviation"] = new("Standard Deviation (STDEV)", StatisticDescriptions["Standard Deviation"], "0.###", " FPS", " FPS", HigherIsBetter: false),
+		["Coefficient of Variation"] = new("Coefficient of Variation (CV)", StatisticDescriptions["Coefficient of Variation"], "0.#####", "", "", HigherIsBetter: false)
+	};
+
+	public static readonly Dictionary<string, StatisticDefinition> LatencyStatistics = new()
+	{
+		["Average (Arithmetic)"] = new("Average (Arithmetic)", StatisticDescriptions["Average (Arithmetic)"], "0.####", " ms", " ms", HigherIsBetter: false),
+		["P50 (Median)"] = new("P50 (Median)", StatisticDescriptions["P50 (Median)"], "0.####", " ms", " ms", HigherIsBetter: false),
+		["P5"] = new("P95", StatisticDescriptions["P95"], "0.####", " ms", " ms", HigherIsBetter: false),
+		["P1"] = new("P99", StatisticDescriptions["P99"], "0.####", " ms", " ms", HigherIsBetter: false),
+		["Maximum"] = new("Maximum", StatisticDescriptions["Maximum"], "0.####", " ms", " ms", HigherIsBetter: false),
+		["Minimum"] = new("Minimum", StatisticDescriptions["Minimum"], "0.####", " ms", " ms", HigherIsBetter: false),
+		["Root mean square of successive differences (RMSSD)"] = new("Root mean square of successive differences (RMSSD)", StatisticDescriptions["Root mean square of successive differences (RMSSD)"], "0.####", " ms", " ms", HigherIsBetter: false),
+		["Stepwise-Relative"] = new("Stepwise-Relative", StatisticDescriptions["Stepwise-Relative"], "0.0", "%", " pp", HigherIsBetter: false),
+		["Standard Deviation"] = new("Standard Deviation (STDEV)", StatisticDescriptions["Standard Deviation"], "0.####", " ms", " ms", HigherIsBetter: false),
+		["Coefficient of Variation"] = new("Coefficient of Variation (CV)", StatisticDescriptions["Coefficient of Variation"], "0.#####", "", "", HigherIsBetter: false)
+	};
+
+	public static readonly (string Name, Func<AnalysisResult, Metrics> Selector, Dictionary<string, StatisticDefinition> Statistics)[] StatisticGroups =
+	[
+		("Displayed FPS", result => result.DisplayedFps, FpsStatistics),
+		("Rendered FPS", result => result.RenderedFps, FpsStatistics),
+		("MsBetweenDisplayChange", result => result.MsBetweenDisplayChangeStats, LatencyStatistics),
+		("MsBetweenPresents", result => result.MsBetweenPresentsStats, LatencyStatistics),
+		("MsGPUBusy", result => result.MsGpuBusyStats, LatencyStatistics),
+		("MsUntilDisplayed", result => result.MsUntilDisplayedStats, LatencyStatistics)
+	];
 }

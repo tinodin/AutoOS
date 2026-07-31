@@ -66,8 +66,7 @@
                         <controls:TabbedCommandBarItem.PrimaryCommands>
 
                             <!--  Add  -->
-                            <AppBarButton Click="AddRecording_Click"
-                                          IsEnabled="{x:Bind ViewModel.IsRecording, Mode=OneWay, Converter={StaticResource InverseBoolToObjectConverter}}"
+                            <AppBarButton Command="{x:Bind ViewModel.AddCommand}"
                                           Label="Add">
                                 <AppBarButton.Content>
                                     <dev:ThemedIcon Style="{StaticResource App.ThemedIcons.New.Item}" />
@@ -92,8 +91,8 @@
                             </AppBarButton>
 
                             <!--  Delete  -->
-                            <AppBarButton Click="DeleteRecording_Click"
-                                          IsEnabled="{x:Bind ViewModel.IsDeleteEnabled, Mode=OneWay}"
+                            <AppBarButton Command="{x:Bind ViewModel.DeleteCommand}"
+                                          CommandParameter="{x:Bind XamlRoot}"
                                           Label="Delete">
                                 <AppBarButton.Content>
                                     <dev:ThemedIcon Style="{StaticResource App.ThemedIcons.Delete}" />

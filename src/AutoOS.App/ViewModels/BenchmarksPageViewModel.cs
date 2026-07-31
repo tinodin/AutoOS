@@ -1,11 +1,13 @@
 using System.Collections.ObjectModel;
 using AutoOS.Core.Helpers.Benchmark;
+using AutoOS.Core.Helpers.Picker;
 using AutoOS.Views.Settings;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Xaml.Media;
 using nietras.SeparatedValues;
 using Syncfusion.UI.Xaml.TreeGrid;
+using Windows.System;
 
 namespace AutoOS.ViewModels;
 
@@ -30,6 +32,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	[NotifyPropertyChangedFor(nameof(HasTwoRecordingsVisibility))]
 	[NotifyPropertyChangedFor(nameof(IsDeleteEnabled))]
 	[NotifyCanExecuteChangedFor(nameof(AggregateCommand))]
+	[NotifyCanExecuteChangedFor(nameof(DeleteCommand))]
 	public partial int SelectedRecordingCount { get; set; }
 
 	[ObservableProperty]
@@ -47,7 +50,66 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	[ObservableProperty]
 	public partial bool IsRenameEnabled { get; set; }
 
+	public bool IsAddEnabled => !IsRecording;
+
+	public Func<Task> ReloadRecordings { get; set; }
+
+	[RelayCommand(CanExecute = nameof(IsAddEnabled))]
+	private async Task AddAsync()
+	{
+		var picker = new FilePicker(App.MainWindow)
+		{
+			ShowAllFilesOption = false,
+			InitialDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"),
+			Title = "Add Recordings"
+		};
+		picker.FileTypeChoices.Add("PresentMon recordings", ["*.csv"]);
+		var files = await picker.PickMultipleFilesAsync();
+		if (files.Count == 0)
+			return;
+
+		foreach (var file in files)
+			File.Copy(file.Path, Path.Combine(BenchmarkCsv.RecordingsDirectory, file.Name), true);
+
+		ReloadRecordings?.Invoke();
+	}
+	
 	public bool IsDeleteEnabled => SelectedRecordingCount > 0;
+	
+	[RelayCommand(CanExecute = nameof(IsDeleteEnabled))]
+	private async Task DeleteAsync(XamlRoot xamlRoot)
+	{
+		if (SelectedRecordings.Count == 0)
+			return;
+
+		var dialog = new ContentDialog
+		{
+			Title = "Delete recordings",
+			Content = $"Are you sure you want to delete {SelectedRecordings.Count} recording{(SelectedRecordings.Count == 1 ? "" : "s")}?",
+			PrimaryButtonText = "Delete",
+			CloseButtonText = "Cancel",
+			DefaultButton = ContentDialogButton.Close,
+			XamlRoot = xamlRoot
+		};
+		if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+			return;
+
+		foreach (var recording in SelectedRecordings)
+		{
+			try
+			{
+				File.Delete(recording.FilePath);
+			}
+			catch (IOException)
+			{
+			}
+			catch (UnauthorizedAccessException)
+			{
+			}
+		}
+
+		ReloadRecordings?.Invoke();
+	}
 
 	[RelayCommand(CanExecute = nameof(IsAggregateEnabled))]
 	private void Aggregate()
@@ -210,6 +272,9 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 
 	public List<object> ShortcutKeys { get; } = ["Ctrl", "Shift", "R"];
 
+	public VirtualKeyModifiers ShortcutModifiers { get; } = VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift;
+	public VirtualKey ShortcutKey { get; } = VirtualKey.R;
+
 	public bool CanRecord => IsRecording || (!string.IsNullOrWhiteSpace(ProcessName));
 	public string RecordLabel => IsRecording ? "Cancel" : "Record";
 	public string RecordIconGlyph => IsRecording ? "\uE711" : "\uE7C8";
@@ -218,6 +283,8 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	[NotifyPropertyChangedFor(nameof(CanRecord))]
 	[NotifyPropertyChangedFor(nameof(RecordLabel))]
 	[NotifyPropertyChangedFor(nameof(RecordIconGlyph))]
+	[NotifyPropertyChangedFor(nameof(IsAddEnabled))]
+	[NotifyCanExecuteChangedFor(nameof(AddCommand))]
 	public partial bool IsRecording { get; set; }
 
 	[ObservableProperty]
@@ -395,10 +462,10 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	public partial ObservableCollection<string> BaselineItems { get; set; } = ["None"];
 
 	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(IsDeltaModeEnabled))]
 	public partial int BaselineSelectedIndex { get; set; }
 
-	[ObservableProperty]
-	public partial bool IsDeltaModeEnabled { get; set; }
+	public bool IsDeltaModeEnabled => BaselineSelectedIndex >= 1;
 
 	[ObservableProperty]
 	public partial bool IsPercentDelta { get; set; }
@@ -414,6 +481,41 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 
 	[ObservableProperty]
 	public partial string DeltaHeader { get; set; }
+
+	[ObservableProperty]
+	public partial bool ShowRecordingAColumn { get; set; }
+
+	[ObservableProperty]
+	public partial bool ShowRecordingBColumn { get; set; }
+
+	[ObservableProperty]
+	public partial bool ShowDeltaColumn { get; set; }
+
+	partial void OnBaselineSelectedIndexChanged(int value)
+	{
+		UpdateStatisticsColumns();
+	}
+
+	partial void OnIsPercentDeltaChanged(bool value)
+	{
+		UpdateStatisticsColumns();
+	}
+
+	public int BaselineIndex => SelectedRecordings.Count == 2 && BaselineSelectedIndex is 1 or 2 ? BaselineSelectedIndex - 1 : -1;
+
+	private void UpdateStatisticsColumns()
+	{
+		int count = SelectedRecordings.Count;
+		int baseline = BaselineIndex;
+
+		ShowRecordingAColumn = count >= 1 && baseline != 1;
+		ShowRecordingBColumn = count == 2 && baseline != 0;
+		ShowDeltaColumn = baseline >= 0;
+
+		RecordingAHeader = count >= 1 ? SelectedRecordings[0].Title + (baseline == 0 ? " (Baseline)" : string.Empty) : "Recording A";
+		RecordingBHeader = count >= 2 ? SelectedRecordings[1].Title + (baseline == 1 ? " (Baseline)" : string.Empty) : "Recording B";
+		DeltaHeader = baseline >= 0 ? $"{SelectedRecordings[1 - baseline].Title} (Delta)" : IsPercentDelta ? "Delta (%)" : "Delta (+/-)";
+	}
 
 	public bool IsAggregateEnabled => SelectedRecordingCount > 1 && SelectedRecordingsHaveSameProcess;
 
@@ -507,7 +609,6 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 			}
 		}
 		SelectedRecordingsHaveSameProcess = sameProcess;
-		IsDeltaModeEnabled = false;
 		AnalysisChartType = "Bar";
 		BaselineItems = new ObservableCollection<string>(["None", .. recordings.Select(recording => recording.Title)]);
 		BaselineSelectedIndex = 0;
@@ -556,6 +657,13 @@ public sealed partial class RecordingItem : ObservableObject
 	public ObservableCollection<RecordingItem> Children { get; } = [];
 }
 
+public enum ComparisonResult
+{
+	None,
+	Better,
+	Worse
+}
+
 [WinRT.GeneratedBindableCustomProperty]
 public sealed partial class ResultRow : ObservableObject
 {
@@ -575,15 +683,19 @@ public sealed partial class ResultRow : ObservableObject
 	public partial string Delta { get; set; } = string.Empty;
 
 	[ObservableProperty]
-	public partial string RecordingAComparison { get; set; }
+	public partial ComparisonResult RecordingAComparison { get; set; }
 
 	[ObservableProperty]
-	public partial string RecordingBComparison { get; set; }
+	public partial ComparisonResult RecordingBComparison { get; set; }
 
 	[ObservableProperty]
-	public partial string DeltaComparison { get; set; }
+	public partial ComparisonResult DeltaComparison { get; set; }
 
 	public ObservableCollection<ResultRow> Children { get; } = [];
+
+	internal double? RecordingAValue { get; set; }
+	internal double? RecordingBValue { get; set; }
+	internal BenchmarkCsv.StatisticDefinition Definition { get; set; }
 }
 
 public sealed partial class ResultCellStyleSelector : StyleSelector
@@ -595,14 +707,19 @@ public sealed partial class ResultCellStyleSelector : StyleSelector
 	{
 		if (item is not ResultRow row || container is not TreeGridCell cell)
 			return null;
-		var value = cell.ColumnBase?.TreeGridColumn.MappingName switch
+		var comparison = cell.ColumnBase?.TreeGridColumn.MappingName switch
 		{
 			nameof(ResultRow.RecordingA) => row.RecordingAComparison,
 			nameof(ResultRow.RecordingB) => row.RecordingBComparison,
 			nameof(ResultRow.Delta) => row.DeltaComparison,
+			_ => ComparisonResult.None
+		};
+		return comparison switch
+		{
+			ComparisonResult.Better => SuccessStyle,
+			ComparisonResult.Worse => CriticalStyle,
 			_ => null
 		};
-		return value == "Better" ? SuccessStyle : value == "Worse" ? CriticalStyle : null;
 	}
 }
 
