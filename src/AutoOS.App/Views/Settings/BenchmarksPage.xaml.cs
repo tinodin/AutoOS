@@ -3,8 +3,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices.WindowsRuntime;
 using AutoOS.Core.Helpers.Benchmark;
-using AutoOS.Core.Helpers.Benchmark.Models;
-using AutoOS.Core.Helpers.Picker;
 using AutoOS.Helpers.Picker;
 using AutoOS.ViewModels;
 using CommunityToolkit.WinUI.Controls;
