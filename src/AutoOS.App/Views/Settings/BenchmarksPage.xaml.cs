@@ -449,7 +449,7 @@ public sealed record RecordingAnalysis(RecordingItem Recording, AnalysisResult A
 	{
 		if (double.IsNaN(args.NewValue) || ViewModel.AnalysisChartType != "Pie" || ViewModel.CachedAnalysis.Count == 0)
 			return;
-		var pieData = BuildPieChartData(ViewModel.CachedAnalysis, Math.Round(args.NewValue, 1), ViewModel.LowFpsThreshold);
+		var pieData = BuildPieChartData(ViewModel.CachedAnalysis, args.NewValue, ViewModel.LowFpsThreshold);
 		BindPieChart(pieData);
 	}
 
