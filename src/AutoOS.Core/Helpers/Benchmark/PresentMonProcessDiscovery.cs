@@ -33,6 +33,7 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 	private const uint DxgiStatusNoDesktopAccess = 0x087A0005;
 	private const uint DxgiStatusModeChangeInProgress = 0x087A0008;
 	private const uint RedirectedCompositionModel = 7;
+
 	private static readonly HashSet<string> ExcludedProcessNames = new(StringComparer.OrdinalIgnoreCase)
 	{
 		"ApplicationFrameHost.exe",
@@ -167,7 +168,7 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 			session.Source.Process();
 		}
 		catch
-		{	}
+		{ }
 	}
 
 	private void ProcessTraceEvent(TraceEvent traceEvent)

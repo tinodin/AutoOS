@@ -42,7 +42,7 @@ public sealed record PieChartData(List<PiePoint> Data1, List<PiePoint> Data2);
 
 public sealed record RecordingAnalysis(RecordingItem Recording, AnalysisResult Analysis);
 
-	public sealed partial class BenchmarksPage : Page
+public sealed partial class BenchmarksPage : Page
 {
 	public BenchmarksPageViewModel ViewModel { get; } = new();
 
@@ -194,7 +194,7 @@ public sealed record RecordingAnalysis(RecordingItem Recording, AnalysisResult A
 			});
 		}
 	}
-	
+
 	private async void Record_Checked(object sender, RoutedEventArgs e)
 	{
 		_recordingCts?.Cancel();
@@ -355,7 +355,7 @@ public sealed record RecordingAnalysis(RecordingItem Recording, AnalysisResult A
 	private void RecordingsTreeGrid_SelectionChanged(object sender, GridSelectionChangedEventArgs e)
 	{
 		ViewModel.SetSelectedRecordings(RecordingsTreeGrid.SelectedItems.OfType<RecordingItem>().Append(RecordingsTreeGrid.SelectedItem as RecordingItem).Where(recording => recording is not null).DistinctBy(recording => recording.FilePath, StringComparer.OrdinalIgnoreCase).ToList());
-		
+
 		if (ViewModel.SelectedRecordings.Count is 0 or > 2)
 			return;
 
@@ -708,7 +708,7 @@ public sealed record RecordingAnalysis(RecordingItem Recording, AnalysisResult A
 			ViewModel.BarColumnChartDisplayedData2 = oldDisplayedData2;
 			ViewModel.BarColumnChartRenderedData2 = oldRenderedData2;
 		}
-		
+
 		else if (ViewModel.AnalysisChartType is "Line" or "Scatter")
 		{
 			var oldData1 = ViewModel.LineScatterChartData1;
@@ -718,7 +718,7 @@ public sealed record RecordingAnalysis(RecordingItem Recording, AnalysisResult A
 			ViewModel.LineScatterChartData1 = oldData1;
 			ViewModel.LineScatterChartData2 = oldData2;
 		}
-		else 
+		else
 		{
 			var oldData1 = ViewModel.PieChartData1;
 			var oldData2 = ViewModel.PieChartData2;
@@ -743,8 +743,8 @@ public sealed record RecordingAnalysis(RecordingItem Recording, AnalysisResult A
 		List<ResultRow> groups = [];
 		foreach (var (name, selector, statistics) in BenchmarkCsv.StatisticGroups)
 		{
-		var m0 = selector(results[0].Analysis);
-		var m1 = results.Count > 1 ? selector(results[1].Analysis) : null;
+			var m0 = selector(results[0].Analysis);
+			var m1 = results.Count > 1 ? selector(results[1].Analysis) : null;
 
 			var group = new ResultRow
 			{
