@@ -424,6 +424,29 @@
                                 </dev:SelectorBarSegmented>
                             </AppBarElementContainer>
 
+                            <AppBarSeparator Margin="4,0" />
+
+                            <!--  Thresholds  -->
+                            <AppBarElementContainer Margin="0,0,2,0"
+                                                    ToolTipService.ToolTip="Low FPS threshold">
+                                <NumberBox LargeChange="5"
+                                           Minimum="1"
+                                           SmallChange="1"
+                                           SpinButtonPlacementMode="Inline"
+                                           ValueChanged="LowFpsThresholdNumberBox_ValueChanged"
+                                           Value="{x:Bind ViewModel.LowFpsThreshold, Mode=TwoWay}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer Margin="0,0,2,0"
+                                                    ToolTipService.ToolTip="Stutter factor">
+                                <NumberBox LargeChange="0.5"
+                                           Maximum="10"
+                                           Minimum="1"
+                                           SmallChange="0.1"
+                                           SpinButtonPlacementMode="Inline"
+                                           ValueChanged="StutterFactorNumberBox_ValueChanged"
+                                           Value="{x:Bind ViewModel.StutterFactor, Mode=TwoWay}" />
+                            </AppBarElementContainer>
+
                         </controls:TabbedCommandBarItem.PrimaryCommands>
                     </controls:TabbedCommandBarItem>
                 </controls:TabbedCommandBar.MenuItems>

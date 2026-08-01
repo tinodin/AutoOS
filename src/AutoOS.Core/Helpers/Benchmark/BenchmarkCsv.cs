@@ -1,4 +1,4 @@
-using System.Buffers;
+﻿using System.Buffers;
 using System.Globalization;
 using System.Text;
 using AutoOS.Core.Helpers.Benchmark.Models;
@@ -97,7 +97,8 @@ public static class BenchmarkCsv
 		["MsGPUBusy"] = "How long the graphics card works on a single frame.",
 		["MsUntilDisplayed"] = "The delay between the game finishing a frame and it appearing on screen.",
 		["MsRenderPresentLatency"] = "The time between a frame being rendered and being presented.",
-		["Render Queue Depth"] = "The number of frames currently in the render queue."
+		["Render Queue Depth"] = "The number of frames currently in the render queue.",
+		["Stutter Analysis"] = "Breakdown of smooth periods, low FPS drops, stuttering spikes, and frame pacing variability."
 	};
 
 	public static readonly string[] StatisticLabels =
@@ -141,7 +142,13 @@ public static class BenchmarkCsv
 		["Standard Deviation"] = "Measures how widely values are spread around the average. Lower is more consistent.",
 		["Coefficient of Variation"] = "Standard deviation divided by the mean. Useful for comparing consistency across different performance levels.",
 		["Root mean square of successive differences (RMSSD)"] = "Measures the magnitude of variations between consecutive frame times. Lower values indicate more consistent frame pacing.",
-		["Stepwise-Relative"] = "Median percentage change between consecutive frame times. Lower values indicate less severe spikes."
+		["Stepwise-Relative"] = "Median percentage change between consecutive frame times. Lower values indicate less severe spikes.",
+
+		["Smooth"] = "Duration of smooth, consistent frame rates.",
+		["Low FPS"] = "Duration of frame rates below the low FPS threshold",
+		["Stuttering"] = "Duration of frame time spikes exceeding the stutter threshold.",
+		["Displayed Adaptive Standard Deviation"] = "Variation of the frame times your monitor actually receives, measured per 500 ms window. Lower is smoother.",
+		["Rendered Adaptive Standard Deviation"] = "Variation of the frame times your PC renders, measured per 500 ms window. Lower is smoother."
 	};
 
 	public static double GetStatistic(Metrics metric, string label) => label switch
@@ -166,12 +173,28 @@ public static class BenchmarkCsv
 		"Coefficient of Variation" => metric.Cv,
 		"Root mean square of successive differences (RMSSD)" => metric.Rmssd,
 		"Stepwise-Relative" => metric.StepwiseRelSD * 100,
+
+		"Smooth" => metric.Smooth,
+		"Low FPS" => metric.LowFPS,
+		"Stuttering" => metric.Stuttering,
+		"Displayed Adaptive Standard Deviation" => metric.DisplayedAdaptiveStdDev,
+		"Rendered Adaptive Standard Deviation" => metric.RenderedAdaptiveStdDev,
 		_ => 0
 	};
 
-	public readonly record struct StatisticDefinition(string Label, string Description, string Format, string Suffix, string DeltaSuffix, bool HigherIsBetter)
+	public static double? GetStatisticSeconds(Metrics metric, string label) => label switch
+	{
+		"Smooth" => metric.Smooth / 100 * metric.TotalSeconds,
+		"Low FPS" => metric.LowFPS / 100 * metric.TotalSeconds,
+		"Stuttering" => metric.Stuttering / 100 * metric.TotalSeconds,
+		_ => null
+	};
+
+	public readonly record struct StatisticDefinition(string Label, string Description, string Format, string Suffix, string DeltaSuffix, bool HigherIsBetter, Func<double, Metrics, string> Formatter = null)
 	{
 		public string FormatValue(double value) => value.ToString(Format, CultureInfo.CurrentCulture) + Suffix;
+
+		public string FormatValue(double value, Metrics metric) => Formatter is null ? FormatValue(value) : Formatter(value, metric);
 	}
 
 	public static readonly Dictionary<string, StatisticDefinition> FpsStatistics = new()
@@ -204,16 +227,25 @@ public static class BenchmarkCsv
 		["P5"] = new("P95", StatisticDescriptions["P95"], "0.####", " ms", " ms", HigherIsBetter: false),
 		["P1"] = new("P99", StatisticDescriptions["P99"], "0.####", " ms", " ms", HigherIsBetter: false),
 
-		["Maximum"] = new("Maximum", StatisticDescriptions["Maximum"], "0.####", " ms", " ms", HigherIsBetter: false),
-		["Minimum"] = new("Minimum", StatisticDescriptions["Minimum"], "0.####", " ms", " ms", HigherIsBetter: false),
+        ["Minimum"] = new("Minimum", StatisticDescriptions["Minimum"], "0.####", " ms", " ms", HigherIsBetter: false),
+        ["Maximum"] = new("Maximum", StatisticDescriptions["Maximum"], "0.####", " ms", " ms", HigherIsBetter: false),
 
 		["Root mean square of successive differences (RMSSD)"] = new("Root mean square of successive differences (RMSSD)", StatisticDescriptions["Root mean square of successive differences (RMSSD)"], "0.####", " ms", " ms", HigherIsBetter: false),
-		["Stepwise-Relative"] = new("Stepwise-Relative", StatisticDescriptions["Stepwise-Relative"], "0.0", "%", " pp", HigherIsBetter: false),
+		["Stepwise-Relative"] = new("Stepwise-Relative", StatisticDescriptions["Stepwise-Relative"], "0.00", " %", " %", HigherIsBetter: false),
 		["Standard Deviation"] = new("Standard Deviation (STDEV)", StatisticDescriptions["Standard Deviation"], "0.####", " ms", " ms", HigherIsBetter: false),
 		["Coefficient of Variation"] = new("Coefficient of Variation (CV)", StatisticDescriptions["Coefficient of Variation"], "0.#####", "", "", HigherIsBetter: false)
 	};
 
-	public static readonly (string Name, Func<AnalysisResult, Metrics> Selector, Dictionary<string, StatisticDefinition> Statistics)[] StatisticGroups =
+	public static readonly Dictionary<string, StatisticDefinition> StutterStatistics = new()
+	{
+		["Smooth"] = new("Smooth", StatisticDescriptions["Smooth"], "0.##", " %", " %", HigherIsBetter: true, Formatter: (value, metric) => $"{metric.Smooth / 100 * metric.TotalSeconds:0.00} s ({value:0.##} %)"),
+		["Low FPS"] = new("Low FPS", StatisticDescriptions["Low FPS"], "0.##", " %", " %", HigherIsBetter: false, Formatter: (value, metric) => $"{metric.LowFPS / 100 * metric.TotalSeconds:0.00} s ({value:0.##} %)"),
+		["Stuttering"] = new("Stuttering", StatisticDescriptions["Stuttering"], "0.##", " %", " %", HigherIsBetter: false, Formatter: (value, metric) => $"{metric.Stuttering / 100 * metric.TotalSeconds:0.00} s ({value:0.##} %)"),
+		["Displayed Adaptive Standard Deviation"] = new("Displayed Adaptive Standard Deviation", StatisticDescriptions["Displayed Adaptive Standard Deviation"], "0.####", " ms", " ms", HigherIsBetter: false),
+		["Rendered Adaptive Standard Deviation"] = new("Rendered Adaptive Standard Deviation", StatisticDescriptions["Rendered Adaptive Standard Deviation"], "0.####", " ms", " ms", HigherIsBetter: false)
+	};
+
+	public static (string Name, Func<AnalysisResult, Metrics> Selector, Dictionary<string, StatisticDefinition> Statistics)[] GetStatisticGroups(double stutterFactor = 2.5, double lowFpsThreshold = 25) =>
 	[
 		("Displayed FPS", result => result.DisplayedFps, FpsStatistics),
 		("Rendered FPS", result => result.RenderedFps, FpsStatistics),
@@ -222,6 +254,7 @@ public static class BenchmarkCsv
 		("MsGPUBusy", result => result.MsGpuBusyStats, LatencyStatistics),
 		("MsUntilDisplayed", result => result.MsUntilDisplayedStats, LatencyStatistics),
 		("MsRenderPresentLatency", result => result.MsRenderPresentLatencyStats, LatencyStatistics),
-		("Render Queue Depth", result => result.RenderQueueDepthStats, LatencyStatistics)
+		("Render Queue Depth", result => result.RenderQueueDepthStats, LatencyStatistics),
+		("Stutter Analysis", result => RecordingAnalyzer.GetStutterMetrics(result, stutterFactor, lowFpsThreshold), StutterStatistics)
 	];
 }

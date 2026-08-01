@@ -443,18 +443,28 @@ public sealed partial class BenchmarksPage : Page
 
 	private void LowFpsThresholdNumberBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
 	{
-		if (double.IsNaN(args.NewValue) || ViewModel.AnalysisChartType != "Pie" || ViewModel.CachedAnalysis.Count == 0)
+		if (double.IsNaN(args.NewValue) || ViewModel.CachedAnalysis.Count == 0)
 			return;
-		var pieData = BuildPieChartData(ViewModel.CachedAnalysis, ViewModel.StutterFactor, args.NewValue);
-		BindPieChart(pieData);
+
+        if (ViewModel.AnalysisChartType == "Pie")
+		{
+			var pieData = BuildPieChartData(ViewModel.CachedAnalysis, ViewModel.StutterFactor, args.NewValue);
+			BindPieChart(pieData);
+		}
+		UpdateStutterStatistics();
 	}
 
 	private void StutterFactorNumberBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
 	{
-		if (double.IsNaN(args.NewValue) || ViewModel.AnalysisChartType != "Pie" || ViewModel.CachedAnalysis.Count == 0)
+		if (double.IsNaN(args.NewValue) || ViewModel.CachedAnalysis.Count == 0)
 			return;
-		var pieData = BuildPieChartData(ViewModel.CachedAnalysis, args.NewValue, ViewModel.LowFpsThreshold);
-		BindPieChart(pieData);
+
+        if (ViewModel.AnalysisChartType == "Pie")
+		{
+			var pieData = BuildPieChartData(ViewModel.CachedAnalysis, args.NewValue, ViewModel.LowFpsThreshold);
+			BindPieChart(pieData);
+		}
+		UpdateStutterStatistics();
 	}
 
 	private void StatisticsBaselineComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -747,7 +757,7 @@ public sealed partial class BenchmarksPage : Page
 		}
 
 		List<ResultRow> groups = [];
-		foreach (var (name, selector, statistics) in BenchmarkCsv.StatisticGroups)
+		foreach (var (name, selector, statistics) in BenchmarkCsv.GetStatisticGroups(ViewModel.StutterFactor, ViewModel.LowFpsThreshold))
 		{
 			var m0 = selector(results[0].Analysis);
 			var m1 = results.Count > 1 ? selector(results[1].Analysis) : null;
@@ -765,10 +775,12 @@ public sealed partial class BenchmarksPage : Page
 				{
 					Statistic = definition.Label,
 					Tooltip = definition.Description,
-					RecordingA = definition.FormatValue(valueA),
-					RecordingB = m1 == null ? "" : definition.FormatValue(valueB),
+					RecordingA = definition.FormatValue(valueA, m0),
+					RecordingB = m1 == null ? "" : definition.FormatValue(valueB, m1),
 					RecordingAValue = valueA,
 					RecordingBValue = m1 == null ? null : valueB,
+					RecordingASeconds = BenchmarkCsv.GetStatisticSeconds(m0, key),
+					RecordingBSeconds = m1 == null ? null : BenchmarkCsv.GetStatisticSeconds(m1, key),
 					Definition = definition
 				});
 			}
@@ -803,8 +815,8 @@ public sealed partial class BenchmarksPage : Page
 	{
 		static string signed(double value, string format, string suffix)
 		{
-			string sign = value > 0 ? "+ " : value < 0 ? "- " : "";
-			return sign + Math.Abs(value).ToString(format, CultureInfo.InvariantCulture) + suffix;
+			string sign = value >= 0 ? "+ " : "- ";
+			return sign + Math.Abs(value).ToString(format, CultureInfo.CurrentCulture) + suffix;
 		}
 
 		foreach (var row in rows)
@@ -821,6 +833,11 @@ public sealed partial class BenchmarksPage : Page
 				bool valueAIsBetter = row.Definition.HigherIsBetter ? valueA > valueB : valueA < valueB;
 				row.RecordingAComparison = valueAIsBetter ? ComparisonResult.Better : ComparisonResult.Worse;
 				row.RecordingBComparison = valueAIsBetter ? ComparisonResult.Worse : ComparisonResult.Better;
+			}
+			else
+			{
+				row.RecordingAComparison = ComparisonResult.None;
+				row.RecordingBComparison = ComparisonResult.None;
 			}
 
 			if (baselineIndex is 0 or 1)
@@ -840,10 +857,18 @@ public sealed partial class BenchmarksPage : Page
 				}
 				else
 				{
+					row.RecordingAComparison = ComparisonResult.None;
+					row.RecordingBComparison = ComparisonResult.None;
 					row.DeltaComparison = ComparisonResult.None;
 				}
 
-				row.Delta = showPercentDelta ? baseline == 0 ? string.Empty : signed(delta / Math.Abs(baseline) * 100, "0.##", "%") : signed(delta, row.Definition.Format, row.Definition.DeltaSuffix);
+				string deltaText = showPercentDelta ? signed(delta, row.Definition.Format, " %") : signed(delta, row.Definition.Format, row.Definition.DeltaSuffix);
+				if (row.RecordingASeconds is double secondsA && row.RecordingBSeconds is double secondsB)
+				{
+					double secondsDelta = baselineIndex == 0 ? secondsB - secondsA : secondsA - secondsB;
+					deltaText = $"{signed(secondsDelta, "0.00", " s")} ({deltaText})";
+				}
+				row.Delta = deltaText;
 			}
 			else
 			{
@@ -853,7 +878,36 @@ public sealed partial class BenchmarksPage : Page
 		}
 	}
 
-	private void Chart_RightTapped(object sender, RightTappedRoutedEventArgs e)
+    private void UpdateStutterStatistics()
+    {
+        var results = ViewModel.CachedAnalysis;
+        var stutterGroup = ViewModel.StatisticsRows.FirstOrDefault(row => row.Statistic == "Stutter Analysis");
+        if (results.Count == 0 || stutterGroup is null)
+            return;
+
+        var m0 = RecordingAnalyzer.GetStutterMetrics(results[0].Analysis, ViewModel.StutterFactor, ViewModel.LowFpsThreshold);
+        var m1 = results.Count > 1 ? RecordingAnalyzer.GetStutterMetrics(results[1].Analysis, ViewModel.StutterFactor, ViewModel.LowFpsThreshold) : null;
+
+        foreach (var (key, definition) in BenchmarkCsv.StutterStatistics)
+        {
+            var row = stutterGroup.Children.FirstOrDefault(child => child.Statistic == definition.Label);
+            if (row is null)
+                continue;
+            double valueA = BenchmarkCsv.GetStatistic(m0, key);
+            double valueB = m1 == null ? 0 : BenchmarkCsv.GetStatistic(m1, key);
+            row.RecordingA = definition.FormatValue(valueA, m0);
+            row.RecordingB = m1 == null ? "" : definition.FormatValue(valueB, m1);
+            row.RecordingAValue = valueA;
+            row.RecordingBValue = m1 == null ? null : valueB;
+            row.RecordingASeconds = BenchmarkCsv.GetStatisticSeconds(m0, key);
+            row.RecordingBSeconds = m1 == null ? null : BenchmarkCsv.GetStatisticSeconds(m1, key);
+        }
+
+        ApplyStatisticsComparisons(stutterGroup.Children, ViewModel.BaselineIndex, ViewModel.IsPercentDelta);
+        StatisticsTreeGrid.View?.RefreshFilter();
+    }
+
+    private void Chart_RightTapped(object sender, RightTappedRoutedEventArgs e)
 	{
 		if (sender is not FrameworkElement chart) return;
 

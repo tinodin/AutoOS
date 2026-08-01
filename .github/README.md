@@ -10,10 +10,10 @@
 [![PayPal](https://img.shields.io/badge/Donate-PayPal-003087?logo=paypal&logoColor=fff)](https://www.paypal.com/donate/?hosted_button_id=GVEVUSHUWXEAG)
 
 <h3 align="center">
-  <a href="docs/INSTALL.md">Installation Guide</a> •
-  <a href="docs/USER_GUIDE_INSTALLER.md">User Guide (Installer)</a> •
-  <a href="docs/USER_GUIDE_SETTINGS.md">User Guide (Settings)</a> •
-  <a href="docs/LICENSE_THIRD_PARTY.md">Credits & License</a>
+<a href="../docs/INSTALL.md">Installation Guide</a> •
+<a href="../docs/USER_GUIDE_INSTALLER.md">User Guide (Installer)</a> •
+<a href="../docs/USER_GUIDE_SETTINGS.md">User Guide (Settings)</a> •
+<a href="../docs/LICENSE_THIRD_PARTY.md">Credits & License</a>
 </h3>
 </div>
 

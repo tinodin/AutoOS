@@ -973,6 +973,8 @@ public sealed partial class ResultRow : ObservableObject
 
 	internal double? RecordingAValue { get; set; }
 	internal double? RecordingBValue { get; set; }
+	internal double? RecordingASeconds { get; set; }
+	internal double? RecordingBSeconds { get; set; }
 	internal BenchmarkCsv.StatisticDefinition Definition { get; set; }
 }
 

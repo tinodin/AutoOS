@@ -1,8 +1,9 @@
-namespace AutoOS.Core.Helpers.Benchmark.Models;
+﻿namespace AutoOS.Core.Helpers.Benchmark.Models;
 
 public class Metrics
 {
-	public double Low01 { get; set; }
+    public double TotalSeconds { get; set; }
+    public double Low01 { get; set; }
 	public double Low1 { get; set; }
 
 	public double AvgArithmetic { get; set; }
@@ -22,4 +23,11 @@ public class Metrics
 	public double Cv { get; set; }
 	public double Rmssd { get; set; }
 	public double StepwiseRelSD { get; set; }
+
+	public double Smooth { get; set; }
+	public double LowFPS { get; set; }
+	public double Stuttering { get; set; }
+
+	public double DisplayedAdaptiveStdDev { get; set; }
+	public double RenderedAdaptiveStdDev { get; set; }
 }
