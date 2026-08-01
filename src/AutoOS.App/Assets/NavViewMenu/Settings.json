@@ -115,6 +115,13 @@
           "HideItem": true
         },
         {
+          "UniqueId": "AutoOS.Views.Settings.BenchmarksPage",
+          "Title": "Benchmarks",
+          "Subtitle": "Benchmarks",
+          "ImagePath": "ms-appx:///Assets/Fluent/Benchmarks.png",
+          "HideItem": true
+        },
+        {
           "UniqueId": "AutoOS.Views.Settings.GamesPage",
           "Title": "Games",
           "Subtitle": "Games",

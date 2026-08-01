@@ -21,6 +21,7 @@ public partial class BreadcrumbPageMappingsSettings
 		{ typeof(Views.Settings.UpdatePage), new BreadcrumbPageConfig { PageTitle = null, IsHeaderVisible = false, ClearNavigation = false } },
 		{ typeof(Views.Settings.BrowsersPage), new BreadcrumbPageConfig { PageTitle = null, IsHeaderVisible = false, ClearNavigation = false } },
 		{ typeof(Views.Settings.ApplicationsPage), new BreadcrumbPageConfig { PageTitle = null, IsHeaderVisible = false, ClearNavigation = false } },
+		{ typeof(Views.Settings.BenchmarksPage), new BreadcrumbPageConfig { PageTitle = null, IsHeaderVisible = false, ClearNavigation = false } },
 		{ typeof(Views.Settings.GamesPage), new BreadcrumbPageConfig { PageTitle = null, IsHeaderVisible = false, ClearNavigation = false } }
 	};
 }

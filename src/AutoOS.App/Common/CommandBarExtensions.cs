@@ -1,10 +1,21 @@
 using System.Runtime.CompilerServices;
+using CommunityToolkit.WinUI.Controls;
 
 namespace AutoOS.Common;
 
 public static class CommandBarExtensions
 {
-    private static readonly ConditionalWeakTable<CommandBar, Dictionary<AppBarElementContainer, Thickness>> _marginsMap = [];
+    private static readonly ConditionalWeakTable<CommandBar, CommandBarState> _stateMap = [];
+
+    private sealed class CommandBarState
+    {
+        public Dictionary<AppBarElementContainer, Thickness> Margins { get; } = [];
+        public List<(UIElement Element, long Token)> VisibilityTokens { get; } = [];
+        public Windows.Foundation.Collections.VectorChangedEventHandler<ICommandBarElement> VectorChangedHandler { get; set; }
+        public SizeChangedEventHandler SizeChangedHandler { get; set; }
+        public bool RefreshQueued { get; set; }
+        public bool RefreshDirty { get; set; }
+    }
 
     public static readonly DependencyProperty ApplyOverflowIndentProperty =
         DependencyProperty.RegisterAttached(
@@ -57,88 +68,269 @@ public static class CommandBarExtensions
         obj.SetValue(OverflowButtonAlignmentProperty, value);
     }
 
-    private static void OnApplyOverflowIndentChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    private static void ForEachCommandBar(DependencyObject dependencyObject, Action<CommandBar> action)
     {
-        if (d is not CommandBar commandBar)
-            return;
-
-        bool newValue = (bool)e.NewValue;
-
-        if (newValue)
+        if (dependencyObject is CommandBar commandBar)
         {
-            commandBar.Opening += CommandBar_Opening;
-            commandBar.Closed += CommandBar_Closed;
-            
-            if (commandBar.IsOpen)
+            action(commandBar);
+        }
+        else if (dependencyObject is TabbedCommandBar tabbedCommandBar)
+        {
+            if (tabbedCommandBar.IsLoaded)
             {
-                ApplyOverflowContainerMargins(commandBar);
-            }
-
-            if (commandBar.IsLoaded)
-            {
-                UpdateCommandAlignment(commandBar, GetCommandAlignment(commandBar));
-                UpdateOverflowButtonAlignment(commandBar, GetOverflowButtonAlignment(commandBar));
+                foreach (var item in tabbedCommandBar.MenuItems.OfType<TabbedCommandBarItem>())
+                    action(item);
             }
             else
             {
                 RoutedEventHandler loadedHandler = null;
                 loadedHandler = (sender, args) =>
                 {
+                    tabbedCommandBar.Loaded -= loadedHandler;
+                    foreach (var item in tabbedCommandBar.MenuItems.OfType<TabbedCommandBarItem>())
+                        action(item);
+                };
+                tabbedCommandBar.Loaded += loadedHandler;
+            }
+        }
+    }
+
+    private static void OnApplyOverflowIndentChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
+    {
+        bool newValue = (bool)args.NewValue;
+
+        ForEachCommandBar(dependencyObject, commandBar =>
+        {
+            if (newValue)
+            {
+                commandBar.Opening += CommandBar_Opening;
+                commandBar.Closed += CommandBar_Closed;
+
+                if (commandBar.IsOpen)
+                    ApplyOverflowContainerMargins(commandBar);
+
+                AttachSizeChangedTracking(commandBar);
+                AttachVisibilityTracking(commandBar);
+
+                if (commandBar.IsLoaded)
+                {
+                    UpdateCommandAlignment(commandBar, GetCommandAlignment(dependencyObject));
+                    UpdateOverflowButtonAlignment(commandBar, GetOverflowButtonAlignment(dependencyObject));
+                }
+                else
+                {
+                    RoutedEventHandler loadedHandler = null;
+                    loadedHandler = (sender, eventArgs) =>
+                    {
+                        commandBar.Loaded -= loadedHandler;
+                        UpdateCommandAlignment(commandBar, GetCommandAlignment(dependencyObject));
+                        UpdateOverflowButtonAlignment(commandBar, GetOverflowButtonAlignment(dependencyObject));
+                        AttachSizeChangedTracking(commandBar);
+                        AttachVisibilityTracking(commandBar);
+                    };
+                    commandBar.Loaded += loadedHandler;
+                }
+            }
+            else
+            {
+                commandBar.Opening -= CommandBar_Opening;
+                commandBar.Closed -= CommandBar_Closed;
+                DetachSizeChangedTracking(commandBar);
+                DetachVisibilityTracking(commandBar);
+                RestoreOverflowContainerMargins(commandBar);
+            }
+        });
+    }
+
+    private static void OnCommandAlignmentChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
+    {
+        var alignment = (HorizontalAlignment)args.NewValue;
+        ForEachCommandBar(dependencyObject, commandBar =>
+        {
+            if (commandBar.IsLoaded)
+                UpdateCommandAlignment(commandBar, alignment);
+            else
+            {
+                RoutedEventHandler loadedHandler = null;
+                loadedHandler = (sender, eventArgs) =>
+                {
                     commandBar.Loaded -= loadedHandler;
-                    UpdateCommandAlignment(commandBar, GetCommandAlignment(commandBar));
-                    UpdateOverflowButtonAlignment(commandBar, GetOverflowButtonAlignment(commandBar));
+                    UpdateCommandAlignment(commandBar, alignment);
                 };
                 commandBar.Loaded += loadedHandler;
             }
-        }
-        else
+        });
+    }
+
+    private static void OnOverflowButtonAlignmentChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
+    {
+        var alignment = (HorizontalAlignment)args.NewValue;
+        ForEachCommandBar(dependencyObject, commandBar =>
         {
-            commandBar.Opening -= CommandBar_Opening;
-            commandBar.Closed -= CommandBar_Closed;
-            RestoreOverflowContainerMargins(commandBar);
+            if (commandBar.IsLoaded)
+                UpdateOverflowButtonAlignment(commandBar, alignment);
+            else
+            {
+                RoutedEventHandler loadedHandler = null;
+                loadedHandler = (sender, eventArgs) =>
+                {
+                    commandBar.Loaded -= loadedHandler;
+                    UpdateOverflowButtonAlignment(commandBar, alignment);
+                };
+                commandBar.Loaded += loadedHandler;
+            }
+        });
+    }
+
+    private static void AttachVisibilityTracking(CommandBar commandBar)
+    {
+        var state = _stateMap.GetOrCreateValue(commandBar);
+        if (state.VectorChangedHandler is null)
+        {
+            state.VectorChangedHandler = (_, _) =>
+            {
+                HookVisibilityCallbacks(commandBar);
+                QueueOverflowRefresh(commandBar);
+            };
+            commandBar.PrimaryCommands.VectorChanged += state.VectorChangedHandler;
+        }
+
+        HookVisibilityCallbacks(commandBar);
+    }
+
+    private static void DetachVisibilityTracking(CommandBar commandBar)
+    {
+        if (!_stateMap.TryGetValue(commandBar, out var state))
+            return;
+
+        if (state.VectorChangedHandler is not null)
+        {
+            commandBar.PrimaryCommands.VectorChanged -= state.VectorChangedHandler;
+            state.VectorChangedHandler = null;
+        }
+
+        UnhookVisibilityCallbacks(state);
+    }
+
+    private static void AttachSizeChangedTracking(CommandBar commandBar)
+    {
+        var state = _stateMap.GetOrCreateValue(commandBar);
+        if (state.SizeChangedHandler is null)
+        {
+            state.SizeChangedHandler = (_, _) => QueueOverflowRefresh(commandBar);
+            commandBar.SizeChanged += state.SizeChangedHandler;
         }
     }
 
-    private static void OnCommandAlignmentChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    private static void DetachSizeChangedTracking(CommandBar commandBar)
     {
-        if (d is not CommandBar commandBar)
+        if (!_stateMap.TryGetValue(commandBar, out var state))
             return;
 
-        if (commandBar.IsLoaded)
+        if (state.SizeChangedHandler is not null)
         {
-            UpdateCommandAlignment(commandBar, (HorizontalAlignment)e.NewValue);
-        }
-        else
-        {
-            RoutedEventHandler loadedHandler = null;
-            loadedHandler = (sender, args) =>
-            {
-                commandBar.Loaded -= loadedHandler;
-                UpdateCommandAlignment(commandBar, GetCommandAlignment(commandBar));
-            };
-            commandBar.Loaded += loadedHandler;
+            commandBar.SizeChanged -= state.SizeChangedHandler;
+            state.SizeChangedHandler = null;
         }
     }
 
-    private static void OnOverflowButtonAlignmentChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    private static void HookVisibilityCallbacks(CommandBar commandBar)
     {
-        if (d is not CommandBar commandBar)
+        var state = _stateMap.GetOrCreateValue(commandBar);
+        UnhookVisibilityCallbacks(state);
+
+        foreach (var element in commandBar.PrimaryCommands.OfType<UIElement>())
+        {
+            long token = element.RegisterPropertyChangedCallback(
+                UIElement.VisibilityProperty,
+                (_, _) => QueueOverflowRefresh(commandBar));
+            state.VisibilityTokens.Add((element, token));
+        }
+    }
+
+    private static void UnhookVisibilityCallbacks(CommandBarState state)
+    {
+        foreach (var (element, token) in state.VisibilityTokens)
+            element.UnregisterPropertyChangedCallback(UIElement.VisibilityProperty, token);
+        state.VisibilityTokens.Clear();
+    }
+
+    private static void QueueOverflowRefresh(CommandBar commandBar)
+    {
+        var state = _stateMap.GetOrCreateValue(commandBar);
+        if (state.RefreshQueued)
+        {
+            state.RefreshDirty = true;
+            return;
+        }
+
+        state.RefreshQueued = true;
+        state.RefreshDirty = false;
+        if (!commandBar.DispatcherQueue.TryEnqueue(() =>
+            {
+                try
+                {
+                    RefreshOverflow(commandBar);
+                    while (state.RefreshDirty)
+                    {
+                        state.RefreshDirty = false;
+                        RefreshOverflow(commandBar);
+                    }
+                }
+                finally
+                {
+                    state.RefreshQueued = false;
+                    if (state.RefreshDirty)
+                        QueueOverflowRefresh(commandBar);
+                }
+            }))
+        {
+            state.RefreshQueued = false;
+        }
+    }
+
+    private static void RefreshOverflow(CommandBar commandBar)
+    {
+        if (!commandBar.IsLoaded || !commandBar.IsDynamicOverflowEnabled)
             return;
 
-        if (commandBar.IsLoaded)
+        commandBar.IsDynamicOverflowEnabled = false;
+        commandBar.IsDynamicOverflowEnabled = true;
+        commandBar.UpdateLayout();
+
+        bool show = HasOverflowContent(commandBar);
+        SetOverflowButtonVisibility(commandBar, show);
+        commandBar.UpdateLayout();
+
+        bool showAfterLayout = HasOverflowContent(commandBar);
+        if (showAfterLayout != show)
+            SetOverflowButtonVisibility(commandBar, showAfterLayout);
+    }
+
+    private static bool HasOverflowContent(CommandBar commandBar)
+    {
+        if (commandBar.SecondaryCommands.Count > 0)
+            return true;
+
+        foreach (ICommandBarElement command in commandBar.PrimaryCommands)
         {
-            UpdateOverflowButtonAlignment(commandBar, (HorizontalAlignment)e.NewValue);
+            if (command.IsInOverflow)
+                return true;
         }
-        else
-        {
-            RoutedEventHandler loadedHandler = null;
-            loadedHandler = (sender, args) =>
-            {
-                commandBar.Loaded -= loadedHandler;
-                UpdateOverflowButtonAlignment(commandBar, GetOverflowButtonAlignment(commandBar));
-            };
-            commandBar.Loaded += loadedHandler;
-        }
+
+        return false;
+    }
+
+    private static void SetOverflowButtonVisibility(CommandBar commandBar, bool show)
+    {
+        var target = show
+            ? CommandBarOverflowButtonVisibility.Visible
+            : CommandBarOverflowButtonVisibility.Auto;
+
+        if (commandBar.OverflowButtonVisibility == target && show)
+            commandBar.OverflowButtonVisibility = CommandBarOverflowButtonVisibility.Collapsed;
+
+        commandBar.OverflowButtonVisibility = target;
     }
 
     private static void UpdateCommandAlignment(CommandBar commandBar, HorizontalAlignment alignment)
@@ -146,8 +338,8 @@ public static class CommandBarExtensions
         try
         {
             commandBar.ApplyTemplate();
-			var primaryItemsControl = FindVisualChild<ItemsControl>(commandBar, "PrimaryItemsControl");
-			primaryItemsControl?.HorizontalAlignment = alignment;
+            var primaryItemsControl = FindVisualChild<ItemsControl>(commandBar, "PrimaryItemsControl");
+            primaryItemsControl?.HorizontalAlignment = alignment;
         }
         catch { }
     }
@@ -157,22 +349,23 @@ public static class CommandBarExtensions
         try
         {
             commandBar.ApplyTemplate();
-			var moreButton = FindVisualChild<Button>(commandBar, "MoreButton");
-			moreButton?.HorizontalAlignment = alignment;
+            var moreButton = FindVisualChild<Button>(commandBar, "MoreButton");
+            moreButton?.HorizontalAlignment = alignment;
         }
         catch { }
     }
 
-    private static T FindVisualChild<T>(DependencyObject obj, string name) where T : DependencyObject
+    private static T FindVisualChild<T>(DependencyObject parent, string childName) where T : DependencyObject
     {
-        for (int i = 0; i < Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChildrenCount(obj); i++)
+        int count = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChildrenCount(parent);
+        for (int index = 0; index < count; index++)
         {
-            var child = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(obj, i);
-            if (child is T t && (child as FrameworkElement)?.Name == name)
+            var child = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(parent, index);
+            if (child is T matched && (child as FrameworkElement)?.Name == childName)
             {
-                return t;
+                return matched;
             }
-            var childOfChild = FindVisualChild<T>(child, name);
+            var childOfChild = FindVisualChild<T>(child, childName);
             if (childOfChild != null)
             {
                 return childOfChild;
@@ -181,51 +374,42 @@ public static class CommandBarExtensions
         return null;
     }
 
-    private static void CommandBar_Opening(object sender, object e)
+    private static void CommandBar_Opening(object sender, object eventArgs)
     {
         if (sender is CommandBar commandBar)
-        {
             ApplyOverflowContainerMargins(commandBar);
-        }
     }
 
-    private static void CommandBar_Closed(object sender, object e)
+    private static void CommandBar_Closed(object sender, object eventArgs)
     {
         if (sender is CommandBar commandBar)
-        {
             RestoreOverflowContainerMargins(commandBar);
-        }
     }
 
     private static void ApplyOverflowContainerMargins(CommandBar commandBar)
     {
-        var margins = _marginsMap.GetOrCreateValue(commandBar);
+        var margins = _stateMap.GetOrCreateValue(commandBar).Margins;
 
         foreach (var container in commandBar.PrimaryCommands.OfType<AppBarElementContainer>())
         {
-            if (container.IsInOverflow)
-            {
-                margins.TryAdd(container, container.Margin);
-                container.Margin = new Thickness(32, 0, 0, 0);
-            }
+            if (container.IsInOverflow && margins.TryAdd(container, container.Margin))
+                container.Margin = new Thickness(32, 0, 32, 4);
         }
 
         foreach (var container in commandBar.SecondaryCommands.OfType<AppBarElementContainer>())
         {
-            margins.TryAdd(container, container.Margin);
-            container.Margin = new Thickness(32, 0, 0, 0);
+            if (margins.TryAdd(container, container.Margin))
+                container.Margin = new Thickness(32, 0, 32, 4);
         }
     }
 
     private static void RestoreOverflowContainerMargins(CommandBar commandBar)
     {
-        if (_marginsMap.TryGetValue(commandBar, out var margins))
+        if (_stateMap.TryGetValue(commandBar, out var state))
         {
-            foreach (var (container, margin) in margins)
-            {
+            foreach (var (container, margin) in state.Margins)
                 container.Margin = margin;
-            }
-            margins.Clear();
+            state.Margins.Clear();
         }
     }
 }

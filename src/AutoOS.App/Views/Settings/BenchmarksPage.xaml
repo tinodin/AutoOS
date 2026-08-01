@@ -1,0 +1,1211 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page x:Class="AutoOS.Views.Settings.BenchmarksPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:chart="using:Syncfusion.UI.Xaml.Charts"
+      xmlns:common="using:AutoOS.Common"
+      xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+      xmlns:converters="using:CommunityToolkit.WinUI.Converters"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:dev="using:DevWinUI"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:sfdata="using:Syncfusion.UI.Xaml.DataGrid"
+      xmlns:sfgrid="using:Syncfusion.UI.Xaml.TreeGrid"
+      xmlns:viewmodel="using:AutoOS.ViewModels"
+      mc:Ignorable="d">
+    <Page.Resources>
+
+        <!--  Inverse Bool to Objet Converter  -->
+        <converters:BoolToObjectConverter x:Key="InverseBoolToObjectConverter"
+                                          FalseValue="True"
+                                          TrueValue="False" />
+
+        <!--  Critical  -->
+        <Style x:Key="CriticalCellStyle"
+               TargetType="sfgrid:TreeGridCell">
+            <Setter Property="Background"
+                    Value="{ThemeResource SystemFillColorCriticalBackgroundBrush}" />
+        </Style>
+
+        <!--  Success  -->
+        <Style x:Key="SuccessCellStyle"
+               TargetType="sfgrid:TreeGridCell">
+            <Setter Property="Background"
+                    Value="{ThemeResource SystemFillColorSuccessBackgroundBrush}" />
+        </Style>
+
+        <!--  Cell style selector  -->
+        <viewmodel:ResultCellStyleSelector x:Key="ResultCellStyleSelector"
+                                           CriticalStyle="{StaticResource CriticalCellStyle}"
+                                           SuccessStyle="{StaticResource SuccessCellStyle}" />
+    </Page.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!--  Header  -->
+        <StackPanel Margin="36,24,36,0">
+            <TextBlock Style="{StaticResource TitleTextBlockStyle}"
+                       Text="Benchmarks" />
+
+            <!--  Command Bar  -->
+            <controls:TabbedCommandBar x:Name="BenchmarksSelectorBar"
+                                       Margin="0,48,0,0"
+                                       common:CommandBarExtensions.ApplyOverflowIndent="True"
+                                       common:CommandBarExtensions.CommandAlignment="Left"
+                                       common:CommandBarExtensions.OverflowButtonAlignment="Right"
+                                       SelectedItem="{x:Bind RecordingsTab}"
+                                       SelectionChanged="BenchmarksSelectorBar_SelectionChanged">
+                <controls:TabbedCommandBar.MenuItems>
+
+                    <!--  Recordings  -->
+                    <controls:TabbedCommandBarItem x:Name="RecordingsTab"
+                                                   Header="Recordings">
+                        <controls:TabbedCommandBarItem.PrimaryCommands>
+
+                            <!--  Add  -->
+                            <AppBarButton Command="{x:Bind ViewModel.AddCommand}"
+                                          Label="Add">
+                                <AppBarButton.Content>
+                                    <dev:ThemedIcon Style="{StaticResource App.ThemedIcons.New.Item}" />
+                                </AppBarButton.Content>
+                                <AppBarButton.KeyboardAccelerators>
+                                    <KeyboardAccelerator Key="N"
+                                                         Modifiers="Control" />
+                                </AppBarButton.KeyboardAccelerators>
+                            </AppBarButton>
+
+                            <!--  Separator  -->
+                            <AppBarSeparator Margin="4,0" />
+
+                            <!--  Rename  -->
+                            <AppBarButton Click="RenameRecording_Click"
+                                          IsEnabled="{x:Bind ViewModel.IsRenameEnabled, Mode=OneWay}"
+                                          Label="Rename"
+                                          ToolTipService.ToolTip="Rename (F2)">
+                                <AppBarButton.Content>
+                                    <dev:ThemedIcon Style="{StaticResource App.ThemedIcons.Rename}" />
+                                </AppBarButton.Content>
+                            </AppBarButton>
+
+                            <!--  Delete  -->
+                            <AppBarButton Command="{x:Bind ViewModel.DeleteCommand}"
+                                          CommandParameter="{x:Bind XamlRoot}"
+                                          Label="Delete">
+                                <AppBarButton.Content>
+                                    <dev:ThemedIcon Style="{StaticResource App.ThemedIcons.Delete}" />
+                                </AppBarButton.Content>
+                                <AppBarButton.KeyboardAccelerators>
+                                    <KeyboardAccelerator Key="Delete" />
+                                </AppBarButton.KeyboardAccelerators>
+                            </AppBarButton>
+
+                            <!--  Aggregate  -->
+                            <AppBarButton x:Name="Aggregate"
+                                          Command="{x:Bind ViewModel.AggregateCommand}"
+                                          Icon="{dev:FontIcon Glyph=&#xEA3C;}"
+                                          Label="Aggregate">
+                                <AppBarButton.KeyboardAccelerators>
+                                    <KeyboardAccelerator Key="A"
+                                                         Modifiers="Menu" />
+                                </AppBarButton.KeyboardAccelerators>
+                            </AppBarButton>
+
+                            <!--  Separator  -->
+                            <AppBarSeparator Margin="4,0" />
+
+                            <!--  Process  -->
+                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsRecording, Mode=OneWay, Converter={StaticResource InverseBoolToObjectConverter}}">
+                                <ComboBox x:Name="ProcessComboBox"
+                                          MinWidth="265"
+                                          DropDownClosed="ProcessComboBox_DropDownClosed"
+                                          DropDownOpened="ProcessComboBox_DropDownOpened"
+                                          ItemsSource="{x:Bind ViewModel.ProcessSuggestions, Mode=OneWay}"
+                                          PlaceholderText="Select a process to record..."
+                                          SelectedItem="{x:Bind ViewModel.ProcessName, Mode=TwoWay}"
+                                          ToolTipService.ToolTip="Process" />
+                            </AppBarElementContainer>
+
+                            <!--  Separator  -->
+                            <AppBarSeparator Margin="4,0" />
+
+                            <!--  Delay  -->
+                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsRecording, Mode=OneWay, Converter={StaticResource InverseBoolToObjectConverter}}">
+                                <NumberBox LargeChange="5"
+                                           Maximum="10"
+                                           Minimum="2"
+                                           SmallChange="1"
+                                           SpinButtonPlacementMode="Inline"
+                                           ToolTipService.ToolTip="Delay (s)"
+                                           Value="{x:Bind ViewModel.Delay, Mode=TwoWay}" />
+                            </AppBarElementContainer>
+
+                            <!--  Duration  -->
+                            <AppBarElementContainer Margin="2,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsRecording, Mode=OneWay, Converter={StaticResource InverseBoolToObjectConverter}}">
+                                <NumberBox LargeChange="5"
+                                           Maximum="120"
+                                           Minimum="15"
+                                           SmallChange="1"
+                                           SpinButtonPlacementMode="Inline"
+                                           ToolTipService.ToolTip="Duration (s)"
+                                           Value="{x:Bind ViewModel.Duration, Mode=TwoWay}" />
+                            </AppBarElementContainer>
+
+                            <!--  Separator  -->
+                            <AppBarSeparator Margin="4,0" />
+
+                            <!--  Hotkey  -->
+                            <AppBarElementContainer>
+                                <dev:Shortcut x:Name="HotkeyShortcut"
+                                              Margin="0,0,2,0"
+                                              Keys="{x:Bind ViewModel.ShortcutKeys, Mode=OneWay}"
+                                              PrimaryButtonClick="HotkeyShortcut_PrimaryButtonClick"
+                                              Style="{StaticResource SmallShortcutStyle}"
+                                              ToolTipService.ToolTip="Recording Shortcut"
+                                              UseAutoValidation="True" />
+                            </AppBarElementContainer>
+
+                            <!--  Record  -->
+                            <AppBarElementContainer>
+                                <ToggleButton x:Name="Record"
+                                              Checked="Record_Checked"
+                                              IsEnabled="{x:Bind ViewModel.CanRecord, Mode=OneWay}"
+                                              Unchecked="Record_Unchecked">
+                                    <StackPanel Orientation="Horizontal"
+                                                Spacing="8">
+                                        <FontIcon FontSize="12"
+                                                  Glyph="{x:Bind ViewModel.RecordIconGlyph, Mode=OneWay}" />
+                                        <TextBlock Style="{StaticResource BodyTextBlockStyle}"
+                                                   Text="{x:Bind ViewModel.RecordLabel, Mode=OneWay}" />
+                                    </StackPanel>
+                                </ToggleButton>
+                            </AppBarElementContainer>
+
+                        </controls:TabbedCommandBarItem.PrimaryCommands>
+                    </controls:TabbedCommandBarItem>
+
+                    <!--  Analysis  -->
+                    <controls:TabbedCommandBarItem x:Name="AnalysisTab"
+                                                   Header="Analysis">
+                        <controls:TabbedCommandBarItem.PrimaryCommands>
+
+                            <!--  Chart Type  -->
+                            <AppBarElementContainer Margin="4,0,0,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    ToolTipService.ToolTip="Chart Type">
+                                <dev:SelectorBarSegmented SelectionChanged="AnalysisChartTypeSelector_SelectionChanged">
+                                    <SelectorBarItem x:Name="BarChartItem"
+                                                     IsSelected="True"
+                                                     Text="Bar"
+                                                     ToolTipService.ToolTip="Horizontal bar chart comparing FPS statistics." />
+                                    <SelectorBarItem x:Name="ColumnChartItem"
+                                                     Text="Column"
+                                                     ToolTipService.ToolTip="Vertical column chart comparing FPS statistics." />
+                                    <SelectorBarItem x:Name="LineChartItem"
+                                                     Text="Line"
+                                                     ToolTipService.ToolTip="Line chart of the selected per-frame metric." />
+                                    <SelectorBarItem x:Name="ScatterChartItem"
+                                                     Text="Scatter"
+                                                     ToolTipService.ToolTip="Scatter plot of the selected per-frame metric." />
+                                    <SelectorBarItem x:Name="PieChartItem"
+                                                     Text="Pie"
+                                                     ToolTipService.ToolTip="Pie chart showing stutter analysis." />
+                                </dev:SelectorBarSegmented>
+                            </AppBarElementContainer>
+
+                            <!--  Separator  -->
+                            <AppBarSeparator Margin="4,0" />
+
+                            <!--  Bar / Column Statistics  -->
+                            <AppBarElementContainer Margin="0,0,2,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="0.1% Low Avg"
+                                              IsChecked="{x:Bind ViewModel.ShowLow01, Mode=TwoWay}"
+                                              ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('0.1% Low Avg')}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="1% Low Avg"
+                                              IsChecked="{x:Bind ViewModel.ShowLow1, Mode=TwoWay}"
+                                              ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('1% Low Avg')}" />
+                            </AppBarElementContainer>
+
+                            <AppBarSeparator Margin="4,0"
+                                             Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}" />
+
+                            <AppBarElementContainer Margin="0,0,2,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="Avg (Arithmetic)"
+                                              IsChecked="{x:Bind ViewModel.ShowAvgArithmetic, Mode=TwoWay}"
+                                              ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('Avg (Arithmetic)')}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="Avg (Harmonic)"
+                                              IsChecked="{x:Bind ViewModel.ShowAvgHarmonic, Mode=TwoWay}"
+                                              ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('Avg (Harmonic)')}" />
+                            </AppBarElementContainer>
+
+                            <AppBarSeparator Margin="4,0"
+                                             Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}" />
+
+                            <AppBarElementContainer Margin="0,0,2,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="Min"
+                                              IsChecked="{x:Bind ViewModel.ShowMin, Mode=TwoWay}"
+                                              ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('Min')}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="Max"
+                                              IsChecked="{x:Bind ViewModel.ShowMax, Mode=TwoWay}"
+                                              ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('Max')}" />
+                            </AppBarElementContainer>
+
+                            <AppBarSeparator Margin="4,0"
+                                             Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}" />
+
+                            <AppBarElementContainer Margin="0,0,2,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="P0.1"
+                                              IsChecked="{x:Bind ViewModel.ShowP01, Mode=TwoWay}"
+                                              ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P0.1')}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer Margin="0,0,2,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="P1"
+                                              IsChecked="{x:Bind ViewModel.ShowP1, Mode=TwoWay}"
+                                              ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P1')}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer Margin="0,0,2,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="P5"
+                                              IsChecked="{x:Bind ViewModel.ShowP5, Mode=TwoWay}"
+                                              ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P5')}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer Margin="0,0,2,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="P50 (Median)"
+                                              IsChecked="{x:Bind ViewModel.ShowP50Median, Mode=TwoWay}"
+                                              ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P50 (Median)')}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer Margin="0,0,2,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="P95"
+                                              IsChecked="{x:Bind ViewModel.ShowP95, Mode=TwoWay}"
+                                              ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P95')}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
+                                <ToggleButton Content="P99"
+                                              IsChecked="{x:Bind ViewModel.ShowP99, Mode=TwoWay}"
+                                              ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P99')}" />
+                            </AppBarElementContainer>
+
+                            <!--  Line / Scatter Statistics  -->
+                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.MetricVisibility, Mode=OneWay}">
+                                <ComboBox x:Name="Metric1ComboBox"
+                                          MinWidth="215"
+                                          SelectedIndex="0"
+                                          SelectionChanged="MetricComboBox_SelectionChanged">
+                                    <ComboBoxItem Content="MsBetweenDisplayChange"
+                                                  ToolTipService.ToolTip="{x:Bind ViewModel.GetMetricTooltip('MsBetweenDisplayChange')}" />
+                                    <ComboBoxItem Content="MsBetweenPresents"
+                                                  ToolTipService.ToolTip="{x:Bind ViewModel.GetMetricTooltip('MsBetweenPresents')}" />
+                                    <ComboBoxItem Content="MsGPUBusy"
+                                                  ToolTipService.ToolTip="{x:Bind ViewModel.GetMetricTooltip('MsGPUBusy')}" />
+                                    <ComboBoxItem Content="MsUntilDisplayed"
+                                                  ToolTipService.ToolTip="{x:Bind ViewModel.GetMetricTooltip('MsUntilDisplayed')}" />
+                                </ComboBox>
+                            </AppBarElementContainer>
+
+                            <!--  Pie Thresholds  -->
+                            <AppBarElementContainer Margin="0,0,2,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.ThresholdsVisibility, Mode=OneWay}">
+                                <NumberBox LargeChange="5"
+                                           Minimum="1"
+                                           SmallChange="1"
+                                           SpinButtonPlacementMode="Inline"
+                                           ToolTipService.ToolTip="Low FPS threshold"
+                                           ValueChanged="LowFpsThresholdNumberBox_ValueChanged"
+                                           Value="{x:Bind ViewModel.LowFpsThreshold, Mode=TwoWay}" />
+                            </AppBarElementContainer>
+                            <AppBarElementContainer Margin="0,0,2,0"
+                                                    IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.ThresholdsVisibility, Mode=OneWay}">
+                                <NumberBox LargeChange="0.5"
+                                           Maximum="10"
+                                           Minimum="1"
+                                           SmallChange="0.1"
+                                           SpinButtonPlacementMode="Inline"
+                                           ToolTipService.ToolTip="Stutter factor"
+                                           ValueChanged="StutterFactorNumberBox_ValueChanged"
+                                           Value="{x:Bind ViewModel.StutterFactor, Mode=TwoWay}" />
+                            </AppBarElementContainer>
+
+                            <!--  Separator  -->
+                            <AppBarSeparator Margin="4,0" />
+
+                            <!--  Recording A Color Picker  -->
+                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+                                                    ToolTipService.ToolTip="{x:Bind ViewModel.RecordingAColorTooltip, Mode=OneWay}">
+                                <dev:DropdownColorPicker VerticalAlignment="Bottom"
+                                                         ColorSpectrumShape="Ring"
+                                                         IsAlphaEnabled="True"
+                                                         IsAlphaSliderVisible="True"
+                                                         IsMoreButtonVisible="True"
+                                                         Tag="RecordingA"
+                                                         Color="{x:Bind ViewModel.RecordingAColor, Mode=TwoWay}">
+                                </dev:DropdownColorPicker>
+                            </AppBarElementContainer>
+
+                            <!--  Recording B Color Picker  -->
+                            <AppBarElementContainer Margin="4,0,0,0"
+                                                    ToolTipService.ToolTip="{x:Bind ViewModel.RecordingBColorTooltip, Mode=OneWay}"
+                                                    Visibility="{x:Bind ViewModel.HasTwoRecordingsVisibility, Mode=OneWay}">
+                                <dev:DropdownColorPicker VerticalAlignment="Bottom"
+                                                         ColorSpectrumShape="Ring"
+                                                         IsAlphaEnabled="True"
+                                                         IsAlphaSliderVisible="True"
+                                                         IsMoreButtonVisible="True"
+                                                         Tag="RecordingB"
+                                                         Color="{x:Bind ViewModel.RecordingBColor, Mode=TwoWay}">
+                                </dev:DropdownColorPicker>
+                            </AppBarElementContainer>
+
+                        </controls:TabbedCommandBarItem.PrimaryCommands>
+                    </controls:TabbedCommandBarItem>
+
+                    <!--  Statistics  -->
+                    <controls:TabbedCommandBarItem x:Name="StatisticsTab"
+                                                   Header="Statistics">
+                        <controls:TabbedCommandBarItem.PrimaryCommands>
+
+                            <!--  Baseline  -->
+                            <AppBarElementContainer Margin="4,0,0,0"
+                                                    IsEnabled="{x:Bind ViewModel.HasTwoRecordings, Mode=OneWay}">
+                                <ComboBox MinWidth="250"
+                                          ItemsSource="{x:Bind ViewModel.BaselineItems, Mode=OneWay}"
+                                          SelectedIndex="{x:Bind ViewModel.BaselineSelectedIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                          SelectionChanged="StatisticsBaselineComboBox_SelectionChanged"
+                                          ToolTipService.ToolTip="Baseline" />
+                            </AppBarElementContainer>
+
+                            <AppBarSeparator Margin="4,0" />
+
+                            <!--  Delta Format  -->
+                            <AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsDeltaModeEnabled, Mode=OneWay}"
+                                                    ToolTipService.ToolTip="Delta format">
+                                <dev:SelectorBarSegmented IsEnabled="{x:Bind ViewModel.IsDeltaModeEnabled, Mode=OneWay}"
+                                                          SelectionChanged="StatisticsDeltaModeSelector_SelectionChanged">
+                                    <SelectorBarItem IsSelected="True"
+                                                     Text="+/-"
+                                                     ToolTipService.ToolTip="Absolute delta" />
+                                    <SelectorBarItem x:Name="PercentDeltaItem"
+                                                     Text="%"
+                                                     ToolTipService.ToolTip="Percent delta" />
+                                </dev:SelectorBarSegmented>
+                            </AppBarElementContainer>
+
+                        </controls:TabbedCommandBarItem.PrimaryCommands>
+                    </controls:TabbedCommandBarItem>
+                </controls:TabbedCommandBar.MenuItems>
+            </controls:TabbedCommandBar>
+        </StackPanel>
+
+        <dev:SwitchPresenter Grid.Row="1"
+                             Margin="36,8,36,36"
+                             Value="{x:Bind ViewModel.ActiveTab, Mode=OneWay}">
+            <!--  Recordings  -->
+            <dev:Case Value="Recordings">
+                <dev:SwitchPresenter Value="{x:Bind ViewModel.RecordingState, Mode=OneWay}">
+                    <dev:Case Value="Content">
+
+                        <!--  Recordings TreeGrid  -->
+                        <sfgrid:SfTreeGrid x:Name="RecordingsTreeGrid"
+                                           AllowEditing="True"
+                                           AllowTriStateSorting="True"
+                                           AutoExpandMode="AllNodesExpanded"
+                                           AutoGenerateColumns="False"
+                                           CheckBoxSelectionMode="SynchronizeSelection"
+                                           ChildPropertyName="Children"
+                                           ColumnWidthMode="Star"
+                                           CurrentCellEndEdit="RecordingsTreeGrid_CurrentCellEndEdit"
+                                           EditTrigger="OnDoubleTap"
+                                           GridLinesVisibility="Both"
+                                           HeaderLinesVisibility="Both"
+                                           ItemsSource="{x:Bind ViewModel.Recordings, Mode=OneWay}"
+                                           NavigationMode="Cell"
+                                           PasteOption="None"
+                                           SelectionChanged="RecordingsTreeGrid_SelectionChanged"
+                                           SelectionMode="Multiple"
+                                           ShowCheckBox="True"
+                                           ShowToolTip="True"
+                                           SizeChanged="RecordingsTreeGrid_SizeChanged">
+                            <sfgrid:SfTreeGrid.ColumnSizer>
+                                <common:TreeGridStarColumnSizer />
+                            </sfgrid:SfTreeGrid.ColumnSizer>
+                            <sfgrid:SfTreeGrid.Columns>
+
+                                <!--  Title  -->
+                                <sfgrid:TreeGridTextColumn common:StarRatio.ColumnRatio="2"
+                                                           HeaderText="Title"
+                                                           MappingName="Title"
+                                                           MinimumWidth="70"
+                                                           ShowToolTip="True"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           TextWrapping="NoWrap" />
+
+                                <!--  Process  -->
+                                <sfgrid:TreeGridTextColumn common:StarRatio.ColumnRatio="2"
+                                                           AllowFocus="False"
+                                                           HeaderText="Process"
+                                                           IsReadOnly="True"
+                                                           MappingName="Process"
+                                                           MinimumWidth="80"
+                                                           ShowToolTip="True"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           TextWrapping="NoWrap" />
+
+                                <!--  Presentation Mode  -->
+                                <sfgrid:TreeGridTextColumn common:StarRatio.ColumnRatio="2"
+                                                           AllowFocus="False"
+                                                           HeaderText="Presentation Mode"
+                                                           IsReadOnly="True"
+                                                           MappingName="PresentationMode"
+                                                           MinimumWidth="125"
+                                                           ShowToolTip="True"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           TextWrapping="NoWrap" />
+
+                                <!--  Duration  -->
+                                <sfgrid:TreeGridNumericColumn common:StarRatio.ColumnRatio="1"
+                                                              AllowFocus="False"
+                                                              DisplayNumberFormat="0.# s"
+                                                              HeaderText="Duration"
+                                                              IsReadOnly="True"
+                                                              MappingName="DurationSeconds"
+                                                              MaximumWidth="80"
+                                                              MinimumWidth="75"
+                                                              ShowToolTip="True"
+                                                              TextTrimming="CharacterEllipsis"
+                                                              TextWrapping="NoWrap" />
+
+                                <!--  Date / Time  -->
+                                <sfgrid:TreeGridDateColumn common:StarRatio.ColumnRatio="1"
+                                                           AllowFocus="False"
+                                                           DisplayDateFormat="dd/MM/yy HH:mm"
+                                                           HeaderText="Date / Time"
+                                                           IsReadOnly="True"
+                                                           MappingName="Date"
+                                                           MaximumWidth="125"
+                                                           MinimumWidth="100"
+                                                           ShowToolTip="True"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           TextWrapping="NoWrap" />
+
+                            </sfgrid:SfTreeGrid.Columns>
+                        </sfgrid:SfTreeGrid>
+                    </dev:Case>
+
+                    <!--  No Recordings  -->
+                    <dev:Case Value="Empty">
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="12">
+                            <FontIcon HorizontalAlignment="Center"
+                                      FontSize="48"
+                                      Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                      Glyph="&#xE9F9;" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       Text="No recordings found"
+                                       TextAlignment="Center" />
+                        </StackPanel>
+                    </dev:Case>
+
+                    <!--  Delay  -->
+                    <dev:Case Value="Delay">
+                        <Grid>
+                            <ProgressRing Width="250"
+                                          Height="250"
+                                          Background="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                          IsIndeterminate="False"
+                                          Value="{x:Bind ViewModel.DelayProgress, Mode=OneWay}" />
+                            <StackPanel HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Spacing="4">
+                                <TextBlock HorizontalAlignment="Center"
+                                           Style="{StaticResource TitleLargeTextBlockStyle}"
+                                           Text="{x:Bind ViewModel.DelaySecondsLeft, Mode=OneWay}" />
+                                <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           Text="seconds until start" />
+                            </StackPanel>
+                        </Grid>
+                    </dev:Case>
+
+                    <!--  Duration  -->
+                    <dev:Case Value="Duration">
+                        <Grid>
+                            <ProgressRing Width="250"
+                                          Height="250"
+                                          Background="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                          IsIndeterminate="False"
+                                          Value="{x:Bind ViewModel.DurationProgress, Mode=OneWay}">
+                            </ProgressRing>
+                            <StackPanel HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Spacing="4">
+                                <TextBlock HorizontalAlignment="Center"
+                                           Style="{StaticResource TitleLargeTextBlockStyle}"
+                                           Text="{x:Bind ViewModel.DurationSecondsLeft, Mode=OneWay}" />
+                                <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           Text="seconds remaining" />
+                            </StackPanel>
+                        </Grid>
+                    </dev:Case>
+                </dev:SwitchPresenter>
+            </dev:Case>
+
+            <!--  Analysis  -->
+            <dev:Case Value="Analysis">
+                <dev:SwitchPresenter Value="{x:Bind ViewModel.AnalysisState, Mode=OneWay}">
+                    <dev:Case Value="Content">
+                        <dev:SwitchPresenter Value="{x:Bind ViewModel.AnalysisChartType, Mode=OneWay}">
+                            <dev:Case Value="Bar">
+
+                                <!--  Bar Chart  -->
+                                <chart:SfCartesianChart x:Name="BarChart"
+                                                        IsTransposed="True"
+                                                        RightTapped="Chart_RightTapped">
+                                    <chart:SfCartesianChart.Legend>
+                                        <chart:ChartLegend ToggleSeriesVisibility="True">
+                                            <chart:ChartLegend.Header>
+                                                <TextBlock HorizontalAlignment="Center"
+                                                           Style="{StaticResource BodyLargeTextBlockStyle}"
+                                                           Text="{x:Bind ViewModel.AnalysisProcess, Mode=OneWay}" />
+                                            </chart:ChartLegend.Header>
+                                        </chart:ChartLegend>
+                                    </chart:SfCartesianChart.Legend>
+
+                                    <!--  X Axis (FPS)  -->
+                                    <chart:SfCartesianChart.YAxes>
+                                        <chart:NumericalAxis EdgeLabelsDrawingMode="Shift"
+                                                             Header="FPS"
+                                                             RangePadding="AppendInterval"
+                                                             ShowMajorGridLines="True" />
+                                    </chart:SfCartesianChart.YAxes>
+
+                                    <!--  Y Axis (Statistics)  -->
+                                    <chart:SfCartesianChart.XAxes>
+                                        <chart:CategoryAxis IsInversed="True"
+                                                            ShowMajorGridLines="False" />
+                                    </chart:SfCartesianChart.XAxes>
+
+                                    <chart:SfCartesianChart.Series>
+
+                                        <!--  Displayed FPS 1  -->
+                                        <chart:ColumnSeries x:Name="BarDisplayedFpsSeries1"
+                                                            EnableAnimation="True"
+                                                            Fill="{x:Bind ViewModel.RecordingAColorBrush, Mode=OneWay}"
+                                                            ItemsSource="{x:Bind ViewModel.BarColumnChartDisplayedData1, Mode=OneWay}"
+                                                            Label="{x:Bind ViewModel.BarColumnChartDisplayedLabel1, Mode=OneWay}"
+                                                            SegmentSpacing="0.2"
+                                                            ShowDataLabels="True"
+                                                            XBindingPath="Label"
+                                                            YBindingPath="Value">
+                                            <chart:ColumnSeries.DataLabelSettings>
+                                                <chart:CartesianDataLabelSettings Format="0.#"
+                                                                                  Position="Outer"
+                                                                                  UseSeriesPalette="False" />
+                                            </chart:ColumnSeries.DataLabelSettings>
+                                        </chart:ColumnSeries>
+
+                                        <!--  Rendered FPS 1  -->
+                                        <chart:ColumnSeries x:Name="BarRenderedFpsSeries1"
+                                                            EnableAnimation="True"
+                                                            IsVisibleOnLegend="{x:Bind ViewModel.BarColumnRenderedVisible, Mode=OneWay}"
+                                                            ItemsSource="{x:Bind ViewModel.BarColumnChartRenderedData1, Mode=OneWay}"
+                                                            Label="{x:Bind ViewModel.BarColumnChartRenderedLabel1, Mode=OneWay}"
+                                                            SegmentSpacing="0.2"
+                                                            ShowDataLabels="True"
+                                                            Visibility="{x:Bind ViewModel.BarColumnRenderedVisibility, Mode=OneWay}"
+                                                            XBindingPath="Label"
+                                                            YBindingPath="Value">
+                                            <chart:ColumnSeries.Fill>
+                                                <SolidColorBrush Color="{x:Bind ViewModel.RecordingASecondaryColor, Mode=OneWay}" />
+                                            </chart:ColumnSeries.Fill>
+                                            <chart:ColumnSeries.DataLabelSettings>
+                                                <chart:CartesianDataLabelSettings Format="0.#"
+                                                                                  Position="Outer"
+                                                                                  UseSeriesPalette="False" />
+                                            </chart:ColumnSeries.DataLabelSettings>
+                                        </chart:ColumnSeries>
+
+                                        <!--  Displayed FPS 2  -->
+                                        <chart:ColumnSeries x:Name="BarDisplayedFpsSeries2"
+                                                            EnableAnimation="True"
+                                                            Fill="{x:Bind ViewModel.RecordingBColorBrush, Mode=OneWay}"
+                                                            IsVisibleOnLegend="{x:Bind ViewModel.HasTwoRecordings, Mode=OneWay}"
+                                                            ItemsSource="{x:Bind ViewModel.BarColumnChartDisplayedData2, Mode=OneWay}"
+                                                            Label="{x:Bind ViewModel.BarColumnChartDisplayedLabel2, Mode=OneWay}"
+                                                            SegmentSpacing="0.2"
+                                                            ShowDataLabels="True"
+                                                            Visibility="{x:Bind ViewModel.HasTwoRecordingsVisibility, Mode=OneWay}"
+                                                            XBindingPath="Label"
+                                                            YBindingPath="Value">
+                                            <chart:ColumnSeries.DataLabelSettings>
+                                                <chart:CartesianDataLabelSettings Format="0.#"
+                                                                                  Position="Outer"
+                                                                                  UseSeriesPalette="False" />
+                                            </chart:ColumnSeries.DataLabelSettings>
+                                        </chart:ColumnSeries>
+
+                                        <!--  Rendered FPS 2  -->
+                                        <chart:ColumnSeries x:Name="BarRenderedFpsSeries2"
+                                                            EnableAnimation="True"
+                                                            IsVisibleOnLegend="{x:Bind ViewModel.HasTwoRecordings, Mode=OneWay}"
+                                                            ItemsSource="{x:Bind ViewModel.BarColumnChartRenderedData2, Mode=OneWay}"
+                                                            Label="{x:Bind ViewModel.BarColumnChartRenderedLabel2, Mode=OneWay}"
+                                                            SegmentSpacing="0.2"
+                                                            ShowDataLabels="True"
+                                                            Visibility="{x:Bind ViewModel.HasTwoRecordingsVisibility, Mode=OneWay}"
+                                                            XBindingPath="Label"
+                                                            YBindingPath="Value">
+                                            <chart:ColumnSeries.Fill>
+                                                <SolidColorBrush Color="{x:Bind ViewModel.RecordingBSecondaryColor, Mode=OneWay}" />
+                                            </chart:ColumnSeries.Fill>
+                                            <chart:ColumnSeries.DataLabelSettings>
+                                                <chart:CartesianDataLabelSettings Format="0.#"
+                                                                                  Position="Outer"
+                                                                                  UseSeriesPalette="False" />
+                                            </chart:ColumnSeries.DataLabelSettings>
+                                        </chart:ColumnSeries>
+                                    </chart:SfCartesianChart.Series>
+                                </chart:SfCartesianChart>
+                            </dev:Case>
+                            <dev:Case Value="Column">
+
+                                <!--  Column Chart  -->
+                                <chart:SfCartesianChart x:Name="ColumnChart"
+                                                        RightTapped="Chart_RightTapped">
+                                    <chart:SfCartesianChart.Legend>
+                                        <chart:ChartLegend ToggleSeriesVisibility="True">
+                                            <chart:ChartLegend.Header>
+                                                <TextBlock HorizontalAlignment="Center"
+                                                           Style="{StaticResource BodyLargeTextBlockStyle}"
+                                                           Text="{x:Bind ViewModel.AnalysisProcess, Mode=OneWay}" />
+                                            </chart:ChartLegend.Header>
+                                        </chart:ChartLegend>
+                                    </chart:SfCartesianChart.Legend>
+
+                                    <!--  X Axis (Statistics)  -->
+                                    <chart:SfCartesianChart.XAxes>
+                                        <chart:CategoryAxis LabelPlacement="BetweenTicks"
+                                                            ShowMajorGridLines="False" />
+                                    </chart:SfCartesianChart.XAxes>
+
+                                    <!--  Y Axis (FPS)  -->
+                                    <chart:SfCartesianChart.YAxes>
+                                        <chart:NumericalAxis EdgeLabelsDrawingMode="Shift"
+                                                             Header="FPS"
+                                                             RangePadding="AppendInterval"
+                                                             ShowMajorGridLines="True" />
+                                    </chart:SfCartesianChart.YAxes>
+                                    <chart:SfCartesianChart.Series>
+
+                                        <!--  Displayed FPS 1  -->
+                                        <chart:ColumnSeries x:Name="ColumnDisplayedFpsSeries1"
+                                                            EnableAnimation="True"
+                                                            Fill="{x:Bind ViewModel.RecordingAColorBrush, Mode=OneWay}"
+                                                            ItemsSource="{x:Bind ViewModel.BarColumnChartDisplayedData1, Mode=OneWay}"
+                                                            Label="{x:Bind ViewModel.BarColumnChartDisplayedLabel1, Mode=OneWay}"
+                                                            SegmentSpacing="0.2"
+                                                            ShowDataLabels="True"
+                                                            XBindingPath="Label"
+                                                            YBindingPath="Value">
+                                            <chart:ColumnSeries.DataLabelSettings>
+                                                <chart:CartesianDataLabelSettings Format="0.#"
+                                                                                  Position="Outer"
+                                                                                  UseSeriesPalette="False" />
+                                            </chart:ColumnSeries.DataLabelSettings>
+                                        </chart:ColumnSeries>
+
+                                        <!--  Rendered FPS 1  -->
+                                        <chart:ColumnSeries x:Name="ColumnRenderedFpsSeries1"
+                                                            EnableAnimation="True"
+                                                            IsVisibleOnLegend="{x:Bind ViewModel.BarColumnRenderedVisible, Mode=OneWay}"
+                                                            ItemsSource="{x:Bind ViewModel.BarColumnChartRenderedData1, Mode=OneWay}"
+                                                            Label="{x:Bind ViewModel.BarColumnChartRenderedLabel1, Mode=OneWay}"
+                                                            SegmentSpacing="0.2"
+                                                            ShowDataLabels="True"
+                                                            XBindingPath="Label"
+                                                            YBindingPath="Value">
+                                            <chart:ColumnSeries.Fill>
+                                                <SolidColorBrush Color="{x:Bind ViewModel.RecordingASecondaryColor, Mode=OneWay}" />
+                                            </chart:ColumnSeries.Fill>
+                                            <chart:ColumnSeries.DataLabelSettings>
+                                                <chart:CartesianDataLabelSettings Format="0.#"
+                                                                                  Position="Outer"
+                                                                                  UseSeriesPalette="False" />
+                                            </chart:ColumnSeries.DataLabelSettings>
+                                        </chart:ColumnSeries>
+
+                                        <!--  Displayed FPS 2  -->
+                                        <chart:ColumnSeries x:Name="ColumnDisplayedFpsSeries2"
+                                                            EnableAnimation="True"
+                                                            Fill="{x:Bind ViewModel.RecordingBColorBrush, Mode=OneWay}"
+                                                            IsVisibleOnLegend="{x:Bind ViewModel.HasTwoRecordings, Mode=OneWay}"
+                                                            ItemsSource="{x:Bind ViewModel.BarColumnChartDisplayedData2, Mode=OneWay}"
+                                                            Label="{x:Bind ViewModel.BarColumnChartDisplayedLabel2, Mode=OneWay}"
+                                                            SegmentSpacing="0.2"
+                                                            ShowDataLabels="True"
+                                                            XBindingPath="Label"
+                                                            YBindingPath="Value">
+                                            <chart:ColumnSeries.DataLabelSettings>
+                                                <chart:CartesianDataLabelSettings Format="0.#"
+                                                                                  Position="Outer"
+                                                                                  UseSeriesPalette="False" />
+                                            </chart:ColumnSeries.DataLabelSettings>
+                                        </chart:ColumnSeries>
+
+                                        <!--  Rendered FPS 2  -->
+                                        <chart:ColumnSeries x:Name="ColumnRenderedFpsSeries2"
+                                                            EnableAnimation="True"
+                                                            IsVisibleOnLegend="{x:Bind ViewModel.HasTwoRecordings, Mode=OneWay}"
+                                                            ItemsSource="{x:Bind ViewModel.BarColumnChartRenderedData2, Mode=OneWay}"
+                                                            Label="{x:Bind ViewModel.BarColumnChartRenderedLabel2, Mode=OneWay}"
+                                                            SegmentSpacing="0.2"
+                                                            ShowDataLabels="True"
+                                                            XBindingPath="Label"
+                                                            YBindingPath="Value">
+                                            <chart:ColumnSeries.Fill>
+                                                <SolidColorBrush Color="{x:Bind ViewModel.RecordingBSecondaryColor, Mode=OneWay}" />
+                                            </chart:ColumnSeries.Fill>
+                                            <chart:ColumnSeries.DataLabelSettings>
+                                                <chart:CartesianDataLabelSettings Format="0.#"
+                                                                                  Position="Outer"
+                                                                                  UseSeriesPalette="False" />
+                                            </chart:ColumnSeries.DataLabelSettings>
+                                        </chart:ColumnSeries>
+                                    </chart:SfCartesianChart.Series>
+                                </chart:SfCartesianChart>
+                            </dev:Case>
+                            <dev:Case Value="Line">
+
+                                <!--  Line Chart  -->
+                                <chart:SfCartesianChart x:Name="LineChart"
+                                                        RightTapped="Chart_RightTapped">
+                                    <chart:SfCartesianChart.Legend>
+                                        <chart:ChartLegend ToggleSeriesVisibility="True">
+                                            <chart:ChartLegend.Header>
+                                                <TextBlock HorizontalAlignment="Center"
+                                                           Style="{StaticResource BodyLargeTextBlockStyle}"
+                                                           Text="{x:Bind ViewModel.AnalysisProcess, Mode=OneWay}" />
+                                            </chart:ChartLegend.Header>
+                                        </chart:ChartLegend>
+                                    </chart:SfCartesianChart.Legend>
+
+                                    <!--  X Axis (Frame Index)  -->
+                                    <chart:SfCartesianChart.XAxes>
+                                        <chart:NumericalAxis x:Name="LineChartXAxis"
+                                                             EdgeLabelsDrawingMode="Shift"
+                                                             Header="Frame Index" />
+                                    </chart:SfCartesianChart.XAxes>
+
+                                    <!--  Y Axis (Milliseconds)  -->
+                                    <chart:SfCartesianChart.YAxes>
+                                        <chart:NumericalAxis x:Name="LineChartYAxis"
+                                                             Header="Milliseconds (ms)" />
+                                    </chart:SfCartesianChart.YAxes>
+                                    <chart:SfCartesianChart.TrackballBehavior>
+                                        <chart:ChartTrackballBehavior />
+                                    </chart:SfCartesianChart.TrackballBehavior>
+                                    <chart:SfCartesianChart.ZoomPanBehavior>
+                                        <chart:ChartZoomPanBehavior EnableMouseWheelZooming="True"
+                                                                    EnablePanning="True"
+                                                                    ZoomMode="XY" />
+                                    </chart:SfCartesianChart.ZoomPanBehavior>
+                                    <chart:SfCartesianChart.Series>
+
+                                        <!--  Metric Series 1  -->
+                                        <chart:FastLineSeries EnableAnimation="True"
+                                                              Fill="{x:Bind ViewModel.RecordingAColorBrush, Mode=OneWay}"
+                                                              ItemsSource="{x:Bind ViewModel.LineScatterChartData1, Mode=OneWay}"
+                                                              Label="{x:Bind ViewModel.LineScatterChartLabel1, Mode=OneWay}"
+                                                              XBindingPath="Index"
+                                                              YBindingPath="Value" />
+
+                                        <!--  Metric Series 2  -->
+                                        <chart:FastLineSeries EnableAnimation="True"
+                                                              Fill="{x:Bind ViewModel.RecordingBColorBrush, Mode=OneWay}"
+                                                              IsVisibleOnLegend="{x:Bind ViewModel.HasTwoRecordings, Mode=OneWay}"
+                                                              ItemsSource="{x:Bind ViewModel.LineScatterChartData2, Mode=OneWay}"
+                                                              Label="{x:Bind ViewModel.LineScatterChartLabel2, Mode=OneWay}"
+                                                              XBindingPath="Index"
+                                                              YBindingPath="Value" />
+                                    </chart:SfCartesianChart.Series>
+                                </chart:SfCartesianChart>
+                            </dev:Case>
+                            <dev:Case Value="Scatter">
+
+                                <!--  Scatter Chart  -->
+                                <chart:SfCartesianChart x:Name="ScatterChart"
+                                                        RightTapped="Chart_RightTapped">
+                                    <chart:SfCartesianChart.Legend>
+                                        <chart:ChartLegend ToggleSeriesVisibility="True">
+                                            <chart:ChartLegend.Header>
+                                                <TextBlock HorizontalAlignment="Center"
+                                                           Style="{StaticResource BodyLargeTextBlockStyle}"
+                                                           Text="{x:Bind ViewModel.AnalysisProcess, Mode=OneWay}" />
+                                            </chart:ChartLegend.Header>
+                                        </chart:ChartLegend>
+                                    </chart:SfCartesianChart.Legend>
+
+                                    <!--  X Axis (Frame Index)  -->
+                                    <chart:SfCartesianChart.XAxes>
+                                        <chart:NumericalAxis x:Name="ScatterChartXAxis"
+                                                             EdgeLabelsDrawingMode="Shift"
+                                                             Header="Frame Index" />
+                                    </chart:SfCartesianChart.XAxes>
+
+                                    <!--  Y Axis (Milliseconds)  -->
+                                    <chart:SfCartesianChart.YAxes>
+                                        <chart:NumericalAxis x:Name="ScatterChartYAxis"
+                                                             Header="Milliseconds (ms)" />
+                                    </chart:SfCartesianChart.YAxes>
+                                    <chart:SfCartesianChart.TrackballBehavior>
+                                        <chart:ChartTrackballBehavior />
+                                    </chart:SfCartesianChart.TrackballBehavior>
+                                    <chart:SfCartesianChart.ZoomPanBehavior>
+                                        <chart:ChartZoomPanBehavior EnableMouseWheelZooming="True"
+                                                                    EnablePanning="True"
+                                                                    ZoomMode="XY" />
+                                    </chart:SfCartesianChart.ZoomPanBehavior>
+                                    <chart:SfCartesianChart.Series>
+
+                                        <!--  Metric Series 1  -->
+                                        <chart:FastScatterBitmapSeries EnableAnimation="True"
+                                                                       Fill="{x:Bind ViewModel.RecordingAColorBrush, Mode=OneWay}"
+                                                                       ItemsSource="{x:Bind ViewModel.LineScatterChartData1, Mode=OneWay}"
+                                                                       Label="{x:Bind ViewModel.LineScatterChartLabel1, Mode=OneWay}"
+                                                                       PointHeight="2"
+                                                                       PointWidth="2"
+                                                                       XBindingPath="Index"
+                                                                       YBindingPath="Value" />
+
+                                        <!--  Metric Series 2  -->
+                                        <chart:FastScatterBitmapSeries EnableAnimation="True"
+                                                                       Fill="{x:Bind ViewModel.RecordingBColorBrush, Mode=OneWay}"
+                                                                       IsVisibleOnLegend="{x:Bind ViewModel.HasTwoRecordings, Mode=OneWay}"
+                                                                       ItemsSource="{x:Bind ViewModel.LineScatterChartData2, Mode=OneWay}"
+                                                                       Label="{x:Bind ViewModel.LineScatterChartLabel2, Mode=OneWay}"
+                                                                       PointHeight="2"
+                                                                       PointWidth="2"
+                                                                       XBindingPath="Index"
+                                                                       YBindingPath="Value" />
+                                    </chart:SfCartesianChart.Series>
+                                </chart:SfCartesianChart>
+                            </dev:Case>
+                            <dev:Case Value="Pie">
+
+                                <!--  Pie Chart  -->
+                                <Grid x:Name="PieChartContainer">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Row="0"
+                                               Grid.Column="0"
+                                               Grid.ColumnSpan="2"
+                                               Margin="0,5,0,0"
+                                               HorizontalAlignment="Center"
+                                               Style="{StaticResource BodyLargeTextBlockStyle}"
+                                               Text="{x:Bind ViewModel.AnalysisProcess, Mode=OneWay}" />
+
+                                    <!--  Pie Chart 1  -->
+                                    <chart:SfCircularChart x:Name="PieChart1"
+                                                           Grid.Row="1"
+                                                           Grid.Column="0"
+                                                           Grid.ColumnSpan="{x:Bind ViewModel.PieChartColumnSpan, Mode=OneWay}"
+                                                           RightTapped="Chart_RightTapped">
+                                        <chart:SfCircularChart.Legend>
+                                            <chart:ChartLegend ToggleSeriesVisibility="True">
+                                                <chart:ChartLegend.Header>
+                                                    <TextBlock FontSize="16"
+                                                               Style="{StaticResource BodyLargeTextBlockStyle}"
+                                                               Text="{x:Bind ViewModel.PieChartLabel1, Mode=OneWay}" />
+                                                </chart:ChartLegend.Header>
+                                            </chart:ChartLegend>
+                                        </chart:SfCircularChart.Legend>
+                                        <chart:SfCircularChart.Series>
+                                            <chart:PieSeries EnableAnimation="True"
+                                                             ExplodeOnTap="True"
+                                                             ItemsSource="{x:Bind ViewModel.PieChartData1, Mode=OneWay}"
+                                                             PaletteBrushes="{x:Bind ViewModel.PieChart1Palette, Mode=OneWay}"
+                                                             ShowDataLabels="True"
+                                                             XBindingPath="Label"
+                                                             YBindingPath="Value">
+                                                <chart:PieSeries.DataLabelSettings>
+                                                    <chart:CircularDataLabelSettings ConnectorHeight="24"
+                                                                                     Context="Percentage"
+                                                                                     Position="Outside"
+                                                                                     ShowConnectorLine="True"
+                                                                                     UseSeriesPalette="True" />
+                                                </chart:PieSeries.DataLabelSettings>
+                                            </chart:PieSeries>
+                                        </chart:SfCircularChart.Series>
+                                    </chart:SfCircularChart>
+
+                                    <!--  Pie Chart 2  -->
+                                    <chart:SfCircularChart x:Name="PieChart2"
+                                                           Grid.Row="1"
+                                                           Grid.Column="1"
+                                                           RightTapped="Chart_RightTapped"
+                                                           Visibility="{x:Bind ViewModel.HasTwoRecordingsVisibility, Mode=OneWay}">
+                                        <chart:SfCircularChart.Legend>
+                                            <chart:ChartLegend ToggleSeriesVisibility="True">
+                                                <chart:ChartLegend.Header>
+                                                    <TextBlock FontSize="16"
+                                                               Style="{StaticResource BodyLargeTextBlockStyle}"
+                                                               Text="{x:Bind ViewModel.PieChartLabel2, Mode=OneWay}" />
+                                                </chart:ChartLegend.Header>
+                                            </chart:ChartLegend>
+                                        </chart:SfCircularChart.Legend>
+                                        <chart:SfCircularChart.Series>
+                                            <chart:PieSeries EnableAnimation="True"
+                                                             ExplodeOnTap="True"
+                                                             ItemsSource="{x:Bind ViewModel.PieChartData2, Mode=OneWay}"
+                                                             PaletteBrushes="{x:Bind ViewModel.PieChart2Palette, Mode=OneWay}"
+                                                             ShowDataLabels="True"
+                                                             XBindingPath="Label"
+                                                             YBindingPath="Value">
+                                                <chart:PieSeries.DataLabelSettings>
+                                                    <chart:CircularDataLabelSettings ConnectorHeight="24"
+                                                                                     Context="Percentage"
+                                                                                     Position="Outside"
+                                                                                     ShowConnectorLine="True"
+                                                                                     UseSeriesPalette="True" />
+                                                </chart:PieSeries.DataLabelSettings>
+                                            </chart:PieSeries>
+                                        </chart:SfCircularChart.Series>
+                                    </chart:SfCircularChart>
+                                </Grid>
+                            </dev:Case>
+                        </dev:SwitchPresenter>
+                    </dev:Case>
+
+                    <!--  No Recordings  -->
+                    <dev:Case Value="Empty">
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="12">
+                            <FontIcon HorizontalAlignment="Center"
+                                      FontSize="48"
+                                      Foreground="{ThemeResource SystemFillColorCritical}"
+                                      Glyph="&#xE783;" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       Text="No recordings selected"
+                                       TextAlignment="Center" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       FontSize="12"
+                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                       Text="Select up to two recordings to view analysis"
+                                       TextAlignment="Center" />
+                        </StackPanel>
+                    </dev:Case>
+
+                    <!--  Too many Recordings  -->
+                    <dev:Case Value="Error">
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="12">
+                            <FontIcon HorizontalAlignment="Center"
+                                      FontSize="48"
+                                      Foreground="{ThemeResource SystemFillColorCritical}"
+                                      Glyph="&#xE783;" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       Text="Too many recordings selected"
+                                       TextAlignment="Center" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       FontSize="12"
+                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                       Text="Maximum of 2 recordings supported for analysis"
+                                       TextAlignment="Center" />
+                        </StackPanel>
+                    </dev:Case>
+
+                    <!--  Different Processes  -->
+                    <dev:Case Value="ProcessMismatch">
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="12">
+                            <FontIcon HorizontalAlignment="Center"
+                                      FontSize="48"
+                                      Foreground="{ThemeResource SystemFillColorCritical}"
+                                      Glyph="&#xE783;" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       Text="Recordings use different processes"
+                                       TextAlignment="Center" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       FontSize="12"
+                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                       Text="Select recordings from the same process to compare them"
+                                       TextAlignment="Center" />
+                        </StackPanel>
+                    </dev:Case>
+                </dev:SwitchPresenter>
+            </dev:Case>
+
+            <!--  Statistics  -->
+            <dev:Case Value="Statistics">
+                <dev:SwitchPresenter Value="{x:Bind ViewModel.StatisticsState, Mode=OneWay}">
+                    <dev:Case Value="Content">
+
+                        <!--  Statistics TreeGrid  -->
+                        <sfgrid:SfTreeGrid x:Name="StatisticsTreeGrid"
+                                           VerticalAlignment="Stretch"
+                                           AllowTriStateSorting="True"
+                                           AutoExpandMode="AllNodesExpanded"
+                                           AutoGenerateColumns="False"
+                                           ChildPropertyName="Children"
+                                           ColumnWidthMode="Star"
+                                           ExpanderColumn="Statistic"
+                                           GridLinesVisibility="Both"
+                                           HeaderLinesVisibility="Both"
+                                           ItemsSource="{x:Bind ViewModel.StatisticsRows, Mode=OneWay}"
+                                           SelectionMode="None"
+                                           SizeChanged="StatisticsTreeGrid_SizeChanged">
+                            <sfgrid:SfTreeGrid.ColumnSizer>
+                                <common:TreeGridStarColumnSizer />
+                            </sfgrid:SfTreeGrid.ColumnSizer>
+                            <sfgrid:SfTreeGrid.Columns>
+
+                                <!--  Statistic  -->
+                                <sfgrid:TreeGridTemplateColumn common:StarRatio.ColumnRatio="2"
+                                                               HeaderText="Statistic"
+                                                               MappingName="Statistic">
+                                    <sfgrid:TreeGridTemplateColumn.CellTemplate>
+                                        <DataTemplate x:DataType="viewmodel:ResultRow">
+                                            <TextBlock Margin="12,0"
+                                                       VerticalAlignment="Center"
+                                                       Text="{x:Bind Statistic, Mode=OneWay}"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       TextWrapping="NoWrap"
+                                                       ToolTipService.ToolTip="{x:Bind Tooltip, Mode=OneWay}" />
+                                        </DataTemplate>
+                                    </sfgrid:TreeGridTemplateColumn.CellTemplate>
+                                </sfgrid:TreeGridTemplateColumn>
+
+                                <!--  Recording A  -->
+                                <sfgrid:TreeGridTextColumn x:Name="StatisticsRecordingAColumn"
+                                                           common:StarRatio.ColumnRatio="1"
+                                                           CellStyleSelector="{StaticResource ResultCellStyleSelector}"
+                                                           HeaderText="{x:Bind ViewModel.RecordingAHeader, Mode=OneWay}"
+                                                           MappingName="RecordingA" />
+
+                                <!--  Recording B  -->
+                                <sfgrid:TreeGridTextColumn x:Name="StatisticsRecordingBColumn"
+                                                           common:StarRatio.ColumnRatio="1"
+                                                           CellStyleSelector="{StaticResource ResultCellStyleSelector}"
+                                                           HeaderText="{x:Bind ViewModel.RecordingBHeader, Mode=OneWay}"
+                                                           MappingName="RecordingB" />
+
+                                <!--  Delta  -->
+                                <sfgrid:TreeGridTextColumn x:Name="StatisticsDeltaColumn"
+                                                           common:StarRatio.ColumnRatio="1"
+                                                           CellStyleSelector="{StaticResource ResultCellStyleSelector}"
+                                                           HeaderText="{x:Bind ViewModel.DeltaHeader, Mode=OneWay}"
+                                                           MappingName="Delta" />
+                            </sfgrid:SfTreeGrid.Columns>
+                        </sfgrid:SfTreeGrid>
+                    </dev:Case>
+
+                    <!--  No Recordings  -->
+                    <dev:Case Value="Empty">
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="12">
+                            <FontIcon HorizontalAlignment="Center"
+                                      FontSize="48"
+                                      Foreground="{ThemeResource SystemFillColorCritical}"
+                                      Glyph="&#xE783;" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       Text="No recordings selected"
+                                       TextAlignment="Center" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       FontSize="12"
+                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                       Text="Select up to two recordings to view statistics"
+                                       TextAlignment="Center" />
+
+                        </StackPanel>
+                    </dev:Case>
+
+                    <!--  Too many Recordings  -->
+                    <dev:Case Value="Error">
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="12">
+                            <FontIcon HorizontalAlignment="Center"
+                                      FontSize="48"
+                                      Foreground="{ThemeResource SystemFillColorCritical}"
+                                      Glyph="&#xE783;" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       Text="Too many recordings selected"
+                                       TextAlignment="Center" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       FontSize="12"
+                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                       Text="Maximum of 2 recordings supported for statistics"
+                                       TextAlignment="Center" />
+                        </StackPanel>
+                    </dev:Case>
+
+                    <!--  Different Processes  -->
+                    <dev:Case Value="ProcessMismatch">
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="12">
+                            <FontIcon HorizontalAlignment="Center"
+                                      FontSize="48"
+                                      Foreground="{ThemeResource SystemFillColorCritical}"
+                                      Glyph="&#xE783;" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       Text="Recordings use different processes"
+                                       TextAlignment="Center" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       FontSize="12"
+                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                       Text="Select recordings from the same process to compare them"
+                                       TextAlignment="Center" />
+                        </StackPanel>
+                    </dev:Case>
+                </dev:SwitchPresenter>
+            </dev:Case>
+        </dev:SwitchPresenter>
+    </Grid>
+</Page>
