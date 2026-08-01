@@ -328,6 +328,10 @@
                                                   ToolTipService.ToolTip="{x:Bind ViewModel.GetMetricTooltip('MsGPUBusy')}" />
                                     <ComboBoxItem Content="MsUntilDisplayed"
                                                   ToolTipService.ToolTip="{x:Bind ViewModel.GetMetricTooltip('MsUntilDisplayed')}" />
+                                    <ComboBoxItem Content="MsRenderPresentLatency"
+                                                  ToolTipService.ToolTip="{x:Bind ViewModel.GetMetricTooltip('MsRenderPresentLatency')}" />
+                                    <ComboBoxItem Content="Render Queue Depth"
+                                                  ToolTipService.ToolTip="{x:Bind ViewModel.GetMetricTooltip('Render Queue Depth')}" />
                                 </ComboBox>
                             </AppBarElementContainer>
 

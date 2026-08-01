@@ -8,13 +8,17 @@ public sealed record AnalysisResult(
 	IReadOnlyList<double> MsBetweenPresents,
 	IReadOnlyList<double> MsGPUBusy,
 	IReadOnlyList<double> MsUntilDisplayed,
+	IReadOnlyList<double> MsRenderPresentLatency,
+	IReadOnlyList<double> RenderQueueDepth,
 	IReadOnlyList<double> StutterMovingAverage,
 	Metrics DisplayedFps,
 	Metrics RenderedFps,
 	Metrics MsBetweenDisplayChangeStats,
 	Metrics MsBetweenPresentsStats,
 	Metrics MsGpuBusyStats,
-	Metrics MsUntilDisplayedStats
+	Metrics MsUntilDisplayedStats,
+	Metrics MsRenderPresentLatencyStats,
+	Metrics RenderQueueDepthStats
 );
 
 public static class RecordingAnalyzer
@@ -29,6 +33,7 @@ public static class RecordingAnalyzer
 		List<double> presents = new(4096);
 		List<double> gpuBusy = new(4096);
 		List<double> untilDisplayed = new(4096);
+		List<double> renderPresentLatency = new(4096);
 
 		using var reader = Sep.Reader(o => o with { Sep = new Sep(','), Unescape = true, ColNameComparer = StringComparer.OrdinalIgnoreCase }).FromFile(filePath);
 
@@ -36,6 +41,7 @@ public static class RecordingAnalyzer
 		reader.Header.TryIndexOf("MsBetweenPresents", out int idxPresents);
 		reader.Header.TryIndexOf("MsGPUBusy", out int idxGpuBusy);
 		reader.Header.TryIndexOf("MsUntilDisplayed", out int idxUntilDisplayed);
+		reader.Header.TryIndexOf("MsRenderPresentLatency", out int idxRenderPresentLatency);
 
 		while (reader.MoveNext())
 		{
@@ -52,6 +58,15 @@ public static class RecordingAnalyzer
 			if (idxUntilDisplayed >= 0 && idxUntilDisplayed < row.ColCount &&
 				row[idxUntilDisplayed].TryParse(out double untilDisplayedValue))
 				untilDisplayed.Add(untilDisplayedValue);
+			if (idxRenderPresentLatency >= 0 && idxRenderPresentLatency < row.ColCount &&
+				row[idxRenderPresentLatency].TryParse(out double renderPresentLatencyValue))
+				renderPresentLatency.Add(renderPresentLatencyValue);
+		}
+
+		List<double> renderQueueDepth = new(renderPresentLatency.Count);
+		for (int i = 0; i < renderPresentLatency.Count; i++)
+		{
+			renderQueueDepth.Add(presents[i] > 0 ? renderPresentLatency[i] / presents[i] : 0);
 		}
 
 		return new AnalysisResult(
@@ -59,13 +74,17 @@ public static class RecordingAnalyzer
 			MsBetweenPresents: presents,
 			MsGPUBusy: gpuBusy,
 			MsUntilDisplayed: untilDisplayed,
+			MsRenderPresentLatency: renderPresentLatency,
+			RenderQueueDepth: renderQueueDepth,
 			StutterMovingAverage: ComputeMovingAverage(presents),
 			DisplayedFps: ComputeMetrics(displayChange, isFps: true),
 			RenderedFps: ComputeMetrics(presents, isFps: true),
 			MsBetweenDisplayChangeStats: ComputeMetrics(displayChange, isFps: false),
 			MsBetweenPresentsStats: ComputeMetrics(presents, isFps: false),
 			MsGpuBusyStats: ComputeMetrics(gpuBusy, isFps: false),
-			MsUntilDisplayedStats: ComputeMetrics(untilDisplayed, isFps: false)
+			MsUntilDisplayedStats: ComputeMetrics(untilDisplayed, isFps: false),
+			MsRenderPresentLatencyStats: ComputeMetrics(renderPresentLatency, isFps: false),
+			RenderQueueDepthStats: ComputeMetrics(renderQueueDepth, isFps: false)
 		);
 	}
 

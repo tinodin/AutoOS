@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Globalization;
 using AutoOS.Core.Helpers.Benchmark;
 using AutoOS.Core.Helpers.Picker;

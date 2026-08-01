@@ -548,6 +548,8 @@ public sealed partial class BenchmarksPage : Page
 				"MsBetweenPresents" => result.Analysis.MsBetweenPresents,
 				"MsGPUBusy" => result.Analysis.MsGPUBusy,
 				"MsUntilDisplayed" => result.Analysis.MsUntilDisplayed,
+				"MsRenderPresentLatency" => result.Analysis.MsRenderPresentLatency,
+				"Render Queue Depth" => result.Analysis.RenderQueueDepth,
 				_ => []
 			};
 

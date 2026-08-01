@@ -95,7 +95,9 @@ public static class BenchmarkCsv
 		["MsBetweenDisplayChange"] = "The time it takes for a new image to physically appear on your screen.",
 		["MsBetweenPresents"] = "The time it takes the game engine to push out each new frame.",
 		["MsGPUBusy"] = "How long the graphics card works on a single frame.",
-		["MsUntilDisplayed"] = "The delay between the game finishing a frame and it appearing on screen."
+		["MsUntilDisplayed"] = "The delay between the game finishing a frame and it appearing on screen.",
+		["MsRenderPresentLatency"] = "The time between a frame being rendered and being presented.",
+		["Render Queue Depth"] = "The number of frames currently in the render queue."
 	};
 
 	public static readonly string[] StatisticLabels =
@@ -218,6 +220,8 @@ public static class BenchmarkCsv
 		("MsBetweenDisplayChange", result => result.MsBetweenDisplayChangeStats, LatencyStatistics),
 		("MsBetweenPresents", result => result.MsBetweenPresentsStats, LatencyStatistics),
 		("MsGPUBusy", result => result.MsGpuBusyStats, LatencyStatistics),
-		("MsUntilDisplayed", result => result.MsUntilDisplayedStats, LatencyStatistics)
+		("MsUntilDisplayed", result => result.MsUntilDisplayedStats, LatencyStatistics),
+		("MsRenderPresentLatency", result => result.MsRenderPresentLatencyStats, LatencyStatistics),
+		("Render Queue Depth", result => result.RenderQueueDepthStats, LatencyStatistics)
 	];
 }
