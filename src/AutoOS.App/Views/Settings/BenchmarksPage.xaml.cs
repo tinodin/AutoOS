@@ -97,6 +97,10 @@ public sealed partial class BenchmarksPage : Page
 			case TabbedCommandBarItem item when item == AnalysisTab:
 				ViewModel.ActiveTab = "Analysis";
 				ViewModel.AnalysisChartType = "Bar";
+				DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
+				{
+					BarChartItem.IsSelected = true;
+				});
 				if (ViewModel.IsAnalysisToolbarEnabled)
 					ReplayAnimation();
 				break;
