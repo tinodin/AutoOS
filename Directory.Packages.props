@@ -1,5 +1,6 @@
-<Project>
+﻿<Project>
   <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <LevelDBSharpPackageVersion>1.0.0</LevelDBSharpPackageVersion>
   </PropertyGroup>
   <ItemGroup>

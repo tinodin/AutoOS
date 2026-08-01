@@ -88,13 +88,9 @@ jobs:
       with:
         proj-path: ${{ env.PROJECT_PATH }}
 
-    # Build C++ project
-    - name: Build SoundHelper
-      run: msbuild src\AutoOS.App.Sound\AutoOS.App.Sound.vcxproj /p:Configuration=Release /p:Platform=${{ matrix.platform }} /p:PlatformToolset=v143
-
     # Restore the app
     - name: Restore the application
-      run: dotnet restore $env:PROJECT_PATH /p:Configuration=Release /p:CppBuiltSeparately=true
+      run: dotnet restore $env:PROJECT_PATH /p:Configuration=Release
 
     # Decode PFX
     - name: Decode the pfx
@@ -141,7 +137,7 @@ jobs:
 
     # Building with configured commands
     - name: Create the MSIX package
-      run: dotnet publish $env:PROJECT_PATH -o ${{ env.PUBLISH_OUTPUT_FOLDER }}/${{ matrix.platform }} /p:Configuration=Release /p:Platform=${{ matrix.platform }} /p:RuntimeIdentifier=win-${{ matrix.platform }} /p:SelfContained=${{ env.PUBLISH_SELF_CONTAINED }} /p:PublishAot=${{ env.PUBLISH_AOT }} /p:PublishTrimmed=${{ env.PUBLISH_TRIMMED }} /p:TrimMode=${{ env.PUBLISH_TRIM_MODE }} /p:UapAppxPackageBuildMode=SideloadOnly /p:AppxBundle=Never /p:PackageCertificateKeyFile=GitHubActionsWorkflow.pfx /p:AppxPackageDir=../../Packages/ /p:GenerateAppxPackageOnBuild=true /p:CppBuiltSeparately=true
+      run: dotnet publish $env:PROJECT_PATH -o ${{ env.PUBLISH_OUTPUT_FOLDER }}/${{ matrix.platform }} /p:Configuration=Release /p:Platform=${{ matrix.platform }} /p:RuntimeIdentifier=win-${{ matrix.platform }} /p:SelfContained=${{ env.PUBLISH_SELF_CONTAINED }} /p:PublishAot=${{ env.PUBLISH_AOT }} /p:PublishTrimmed=${{ env.PUBLISH_TRIMMED }} /p:TrimMode=${{ env.PUBLISH_TRIM_MODE }} /p:UapAppxPackageBuildMode=SideloadOnly /p:AppxBundle=Never /p:PackageCertificateKeyFile=GitHubActionsWorkflow.pfx /p:AppxPackageDir=../../Packages/ /p:GenerateAppxPackageOnBuild=true
     
     # Remove PFX
     - name: Remove the pfx
