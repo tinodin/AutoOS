@@ -128,6 +128,7 @@ public sealed partial class ApplicationsPage : Page
 			new() { Text = "Cursor", ImageSource = "ms-appx:///Assets/Fluent/Cursor.png" },
 			new() { Text = "Devin", ImageSource = "ms-appx:///Assets/Fluent/Devin.png" },
 			new() { Text = "Kiro", ImageSource = "ms-appx:///Assets/Fluent/Kiro.png" },
+			new() { Text = "OpenCode", ImageSource = "ms-appx:///Assets/Fluent/OpenCode.png" },
 			new() { Text = "Sublime Text", ImageSource = "ms-appx:///Assets/Fluent/SublimeText.png" },
 			new() { Text = "IntelliJ IDEA", ImageSource = "ms-appx:///Assets/Fluent/IDEA.png" },
 			new() { Text = "WinMerge", ImageSource = "ms-appx:///Assets/Fluent/WinMerge.png" },
@@ -221,6 +222,7 @@ public sealed partial class ApplicationsPage : Page
 			new() { Text = "AutoHotkey", ImageSource = "ms-appx:///Assets/Fluent/AutoHotkey.png" },
 			new() { Text = "EmEditor", ImageSource = "ms-appx:///Assets/Fluent/EmEditor.png" },
 			new() { Text = "WinDbg", ImageSource = "ms-appx:///Assets/Fluent/WinDbg.png" },
+			new() { Text = "qBittorrent", ImageSource = "ms-appx:///Assets/Fluent/QBittorrent.png" },
 			new() { Text = "Deluge", ImageSource = "ms-appx:///Assets/Fluent/Deluge.png" },
 			new() { Text = "Free Download Manager", ImageSource = "ms-appx:///Assets/Fluent/FreeDownloadManager.png" }
 		};

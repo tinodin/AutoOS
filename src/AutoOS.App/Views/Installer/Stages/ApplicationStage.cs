@@ -92,6 +92,7 @@ public class ApplicationSelection
 	public bool Cursor { get; set; }
 	public bool Devin { get; set; }
 	public bool Kiro { get; set; }
+	public bool OpenCode { get; set; }
 	public bool SublimeText { get; set; }
 	public bool IDEA { get; set; }
 	public bool WinMerge { get; set; }
@@ -156,6 +157,7 @@ public class ApplicationSelection
 	public bool AutoHotkey { get; set; }
 	public bool EmEditor { get; set; }
 	public bool WinDbg { get; set; }
+	public bool QBittorrent { get; set; }
 	public bool Deluge { get; set; }
 	public bool FreeDownloadManager { get; set; }
 }
@@ -251,6 +253,7 @@ public static class ApplicationStage
 		bool Cursor = selection?.Cursor ?? PreparingStage.Cursor;
 		bool Devin = selection?.Devin ?? PreparingStage.Devin;
 		bool Kiro = selection?.Kiro ?? PreparingStage.Kiro;
+		bool OpenCode = selection?.OpenCode ?? PreparingStage.OpenCode;
 		bool SublimeText = selection?.SublimeText ?? PreparingStage.SublimeText;
 		bool IDEA = selection?.IDEA ?? PreparingStage.IDEA;
 		bool WinMerge = selection?.WinMerge ?? PreparingStage.WinMerge;
@@ -322,6 +325,7 @@ public static class ApplicationStage
 		bool AutoHotkey = selection?.AutoHotkey ?? PreparingStage.AutoHotkey;
 		bool EmEditor = selection?.EmEditor ?? PreparingStage.EmEditor;
 		bool WinDbg = selection?.WinDbg ?? PreparingStage.WinDbg;
+		bool QBittorrent = selection?.QBittorrent ?? PreparingStage.QBittorrent;
 		bool Deluge = selection?.Deluge ?? PreparingStage.Deluge;
 		bool FreeDownloadManager = selection?.FreeDownloadManager ?? PreparingStage.FreeDownloadManager;
 
@@ -1465,6 +1469,14 @@ public static class ApplicationStage
 			("Installing Kiro", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "kiro-ide-win32-x64.exe"), Arguments = "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Kiro == true),
 			("Cleaning up Kiro files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "kiro-ide-win32-x64.exe")), () => Kiro == true),
 
+			// download opencode
+			("Downloading OpenCode", async () => await DownloadHelper.Download("https://opencode.ai/download/stable/windows-x64-nsis", Path.GetTempPath(), "OpenCode Desktop Installer.exe", reporter: reporter), () => OpenCode == true),
+
+			// install opencode
+			("Installing OpenCode", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "OpenCode Desktop Installer.exe"), Arguments = "/S", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => OpenCode == true),
+			("Cleaning up OpenCode files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "OpenCode Desktop Installer.exe")), () => OpenCode == true),
+			("Removing OpenCode desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "OpenCode.lnk")), () => OpenCode == true),
+
 			// download sublime text
 			("Downloading Sublime Text", async () => await DownloadHelper.Download("https://download.sublimetext.com/sublime_text_build_4200_x64_setup.exe", Path.GetTempPath(), "sublime_text_x64_setup.exe", reporter: reporter), () => SublimeText == true),
 
@@ -2214,7 +2226,7 @@ public static class ApplicationStage
 			("Removing AnyDesk desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "AnyDesk.lnk")), () => AnyDesk == true),
 
 			// download rustdesk
-			("Downloading RustDesk", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/rustdesk/rustdesk/releases")).RootElement.EnumerateArray().First(release => !release.GetProperty("prerelease").GetBoolean() && release.GetProperty("assets").EnumerateArray().Any(asset => asset.GetProperty("name").GetString().EndsWith(".msi"))).GetProperty("assets").EnumerateArray().First(asset => asset.GetProperty("name").GetString().EndsWith(".msi")).GetProperty("browser_download_url").GetString(), Path.GetTempPath(), "rustdesk-x86_64.msi", reporter: reporter), () => RustDesk == true),
+			("Downloading RustDesk", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/rustdesk/rustdesk/releases")).RootElement.EnumerateArray().First(release => !release.GetProperty("prerelease").GetBoolean() && release.GetProperty("assets").EnumerateArray().Any(asset => asset.GetProperty("name").GetString().Contains("x86_64") && asset.GetProperty("name").GetString().EndsWith(".msi"))).GetProperty("assets").EnumerateArray().First(asset => asset.GetProperty("name").GetString().Contains("x86_64") && asset.GetProperty("name").GetString().EndsWith(".msi")).GetProperty("browser_download_url").GetString(), Path.GetTempPath(), "rustdesk-x86_64.msi", reporter: reporter), () => RustDesk == true),
 			
 			// install rustdesk
 			("Installing RustDesk", async () => await Process.Start(new ProcessStartInfo { FileName = "msiexec.exe", Arguments = $@"/i ""{Path.Combine(Path.GetTempPath(), "rustdesk-x86_64.msi")}"" /qn" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => RustDesk == true),
@@ -2224,6 +2236,7 @@ public static class ApplicationStage
 			// disable rustdesk startup entry
 			("Disabling RustDesk startup entry", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\RustDesk", "Start", 4, RegistryValueKind.DWord), () => RustDesk == true),
 			("Disabling RustDesk startup entry", async () => ServicesHelper.StopService("RustDesk"), () => RustDesk == true),
+			("Disabling RustDesk startup entry", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder", "RustDesk Tray.lnk", new byte[] { 0x03 }, RegistryValueKind.Binary), () => RustDesk == true),
 
 			// remove rustdesk desktop shortcut
 			("Removing RustDesk desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "RustDesk.lnk")), () => RustDesk == true),
@@ -2267,6 +2280,13 @@ public static class ApplicationStage
 			// install windbg
 			("Installing WinDbg", async () => await StoreHelper.Install("Microsoft.WinDbg_8wekyb3d8bbwe"), () => WinDbg == true),
 
+			// download qbittorrent
+			("Downloading qBittorrent", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/qbittorrent/qBittorrent/releases")).RootElement.EnumerateArray().First(release => !release.GetProperty("prerelease").GetBoolean() && release.GetProperty("assets").EnumerateArray().Any(asset => asset.GetProperty("name").GetString().Contains("x64_setup.exe"))).GetProperty("assets").EnumerateArray().First(asset => asset.GetProperty("name").GetString().Contains("x64_setup.exe")).GetProperty("browser_download_url").GetString(), Path.GetTempPath(), "qbittorrent_x64_setup.exe", reporter: reporter), () => QBittorrent == true),
+
+			// install qbittorrent
+			("Installing qBittorrent", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "qbittorrent_x64_setup.exe"), Arguments = "/S", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => QBittorrent == true),
+			("Cleaning up qBittorrent files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "qbittorrent_x64_setup.exe")), () => QBittorrent == true),
+
 			// download deluge
 			("Downloading Deluge", async () => await DownloadHelper.Download("http://download.deluge-torrent.org/windows/deluge-2.2.0-win64-setup.exe", Path.GetTempPath(), "deluge-win64-setup.exe", reporter: reporter), () => Deluge == true),
 
@@ -2283,6 +2303,7 @@ public static class ApplicationStage
 
             // remove free download manager desktop shortcut
 			("Removing Free Download Manager desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Free Download Manager.lnk")), () => FreeDownloadManager == true),
+			("Disabling Free Download Manager startup entry", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", "Free Download Manager", new byte[] { 0x03 }, RegistryValueKind.Binary), () => FreeDownloadManager == true),
         };
 
 		if (selection != null)
