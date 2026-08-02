@@ -68,9 +68,9 @@ public sealed partial class BrowsersPage : Page
 		var selectedBrowsers = localSettings.Values["Browsers"] as string;
 		var BrowsersItems = Browsers.ItemsSource as List<GridViewItem>;
 		Browsers.SelectedItems.AddRange(
-			selectedBrowsers?.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
+			selectedBrowsers?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
 			.Select(e => BrowsersItems?.FirstOrDefault(ext => ext.Text == e))
-			.Where(ext => ext != null) ?? Enumerable.Empty<GridViewItem>()
+			.Where(ext => ext != null) ?? []
 		);
 
 		isInitializingBrowsersState = false;
@@ -93,9 +93,9 @@ public sealed partial class BrowsersPage : Page
 		var selectedExtensions = localSettings.Values["Extensions"] as string;
 		var extensionsItems = Extensions.ItemsSource as List<GridViewItem>;
 		Extensions.SelectedItems.AddRange(
-			selectedExtensions?.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
+			selectedExtensions?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
 			.Select(e => extensionsItems?.FirstOrDefault(ext => ext.Text == e))
-			.Where(ext => ext != null) ?? Enumerable.Empty<GridViewItem>()
+			.Where(ext => ext != null) ?? []
 		);
 
 		isInitializingExtensionsState = false;

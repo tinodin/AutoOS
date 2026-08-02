@@ -98,8 +98,8 @@ public partial class HeaderCarousel : ItemsControl
 	private static bool _lastHorizontalState = false;
 	private const double ThumbstickThreshold = 0.5;
 
-	private static readonly Dictionary<GamepadButtons, DateTimeOffset> _buttonPressStartTimes = new();
-	private static readonly Dictionary<GamepadButtons, DateTimeOffset> _lastButtonRepeatTimes = new();
+	private static readonly Dictionary<GamepadButtons, DateTimeOffset> _buttonPressStartTimes = [];
+	private static readonly Dictionary<GamepadButtons, DateTimeOffset> _lastButtonRepeatTimes = [];
 	private static readonly TimeSpan _initialRepeatDelay = TimeSpan.FromMilliseconds(500);
 	private static readonly TimeSpan _subsequentRepeatDelay = TimeSpan.FromMilliseconds(100);
 	private static readonly List<HeaderCarousel> _activeInstances = [];
@@ -2373,7 +2373,7 @@ public partial class HeaderCarousel : ItemsControl
 	private bool? previousGameState = null;
 	private bool? previousExplorerState = null;
 	private bool servicesState = false;
-	private readonly Dictionary<string, DateTime> epicGameStartTimes = new();
+	private readonly Dictionary<string, DateTime> epicGameStartTimes = [];
 
 	void StartGameWatcher(Func<bool> isGameRunning)
 	{

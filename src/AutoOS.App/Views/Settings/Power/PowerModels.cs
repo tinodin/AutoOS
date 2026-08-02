@@ -55,7 +55,7 @@ namespace AutoOS.Views.Settings.Power
 	public sealed partial class PowerSubgroup : PowerModelItem
 	{
 		public override Windows.UI.Text.FontWeight FontWeight { get; set; } = FontWeights.SemiBold;
-		public override ObservableCollection<PowerSetting> Settings { get; set; } = new ObservableCollection<PowerSetting>();
+		public override ObservableCollection<PowerSetting> Settings { get; set; } = [];
 
 		private bool _isExpanded = true;
 		public override bool IsExpanded

@@ -14,11 +14,11 @@ public class GameModel
 	public string AgeRatingTitle { get; set; }
 	public string AgeRatingDescription { get; set; }
 	public string Elements { get; set; }
-	public List<string> Genres { get; set; } = new();
-	public List<string> Features { get; set; } = new();
+	public List<string> Genres { get; set; } = [];
+	public List<string> Features { get; set; } = [];
 	public string Description { get; set; }
-	public List<string> Screenshots { get; set; } = new();
-	public List<string> VideoUrls { get; set; } = new();
+	public List<string> Screenshots { get; set; } = [];
+	public List<string> VideoUrls { get; set; } = [];
 	public string InstallLocation { get; set; }
 	public string Launcher { get; set; }
 	public string CatalogItemId { get; set; }
@@ -26,8 +26,8 @@ public class GameModel
 	public string AppName { get; set; }
 	public string LaunchCommand { get; set; }
 	public string LaunchExecutable { get; set; }
-	public List<string> ProcessNames { get; set; } = new();
-	public List<string> BackgroundProcessNames { get; set; } = new();
+	public List<string> ProcessNames { get; set; } = [];
+	public List<string> BackgroundProcessNames { get; set; } = [];
 	public string ArtifactId { get; set; }
 	public string GameID { get; set; }
 	public string LauncherLocation { get; set; }

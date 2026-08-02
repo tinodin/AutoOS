@@ -33,17 +33,17 @@ public static partial class SchedulingHelper
 			audioMask = GetCoreMask(pCores[cores - 5]);
 		}
 
-		var audioDevices = (device == null || device.DeviceType == DeviceType.AudioController) ? DeviceHelper.GetDevices(DeviceType.AudioController).Where(d => d.SupportsIrq).ToList() : new List<DeviceInfo>();
-		var gpuDevices = (device == null || device.DeviceType == DeviceType.GPU) ? DeviceHelper.GetDevices(DeviceType.GPU).Where(d => d.SupportsIrq).ToList() : new List<DeviceInfo>();
-		var xhciDevices = (device == null || device.DeviceType == DeviceType.XHCI) ? DeviceHelper.GetDevices(DeviceType.XHCI).Where(d => d.SupportsIrq).ToList() : new List<DeviceInfo>();
-		var nicDevices = (device == null || device.DeviceType == DeviceType.NIC) ? DeviceHelper.GetDevices(DeviceType.NIC).Where(d => d.SupportsIrq).ToList() : new List<DeviceInfo>();
+		var audioDevices = (device == null || device.DeviceType == DeviceType.AudioController) ? [.. DeviceHelper.GetDevices(DeviceType.AudioController).Where(d => d.SupportsIrq)] : new List<DeviceInfo>();
+		var gpuDevices = (device == null || device.DeviceType == DeviceType.GPU) ? [.. DeviceHelper.GetDevices(DeviceType.GPU).Where(d => d.SupportsIrq)] : new List<DeviceInfo>();
+		var xhciDevices = (device == null || device.DeviceType == DeviceType.XHCI) ? [.. DeviceHelper.GetDevices(DeviceType.XHCI).Where(d => d.SupportsIrq)] : new List<DeviceInfo>();
+		var nicDevices = (device == null || device.DeviceType == DeviceType.NIC) ? [.. DeviceHelper.GetDevices(DeviceType.NIC).Where(d => d.SupportsIrq)] : new List<DeviceInfo>();
 
 		if (device != null)
 		{
-			audioDevices = audioDevices.Where(device => device.PnpDeviceId == device.PnpDeviceId).ToList();
-			gpuDevices = gpuDevices.Where(device => device.PnpDeviceId == device.PnpDeviceId).ToList();
-			xhciDevices = xhciDevices.Where(device => device.PnpDeviceId == device.PnpDeviceId).ToList();
-			nicDevices = nicDevices.Where(device => device.PnpDeviceId == device.PnpDeviceId).ToList();
+			audioDevices = [.. audioDevices.Where(device => device.PnpDeviceId == device.PnpDeviceId)];
+			gpuDevices = [.. gpuDevices.Where(device => device.PnpDeviceId == device.PnpDeviceId)];
+			xhciDevices = [.. xhciDevices.Where(device => device.PnpDeviceId == device.PnpDeviceId)];
+			nicDevices = [.. nicDevices.Where(device => device.PnpDeviceId == device.PnpDeviceId)];
 		}
 
 		var allChangedDevices = new List<(DeviceInfo device, DeviceType deviceType)>();

@@ -29,7 +29,7 @@ public partial class SavePicker
 	public string? InitialDirectory { get; set; }
 	public Microsoft.Windows.Storage.Pickers.PickerLocationId SuggestedStartLocation { get; set; } = Microsoft.Windows.Storage.Pickers.PickerLocationId.Unspecified;
 	public string? Title { get; set; }
-	public Dictionary<string, IList<string>> FileTypeChoices { get; set; } = new();
+	public Dictionary<string, IList<string>> FileTypeChoices { get; set; } = [];
 	public bool ShowAllFilesOption { get; set; } = true;
 
 	/// <summary>

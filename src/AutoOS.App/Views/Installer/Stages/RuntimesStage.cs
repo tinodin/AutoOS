@@ -11,8 +11,8 @@ public static class RuntimesStage
 {
 	public static List<(string Title, Func<Task> Action, Func<bool> Condition)> GetActions()
 	{
-		return new List<(string Title, Func<Task> Action, Func<bool> Condition)>
-		{
+		return
+		[
 			// download the visual c++ redistributable
 			("Downloading Visual C++ Redistributable", async () => await DownloadHelper.Download("https://github.com/abbodi1406/vcredist/releases/latest/download/VisualCppRedist_AIO_x86_x64.exe", Path.GetTempPath(), "VisualCppRedist_AIO_x86_x64.exe", new InstallPageReporter()), null),
 
@@ -66,7 +66,7 @@ public static class RuntimesStage
 			("Installing DirectX Redistributable", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "directx_Jun2010_redist", "DXSetup.exe"), Arguments = "/silent", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), null),
 			("Cleaning up DirectX Redistributable files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "directx_Jun2010_redist.exe")), null),
 			("Cleaning up DirectX Redistributable files", async () => Directory.Delete(Path.Combine(Path.GetTempPath(), "directx_Jun2010_redist"), true), null)
-		};
+		];
 	}
 }
 

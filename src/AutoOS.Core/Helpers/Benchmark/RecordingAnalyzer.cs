@@ -29,11 +29,11 @@ public static class RecordingAnalyzer
         if (!info.Exists)
             return null;
 
-        List<double> displayChange = new(4096);
-        List<double> presents = new(4096);
-        List<double> gpuBusy = new(4096);
-        List<double> untilDisplayed = new(4096);
-        List<double> renderPresentLatency = new(4096);
+        List<double> displayChange = [with(4096)];
+        List<double> presents = [with(4096)];
+        List<double> gpuBusy = [with(4096)];
+        List<double> untilDisplayed = [with(4096)];
+        List<double> renderPresentLatency = [with(4096)];
 
         using var reader = Sep.Reader(o => o with { Sep = new Sep(','), Unescape = true, ColNameComparer = StringComparer.OrdinalIgnoreCase }).FromFile(filePath);
 
@@ -63,7 +63,7 @@ public static class RecordingAnalyzer
                 renderPresentLatency.Add(renderPresentLatencyValue);
         }
 
-        List<double> renderQueueDepth = new(renderPresentLatency.Count);
+        List<double> renderQueueDepth = [with(renderPresentLatency.Count)];
         for (int i = 0; i < renderPresentLatency.Count; i++)
         {
             renderQueueDepth.Add(presents[i] > 0 ? renderPresentLatency[i] / presents[i] : 0);

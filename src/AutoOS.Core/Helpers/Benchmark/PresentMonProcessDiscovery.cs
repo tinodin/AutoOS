@@ -34,8 +34,9 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 	private const uint DxgiStatusModeChangeInProgress = 0x087A0008;
 	private const uint RedirectedCompositionModel = 7;
 
-	private static readonly HashSet<string> ExcludedProcessNames = new(StringComparer.OrdinalIgnoreCase)
-	{
+	private static readonly HashSet<string> ExcludedProcessNames =
+	[
+		with(StringComparer.OrdinalIgnoreCase),
 		"ApplicationFrameHost.exe",
 		"audiodg.exe",
 		"AutoOS.exe",
@@ -79,15 +80,15 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 		"Widgets.exe",
 		"WidgetService.exe",
 		"WmiPrvSE.exe"
-	};
+	];
 
 	private readonly Lock _sync = new();
 	private readonly Dictionary<int, ProcessIdentity> _runningProcesses = [];
 	private readonly Dictionary<int, ProcessIdentity> _presentingProcesses = [];
 	private readonly HashSet<RuntimePresent> _runtimePresents = [];
-	private readonly HashSet<string> _snapshotCandidates = new(StringComparer.OrdinalIgnoreCase);
-	private readonly HashSet<string> _redirectedCompositionProcesses = new(StringComparer.OrdinalIgnoreCase);
-	private readonly HashSet<string> _confirmedPresentingProcesses = new(StringComparer.OrdinalIgnoreCase);
+	private readonly HashSet<string> _snapshotCandidates = [with(StringComparer.OrdinalIgnoreCase)];
+	private readonly HashSet<string> _redirectedCompositionProcesses = [with(StringComparer.OrdinalIgnoreCase)];
+	private readonly HashSet<string> _confirmedPresentingProcesses = [with(StringComparer.OrdinalIgnoreCase)];
 	private TraceEventSession _session;
 	private bool _started;
 
@@ -376,7 +377,7 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 
 	private void RefreshRunningProcesses()
 	{
-		Dictionary<string, List<Process>> processGroups = new(StringComparer.OrdinalIgnoreCase);
+		Dictionary<string, List<Process>> processGroups = [with(StringComparer.OrdinalIgnoreCase)];
 
 		foreach (Process process in Process.GetProcesses())
 		{
@@ -391,7 +392,7 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 			processes.Add(process);
 		}
 
-		HashSet<string> candidates = new(StringComparer.OrdinalIgnoreCase);
+		HashSet<string> candidates = [with(StringComparer.OrdinalIgnoreCase)];
 		foreach (var (name, processes) in processGroups)
 		{
 			if (IsSnapshotCandidate(processes))

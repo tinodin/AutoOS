@@ -7,8 +7,8 @@ public static class OptionalFeatureStage
 {
 	public static List<(string Title, Func<Task> Action, Func<bool> Condition)> GetActions()
 	{
-		return new List<(string Title, Func<Task> Action, Func<bool> Condition)>
-		{
+		return
+		[
 			// disable optional features
 			(@"Disabling ""WorkFolders-Client"" optional feature", async () => ServicesHelper.StopService("TiWorker"), null),
 			(@"Disabling ""WorkFolders-Client"" optional feature", async () => ServicesHelper.StopService("TrustedInstaller"), null),
@@ -21,7 +21,7 @@ public static class OptionalFeatureStage
 			(@"Removing ""App.StepsRecorder"" capability", async () => await ProcessActions.RunPowerShell(@"Remove-WindowsCapability -Online -Name (Get-WindowsCapability -Online | Where Name -like ""App.StepsRecorder*"").Name"), null),
 			(@"Removing ""Browser.InternetExplorer"" capability", async () => await ProcessActions.RunPowerShell(@"Remove-WindowsCapability -Online -Name (Get-WindowsCapability -Online | Where Name -like ""Browser.InternetExplorer*"").Name"), null),
 			(@"Removing ""Microsoft.Windows.PowerShell.ISE"" capability", async () => await ProcessActions.RunPowerShell(@"Remove-WindowsCapability -Online -Name (Get-WindowsCapability -Online | Where Name -like ""Microsoft.Windows.PowerShell.ISE*"").Name"), null),
-		};
+		];
 	}
 }
 

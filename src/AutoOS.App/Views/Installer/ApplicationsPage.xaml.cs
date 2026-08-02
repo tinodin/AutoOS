@@ -233,9 +233,9 @@ public sealed partial class ApplicationsPage : Page
 		var selectedMessaging = localSettings.Values["Messaging"] as string;
 		var messagingItems = Messaging.ItemsSource as List<GridViewItem>;
 		Messaging.SelectedItems.AddRange(
-			selectedMessaging?.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
+			selectedMessaging?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
 			.Select(e => messagingItems?.FirstOrDefault(ext => ext.Text == e))
-			.Where(ext => ext != null) ?? Enumerable.Empty<GridViewItem>()
+			.Where(ext => ext != null) ?? []
 		);
 
 		isInitializingMessagingState = false;
@@ -246,9 +246,9 @@ public sealed partial class ApplicationsPage : Page
 		var selectedLaunchers = localSettings.Values["Launchers"] as string;
 		var launcherItems = Launchers.ItemsSource as List<GridViewItem>;
 		Launchers.SelectedItems.AddRange(
-			selectedLaunchers?.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
+			selectedLaunchers?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
 			.Select(e => launcherItems?.FirstOrDefault(ext => ext.Text == e))
-			.Where(ext => ext != null) ?? Enumerable.Empty<GridViewItem>()
+			.Where(ext => ext != null) ?? []
 		);
 
 		isInitializingLaunchersState = false;
@@ -259,9 +259,9 @@ public sealed partial class ApplicationsPage : Page
 		var selectedMusic = localSettings.Values["Music"] as string;
 		var musicItems = Music.ItemsSource as List<GridViewItem>;
 		Music.SelectedItems.AddRange(
-			selectedMusic?.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
+			selectedMusic?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
 			.Select(e => musicItems?.FirstOrDefault(ext => ext.Text == e))
-			.Where(ext => ext != null) ?? Enumerable.Empty<GridViewItem>()
+			.Where(ext => ext != null) ?? []
 		);
 
 		isInitializingMusicState = false;
@@ -272,9 +272,9 @@ public sealed partial class ApplicationsPage : Page
 		var selectedPeripherals = localSettings.Values["Peripherals"] as string;
 		var peripheralItems = Peripherals.ItemsSource as List<GridViewItem>;
 		Peripherals.SelectedItems.AddRange(
-			selectedPeripherals?.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
+			selectedPeripherals?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
 			.Select(e => peripheralItems?.FirstOrDefault(ext => ext.Text == e))
-			.Where(ext => ext != null) ?? Enumerable.Empty<GridViewItem>()
+			.Where(ext => ext != null) ?? []
 		);
 
 		isInitializingPeripheralsState = false;
@@ -285,9 +285,9 @@ public sealed partial class ApplicationsPage : Page
 		var selectedControllers = localSettings.Values["Controllers"] as string;
 		var controllersItems = Controllers.ItemsSource as List<GridViewItem>;
 		Controllers.SelectedItems.AddRange(
-			selectedControllers?.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
+			selectedControllers?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
 			.Select(e => controllersItems?.FirstOrDefault(ext => ext.Text == e))
-			.Where(ext => ext != null) ?? Enumerable.Empty<GridViewItem>()
+			.Where(ext => ext != null) ?? []
 		);
 
 		isInitializingControllersState = false;
@@ -298,9 +298,9 @@ public sealed partial class ApplicationsPage : Page
 		var selectedDevelopment = localSettings.Values["Development"] as string;
 		var developmentItems = Development.ItemsSource as List<GridViewItem>;
 		Development.SelectedItems.AddRange(
-			selectedDevelopment?.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
+			selectedDevelopment?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
 			.Select(e => developmentItems?.FirstOrDefault(ext => ext.Text == e))
-			.Where(ext => ext != null) ?? Enumerable.Empty<GridViewItem>()
+			.Where(ext => ext != null) ?? []
 		);
 
 		isInitializingDevelopmentState = false;
@@ -311,9 +311,9 @@ public sealed partial class ApplicationsPage : Page
 		var selectedSysinternals = localSettings.Values["Sysinternals"] as string;
 		var sysinternalsItems = Sysinternals.ItemsSource as List<GridViewItem>;
 		Sysinternals.SelectedItems.AddRange(
-			selectedSysinternals?.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
+			selectedSysinternals?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
 			.Select(e => sysinternalsItems?.FirstOrDefault(ext => ext.Text == e))
-			.Where(ext => ext != null) ?? Enumerable.Empty<GridViewItem>()
+			.Where(ext => ext != null) ?? []
 		);
 
 		isInitializingSysinternalsState = false;
@@ -324,9 +324,9 @@ public sealed partial class ApplicationsPage : Page
 		var selectedOverclocking = localSettings.Values["Overclocking"] as string;
 		var overclockingItems = Overclocking.ItemsSource as List<GridViewItem>;
 		Overclocking.SelectedItems.AddRange(
-			selectedOverclocking?.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
+			selectedOverclocking?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
 			.Select(e => overclockingItems?.FirstOrDefault(ext => ext.Text == e))
-			.Where(ext => ext != null) ?? Enumerable.Empty<GridViewItem>()
+			.Where(ext => ext != null) ?? []
 		);
 
 		isInitializingOverclockingState = false;
@@ -337,9 +337,9 @@ public sealed partial class ApplicationsPage : Page
 		var selectedMusicProduction = localSettings.Values["MusicProduction"] as string;
 		var musicProductionItems = MusicProduction.ItemsSource as List<GridViewItem>;
 		MusicProduction.SelectedItems.AddRange(
-			selectedMusicProduction?.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
+			selectedMusicProduction?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
 			.Select(e => musicProductionItems?.FirstOrDefault(ext => ext.Text == e))
-			.Where(ext => ext != null) ?? Enumerable.Empty<GridViewItem>()
+			.Where(ext => ext != null) ?? []
 		);
 
 		isInitializingMusicProductionState = false;
@@ -350,9 +350,9 @@ public sealed partial class ApplicationsPage : Page
 		var selectedVideoProduction = localSettings.Values["VideoProduction"] as string;
 		var videoProductionItems = VideoProduction.ItemsSource as List<GridViewItem>;
 		VideoProduction.SelectedItems.AddRange(
-			selectedVideoProduction?.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
+			selectedVideoProduction?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
 			.Select(e => videoProductionItems?.FirstOrDefault(ext => ext.Text == e))
-			.Where(ext => ext != null) ?? Enumerable.Empty<GridViewItem>()
+			.Where(ext => ext != null) ?? []
 		);
 
 		isInitializingVideoProductionState = false;
@@ -363,9 +363,9 @@ public sealed partial class ApplicationsPage : Page
 		var selectedMultimedia = localSettings.Values["Multimedia"] as string;
 		var multimediaItems = Multimedia.ItemsSource as List<GridViewItem>;
 		Multimedia.SelectedItems.AddRange(
-			selectedMultimedia?.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
+			selectedMultimedia?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
 			.Select(e => multimediaItems?.FirstOrDefault(ext => ext.Text == e))
-			.Where(ext => ext != null) ?? Enumerable.Empty<GridViewItem>()
+			.Where(ext => ext != null) ?? []
 		);
 
 		isInitializingMultimediaState = false;
@@ -376,9 +376,9 @@ public sealed partial class ApplicationsPage : Page
 		var selectedOffice = localSettings.Values["Office"] as string;
 		var oficeItems = Office.ItemsSource as List<GridViewItem>;
 		Office.SelectedItems.AddRange(
-			selectedOffice?.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
+			selectedOffice?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
 			.Select(e => oficeItems?.FirstOrDefault(ext => ext.Text == e))
-			.Where(ext => ext != null) ?? Enumerable.Empty<GridViewItem>()
+			.Where(ext => ext != null) ?? []
 		);
 
 		isInitializingOfficeState = false;
@@ -389,9 +389,9 @@ public sealed partial class ApplicationsPage : Page
 		var selectedMiscellaneous = localSettings.Values["Miscellaneous"] as string;
 		var miscellaneousItems = Miscellaneous.ItemsSource as List<GridViewItem>;
 		Miscellaneous.SelectedItems.AddRange(
-			selectedMiscellaneous?.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
+			selectedMiscellaneous?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
 			.Select(e => miscellaneousItems?.FirstOrDefault(ext => ext.Text == e))
-			.Where(ext => ext != null) ?? Enumerable.Empty<GridViewItem>()
+			.Where(ext => ext != null) ?? []
 		);
 
 		isInitializingMiscellaneousState = false;

@@ -310,7 +310,7 @@ public static partial class SteamHelper
                                 {
                                     int driveIndex = pathVal.StartsWith("\"") ? 1 : 0;
                                     string updatedVal = pathVal[..driveIndex] + drive.Name[0] + pathVal[(driveIndex + 1)..];
-                                    shortcutData[key] = new KVObject(updatedVal);
+                                    shortcutData[key] = [with(updatedVal)];
                                     break;
                                 }
                             }
@@ -335,12 +335,12 @@ public static partial class SteamHelper
         {
             ["0"] = new KVObject
             {
-                ["path"] = new KVObject(SteamDir),
-                ["label"] = new KVObject(""),
-                ["contentid"] = new KVObject("0"),
-                ["totalsize"] = new KVObject("0"),
-                ["update_clean_bytes_tally"] = new KVObject("0"),
-                ["time_last_update_verified"] = new KVObject("0"),
+                ["path"] = [with(SteamDir)],
+                ["label"] = [with("")],
+                ["contentid"] = [with("0")],
+                ["totalsize"] = [with("0")],
+                ["update_clean_bytes_tally"] = [with("0")],
+                ["time_last_update_verified"] = [with("0")],
                 ["apps"] = []
             }
         };
@@ -375,7 +375,7 @@ public static partial class SteamHelper
             var entry = new KVObject();
             foreach (var child in folderChildren)
             {
-                entry[child.Key] = child.Key == "path" ? new KVObject(resolvedPath) : child.Value;
+                entry[child.Key] = child.Key == "path" ? [with(resolvedPath)] : child.Value;
             }
 
             rootObj[nextIndex.ToString()] = entry;
@@ -798,7 +798,7 @@ public static partial class SteamHelper
                 {"m", "Mature 17+"},
                 {"ao", "Adults Only 18+"},
             },
-            _ => new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            _ => [with(StringComparer.OrdinalIgnoreCase)]
         };
 
         model.Title = data.TryGetProperty("name", out var nameElem) && nameElem.ValueKind == JsonValueKind.String ? nameElem.GetString() : model.Title;

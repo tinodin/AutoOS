@@ -39,12 +39,12 @@ public sealed partial class SecurityPage : Page
 	private void GetWindowsDefenderState()
 	{
 		// declare services and drivers
-		var groups = new[]
-		{
-			(new[] { "SecurityHealthService", "Sense", "WdNisDrv", "WdNisSvc", "webthreatdefsvc" }, 3),
-			(new[] { "webthreatdefusersvc", "WinDefend"  }, 2),
-			(new[] { "MsSecCore", "WdBoot", "WdFilter" }, 0)
-		};
+		(string[], int)[] groups =
+		[
+			(["SecurityHealthService", "Sense", "WdNisDrv", "WdNisSvc", "webthreatdefsvc"], 3),
+			(["webthreatdefusersvc", "WinDefend"], 2),
+			(["MsSecCore", "WdBoot", "WdFilter"], 0)
+		];
 
 		// check if values match
 		bool isEnabled = true;

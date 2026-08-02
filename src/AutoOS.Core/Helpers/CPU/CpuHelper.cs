@@ -260,7 +260,7 @@ public static partial class CpuHelper
 
 		foreach (var group in groupedByEfficiency)
 		{
-			var cores = GroupCpuSetsByCore(group.ToList());
+			var cores = GroupCpuSetsByCore([.. group]);
 			if (GetCpuArchitecture().Vendor == CpuVendor.Intel)
 			{
 				if (group.Key == 0) eCores.AddRange(cores);
@@ -295,7 +295,7 @@ public static partial class CpuHelper
 				var group = CreateGroup(currentSets, previous, cpuSetsInfo, groupIndex++, coreOffset);
 				groups.Add(group);
 				coreOffset += group.Cores.Count;
-				currentSets = new List<CpuSet>();
+				currentSets = [];
 			}
 			currentSets.Add(current);
 		}

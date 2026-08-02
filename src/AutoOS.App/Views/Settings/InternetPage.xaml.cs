@@ -10,7 +10,7 @@ namespace AutoOS.Views.Settings;
 public sealed partial class InternetPage : Page
 {
 	private bool isInitializingAdvancedNetworkSettings = true;
-	private readonly Dictionary<DeviceInfo, Dictionary<string, (string Value, string DisplayValue)>> _pendingChanges = new();
+	private readonly Dictionary<DeviceInfo, Dictionary<string, (string Value, string DisplayValue)>> _pendingChanges = [];
 	public ObservableCollection<DeviceInfo> NetworkAdapters { get; } = [];
 
 	public InternetPage()
@@ -171,7 +171,7 @@ public sealed partial class InternetPage : Page
 		if (settingsGroup?.DataContext is not DeviceInfo device) return;
 
 		if (!_pendingChanges.ContainsKey(device))
-			_pendingChanges[device] = new();
+			_pendingChanges[device] = [];
 
 		var deviceChanges = _pendingChanges[device];
 
@@ -350,7 +350,7 @@ public sealed partial class InternetPage : Page
 		if (xIsMbps && yIsGbps) return -1;
 		if (yIsMbps && xIsGbps) return 1;
 
-		string[] rates = { "Disabled", "Off", "Minimal", "Low", "Medium", "Middle", "High", "Extreme", "Adaptive" };
+		string[] rates = ["Disabled", "Off", "Minimal", "Low", "Medium", "Middle", "High", "Extreme", "Adaptive"];
 		int xInt = Array.FindIndex(rates, i => x.Equals(i, StringComparison.OrdinalIgnoreCase));
 		int yInt = Array.FindIndex(rates, i => y.Equals(i, StringComparison.OrdinalIgnoreCase));
 		if (xInt != -1 && yInt != -1) return xInt.CompareTo(yInt);

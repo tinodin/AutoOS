@@ -31,7 +31,7 @@ public partial class FilePicker
 	public string? InitialDirectory { get; set; }
 	public Microsoft.Windows.Storage.Pickers.PickerLocationId SuggestedStartLocation { get; set; } = Microsoft.Windows.Storage.Pickers.PickerLocationId.Unspecified;
 	public string? Title { get; set; }
-	public Dictionary<string, IList<string>> FileTypeChoices { get; set; } = new();
+	public Dictionary<string, IList<string>> FileTypeChoices { get; set; } = [];
 	public bool ShowAllFilesOption { get; set; } = true;
 
 	/// <summary>
@@ -166,10 +166,10 @@ public partial class FilePicker
 			catch (Exception ex) when ((uint)(ex.HResult) == 0x800704C7) // ERROR_CANCELLED
 			{
 				// User canceled the dialog, return an empty list
-				return new List<string>();
+				return [];
 			}
 
-			List<string> filePaths = new List<string>();
+			List<string> filePaths = [];
 
 			if (allowMultiple)
 			{

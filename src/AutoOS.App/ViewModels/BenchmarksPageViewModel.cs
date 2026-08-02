@@ -47,9 +47,9 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	[NotifyCanExecuteChangedFor(nameof(AggregateCommand))]
 	public partial bool SelectedRecordingsHaveSameProcess { get; set; }
 
-	public IReadOnlyList<RecordingItem> SelectedRecordings { get; set; } = new List<RecordingItem>();
+	public IReadOnlyList<RecordingItem> SelectedRecordings { get; set; } = [];
 	public List<RecordingAnalysis> CachedAnalysis { get; set; } = [];
-	private readonly HashSet<string> _recordableProcesses = new(StringComparer.OrdinalIgnoreCase);
+	private readonly HashSet<string> _recordableProcesses = [with(StringComparer.OrdinalIgnoreCase)];
 	private readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 	
 	public async Task LoadRecordingsAsync()
@@ -71,8 +71,8 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 
 			var sepReader = Sep.Reader(options => options with { Sep = new Sep(','), Unescape = true, ColNameComparer = StringComparer.OrdinalIgnoreCase });
 
-			List<RecordingItem> recordings = new(csvFiles.Count);
-			Dictionary<RecordingItem, List<string>> aggregateSources = new();
+			List<RecordingItem> recordings = [with(csvFiles.Count)];
+			Dictionary<RecordingItem, List<string>> aggregateSources = [];
 
 			var loadedRecordings = csvFiles
 				.AsParallel()
@@ -218,7 +218,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 
 	public void SetRecordings(IReadOnlyList<RecordingItem> recordings)
 	{
-		Recordings = new ObservableCollection<RecordingItem>(recordings);
+		Recordings = [with(recordings)];
 		RecordingState = recordings.Count == 0 ? "Empty" : "Content";
 	}
 
@@ -245,7 +245,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		}
 		SelectedRecordingsHaveSameProcess = sameProcess;
 		AnalysisChartType = "Bar";
-		BaselineItems = new ObservableCollection<string>(["None", .. recordings.Select(recording => recording.Title)]);
+		BaselineItems = [with(["None", .. recordings.Select(recording => recording.Title)])];
 		BaselineSelectedIndex = 0;
 
 		AnalysisProcess = recordingA?.Process ?? string.Empty;
@@ -340,7 +340,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		List<string> headerCols;
 		using (var headerReader = Sep.Reader(options => options with { Sep = new Sep(','), Unescape = true }).FromFile(selected[0].FilePath))
 		{
-			headerCols = new List<string>(headerReader.Header.ColNames.Count);
+			headerCols = [with(headerReader.Header.ColNames.Count)];
 			for (int i = 0; i < headerReader.Header.ColNames.Count; i++)
 				headerCols.Add(headerReader.Header.ColNames[i]);
 		}

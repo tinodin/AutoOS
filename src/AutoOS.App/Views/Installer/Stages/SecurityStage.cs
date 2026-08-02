@@ -116,8 +116,8 @@ public static class SecurityStage
 			}
 		}
 
-		return new List<(string Title, Func<Task> Action, Func<bool> Condition)>
-		{
+		return
+		[
 			// enable "hide windows security systray" policy
 			(@"Enabling ""Hide Windows Security Systray"" policy", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender Security Center\Systray", "HideSystray", 1, RegistryValueKind.DWord), null),
 			
@@ -189,7 +189,7 @@ public static class SecurityStage
 			// disable process mitigations
 			("Disabling process mitigations", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Kernel", "MitigationAuditOptions", Enumerable.Repeat((byte)0x22, 24).ToArray(), RegistryValueKind.Binary), () => ProcessMitigations == false),
 			("Disabling process mitigations", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Kernel", "MitigationOptions", Enumerable.Repeat((byte)0x22, 24).ToArray(), RegistryValueKind.Binary), () => ProcessMitigations == false),
-		};
+		];
 	}
 }
 

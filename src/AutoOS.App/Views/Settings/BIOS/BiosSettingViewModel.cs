@@ -97,7 +97,7 @@ public partial class BiosSettingViewModel : ObservableObject
 	private List<SettingState> _currentState = [];
 	private List<SettingState> _batchStartState;
 	private bool _isRestoringHistory;
-	private readonly Dictionary<BiosSettingModel, BiosTreeNode> _modelToLeafMap = new();
+	private readonly Dictionary<BiosSettingModel, BiosTreeNode> _modelToLeafMap = [];
 
 	public bool CanUndo => IsLoaded && _undoStates.Count > 0;
 
@@ -1010,7 +1010,7 @@ public partial class BiosSettingViewModel : ObservableObject
 	}
 
 	private List<SettingState> CaptureState() =>
-		_allLeaves.Select(leaf => new SettingState(leaf.Model, leaf.Model.SelectedOption, leaf.Model.Value)).ToList();
+		[.. _allLeaves.Select(leaf => new SettingState(leaf.Model, leaf.Model.SelectedOption, leaf.Model.Value))];
 
 	private void RestoreState(List<SettingState> state)
 	{

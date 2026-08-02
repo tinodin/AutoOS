@@ -215,12 +215,12 @@ public sealed partial class ServicesPage : Page
 		if (isChecked)
 		{
 			// declare services and drivers
-			var groups = new[]
-			{
-				(new[] { "WlanSvc", "Wcmsvc" }, 2),
-				(new[] { "NlaSvc", "WinHttpAutoProxySvc", "Netwtw10", "Netwtw14" }, 3),
-				(new[] { "tdx", "vwififlt"}, 1)
-			};
+			(string[], int)[] groups =
+			[
+				(["WlanSvc", "Wcmsvc"], 2),
+				(["NlaSvc", "WinHttpAutoProxySvc", "Netwtw10", "Netwtw14"], 3),
+				(["tdx", "vwififlt"], 1)
+			];
 
 			// set start values
 			foreach (var group in groups)

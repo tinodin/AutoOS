@@ -204,7 +204,7 @@ public partial class DeviceAffinityViewModel : INotifyPropertyChanged
 		GroupColumnDefinitions = string.Join(", ", groups.Select(g => $"{g.RecommendedColumns}*"));
 		TotalColumns = groups.Sum(g => g.RecommendedColumns);
 
-		CpuGroups = new ObservableCollection<CpuCoreGroup>(groups);
+		CpuGroups = [with(groups)];
 		OnPropertyChanged(nameof(Group0Width));
 		OnPropertyChanged(nameof(Group1Width));
 		OnPropertyChanged(nameof(Group2Width));

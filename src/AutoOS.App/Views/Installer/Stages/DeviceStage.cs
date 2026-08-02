@@ -11,8 +11,8 @@ public static class DeviceStage
 {
 	public static List<(string Title, Func<Task> Action, Func<bool> Condition)> GetActions()
 	{
-		return new List<(string Title, Func<Task> Action, Func<bool> Condition)>
-		{
+		return
+		[
 			// properties -> policies -> write-caching policy
 			(@"Enabling ""Enable write caching on the device""", async () => await RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, new ProcessStartInfo("cmd.exe", @"/c for /f ""tokens=*"" %i in ('reg query ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Enum\SCSI""^| findstr ""HKEY""') do for /f ""tokens=*"" %a in ('reg query ""%i""^| findstr ""HKEY""') do reg add ""%a\Device Parameters\Disk"" /v ""UserWriteCacheSetting"" /t REG_DWORD /d 1 /f") { CreateNoWindow = true }), null),
 			(@"Enabling ""Turn off Windows write-cache buffer flushing on the device""", async () => await RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, new ProcessStartInfo("cmd.exe", @"/c for /f ""tokens=*"" %i in ('reg query ""HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Enum\SCSI""^| findstr ""HKEY""') do for /f ""tokens=*"" %a in ('reg query ""%i""^| findstr ""HKEY""') do reg add ""%a\Device Parameters\Disk"" /v ""CacheIsPowerProtected"" /t REG_DWORD /d 1 /f") { CreateNoWindow = true }), null),
@@ -34,7 +34,7 @@ public static class DeviceStage
 			
 			// disable reserved storage
 			("Disabling reserved storage", async () => await ProcessActions.RunPowerShell(@"DISM /Online /Set-ReservedStorageState /State:Disabled"), null)
-		};
+		];
 	}
 }
 

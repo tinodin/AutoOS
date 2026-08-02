@@ -30,7 +30,7 @@ public static partial class DownloadHelper
 	{
 		Directory.CreateDirectory(path);
 		var urlList = urls.ToList();
-		var fileList = files?.ToList() ?? new List<string>();
+		var fileList = files?.ToList() ?? [];
 		long totalBytesDownloaded = 0;
 		DateTime lastLoggedTime = DateTime.MinValue;
 		double lastSpeedMB = 0;

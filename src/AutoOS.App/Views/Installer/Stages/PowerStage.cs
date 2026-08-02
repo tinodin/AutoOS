@@ -11,8 +11,8 @@ public static class PowerStage
 	{
 		Guid guid = Guid.Empty;
 
-		return new List<(string Title, Func<Task> Action, Func<bool> Condition)>
-		{
+		return
+		[
 			// reset power plans
 			("Resetting Power plans", async () => PowerHelper.RestoreDefaultPowerSchemes(), null),
 
@@ -120,7 +120,7 @@ public static class PowerStage
 			("Disabling hibernation", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power", "HibernateEnabled", 0, RegistryValueKind.DWord), null),
 			("Disabling hibernation", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Power", "HiberbootEnabled", 0, RegistryValueKind.DWord), null),
 			("Disabling hibernation", async () => await Process.Start(new ProcessStartInfo { FileName = "powercfg", Arguments = "/h off", UseShellExecute = false, CreateNoWindow = true })!.WaitForExitAsync(), null),
-		};
+		];
 	}
 }
 

@@ -999,7 +999,7 @@ public static class BrowsersStage
 
 		if (selection != null)
 		{
-			return actions.Where(action => action.Condition != null && action.Condition.Invoke()).ToList();
+			return [.. actions.Where(action => action.Condition != null && action.Condition.Invoke())];
 		}
 
 		return actions;
@@ -1011,7 +1011,7 @@ public static class BrowsersStage
 		var root = JsonNode.Parse(json)?.AsObject();
 		if (root != null && root.TryGetPropertyValue("policies", out var policiesNode))
 		{
-			var policies = policiesNode?.AsObject() ?? new JsonObject();
+			var policies = policiesNode?.AsObject() ?? [];
 			JsonNode extensionNode = JsonValue.Create(extensionUrl)!;
 			if (!policies.ContainsKey("Extensions"))
 			{

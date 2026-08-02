@@ -132,10 +132,10 @@ public partial class FolderPicker
 			catch (Exception ex) when ((uint)(ex.HResult) == 0x800704C7) // ERROR_CANCELLED
 			{
 				// User canceled the dialog, return an empty list
-				return new List<string>();
+				return [];
 			}
 
-			List<string> folderPaths = new List<string>();
+			List<string> folderPaths = [];
 
 			if (allowMultiple)
 			{

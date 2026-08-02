@@ -99,7 +99,7 @@ public sealed partial class GraphicsPage : Page
 		}
 
 		var detectedGpus = GpuHelper.GetGPUs();
-		detectedGpus = detectedGpus.OrderBy(g => g.Location).ToList();
+		detectedGpus = [.. detectedGpus.OrderBy(g => g.Location)];
 
 		foreach (var gpu in detectedGpus)
 		{

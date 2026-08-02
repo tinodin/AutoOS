@@ -157,7 +157,7 @@ public static partial class IgdbHelper
 							{"ec", "Early Childhood"}, {"e", "Everyone"}, {"e10", "Everyone 10+"}, {"e10+", "Everyone 10+"},
 							{"t", "Teen"}, {"m", "Mature 17+"}, {"ao", "Adults Only 18+"},
 						},
-						_ => new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+						_ => [with(StringComparer.OrdinalIgnoreCase)]
 					};
 
 					JsonElement? ratingEntry = null;

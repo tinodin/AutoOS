@@ -9,7 +9,7 @@ public partial class BiosSettingModel : INotifyPropertyChanged, INotifyDataError
 	private bool _isLoaded = false;
 	private string _value;
 	private Option _selectedOption;
-	private readonly Dictionary<string, List<string>> _warnings = new();
+	private readonly Dictionary<string, List<string>> _warnings = [];
 	private static bool _isBatchMode;
 
 	public static bool IsBatchMode
@@ -127,7 +127,7 @@ public partial class BiosSettingModel : INotifyPropertyChanged, INotifyDataError
 		{
 			if (string.IsNullOrWhiteSpace(_value))
 			{
-				_warnings[propertyName] = new List<string> { "Value is empty" };
+				_warnings[propertyName] = ["Value is empty"];
 				RaiseErrorsChanged(propertyName);
 			}
 			else if (_warnings.ContainsKey(propertyName))
@@ -142,7 +142,7 @@ public partial class BiosSettingModel : INotifyPropertyChanged, INotifyDataError
 			const string optionPropertyName = nameof(SelectedOption);
 			if (_selectedOption == null)
 			{
-				_warnings[optionPropertyName] = new List<string> { "No option selected" };
+				_warnings[optionPropertyName] = ["No option selected"];
 				RaiseErrorsChanged(optionPropertyName);
 			}
 			else if (_warnings.ContainsKey(optionPropertyName))

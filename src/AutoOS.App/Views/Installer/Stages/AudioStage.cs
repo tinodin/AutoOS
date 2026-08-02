@@ -15,8 +15,8 @@ public static class AudioStage
 	{
 		bool NetAdapterCx = PreparingStage.NetAdapterCx;
 
-		return new List<(string Title, Func<Task> Action, Func<bool> Condition)>
-		{
+		return
+		[
 			// disable audio enhancements
 			("Disabling audio enhancements", async () => await RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, new ProcessStartInfo("cmd.exe", @"/c powershell -Command ""$Keys = @('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Render'); foreach ($Key in $Keys) { Get-ChildItem $Key -Recurse | Where-Object { $_.PSPath -match '\\FxProperties$' } | ForEach-Object { Set-ItemProperty -Path $_.PSPath -Name '{1da5d803-d492-4edd-8c23-e0c0ffee7f0e},5' -Value 1 } }""") { CreateNoWindow = true }), null),
 			("Disabling audio enhancements", async () => await RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, new ProcessStartInfo("cmd.exe", @"/c powershell -Command ""$Keys = @('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Capture'); foreach ($Key in $Keys) { Get-ChildItem $Key -Recurse | Where-Object { $_.PSPath -match '\\FxProperties$' } | ForEach-Object { Set-ItemProperty -Path $_.PSPath -Name '{1da5d803-d492-4edd-8c23-e0c0ffee7f0e},5' -Value 1 } }""") { CreateNoWindow = true }), null),
@@ -54,7 +54,7 @@ public static class AudioStage
 			("Installing Dolby AC-3 Feature on Demand", async () => await Process.Start(new ProcessStartInfo { FileName = "dism.exe", Arguments = $@"/online /Add-Package /PackagePath:""{Path.Combine(Path.GetTempPath(), @"Dolby-AC-3-FoD\update.mum")}"" /norestart", UseShellExecute = false, CreateNoWindow = true })!.WaitForExitAsync(), null),
 			("Cleaning up Dolby AC-3 Feature on Demand files", async () => { var zipPath = Path.Combine(Path.GetTempPath(), "Dolby-AC-3-FoD.zip"); if (File.Exists(zipPath)) File.Delete(zipPath); }, null),
 			("Cleaning up Dolby AC-3 Feature on Demand files", async () => { var dirPath = Path.Combine(Path.GetTempPath(), "Dolby-AC-3-FoD"); if (Directory.Exists(dirPath)) Directory.Delete(dirPath, true); }, null)
-		};
+		];
 	}
 }
 
