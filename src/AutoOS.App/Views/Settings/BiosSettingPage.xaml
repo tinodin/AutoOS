@@ -280,22 +280,22 @@
                 </Grid.ColumnDefinitions>
 
                 <!--  Search  -->
-                <dev:TextBox x:Name="Search"
+                <common:TextBox x:Name="Search"
                              Grid.Column="0"
                              IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"
                              IsSpellCheckEnabled="False"
                              PlaceholderText="Search..."
                              TextChanged="Search_TextChanged"
                              ToolTipService.ToolTip="Search (Ctrl+F)">
-                    <dev:TextBox.KeyboardAccelerators>
+                    <common:TextBox.KeyboardAccelerators>
                         <KeyboardAccelerator Key="F"
                                              Invoked="Search_AcceleratorInvoked"
                                              Modifiers="Control" />
-                    </dev:TextBox.KeyboardAccelerators>
-                    <dev:TextBox.Content>
+                    </common:TextBox.KeyboardAccelerators>
+                    <common:TextBox.Content>
                         <Button Content="&#xE71E;" />
-                    </dev:TextBox.Content>
-                </dev:TextBox>
+                    </common:TextBox.Content>
+                </common:TextBox>
 
                 <!--  Filter  -->
                 <DropDownButton Grid.Column="1"

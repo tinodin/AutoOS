@@ -425,7 +425,7 @@ public static partial class SteamHelper
         KVDocument kv;
         try
         {
-            using var stream = File.OpenRead(localConfigPath);
+            using FileStream stream = File.OpenRead(localConfigPath);
             kv = KVSerializer.Create(KVSerializationFormat.KeyValues1Text).Deserialize(stream, new KVSerializerOptions { HasEscapeSequences = true });
         }
         catch

@@ -96,7 +96,6 @@ public sealed partial class BenchmarksPage : Page
 
 			case TabbedCommandBarItem item when item == AnalysisTab:
 				ViewModel.ActiveTab = "Analysis";
-				ViewModel.AnalysisChartType = "Bar";
 
 				if (ViewModel.IsAnalysisToolbarEnabled)
 					ReplayAnimation();

@@ -5,6 +5,7 @@
       xmlns:converters="using:CommunityToolkit.WinUI.Converters"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:dev="using:DevWinUI"
+      xmlns:common="using:AutoOS.Common"
       xmlns:local="using:AutoOS.Views.Settings.Power"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       mc:Ignorable="d">
@@ -255,16 +256,16 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <!--  Search  -->
-                <dev:TextBox x:Name="Search"
+                <common:TextBox x:Name="Search"
                              Grid.Row="0"
                              Grid.Column="0"
                              Grid.ColumnSpan="4"
                              PlaceholderText="Search..."
                              TextChanged="SearchBox_TextChanged">
-                    <dev:TextBox.Content>
+                    <common:TextBox.Content>
                         <Button Content="&#xE71E;" />
-                    </dev:TextBox.Content>
-                </dev:TextBox>
+                    </common:TextBox.Content>
+                </common:TextBox>
                 <!--  Power plan  -->
                 <ComboBox x:Name="PowerPlanComboBox"
                           Grid.Row="1"
