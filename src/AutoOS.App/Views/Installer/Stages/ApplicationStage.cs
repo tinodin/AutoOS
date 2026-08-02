@@ -548,7 +548,7 @@ public static class ApplicationStage
 			("Disabling Discord startup entry", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", "Discord", new byte[] { 0x01 }, RegistryValueKind.Binary), () => Discord == true),
 
 			// optimize discord settings
-			("Optimizing Discord settings", async () => await File.WriteAllTextAsync(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Discord", "settings.json"), "{\n  \"enableHardwareAcceleration\": false,\n  \"OPEN_ON_STARTUP\": false,\n  \"MINIMIZE_TO_TRAY\": false,\n  \"debugLogging\": false,\n  \"openasar\": {\n    \"setup\": true,\n    \"noTrack\": true\n  }\n}"), () => Discord == true),
+			("Optimizing Discord settings", async () => await File.WriteAllTextAsync(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Discord", "settings.json"), "{\n  \"OPEN_ON_STARTUP\": false,\n  \"MINIMIZE_TO_TRAY\": false,\n  \"debugLogging\": false,\n  \"openasar\": {\n    \"setup\": true,\n    \"noTrack\": true\n  }\n}"), () => Discord == true),
 
 			// download vencord
 			("Downloading Vencord", async () => await DownloadHelper.Download("https://github.com/Vencord/Installer/releases/latest/download/VencordInstallerCli.exe", Path.GetTempPath(), "VencordInstallerCli.exe", reporter: reporter), () => Discord == true),
@@ -733,7 +733,7 @@ public static class ApplicationStage
 			("Importing Riot Client Games", async () => Valorant = File.Exists(Path.Combine(RiotHelper.RiotGamesMetadataPath, "valorant.live", "valorant.live.product_settings.yaml")) && !string.IsNullOrEmpty(Regex.Match(await File.ReadAllTextAsync(Path.Combine(RiotHelper.RiotGamesMetadataPath, "valorant.live", "valorant.live.product_settings.yaml")), @"product_install_full_path:\s*(.+)").Groups[1].Value.Trim()), () => RiotClient == true && RiotClientGames == true),
 
 			// optimize riot client settings
-			("Optimizing Riot Client settings", async () => { var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Riot Games\Riot Client\Config\RiotClientSettings.yaml"); await File.WriteAllTextAsync(path, Regex.Replace((await File.ReadAllTextAsync(path)).Replace("install:", "install:\n    hardware-acceleration: false"), @"(hardware-acceleration|launch_on_computer_set_by_default|enable_run_in_background_set_by_player|enable_launch_on_computer_start_set_by_player):.*", "$1: false")); }, () => RiotClient == true),
+			("Optimizing Riot Client settings", async () => { var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Riot Games\Riot Client\Config\RiotClientSettings.yaml"); await File.WriteAllTextAsync(path, Regex.Replace(await File.ReadAllTextAsync(path), @"(launch_on_computer_set_by_default|enable_run_in_background_set_by_player|enable_launch_on_computer_start_set_by_player):.*", "$1: false")); }, () => RiotClient == true),
 
 			// disable riot client startup entry
 			("Disabling Riot Client startup entry", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", "RiotClient", new byte[] { 0x01 }, RegistryValueKind.Binary), () => RiotClient == true),
@@ -1113,9 +1113,6 @@ public static class ApplicationStage
 
 			// pin spotify to the taskbar
 			("Pinning Spotify to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Spotify.lnk")), () => Spotify == true),
-
-			// disable spotify hardware acceleration
-			("Disabling Spotify hardware acceleration", async () => await File.WriteAllTextAsync(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Spotify", "prefs"), "ui.hardware_acceleration=false"), () => Spotify == true),
 
 			// download spotx
 			("Downloading SpotX", async () => await DownloadHelper.Download("https://raw.githubusercontent.com/SpotX-Official/SpotX/main/run.ps1", Path.GetTempPath(), "run.ps1", reporter: reporter), () => Spotify == true),

@@ -43,8 +43,6 @@
 
   <ItemGroup>
     <Manifest Include="$(ApplicationManifest)" />
-    <None Include="..\AutoOS.Core\NativeMethods.txt" Link="NativeMethods.txt" />
-    <None Include="..\AutoOS.Core\NativeMethods.json" Link="NativeMethods.json" />
   </ItemGroup>
 
   <ItemGroup>
