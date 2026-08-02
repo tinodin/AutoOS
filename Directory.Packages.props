@@ -11,7 +11,7 @@
     <PackageVersion Include="CommunityToolkit.WinUI.Controls.Primitives" Version="8.3.260402-preview2" />
     <PackageVersion Include="CommunityToolkit.WinUI.Controls.TabbedCommandBar" Version="8.3.260402-preview2" />
     <PackageVersion Include="CommunityToolkit.WinUI.Converters" Version="8.3.260402-preview2" />
-    <PackageVersion Include="DevWinUI" Version="10.1.0" />
+    <PackageVersion Include="DevWinUI" Version="10.2.0" />
     <PackageVersion Include="Downloader" Version="5.9.5" />
     <PackageVersion Include="LevelDBSharp" Version="1.0.0" />
     <PackageVersion Include="Microsoft.Data.Sqlite" Version="11.0.0-preview.5.26302.115" />

@@ -44,16 +44,23 @@ public static partial class SteamHelper
             kv = KVSerializer.Create(KVSerializationFormat.KeyValues1Text)
                 .Deserialize(ms, new KVSerializerOptions { HasEscapeSequences = true });
         }
-        catch (KeyValueException)
+        catch
         {
-            using var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
-            kv = KVSerializer.Create(KVSerializationFormat.KeyValues1Text)
-                .Deserialize(ms, new KVSerializerOptions { HasEscapeSequences = false });
+            try
+            {
+                using var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
+                kv = KVSerializer.Create(KVSerializationFormat.KeyValues1Text)
+                    .Deserialize(ms, new KVSerializerOptions { HasEscapeSequences = false });
+            }
+            catch
+            {
+                return [];
+            }
         }
 
         return
         [
-            .. kv.Root.Children
+            .. (kv?.Root?.Children ?? [])
                 .Select(child =>
                 {
                     if (child.Value is not KVObject accountData)
@@ -97,14 +104,21 @@ public static partial class SteamHelper
             kv = KVSerializer.Create(KVSerializationFormat.KeyValues1Text)
                 .Deserialize(ms, new KVSerializerOptions { HasEscapeSequences = true });
         }
-        catch (KeyValueException)
+        catch
         {
-            using var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
-            kv = KVSerializer.Create(KVSerializationFormat.KeyValues1Text)
-                .Deserialize(ms, new KVSerializerOptions { HasEscapeSequences = false });
+            try
+            {
+                using var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
+                kv = KVSerializer.Create(KVSerializationFormat.KeyValues1Text)
+                    .Deserialize(ms, new KVSerializerOptions { HasEscapeSequences = false });
+            }
+            catch
+            {
+                return null;
+            }
         }
 
-        return kv.Root.Children.FirstOrDefault(child =>
+        return kv?.Root?.Children?.FirstOrDefault(child =>
         {
             if (child.Value is not KVObject accountData)
                 return false;
@@ -408,11 +422,18 @@ public static partial class SteamHelper
         string localConfigPath = Path.Combine(SteamUserDataDir, folderName, "config", "localconfig.vdf");
         if (!File.Exists(localConfigPath)) return (playtimeData, ownedAppIds);
 
-        var options = new KVSerializerOptions { HasEscapeSequences = true };
-        using var stream = File.OpenRead(localConfigPath);
-        var kv = KVSerializer.Create(KVSerializationFormat.KeyValues1Text).Deserialize(stream, options);
+        KVDocument kv;
+        try
+        {
+            using var stream = File.OpenRead(localConfigPath);
+            kv = KVSerializer.Create(KVSerializationFormat.KeyValues1Text).Deserialize(stream, new KVSerializerOptions { HasEscapeSequences = true });
+        }
+        catch
+        {
+            return (playtimeData, ownedAppIds);
+        }
 
-        var softwareNode = kv.Root.Children.FirstOrDefault(children => string.Equals(children.Key, "Software", StringComparison.OrdinalIgnoreCase));
+        var softwareNode = (kv?.Root?.Children ?? []).FirstOrDefault(children => string.Equals(children.Key, "Software", StringComparison.OrdinalIgnoreCase));
         if (softwareNode.Equals(default(KeyValuePair<string, KVObject>))) return (playtimeData, ownedAppIds);
 
         var software = softwareNode.Value;

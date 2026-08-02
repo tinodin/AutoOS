@@ -5,7 +5,7 @@
     <AssemblyName>AutoOS</AssemblyName>
     <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>1.4.6.2</Version>
+    <Version>1.4.7.0</Version>
     <TargetFramework>$(WindowsTargetFramework)</TargetFramework>
     <TargetPlatformMinVersion>$(MinimalWindowsVersion)</TargetPlatformMinVersion>
 
@@ -16,7 +16,7 @@
 
     <Nullable>Enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <TrimMode>partial</TrimMode>
+    <TrimMode>full</TrimMode>
     <CsWinRTAotWarningLevel>2</CsWinRTAotWarningLevel>
 
     <PublishAot>False</PublishAot>
