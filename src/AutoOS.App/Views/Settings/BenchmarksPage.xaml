@@ -193,7 +193,7 @@
 							<!--  Chart Type  -->
 							<AppBarElementContainer
 								Margin="4,0,0,0"
-								IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+								IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}"
 								ToolTipService.ToolTip="Chart Type">
 								<dev:SelectorBarSegmented SelectionChanged="AnalysisChartTypeSelector_SelectionChanged">
 									<SelectorBarItem
@@ -226,14 +226,14 @@
 							<!--  Bar / Column Statistics  -->
 							<AppBarElementContainer
 								Margin="0,0,2,0"
-								IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+								IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}"
 								Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
 								<ToggleButton
 									Content="0.1% Low Avg"
 									IsChecked="{x:Bind ViewModel.ShowLow01, Mode=TwoWay}"
 									ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('0.1% Low Avg')}" />
 							</AppBarElementContainer>
-							<AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}" Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
+							<AppBarElementContainer IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}" Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
 								<ToggleButton
 									Content="1% Low Avg"
 									IsChecked="{x:Bind ViewModel.ShowLow1, Mode=TwoWay}"
@@ -244,14 +244,14 @@
 
 							<AppBarElementContainer
 								Margin="0,0,2,0"
-								IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+								IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}"
 								Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
 								<ToggleButton
 									Content="Avg (Arithmetic)"
 									IsChecked="{x:Bind ViewModel.ShowAvgArithmetic, Mode=TwoWay}"
 									ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('Avg (Arithmetic)')}" />
 							</AppBarElementContainer>
-							<AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}" Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
+							<AppBarElementContainer IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}" Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
 								<ToggleButton
 									Content="Avg (Harmonic)"
 									IsChecked="{x:Bind ViewModel.ShowAvgHarmonic, Mode=TwoWay}"
@@ -262,14 +262,14 @@
 
 							<AppBarElementContainer
 								Margin="0,0,2,0"
-								IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+								IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}"
 								Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
 								<ToggleButton
 									Content="Min"
 									IsChecked="{x:Bind ViewModel.ShowMin, Mode=TwoWay}"
 									ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('Min')}" />
 							</AppBarElementContainer>
-							<AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}" Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
+							<AppBarElementContainer IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}" Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
 								<ToggleButton
 									Content="Max"
 									IsChecked="{x:Bind ViewModel.ShowMax, Mode=TwoWay}"
@@ -280,7 +280,7 @@
 
 							<AppBarElementContainer
 								Margin="0,0,2,0"
-								IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+								IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}"
 								Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
 								<ToggleButton
 									Content="P0.1"
@@ -289,7 +289,7 @@
 							</AppBarElementContainer>
 							<AppBarElementContainer
 								Margin="0,0,2,0"
-								IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+								IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}"
 								Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
 								<ToggleButton
 									Content="P1"
@@ -298,7 +298,7 @@
 							</AppBarElementContainer>
 							<AppBarElementContainer
 								Margin="0,0,2,0"
-								IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+								IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}"
 								Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
 								<ToggleButton
 									Content="P5"
@@ -307,7 +307,7 @@
 							</AppBarElementContainer>
 							<AppBarElementContainer
 								Margin="0,0,2,0"
-								IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+								IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}"
 								Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
 								<ToggleButton
 									Content="P50 (Median)"
@@ -316,14 +316,14 @@
 							</AppBarElementContainer>
 							<AppBarElementContainer
 								Margin="0,0,2,0"
-								IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+								IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}"
 								Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
 								<ToggleButton
 									Content="P95"
 									IsChecked="{x:Bind ViewModel.ShowP95, Mode=TwoWay}"
 									ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P95')}" />
 							</AppBarElementContainer>
-							<AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}" Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
+							<AppBarElementContainer IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}" Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
 								<ToggleButton
 									Content="P99"
 									IsChecked="{x:Bind ViewModel.ShowP99, Mode=TwoWay}"
@@ -331,7 +331,7 @@
 							</AppBarElementContainer>
 
 							<!--  Line / Scatter Statistics  -->
-							<AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}" Visibility="{x:Bind ViewModel.MetricVisibility, Mode=OneWay}">
+							<AppBarElementContainer IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}" Visibility="{x:Bind ViewModel.MetricVisibility, Mode=OneWay}">
 								<ComboBox
 									x:Name="Metric1ComboBox"
 									MinWidth="215"
@@ -347,10 +347,7 @@
 							</AppBarElementContainer>
 
 							<!--  Pie Thresholds  -->
-							<AppBarElementContainer
-								Margin="0,0,2,0"
-								IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
-								Visibility="{x:Bind ViewModel.ThresholdsVisibility, Mode=OneWay}">
+							<AppBarElementContainer IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}" Visibility="{x:Bind ViewModel.ThresholdsVisibility, Mode=OneWay}">
 								<NumberBox
 									LargeChange="5"
 									Minimum="1"
@@ -361,8 +358,8 @@
 									Value="{x:Bind ViewModel.LowFpsThreshold, Mode=TwoWay}" />
 							</AppBarElementContainer>
 							<AppBarElementContainer
-								Margin="0,0,2,0"
-								IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}"
+								Margin="2,0"
+								IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}"
 								Visibility="{x:Bind ViewModel.ThresholdsVisibility, Mode=OneWay}">
 								<NumberBox
 									LargeChange="0.5"
@@ -379,7 +376,7 @@
 							<AppBarSeparator Margin="4,0" />
 
 							<!--  Recording A Color Picker  -->
-							<AppBarElementContainer IsEnabled="{x:Bind ViewModel.IsAnalysisToolbarEnabled, Mode=OneWay}" ToolTipService.ToolTip="{x:Bind ViewModel.RecordingAColorTooltip, Mode=OneWay}">
+							<AppBarElementContainer IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}" ToolTipService.ToolTip="{x:Bind ViewModel.RecordingAColorTooltip, Mode=OneWay}">
 								<common:DropdownColorPicker
 									VerticalAlignment="Bottom"
 									ColorSpectrumShape="Ring"
@@ -441,7 +438,7 @@
 							<AppBarSeparator Margin="4,0" />
 
 							<!--  Thresholds  -->
-							<AppBarElementContainer Margin="0,0,2,0" ToolTipService.ToolTip="Low FPS threshold">
+							<AppBarElementContainer IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}" ToolTipService.ToolTip="Low FPS threshold">
 								<NumberBox
 									LargeChange="5"
 									Minimum="1"
@@ -450,7 +447,10 @@
 									ValueChanged="LowFpsThresholdNumberBox_ValueChanged"
 									Value="{x:Bind ViewModel.LowFpsThreshold, Mode=TwoWay}" />
 							</AppBarElementContainer>
-							<AppBarElementContainer Margin="0,0,2,0" ToolTipService.ToolTip="Stutter factor">
+							<AppBarElementContainer
+								Margin="2,0"
+								IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}"
+								ToolTipService.ToolTip="Stutter factor">
 								<NumberBox
 									LargeChange="0.5"
 									Maximum="10"

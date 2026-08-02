@@ -30,7 +30,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(IsDeleteEnabled))]
 	[NotifyPropertyChangedFor(nameof(IsAggregateEnabled))]
-	[NotifyPropertyChangedFor(nameof(IsAnalysisToolbarEnabled))]
+	[NotifyPropertyChangedFor(nameof(HasSelectedRecordings))]
 	[NotifyPropertyChangedFor(nameof(HasTwoRecordingsVisibility))]
 	[NotifyPropertyChangedFor(nameof(HasTwoRecordings))]
 	[NotifyPropertyChangedFor(nameof(PieChartColumnSpan))]
@@ -40,7 +40,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(IsAggregateEnabled))]
-	[NotifyPropertyChangedFor(nameof(IsAnalysisToolbarEnabled))]
+	[NotifyPropertyChangedFor(nameof(HasSelectedRecordings))]
 	[NotifyPropertyChangedFor(nameof(HasTwoRecordingsVisibility))]
 	[NotifyPropertyChangedFor(nameof(HasTwoRecordings))]
 	[NotifyPropertyChangedFor(nameof(PieChartColumnSpan))]
@@ -559,7 +559,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	[ObservableProperty]
 	public partial ObservableCollection<RecordingItem> Recordings { get; set; } = [];
 
-	public bool IsAnalysisToolbarEnabled => SelectedRecordingCount is > 0 and <= 2 && SelectedRecordingsHaveSameProcess;
+	public bool HasSelectedRecordings => SelectedRecordingCount is > 0 and <= 2 && SelectedRecordingsHaveSameProcess;
 
 	public Visibility StatisticsVisibility => (AnalysisChartType is "Bar" or "Column") ? Visibility.Visible : Visibility.Collapsed;
 
