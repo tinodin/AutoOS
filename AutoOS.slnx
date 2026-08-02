@@ -1,24 +1,31 @@
 <Solution>
   <Configurations>
-    <Platform Name="ARM64" />
+    <Platform Name="arm64" />
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Folder Name="/Solution Items/">
-    <File Path=".editorconfig" />
+  <Folder Name="/global/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
   </Folder>
-  <Project Path="src\AutoOS.App.Sound\AutoOS.App.Sound.vcxproj" Id="2c195a31-78fe-4baf-9328-bb5d0ada390a">
-    <Platform Project="x64" />
-  </Project>
-  <Project Path="src\AutoOS.App\AutoOS.App.csproj">
-    <Platform Solution="*|ARM64" Project="ARM64" />
-    <Platform Solution="*|x64" Project="x64" />
-    <Platform Solution="*|x86" Project="x86" />
-    <Deploy />
-  </Project>
-  <Project Path="src\AutoOS.Core\AutoOS.Core.csproj">
-    <Platform Solution="*|ARM64" Project="ARM64" />
-    <Platform Solution="*|x64" Project="x64" />
-    <Platform Solution="*|x86" Project="x86" />
-  </Project>
+  <Folder Name="/src/" />
+  <Folder Name="/src/core/">
+    <Project Path="src/AutoOS.Core/AutoOS.Core.csproj">
+      <Platform Solution="*|arm64" Project="ARM64" />
+      <Platform Solution="*|x64" Project="x64" />
+      <Platform Solution="*|x86" Project="x86" />
+    </Project>
+  </Folder>
+  <Folder Name="/src/platforms/">
+    <Project Path="src/AutoOS.App/AutoOS.App.csproj">
+      <Platform Solution="*|arm64" Project="ARM64" />
+      <Platform Solution="*|x64" Project="x64" />
+      <Platform Solution="*|x86" Project="x86" />
+      <BuildDependency Project="src/AutoOS.App.Sound/AutoOS.App.Sound.vcxproj" />
+      <Deploy />
+    </Project>
+    <Project Path="src/AutoOS.App.Sound/AutoOS.App.Sound.vcxproj" Id="2c195a31-78fe-4baf-9328-bb5d0ada390a">
+      <Platform Project="x64" />
+    </Project>
+  </Folder>
 </Solution>

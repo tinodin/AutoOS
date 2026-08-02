@@ -14,13 +14,11 @@
     Publisher="CN=tinodin"
     Version="1.4.6.2" />
 
-  <mp:PhoneIdentity PhoneProductId="81be9a4c-5599-4f16-b2df-5df99b34cec2" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
-
   <Properties>
     <DisplayName>AutoOS</DisplayName>
     <PublisherDisplayName>tinodin</PublisherDisplayName>
-    <Logo>Assets\Store\StoreLogo.png</Logo>
-<desktop6:RegistryWriteVirtualization>disabled</desktop6:RegistryWriteVirtualization>
+    <Logo>Assets\AppTiles\StoreLogo.png</Logo>
+    <desktop6:RegistryWriteVirtualization>disabled</desktop6:RegistryWriteVirtualization>
     <desktop6:FileSystemWriteVirtualization>disabled</desktop6:FileSystemWriteVirtualization>
   </Properties>
 
@@ -37,30 +35,48 @@
     <Application Id="App"
       Executable="$targetnametoken$.exe"
       EntryPoint="$targetentrypoint$">
+
       <uap:VisualElements
         DisplayName="AutoOS"
-        Description="AutoOS"
-        BackgroundColor="transparent"
-        Square150x150Logo="Assets\Store\Square150x150Logo.png"
-        Square44x44Logo="Assets\Store\Square44x44Logo.png">
-        <uap:DefaultTile Wide310x150Logo="Assets\Store\Wide310x150Logo.png" />
-        <uap:SplashScreen Image="Assets\Store\SplashScreen.png" />
+        Description="AutoOS is a Native AOT WinUI 3 application that automates migrating to a new Windows installation on a separate partition. With minimal user effort, it seamlessly configures a cleaner and faster system optimized for gaming performance and productivity while preserving all system compatibility."
+        Square150x150Logo="Assets\AppTiles\Square150x150Logo.png"
+        Square44x44Logo="Assets\AppTiles\Square44x44Logo.png"
+        BackgroundColor="transparent">
+
+        <uap:DefaultTile
+            Wide310x150Logo="Assets\AppTiles\Wide310x150Logo.png"
+            Square71x71Logo="Assets\AppTiles\SmallTile.png"
+            Square310x310Logo="Assets\AppTiles\LargeTile.png"
+            ShortName="AutoOS">
+          <uap:ShowNameOnTiles>
+            <uap:ShowOn Tile="square150x150Logo" />
+            <uap:ShowOn Tile="wide310x150Logo" />
+            <uap:ShowOn Tile="square310x310Logo" />
+          </uap:ShowNameOnTiles>
+        </uap:DefaultTile>
+
+        <uap:SplashScreen uap5:Optional="true" Image="Assets\AppTiles\SplashScreen.png" />
+
       </uap:VisualElements>
 
-		<Extensions>
-			<uap5:Extension Category="windows.startupTask">
-				<uap5:StartupTask
-				  TaskId="AutoOS"
-				  Enabled="true"
-				  DisplayName="AutoOS" />
-			</uap5:Extension>
-		</Extensions>    
-	</Application>
+      <Extensions>
+
+        <uap5:Extension Category="windows.startupTask">
+          <uap5:StartupTask
+            TaskId="AutoOS"
+            Enabled="true"
+            DisplayName="AutoOS" />
+        </uap5:Extension>
+
+      </Extensions>
+
+    </Application>
   </Applications>
 
   <Capabilities>
     <rescap:Capability Name="runFullTrust" />
     <rescap:Capability Name="allowElevation"/>
     <rescap:Capability Name="unvirtualizedResources" />
+    <rescap:Capability Name="packageManagement" />
   </Capabilities>
 </Package>

@@ -84,14 +84,8 @@
     <ProjectReference Include="..\AutoOS.Core\AutoOS.Core.csproj" />
   </ItemGroup>
 
-  <Target Name="SoundHelper" BeforeTargets="ResolveAssemblyReferences" Condition="'$(Platform)' == 'x64'">
-    <MSBuild Projects="..\AutoOS.App.Sound\AutoOS.App.Sound.vcxproj"
-             Targets="Build"
-             Properties="Configuration=$(Configuration);Platform=x64" />
-  </Target>
-
   <ItemGroup>
-    <Content Include="..\AutoOS.App.Sound\x64\$(Configuration)\AutoOS.Sound.exe" Link="AutoOS.Sound.exe">
+    <Content Include="..\..\artifacts\$(Configuration)\x64\AutoOS.App.Sound\AutoOS.Sound.exe" Link="AutoOS.Sound.exe" Condition="Exists('..\..\artifacts\$(Configuration)\x64\AutoOS.App.Sound\AutoOS.Sound.exe')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
