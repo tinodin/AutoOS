@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<Page x:Class="AutoOS.Views.Settings.SchedulingPage"
-	  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-	  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	  xmlns:controls="using:CommunityToolkit.WinUI.Controls"
-	  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-	  xmlns:dev="using:DevWinUI"
-	  xmlns:local="using:AutoOS.Views.Settings.Scheduling"
-	  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	  mc:Ignorable="d">
+<Page
+	x:Class="AutoOS.Views.Settings.SchedulingPage"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	xmlns:dev="using:DevWinUI"
+	xmlns:local="using:AutoOS.Views.Settings.Scheduling"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	mc:Ignorable="d">
 	<Page.Resources>
-		<DataTemplate x:Key="GroupTemplate"
-					  x:DataType="local:SchedulingGroup">
-			<TreeViewItem IsExpanded="{x:Bind IsExpanded, Mode=TwoWay}"
-						  ItemsSource="{x:Bind SubItems}">
+		<DataTemplate x:Key="GroupTemplate" x:DataType="local:SchedulingGroup">
+			<TreeViewItem IsExpanded="{x:Bind IsExpanded, Mode=TwoWay}" ItemsSource="{x:Bind SubItems}">
 				<controls:DataRow>
 					<TextBlock />
-					<TextBlock Margin="-24,0,0,0"
-							   FontWeight="SemiBold"
-							   Text="{x:Bind Name}" />
+					<TextBlock
+						Margin="-24,0,0,0"
+						FontWeight="SemiBold"
+						Text="{x:Bind Name}" />
 					<TextBlock />
 					<TextBlock />
 					<TextBlock />
@@ -27,102 +27,108 @@
 				</controls:DataRow>
 			</TreeViewItem>
 		</DataTemplate>
-		<DataTemplate x:Key="ItemTemplate"
-					  x:DataType="local:SchedulingItem">
+		<DataTemplate x:Key="ItemTemplate" x:DataType="local:SchedulingItem">
 			<TreeViewItem>
 				<controls:DataRow>
 					<TextBlock />
-					<TextBlock Text="{x:Bind Name, Mode=OneWay}"
-							   ToolTipService.ToolTip="{x:Bind Name, Mode=OneWay}" />
-					<TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-							   Text="{x:Bind MsiModeDisplay, Mode=OneWay}" />
-					<TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-							   Text="{x:Bind MsiLimitDisplay, Mode=OneWay}" />
-					<TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-							   Text="{x:Bind MaxMsiLimitDisplay, Mode=OneWay}" />
-					<TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-							   Text="{x:Bind DevicePolicyDisplay, Mode=OneWay}" />
-					<TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-							   Text="{x:Bind DevicePriorityDisplay, Mode=OneWay}" />
-					<TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-							   Text="{x:Bind SpecifiedProcessorsDisplay, Mode=OneWay}" />
+					<TextBlock Text="{x:Bind Name, Mode=OneWay}" ToolTipService.ToolTip="{x:Bind Name, Mode=OneWay}" />
+					<TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind MsiModeDisplay, Mode=OneWay}" />
+					<TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind MsiLimitDisplay, Mode=OneWay}" />
+					<TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind MaxMsiLimitDisplay, Mode=OneWay}" />
+					<TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind DevicePolicyDisplay, Mode=OneWay}" />
+					<TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind DevicePriorityDisplay, Mode=OneWay}" />
+					<TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind SpecifiedProcessorsDisplay, Mode=OneWay}" />
 				</controls:DataRow>
 			</TreeViewItem>
 		</DataTemplate>
-		<local:SchedulingItemTemplateSelector x:Key="SchedulingItemTemplateSelector"
-											  GroupTemplate="{StaticResource GroupTemplate}"
-											  ItemTemplate="{StaticResource ItemTemplate}" />
+		<local:SchedulingItemTemplateSelector
+			x:Key="SchedulingItemTemplateSelector"
+			GroupTemplate="{StaticResource GroupTemplate}"
+			ItemTemplate="{StaticResource ItemTemplate}" />
 	</Page.Resources>
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto" />
 			<RowDefinition Height="*" />
 		</Grid.RowDefinitions>
-		<TextBlock Margin="36,24,0,0"
-				   Style="{StaticResource TitleTextBlockStyle}"
-				   Text="Per-CPU Scheduling" />
-		<ScrollViewer Grid.Row="1"
-					  VerticalScrollBarVisibility="Auto"
-					  VerticalScrollMode="Auto">
-			<StackPanel Margin="{ThemeResource ContentPageMargin}"
-						Padding="{ThemeResource ContentPagePadding}"
-						dev:PanelAttach.ChildrenTransitions="Default"
-						Spacing="8">
-				<dev:SettingsGroup Margin="0,0,0,32"
-								   Description="Manage your Audio Controller, Graphics Card, XHCI Controller and Network Interface Controller Affinities."
-								   Header="Per-CPU Scheduling">
+		<TextBlock
+			Margin="36,24,0,0"
+			Style="{StaticResource TitleTextBlockStyle}"
+			Text="Per-CPU Scheduling" />
+		<ScrollViewer
+			Grid.Row="1"
+			VerticalScrollBarVisibility="Auto"
+			VerticalScrollMode="Auto">
+			<StackPanel
+				Margin="{ThemeResource ContentPageMargin}"
+				Padding="{ThemeResource ContentPagePadding}"
+				dev:PanelAttach.ChildrenTransitions="Default"
+				Spacing="8">
+				<dev:SettingsGroup
+					Margin="0,0,0,32"
+					Description="Manage your Audio Controller, Graphics Card, XHCI Controller and Network Interface Controller Affinities."
+					Header="Per-CPU Scheduling">
 					<dev:SettingsGroup.HeaderIcon>
 						<ImageIcon Source="/Assets/Fluent/Cpu.png" />
 					</dev:SettingsGroup.HeaderIcon>
 					<dev:SettingsGroup.Content>
-						<dev:ProgressButton x:Name="Optimize"
-											HorizontalAlignment="Left"
-											Checked="Optimize_Checked"
-											CheckedContent="Optimizing Affinities..."
-											Content="Optimize Affinities"
-											IsIndeterminate="True"
-											Style="{ThemeResource AccentProgressButtonStyle}" />
+						<dev:ProgressButton
+							x:Name="Optimize"
+							HorizontalAlignment="Left"
+							Checked="Optimize_Checked"
+							CheckedContent="Optimizing Affinities..."
+							Content="Optimize Affinities"
+							IsIndeterminate="True"
+							Style="{ThemeResource AccentProgressButtonStyle}" />
 					</dev:SettingsGroup.Content>
 					<dev:SettingsGroup.Items>
-						<Border Padding="4,6"
-								Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-								BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-								BorderThickness="1,0,1,1"
-								CornerRadius="0,0,4,4">
-							<controls:HeaderedTreeView x:Name="TreeView"
-													   AllowDrop="False"
-													   CanDrag="False"
-													   CanDragItems="False"
-													   ItemInvoked="TreeView_ItemInvoked"
-													   ItemTemplateSelector="{StaticResource SchedulingItemTemplateSelector}"
-													   ItemsSource="{x:Bind Nodes}"
-													   SelectionMode="None">
+						<Border
+							Padding="4,6"
+							Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+							BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+							BorderThickness="1,0,1,1"
+							CornerRadius="0,0,4,4">
+							<controls:HeaderedTreeView
+								x:Name="TreeView"
+								AllowDrop="False"
+								CanDrag="False"
+								CanDragItems="False"
+								ItemInvoked="TreeView_ItemInvoked"
+								ItemTemplateSelector="{StaticResource SchedulingItemTemplateSelector}"
+								ItemsSource="{x:Bind Nodes}"
+								SelectionMode="None">
 								<controls:HeaderedTreeView.Header>
 									<controls:DataTable ColumnSpacing="8">
-										<controls:DataColumn Content=""
-															 DesiredWidth="Auto" />
-										<controls:DataColumn Margin="-48,0,48,0"
-															 Content="Name"
-															 DesiredWidth="Auto"
-															 FontSize="12" />
-										<controls:DataColumn Content="MSI Mode"
-															 DesiredWidth="*"
-															 FontSize="12" />
-										<controls:DataColumn Content="MSI Limit"
-															 DesiredWidth="*"
-															 FontSize="12" />
-										<controls:DataColumn Content="Max MSI Limit"
-															 DesiredWidth="*"
-															 FontSize="12" />
-										<controls:DataColumn Content="Device Policy"
-															 DesiredWidth="*"
-															 FontSize="12" />
-										<controls:DataColumn Content="Device Priority"
-															 DesiredWidth="*"
-															 FontSize="12" />
-										<controls:DataColumn Content="Specified Proc"
-															 DesiredWidth="165"
-															 FontSize="12" />
+										<controls:DataColumn Content="" DesiredWidth="Auto" />
+										<controls:DataColumn
+											Margin="-48,0,48,0"
+											Content="Name"
+											DesiredWidth="Auto"
+											FontSize="12" />
+										<controls:DataColumn
+											Content="MSI Mode"
+											DesiredWidth="*"
+											FontSize="12" />
+										<controls:DataColumn
+											Content="MSI Limit"
+											DesiredWidth="*"
+											FontSize="12" />
+										<controls:DataColumn
+											Content="Max MSI Limit"
+											DesiredWidth="*"
+											FontSize="12" />
+										<controls:DataColumn
+											Content="Device Policy"
+											DesiredWidth="*"
+											FontSize="12" />
+										<controls:DataColumn
+											Content="Device Priority"
+											DesiredWidth="*"
+											FontSize="12" />
+										<controls:DataColumn
+											Content="Specified Proc"
+											DesiredWidth="165"
+											FontSize="12" />
 									</controls:DataTable>
 								</controls:HeaderedTreeView.Header>
 							</controls:HeaderedTreeView>

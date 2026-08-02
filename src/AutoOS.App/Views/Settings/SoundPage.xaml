@@ -1,131 +1,68 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<Page x:Class="AutoOS.Views.Settings.SoundPage"
-	  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-	  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	  xmlns:converters="using:CommunityToolkit.WinUI.Converters"
-	  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-	  xmlns:dev="using:DevWinUI"
-	  xmlns:local="using:AutoOS.Views.Settings"
-	  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	  xmlns:models="using:AutoOS.Core.Helpers.Device.Models"
-	  xmlns:soundConverters="using:AutoOS.Core.Helpers.Sound.Converters"
-	  xmlns:views="using:AutoOS.Views.Settings"
-	  mc:Ignorable="d">
+<Page
+	x:Class="AutoOS.Views.Settings.SoundPage"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:converters="using:CommunityToolkit.WinUI.Converters"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	xmlns:dev="using:DevWinUI"
+	xmlns:local="using:AutoOS.Views.Settings"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:models="using:AutoOS.Core.Helpers.Device.Models"
+	xmlns:soundConverters="using:AutoOS.Core.Helpers.Sound.Converters"
+	xmlns:views="using:AutoOS.Views.Settings"
+	mc:Ignorable="d">
 	<Page.Resources>
 		<converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
-		<converters:BoolToObjectConverter x:Key="MuteToolTipConverter"
-										  FalseValue="Mute Volume"
-										  TrueValue="Unmute Volume" />
-		<converters:BoolToObjectConverter x:Key="MicMuteToolTipConverter"
-										  FalseValue="Mute microphone"
-										  TrueValue="Unmute microphone" />
-		<converters:BoolToVisibilityConverter x:Key="MuteIconVisibilityConverter"
-											  FalseValue="Collapsed"
-											  TrueValue="Visible" />
+		<converters:BoolToObjectConverter
+			x:Key="MuteToolTipConverter"
+			FalseValue="Mute Volume"
+			TrueValue="Unmute Volume" />
+		<converters:BoolToObjectConverter
+			x:Key="MicMuteToolTipConverter"
+			FalseValue="Mute microphone"
+			TrueValue="Unmute microphone" />
+		<converters:BoolToVisibilityConverter
+			x:Key="MuteIconVisibilityConverter"
+			FalseValue="Collapsed"
+			TrueValue="Visible" />
 		<soundConverters:FormFactorToImageIconConverter x:Key="FormFactorToImageIconConverter" />
-		<converters:BoolToVisibilityConverter x:Key="ActiveIconVisibilityConverter"
-											  FalseValue="Visible"
-											  TrueValue="Collapsed" />
+		<converters:BoolToVisibilityConverter
+			x:Key="ActiveIconVisibilityConverter"
+			FalseValue="Visible"
+			TrueValue="Collapsed" />
 	</Page.Resources>
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto" />
 			<RowDefinition Height="*" />
 		</Grid.RowDefinitions>
-		<TextBlock Margin="36,24,0,0"
-				   Style="{StaticResource TitleTextBlockStyle}"
-				   Text="Sound" />
-		<ScrollViewer Grid.Row="1"
-					  VerticalScrollBarVisibility="Auto"
-					  VerticalScrollMode="Auto">
-			<StackPanel Margin="{ThemeResource ContentPageMargin}"
-						Padding="{ThemeResource ContentPagePadding}">
-				<dev:SimpleSettingsGroup Margin="0,-32,0,0"
-										 Header="Output"
-										 Visibility="{x:Bind HasOutputDevice, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-					<dev:SettingsGroup Description="{x:Bind CurrentOutput.Description, Mode=OneWay}"
-									   Header="{x:Bind CurrentOutput.FriendlyName, Mode=OneWay}"
-									   HeaderIcon="{x:Bind CurrentOutput.FormFactor, Mode=OneWay, Converter={StaticResource FormFactorToImageIconConverter}}">
+		<TextBlock
+			Margin="36,24,0,0"
+			Style="{StaticResource TitleTextBlockStyle}"
+			Text="Sound" />
+		<ScrollViewer
+			Grid.Row="1"
+			VerticalScrollBarVisibility="Auto"
+			VerticalScrollMode="Auto">
+			<StackPanel Margin="{ThemeResource ContentPageMargin}" Padding="{ThemeResource ContentPagePadding}">
+				<dev:SimpleSettingsGroup
+					Margin="0,-32,0,0"
+					Header="Output"
+					Visibility="{x:Bind HasOutputDevice, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+					<dev:SettingsGroup
+						Description="{x:Bind CurrentOutput.Description, Mode=OneWay}"
+						Header="{x:Bind CurrentOutput.FriendlyName, Mode=OneWay}"
+						HeaderIcon="{x:Bind CurrentOutput.FormFactor, Mode=OneWay, Converter={StaticResource FormFactorToImageIconConverter}}">
 						<dev:SettingsGroup.Items>
-							<dev:SettingsExpander Margin="0,-2"
-												  Header="  Volume"
-												  Visibility="{x:Bind CurrentOutput.SupportPerChannelVolume, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+							<dev:SettingsExpander
+								Margin="0,-2"
+								Header="  Volume"
+								Visibility="{x:Bind CurrentOutput.SupportPerChannelVolume, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
 								<dev:SettingsExpander.Content>
-									<StackPanel Orientation="Horizontal"
-												Spacing="8">
-										<Button Width="32"
-												Padding="4"
-												VerticalAlignment="Center"
-												Background="Transparent"
-												BorderThickness="0"
-												Click="Mute_Click"
-												DataContext="{x:Bind CurrentOutput, Mode=OneWay}"
-												ToolTipService.ToolTip="{x:Bind CurrentOutput.IsMuted, Mode=OneWay, Converter={StaticResource MuteToolTipConverter}}">
-											<Grid>
-												<FontIcon Width="24"
-														  FontSize="20"
-														  Glyph="&#xE74F;"
-														  Visibility="{x:Bind CurrentOutput.IsMuted, Mode=OneWay, Converter={StaticResource MuteIconVisibilityConverter}}" />
-												<FontIcon Width="24"
-														  FontSize="20"
-														  Glyph="&#xE995;"
-														  Visibility="{x:Bind CurrentOutput.IsMuted, Mode=OneWay, Converter={StaticResource ActiveIconVisibilityConverter}}" />
-											</Grid>
-										</Button>
-										<TextBlock Width="32"
-												   VerticalAlignment="Center"
-												   Text="{x:Bind CurrentOutput.Volume, Mode=OneWay}"
-												   TextAlignment="Right" />
-										<Slider MinWidth="200"
-												DataContext="{x:Bind CurrentOutput, Mode=OneWay}"
-												Maximum="100"
-												Minimum="0"
-												StepFrequency="1"
-												ValueChanged="Volume_ValueChanged"
-												Value="{x:Bind CurrentOutput.Volume, Mode=TwoWay}" />
-									</StackPanel>
-								</dev:SettingsExpander.Content>
-								<dev:SettingsExpander.Items>
-									<dev:SettingsCard Header="Left channel">
-										<StackPanel Orientation="Horizontal"
-													Spacing="8">
-											<TextBlock Width="32"
-													   VerticalAlignment="Center"
-													   Text="{x:Bind CurrentOutput.LeftVolume, Mode=OneWay}"
-													   TextAlignment="Right" />
-											<Slider MinWidth="200"
-													DataContext="{x:Bind CurrentOutput, Mode=OneWay}"
-													Maximum="100"
-													Minimum="0"
-													StepFrequency="1"
-													ValueChanged="LeftVolume_ValueChanged"
-													Value="{x:Bind CurrentOutput.LeftVolume, Mode=TwoWay}" />
-										</StackPanel>
-									</dev:SettingsCard>
-									<dev:SettingsCard Header="Right channel">
-										<StackPanel Orientation="Horizontal"
-													Spacing="8">
-											<TextBlock Width="32"
-													   VerticalAlignment="Center"
-													   Text="{x:Bind CurrentOutput.RightVolume, Mode=OneWay}"
-													   TextAlignment="Right" />
-											<Slider MinWidth="200"
-													DataContext="{x:Bind CurrentOutput, Mode=OneWay}"
-													Maximum="100"
-													Minimum="0"
-													StepFrequency="1"
-													ValueChanged="RightVolume_ValueChanged"
-													Value="{x:Bind CurrentOutput.RightVolume, Mode=TwoWay}" />
-										</StackPanel>
-									</dev:SettingsCard>
-								</dev:SettingsExpander.Items>
-							</dev:SettingsExpander>
-							<dev:SettingsCard Margin="0,-1,0,0"
-											  Header="Volume"
-											  Visibility="{x:Bind CurrentOutput.SupportPerChannelVolume, Mode=OneWay, Converter={StaticResource ActiveIconVisibilityConverter}}">
-								<StackPanel Orientation="Horizontal"
-											Spacing="8">
-									<Button Width="32"
+									<StackPanel Orientation="Horizontal" Spacing="8">
+										<Button
+											Width="32"
 											Padding="4"
 											VerticalAlignment="Center"
 											Background="Transparent"
@@ -133,104 +70,195 @@
 											Click="Mute_Click"
 											DataContext="{x:Bind CurrentOutput, Mode=OneWay}"
 											ToolTipService.ToolTip="{x:Bind CurrentOutput.IsMuted, Mode=OneWay, Converter={StaticResource MuteToolTipConverter}}">
-										<Grid>
-											<FontIcon Width="24"
-													  FontSize="20"
-													  Glyph="&#xE74F;"
-													  Visibility="{x:Bind CurrentOutput.IsMuted, Mode=OneWay, Converter={StaticResource MuteIconVisibilityConverter}}" />
-											<FontIcon Width="24"
-													  FontSize="20"
-													  Glyph="&#xE995;"
-													  Visibility="{x:Bind CurrentOutput.IsMuted, Mode=OneWay, Converter={StaticResource ActiveIconVisibilityConverter}}" />
-										</Grid>
-									</Button>
-									<TextBlock Width="32"
-											   VerticalAlignment="Center"
-											   Text="{x:Bind CurrentOutput.Volume, Mode=OneWay}"
-											   TextAlignment="Right" />
-									<Slider MinWidth="200"
+											<Grid>
+												<FontIcon
+													Width="24"
+													FontSize="20"
+													Glyph="&#xE74F;"
+													Visibility="{x:Bind CurrentOutput.IsMuted, Mode=OneWay, Converter={StaticResource MuteIconVisibilityConverter}}" />
+												<FontIcon
+													Width="24"
+													FontSize="20"
+													Glyph="&#xE995;"
+													Visibility="{x:Bind CurrentOutput.IsMuted, Mode=OneWay, Converter={StaticResource ActiveIconVisibilityConverter}}" />
+											</Grid>
+										</Button>
+										<TextBlock
+											Width="32"
+											VerticalAlignment="Center"
+											Text="{x:Bind CurrentOutput.Volume, Mode=OneWay}"
+											TextAlignment="Right" />
+										<Slider
+											MinWidth="200"
 											DataContext="{x:Bind CurrentOutput, Mode=OneWay}"
 											Maximum="100"
 											Minimum="0"
 											StepFrequency="1"
 											ValueChanged="Volume_ValueChanged"
 											Value="{x:Bind CurrentOutput.Volume, Mode=TwoWay}" />
+									</StackPanel>
+								</dev:SettingsExpander.Content>
+								<dev:SettingsExpander.Items>
+									<dev:SettingsCard Header="Left channel">
+										<StackPanel Orientation="Horizontal" Spacing="8">
+											<TextBlock
+												Width="32"
+												VerticalAlignment="Center"
+												Text="{x:Bind CurrentOutput.LeftVolume, Mode=OneWay}"
+												TextAlignment="Right" />
+											<Slider
+												MinWidth="200"
+												DataContext="{x:Bind CurrentOutput, Mode=OneWay}"
+												Maximum="100"
+												Minimum="0"
+												StepFrequency="1"
+												ValueChanged="LeftVolume_ValueChanged"
+												Value="{x:Bind CurrentOutput.LeftVolume, Mode=TwoWay}" />
+										</StackPanel>
+									</dev:SettingsCard>
+									<dev:SettingsCard Header="Right channel">
+										<StackPanel Orientation="Horizontal" Spacing="8">
+											<TextBlock
+												Width="32"
+												VerticalAlignment="Center"
+												Text="{x:Bind CurrentOutput.RightVolume, Mode=OneWay}"
+												TextAlignment="Right" />
+											<Slider
+												MinWidth="200"
+												DataContext="{x:Bind CurrentOutput, Mode=OneWay}"
+												Maximum="100"
+												Minimum="0"
+												StepFrequency="1"
+												ValueChanged="RightVolume_ValueChanged"
+												Value="{x:Bind CurrentOutput.RightVolume, Mode=TwoWay}" />
+										</StackPanel>
+									</dev:SettingsCard>
+								</dev:SettingsExpander.Items>
+							</dev:SettingsExpander>
+							<dev:SettingsCard
+								Margin="0,-1,0,0"
+								Header="Volume"
+								Visibility="{x:Bind CurrentOutput.SupportPerChannelVolume, Mode=OneWay, Converter={StaticResource ActiveIconVisibilityConverter}}">
+								<StackPanel Orientation="Horizontal" Spacing="8">
+									<Button
+										Width="32"
+										Padding="4"
+										VerticalAlignment="Center"
+										Background="Transparent"
+										BorderThickness="0"
+										Click="Mute_Click"
+										DataContext="{x:Bind CurrentOutput, Mode=OneWay}"
+										ToolTipService.ToolTip="{x:Bind CurrentOutput.IsMuted, Mode=OneWay, Converter={StaticResource MuteToolTipConverter}}">
+										<Grid>
+											<FontIcon
+												Width="24"
+												FontSize="20"
+												Glyph="&#xE74F;"
+												Visibility="{x:Bind CurrentOutput.IsMuted, Mode=OneWay, Converter={StaticResource MuteIconVisibilityConverter}}" />
+											<FontIcon
+												Width="24"
+												FontSize="20"
+												Glyph="&#xE995;"
+												Visibility="{x:Bind CurrentOutput.IsMuted, Mode=OneWay, Converter={StaticResource ActiveIconVisibilityConverter}}" />
+										</Grid>
+									</Button>
+									<TextBlock
+										Width="32"
+										VerticalAlignment="Center"
+										Text="{x:Bind CurrentOutput.Volume, Mode=OneWay}"
+										TextAlignment="Right" />
+									<Slider
+										MinWidth="200"
+										DataContext="{x:Bind CurrentOutput, Mode=OneWay}"
+										Maximum="100"
+										Minimum="0"
+										StepFrequency="1"
+										ValueChanged="Volume_ValueChanged"
+										Value="{x:Bind CurrentOutput.Volume, Mode=TwoWay}" />
 								</StackPanel>
 							</dev:SettingsCard>
 							<dev:SettingsCard Header="Format">
-								<ComboBox MinWidth="310"
-										  DataContext="{x:Bind CurrentOutput, Mode=OneWay}"
-										  ItemsSource="{x:Bind CurrentOutput.AvailableFormats, Mode=OneWay}"
-										  SelectedItem="{x:Bind CurrentOutput.SelectedFormat, Mode=TwoWay}"
-										  SelectionChanged="Format_SelectionChanged" />
+								<ComboBox
+									MinWidth="310"
+									DataContext="{x:Bind CurrentOutput, Mode=OneWay}"
+									ItemsSource="{x:Bind CurrentOutput.AvailableFormats, Mode=OneWay}"
+									SelectedItem="{x:Bind CurrentOutput.SelectedFormat, Mode=TwoWay}"
+									SelectionChanged="Format_SelectionChanged" />
 							</dev:SettingsCard>
 
 							<dev:SettingsCard Header="Buffer size">
-								<ComboBox MinWidth="175"
-										  DataContext="{x:Bind CurrentOutput, Mode=OneWay}"
-										  ItemsSource="{x:Bind CurrentOutput.BufferSizes, Mode=OneWay}"
-										  SelectedItem="{x:Bind CurrentOutput.SelectedBufferSize, Mode=TwoWay}"
-										  SelectionChanged="AudioEndpointBufferSize_SelectionChanged" />
+								<ComboBox
+									MinWidth="175"
+									DataContext="{x:Bind CurrentOutput, Mode=OneWay}"
+									ItemsSource="{x:Bind CurrentOutput.BufferSizes, Mode=OneWay}"
+									SelectedItem="{x:Bind CurrentOutput.SelectedBufferSize, Mode=TwoWay}"
+									SelectionChanged="AudioEndpointBufferSize_SelectionChanged" />
 							</dev:SettingsCard>
 						</dev:SettingsGroup.Items>
 					</dev:SettingsGroup>
 				</dev:SimpleSettingsGroup>
-				<dev:SimpleSettingsGroup Header="Input"
-										 Visibility="{x:Bind HasInputDevice, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-					<dev:SettingsGroup Description="{x:Bind CurrentInput.Description, Mode=OneWay}"
-									   Header="{x:Bind CurrentInput.FriendlyName, Mode=OneWay}"
-									   HeaderIcon="{x:Bind CurrentInput.FormFactor, Mode=OneWay, Converter={StaticResource FormFactorToImageIconConverter}}">
+				<dev:SimpleSettingsGroup Header="Input" Visibility="{x:Bind HasInputDevice, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+					<dev:SettingsGroup
+						Description="{x:Bind CurrentInput.Description, Mode=OneWay}"
+						Header="{x:Bind CurrentInput.FriendlyName, Mode=OneWay}"
+						HeaderIcon="{x:Bind CurrentInput.FormFactor, Mode=OneWay, Converter={StaticResource FormFactorToImageIconConverter}}">
 						<dev:SettingsGroup.Items>
 							<dev:SettingsCard Header="Input volume">
-								<StackPanel Orientation="Horizontal"
-											Spacing="8">
-									<Button Width="32"
-											Padding="4"
-											VerticalAlignment="Center"
-											Background="Transparent"
-											BorderThickness="0"
-											Click="Mute_Click"
-											DataContext="{x:Bind CurrentInput, Mode=OneWay}"
-											ToolTipService.ToolTip="{x:Bind CurrentInput.IsMuted, Mode=OneWay, Converter={StaticResource MicMuteToolTipConverter}}">
+								<StackPanel Orientation="Horizontal" Spacing="8">
+									<Button
+										Width="32"
+										Padding="4"
+										VerticalAlignment="Center"
+										Background="Transparent"
+										BorderThickness="0"
+										Click="Mute_Click"
+										DataContext="{x:Bind CurrentInput, Mode=OneWay}"
+										ToolTipService.ToolTip="{x:Bind CurrentInput.IsMuted, Mode=OneWay, Converter={StaticResource MicMuteToolTipConverter}}">
 										<Grid>
-											<FontIcon Width="24"
-													  FontSize="20"
-													  Glyph="&#xF781;"
-													  Visibility="{x:Bind CurrentInput.IsMuted, Mode=OneWay, Converter={StaticResource MuteIconVisibilityConverter}}" />
-											<FontIcon Width="24"
-													  FontSize="20"
-													  Glyph="&#xE720;"
-													  Visibility="{x:Bind CurrentInput.IsMuted, Mode=OneWay, Converter={StaticResource ActiveIconVisibilityConverter}}" />
+											<FontIcon
+												Width="24"
+												FontSize="20"
+												Glyph="&#xF781;"
+												Visibility="{x:Bind CurrentInput.IsMuted, Mode=OneWay, Converter={StaticResource MuteIconVisibilityConverter}}" />
+											<FontIcon
+												Width="24"
+												FontSize="20"
+												Glyph="&#xE720;"
+												Visibility="{x:Bind CurrentInput.IsMuted, Mode=OneWay, Converter={StaticResource ActiveIconVisibilityConverter}}" />
 										</Grid>
 									</Button>
-									<TextBlock Width="32"
-											   VerticalAlignment="Center"
-											   Text="{x:Bind CurrentInput.Volume, Mode=OneWay}"
-											   TextAlignment="Right" />
-									<Slider MinWidth="200"
-											DataContext="{x:Bind CurrentInput, Mode=OneWay}"
-											Maximum="100"
-											Minimum="0"
-											StepFrequency="1"
-											ValueChanged="Volume_ValueChanged"
-											Value="{x:Bind CurrentInput.Volume, Mode=TwoWay}" />
+									<TextBlock
+										Width="32"
+										VerticalAlignment="Center"
+										Text="{x:Bind CurrentInput.Volume, Mode=OneWay}"
+										TextAlignment="Right" />
+									<Slider
+										MinWidth="200"
+										DataContext="{x:Bind CurrentInput, Mode=OneWay}"
+										Maximum="100"
+										Minimum="0"
+										StepFrequency="1"
+										ValueChanged="Volume_ValueChanged"
+										Value="{x:Bind CurrentInput.Volume, Mode=TwoWay}" />
 								</StackPanel>
 							</dev:SettingsCard>
 
 							<dev:SettingsCard Header="Format">
-								<ComboBox MinWidth="310"
-										  DataContext="{x:Bind CurrentInput, Mode=OneWay}"
-										  ItemsSource="{x:Bind CurrentInput.AvailableFormats, Mode=OneWay}"
-										  SelectedItem="{x:Bind CurrentInput.SelectedFormat, Mode=TwoWay}"
-										  SelectionChanged="Format_SelectionChanged" />
+								<ComboBox
+									MinWidth="310"
+									DataContext="{x:Bind CurrentInput, Mode=OneWay}"
+									ItemsSource="{x:Bind CurrentInput.AvailableFormats, Mode=OneWay}"
+									SelectedItem="{x:Bind CurrentInput.SelectedFormat, Mode=TwoWay}"
+									SelectionChanged="Format_SelectionChanged" />
 							</dev:SettingsCard>
 
 							<dev:SettingsCard Header="Buffer size">
-								<ComboBox MinWidth="175"
-										  DataContext="{x:Bind CurrentInput, Mode=OneWay}"
-										  ItemsSource="{x:Bind CurrentInput.BufferSizes, Mode=OneWay}"
-										  SelectedItem="{x:Bind CurrentInput.SelectedBufferSize, Mode=TwoWay}"
-										  SelectionChanged="AudioEndpointBufferSize_SelectionChanged" />
+								<ComboBox
+									MinWidth="175"
+									DataContext="{x:Bind CurrentInput, Mode=OneWay}"
+									ItemsSource="{x:Bind CurrentInput.BufferSizes, Mode=OneWay}"
+									SelectedItem="{x:Bind CurrentInput.SelectedBufferSize, Mode=TwoWay}"
+									SelectionChanged="AudioEndpointBufferSize_SelectionChanged" />
 							</dev:SettingsCard>
 						</dev:SettingsGroup.Items>
 					</dev:SettingsGroup>

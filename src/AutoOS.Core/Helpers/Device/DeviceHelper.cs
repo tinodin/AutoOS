@@ -578,35 +578,35 @@ public static partial class DeviceHelper
 		return null;
 	}
 
+	private static bool TryGetRuntimeOffset(ReadWriteHelper hw, DeviceInfo device, out ulong runtime, out int max)
+	{
+		runtime = 0;
+		max = 0;
+
+		if (device.BaseAddress == 0) return false;
+
+		if (!hw.ReadMemory32(device.BaseAddress + 0x18, out uint rtsoff)) return false;
+		if (rtsoff == 0xFFFFFFFF || rtsoff == 0) return false;
+
+		runtime = device.BaseAddress + (rtsoff & ~0x1Fu);
+
+		if (!hw.ReadMemory32(device.BaseAddress + 0x04, out uint hcs1)) return false;
+		if (hcs1 == 0xFFFFFFFF) return false;
+
+		max = (int)((hcs1 >> 8) & 0x7FF);
+		return max <= 128;
+	}
+
 	public static bool GetIMODState(DeviceInfo device, ReadWriteHelper sharedHw = null)
 	{
 		using var localHw = sharedHw == null ? new ReadWriteHelper() : null;
 		var hw = sharedHw ?? localHw;
 
-		if (device.BaseAddress == 0) return false;
-
-		if (!hw.ReadMemory32(device.BaseAddress + 0x18, out uint rtsoff))
-			throw new Exception("Failed to read RTSOFF register at base address 0x" + device.BaseAddress.ToString("X"));
-
-		if (rtsoff == 0xFFFFFFFF || rtsoff == 0)
-			throw new Exception($"Invalid RTSOFF value (0x{rtsoff:X8}) read from controller base address 0x{device.BaseAddress:X}.");
-
-		ulong runtime = device.BaseAddress + (rtsoff & ~0x1Fu);
-
-		if (!hw.ReadMemory32(device.BaseAddress + 0x04, out uint hcs1))
-			throw new Exception("Failed to read HCS1 register at base address 0x" + device.BaseAddress.ToString("X"));
-
-		if (hcs1 == 0xFFFFFFFF)
-			throw new Exception($"Invalid HCS1 value (0x{hcs1:X8}) read from controller base address 0x{device.BaseAddress:X}.");
-
-		int max = (int)((hcs1 >> 8) & 0x7FF);
-		if (max > 128)
-			throw new Exception($"Sanity check failed: unusually large number of interrupters ({max}) read from HCS1 (0x{hcs1:X8}).");
+		if (!TryGetRuntimeOffset(hw, device, out ulong runtime, out int max)) return false;
 
 		for (int i = 0; i < max; i++)
 		{
-			if (!hw.ReadMemory32(runtime + 0x24 + (0x20 * (ulong)i), out uint imod))
-				throw new Exception("Failed to read IMOD register at index " + i);
+			if (!hw.ReadMemory32(runtime + 0x24 + (0x20 * (ulong)i), out uint imod)) return false;
 			if (imod != 0) return true;
 		}
 
@@ -616,24 +616,8 @@ public static partial class DeviceHelper
 	public static void ToggleImod(DeviceInfo device, bool enable)
 	{
 		using var hw = new ReadWriteHelper();
-		if (device.BaseAddress == 0) return;
 
-		if (!hw.ReadMemory32(device.BaseAddress + 0x18, out uint rtsoff))
-			throw new Exception("Failed to read RTSOFF register at base address 0x" + device.BaseAddress.ToString("X"));
-
-		if (rtsoff == 0xFFFFFFFF || rtsoff == 0)
-			throw new Exception($"Invalid RTSOFF value (0x{rtsoff:X8}) read from controller base address 0x{device.BaseAddress:X}.");
-
-		ulong runtime = device.BaseAddress + (rtsoff & ~0x1Fu);
-		if (!hw.ReadMemory32(device.BaseAddress + 0x04, out uint hcs1))
-			throw new Exception("Failed to read HCS1 register at base address 0x" + device.BaseAddress.ToString("X"));
-
-		if (hcs1 == 0xFFFFFFFF)
-			throw new Exception($"Invalid HCS1 value (0x{hcs1:X8}) read from controller base address 0x{device.BaseAddress:X}.");
-
-		int max = (int)((hcs1 >> 8) & 0x7FF);
-		if (max > 128)
-			throw new Exception($"Sanity check failed: unusually large number of interrupters ({max}) read from HCS1 (0x{hcs1:X8}).");
+		if (!TryGetRuntimeOffset(hw, device, out ulong runtime, out int max)) return;
 
 		var json = ApplicationData.Current.LocalSettings.Values["XHCIs"]?.ToString();
 		var array = !string.IsNullOrEmpty(json) ? JsonNode.Parse(json)?.AsArray() : [];
@@ -683,31 +667,14 @@ public static partial class DeviceHelper
 		using var localHw = sharedHw == null ? new ReadWriteHelper() : null;
 		var hw = sharedHw ?? localHw;
 
-		if (device.BaseAddress == 0 || !GetIMODState(device, hw)) return;
-
-		if (!hw.ReadMemory32(device.BaseAddress + 0x18, out uint rtsoff))
-			throw new Exception("Failed to read RTSOFF register at base address 0x" + device.BaseAddress.ToString("X"));
-
-		if (rtsoff == 0xFFFFFFFF || rtsoff == 0)
-			throw new Exception($"Invalid RTSOFF value (0x{rtsoff:X8}) read from controller base address 0x{device.BaseAddress:X}.");
-
-		ulong runtime = device.BaseAddress + (rtsoff & ~0x1Fu);
-		if (!hw.ReadMemory32(device.BaseAddress + 0x04, out uint hcs1))
-			throw new Exception("Failed to read HCS1 register at base address 0x" + device.BaseAddress.ToString("X"));
-
-		if (hcs1 == 0xFFFFFFFF)
-			throw new Exception($"Invalid HCS1 value (0x{hcs1:X8}) read from controller base address 0x{device.BaseAddress:X}.");
-
-		int max = (int)((hcs1 >> 8) & 0x7FF);
-		if (max > 128)
-			throw new Exception($"Sanity check failed: unusually large number of interrupters ({max}) read from HCS1 (0x{hcs1:X8}).");
+		if (!GetIMODState(device, hw)) return;
+		if (!TryGetRuntimeOffset(hw, device, out ulong runtime, out int max)) return;
 
 		var intervals = new JsonObject();
 		for (int i = 0; i < max; i++)
 		{
 			ulong addr = runtime + 0x24 + (0x20 * (ulong)i);
-			if (!hw.ReadMemory32(addr, out uint val))
-				throw new Exception("Failed to read memory address 0x" + addr.ToString("X"));
+			if (!hw.ReadMemory32(addr, out uint val)) return;
 			intervals[addr.ToString()] = val;
 		}
 

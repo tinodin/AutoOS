@@ -1,33 +1,48 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-					xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-					xmlns:dev="using:DevWinUI"
-					xmlns:local="using:AutoOS.Views.Settings.Games">
-	<Style BasedOn="{StaticResource DefaultCarouselItemStyle}"
-		   TargetType="local:HeaderCarouselItem" />
+<ResourceDictionary
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:dev="using:DevWinUI"
+	xmlns:local="using:AutoOS.Views.Settings.Games">
+	<Style BasedOn="{StaticResource DefaultCarouselItemStyle}" TargetType="local:HeaderCarouselItem" />
 
-	<Style x:Key="DefaultCarouselItemStyle"
-		   TargetType="local:HeaderCarouselItem">
-		<Setter Property="Width"
-				Value="360" />
-		<Setter Property="UseSystemFocusVisuals"
-				Value="True" />
-		<Setter Property="UseLayoutRounding"
-				Value="True" />
-		<Setter Property="Height"
-				Value="208" />
-		<Setter Property="CornerRadius"
-				Value="8" />
-		<Setter Property="dev:VisualAttach.Scale"
-				Value="0.8" />
-		<Setter Property="dev:VisualAttach.NormalizedCenterPoint"
-				Value="0.5, 0.5" />
-		<Setter Property="ElementSoundMode"
-				Value="Off" />
+	<Style x:Key="DefaultCarouselItemStyle" TargetType="local:HeaderCarouselItem">
+		<Setter Property="Width" Value="360" />
+		<Setter Property="UseSystemFocusVisuals" Value="True" />
+		<Setter Property="UseLayoutRounding" Value="True" />
+		<Setter Property="Height" Value="208" />
+		<Setter Property="CornerRadius" Value="8" />
+		<Setter Property="dev:VisualAttach.Scale" Value="0.8" />
+		<Setter Property="dev:VisualAttach.NormalizedCenterPoint" Value="0.5, 0.5" />
+		<Setter Property="ElementSoundMode" Value="Off" />
 		<Setter Property="Template">
 			<Setter.Value>
 				<ControlTemplate TargetType="local:HeaderCarouselItem">
 					<Grid>
+						<Grid
+							x:Name="PART_ShadowHost"
+							Background="{TemplateBinding Background}"
+							CornerRadius="{TemplateBinding CornerRadius}" />
+						<Grid
+							x:Name="PART_BorderHost"
+							Padding="0"
+							AutomationProperties.Name="{TemplateBinding Title}"
+							CornerRadius="{TemplateBinding CornerRadius}">
+							<Grid.Lights>
+								<dev:HoverLight />
+								<dev:AmbLight />
+							</Grid.Lights>
+							<dev:ImageEx
+								HorizontalAlignment="Stretch"
+								VerticalAlignment="Stretch"
+								AutomationProperties.AccessibilityView="Raw"
+								CornerRadius="{TemplateBinding CornerRadius}"
+								DecodePixelHeight="208"
+								DecodePixelType="Logical"
+								IsCacheEnabled="True"
+								Source="{TemplateBinding ImageUrl}"
+								Stretch="Fill" />
+						</Grid>
 						<VisualStateManager.VisualStateGroups>
 							<VisualStateGroup x:Name="SelectedStates">
 								<VisualState x:Name="NotSelected" />
@@ -38,33 +53,11 @@
 												<SolidColorBrush Color="#8BFFFFFF" />
 											</Setter.Value>
 										</Setter>
-										<Setter Target="PART_BorderHost.BorderThickness"
-												Value="1" />
+										<Setter Target="PART_BorderHost.BorderThickness" Value="1" />
 									</VisualState.Setters>
 								</VisualState>
 							</VisualStateGroup>
 						</VisualStateManager.VisualStateGroups>
-						<Grid x:Name="PART_ShadowHost"
-							  Background="{TemplateBinding Background}"
-							  CornerRadius="{TemplateBinding CornerRadius}" />
-						<Grid x:Name="PART_BorderHost"
-							  Padding="0"
-							  AutomationProperties.Name="{TemplateBinding Title}"
-							  CornerRadius="{TemplateBinding CornerRadius}">
-							<Grid.Lights>
-								<dev:HoverLight />
-								<dev:AmbLight />
-							</Grid.Lights>
-							<dev:ImageEx HorizontalAlignment="Stretch"
-										 VerticalAlignment="Stretch"
-										 AutomationProperties.AccessibilityView="Raw"
-										 CornerRadius="{TemplateBinding CornerRadius}"
-										 DecodePixelHeight="208"
-										 DecodePixelType="Logical"
-										 IsCacheEnabled="True"
-										 Source="{TemplateBinding ImageUrl}"
-										 Stretch="Fill" />
-						</Grid>
 					</Grid>
 				</ControlTemplate>
 			</Setter.Value>

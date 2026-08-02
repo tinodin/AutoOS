@@ -1,4 +1,5 @@
 using Windows.Win32;
+using Windows.Win32.System.Memory;
 
 namespace AutoOS.Core.Helpers.ReadWrite;
 
@@ -132,7 +133,7 @@ public partial class ReadWriteHelper : IDisposable
 		IntPtr pLinAddr = InpOut.MapPhysToLin((IntPtr)address, (uint)buffer.Length, out nint hMapping);
 		if (pLinAddr == IntPtr.Zero) return false;
 
-		if (PInvoke.IsBadReadPtr((void*)pLinAddr, (nuint)buffer.Length))
+		if (!IsReadableMemory(pLinAddr, buffer.Length))
 		{
 			_ = InpOut.UnmapPhysicalMemory(hMapping, pLinAddr);
 			return false;
@@ -154,6 +155,38 @@ public partial class ReadWriteHelper : IDisposable
 		{
 			_ = InpOut.UnmapPhysicalMemory(hMapping, pLinAddr);
 		}
+	}
+
+	private static unsafe bool IsReadableMemory(IntPtr address, int length)
+	{
+		ulong addr = (ulong)address.ToInt64();
+		long remaining = length;
+
+		while (remaining > 0)
+		{
+			MEMORY_BASIC_INFORMATION mbi;
+			if (PInvoke.VirtualQuery((void*)addr, &mbi, (nuint)sizeof(MEMORY_BASIC_INFORMATION)) == 0)
+				return false;
+
+			if (mbi.State != VIRTUAL_ALLOCATION_TYPE.MEM_COMMIT)
+				return false;
+
+			if ((mbi.Protect & (PAGE_PROTECTION_FLAGS.PAGE_GUARD | PAGE_PROTECTION_FLAGS.PAGE_NOACCESS)) != 0)
+				return false;
+
+			if ((mbi.Protect & (PAGE_PROTECTION_FLAGS.PAGE_READONLY | PAGE_PROTECTION_FLAGS.PAGE_READWRITE | PAGE_PROTECTION_FLAGS.PAGE_WRITECOPY | PAGE_PROTECTION_FLAGS.PAGE_EXECUTE_READ | PAGE_PROTECTION_FLAGS.PAGE_EXECUTE_READWRITE | PAGE_PROTECTION_FLAGS.PAGE_EXECUTE_WRITECOPY)) == 0)
+				return false;
+
+			ulong regionSize = (ulong)mbi.RegionSize;
+			if (regionSize == 0)
+				return false;
+
+			ulong regionEnd = (ulong)mbi.BaseAddress + regionSize;
+			remaining -= (long)Math.Min((ulong)remaining, regionEnd - addr);
+			addr = regionEnd;
+		}
+
+		return true;
 	}
 
 	public unsafe bool WriteMemory(ulong address, byte[] buffer)
