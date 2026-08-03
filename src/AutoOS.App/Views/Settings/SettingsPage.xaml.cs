@@ -1,5 +1,6 @@
 using AutoOS.Core.Helpers.Picker;
 using AutoOS.Helpers.Picker;
+using Microsoft.UI.Xaml.Media;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using WinRT;
@@ -231,6 +232,11 @@ public sealed partial class SettingsPage : Page
 
 	private void LoadSettings()
 	{
+		if (localSettings.Values.TryGetValue("TintColor", out object tintValue) && tintValue is string tintHex)
+		{
+			MainDropdownColorPicker.Color = DevWinUI.ColorHelper.GetColorFromHex(tintHex);
+		}
+
 		if (!localSettings.Values.TryGetValue("HideStartup", out object hideStartupValue))
 		{
 			localSettings.Values["HideStartup"] = 0;
@@ -266,6 +272,26 @@ public sealed partial class SettingsPage : Page
 	private void RestoreWindowState_Toggled(object sender, RoutedEventArgs e)
 	{
 		localSettings.Values["RestoreWindowState"] = RestoreWindowState.IsOn;
+	}
+
+	private void MainDropdownColorPicker_ColorChanged(object sender, DropdownColorPickerColorChangedEventArgs e)
+	{
+		SetTintColor(e.Color);
+	}
+
+	private void ColorPalette_ColorChanged(object sender, ColorPaletteColorChangedEventArgs e)
+	{
+		MainDropdownColorPicker.Color = e.Color;
+		SetTintColor(e.Color);
+	}
+
+	private void SetTintColor(Windows.UI.Color color)
+	{
+		if (App.MainWindow.Content is not Grid rootGrid)
+			return;
+
+		rootGrid.Background = new SolidColorBrush(color);
+		localSettings.Values["TintColor"] = DevWinUI.ColorHelper.GetHexFromColor(color);
 	}
 }
 

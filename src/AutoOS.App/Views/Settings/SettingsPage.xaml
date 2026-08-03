@@ -93,16 +93,58 @@
 							<ComboBoxItem Content="Default" Tag="Default" />
 						</ComboBox>
 					</dev:SettingsCard>
-					<dev:SettingsCard Description="Change the appearance of the backdrop material behind your app. You can choose from mica, acrylic, or transparent options." Header="Material">
+					<dev:SettingsCard Description="Change the appearance of the backdrop material behind your app. You can choose from none, acrylic, or acrylic thin, mica and mica alt options." Header="Material">
 						<dev:SettingsCard.HeaderIcon>
 							<ImageIcon Source="/Assets/Fluent/Backdrop.png" />
 						</dev:SettingsCard.HeaderIcon>
 						<ComboBox dev:ThemeServiceAttach.ThemeService="{x:Bind local:App.Current.ThemeService}">
+							<ComboBoxItem Content="None" Tag="None" />
+							<ComboBoxItem Content="Acrylic" Tag="Acrylic" />
+							<ComboBoxItem Content="AcrylicThin" Tag="AcrylicThin" />
 							<ComboBoxItem Content="Mica" Tag="Mica" />
 							<ComboBoxItem Content="Mica Alt" Tag="MicaAlt" />
-							<ComboBoxItem Content="Acrylic" Tag="Acrylic" />
 						</ComboBox>
 					</dev:SettingsCard>
+					<dev:SettingsExpander
+						Description="Add tint to your window to make your experience more personalized."
+						Header="TintColor"
+						HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Tint.png}">
+						<dev:DropdownColorPicker x:Name="MainDropdownColorPicker" ColorChanged="MainDropdownColorPicker_ColorChanged" />
+						<dev:SettingsExpander.ItemsHeader>
+							<dev:SettingsCard>
+								<dev:SettingsCard.Description>
+									<dev:ColorPalette
+										x:Name="ColorPalette"
+										ColorChanged="ColorPalette_ColorChanged"
+										ColorSet="Custom"
+										ItemShape="Tab">
+										<dev:ColorPalette.Colors>
+											<dev:ColorPaletteItem ColorName="Default" Color="#00000000" />
+											<dev:ColorPaletteItem ColorName="Yellow Gold" Color="#32FFB900" />
+											<dev:ColorPaletteItem ColorName="Orange Bright" Color="#32F7630C" />
+											<dev:ColorPaletteItem ColorName="Brick Red" Color="#32D13438" />
+											<dev:ColorPaletteItem ColorName="Mod Red" Color="#32FF4343" />
+											<dev:ColorPaletteItem ColorName="Red" Color="#32EA005E" />
+											<dev:ColorPaletteItem ColorName="Rose Bright" Color="#32EA005E" />
+											<dev:ColorPaletteItem ColorName="Blue" Color="#320078D7" />
+											<dev:ColorPaletteItem ColorName="Iris Pastel" Color="#328764B8" />
+											<dev:ColorPaletteItem ColorName="Violet Red Light" Color="#32B146C2" />
+											<dev:ColorPaletteItem ColorName="Cool Blue Bright" Color="#320099BC" />
+											<dev:ColorPaletteItem ColorName="Seafoam" Color="#3200B7C3" />
+											<dev:ColorPaletteItem ColorName="Mint Light" Color="#3200B294" />
+											<dev:ColorPaletteItem ColorName="Gray" Color="#327A7574" />
+											<dev:ColorPaletteItem ColorName="Green" Color="#32107C10" />
+											<dev:ColorPaletteItem ColorName="Overcast" Color="#32767676" />
+											<dev:ColorPaletteItem ColorName="Storm" Color="#324C4A48" />
+											<dev:ColorPaletteItem ColorName="Blue Gray" Color="#3269797E" />
+											<dev:ColorPaletteItem ColorName="Gray Dark" Color="#324A5459" />
+											<dev:ColorPaletteItem ColorName="Camouflage" Color="#327E735F" />
+										</dev:ColorPalette.Colors>
+									</dev:ColorPalette>
+								</dev:SettingsCard.Description>
+							</dev:SettingsCard>
+						</dev:SettingsExpander.ItemsHeader>
+					</dev:SettingsExpander>
 					<dev:SettingsCard
 						Description="Sync your app’s color with your Windows accent color. You can open the Windows accent color setting by clicking this card."
 						Header="Accent color"
