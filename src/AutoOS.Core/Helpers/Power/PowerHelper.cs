@@ -193,6 +193,17 @@ public static unsafe class PowerHelper
 
     public static Guid GetPlanGuidByName(string name)
     {
+        foreach (Guid schemeGuid in EnumerateSchemes())
+        {
+            if (string.Equals(ReadFriendlyName(schemeGuid, null, null), name, StringComparison.OrdinalIgnoreCase))
+                return schemeGuid;
+        }
+        return Guid.Empty;
+    }
+
+    public static List<Guid> EnumerateSchemes()
+    {
+        List<Guid> schemes = [];
         uint index = 0;
         uint size = (uint)sizeof(Guid);
         byte* pBuffer = stackalloc byte[(int)size];
@@ -202,10 +213,75 @@ public static unsafe class PowerHelper
             uint res = (uint)PInvoke.PowerEnumerate(default, null, null, POWER_DATA_ACCESSOR.ACCESS_SCHEME, index++, new Span<byte>(pBuffer, (int)size), ref size);
             if (res != 0) break;
 
-            Guid schemeGuid = new(new ReadOnlySpan<byte>(pBuffer, (int)size));
-            if (string.Equals(ReadFriendlyName(schemeGuid, null, null), name, StringComparison.OrdinalIgnoreCase))
-                return schemeGuid;
+            schemes.Add(new Guid(new ReadOnlySpan<byte>(pBuffer, (int)size)));
         }
-        return Guid.Empty;
+        return schemes;
+    }
+
+    public static List<Guid> EnumerateSubgroups(Guid scheme)
+    {
+        List<Guid> subgroups = [];
+        uint index = 0;
+        uint size = (uint)sizeof(Guid);
+        byte* pBuffer = stackalloc byte[(int)size];
+
+        while (true)
+        {
+            uint res = (uint)PInvoke.PowerEnumerate(default, scheme, null, POWER_DATA_ACCESSOR.ACCESS_SUBGROUP, index++, new Span<byte>(pBuffer, (int)size), ref size);
+            if (res != 0) break;
+
+            subgroups.Add(new Guid(new ReadOnlySpan<byte>(pBuffer, (int)size)));
+        }
+        return subgroups;
+    }
+
+    public static List<Guid> EnumerateSettings(Guid scheme, Guid? subgroup)
+    {
+        List<Guid> settings = [];
+        uint index = 0;
+        uint size = (uint)sizeof(Guid);
+        byte* pBuffer = stackalloc byte[(int)size];
+
+        while (true)
+        {
+            uint res = (uint)PInvoke.PowerEnumerate(default, scheme, subgroup, POWER_DATA_ACCESSOR.ACCESS_INDIVIDUAL_SETTING, index++, new Span<byte>(pBuffer, (int)size), ref size);
+            if (res != 0) break;
+
+            settings.Add(new Guid(new ReadOnlySpan<byte>(pBuffer, (int)size)));
+        }
+        return settings;
+    }
+
+    public static Guid ReadActiveScheme()
+    {
+        WIN32_ERROR result = PInvoke.PowerGetActiveScheme(default, out Guid* activeScheme);
+        if (result != WIN32_ERROR.ERROR_SUCCESS || activeScheme == null)
+            return Guid.Empty;
+
+        try
+        {
+            return *activeScheme;
+        }
+        finally
+        {
+            PInvoke.LocalFree((HLOCAL)activeScheme);
+        }
+    }
+
+    public static Guid ImportPowerScheme(string filePath)
+    {
+        Guid* destination = null;
+        uint result = (uint)PInvoke.PowerImportPowerScheme(default, filePath, ref destination);
+        if (result != 0 || destination == null)
+            return Guid.Empty;
+
+        try
+        {
+            return *destination;
+        }
+        finally
+        {
+            PInvoke.LocalFree((HLOCAL)destination);
+        }
     }
 }

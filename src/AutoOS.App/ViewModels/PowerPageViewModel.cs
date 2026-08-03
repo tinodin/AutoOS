@@ -37,6 +37,14 @@ public enum PowerFilterMode
 
 public sealed partial class PowerPageViewModel : ObservableObject
 {
+	private static readonly PowerPlan EmptyComparePlan = new()
+	{
+		Guid = Guid.Empty,
+		Name = "Select plan to compare",
+		Description = "Select a power plan to compare against the active plan.",
+		IsPlaceholder = true
+	};
+
 	private readonly Stack<List<PowerSettingValueState>> _undoStates = [];
 	private readonly Stack<List<PowerSettingValueState>> _redoStates = [];
 	private readonly Dictionary<PowerSettingKey, PowerValues> _comparisonValues = [];
@@ -186,20 +194,13 @@ public sealed partial class PowerPageViewModel : ObservableObject
 		foreach (var plan in plans)
 			PowerPlans.Add(plan);
 
-		var placeholder = new PowerPlan
-		{
-			Guid = Guid.Empty,
-			Name = "Select plan to compare",
-			Description = "Select a power plan to compare against the active plan.",
-			IsPlaceholder = true
-		};
 		ActivePlan = PowerPlans.FirstOrDefault(plan => plan.Guid == activeGuid);
 		if (ActivePlan == null && selectFallback)
 			ActivePlan = PowerPlans.FirstOrDefault();
-		ComparePlans.Add(placeholder);
+		ComparePlans.Add(EmptyComparePlan);
 		foreach (var plan in PowerPlans.Where(plan => plan.Guid != ActivePlan?.Guid))
 			ComparePlans.Add(plan);
-		ComparePlan = placeholder;
+		ComparePlan = EmptyComparePlan;
 		if (ActivePlan == null)
 		{
 			_subgroups = [];
@@ -282,18 +283,174 @@ public sealed partial class PowerPageViewModel : ObservableObject
 
 	public void RefreshComparePlans()
 	{
-		PowerPlan placeholder = ComparePlans.FirstOrDefault(plan => plan.IsPlaceholder) ?? new PowerPlan
-		{
-			Guid = Guid.Empty,
-			Name = "Select plan to compare",
-			Description = "Select a power plan to compare against the active plan.",
-			IsPlaceholder = true
-		};
 		ComparePlans.Clear();
-		ComparePlans.Add(placeholder);
+		ComparePlans.Add(EmptyComparePlan);
 		foreach (var plan in PowerPlans.Where(plan => plan.Guid != ActivePlan?.Guid))
 			ComparePlans.Add(plan);
-		ComparePlan = placeholder;
+		ComparePlan = EmptyComparePlan;
+	}
+
+	public async Task LoadPowerPlansAsync(Guid? preferredGuid = null)
+	{
+		SetIsLoaded(false);
+		(List<PowerPlan> plans, Guid activeGuid) = await Task.Run(ReadPowerPlans);
+
+		bool hasTarget = preferredGuid.HasValue || activeGuid != Guid.Empty;
+		SetPlans(plans, preferredGuid ?? activeGuid, hasTarget);
+		if (ActivePlan == null)
+			return;
+
+		IReadOnlyList<PowerSubgroupState> settings = await Task.Run(() => LoadPowerPlanSettings(ActivePlan.Guid));
+		LoadActivePlan(ActivePlan, settings);
+	}
+
+	public async Task SetActivePlanAsync(PowerPlan plan)
+	{
+		if (plan == null || plan == ActivePlan)
+			return;
+
+		PowerHelper.PowerSetActiveScheme(plan.Guid);
+		SetIsLoaded(false);
+		IReadOnlyList<PowerSubgroupState> settings = await Task.Run(() => LoadPowerPlanSettings(plan.Guid));
+		LoadActivePlan(plan, settings);
+	}
+
+	public async Task RestoreDefaultPlansAsync()
+	{
+		PowerHelper.RestoreDefaultPowerSchemes();
+		await LoadPowerPlansAsync();
+	}
+
+	public async Task ImportPowerPlanAsync(string filePath)
+	{
+		Guid importedGuid = PowerHelper.ImportPowerScheme(filePath);
+		PowerHelper.PowerSetActiveScheme(importedGuid);
+		await LoadPowerPlansAsync(importedGuid);
+	}
+
+	public async Task DuplicatePlanAsync(PowerPlan plan)
+	{
+		int number = 1;
+		string name;
+		do
+		{
+			name = number == 1 ? $"{plan.Name} - Copy" : $"{plan.Name} - Copy ({number})";
+			number++;
+		}
+		while (PowerPlans.Any(item => item.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase)));
+
+		Guid guid = PowerHelper.DuplicateScheme(plan.Guid, name, plan.Description);
+		PowerHelper.PowerSetActiveScheme(guid);
+		await LoadPowerPlansAsync(guid);
+	}
+
+	public async Task DeletePlanAsync(PowerPlan plan)
+	{
+		if (PowerPlans.Count <= 1)
+			return;
+
+		int index = PowerPlans.IndexOf(plan);
+		PowerPlan nextPlan = index > 0 ? PowerPlans[index - 1] : PowerPlans[index + 1];
+		PowerHelper.PowerSetActiveScheme(nextPlan.Guid);
+		PowerHelper.DeleteScheme(plan.Guid);
+		await LoadPowerPlansAsync(nextPlan.Guid);
+	}
+
+	public void UpdatePlanMetadata(PowerPlan plan, string name, string description)
+	{
+		PowerHelper.WriteSchemeFriendlyName(plan.Guid, name);
+		PowerHelper.WriteSchemeDescription(plan.Guid, description);
+		plan.Name = PowerHelper.ReadFriendlyName(plan.Guid, null, null);
+		plan.Description = PowerHelper.ReadDescription(plan.Guid);
+		NotifyPlanHeaders();
+	}
+
+	private static (List<PowerPlan> Plans, Guid ActiveGuid) ReadPowerPlans()
+	{
+		List<PowerPlan> plans = [];
+		foreach (Guid guid in PowerHelper.EnumerateSchemes())
+			plans.Add(new PowerPlan
+			{
+				Guid = guid,
+				Name = PowerHelper.ReadFriendlyName(guid, null, null),
+				Description = PowerHelper.ReadDescription(guid)
+			});
+
+		return (plans, PowerHelper.ReadActiveScheme());
+	}
+
+	private static List<PowerSubgroupState> LoadPowerPlanSettings(Guid scheme)
+	{
+		Guid noneSubgroupGuid = new("fea3413e-7e05-4911-9a71-700331f1c294");
+		List<PowerSubgroupState> subgroups = [];
+		var noneSubgroup = new PowerSubgroupState
+		{
+			Guid = noneSubgroupGuid,
+			Name = "None"
+		};
+		foreach (var setting in EnumerateSettings(scheme, noneSubgroupGuid, null))
+			noneSubgroup.Settings.Add(setting);
+		subgroups.Add(noneSubgroup);
+
+		foreach (Guid subgroupGuid in PowerHelper.EnumerateSubgroups(scheme))
+		{
+			string name = subgroupGuid == new Guid("9596fb26-9850-41fd-ac3e-f7c3c00afd4b") ? "Multimedia settings" : PowerHelper.ReadFriendlyName(scheme, subgroupGuid, null);
+			if (string.IsNullOrWhiteSpace(name))
+				continue;
+
+			var subgroup = new PowerSubgroupState
+			{
+				Guid = subgroupGuid,
+				Name = name,
+				Description = PowerHelper.ReadDescription(scheme, subgroupGuid)
+			};
+			foreach (var setting in EnumerateSettings(scheme, subgroupGuid, subgroupGuid))
+				subgroup.Settings.Add(setting);
+			if (subgroup.Settings.Count > 0)
+				subgroups.Add(subgroup);
+		}
+
+		subgroups.Remove(noneSubgroup);
+		subgroups.Insert(0, noneSubgroup);
+		return subgroups;
+	}
+
+	private static List<PowerSettingState> EnumerateSettings(Guid scheme, Guid subgroupGuid, Guid? enumerationSubgroup)
+	{
+		List<PowerSettingState> settings = [];
+		foreach (Guid settingGuid in PowerHelper.EnumerateSettings(scheme, enumerationSubgroup))
+		{
+			if (!PowerHelper.TryReadAcValueIndex(scheme, subgroupGuid, settingGuid, out uint acValue) ||
+				!PowerHelper.TryReadDcValueIndex(scheme, subgroupGuid, settingGuid, out uint dcValue))
+			{
+				continue;
+			}
+
+			uint? minimum = PowerHelper.TryReadValueMin(subgroupGuid, settingGuid, out uint minimumValue) ? minimumValue : null;
+			uint? maximum = PowerHelper.TryReadValueMax(subgroupGuid, settingGuid, out uint maximumValue) ? maximumValue : null;
+			uint? increment = PowerHelper.TryReadValueIncrement(subgroupGuid, settingGuid, out uint incrementValue) ? incrementValue : null;
+			var setting = new PowerSettingState
+			{
+				SubgroupGuid = subgroupGuid,
+				Guid = settingGuid,
+				Name = PowerHelper.ReadFriendlyName(scheme, subgroupGuid, settingGuid),
+				Description = PowerHelper.ReadDescription(scheme, subgroupGuid, settingGuid),
+				AcValue = acValue,
+				DcValue = dcValue,
+				OriginalAcValue = acValue,
+				OriginalDcValue = dcValue,
+				Minimum = minimum,
+				Maximum = maximum,
+				Increment = increment,
+				Unit = PowerHelper.ReadValueUnitsSpecifier(subgroupGuid, settingGuid)
+			};
+			if (string.IsNullOrWhiteSpace(setting.Name))
+				setting.Name = settingGuid.ToString();
+			setting.PrimeDisplayData();
+			settings.Add(setting);
+		}
+
+		return settings;
 	}
 
 	private void NotifyModeChanged()
