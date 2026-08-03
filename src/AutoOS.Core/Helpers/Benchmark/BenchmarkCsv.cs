@@ -236,6 +236,22 @@ public static class BenchmarkCsv
 		["Coefficient of Variation"] = new("Coefficient of Variation (CV)", StatisticDescriptions["Coefficient of Variation"], "0.#####", "", "", HigherIsBetter: false)
 	};
 
+	public static readonly Dictionary<string, StatisticDefinition> RenderQueueDepthStatistics = new()
+	{
+		["Average (Arithmetic)"] = new("Average (Arithmetic)", StatisticDescriptions["Average (Arithmetic)"], "0.##", " frames", " frames", HigherIsBetter: false),
+
+		["P50 (Median)"] = new("P50 (Median)", StatisticDescriptions["P50 (Median)"], "0.##", " frames", " frames", HigherIsBetter: false),
+		["P5"] = new("P95", StatisticDescriptions["P95"], "0.##", " frames", " frames", HigherIsBetter: false),
+		["P1"] = new("P99", StatisticDescriptions["P99"], "0.##", " frames", " frames", HigherIsBetter: false),
+
+        ["Minimum"] = new("Minimum", StatisticDescriptions["Minimum"], "0.##", " frames", " frames", HigherIsBetter: false),
+        ["Maximum"] = new("Maximum", StatisticDescriptions["Maximum"], "0.##", " frames", " frames", HigherIsBetter: false),
+
+		["Stepwise-Relative"] = new("Stepwise-Relative", StatisticDescriptions["Stepwise-Relative"], "0.00", " %", " %", HigherIsBetter: false),
+		["Standard Deviation"] = new("Standard Deviation (STDEV)", StatisticDescriptions["Standard Deviation"], "0.##", " frames", " frames", HigherIsBetter: false),
+		["Coefficient of Variation"] = new("Coefficient of Variation (CV)", StatisticDescriptions["Coefficient of Variation"], "0.#####", "", "", HigherIsBetter: false)
+	};
+
 	public static readonly Dictionary<string, StatisticDefinition> StutterStatistics = new()
 	{
 		["Smooth"] = new("Smooth", StatisticDescriptions["Smooth"], "0.##", " %", " %", HigherIsBetter: true, Formatter: (value, metric) => $"{metric.Smooth / 100 * metric.TotalSeconds:0.00} s ({value:0.##} %)"),
@@ -254,7 +270,7 @@ public static class BenchmarkCsv
 		("MsGPUBusy", result => result.MsGpuBusyStats, LatencyStatistics),
 		("MsUntilDisplayed", result => result.MsUntilDisplayedStats, LatencyStatistics),
 		("MsRenderPresentLatency", result => result.MsRenderPresentLatencyStats, LatencyStatistics),
-		("Render Queue Depth", result => result.RenderQueueDepthStats, LatencyStatistics),
+		("Render Queue Depth", result => result.RenderQueueDepthStats, RenderQueueDepthStatistics),
 		("Stutter Analysis", result => RecordingAnalyzer.GetStutterMetrics(result, stutterFactor, lowFpsThreshold), StutterStatistics)
 	];
 }

@@ -488,6 +488,9 @@ public sealed partial class BenchmarksPage : Page
 
 	private void BuildAnalysis()
 	{
+		if (ViewModel.CachedAnalysis.Count == 0)
+			return;
+
 		var metric = (Metric1ComboBox.SelectedItem as ComboBoxItem)?.Content as string;
 		var presentation = BuildBarColumnChartData(ViewModel.CachedAnalysis);
 		BindBarColumnChart(presentation);
@@ -546,7 +549,7 @@ public sealed partial class BenchmarksPage : Page
 		string metricLabel2 = string.Empty;
 
 		int index = 0;
-		foreach (var result in results)
+		foreach (RecordingAnalysis result in results)
 		{
 			IReadOnlyList<double> rawValues = metric switch
 			{
@@ -555,7 +558,6 @@ public sealed partial class BenchmarksPage : Page
 				"MsGPUBusy" => result.Analysis.MsGPUBusy,
 				"MsUntilDisplayed" => result.Analysis.MsUntilDisplayed,
 				"MsRenderPresentLatency" => result.Analysis.MsRenderPresentLatency,
-				"Render Queue Depth" => result.Analysis.RenderQueueDepth,
 				_ => []
 			};
 
@@ -858,7 +860,7 @@ public sealed partial class BenchmarksPage : Page
 					row.DeltaComparison = ComparisonResult.None;
 				}
 
-				string deltaText = showPercentDelta ? signed(delta, row.Definition.Format, " %") : signed(delta, row.Definition.Format, row.Definition.DeltaSuffix);
+				string deltaText = showPercentDelta && baseline != 0 ? signed(delta / baseline * 100, "0.##", " %") : signed(delta, row.Definition.Format, row.Definition.DeltaSuffix);
 				if (row.RecordingASeconds is double secondsA && row.RecordingBSeconds is double secondsB)
 				{
 					double secondsDelta = baselineIndex == 0 ? secondsB - secondsA : secondsA - secondsB;
