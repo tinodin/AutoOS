@@ -79,7 +79,7 @@
 				</ItemsRepeater>
 				<dev:SettingsGroup Description="Import your MSI Afterburner profile here." Header="MSI Afterburner">
 					<dev:SettingsGroup.HeaderIcon>
-						<ImageIcon Source="/Assets/Fluent/MsiAfterburner.png" />
+						<ImageIcon Source="/Assets/FluentIcons/Pages/Graphics/MsiAfterburner.png" />
 					</dev:SettingsGroup.HeaderIcon>
 					<dev:SettingsGroup.Content>
 						<Button
@@ -95,7 +95,7 @@
 					Description="Launch OBS Studio on startup and start the replay buffer."
 					Header="OBS Studio">
 					<dev:SettingsGroup.HeaderIcon>
-						<ImageIcon Source="/Assets/Fluent/Obs.png" />
+						<ImageIcon Source="/Assets/FluentIcons/Pages/Graphics/Obs.png" />
 					</dev:SettingsGroup.HeaderIcon>
 					<dev:SettingsGroup.Content>
 						<ToggleSwitch x:Name="OBS" Toggled="OBS_Toggled" />

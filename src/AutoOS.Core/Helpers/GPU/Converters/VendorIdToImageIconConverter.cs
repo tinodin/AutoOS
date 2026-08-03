@@ -21,7 +21,7 @@ public partial class VendorIdToImageIconConverter : IValueConverter
 
 		return new ImageIcon
 		{
-			Source = new BitmapImage(new Uri($"ms-appx:///Assets/Fluent/{icon}"))
+			Source = new BitmapImage(new Uri($"ms-appx:///Assets/FluentIcons/Pages/Graphics/{icon}"))
 		};
 	}
 

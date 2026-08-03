@@ -32,7 +32,7 @@ namespace AutoOS.Views
 			{
 				App.Current.NavService
 					.Initialize(NavView, NavFrame, NavigationPageMappingsSettings.PageDictionary)
-					.ConfigureDefaultPage(typeof(Settings.HomeLandingPage))
+					.ConfigureDefaultPage(typeof(Settings.HomePage))
 					.ConfigureSettingsPage(typeof(Settings.SettingsPage))
 					.ConfigureJsonFile("Assets/NavViewMenu/Settings.json")
 					.ConfigureTitleBar(AppTitleBar, false)
@@ -45,7 +45,7 @@ namespace AutoOS.Views
 			{
 				App.Current.NavService
 					.Initialize(NavView, NavFrame, NavigationPageMappingsInstaller.PageDictionary)
-					.ConfigureDefaultPage((Windows.Storage.ApplicationData.Current.LocalSettings.Values["actionStage"] as int? ?? -1) > 0 ? typeof(Installer.InstallPage) : typeof(Installer.HomeLandingPage))
+					.ConfigureDefaultPage((Windows.Storage.ApplicationData.Current.LocalSettings.Values["actionStage"] as int? ?? -1) > 0 ? typeof(Installer.InstallPage) : typeof(Installer.HomePage))
 					.ConfigureJsonFile("Assets/NavViewMenu/Installer.json")
 					.ConfigureTitleBar(AppTitleBar, false)
 					.ConfigureBreadcrumbBar(BreadCrumbNav, BreadcrumbPageMappingsInstaller.PageDictionary);
@@ -73,9 +73,9 @@ namespace AutoOS.Views
 		public readonly string[] AllPages =
 		[
 			"PersonalizationPage",
-			"ApplicationsPage",
+			"AppsPage",
 			"BrowsersPage",
-			"DisplayPage",
+			"DisplaysPage",
 			"GraphicsPage",
 			"SecurityPage"
 		];

@@ -50,7 +50,7 @@
 							<StackPanel>
 								<dev:SettingsGroup Description="{x:Bind Location, Mode=OneWay}" Header="{x:Bind FriendlyName, Mode=OneWay}">
 									<dev:SettingsGroup.HeaderIcon>
-										<ImageIcon Source="/Assets/Fluent/Devices.png" />
+										<ImageIcon Source="/Assets/FluentIcons/Pages/Devices/Devices.png" />
 									</dev:SettingsGroup.HeaderIcon>
 									<dev:SettingsGroup.Items>
 										<dev:SettingsCard Description="Disabling IMOD fixes data loss when creating too many interrupts. Recommended to disable on high polling rate mice/keyboards." Header="XHCI Interrupt Moderation (IMOD)">

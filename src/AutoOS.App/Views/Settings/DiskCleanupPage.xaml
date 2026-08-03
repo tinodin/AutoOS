@@ -32,7 +32,7 @@
 					Description="Cleanup your drives."
 					Header="Disk Cleanup">
 					<dev:SettingsGroup.HeaderIcon>
-						<ImageIcon Source="/Assets/Fluent/DiskCleanup.png" />
+						<ImageIcon Source="/Assets/FluentIcons/Sidebar/DiskCleanup.png" />
 					</dev:SettingsGroup.HeaderIcon>
 					<dev:SettingsGroup.Content>
 						<dev:ProgressButton

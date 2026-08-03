@@ -28,38 +28,38 @@ public sealed partial class BrowsersPage : Page
 	{
 		Browsers.ItemsSource = new List<GridViewItem>
 		{
-			new() { Text = "Chrome", ImageSource = "ms-appx:///Assets/Fluent/Chrome.png" },
-			new() { Text = "Thorium", ImageSource = "ms-appx:///Assets/Fluent/Thorium.png" },
-			new() { Text = "Helium", ImageSource = "ms-appx:///Assets/Fluent/Helium.png" },
-			new() { Text = "Brave", ImageSource = "ms-appx:///Assets/Fluent/Brave.png" },
-			new() { Text = "Vivaldi", ImageSource = "ms-appx:///Assets/Fluent/Vivaldi.png" },
-			new() { Text = "Arc", ImageSource = "ms-appx:///Assets/Fluent/Arc.png" },
-			new() { Text = "Comet", ImageSource = "ms-appx:///Assets/Fluent/Comet.png" },
-			new() { Text = "Firefox", ImageSource = "ms-appx:///Assets/Fluent/Firefox.png" },
-			new() { Text = "Zen", ImageSource = "ms-appx:///Assets/Fluent/Zen.png" },
-			new() { Text = "Waterfox", ImageSource = "ms-appx:///Assets/Fluent/Waterfox.png" },
-			new() { Text = "LibreWolf", ImageSource = "ms-appx:///Assets/Fluent/Librewolf.png" },
-			new() { Text = "Floorp", ImageSource = "ms-appx:///Assets/Fluent/Floorp.png" },
-			new() { Text = "Mullvad Browser", ImageSource = "ms-appx:///Assets/Fluent/Mullvad.png" }
+			new() { Text = "Chrome", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Chrome.png" },
+			new() { Text = "Thorium", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Thorium.png" },
+			new() { Text = "Helium", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Helium.png" },
+			new() { Text = "Brave", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Brave.png" },
+			new() { Text = "Vivaldi", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Vivaldi.png" },
+			new() { Text = "Arc", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Arc.png" },
+			new() { Text = "Comet", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Comet.png" },
+			new() { Text = "Firefox", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Firefox.png" },
+			new() { Text = "Zen", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Zen.png" },
+			new() { Text = "Waterfox", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Waterfox.png" },
+			new() { Text = "LibreWolf", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/LibreWolf.png" },
+			new() { Text = "Floorp", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Floorp.png" },
+			new() { Text = "Mullvad Browser", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Mullvad.png" }
 		};
 
 		Extensions.ItemsSource = new List<GridViewItem>
 		{
-			new() { Text = "uBlock Origin", ImageSource = "ms-appx:///Assets/Fluent/UBlockorigin.png" },
-			new() { Text = "Privacy Badger", ImageSource = "ms-appx:///Assets/Fluent/PrivacyBadger.png" },
-			new() { Text = "Decentraleyes", ImageSource = "ms-appx:///Assets/Fluent/Decentraleyes.png" },
-			new() { Text = "I still don't care about cookies", ImageSource = "ms-appx:///Assets/Fluent/IStillDontCareAboutCookies.png" },
-			new() { Text = "Violentmonkey", ImageSource = "ms-appx:///Assets/Fluent/Violentmonkey.png" },
-			new() { Text = "Tampermonkey", ImageSource = "ms-appx:///Assets/Fluent/Tampermonkey.png" },
-			new() { Text = "SponsorBlock", ImageSource = "ms-appx:///Assets/Fluent/Sponsorblock.png" },
-			new() { Text = "Return YouTube Dislike", ImageSource = "ms-appx:///Assets/Fluent/ReturnYouTubeDislike.png" },
-			new() { Text = "YouTube No Translation", ImageSource = "ms-appx:///Assets/Fluent/YouTubeNoTranslation.png" },
-			new() { Text = "Dark Reader", ImageSource = "ms-appx:///Assets/Fluent/Darkreader.png" },
-			new() { Text = "Shazam", ImageSource = "ms-appx:///Assets/Fluent/Shazam.png" },
-			new() { Text = "Wayback Machine", ImageSource = "ms-appx:///Assets/Fluent/WaybackMachine.png" },
-			new() { Text = "iCloud Passwords", ImageSource = "ms-appx:///Assets/Fluent/IcloudPasswords.png" },
-			new() { Text = "Bitwarden", ImageSource = "ms-appx:///Assets/Fluent/Bitwarden.png" },
-			new() { Text = "1Password", ImageSource = "ms-appx:///Assets/Fluent/1Password.png" }
+			new() { Text = "uBlock Origin", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/UBlockOrigin.png" },
+			new() { Text = "Privacy Badger", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/PrivacyBadger.png" },
+			new() { Text = "Decentraleyes", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/Decentraleyes.png" },
+			new() { Text = "I still don't care about cookies", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/IStillDontCareAboutCookies.png" },
+			new() { Text = "Violentmonkey", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/Violentmonkey.png" },
+			new() { Text = "Tampermonkey", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/Tampermonkey.png" },
+			new() { Text = "SponsorBlock", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/Sponsorblock.png" },
+			new() { Text = "Return YouTube Dislike", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/ReturnYouTubeDislike.png" },
+			new() { Text = "YouTube No Translation", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/YouTubeNoTranslation.png" },
+			new() { Text = "Dark Reader", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/Darkreader.png" },
+			new() { Text = "Shazam", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/Shazam.png" },
+			new() { Text = "Wayback Machine", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/WaybackMachine.png" },
+			new() { Text = "iCloud Passwords", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/IcloudPasswords.png" },
+			new() { Text = "Bitwarden", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/Bitwarden.png" },
+			new() { Text = "1Password", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/1Password.png" }
 		};
 	}
 

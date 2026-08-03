@@ -21,7 +21,7 @@ public partial class FormFactorToImageIconConverter : IValueConverter
 
 		return new ImageIcon
 		{
-			Source = new BitmapImage(new Uri($"ms-appx:///Assets/Fluent/{icon}"))
+			Source = new BitmapImage(new Uri($"ms-appx:///Assets/FluentIcons/Pages/Sound/{icon}"))
 		};
 	}
 

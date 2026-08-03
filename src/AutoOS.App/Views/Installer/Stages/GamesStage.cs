@@ -10,8 +10,8 @@ public static partial class GamesStage
 {
 	public static List<(string Title, Func<Task> Action, Func<bool> Condition)> GetActions()
 	{
-		bool Fortnite = ApplicationStage.Fortnite;
-		bool Valorant = ApplicationStage.Valorant;
+		bool Fortnite = AppsStage.Fortnite;
+		bool Valorant = AppsStage.Valorant;
 
 		string fortnitePath = string.Empty;
 

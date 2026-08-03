@@ -171,7 +171,7 @@
 								Style="{ThemeResource MicaButtonStyle}"
 								XYFocusLeft="{Binding ElementName=Sort}"
 								XYFocusRight="{Binding ElementName=SteamButton}">
-								<dev:ImageEx Height="20" Source="Assets/Fluent/Epicgames.png" />
+								<dev:ImageEx Height="20" Source="Assets/FluentIcons/Apps/Launchers/Epicgames.png" />
 								<Button.Flyout>
 									<Flyout Placement="Bottom">
 										<Flyout.FlyoutPresenterStyle>
@@ -254,7 +254,7 @@
 								CornerRadius="18"
 								Style="{ThemeResource MicaButtonStyle}"
 								XYFocusLeft="{Binding ElementName=EpicGamesButton}">
-								<dev:ImageEx Height="20" Source="Assets/Fluent/Steam.png" />
+								<dev:ImageEx Height="20" Source="Assets/FluentIcons/Apps/Launchers/Steam.png" />
 								<Button.Flyout>
 									<Flyout Placement="Bottom">
 										<Flyout.FlyoutPresenterStyle>

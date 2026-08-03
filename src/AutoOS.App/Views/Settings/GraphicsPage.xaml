@@ -108,7 +108,7 @@
 				</ItemsRepeater>
 				<dev:SettingsGroup Description="Overclock your graphics card, remove power limits, set custom fan curves, and more." Header="MSI Afterburner">
 					<dev:SettingsGroup.HeaderIcon>
-						<ImageIcon Source="/Assets/Fluent/MsiAfterburner.png" />
+						<ImageIcon Source="/Assets/FluentIcons/Pages/Graphics/MsiAfterburner.png" />
 					</dev:SettingsGroup.HeaderIcon>
 					<dev:SettingsGroup.Content>
 						<Button
@@ -126,7 +126,7 @@
 				<StackPanel x:Name="MsiAfterburnerInfo" Margin="4,8,4,0" />
 				<dev:SettingsGroup Description="Launch OBS Studio on startup and start the replay buffer." Header="OBS Studio">
 					<dev:SettingsGroup.HeaderIcon>
-						<ImageIcon Source="/Assets/Fluent/Obs.png" />
+						<ImageIcon Source="/Assets/FluentIcons/Pages/Graphics/Obs.png" />
 					</dev:SettingsGroup.HeaderIcon>
 					<dev:SettingsGroup.Content>
 						<ToggleSwitch x:Name="OBS" Toggled="OBS_Toggled" />

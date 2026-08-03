@@ -85,7 +85,7 @@
 				<dev:SimpleSettingsGroup Header="Appearance &amp; behavior">
 					<dev:SettingsCard Description="Select the theme that suits your mood and preference. You can choose from dark, light, or system themes." Header="App theme">
 						<dev:SettingsCard.HeaderIcon>
-							<ImageIcon Source="/Assets/Fluent/Theme.png" />
+							<ImageIcon Source="/Assets/FluentIcons/Pages/Settings/Theme.png" />
 						</dev:SettingsCard.HeaderIcon>
 						<ComboBox dev:ThemeServiceAttach.ThemeService="{x:Bind local:App.Current.ThemeService}">
 							<ComboBoxItem Content="Light" Tag="Light" />
@@ -95,7 +95,7 @@
 					</dev:SettingsCard>
 					<dev:SettingsCard Description="Change the appearance of the backdrop material behind your app. You can choose from none, acrylic, or acrylic thin, mica and mica alt options." Header="Material">
 						<dev:SettingsCard.HeaderIcon>
-							<ImageIcon Source="/Assets/Fluent/Backdrop.png" />
+							<ImageIcon Source="/Assets/FluentIcons/Pages/Settings/Backdrop.png" />
 						</dev:SettingsCard.HeaderIcon>
 						<ComboBox dev:ThemeServiceAttach.ThemeService="{x:Bind local:App.Current.ThemeService}">
 							<ComboBoxItem Content="None" Tag="None" />
@@ -108,8 +108,15 @@
 					<dev:SettingsExpander
 						Description="Add tint to your window to make your experience more personalized."
 						Header="TintColor"
-						HeaderIcon="{dev:BitmapIcon Source=Assets/Fluent/Tint.png}">
-						<dev:DropdownColorPicker x:Name="MainDropdownColorPicker" ColorChanged="MainDropdownColorPicker_ColorChanged" />
+						HeaderIcon="{dev:BitmapIcon Source=Assets/FluentIcons/Pages/Settings/Tint.png}"
+						IsExpanded="True">
+						<common:DropdownColorPicker
+							x:Name="MainDropdownColorPicker"
+							ColorChanged="MainDropdownColorPicker_ColorChanged"
+							ColorSpectrumShape="Ring"
+							IsAlphaEnabled="True"
+							IsAlphaSliderVisible="True"
+							IsMoreButtonVisible="True" />
 						<dev:SettingsExpander.ItemsHeader>
 							<dev:SettingsCard>
 								<dev:SettingsCard.Description>
@@ -151,10 +158,10 @@
 						IsClickEnabled="True"
 						LaunchUri="ms-settings:colors">
 						<dev:SettingsCard.HeaderIcon>
-							<ImageIcon Source="/Assets/Fluent/Color.png" />
+							<ImageIcon Source="/Assets/FluentIcons/Pages/Settings/Color.png" />
 						</dev:SettingsCard.HeaderIcon>
 						<dev:SettingsCard.ActionIcon>
-							<ImageIcon Source="/Assets/Fluent/External.png" />
+							<ImageIcon Source="/Assets/FluentIcons/Pages/Settings/External.png" />
 						</dev:SettingsCard.ActionIcon>
 					</dev:SettingsCard>
 				</dev:SimpleSettingsGroup>

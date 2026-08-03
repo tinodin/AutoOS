@@ -3,6 +3,7 @@ using AutoOS.Helpers.Picker;
 using Microsoft.UI.Xaml.Media;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
+using Windows.UI;
 using WinRT;
 
 namespace AutoOS.Views.Settings;
@@ -20,13 +21,112 @@ public sealed partial class SettingsPage : Page
 		GetSwitchEmulator();
 	}
 
+	private void CloneRepo_Click(object sender, RoutedEventArgs e)
+	{
+		DataPackage package = new();
+		package.SetText(GitCloneTextBlock.Text);
+		Clipboard.SetContent(package);
+	}
+
+	private void LoadSettings()
+	{
+		if (localSettings.Values.TryGetValue("TintColor", out object tintValue) && tintValue is string tintHex)
+		{
+			Color tintColor = DevWinUI.ColorHelper.GetColorFromHex(tintHex);
+
+			if (tintColor.A != 0)
+			{
+				MainDropdownColorPicker.Color = tintColor;
+				ColorPalette.SelectedColor = tintColor;
+			}
+			else
+			{
+				MainDropdownColorPicker.ResetColor();
+				ColorPalette.SelectedColor = Colors.Transparent;
+			}
+		}
+		else
+		{
+			MainDropdownColorPicker.ResetColor();
+			ColorPalette.SelectedColor = Colors.Transparent;
+		}
+
+		if (!localSettings.Values.TryGetValue("HideStartup", out object hideStartupValue))
+		{
+			localSettings.Values["HideStartup"] = 0;
+		}
+		else
+		{
+			if (hideStartupValue is bool)
+			{
+				localSettings.Values.Remove("HideStartup");
+			}
+			else
+			{
+				HideStartup.IsOn = (int)hideStartupValue == 1;
+			}
+		}
+
+		if (!localSettings.Values.TryGetValue("RestoreWindowState", out object restoreWindowStateValue))
+		{
+			localSettings.Values["RestoreWindowState"] = false;
+			RestoreWindowState.IsOn = false;
+		}
+		else
+		{
+			RestoreWindowState.IsOn = (bool)restoreWindowStateValue;
+		}
+	}
+
+	private void HideStartup_Toggled(object sender, RoutedEventArgs e)
+	{
+		localSettings.Values["HideStartup"] = HideStartup.IsOn ? 1 : 0;
+	}
+
+	private void RestoreWindowState_Toggled(object sender, RoutedEventArgs e)
+	{
+		localSettings.Values["RestoreWindowState"] = RestoreWindowState.IsOn;
+	}
+
+	private void MainDropdownColorPicker_ColorChanged(object sender, DropdownColorPickerColorChangedEventArgs e)
+	{
+		ColorPalette.SelectedItem = ColorPalette.Colors.FirstOrDefault(c => c.Color.Equals(e.Color));
+		SetTintColor(e.Color);
+	}
+
+	private void ColorPalette_ColorChanged(object sender, ColorPaletteColorChangedEventArgs e)
+	{
+		Color tintColor = e.Color;
+
+		if (tintColor.A == 0)
+		{
+			MainDropdownColorPicker.ResetColor();
+			ColorPalette.SelectedItem = ColorPalette.Colors.FirstOrDefault(c => c.Color.A == 0);
+		}
+		else
+		{
+			MainDropdownColorPicker.Color = tintColor;
+		}
+
+		SetTintColor(tintColor);
+	}
+
+	private void SetTintColor(Color color)
+	{
+		if (App.MainWindow.Content is not Grid rootGrid)
+			return;
+
+		rootGrid.Background = new SolidColorBrush(color);
+		localSettings.Values["TintColor"] = DevWinUI.ColorHelper.GetHexFromColor(color);
+	}
+
 	private void GetItems()
 	{
 		SwitchEmulator.ItemsSource = new List<SettingsGridViewItem>
 		{
-			new() { Text = "Eden", ImageSource = "ms-appx:///Assets/Fluent/Eden.png" },
-			new() { Text = "Citron", ImageSource = "ms-appx:///Assets/Fluent/Citron.png" },
-			new() { Text = "Ryujinx", ImageSource = "ms-appx:///Assets/Fluent/Ryujinx.png" },
+			new() { Text = "Eden", ImageSource = "ms-appx:///Assets/FluentIcons/Pages/Settings/Eden.png" },
+			new() { Text = "Citron", ImageSource = "ms-appx:///Assets/FluentIcons/Pages/Settings/Citron.png" },
+			new() { Text = "Ryujinx", ImageSource = "ms-appx:///Assets/FluentIcons/Pages/Settings/Ryujinx.png" },
 		};
 	}
 
@@ -98,10 +198,10 @@ public sealed partial class SettingsPage : Page
 		isInitializingSwitchEmulatorState = false;
 	}
 
-
 	private void SwitchEmulator_Changed(object sender, SelectionChangedEventArgs e)
 	{
-		if (isInitializingSwitchEmulatorState) return;
+		if (isInitializingSwitchEmulatorState)
+			return;
 
 		if (SwitchEmulator.SelectedItem is SettingsGridViewItem selectedItem)
 		{
@@ -201,7 +301,8 @@ public sealed partial class SettingsPage : Page
 		};
 
 		var folder = await picker.PickSingleFolderAsync();
-		if (folder == null) return;
+		if (folder == null)
+			return;
 
 		string folderName = Path.GetFileName(folder.Path).ToLowerInvariant();
 		if (folderName == "portable" || folderName == "ryujinx")
@@ -221,77 +322,6 @@ public sealed partial class SettingsPage : Page
 			};
 			await dialog.ShowAsync();
 		}
-	}
-
-	private void CloneRepo_Click(object sender, RoutedEventArgs e)
-	{
-		DataPackage package = new();
-		package.SetText(GitCloneTextBlock.Text);
-		Clipboard.SetContent(package);
-	}
-
-	private void LoadSettings()
-	{
-		if (localSettings.Values.TryGetValue("TintColor", out object tintValue) && tintValue is string tintHex)
-		{
-			MainDropdownColorPicker.Color = DevWinUI.ColorHelper.GetColorFromHex(tintHex);
-		}
-
-		if (!localSettings.Values.TryGetValue("HideStartup", out object hideStartupValue))
-		{
-			localSettings.Values["HideStartup"] = 0;
-		}
-		else
-		{
-			if (hideStartupValue is bool)
-			{
-				localSettings.Values.Remove("HideStartup");
-			}
-			else
-			{
-				HideStartup.IsOn = (int)hideStartupValue == 1;
-			}
-		}
-
-		if (!localSettings.Values.TryGetValue("RestoreWindowState", out object restoreWindowStateValue))
-		{
-			localSettings.Values["RestoreWindowState"] = false;
-			RestoreWindowState.IsOn = false;
-		}
-		else
-		{
-			RestoreWindowState.IsOn = (bool)restoreWindowStateValue;
-		}
-	}
-
-	private void HideStartup_Toggled(object sender, RoutedEventArgs e)
-	{
-		localSettings.Values["HideStartup"] = HideStartup.IsOn ? 1 : 0;
-	}
-
-	private void RestoreWindowState_Toggled(object sender, RoutedEventArgs e)
-	{
-		localSettings.Values["RestoreWindowState"] = RestoreWindowState.IsOn;
-	}
-
-	private void MainDropdownColorPicker_ColorChanged(object sender, DropdownColorPickerColorChangedEventArgs e)
-	{
-		SetTintColor(e.Color);
-	}
-
-	private void ColorPalette_ColorChanged(object sender, ColorPaletteColorChangedEventArgs e)
-	{
-		MainDropdownColorPicker.Color = e.Color;
-		SetTintColor(e.Color);
-	}
-
-	private void SetTintColor(Windows.UI.Color color)
-	{
-		if (App.MainWindow.Content is not Grid rootGrid)
-			return;
-
-		rootGrid.Background = new SolidColorBrush(color);
-		localSettings.Values["TintColor"] = DevWinUI.ColorHelper.GetHexFromColor(color);
 	}
 }
 

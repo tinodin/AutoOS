@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "https://raw.githubusercontent.com/Ghost1372/DevWinUI/refs/heads/main/tools/AppData.Schema.json",
   "Groups": [
     {
@@ -10,52 +10,52 @@
       "IsExpanded": false,
       "Items": [
         {
-          "UniqueId": "AutoOS.Views.Installer.HomeLandingPage",
+          "UniqueId": "AutoOS.Views.Installer.HomePage",
           "Title": "Home",
           "Subtitle": "Home Page",
-          "ImagePath": "ms-appx:///Assets/Fluent/Home.png",
+          "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Home.png",
           "HideItem": true
         },
         {
           "UniqueId": "AutoOS.Views.Installer.PersonalizationPage",
           "Title": "Personalization",
           "Subtitle": "Personalization",
-          "ImagePath": "ms-appx:///Assets/Fluent/Personalization.png",
+          "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Personalization.png",
           "HideItem": true
         },
         {
           "UniqueId": "AutoOS.Views.Installer.BrowsersPage",
           "Title": "Browsers",
           "Subtitle": "Browsers",
-          "ImagePath": "ms-appx:///Assets/Fluent/Browsers.png",
+          "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Browsers.png",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Installer.ApplicationsPage",
+          "UniqueId": "AutoOS.Views.Installer.AppsPage",
           "Title": "Applications",
           "Subtitle": "Applications",
-          "ImagePath": "ms-appx:///Assets/Fluent/Applications.png",
+          "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Applications.png",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Installer.DisplayPage",
+          "UniqueId": "AutoOS.Views.Installer.DisplaysPage",
           "Title": "Displays",
           "Subtitle": "Sisplays",
-          "ImagePath": "ms-appx:///Assets/Fluent/Display.png",
+          "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Display.png",
           "HideItem": true
         },
         {
           "UniqueId": "AutoOS.Views.Installer.GraphicsPage",
           "Title": "Graphics Cards",
           "Subtitle": "Graphics Cards",
-          "ImagePath": "ms-appx:///Assets/Fluent/Gpu.png",
+          "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Gpu.png",
           "HideItem": true
         },
         {
           "UniqueId": "AutoOS.Views.Installer.SecurityPage",
           "Title": "Windows Security",
           "Subtitle": "Windows Security",
-          "ImagePath": "ms-appx:///Assets/Fluent/Security.png",
+          "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Security.png",
           "HideItem": true
         }
       ]
@@ -72,7 +72,7 @@
           "UniqueId": "AutoOS.Views.Installer.InstallPage",
           "Title": "Install AutoOS",
           "Subtitle": "Install AutoOS",
-          "ImagePath": "ms-appx:///Assets/Fluent/Install.png",
+          "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Install.png",
           "HideItem": true
         }
       ]

@@ -69,7 +69,7 @@
 					Description="Manage your Audio Controller, Graphics Card, XHCI Controller and Network Interface Controller Affinities."
 					Header="Per-CPU Scheduling">
 					<dev:SettingsGroup.HeaderIcon>
-						<ImageIcon Source="/Assets/Fluent/Cpu.png" />
+						<ImageIcon Source="/Assets/FluentIcons/Sidebar/Cpu.png" />
 					</dev:SettingsGroup.HeaderIcon>
 					<dev:SettingsGroup.Content>
 						<dev:ProgressButton

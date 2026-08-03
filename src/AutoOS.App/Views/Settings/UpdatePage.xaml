@@ -28,7 +28,7 @@
 				dev:PanelAttach.ChildrenTransitions="Default">
 				<dev:SettingsGroup Description="AutoOS supports installing Windows Updates without losing any tweaks. It is recommended to enable Windows Updates from time to time and install them through the Settings app." Header="Windows Updates">
 					<dev:SettingsGroup.HeaderIcon>
-						<ImageIcon Source="/Assets/Fluent/Update2.png" />
+						<ImageIcon Source="/Assets/FluentIcons/Pages/Update/Update.png" />
 					</dev:SettingsGroup.HeaderIcon>
 					<dev:SettingsGroup.Content>
 						<ToggleSwitch x:Name="WindowsUpdate" Toggled="Update_Toggled" />

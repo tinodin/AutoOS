@@ -28,7 +28,7 @@
 				dev:PanelAttach.ChildrenTransitions="Default">
 				<dev:SettingsGroup Description="Toggle Windows Defender and other security settings." Header="Windows Defender">
 					<dev:SettingsGroup.HeaderIcon>
-						<ImageIcon Source="/Assets/Fluent/Defender.png" />
+						<ImageIcon Source="/Assets/FluentIcons/Pages/Security/Defender.png" />
 					</dev:SettingsGroup.HeaderIcon>
 					<dev:SettingsGroup.Content>
 						<ToggleSwitch x:Name="WindowsDefender" Toggled="WindowsDefender_Toggled" />
