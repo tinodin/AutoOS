@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 using CommunityToolkit.WinUI.Controls;
 
-namespace AutoOS.App.Common;
+namespace AutoOS.App.Extensions;
 
 public static class CommandBarExtensions
 {

@@ -3,12 +3,13 @@
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:bios="using:AutoOS.Core.Helpers.BIOS"
-	xmlns:common="using:AutoOS.App.Common"
 	xmlns:converters="using:CommunityToolkit.WinUI.Converters"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:data="using:Syncfusion.UI.Xaml.Data"
 	xmlns:dev="using:DevWinUI"
+	xmlns:ext="using:AutoOS.App.Extensions"
 	xmlns:grid="using:Syncfusion.UI.Xaml.Grids"
+	xmlns:helpers="using:AutoOS.App.Helpers"
 	xmlns:local="using:AutoOS.App.Views.Settings.BIOS"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:sfgrid="using:Syncfusion.UI.Xaml.TreeGrid"
@@ -239,11 +240,11 @@
 				ComboBoxTemplate="{StaticResource ComboBoxEditTemplate}"
 				TextBoxTemplate="{StaticResource TextBoxEditTemplate}" />
 
-			<common:TreeGridSortComparer x:Key="DisplayNameComparer" PropertyName="DisplayName" />
-			<common:TreeGridSortComparer x:Key="DisplayCurrentComparer" PropertyName="DisplayCurrent" />
-			<common:TreeGridSortComparer x:Key="DisplayRecommendedComparer" PropertyName="DisplayRecommended" />
-			<common:TreeGridSortComparer x:Key="DisplayDefaultComparer" PropertyName="DisplayDefault" />
-			<common:TreeGridSortComparer x:Key="DisplayOriginalComparer" PropertyName="DisplayOriginal" />
+			<helpers:TreeGridSortComparer x:Key="DisplayNameComparer" PropertyName="DisplayName" />
+			<helpers:TreeGridSortComparer x:Key="DisplayCurrentComparer" PropertyName="DisplayCurrent" />
+			<helpers:TreeGridSortComparer x:Key="DisplayRecommendedComparer" PropertyName="DisplayRecommended" />
+			<helpers:TreeGridSortComparer x:Key="DisplayDefaultComparer" PropertyName="DisplayDefault" />
+			<helpers:TreeGridSortComparer x:Key="DisplayOriginalComparer" PropertyName="DisplayOriginal" />
 		</ResourceDictionary>
 	</Page.Resources>
 
@@ -264,7 +265,7 @@
 				</Grid.ColumnDefinitions>
 
 				<!--  Search  -->
-				<common:TextBox
+				<uc:TextBox
 					x:Name="Search"
 					Grid.Column="0"
 					IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"
@@ -272,16 +273,16 @@
 					PlaceholderText="Search..."
 					TextChanged="Search_TextChanged"
 					ToolTipService.ToolTip="Search (Ctrl+F)">
-					<common:TextBox.KeyboardAccelerators>
+					<uc:TextBox.KeyboardAccelerators>
 						<KeyboardAccelerator
 							Key="F"
 							Invoked="Search_AcceleratorInvoked"
 							Modifiers="Control" />
-					</common:TextBox.KeyboardAccelerators>
-					<common:TextBox.Content>
+					</uc:TextBox.KeyboardAccelerators>
+					<uc:TextBox.Content>
 						<Button Content="&#xE71E;" />
-					</common:TextBox.Content>
-				</common:TextBox>
+					</uc:TextBox.Content>
+				</uc:TextBox>
 
 				<!--  Filter  -->
 				<DropDownButton
@@ -338,9 +339,9 @@
 
 				<!--  Command Bar  -->
 				<CommandBar
-					common:CommandBarExtensions.ApplyOverflowIndent="True"
-					common:CommandBarExtensions.CommandAlignment="Left"
-					common:CommandBarExtensions.OverflowButtonAlignment="Right"
+					ext:CommandBarExtensions.ApplyOverflowIndent="True"
+					ext:CommandBarExtensions.CommandAlignment="Left"
+					ext:CommandBarExtensions.OverflowButtonAlignment="Right"
 					DefaultLabelPosition="Right">
 
 					<!--  Undo  -->
@@ -492,7 +493,7 @@
 					<!--  Tree Grid (Main)  -->
 					<sfgrid:SfTreeGrid
 						x:Name="BiosTreeGrid"
-						common:TreeGridSelectionControllerHelper.UseCustomSelectionController="True"
+						helpers:TreeGridSelectionControllerHelper.UseCustomSelectionController="True"
 						AllowEditing="True"
 						AllowSorting="True"
 						AllowTriStateSorting="True"
@@ -521,7 +522,7 @@
 							<MenuFlyout />
 						</sfgrid:SfTreeGrid.HeaderContextFlyout>
 						<sfgrid:SfTreeGrid.ColumnSizer>
-							<common:TreeGridStarColumnSizer />
+							<helpers:TreeGridStarColumnSizer />
 						</sfgrid:SfTreeGrid.ColumnSizer>
 						<sfgrid:SfTreeGrid.SortComparers>
 							<data:SortComparer Comparer="{StaticResource DisplayNameComparer}" PropertyName="DisplayName" />
@@ -533,7 +534,7 @@
 
 							<!--  Setting  -->
 							<sfgrid:TreeGridTextColumn
-								common:StarRatio.ColumnRatio="3"
+								helpers:StarRatio.ColumnRatio="3"
 								AllowFocus="False"
 								HeaderText="Setting"
 								IsReadOnly="True"
@@ -544,7 +545,7 @@
 
 							<!--  Current  -->
 							<sfgrid:TreeGridTemplateColumn
-								common:StarRatio.ColumnRatio="1"
+								helpers:StarRatio.ColumnRatio="1"
 								AllowSorting="True"
 								CellStyleSelector="{StaticResource BiosCellStyleSelector}"
 								EditTemplateSelector="{StaticResource EditTemplateSelector}"
@@ -565,7 +566,7 @@
 
 							<!--  Recommended  -->
 							<sfgrid:TreeGridTextColumn
-								common:StarRatio.ColumnRatio="1"
+								helpers:StarRatio.ColumnRatio="1"
 								AllowFocus="False"
 								CellStyleSelector="{StaticResource BiosCellStyleSelector}"
 								HeaderText="Recommended"
@@ -577,7 +578,7 @@
 
 							<!--  Default  -->
 							<sfgrid:TreeGridTextColumn
-								common:StarRatio.ColumnRatio="1"
+								helpers:StarRatio.ColumnRatio="1"
 								AllowFocus="False"
 								HeaderText="Default"
 								IsReadOnly="True"
@@ -591,7 +592,7 @@
 					<!--  Tree View (View Changes)  -->
 					<sfgrid:SfTreeGrid
 						x:Name="BiosDiffTreeGrid"
-						common:TreeGridSelectionControllerHelper.UseCustomSelectionController="True"
+						helpers:TreeGridSelectionControllerHelper.UseCustomSelectionController="True"
 						AllowEditing="True"
 						AllowSorting="True"
 						AllowTriStateSorting="True"
@@ -620,7 +621,7 @@
 							<MenuFlyout />
 						</sfgrid:SfTreeGrid.HeaderContextFlyout>
 						<sfgrid:SfTreeGrid.ColumnSizer>
-							<common:TreeGridStarColumnSizer />
+							<helpers:TreeGridStarColumnSizer />
 						</sfgrid:SfTreeGrid.ColumnSizer>
 						<sfgrid:SfTreeGrid.SortComparers>
 							<data:SortComparer Comparer="{StaticResource DisplayNameComparer}" PropertyName="DisplayName" />
@@ -635,7 +636,7 @@
 
 							<!--  Setting  -->
 							<sfgrid:TreeGridTextColumn
-								common:StarRatio.ColumnRatio="3"
+								helpers:StarRatio.ColumnRatio="3"
 								AllowFocus="False"
 								HeaderText="Setting"
 								IsReadOnly="True"
@@ -646,7 +647,7 @@
 
 							<!--  Original  -->
 							<sfgrid:TreeGridTextColumn
-								common:StarRatio.ColumnRatio="1"
+								helpers:StarRatio.ColumnRatio="1"
 								AllowFocus="False"
 								CellStyleSelector="{StaticResource DiffCellStyleSelector}"
 								HeaderText="Original"
@@ -658,7 +659,7 @@
 
 							<!--  New  -->
 							<sfgrid:TreeGridTemplateColumn
-								common:StarRatio.ColumnRatio="1"
+								helpers:StarRatio.ColumnRatio="1"
 								AllowSorting="True"
 								CellStyleSelector="{StaticResource DiffCellStyleSelector}"
 								EditTemplateSelector="{StaticResource EditTemplateSelector}"
@@ -679,7 +680,7 @@
 
 							<!--  Default  -->
 							<sfgrid:TreeGridTextColumn
-								common:StarRatio.ColumnRatio="1"
+								helpers:StarRatio.ColumnRatio="1"
 								AllowFocus="False"
 								HeaderText="Default"
 								IsReadOnly="True"

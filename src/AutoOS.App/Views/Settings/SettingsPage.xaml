@@ -3,7 +3,6 @@
 	x:Class="AutoOS.App.Views.Settings.SettingsPage"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:common="using:AutoOS.App.Common"
 	xmlns:controls="using:CommunityToolkit.WinUI.Controls"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:dev="using:DevWinUI"
@@ -111,7 +110,7 @@
 						Header="TintColor"
 						HeaderIcon="{dev:BitmapIcon Source=Assets/FluentIcons/Pages/Settings/Tint.png}"
 						IsExpanded="True">
-						<common:DropdownColorPicker
+						<uc:DropdownColorPicker
 							x:Name="MainDropdownColorPicker"
 							ColorChanged="MainDropdownColorPicker_ColorChanged"
 							ColorSpectrumShape="Ring"
@@ -210,26 +209,26 @@
 									</GridView.ItemsPanel>
 								</GridView>
 								<dev:SettingsCard Header="Executable Location" HeaderIcon="{dev:FontIcon FontFamily={StaticResource SymbolThemeFontFamily}, Glyph=&#xE8A5;}">
-									<common:TextBox
+									<uc:TextBox
 										x:Name="ExecutableLocationValue"
 										MinWidth="300"
 										PlaceholderText="Executable Location..."
 										TextChanged="ExecutableLocation_TextChanged">
-										<common:TextBox.Content>
+										<uc:TextBox.Content>
 											<Button Click="ExecutableLocation_Click" Content="&#xE838;" />
-										</common:TextBox.Content>
-									</common:TextBox>
+										</uc:TextBox.Content>
+									</uc:TextBox>
 								</dev:SettingsCard>
 								<dev:SettingsCard Header="Data Location" HeaderIcon="{dev:FontIcon FontFamily={StaticResource SymbolThemeFontFamily}, Glyph=&#xE8B7;}">
-									<common:TextBox
+									<uc:TextBox
 										x:Name="DataLocationValue"
 										MinWidth="300"
 										PlaceholderText="Data Location..."
 										TextChanged="DataLocation_TextChanged">
-										<common:TextBox.Content>
+										<uc:TextBox.Content>
 											<Button Click="DataLocation_Click" Content="&#xE838;" />
-										</common:TextBox.Content>
-									</common:TextBox>
+										</uc:TextBox.Content>
+									</uc:TextBox>
 								</dev:SettingsCard>
 							</StackPanel>
 						</dev:Card.Content>

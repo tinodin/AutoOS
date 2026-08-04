@@ -2,10 +2,10 @@
 <ResourceDictionary
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:common="using:AutoOS.App.Common"
-	xmlns:devwinui="using:DevWinUI">
+	xmlns:dev="using:DevWinUI"
+	xmlns:uc="using:AutoOS.App.UserControls">
 
-	<Style TargetType="common:TextBox">
+	<Style TargetType="uc:TextBox">
 		<Setter Property="Foreground" Value="{ThemeResource TextControlForeground}" />
 		<Setter Property="Background" Value="{ThemeResource TextControlBackground}" />
 		<Setter Property="BorderBrush" Value="{ThemeResource TextControlBorderBrush}" />
@@ -28,7 +28,7 @@
 		<Setter Property="BackgroundSizing" Value="InnerBorderEdge" />
 		<Setter Property="Template">
 			<Setter.Value>
-				<ControlTemplate TargetType="common:TextBox">
+				<ControlTemplate TargetType="uc:TextBox">
 					<Grid>
 						<Grid.Resources>
 							<Style BasedOn="{StaticResource TextBoxButtonStyle}" TargetType="Button" />
@@ -207,8 +207,8 @@
 							Grid.Column="0"
 							Grid.ColumnSpan="2"
 							x:Load="False"
-							ItemTemplate="{Binding Path=(devwinui:Validation.ErrorTemplate), RelativeSource={RelativeSource TemplatedParent}}"
-							ItemsSource="{Binding Path=(devwinui:Validation.Errors), RelativeSource={RelativeSource TemplatedParent}}" />
+							ItemTemplate="{Binding Path=(dev:Validation.ErrorTemplate), RelativeSource={RelativeSource TemplatedParent}}"
+							ItemsSource="{Binding Path=(dev:Validation.Errors), RelativeSource={RelativeSource TemplatedParent}}" />
 						<VisualStateManager.VisualStateGroups>
 							<VisualStateGroup x:Name="CommonStates">
 								<VisualState x:Name="Normal" />

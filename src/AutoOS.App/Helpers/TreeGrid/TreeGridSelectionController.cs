@@ -3,7 +3,7 @@ using Microsoft.UI.Xaml.Media;
 using Syncfusion.UI.Xaml.TreeGrid;
 using Windows.System;
 
-namespace AutoOS.App.Common;
+namespace AutoOS.App.Helpers;
 
 public static class TreeGridSelectionControllerHelper
 {
