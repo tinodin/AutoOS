@@ -10,7 +10,7 @@ using Windows.Win32.UI.Shell;
 using Windows.Win32.UI.Shell.Common;
 using WinRT.Interop;
 
-namespace AutoOS.Helpers.Picker;
+namespace AutoOS.Core.Helpers.Picker;
 
 public partial class SavePicker
 {

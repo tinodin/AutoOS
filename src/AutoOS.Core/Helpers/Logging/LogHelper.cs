@@ -1,4 +1,4 @@
-﻿using System.Net.Http.Headers;
+using System.Net.Http.Headers;
 using System.Net.Security;
 using System.Security.Authentication;
 using System.Text;
@@ -8,6 +8,7 @@ using AutoOS.Core.Helpers.Database;
 using AutoOS.Core.Helpers.Device;
 using AutoOS.Core.Helpers.Device.Models;
 using AutoOS.Core.Helpers.Games;
+using AutoOS.Core.Helpers.Games.Models;
 using AutoOS.Core.Helpers.GPU;
 using AutoOS.Core.Helpers.GPU.Models;
 using AutoOS.Core.Helpers.Monitor;

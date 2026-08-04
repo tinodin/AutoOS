@@ -1,13 +1,14 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Globalization;
-using AutoOS.Core.Helpers.Benchmark;
+using AutoOS.App.Data.Enums;
+using AutoOS.App.Data.Models.Benchmarks;
+using AutoOS.App.Services.Benchmarks;
 using AutoOS.Core.Helpers.Picker;
-using AutoOS.App.Views.Settings;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Xaml.Media;
 using nietras.SeparatedValues;
-using Syncfusion.UI.Xaml.TreeGrid;
 using Windows.Storage;
 using Windows.System;
 
@@ -48,21 +49,49 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	public partial bool SelectedRecordingsHaveSameProcess { get; set; }
 
 	public IReadOnlyList<RecordingItem> SelectedRecordings { get; set; } = [];
+	private readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 	public List<RecordingAnalysis> CachedAnalysis { get; set; } = [];
 	private readonly HashSet<string> _recordableProcesses = [with(StringComparer.OrdinalIgnoreCase)];
-	private readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
+	private ProcessDiscoveryService? _processDiscovery;
+	private CancellationTokenSource? _recordingCts;
+	private Process? _activeProcess;
+
+	public BenchmarksPageViewModel()
+	{
+		RecordingAColor = Colors.DodgerBlue;
+		RecordingBColor = Colors.Orange;
+	}
+
+	public void LoadSettings()
+	{
+		if (localSettings.Values.TryGetValue("BenchmarkDelay", out object? delayObj) && delayObj is double delay)
+			Delay = delay;
+
+		if (localSettings.Values.TryGetValue("BenchmarkDuration", out object? durationObj) && durationObj is double duration)
+			Duration = duration;
+
+		if (localSettings.Values.TryGetValue("BenchmarkShortcut", out object? shortcutObj) && shortcutObj is string shortcut && !string.IsNullOrWhiteSpace(shortcut))
+		{
+			string[] parts = shortcut.Split('|');
+			if (parts.Length == 2 && Enum.TryParse(parts[0], out VirtualKeyModifiers modifiers) && Enum.TryParse(parts[1], out VirtualKey key))
+			{
+				ShortcutModifiers = modifiers;
+				ShortcutKey = key;
+			}
+		}
+	}
 
 	public async Task LoadRecordingsAsync()
 	{
 		List<RecordingItem> finalRecordings = await Task.Run(() =>
 		{
-			if (!Directory.Exists(BenchmarkCsv.RecordingsDirectory))
+			if (!Directory.Exists(RecordingAnalysisService.RecordingsDirectory))
 			{
-				Directory.CreateDirectory(BenchmarkCsv.RecordingsDirectory);
+				Directory.CreateDirectory(RecordingAnalysisService.RecordingsDirectory);
 				return [];
 			}
 
-			List<FileInfo> csvFiles = [.. new DirectoryInfo(BenchmarkCsv.RecordingsDirectory).EnumerateFiles("*.csv")];
+			List<FileInfo> csvFiles = [.. new DirectoryInfo(RecordingAnalysisService.RecordingsDirectory).EnumerateFiles("*.csv")];
 
 			if (csvFiles.Count == 0)
 			{
@@ -143,12 +172,12 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 							string? firstDateTimeStr = dateTimeIdx >= 0 ? firstRow[dateTimeIdx].ToString() : null;
 							string? firstTimeSecondsStr = timeSecondsIdx >= 0 ? firstRow[timeSecondsIdx].ToString() : null;
 
-							string lastLine = BenchmarkCsv.ReadLastLine(info.FullName, info.Length);
+							string lastLine = RecordingAnalysisService.ReadLastLine(info.FullName, info.Length);
 							ReadOnlySpan<char> lastLineSpan = lastLine;
 
 							if (dateTimeIdx >= 0 && firstDateTimeStr != null)
 							{
-								ReadOnlySpan<char> lastDateTimeSpan = BenchmarkCsv.GetField(lastLineSpan, dateTimeIdx);
+								ReadOnlySpan<char> lastDateTimeSpan = RecordingAnalysisService.GetField(lastLineSpan, dateTimeIdx);
 								if (!lastDateTimeSpan.IsEmpty &&
 									DateTime.TryParse(firstDateTimeStr, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out DateTime start) &&
 									DateTime.TryParse(lastDateTimeSpan, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out DateTime end))
@@ -160,7 +189,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 
 							if (!hasCsvDuration && timeSecondsIdx >= 0 && firstTimeSecondsStr != null && double.TryParse(firstTimeSecondsStr, NumberStyles.Float, CultureInfo.InvariantCulture, out double firstTimeSec))
 							{
-								ReadOnlySpan<char> lastTimeSecondsSpan = BenchmarkCsv.GetField(lastLineSpan, timeSecondsIdx);
+								ReadOnlySpan<char> lastTimeSecondsSpan = RecordingAnalysisService.GetField(lastLineSpan, timeSecondsIdx);
 								if (!lastTimeSecondsSpan.IsEmpty &&
 									double.TryParse(lastTimeSecondsSpan, NumberStyles.Float, CultureInfo.InvariantCulture, out double lastTimeSec))
 								{
@@ -221,6 +250,9 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		RecordingState = recordings.Count == 0 ? "Empty" : "Content";
 	}
 
+	[ObservableProperty]
+	public partial ObservableCollection<RecordingItem> Recordings { get; set; } = [];
+
 	public void SetSelectedRecordings(IReadOnlyList<RecordingItem> recordings)
 	{
 		SelectedRecordings = recordings;
@@ -259,8 +291,11 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		StatisticsState = AnalysisState;
 	}
 
-	[ObservableProperty]
-	public partial bool IsRenameEnabled { get; set; }
+	public bool HasSelectedRecordings => SelectedRecordingCount is > 0 and <= 2 && SelectedRecordingsHaveSameProcess;
+
+	public bool HasTwoRecordings => SelectedRecordingCount == 2 && SelectedRecordingsHaveSameProcess;
+	public Visibility HasTwoRecordingsVisibility => HasTwoRecordings ? Visibility.Visible : Visibility.Collapsed;
+	public int PieChartColumnSpan => HasTwoRecordings ? 1 : 2;
 
 	public bool IsAddEnabled => !IsRecording;
 
@@ -279,10 +314,13 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 			return;
 
 		foreach (StorageFile file in files)
-			File.Copy(file.Path, Path.Combine(BenchmarkCsv.RecordingsDirectory, file.Name), true);
+			File.Copy(file.Path, Path.Combine(RecordingAnalysisService.RecordingsDirectory, file.Name), true);
 
 		await LoadRecordingsAsync();
 	}
+
+	[ObservableProperty]
+	public partial bool IsRenameEnabled { get; set; }
 
 	public bool IsDeleteEnabled => SelectedRecordingCount > 0;
 
@@ -321,6 +359,8 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		await LoadRecordingsAsync();
 	}
 
+	public bool IsAggregateEnabled => SelectedRecordingCount > 1 && SelectedRecordingsHaveSameProcess;
+
 	[RelayCommand(CanExecute = nameof(IsAggregateEnabled))]
 	private void Aggregate()
 	{
@@ -331,7 +371,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		string outPath;
 		do
 		{
-			outPath = Path.Combine(BenchmarkCsv.RecordingsDirectory, $"Aggregate-{aggregateNumber++}.csv");
+			outPath = Path.Combine(RecordingAnalysisService.RecordingsDirectory, $"Aggregate-{aggregateNumber++}.csv");
 		}
 		while (File.Exists(outPath));
 
@@ -343,9 +383,9 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 				headerCols.Add(headerReader.Header.ColNames[i]);
 		}
 
-		int applicationIndex = BenchmarkCsv.EnsureColumn(headerCols, "Application");
-		int aggregateDurationIndex = BenchmarkCsv.EnsureColumn(headerCols, "AggregateDurationSeconds");
-		int aggregateSourcesIndex = BenchmarkCsv.EnsureColumn(headerCols, "AggregateSources");
+		int applicationIndex = RecordingAnalysisService.EnsureColumn(headerCols, "Application");
+		int aggregateDurationIndex = RecordingAnalysisService.EnsureColumn(headerCols, "AggregateDurationSeconds");
+		int aggregateSourcesIndex = RecordingAnalysisService.EnsureColumn(headerCols, "AggregateSources");
 		int columnCount = headerCols.Count;
 
 		List<double[]> sums = [];
@@ -468,16 +508,78 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	[ObservableProperty]
 	public partial ObservableCollection<string> ProcessSuggestions { get; set; } = [];
 
+	public void SetRecordableProcesses(IEnumerable<string> processNames)
+	{
+		_recordableProcesses.Clear();
+		_recordableProcesses.UnionWith(processNames);
+		FilterProcessSuggestions(string.Empty);
+	}
+
+	private void FilterProcessSuggestions(string query)
+	{
+		var suggestions = _recordableProcesses
+			.Where(name => string.IsNullOrWhiteSpace(query) || name.Contains(query.Trim(), StringComparison.OrdinalIgnoreCase))
+			.OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+			.ToList();
+
+		if (ProcessSuggestions.SequenceEqual(suggestions, StringComparer.OrdinalIgnoreCase))
+			return;
+
+		for (int i = ProcessSuggestions.Count - 1; i >= 0; i--)
+		{
+			if (!suggestions.Contains(ProcessSuggestions[i], StringComparer.OrdinalIgnoreCase))
+				ProcessSuggestions.RemoveAt(i);
+		}
+
+		int insertIndex = 0;
+		foreach (string suggestion in suggestions)
+		{
+			if (!ProcessSuggestions.Contains(suggestion, StringComparer.OrdinalIgnoreCase))
+				ProcessSuggestions.Insert(insertIndex, suggestion);
+			insertIndex++;
+		}
+	}
+
+	public async Task StartProcessDiscoveryAsync()
+	{
+		_processDiscovery?.Dispose();
+		var discovery = new ProcessDiscoveryService();
+		_processDiscovery = discovery;
+		discovery.Start();
+		List<string> processes = await Task.Run(() => discovery.GetRecordableProcesses(true));
+		SetRecordableProcesses(processes);
+	}
+
+	public void SubscribeProcessDiscovery()
+		=> _processDiscovery?.ProcessesChanged += OnProcessesChanged;
+
+	public void UnsubscribeProcessDiscovery()
+	{
+		if (_processDiscovery != null)
+		{
+			_processDiscovery.ProcessesChanged -= OnProcessesChanged;
+			_processDiscovery.Dispose();
+		}
+	}
+
+	private void OnProcessesChanged(object? sender, EventArgs e)
+	{
+		App.MainWindow.DispatcherQueue.TryEnqueue(() => SetRecordableProcesses(_processDiscovery?.GetRecordableProcesses() ?? []));
+	}
+
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(CanRecord))]
+	[NotifyCanExecuteChangedFor(nameof(RecordCommand))]
 	public partial string ProcessName { get; set; } = string.Empty;
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(CanRecord))]
+	[NotifyCanExecuteChangedFor(nameof(RecordCommand))]
 	public partial double Delay { get; set; } = 5;
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(CanRecord))]
+	[NotifyCanExecuteChangedFor(nameof(RecordCommand))]
 	public partial double Duration { get; set; } = 60;
 
 	[ObservableProperty]
@@ -512,27 +614,6 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	partial void OnShortcutModifiersChanged(VirtualKeyModifiers value) => localSettings.Values["BenchmarkShortcut"] = $"{ShortcutModifiers}|{ShortcutKey}";
 	partial void OnShortcutKeyChanged(VirtualKey value) => localSettings.Values["BenchmarkShortcut"] = $"{ShortcutModifiers}|{ShortcutKey}";
 
-	public void LoadSettings()
-	{
-		if (localSettings.Values.TryGetValue("BenchmarkDelay", out object? delayObj) && delayObj is double delay)
-			Delay = delay;
-
-		if (localSettings.Values.TryGetValue("BenchmarkDuration", out object? durationObj) && durationObj is double duration)
-			Duration = duration;
-
-		if (localSettings.Values.TryGetValue("BenchmarkShortcut", out object? shortcutObj) && shortcutObj is string shortcut && !string.IsNullOrWhiteSpace(shortcut))
-		{
-			string[] parts = shortcut.Split('|');
-			if (parts.Length == 2 &&
-				Enum.TryParse<VirtualKeyModifiers>(parts[0], out VirtualKeyModifiers modifiers) &&
-				Enum.TryParse<VirtualKey>(parts[1], out VirtualKey key))
-			{
-				ShortcutModifiers = modifiers;
-				ShortcutKey = key;
-			}
-		}
-	}
-
 	public bool CanRecord => IsRecording || (!string.IsNullOrWhiteSpace(ProcessName) && !double.IsNaN(Delay) && !double.IsNaN(Duration));
 	public string RecordLabel => IsRecording ? "Cancel" : "Record";
 	public string RecordIconGlyph => IsRecording ? "\uE711" : "\uE7C8";
@@ -540,6 +621,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(IsAddEnabled))]
 	[NotifyCanExecuteChangedFor(nameof(AddCommand))]
+	[NotifyCanExecuteChangedFor(nameof(RecordCommand))]
 	[NotifyPropertyChangedFor(nameof(CanRecord))]
 	[NotifyPropertyChangedFor(nameof(RecordIconGlyph))]
 	[NotifyPropertyChangedFor(nameof(RecordLabel))]
@@ -560,15 +642,310 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	public int DelaySecondsLeft => (int)Math.Ceiling(DelayRemaining);
 	public int DurationSecondsLeft => (int)Math.Ceiling(DurationRemaining);
 
-	[ObservableProperty]
-	public partial ObservableCollection<RecordingItem> Recordings { get; set; } = [];
+	public void ShowDelay(int seconds)
+	{
+		DelayRemaining = seconds;
+		RecordingState = "Delay";
+	}
 
-	public bool HasSelectedRecordings => SelectedRecordingCount is > 0 and <= 2 && SelectedRecordingsHaveSameProcess;
+	public void ShowDuration()
+	{
+		RecordingState = "Duration";
+		DurationRemaining = Duration;
+	}
+
+	[RelayCommand(CanExecute = nameof(CanRecord), AllowConcurrentExecutions = true)]
+	private async Task RecordAsync()
+	{
+		if (IsRecording)
+		{
+			CancelRecording();
+			return;
+		}
+
+		_recordingCts?.Cancel();
+		var cts = new CancellationTokenSource();
+		_recordingCts = cts;
+
+		IsRecording = true;
+
+		int delay = (int)Delay;
+		int duration = (int)Duration;
+
+		ShowDelay(delay);
+
+		var delayTcs = new TaskCompletionSource();
+		var countdownTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
+		long start = Stopwatch.GetTimestamp();
+		countdownTimer.Tick += (s, args) =>
+		{
+			if (cts.IsCancellationRequested)
+			{
+				countdownTimer.Stop();
+				delayTcs.TrySetResult();
+				return;
+			}
+			double elapsed = (Stopwatch.GetTimestamp() - start) / (double)Stopwatch.Frequency;
+			if (elapsed < delay)
+				DelayRemaining = Math.Max(0, delay - elapsed);
+			else
+			{
+				countdownTimer.Stop();
+				delayTcs.TrySetResult();
+			}
+		};
+		countdownTimer.Start();
+		await delayTcs.Task;
+
+		if (cts.IsCancellationRequested)
+		{
+			if (_activeProcess == null)
+				IsRecording = false;
+			return;
+		}
+
+		string outputPath = PresentMonRecordingService.GenerateOutputPath();
+
+		Process? process = PresentMonRecordingService.Start(ProcessName, outputPath, duration);
+		if (process is null)
+		{
+			IsRecording = false;
+			await MessageBox.ShowErrorAsync(App.MainWindow, "PresentMon failed to start.", "Recording Error");
+			return;
+		}
+
+		_activeProcess = process;
+		ShowDuration();
+
+		start = Stopwatch.GetTimestamp();
+		var recordingTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+		recordingTimer.Tick += (s, args) =>
+		{
+			if (cts.IsCancellationRequested)
+			{
+				recordingTimer.Stop();
+				return;
+			}
+			double elapsed = (Stopwatch.GetTimestamp() - start) / (double)Stopwatch.Frequency;
+			DurationRemaining = Math.Max(0, duration - elapsed);
+			if (process.HasExited)
+				recordingTimer.Stop();
+		};
+		recordingTimer.Start();
+
+		try
+		{
+			await process.WaitForExitAsync();
+
+			if (cts.IsCancellationRequested)
+			{
+				PresentMonRecordingService.DeleteOutputFile(outputPath);
+				return;
+			}
+
+			if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
+			{
+				await MessageBox.ShowErrorAsync(App.MainWindow, "PresentMon exited without producing a recording file.");
+			}
+
+			PresentMonRecordingService.PlayCompletedSound();
+		}
+		catch (Exception ex)
+		{
+			await MessageBox.ShowErrorAsync(App.MainWindow, $"An error occurred while recording: {ex.Message}", "Recording Error");
+			return;
+		}
+		finally
+		{
+			recordingTimer.Stop();
+			if (_activeProcess == process)
+			{
+				_activeProcess = null;
+				IsRecording = false;
+			}
+			await LoadRecordingsAsync();
+		}
+	}
+
+	private void CancelRecording()
+	{
+		_recordingCts?.Cancel();
+		if (_activeProcess is { HasExited: false })
+			PresentMonRecordingService.Stop(_activeProcess);
+		IsRecording = false;
+		RecordingState = Recordings.Count == 0 ? "Empty" : "Content";
+	}
+
+	public async Task AnalyzeSelectedAsync()
+	{
+		RecordingAnalysis?[] analyses = await Task.WhenAll(SelectedRecordings.Select(recording =>
+			Task.Run(() =>
+			{
+				AnalysisResult? result = RecordingAnalysisService.Analyze(recording.FilePath);
+				return result is null ? null : new RecordingAnalysis(recording, result);
+			})));
+
+		CachedAnalysis = [.. analyses.OfType<RecordingAnalysis>()];
+	}
+
+	public void BuildAnalysis()
+	{
+		if (CachedAnalysis.Count == 0)
+			return;
+
+		BuildBarColumnChartData();
+		BuildLineScatterChartData();
+		BuildPieChartData();
+	}
+
+	public void BuildBarColumnChartData()
+	{
+		List<RecordingAnalysis> results = CachedAnalysis;
+		if (results.Count == 0)
+			return;
+
+		List<BarPoint> displayedFpsBars1 = [];
+		List<BarPoint> renderedFpsBars1 = [];
+		List<BarPoint> displayedFpsBars2 = [];
+		List<BarPoint> renderedFpsBars2 = [];
+
+		int fpsSeriesIdx = 0;
+		foreach (RecordingAnalysis result in results)
+		{
+			List<BarPoint> displayedTarget = fpsSeriesIdx == 0 ? displayedFpsBars1 : displayedFpsBars2;
+			List<BarPoint> renderedTarget = fpsSeriesIdx == 0 ? renderedFpsBars1 : renderedFpsBars2;
+
+			foreach (string percentile in Catalog.StatisticLabelsShort)
+			{
+				if (IsStatisticEnabled(percentile))
+				{
+					displayedTarget.Add(new BarPoint { Label = percentile, Value = Catalog.GetStatistic(result.Analysis.DisplayedFps, percentile) });
+					renderedTarget.Add(new BarPoint { Label = percentile, Value = Catalog.GetStatistic(result.Analysis.RenderedFps, percentile) });
+				}
+			}
+
+			if (fpsSeriesIdx == 0)
+			{
+				BarColumnChartDisplayedLabel1 = $"{result.Recording.FileName} · Displayed FPS";
+				BarColumnChartRenderedLabel1 = $"{result.Recording.FileName} · Rendered FPS";
+			}
+			else
+			{
+				BarColumnChartDisplayedLabel2 = $"{result.Recording.FileName} · Displayed FPS";
+				BarColumnChartRenderedLabel2 = $"{result.Recording.FileName} · Rendered FPS";
+			}
+			fpsSeriesIdx++;
+		}
+
+		BarColumnChartDisplayedData1 = [.. displayedFpsBars1];
+		BarColumnChartRenderedData1 = [.. renderedFpsBars1];
+		BarColumnChartDisplayedData2 = HasTwoRecordings ? [.. displayedFpsBars2] : [];
+		BarColumnChartRenderedData2 = HasTwoRecordings ? [.. renderedFpsBars2] : [];
+		BarColumnRenderedVisible = true;
+	}
+
+	public void BuildLineScatterChartData()
+	{
+		List<RecordingAnalysis> results = CachedAnalysis;
+		if (results.Count == 0)
+			return;
+
+		string metric = SelectedMetric;
+		List<SeriesPoint> metricPts1 = [];
+		List<SeriesPoint> metricPts2 = [];
+
+		int index = 0;
+		foreach (RecordingAnalysis result in results)
+		{
+			IReadOnlyList<double> rawValues = metric switch
+			{
+				"MsBetweenDisplayChange" => result.Analysis.MsBetweenDisplayChange,
+				"MsBetweenPresents" => result.Analysis.MsBetweenPresents,
+				"MsGPUBusy" => result.Analysis.MsGPUBusy,
+				"MsUntilDisplayed" => result.Analysis.MsUntilDisplayed,
+				"MsRenderPresentLatency" => result.Analysis.MsRenderPresentLatency,
+				_ => []
+			};
+
+			var points = new List<SeriesPoint>(rawValues.Count);
+			for (int i = 0; i < rawValues.Count; i++)
+				points.Add(new SeriesPoint { Index = i + 1, Value = rawValues[i] });
+
+			if (index == 0)
+			{
+				metricPts1 = points;
+				LineScatterChartLabel1 = $"{result.Recording.FileName} · {metric}";
+			}
+			else
+			{
+				metricPts2 = points;
+				LineScatterChartLabel2 = $"{result.Recording.FileName} · {metric}";
+			}
+			index++;
+		}
+
+		LineScatterChartData1 = [.. metricPts1];
+		LineScatterChartData2 = [.. metricPts2];
+	}
+
+	public void BuildPieChartData(double? stutterFactor = null, double? lowFpsThreshold = null)
+	{
+		List<RecordingAnalysis> results = CachedAnalysis;
+		if (results.Count == 0)
+			return;
+
+		double factor = stutterFactor ?? StutterFactor;
+		double threshold = lowFpsThreshold ?? LowFpsThreshold;
+
+		PieChartLabel1 = results[0].Recording.FileName;
+		PieChartLabel2 = HasTwoRecordings ? results[1].Recording.FileName : string.Empty;
+		PieChartData1 = [.. BuildPiePoints(results[0], factor, threshold)];
+		PieChartData2 = HasTwoRecordings ? [.. BuildPiePoints(results[1], factor, threshold)] : [];
+	}
+
+	private static List<PiePoint> BuildPiePoints(RecordingAnalysis result, double stutterFactor, double lowFpsThreshold)
+	{
+		IReadOnlyList<double> sequence = result.Analysis.MsBetweenPresents;
+		IReadOnlyList<double> movingAverage = result.Analysis.StutterMovingAverage;
+		if (sequence.Count == 0 || movingAverage.Count != sequence.Count)
+			return [];
+
+		double stutterPercentage = StatisticsCalculator.GetStutteringTimePercentage(sequence, movingAverage, stutterFactor);
+		double lowFpsPercentage = StatisticsCalculator.GetLowFPSTimePercentage(sequence, movingAverage, stutterFactor, lowFpsThreshold);
+		double smoothPercentage = Math.Max(0, 100 - stutterPercentage - lowFpsPercentage);
+
+		double totalSeconds = sequence.Skip(1).Sum() / 1000;
+		double stutterSeconds = Math.Round(stutterPercentage / 100 * totalSeconds, 2, MidpointRounding.AwayFromZero);
+		double lowFpsSeconds = Math.Round(lowFpsPercentage / 100 * totalSeconds, 2, MidpointRounding.AwayFromZero);
+		double smoothSeconds = Math.Round(smoothPercentage / 100 * totalSeconds, 2, MidpointRounding.AwayFromZero);
+
+		static string formatTime(double seconds) => seconds.ToString("0.00", CultureInfo.InvariantCulture);
+		static string formatPercent(double percentage) => Math.Round(percentage, 1, MidpointRounding.AwayFromZero).ToString("0.#", CultureInfo.InvariantCulture);
+
+		return
+		[
+			new PiePoint { Label = $"Smooth: {formatTime(smoothSeconds)}s ({formatPercent(smoothPercentage)}%)", Value = smoothSeconds },
+			new PiePoint { Label = $"Low FPS: {formatTime(lowFpsSeconds)}s ({formatPercent(lowFpsPercentage)}%)", Value = lowFpsSeconds },
+			new PiePoint { Label = $"Stuttering: {formatTime(stutterSeconds)}s ({formatPercent(stutterPercentage)}%)", Value = stutterSeconds }
+		];
+	}
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(StatisticsVisibility))]
+	[NotifyPropertyChangedFor(nameof(MetricVisibility))]
+	[NotifyPropertyChangedFor(nameof(ThresholdsVisibility))]
+	public partial string AnalysisChartType { get; set; } = "Bar";
 
 	public Visibility StatisticsVisibility => (AnalysisChartType is "Bar" or "Column") ? Visibility.Visible : Visibility.Collapsed;
 
 	public Visibility MetricVisibility => AnalysisChartType is "Line" or "Scatter" ? Visibility.Visible : Visibility.Collapsed;
 	public Visibility ThresholdsVisibility => AnalysisChartType == "Pie" ? Visibility.Visible : Visibility.Collapsed;
+
+	[ObservableProperty]
+	public partial string AnalysisProcess { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial string SelectedMetric { get; set; } = "MsBetweenDisplayChange";
 
 	[ObservableProperty]
 	public partial bool ShowLow01 { get; set; } = true;
@@ -638,131 +1015,163 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		_ => true
 	};
 
-	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(RecordingAColorBrush))]
-	[NotifyPropertyChangedFor(nameof(RecordingASecondaryColor))]
-	public partial Windows.UI.Color RecordingAColor { get; set; }
+	public string GetStatisticTooltip(string key) => Catalog.StatisticDescriptions.TryGetValue(key, out string? desc) ? desc : string.Empty;
 
-	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(RecordingBColorBrush))]
-	[NotifyPropertyChangedFor(nameof(RecordingBSecondaryColor))]
-	public partial Windows.UI.Color RecordingBColor { get; set; }
+	public string GetMetricTooltip(string key) => Catalog.MetricDescriptions.TryGetValue(key, out string? desc) ? desc : string.Empty;
 
-	[ObservableProperty]
-	public partial Windows.UI.Color RecordingASecondaryColor { get; set; }
-
-	[ObservableProperty]
-	public partial Windows.UI.Color RecordingBSecondaryColor { get; set; }
-
-	[ObservableProperty]
-	public partial Windows.UI.Color RecordingATertiaryColor { get; set; }
-
-	[ObservableProperty]
-	public partial Windows.UI.Color RecordingBTertiaryColor { get; set; }
-
-	[ObservableProperty]
-	public partial BrushCollection PieChart1Palette { get; set; } = new BrushCollection();
-
-	[ObservableProperty]
-	public partial BrushCollection PieChart2Palette { get; set; } = new BrushCollection();
-
-	[ObservableProperty]
-	public partial SolidColorBrush RecordingAColorBrush { get; set; } = new SolidColorBrush();
-
-	[ObservableProperty]
-	public partial SolidColorBrush RecordingBColorBrush { get; set; } = new SolidColorBrush();
-
-	public bool HasTwoRecordings => SelectedRecordingCount == 2 && SelectedRecordingsHaveSameProcess;
-	public Visibility HasTwoRecordingsVisibility => HasTwoRecordings ? Visibility.Visible : Visibility.Collapsed;
-	public int PieChartColumnSpan => HasTwoRecordings ? 1 : 2;
-
-	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(StatisticsVisibility))]
-	[NotifyPropertyChangedFor(nameof(MetricVisibility))]
-	[NotifyPropertyChangedFor(nameof(ThresholdsVisibility))]
-	public partial string AnalysisChartType { get; set; } = "Bar";
-
-	[ObservableProperty]
-	public partial string AnalysisProcess { get; set; } = string.Empty;
-
-	[ObservableProperty]
-	public partial ObservableCollection<BarPoint> BarColumnChartDisplayedData1 { get; set; } = [];
-
-	[ObservableProperty]
-	public partial ObservableCollection<BarPoint> BarColumnChartRenderedData1 { get; set; } = [];
-
-	[ObservableProperty]
-	public partial ObservableCollection<BarPoint> BarColumnChartDisplayedData2 { get; set; } = [];
-
-	[ObservableProperty]
-	public partial ObservableCollection<BarPoint> BarColumnChartRenderedData2 { get; set; } = [];
-
-	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(BarColumnRenderedVisibility))]
-	public partial bool BarColumnRenderedVisible { get; set; }
-
-	public Visibility BarColumnRenderedVisibility => BarColumnRenderedVisible ? Visibility.Visible : Visibility.Collapsed;
-
-	[ObservableProperty]
-	public partial string BarColumnChartDisplayedLabel1 { get; set; } = string.Empty;
-
-	[ObservableProperty]
-	public partial string BarColumnChartRenderedLabel1 { get; set; } = string.Empty;
-
-	[ObservableProperty]
-	public partial string BarColumnChartDisplayedLabel2 { get; set; } = string.Empty;
-
-	[ObservableProperty]
-	public partial string BarColumnChartRenderedLabel2 { get; set; } = string.Empty;
-
-	[ObservableProperty]
-	public partial ObservableCollection<SeriesPoint> LineScatterChartData1 { get; set; } = [];
-
-	[ObservableProperty]
-	public partial ObservableCollection<SeriesPoint> LineScatterChartData2 { get; set; } = [];
-
-	[ObservableProperty]
-	public partial string LineScatterChartLabel1 { get; set; } = string.Empty;
-
-	[ObservableProperty]
-	public partial string LineScatterChartLabel2 { get; set; } = string.Empty;
-
-	[ObservableProperty]
-	public partial ObservableCollection<PiePoint> PieChartData1 { get; set; } = [];
-
-	[ObservableProperty]
-	public partial ObservableCollection<PiePoint> PieChartData2 { get; set; } = [];
-
-	[ObservableProperty]
-	public partial string PieChartLabel1 { get; set; } = string.Empty;
-
-	[ObservableProperty]
-	public partial string PieChartLabel2 { get; set; } = string.Empty;
-
-	[ObservableProperty]
-	public partial double LowFpsThreshold { get; set; } = 25;
-
-	partial void OnLowFpsThresholdChanged(double value)
+	public void BuildStatistics()
 	{
-		if (double.IsNaN(value) || double.IsInfinity(value))
+		List<RecordingAnalysis> results = CachedAnalysis;
+		if (results.Count == 0)
+		{
+			StatisticsRows = [];
 			return;
+		}
+
+		List<ResultRow> groups = [];
+		foreach ((string? name, Func<AnalysisResult, Metrics>? selector, Dictionary<string, Statistics>? statistics) in Catalog.GetStatisticGroups(StutterFactor, LowFpsThreshold))
+		{
+			Metrics m0 = selector(results[0].Analysis);
+			Metrics? m1 = results.Count > 1 ? selector(results[1].Analysis) : null;
+
+			var group = new ResultRow
+			{
+				Statistic = name,
+				Tooltip = Catalog.MetricDescriptions.TryGetValue(name, out string? tip) ? tip : "Benchmark statistic."
+			};
+			foreach ((string? key, Statistics definition) in statistics)
+			{
+				double valueA = Catalog.GetStatistic(m0, key);
+				double valueB = m1 == null ? 0 : Catalog.GetStatistic(m1, key);
+				group.Children.Add(new ResultRow
+				{
+					Statistic = definition.Label,
+					Tooltip = definition.Description,
+					RecordingA = definition.FormatValue(valueA, m0),
+					RecordingB = m1 == null ? "" : definition.FormatValue(valueB, m1),
+					RecordingAValue = valueA,
+					RecordingBValue = m1 == null ? null : valueB,
+					RecordingASeconds = Catalog.GetStatisticSeconds(m0, key),
+					RecordingBSeconds = m1 == null ? null : Catalog.GetStatisticSeconds(m1, key),
+					Definition = definition
+				});
+			}
+			groups.Add(group);
+		}
+
+		if (groups.Count == 0)
+		{
+			StatisticsRows = [];
+			return;
+		}
+
+		StatisticsRows = [.. groups];
+		ApplyStatisticsComparisons();
 	}
 
-	[ObservableProperty]
-	public partial double StutterFactor { get; set; } = 2.5;
-
-	partial void OnStutterFactorChanged(double value)
+	public void UpdateStutterStatistics(double? stutterFactor = null, double? lowFpsThreshold = null)
 	{
-		if (double.IsNaN(value) || double.IsInfinity(value))
+		List<RecordingAnalysis> results = CachedAnalysis;
+		ResultRow? stutterGroup = StatisticsRows.FirstOrDefault(row => row.Statistic == "Stutter Analysis");
+		if (results.Count == 0 || stutterGroup is null)
 			return;
-		double rounded = Math.Round(value, 1);
-		if (value != rounded)
-			StutterFactor = rounded;
+
+		double factor = stutterFactor ?? StutterFactor;
+		double threshold = lowFpsThreshold ?? LowFpsThreshold;
+
+		Metrics m0 = StatisticsCalculator.GetStutterMetrics(results[0].Analysis, factor, threshold);
+		Metrics? m1 = results.Count > 1 ? StatisticsCalculator.GetStutterMetrics(results[1].Analysis, factor, threshold) : null;
+
+		foreach ((string? key, Statistics definition) in Catalog.StutterStatistics)
+		{
+			ResultRow? row = stutterGroup.Children.FirstOrDefault(child => child.Statistic == definition.Label);
+			if (row is null)
+				continue;
+			double valueA = Catalog.GetStatistic(m0, key);
+			double valueB = m1 == null ? 0 : Catalog.GetStatistic(m1, key);
+			row.RecordingA = definition.FormatValue(valueA, m0);
+			row.RecordingB = m1 == null ? "" : definition.FormatValue(valueB, m1);
+			row.RecordingAValue = valueA;
+			row.RecordingBValue = m1 == null ? null : valueB;
+			row.RecordingASeconds = Catalog.GetStatisticSeconds(m0, key);
+			row.RecordingBSeconds = m1 == null ? null : Catalog.GetStatisticSeconds(m1, key);
+		}
+
+		ApplyStatisticsComparisons(stutterGroup.Children);
 	}
 
-	public string GetStatisticTooltip(string key) => BenchmarkCsv.StatisticDescriptions.TryGetValue(key, out string? desc) ? desc : string.Empty;
+	public void ApplyStatisticsComparisons()
+		=> ApplyStatisticsComparisons(StatisticsRows.SelectMany(group => group.Children));
 
-	public string GetMetricTooltip(string key) => BenchmarkCsv.MetricDescriptions.TryGetValue(key, out string? desc) ? desc : string.Empty;
+	private void ApplyStatisticsComparisons(IEnumerable<ResultRow> rows)
+	{
+		int baselineIndex = BaselineIndex;
+		bool showPercentDelta = IsPercentDelta;
+
+		static string signed(double value, string format, string suffix)
+		{
+			string sign = value >= 0 ? "+ " : "- ";
+			return sign + Math.Abs(value).ToString(format, CultureInfo.CurrentCulture) + suffix;
+		}
+
+		foreach (ResultRow row in rows)
+		{
+			if (row.RecordingAValue is not double valueA || row.RecordingBValue is not double valueB)
+			{
+				row.Delta = string.Empty;
+				row.DeltaComparison = ComparisonResult.None;
+				continue;
+			}
+
+			if (valueA != valueB)
+			{
+				bool valueAIsBetter = row.Definition.HigherIsBetter ? valueA > valueB : valueA < valueB;
+				row.RecordingAComparison = valueAIsBetter ? ComparisonResult.Better : ComparisonResult.Worse;
+				row.RecordingBComparison = valueAIsBetter ? ComparisonResult.Worse : ComparisonResult.Better;
+			}
+			else
+			{
+				row.RecordingAComparison = ComparisonResult.None;
+				row.RecordingBComparison = ComparisonResult.None;
+			}
+
+			if (baselineIndex is 0 or 1)
+			{
+				double baseline = baselineIndex == 0 ? valueA : valueB;
+				double comparison = baselineIndex == 0 ? valueB : valueA;
+				double delta = comparison - baseline;
+				if (delta != 0)
+				{
+					bool comparisonIsBetter = row.Definition.HigherIsBetter ? delta > 0 : delta < 0;
+					ComparisonResult baselineComparison = comparisonIsBetter ? ComparisonResult.Worse : ComparisonResult.Better;
+					if (baselineIndex == 0)
+						row.RecordingAComparison = baselineComparison;
+					else
+						row.RecordingBComparison = baselineComparison;
+					row.DeltaComparison = comparisonIsBetter ? ComparisonResult.Better : ComparisonResult.Worse;
+				}
+				else
+				{
+					row.RecordingAComparison = ComparisonResult.None;
+					row.RecordingBComparison = ComparisonResult.None;
+					row.DeltaComparison = ComparisonResult.None;
+				}
+
+				string deltaText = showPercentDelta && baseline != 0 ? signed(delta / baseline * 100, "0.##", " %") : signed(delta, row.Definition.Format, row.Definition.DeltaSuffix);
+				if (row.RecordingASeconds is double secondsA && row.RecordingBSeconds is double secondsB)
+				{
+					double secondsDelta = baselineIndex == 0 ? secondsB - secondsA : secondsA - secondsB;
+					deltaText = $"{signed(secondsDelta, "0.00", " s")} ({deltaText})";
+				}
+				row.Delta = deltaText;
+			}
+			else
+			{
+				row.Delta = string.Empty;
+				row.DeltaComparison = ComparisonResult.None;
+			}
+		}
+	}
 
 	[ObservableProperty]
 	public partial ObservableCollection<string> BaselineItems { get; set; } = ["None"];
@@ -828,13 +1237,39 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		DeltaHeader = baseline >= 0 ? $"{SelectedRecordings[1 - baseline].Title} (Delta)" : IsPercentDelta ? "Delta (%)" : "Delta (+/-)";
 	}
 
-	public bool IsAggregateEnabled => SelectedRecordingCount > 1 && SelectedRecordingsHaveSameProcess;
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(RecordingAColorBrush))]
+	[NotifyPropertyChangedFor(nameof(RecordingASecondaryColor))]
+	public partial Windows.UI.Color RecordingAColor { get; set; }
 
-	public BenchmarksPageViewModel()
-	{
-		RecordingAColor = Colors.DodgerBlue;
-		RecordingBColor = Colors.Orange;
-	}
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(RecordingBColorBrush))]
+	[NotifyPropertyChangedFor(nameof(RecordingBSecondaryColor))]
+	public partial Windows.UI.Color RecordingBColor { get; set; }
+
+	[ObservableProperty]
+	public partial Windows.UI.Color RecordingASecondaryColor { get; set; }
+
+	[ObservableProperty]
+	public partial Windows.UI.Color RecordingBSecondaryColor { get; set; }
+
+	[ObservableProperty]
+	public partial Windows.UI.Color RecordingATertiaryColor { get; set; }
+
+	[ObservableProperty]
+	public partial Windows.UI.Color RecordingBTertiaryColor { get; set; }
+
+	[ObservableProperty]
+	public partial BrushCollection PieChart1Palette { get; set; } = new BrushCollection();
+
+	[ObservableProperty]
+	public partial BrushCollection PieChart2Palette { get; set; } = new BrushCollection();
+
+	[ObservableProperty]
+	public partial SolidColorBrush RecordingAColorBrush { get; set; } = new SolidColorBrush();
+
+	[ObservableProperty]
+	public partial SolidColorBrush RecordingBColorBrush { get; set; } = new SolidColorBrush();
 
 	partial void OnRecordingAColorChanged(Windows.UI.Color value)
 	{
@@ -862,49 +1297,80 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		};
 	}
 
-	public void ShowDelay(int seconds)
-	{
-		DelayRemaining = seconds;
-		RecordingState = "Delay";
-	}
+	[ObservableProperty]
+	public partial double LowFpsThreshold { get; set; } = 25;
 
-	public void ShowDuration()
+	partial void OnLowFpsThresholdChanged(double value)
 	{
-		RecordingState = "Duration";
-		DurationRemaining = Duration;
-	}
-
-	public void SetRecordableProcesses(IEnumerable<string> processNames)
-	{
-		_recordableProcesses.Clear();
-		_recordableProcesses.UnionWith(processNames);
-		FilterProcessSuggestions(string.Empty);
-	}
-
-	private void FilterProcessSuggestions(string query)
-	{
-		var suggestions = _recordableProcesses
-			.Where(name => string.IsNullOrWhiteSpace(query) || name.Contains(query.Trim(), StringComparison.OrdinalIgnoreCase))
-			.OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
-			.ToList();
-
-		if (ProcessSuggestions.SequenceEqual(suggestions, StringComparer.OrdinalIgnoreCase))
+		if (double.IsNaN(value) || double.IsInfinity(value))
 			return;
-
-		for (int i = ProcessSuggestions.Count - 1; i >= 0; i--)
-		{
-			if (!suggestions.Contains(ProcessSuggestions[i], StringComparer.OrdinalIgnoreCase))
-				ProcessSuggestions.RemoveAt(i);
-		}
-
-		int insertIndex = 0;
-		foreach (string suggestion in suggestions)
-		{
-			if (!ProcessSuggestions.Contains(suggestion, StringComparer.OrdinalIgnoreCase))
-				ProcessSuggestions.Insert(insertIndex, suggestion);
-			insertIndex++;
-		}
 	}
+
+	[ObservableProperty]
+	public partial double StutterFactor { get; set; } = 2.5;
+
+	partial void OnStutterFactorChanged(double value)
+	{
+		if (double.IsNaN(value) || double.IsInfinity(value))
+			return;
+		double rounded = Math.Round(value, 1);
+		if (value != rounded)
+			StutterFactor = rounded;
+	}
+
+	[ObservableProperty]
+	public partial ObservableCollection<BarPoint> BarColumnChartDisplayedData1 { get; set; } = [];
+
+	[ObservableProperty]
+	public partial ObservableCollection<BarPoint> BarColumnChartRenderedData1 { get; set; } = [];
+
+	[ObservableProperty]
+	public partial ObservableCollection<BarPoint> BarColumnChartDisplayedData2 { get; set; } = [];
+
+	[ObservableProperty]
+	public partial ObservableCollection<BarPoint> BarColumnChartRenderedData2 { get; set; } = [];
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(BarColumnRenderedVisibility))]
+	public partial bool BarColumnRenderedVisible { get; set; }
+
+	public Visibility BarColumnRenderedVisibility => BarColumnRenderedVisible ? Visibility.Visible : Visibility.Collapsed;
+
+	[ObservableProperty]
+	public partial string BarColumnChartDisplayedLabel1 { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial string BarColumnChartRenderedLabel1 { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial string BarColumnChartDisplayedLabel2 { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial string BarColumnChartRenderedLabel2 { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial ObservableCollection<SeriesPoint> LineScatterChartData1 { get; set; } = [];
+
+	[ObservableProperty]
+	public partial ObservableCollection<SeriesPoint> LineScatterChartData2 { get; set; } = [];
+
+	[ObservableProperty]
+	public partial string LineScatterChartLabel1 { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial string LineScatterChartLabel2 { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial ObservableCollection<PiePoint> PieChartData1 { get; set; } = [];
+
+	[ObservableProperty]
+	public partial ObservableCollection<PiePoint> PieChartData2 { get; set; } = [];
+
+	[ObservableProperty]
+	public partial string PieChartLabel1 { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial string PieChartLabel2 { get; set; } = string.Empty;
 
 }
 
@@ -936,13 +1402,6 @@ public sealed partial class RecordingItem : ObservableObject
 	public partial TimeSpan Time { get; set; }
 
 	public ObservableCollection<RecordingItem> Children { get; } = [];
-}
-
-public enum ComparisonResult
-{
-	None,
-	Better,
-	Worse
 }
 
 [WinRT.GeneratedBindableCustomProperty]
@@ -978,32 +1437,7 @@ public sealed partial class ResultRow : ObservableObject
 	internal double? RecordingBValue { get; set; }
 	internal double? RecordingASeconds { get; set; }
 	internal double? RecordingBSeconds { get; set; }
-	internal BenchmarkCsv.StatisticDefinition Definition { get; set; }
-}
-
-public sealed partial class ResultCellStyleSelector : StyleSelector
-{
-	public Style? SuccessStyle { get; set; }
-	public Style? CriticalStyle { get; set; }
-
-	protected override Style? SelectStyleCore(object item, DependencyObject container)
-	{
-		if (item is not ResultRow row || container is not TreeGridCell cell)
-			return null;
-		ComparisonResult comparison = cell.ColumnBase?.TreeGridColumn.MappingName switch
-		{
-			nameof(ResultRow.RecordingA) => row.RecordingAComparison,
-			nameof(ResultRow.RecordingB) => row.RecordingBComparison,
-			nameof(ResultRow.Delta) => row.DeltaComparison,
-			_ => ComparisonResult.None
-		};
-		return comparison switch
-		{
-			ComparisonResult.Better => SuccessStyle,
-			ComparisonResult.Worse => CriticalStyle,
-			_ => null
-		};
-	}
+	internal Statistics Definition { get; set; }
 }
 
 [WinRT.GeneratedBindableCustomProperty]
@@ -1021,6 +1455,16 @@ public sealed partial class SeriesPoint : ObservableObject
 {
 	[ObservableProperty]
 	public partial int Index { get; set; }
+
+	[ObservableProperty]
+	public partial double Value { get; set; }
+}
+
+[WinRT.GeneratedBindableCustomProperty]
+public sealed partial class PiePoint : ObservableObject
+{
+	[ObservableProperty]
+	public partial string Label { get; set; } = string.Empty;
 
 	[ObservableProperty]
 	public partial double Value { get; set; }

@@ -10,6 +10,7 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using AutoOS.Core.Common;
 using AutoOS.Core.Helpers.Games.Clients;
+using AutoOS.Core.Helpers.Games.Models;
 using AutoOS.Core.Helpers.Logging;
 using DevWinUI;
 using Microsoft.VisualBasic.FileIO;

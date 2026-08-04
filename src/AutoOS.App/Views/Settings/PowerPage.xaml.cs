@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using AutoOS.Core.Helpers.Picker;
 using AutoOS.Core.Helpers.Power;
-using AutoOS.Helpers.Picker;
 using AutoOS.App.Views.Settings.Power;
 using Microsoft.UI.Text;
 using Windows.Storage;

@@ -13,6 +13,7 @@
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:sfdata="using:Syncfusion.UI.Xaml.DataGrid"
 	xmlns:sfgrid="using:Syncfusion.UI.Xaml.TreeGrid"
+	xmlns:templateselectors="using:AutoOS.App.Data.TemplateSelectors"
 	xmlns:uc="using:AutoOS.App.UserControls"
 	xmlns:viewmodel="using:AutoOS.App.ViewModels"
 	mc:Ignorable="d">
@@ -25,8 +26,8 @@
 			TrueValue="False" />
 
 		<!--  Cell style selector  -->
-		<viewmodel:ResultCellStyleSelector
-			x:Key="ResultCellStyleSelector"
+		<templateselectors:StatisticsCellStyleSelector
+			x:Key="StatisticsCellStyleSelector"
 			CriticalStyle="{StaticResource CriticalCellStyle}"
 			SuccessStyle="{StaticResource SuccessCellStyle}" />
 
@@ -162,18 +163,15 @@
 							</AppBarElementContainer>
 
 							<!--  Record  -->
-							<AppBarElementContainer>
-								<ToggleButton
-									x:Name="Record"
-									Checked="Record_Checked"
-									IsEnabled="{x:Bind ViewModel.CanRecord, Mode=OneWay}"
-									Unchecked="Record_Unchecked">
-									<StackPanel Orientation="Horizontal" Spacing="8">
-										<FontIcon FontSize="12" Glyph="{x:Bind ViewModel.RecordIconGlyph, Mode=OneWay}" />
-										<TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="{x:Bind ViewModel.RecordLabel, Mode=OneWay}" />
-									</StackPanel>
-								</ToggleButton>
-							</AppBarElementContainer>
+							<AppBarToggleButton
+								Command="{x:Bind ViewModel.RecordCommand}"
+								IsChecked="{x:Bind ViewModel.IsRecording, Mode=OneWay}"
+								Label="{x:Bind ViewModel.RecordLabel, Mode=OneWay}"
+								ToolTipService.ToolTip="{x:Bind ViewModel.RecordLabel, Mode=OneWay}">
+								<AppBarToggleButton.Content>
+									<FontIcon FontSize="12" Glyph="{x:Bind ViewModel.RecordIconGlyph, Mode=OneWay}" />
+								</AppBarToggleButton.Content>
+							</AppBarToggleButton>
 
 						</controls:TabbedCommandBarItem.PrimaryCommands>
 					</controls:TabbedCommandBarItem>
@@ -1214,7 +1212,7 @@
 								<sfgrid:TreeGridTextColumn
 									x:Name="StatisticsRecordingAColumn"
 									helpers:StarRatio.ColumnRatio="1"
-									CellStyleSelector="{StaticResource ResultCellStyleSelector}"
+									CellStyleSelector="{StaticResource StatisticsCellStyleSelector}"
 									HeaderText="{x:Bind ViewModel.RecordingAHeader, Mode=OneWay}"
 									MappingName="RecordingA" />
 
@@ -1222,7 +1220,7 @@
 								<sfgrid:TreeGridTextColumn
 									x:Name="StatisticsRecordingBColumn"
 									helpers:StarRatio.ColumnRatio="1"
-									CellStyleSelector="{StaticResource ResultCellStyleSelector}"
+									CellStyleSelector="{StaticResource StatisticsCellStyleSelector}"
 									HeaderText="{x:Bind ViewModel.RecordingBHeader, Mode=OneWay}"
 									MappingName="RecordingB" />
 
@@ -1230,7 +1228,7 @@
 								<sfgrid:TreeGridTextColumn
 									x:Name="StatisticsDeltaColumn"
 									helpers:StarRatio.ColumnRatio="1"
-									CellStyleSelector="{StaticResource ResultCellStyleSelector}"
+									CellStyleSelector="{StaticResource StatisticsCellStyleSelector}"
 									HeaderText="{x:Bind ViewModel.DeltaHeader, Mode=OneWay}"
 									MappingName="Delta" />
 							</sfgrid:SfTreeGrid.Columns>

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using AutoOS.Core.Common;
+using AutoOS.Core.Helpers.Games.Models;
 using Microsoft.VisualBasic.FileIO;
 using ValveKeyValue;
 
