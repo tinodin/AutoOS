@@ -1,7 +1,7 @@
 using Nucs.JsonSettings.Examples;
 using Nucs.JsonSettings.Modulation;
 
-namespace AutoOS.Common;
+namespace AutoOS.App.Common;
 
 [GenerateAutoSaveOnChange]
 public partial class AppConfig : NotifiyingJsonSettings, IVersionable

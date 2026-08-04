@@ -18,7 +18,7 @@ public static partial class OSHelper
 
 	public static string GetWindowsVersionString()
 	{
-		var version = GetWindowsVersion();
+		(ushort Major, ushort Minor, ushort Build, ushort Ubr) version = GetWindowsVersion();
 		return $"{version.Build}.{version.Ubr}";
 	}
 }

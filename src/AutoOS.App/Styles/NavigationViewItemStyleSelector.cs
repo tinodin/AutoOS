@@ -1,4 +1,4 @@
-namespace AutoOS.Themes;
+namespace AutoOS.App.Themes;
 
 public partial class NavigationViewItemStyleSelector : StyleSelector
 {
@@ -12,7 +12,7 @@ public partial class NavigationViewItemStyleSelector : StyleSelector
 		var navItem = item as NavigationViewItem;
 		if (navItem == null) return null;
 
-		var subItem = VisualHelper.FindParentOfType<NavigationViewItem>(navItem);
+		NavigationViewItem subItem = VisualHelper.FindParentOfType<NavigationViewItem>(navItem);
 
 		if (subItem == null)
 		{

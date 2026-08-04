@@ -1,8 +1,8 @@
-using PhantomClientCore.Native;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-using System.Text.Json;
+using PhantomClientCore.Native;
 
 namespace AutoOS.Core.Helpers.Games.Clients;
 
@@ -37,7 +37,7 @@ internal sealed class TlsClient
 
 	private TlsResponse Execute(string method, string url, string body, IReadOnlyDictionary<string, string> headers)
 	{
-		var mergedHeaders = MergeHeaders(_options.DefaultHeaders, headers);
+		Dictionary<string, string> mergedHeaders = MergeHeaders(_options.DefaultHeaders, headers);
 		var payload = new JsonObject
 		{
 			["sessionId"] = _sessionId,
@@ -65,16 +65,16 @@ internal sealed class TlsClient
 		if (_options.HeaderOrder is { Count: > 0 })
 			payload["headerOrder"] = ToJsonArray(_options.HeaderOrder);
 
-		var responseJson = Request(payload.ToJsonString(JsonWriteOptions));
+		string responseJson = Request(payload.ToJsonString(JsonWriteOptions));
 		return Parse(url, responseJson);
 	}
 
 	private static TlsResponse Parse(string url, string responseJson)
 	{
 		using var document = JsonDocument.Parse(responseJson);
-		var root = document.RootElement;
-		var status = root.TryGetProperty("status", out var statusElement) ? statusElement.GetInt32() : 0;
-		var body = root.TryGetProperty("body", out var bodyElement) ? bodyElement.GetString() ?? "" : "";
+		JsonElement root = document.RootElement;
+		int status = root.TryGetProperty("status", out JsonElement statusElement) ? statusElement.GetInt32() : 0;
+		string body = root.TryGetProperty("body", out JsonElement bodyElement) ? bodyElement.GetString() ?? "" : "";
 
 		if (status == 0)
 			throw new InvalidOperationException("Native request failed: " + body);
@@ -83,7 +83,7 @@ internal sealed class TlsClient
 		{
 			Status = status,
 			Body = body,
-			Url = root.TryGetProperty("target", out var targetElement) ? targetElement.GetString() ?? url : url
+			Url = root.TryGetProperty("target", out JsonElement targetElement) ? targetElement.GetString() ?? url : url
 		};
 	}
 
@@ -93,7 +93,7 @@ internal sealed class TlsClient
 		if (values == null)
 			return obj;
 
-		foreach (var (key, value) in values)
+		foreach ((string? key, string? value) in values)
 			obj[key] = value;
 
 		return obj;
@@ -102,7 +102,7 @@ internal sealed class TlsClient
 	private static JsonArray ToJsonArray(IEnumerable<string> values)
 	{
 		var array = new JsonArray();
-		foreach (var value in values)
+		foreach (string value in values)
 			array.Add(JsonValue.Create(value));
 
 		return array;
@@ -115,13 +115,13 @@ internal sealed class TlsClient
 		var headers = new Dictionary<string, string>(StringComparer.Ordinal);
 		if (baseHeaders != null)
 		{
-			foreach (var (key, value) in baseHeaders)
+			foreach ((string? key, string? value) in baseHeaders)
 				headers[key.ToLowerInvariant()] = value;
 		}
 
 		if (overrideHeaders != null)
 		{
-			foreach (var (key, value) in overrideHeaders)
+			foreach ((string? key, string? value) in overrideHeaders)
 				headers[key.ToLowerInvariant()] = value;
 		}
 
@@ -149,11 +149,11 @@ internal sealed class TlsClient
 	private static string Request(string payloadJson)
 	{
 		EnsureLoaded();
-		var ptr = _request(payloadJson);
+		nint ptr = _request(payloadJson);
 		if (ptr == IntPtr.Zero)
 			throw new InvalidOperationException("Native request returned null.");
 
-		var response = Marshal.PtrToStringUTF8(ptr) ?? "";
+		string response = Marshal.PtrToStringUTF8(ptr) ?? "";
 		FreeByResponseId(response);
 		return response;
 	}
@@ -163,9 +163,9 @@ internal sealed class TlsClient
 		try
 		{
 			using var document = JsonDocument.Parse(json);
-			if (document.RootElement.TryGetProperty("id", out var idElement))
+			if (document.RootElement.TryGetProperty("id", out JsonElement idElement))
 			{
-				var id = idElement.GetString();
+				string? id = idElement.GetString();
 				if (id != null)
 					_freeMemory(id);
 			}

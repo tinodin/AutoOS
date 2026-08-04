@@ -1,10 +1,10 @@
-﻿using AutoOS.Core.Common;
+﻿using System.Net;
+using System.Net.Http.Headers;
+using System.Text;
+using AutoOS.Core.Common;
 using AutoOS.Core.Helpers.Logging;
 using DevWinUI;
 using Downloader;
-using System.Net.Http.Headers;
-using System.Net;
-using System.Text;
 
 namespace AutoOS.Core.Helpers.Download;
 
@@ -30,11 +30,11 @@ public static partial class DownloadHelper
 	{
 		Directory.CreateDirectory(path);
 		var urlList = urls.ToList();
-		var fileList = files?.ToList() ?? [];
+		List<string> fileList = files?.ToList() ?? [];
 		long totalBytesDownloaded = 0;
 		DateTime lastLoggedTime = DateTime.MinValue;
 		double lastSpeedMB = 0;
-		var startTime = DateTime.Now;
+		DateTime startTime = DateTime.Now;
 
 		long totalBytes = 0;
 		foreach (string url in urlList)
@@ -43,7 +43,7 @@ public static partial class DownloadHelper
 			{
 				using var headRequest = new HttpRequestMessage(HttpMethod.Head, url);
 				headRequest.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36");
-				using var response = await httpClient.SendAsync(headRequest, HttpCompletionOption.ResponseHeadersRead);
+				using HttpResponseMessage response = await httpClient.SendAsync(headRequest, HttpCompletionOption.ResponseHeadersRead);
 				if (response.Content.Headers.ContentLength.HasValue)
 				{
 					totalBytes += response.Content.Headers.ContentLength.Value;
@@ -62,10 +62,10 @@ public static partial class DownloadHelper
 
 			if (url.Contains("raw.githubusercontent.com", StringComparison.OrdinalIgnoreCase))
 			{
-				using (var response = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead))
+				using (HttpResponseMessage response = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead))
 				{
 					response.EnsureSuccessStatusCode();
-					using var contentStream = await response.Content.ReadAsStreamAsync();
+					using Stream contentStream = await response.Content.ReadAsStreamAsync();
 					using var fileStream = new FileStream(destination, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
 					await contentStream.CopyToAsync(fileStream);
 					totalBytesDownloaded = new FileInfo(destination).Length;
@@ -114,17 +114,17 @@ public static partial class DownloadHelper
 				};
 			}
 
-			var downloadBuilder = DownloadBuilder.New()
+			DownloadBuilder downloadBuilder = DownloadBuilder.New()
 				.WithUrl(url)
 				.WithDirectory(path)
 				.WithFileName(file)
 				.WithConfiguration(config);
 
-			var download = downloadBuilder.Build();
+			IDownload download = downloadBuilder.Build();
 			long fileBytesDownloaded = 0;
 			long fileTotalBytes = 0;
 			Exception downloaderError = null;
-			var downloaderStartTime = DateTime.Now;
+			DateTime downloaderStartTime = DateTime.Now;
 
 			if (urlList.Count == 1)
 			{
@@ -184,7 +184,7 @@ public static partial class DownloadHelper
 			}
 
 			await download.StartAsync();
-			var downloaderEndTime = DateTime.Now;
+			DateTime downloaderEndTime = DateTime.Now;
 
 			if (urlList.Count == 1)
 			{
@@ -192,7 +192,7 @@ public static partial class DownloadHelper
 				if (!File.Exists(singleFileName))
 				{
 					var errorDetails = new StringBuilder();
-					var package = download.Package;
+					DownloadPackage? package = download.Package;
 
 					errorDetails.AppendLine($"Primary download failed for: {url}");
 					errorDetails.AppendLine($"Package: Status={package?.Status}, SaveComplete={package?.IsSaveComplete}, FileName={package?.FileName}");
@@ -211,7 +211,7 @@ public static partial class DownloadHelper
 							foreach (string headerName in config.RequestConfiguration.Headers.AllKeys)
 								headRequest.Headers.TryAddWithoutValidation(headerName, config.RequestConfiguration.Headers[headerName]);
 						}
-						using var response = await httpClient.SendAsync(headRequest, HttpCompletionOption.ResponseHeadersRead);
+						using HttpResponseMessage response = await httpClient.SendAsync(headRequest, HttpCompletionOption.ResponseHeadersRead);
 						statusCode = response.StatusCode;
 						try { contentLength = response.Content.Headers.ContentLength?.ToString() ?? ""; } catch { }
 						try { acceptRanges = response.Headers.AcceptRanges.FirstOrDefault() ?? ""; } catch { }
@@ -222,8 +222,8 @@ public static partial class DownloadHelper
 					errorDetails.AppendLine($"Content-Length: {contentLength}, Accept-Ranges: {acceptRanges}, Content-Range: {contentRange}");
 
 					Exception fallbackError = null;
-					var httpClientStartTime = DateTime.Now;
-					var httpClientEndTime = DateTime.Now;
+					DateTime httpClientStartTime = DateTime.Now;
+					DateTime httpClientEndTime = DateTime.Now;
 					if (statusCode.HasValue && (int)statusCode.Value >= 200 && (int)statusCode.Value <= 299)
 					{
 						try
@@ -234,7 +234,7 @@ public static partial class DownloadHelper
 								foreach (string headerName in config.RequestConfiguration.Headers.AllKeys)
 									request.Headers.TryAddWithoutValidation(headerName, config.RequestConfiguration.Headers[headerName]);
 							}
-							using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+							using HttpResponseMessage response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 							if (response.IsSuccessStatusCode)
 							{
 								try { contentLength = response.Content.Headers.ContentLength?.ToString() ?? ""; } catch { }
@@ -242,15 +242,15 @@ public static partial class DownloadHelper
 								try { contentRange = response.Content.Headers.ContentRange?.ToString() ?? ""; } catch { }
 
 								Directory.CreateDirectory(Path.GetDirectoryName(singleFileName)!);
-								using var contentStream = await response.Content.ReadAsStreamAsync();
+								using Stream contentStream = await response.Content.ReadAsStreamAsync();
 								using var fileStream = new FileStream(singleFileName, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
 
 								totalBytes = response.Content.Headers.ContentLength ?? -1L;
 								double clientTotalSizeMB = totalBytes / (1024.0 * 1024.0);
-								var buffer = new byte[81920];
+								byte[] buffer = new byte[81920];
 								int bytesRead;
 								long totalRead = 0;
-								var clientLastLoggedTime = DateTime.MinValue;
+								DateTime clientLastLoggedTime = DateTime.MinValue;
 
 								while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
 								{
@@ -281,8 +281,8 @@ public static partial class DownloadHelper
 					if (File.Exists(singleFileName) && new FileInfo(singleFileName).Length != 0)
 					{
 						errorDetails.AppendLine("Fallback download succeeded");
-						var downloaderTime = downloaderEndTime - downloaderStartTime;
-						var httpClientTime = httpClientEndTime - httpClientStartTime;
+						TimeSpan downloaderTime = downloaderEndTime - downloaderStartTime;
+						TimeSpan httpClientTime = httpClientEndTime - httpClientStartTime;
 						errorDetails.AppendLine($"Downloader took: {(downloaderTime.TotalMinutes >= 1 ? $"{(int)downloaderTime.TotalMinutes}min {downloaderTime.Seconds}sec" : $"{downloaderTime.Seconds}sec")}");
 						errorDetails.AppendLine($"HttpClient took: {(httpClientTime.TotalMinutes >= 1 ? $"{(int)httpClientTime.TotalMinutes}min {httpClientTime.Seconds}sec" : $"{httpClientTime.Seconds}sec")}");
 						await LogHelper.LogError(new Exception(errorDetails.ToString(), downloaderError));

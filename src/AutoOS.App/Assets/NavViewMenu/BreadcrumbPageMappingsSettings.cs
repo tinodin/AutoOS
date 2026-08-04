@@ -1,6 +1,6 @@
 using DevWinUI;
 
-namespace AutoOS.Assets.NavViewMenu;
+namespace AutoOS.App.Assets.NavViewMenu;
 
 public partial class BreadcrumbPageMappingsSettings
 {

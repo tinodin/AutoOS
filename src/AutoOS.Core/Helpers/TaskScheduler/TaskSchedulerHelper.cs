@@ -1,5 +1,5 @@
-using System.Runtime.InteropServices.Marshalling;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.Marshalling;
 using Windows.Win32;
 
 namespace AutoOS.Core.Helpers.TaskScheduler;
@@ -103,10 +103,10 @@ public static partial class TaskSchedulerHelper
 	{
 		try
 		{
-			var tasks = folder.GetTasks(1);
+			IRegisteredTaskCollection tasks = folder.GetTasks(1);
 			for (int i = 1; i <= tasks.Get_Count(); i++)
 			{
-				var task = tasks.Get_Item(VARIANT.FromInt(i));
+				IRegisteredTask task = tasks.Get_Item(VARIANT.FromInt(i));
 				if (onMatch(folder, task))
 					return true;
 			}
@@ -115,7 +115,7 @@ public static partial class TaskSchedulerHelper
 
 		try
 		{
-			var subFolders = folder.GetFolders(0);
+			ITaskFolderCollection subFolders = folder.GetFolders(0);
 			for (int i = 1; i <= subFolders.Get_Count(); i++)
 			{
 				if (SearchTasks(subFolders.Get_Item(VARIANT.FromInt(i)), onMatch))
@@ -137,7 +137,7 @@ public static partial class TaskSchedulerHelper
 
 	public static void Toggle(string wildcard, bool enable)
 	{
-		var ts = CreateTaskService();
+		ITaskService ts = CreateTaskService();
 		ts.Connect(VARIANT.Empty, VARIANT.Empty, VARIANT.Empty, VARIANT.Empty);
 
 		SearchTasks(ts.GetFolder("\\"), (_, task) =>
@@ -152,7 +152,7 @@ public static partial class TaskSchedulerHelper
 
 	public static void Unregister(string wildcard)
 	{
-		var ts = CreateTaskService();
+		ITaskService ts = CreateTaskService();
 		ts.Connect(VARIANT.Empty, VARIANT.Empty, VARIANT.Empty, VARIANT.Empty);
 
 		SearchTasks(ts.GetFolder("\\"), (folder, task) =>

@@ -2,7 +2,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using AutoOS.Core.Helpers.Benchmark;
 using AutoOS.Core.Helpers.Picker;
-using AutoOS.Views.Settings;
+using AutoOS.App.Views.Settings;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Xaml.Media;
@@ -11,7 +11,7 @@ using Syncfusion.UI.Xaml.TreeGrid;
 using Windows.Storage;
 using Windows.System;
 
-namespace AutoOS.ViewModels;
+namespace AutoOS.App.ViewModels;
 
 public sealed partial class BenchmarksPageViewModel : ObservableObject
 {
@@ -51,7 +51,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	public List<RecordingAnalysis> CachedAnalysis { get; set; } = [];
 	private readonly HashSet<string> _recordableProcesses = [with(StringComparer.OrdinalIgnoreCase)];
 	private readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
-	
+
 	public async Task LoadRecordingsAsync()
 	{
 		List<RecordingItem> finalRecordings = await Task.Run(() =>
@@ -69,7 +69,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 				return [];
 			}
 
-			var sepReader = Sep.Reader(options => options with { Sep = new Sep(','), Unescape = true, ColNameComparer = StringComparer.OrdinalIgnoreCase });
+			SepReaderOptions sepReader = Sep.Reader(options => options with { Sep = new Sep(','), Unescape = true, ColNameComparer = StringComparer.OrdinalIgnoreCase });
 
 			List<RecordingItem> recordings = [with(csvFiles.Count)];
 			Dictionary<RecordingItem, List<string>> aggregateSources = [];
@@ -97,7 +97,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 
 						List<string> sourceFileNames = [];
 
-						using var reader = sepReader.FromFile(info.FullName);
+						using SepReader reader = sepReader.FromFile(info.FullName);
 
 						reader.Header.TryIndexOf("Application", out int appIdx);
 						reader.Header.TryIndexOf("PresentMode", out int presentModeIdx);
@@ -109,7 +109,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 						if (!reader.MoveNext())
 							return (Recording: result, SourceFileNames: sourceFileNames);
 
-						var firstRow = reader.Current;
+						SepReader.Row firstRow = reader.Current;
 
 						if (appIdx >= 0)
 						{
@@ -133,35 +133,34 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 
 						if (hasAggSources && aggSourcesIdx >= 0)
 						{
-							var sourceText = firstRow[aggSourcesIdx].ToString();
+							string sourceText = firstRow[aggSourcesIdx].ToString();
 							if (!string.IsNullOrWhiteSpace(sourceText))
 								sourceFileNames = [.. sourceText.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)];
 						}
 
 						if (!hasCsvDuration && (dateTimeIdx >= 0 || timeSecondsIdx >= 0))
 						{
-							string firstDateTimeStr = dateTimeIdx >= 0 ? firstRow[dateTimeIdx].ToString() : null;
-							string firstTimeSecondsStr = timeSecondsIdx >= 0 ? firstRow[timeSecondsIdx].ToString() : null;
+							string? firstDateTimeStr = dateTimeIdx >= 0 ? firstRow[dateTimeIdx].ToString() : null;
+							string? firstTimeSecondsStr = timeSecondsIdx >= 0 ? firstRow[timeSecondsIdx].ToString() : null;
 
 							string lastLine = BenchmarkCsv.ReadLastLine(info.FullName, info.Length);
 							ReadOnlySpan<char> lastLineSpan = lastLine;
 
 							if (dateTimeIdx >= 0 && firstDateTimeStr != null)
 							{
-								var lastDateTimeSpan = BenchmarkCsv.GetField(lastLineSpan, dateTimeIdx);
+								ReadOnlySpan<char> lastDateTimeSpan = BenchmarkCsv.GetField(lastLineSpan, dateTimeIdx);
 								if (!lastDateTimeSpan.IsEmpty &&
-									DateTime.TryParse(firstDateTimeStr, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var start) &&
-									DateTime.TryParse(lastDateTimeSpan, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var end))
+									DateTime.TryParse(firstDateTimeStr, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out DateTime start) &&
+									DateTime.TryParse(lastDateTimeSpan, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out DateTime end))
 								{
 									result.DurationSeconds = Math.Max(0, (end - start).TotalSeconds);
 									hasCsvDuration = true;
 								}
 							}
 
-							if (!hasCsvDuration && timeSecondsIdx >= 0 && firstTimeSecondsStr != null &&
-								double.TryParse(firstTimeSecondsStr, NumberStyles.Float, CultureInfo.InvariantCulture, out double firstTimeSec))
+							if (!hasCsvDuration && timeSecondsIdx >= 0 && firstTimeSecondsStr != null && double.TryParse(firstTimeSecondsStr, NumberStyles.Float, CultureInfo.InvariantCulture, out double firstTimeSec))
 							{
-								var lastTimeSecondsSpan = BenchmarkCsv.GetField(lastLineSpan, timeSecondsIdx);
+								ReadOnlySpan<char> lastTimeSecondsSpan = BenchmarkCsv.GetField(lastLineSpan, timeSecondsIdx);
 								if (!lastTimeSecondsSpan.IsEmpty &&
 									double.TryParse(lastTimeSecondsSpan, NumberStyles.Float, CultureInfo.InvariantCulture, out double lastTimeSec))
 								{
@@ -174,7 +173,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 					}
 					catch (IOException)
 					{
-						return (Recording: null, SourceFileNames: null);
+						return (Recording: null!, SourceFileNames: null!);
 					}
 				})
 				.Where(recording => recording.Recording != null)
@@ -185,7 +184,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 
 			Dictionary<string, RecordingItem> recordingsByFileName = new(loadedRecordings.Count, StringComparer.OrdinalIgnoreCase);
 
-			foreach (var (recording, sourceFileNames) in loadedRecordings)
+			foreach ((RecordingItem? recording, List<string>? sourceFileNames) in loadedRecordings)
 			{
 				recordings.Add(recording);
 				recordingsByFileName[recording.FileName] = recording;
@@ -196,11 +195,11 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 			if (aggregateSources.Count > 0)
 			{
 				HashSet<RecordingItem> childRecordings = [];
-				foreach (var (aggregate, sourceFileNames) in aggregateSources)
+				foreach ((RecordingItem? aggregate, List<string>? sourceFileNames) in aggregateSources)
 				{
 					foreach (string sourceFileName in sourceFileNames.Distinct(StringComparer.OrdinalIgnoreCase))
 					{
-						if (recordingsByFileName.TryGetValue(sourceFileName, out RecordingItem source) && !ReferenceEquals(source, aggregate))
+						if (recordingsByFileName.TryGetValue(sourceFileName, out RecordingItem? source) && !ReferenceEquals(source, aggregate))
 						{
 							aggregate.Children.Add(source);
 							childRecordings.Add(source);
@@ -226,14 +225,14 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	{
 		SelectedRecordings = recordings;
 		int count = recordings.Count;
-		RecordingItem recordingA = count > 0 ? recordings[0] : null;
+		RecordingItem? recordingA = count > 0 ? recordings[0] : null;
 		SelectedRecordingCount = count;
 		IsRenameEnabled = count > 0;
 
 		bool sameProcess = count > 0;
 		if (sameProcess)
 		{
-			string firstProcess = recordingA.Process;
+			string firstProcess = recordings[0].Process;
 			for (int i = 1; i < count; i++)
 			{
 				if (!string.Equals(recordings[i].Process, firstProcess, StringComparison.OrdinalIgnoreCase))
@@ -275,18 +274,18 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 			Title = "Add Recordings"
 		};
 		picker.FileTypeChoices.Add("PresentMon recordings", ["*.csv"]);
-		var files = await picker.PickMultipleFilesAsync();
+		List<StorageFile> files = await picker.PickMultipleFilesAsync();
 		if (files.Count == 0)
 			return;
 
-		foreach (var file in files)
+		foreach (StorageFile file in files)
 			File.Copy(file.Path, Path.Combine(BenchmarkCsv.RecordingsDirectory, file.Name), true);
 
 		await LoadRecordingsAsync();
 	}
-	
+
 	public bool IsDeleteEnabled => SelectedRecordingCount > 0;
-	
+
 	[RelayCommand(CanExecute = nameof(IsDeleteEnabled))]
 	private async Task DeleteAsync(XamlRoot xamlRoot)
 	{
@@ -305,7 +304,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		if (await dialog.ShowAsync() != ContentDialogResult.Primary)
 			return;
 
-		foreach (var recording in SelectedRecordings)
+		foreach (RecordingItem recording in SelectedRecordings)
 		{
 			try
 			{
@@ -325,7 +324,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	[RelayCommand(CanExecute = nameof(IsAggregateEnabled))]
 	private void Aggregate()
 	{
-		var selected = SelectedRecordings;
+		IReadOnlyList<RecordingItem> selected = SelectedRecordings;
 		string processName = selected[0].Process;
 
 		int aggregateNumber = 1;
@@ -337,7 +336,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		while (File.Exists(outPath));
 
 		List<string> headerCols;
-		using (var headerReader = Sep.Reader(options => options with { Sep = new Sep(','), Unescape = true }).FromFile(selected[0].FilePath))
+		using (SepReader headerReader = Sep.Reader(options => options with { Sep = new Sep(','), Unescape = true }).FromFile(selected[0].FilePath))
 		{
 			headerCols = [with(headerReader.Header.ColNames.Count)];
 			for (int i = 0; i < headerReader.Header.ColNames.Count; i++)
@@ -356,7 +355,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 
 		for (int fileIndex = 0; fileIndex < selected.Count; fileIndex++)
 		{
-			using var reader = Sep.Reader(options => options with { Sep = new Sep(','), Unescape = true }).FromFile(selected[fileIndex].FilePath);
+			using SepReader reader = Sep.Reader(options => options with { Sep = new Sep(','), Unescape = true }).FromFile(selected[fileIndex].FilePath);
 			if (reader.Header.IsEmpty)
 				continue;
 
@@ -365,7 +364,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 
 			while (reader.MoveNext())
 			{
-				var row = reader.Current;
+				SepReader.Row row = reader.Current;
 
 				if (rowIndex == sums.Count)
 				{
@@ -376,7 +375,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 				double[] rowSums = sums[rowIndex];
 				int[] rowCounts = counts[rowIndex];
 
-				string[] rawRow = isFallbackFile ? new string[row.ColCount] : null;
+				string[]? rawRow = isFallbackFile ? new string[row.ColCount] : null;
 				int colLimit = Math.Min(row.ColCount, columnCount);
 
 				for (int column = 0; column < colLimit; column++)
@@ -388,14 +387,14 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 					}
 
 					if (isFallbackFile)
-						rawRow[column] = row[column].ToString();
+						rawRow![column] = row[column].ToString();
 				}
 
 				if (isFallbackFile)
 				{
 					for (int column = colLimit; column < row.ColCount; column++)
-						rawRow[column] = row[column].ToString();
-					fallbackRows.Add(rawRow);
+						rawRow![column] = row[column].ToString();
+					fallbackRows.Add(rawRow!);
 				}
 
 				rowIndex++;
@@ -406,16 +405,16 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		double meanDurationSeconds = selected.Average(recording => recording.DurationSeconds);
 		string aggregateSources = string.Join("|", selected.Select(recording => recording.FileName).Distinct(StringComparer.OrdinalIgnoreCase));
 
-		using var writer = Sep.Writer(options => options with { Sep = new Sep(',') }).ToFile(outPath);
-		foreach (var col in headerCols)
+		using SepWriter writer = Sep.Writer(options => options with { Sep = new Sep(',') }).ToFile(outPath);
+		foreach (string col in headerCols)
 			writer.Header.Add(col);
 
 		for (int r = 0; r < maxRows; r++)
 		{
-			using var row = writer.NewRow();
+			using SepWriter.Row row = writer.NewRow();
 			double[] rowSums = sums[r];
 			int[] rowCounts = counts[r];
-			string[] fallbackRow = r < fallbackRows.Count ? fallbackRows[r] : null;
+			string[]? fallbackRow = r < fallbackRows.Count ? fallbackRows[r] : null;
 
 			for (int column = 0; column < columnCount; column++)
 			{
@@ -457,7 +456,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		};
 
 		HashSet<RecordingItem> childSet = [.. selected.Where(recording => recording.FilePath != outPath)];
-		foreach (var child in childSet)
+		foreach (RecordingItem child in childSet)
 			aggregateRecording.Children.Add(child);
 
 		List<RecordingItem> updatedList = [aggregateRecording, .. Recordings.Where(recording => !childSet.Contains(recording))];
@@ -480,7 +479,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(CanRecord))]
 	public partial double Duration { get; set; } = 60;
-	  
+
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(ShortcutKeys))]
 	public partial VirtualKeyModifiers ShortcutModifiers { get; set; } = VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift;
@@ -494,11 +493,16 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 		get
 		{
 			var keys = new List<object>();
-			if (ShortcutModifiers.HasFlag(VirtualKeyModifiers.Control)) keys.Add("Ctrl");
-			if (ShortcutModifiers.HasFlag(VirtualKeyModifiers.Shift)) keys.Add("Shift");
-			if (ShortcutModifiers.HasFlag(VirtualKeyModifiers.Menu)) keys.Add("Alt");
-			if (ShortcutModifiers.HasFlag(VirtualKeyModifiers.Windows)) keys.Add("Win");
-			if (ShortcutKey != VirtualKey.None) keys.Add(ShortcutKey.ToString());
+			if (ShortcutModifiers.HasFlag(VirtualKeyModifiers.Control))
+				keys.Add("Ctrl");
+			if (ShortcutModifiers.HasFlag(VirtualKeyModifiers.Shift))
+				keys.Add("Shift");
+			if (ShortcutModifiers.HasFlag(VirtualKeyModifiers.Menu))
+				keys.Add("Alt");
+			if (ShortcutModifiers.HasFlag(VirtualKeyModifiers.Windows))
+				keys.Add("Win");
+			if (ShortcutKey != VirtualKey.None)
+				keys.Add(ShortcutKey.ToString());
 			return keys;
 		}
 	}
@@ -510,18 +514,18 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 
 	public void LoadSettings()
 	{
-		if (localSettings.Values.TryGetValue("BenchmarkDelay", out var delayObj) && delayObj is double delay)
+		if (localSettings.Values.TryGetValue("BenchmarkDelay", out object? delayObj) && delayObj is double delay)
 			Delay = delay;
 
-		if (localSettings.Values.TryGetValue("BenchmarkDuration", out var durationObj) && durationObj is double duration)
+		if (localSettings.Values.TryGetValue("BenchmarkDuration", out object? durationObj) && durationObj is double duration)
 			Duration = duration;
 
-		if (localSettings.Values.TryGetValue("BenchmarkShortcut", out var shortcutObj) && shortcutObj is string shortcut && !string.IsNullOrWhiteSpace(shortcut))
+		if (localSettings.Values.TryGetValue("BenchmarkShortcut", out object? shortcutObj) && shortcutObj is string shortcut && !string.IsNullOrWhiteSpace(shortcut))
 		{
-			var parts = shortcut.Split('|');
+			string[] parts = shortcut.Split('|');
 			if (parts.Length == 2 &&
-				Enum.TryParse<VirtualKeyModifiers>(parts[0], out var modifiers) &&
-				Enum.TryParse<VirtualKey>(parts[1], out var key))
+				Enum.TryParse<VirtualKeyModifiers>(parts[0], out VirtualKeyModifiers modifiers) &&
+				Enum.TryParse<VirtualKey>(parts[1], out VirtualKey key))
 			{
 				ShortcutModifiers = modifiers;
 				ShortcutKey = key;
@@ -602,7 +606,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	[ObservableProperty]
 	public partial bool ShowP99 { get; set; }
 
-	public event Action StatisticToggled;
+	public event Action? StatisticToggled;
 
 	partial void OnShowLow01Changed(bool value) => StatisticToggled?.Invoke();
 	partial void OnShowLow1Changed(bool value) => StatisticToggled?.Invoke();
@@ -657,16 +661,16 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	public partial Windows.UI.Color RecordingBTertiaryColor { get; set; }
 
 	[ObservableProperty]
-	public partial BrushCollection PieChart1Palette { get; set; }
+	public partial BrushCollection PieChart1Palette { get; set; } = new BrushCollection();
 
 	[ObservableProperty]
-	public partial BrushCollection PieChart2Palette { get; set; }
+	public partial BrushCollection PieChart2Palette { get; set; } = new BrushCollection();
 
 	[ObservableProperty]
-	public partial SolidColorBrush RecordingAColorBrush { get; set; }
+	public partial SolidColorBrush RecordingAColorBrush { get; set; } = new SolidColorBrush();
 
 	[ObservableProperty]
-	public partial SolidColorBrush RecordingBColorBrush { get; set; }
+	public partial SolidColorBrush RecordingBColorBrush { get; set; } = new SolidColorBrush();
 
 	public bool HasTwoRecordings => SelectedRecordingCount == 2 && SelectedRecordingsHaveSameProcess;
 	public Visibility HasTwoRecordingsVisibility => HasTwoRecordings ? Visibility.Visible : Visibility.Collapsed;
@@ -679,7 +683,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	public partial string AnalysisChartType { get; set; } = "Bar";
 
 	[ObservableProperty]
-	public partial string AnalysisProcess { get; set; }
+	public partial string AnalysisProcess { get; set; } = string.Empty;
 
 	[ObservableProperty]
 	public partial ObservableCollection<BarPoint> BarColumnChartDisplayedData1 { get; set; } = [];
@@ -756,9 +760,9 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 			StutterFactor = rounded;
 	}
 
-	public string GetStatisticTooltip(string key) => BenchmarkCsv.StatisticDescriptions.TryGetValue(key, out var desc) ? desc : string.Empty;
+	public string GetStatisticTooltip(string key) => BenchmarkCsv.StatisticDescriptions.TryGetValue(key, out string? desc) ? desc : string.Empty;
 
-	public string GetMetricTooltip(string key) => BenchmarkCsv.MetricDescriptions.TryGetValue(key, out var desc) ? desc : string.Empty;
+	public string GetMetricTooltip(string key) => BenchmarkCsv.MetricDescriptions.TryGetValue(key, out string? desc) ? desc : string.Empty;
 
 	[ObservableProperty]
 	public partial ObservableCollection<string> BaselineItems { get; set; } = ["None"];
@@ -787,7 +791,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	public string RecordingBColorTooltip => $"{RecordingBHeader} Color";
 
 	[ObservableProperty]
-	public partial string DeltaHeader { get; set; }
+	public partial string DeltaHeader { get; set; } = string.Empty;
 
 	[ObservableProperty]
 	public partial bool ShowRecordingAColumn { get; set; }
@@ -979,14 +983,14 @@ public sealed partial class ResultRow : ObservableObject
 
 public sealed partial class ResultCellStyleSelector : StyleSelector
 {
-	public Style SuccessStyle { get; set; }
-	public Style CriticalStyle { get; set; }
+	public Style? SuccessStyle { get; set; }
+	public Style? CriticalStyle { get; set; }
 
-	protected override Style SelectStyleCore(object item, DependencyObject container)
+	protected override Style? SelectStyleCore(object item, DependencyObject container)
 	{
 		if (item is not ResultRow row || container is not TreeGridCell cell)
 			return null;
-		var comparison = cell.ColumnBase?.TreeGridColumn.MappingName switch
+		ComparisonResult comparison = cell.ColumnBase?.TreeGridColumn.MappingName switch
 		{
 			nameof(ResultRow.RecordingA) => row.RecordingAComparison,
 			nameof(ResultRow.RecordingB) => row.RecordingBComparison,

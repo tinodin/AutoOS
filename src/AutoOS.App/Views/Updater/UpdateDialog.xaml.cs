@@ -1,12 +1,12 @@
-﻿using AutoOS.Core.Common;
+using System.Text;
+using System.Text.Json.Nodes;
+using AutoOS.Core.Common;
 using AutoOS.Core.Helpers.Download;
 using AutoOS.Core.Helpers.Logging;
-using AutoOS.Views.Installer.Stages;
+using AutoOS.App.Views.Installer.Stages;
 using Microsoft.UI.Xaml.Media;
-using System.Text.Json.Nodes;
-using System.Text;
 
-namespace AutoOS.Views.Updater;
+namespace AutoOS.App.Views.Updater;
 
 public sealed partial class UpdateDialog : UserControl
 {
@@ -75,14 +75,14 @@ public sealed partial class UpdateDialog : UserControl
 
 		ProgressBar.IsIndeterminate = false;
 
-		foreach (var (title, action, condition) in filteredActions)
+		foreach ((string? title, Func<Task>? action, Func<bool>? condition) in filteredActions)
 		{
 			if (previousTitle != string.Empty && (previousTitle != title || title.Contains("downloading", StringComparison.OrdinalIgnoreCase)) && currentGroup.Count > 0)
 			{
 				CurrentGroupStart = ProgressBar.Value;
 				CurrentGroupTarget = CurrentGroupStart + incrementPerTitle;
 
-				foreach (var groupedAction in currentGroup)
+				foreach (Func<Task> groupedAction in currentGroup)
 				{
 					try
 					{
@@ -120,7 +120,7 @@ public sealed partial class UpdateDialog : UserControl
 			CurrentGroupStart = ProgressBar.Value;
 			CurrentGroupTarget = CurrentGroupStart + incrementPerTitle;
 
-			foreach (var groupedAction in currentGroup)
+			foreach (Func<Task> groupedAction in currentGroup)
 			{
 				try
 				{
@@ -140,7 +140,7 @@ public sealed partial class UpdateDialog : UserControl
 	{
 		SetStatus(displayTitle + "...");
 
-		var uiContext = SynchronizationContext.Current;
+		SynchronizationContext? uiContext = SynchronizationContext.Current;
 		var reporter = new UpdateStatusReporter(uiContext, StatusText, ProgressBar, displayTitle, startValue, targetValue);
 
 		await DownloadHelper.Download(url, path, file, reporter);

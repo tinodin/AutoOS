@@ -10,7 +10,7 @@ public static class BenchmarkStatistics
 		if (values.Length == 0)
 			return result;
 
-		var sorted = values.OrderBy(v => v).ToArray();
+		double[] sorted = values.OrderBy(v => v).ToArray();
 		int n = values.Length;
 		double sum = values.Sum();
 		double arithmeticMean = sum / n;
@@ -25,7 +25,7 @@ public static class BenchmarkStatistics
 		}
 		else
 		{
-			var desc = sorted.Reverse().ToArray();
+			double[] desc = sorted.Reverse().ToArray();
 			result.Low01 = desc.Take(c01).Average();
 			result.Low1 = desc.Take(c1).Average();
 		}
@@ -83,7 +83,7 @@ public static class BenchmarkStatistics
 	{
 		double reciprocalSum = 0;
 		int count = 0;
-		foreach (var v in values)
+		foreach (double v in values)
 		{
 			if (v > 0)
 			{

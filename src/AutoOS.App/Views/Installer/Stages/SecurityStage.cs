@@ -1,13 +1,13 @@
+using System.Diagnostics;
+using System.ServiceProcess;
 using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.Services;
-using AutoOS.Views.Installer.Actions;
+using AutoOS.App.Views.Installer.Actions;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
-using System.Diagnostics;
-using System.ServiceProcess;
 
-namespace AutoOS.Views.Installer.Stages;
+namespace AutoOS.App.Views.Installer.Stages;
 
 public static class SecurityStage
 {
@@ -102,7 +102,7 @@ public static class SecurityStage
 							dialogInfoText.Inlines.Clear();
 							dialogInfoText.Inlines.Add(new Run { Text = "Windows Security is disabled. Click done to continue." });
 
-							foreach (var process in Process.GetProcessesByName("SecHealthUI"))
+							foreach (Process process in Process.GetProcessesByName("SecHealthUI"))
 							{
 								try { process.Kill(); } catch { }
 							}
@@ -156,7 +156,7 @@ public static class SecurityStage
 			(@"Disabling ""Turn on telemetry for Defender core service"" policy", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Defender\Features", "DisableCoreService1DSTelemetry", 1, RegistryValueKind.DWord), () => WindowsDefender == false),
 
 			// disable smartscreen
-			("Disabling Smartscreen", async () => await RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, async () => { foreach (var process in Process.GetProcessesByName("smartscreen")) { process.Kill(); await process.WaitForExitAsync(); } if (File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "smartscreen.exe"))) File.Move(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "smartscreen.exe"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "smartscreen.exee")); }), null),
+			("Disabling Smartscreen", async () => await RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, async () => { foreach (Process process in Process.GetProcessesByName("smartscreen")) { process.Kill(); await process.WaitForExitAsync(); } if (File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "smartscreen.exe"))) File.Move(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "smartscreen.exe"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "smartscreen.exee")); }), null),
 
 			// enable windows hardware quality labs (whql) driver enforcement
 			("Enabling Windows Hardware Quality Labs (WHQL) driver enforcement", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\CI\Policy", "WhqlSettings", 1, RegistryValueKind.DWord), null),

@@ -1,12 +1,12 @@
-﻿using Microsoft.Win32.SafeHandles;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
+using Microsoft.Win32.SafeHandles;
 using Windows.Wdk.System.Threading;
+using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.System.RestartManager;
 using Windows.Win32.System.Threading;
-using Windows.Win32;
 
 namespace AutoOS.Core.Helpers.Processes;
 
@@ -116,7 +116,7 @@ public static partial class ProcessesHelper
 		char* sessionKey = stackalloc char[257];
 		PCWSTR* pathsPointer = stackalloc PCWSTR[1];
 
-		foreach (var filePath in pathsToCheck)
+		foreach (string filePath in pathsToCheck)
 		{
 			uint sessionHandle = 0;
 			WIN32_ERROR result = PInvoke.RmStartSession(&sessionHandle, 0, sessionKey);

@@ -1,10 +1,10 @@
-using AutoOS.Core.Helpers.Registry;
-using Microsoft.Win32;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using Windows.Win32.System.Services;
+using AutoOS.Core.Helpers.Registry;
+using Microsoft.Win32;
 using Windows.Win32;
+using Windows.Win32.System.Services;
 
 namespace AutoOS.Core.Helpers.Services;
 
@@ -12,7 +12,7 @@ public static partial class ServicesHelper
 {
 	public unsafe static void KillServiceProcess(string baseServiceName)
 	{
-		using var scmHandle = PInvoke.OpenSCManager(null, null, (uint)PInvoke.SC_MANAGER_ENUMERATE_SERVICE);
+		using CloseServiceHandleSafeHandle scmHandle = PInvoke.OpenSCManager(null, null, (uint)PInvoke.SC_MANAGER_ENUMERATE_SERVICE);
 		if (scmHandle.IsInvalid) return;
 
 		SC_HANDLE rawScmHandle = (SC_HANDLE)scmHandle.DangerousGetHandle();
@@ -74,7 +74,7 @@ public static partial class ServicesHelper
 
 	public unsafe static int GetServicePid(string serviceName)
 	{
-		using var scmHandle = PInvoke.OpenSCManager(null, null, (uint)PInvoke.SC_MANAGER_ENUMERATE_SERVICE);
+		using CloseServiceHandleSafeHandle scmHandle = PInvoke.OpenSCManager(null, null, (uint)PInvoke.SC_MANAGER_ENUMERATE_SERVICE);
 		if (scmHandle.IsInvalid) return 0;
 
 		SC_HANDLE rawScmHandle = (SC_HANDLE)scmHandle.DangerousGetHandle();
@@ -126,7 +126,7 @@ public static partial class ServicesHelper
 
 	public unsafe static void StartService(string serviceName)
 	{
-		using var scmHandle = PInvoke.OpenSCManager(null, null, (uint)(PInvoke.SC_MANAGER_CONNECT | PInvoke.SC_MANAGER_ENUMERATE_SERVICE));
+		using CloseServiceHandleSafeHandle scmHandle = PInvoke.OpenSCManager(null, null, (uint)(PInvoke.SC_MANAGER_CONNECT | PInvoke.SC_MANAGER_ENUMERATE_SERVICE));
 		if (scmHandle.IsInvalid) throw new Win32Exception(Marshal.GetLastWin32Error(), "OpenSCManager failed");
 
 		SC_HANDLE rawScmHandle = (SC_HANDLE)scmHandle.DangerousGetHandle();
@@ -171,7 +171,7 @@ public static partial class ServicesHelper
 						if (currentName.Equals(serviceName, StringComparison.OrdinalIgnoreCase) ||
 							currentName.StartsWith(serviceName + "_", StringComparison.OrdinalIgnoreCase))
 						{
-							using var instanceHandle = PInvoke.OpenService(scmHandle, currentName, (uint)PInvoke.SERVICE_START);
+							using CloseServiceHandleSafeHandle instanceHandle = PInvoke.OpenService(scmHandle, currentName, (uint)PInvoke.SERVICE_START);
 							if (!instanceHandle.IsInvalid)
 							{
 								if (PInvoke.StartService(instanceHandle, null))
@@ -191,7 +191,7 @@ public static partial class ServicesHelper
 			}
 		}
 
-		using var serviceHandleDirect = PInvoke.OpenService(scmHandle, serviceName, (uint)PInvoke.SERVICE_START);
+		using CloseServiceHandleSafeHandle serviceHandleDirect = PInvoke.OpenService(scmHandle, serviceName, (uint)PInvoke.SERVICE_START);
 		if (serviceHandleDirect.IsInvalid)
 		{
 			int error = Marshal.GetLastWin32Error();
@@ -209,7 +209,7 @@ public static partial class ServicesHelper
 
 	public unsafe static void StopService(string baseServiceName)
 	{
-		using var scmHandle = PInvoke.OpenSCManager(null, null, (uint)(PInvoke.SC_MANAGER_CONNECT | PInvoke.SC_MANAGER_ENUMERATE_SERVICE));
+		using CloseServiceHandleSafeHandle scmHandle = PInvoke.OpenSCManager(null, null, (uint)(PInvoke.SC_MANAGER_CONNECT | PInvoke.SC_MANAGER_ENUMERATE_SERVICE));
 		if (scmHandle.IsInvalid) throw new Win32Exception(Marshal.GetLastWin32Error(), "OpenSCManager failed");
 
 		SC_HANDLE rawScmHandle = (SC_HANDLE)scmHandle.DangerousGetHandle();
@@ -254,7 +254,7 @@ public static partial class ServicesHelper
 						if (currentName.Equals(baseServiceName, StringComparison.OrdinalIgnoreCase) ||
 							currentName.StartsWith(baseServiceName + "_", StringComparison.OrdinalIgnoreCase))
 						{
-							using var instanceHandle = PInvoke.OpenService(scmHandle, currentName, (uint)PInvoke.SERVICE_STOP);
+							using CloseServiceHandleSafeHandle instanceHandle = PInvoke.OpenService(scmHandle, currentName, (uint)PInvoke.SERVICE_STOP);
 							if (!instanceHandle.IsInvalid)
 							{
 								if (PInvoke.ControlService(instanceHandle, (uint)PInvoke.SERVICE_CONTROL_STOP, out SERVICE_STATUS _))
@@ -274,7 +274,7 @@ public static partial class ServicesHelper
 			}
 		}
 
-		using var directServiceHandle = PInvoke.OpenService(scmHandle, baseServiceName, (uint)PInvoke.SERVICE_STOP);
+		using CloseServiceHandleSafeHandle directServiceHandle = PInvoke.OpenService(scmHandle, baseServiceName, (uint)PInvoke.SERVICE_STOP);
 		if (directServiceHandle.IsInvalid)
 		{
 			int error = Marshal.GetLastWin32Error();
@@ -292,11 +292,11 @@ public static partial class ServicesHelper
 
 	public static void SetStartupType(string serviceName, SERVICE_START_TYPE startType)
 	{
-		using var scmHandle = PInvoke.OpenSCManager(null, null, (uint)PInvoke.SC_MANAGER_CONNECT);
+		using CloseServiceHandleSafeHandle scmHandle = PInvoke.OpenSCManager(null, null, (uint)PInvoke.SC_MANAGER_CONNECT);
 		if (scmHandle.IsInvalid)
 			throw new Win32Exception(Marshal.GetLastWin32Error());
 
-		using var serviceHandle = PInvoke.OpenService(scmHandle, serviceName, (uint)PInvoke.SERVICE_CHANGE_CONFIG);
+		using CloseServiceHandleSafeHandle serviceHandle = PInvoke.OpenService(scmHandle, serviceName, (uint)PInvoke.SERVICE_CHANGE_CONFIG);
 		if (serviceHandle.IsInvalid)
 		{
 			int error = Marshal.GetLastWin32Error();
@@ -326,7 +326,7 @@ public static partial class ServicesHelper
 
 	public unsafe static void CreateService(string serviceName, string path)
 	{
-		using var scmHandle = PInvoke.OpenSCManager(null, null, (uint)PInvoke.SC_MANAGER_CREATE_SERVICE);
+		using CloseServiceHandleSafeHandle scmHandle = PInvoke.OpenSCManager(null, null, (uint)PInvoke.SC_MANAGER_CREATE_SERVICE);
 		if (scmHandle.IsInvalid) throw new Win32Exception(Marshal.GetLastWin32Error(), "OpenSCManager failed");
 
 		fixed (char* pszServiceName = serviceName)

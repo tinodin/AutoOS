@@ -1,7 +1,7 @@
-using AutoOS.Core.Helpers.CPU.Models;
 using AutoOS.Core.Helpers.CPU;
-using AutoOS.Core.Helpers.Device.Models;
+using AutoOS.Core.Helpers.CPU.Models;
 using AutoOS.Core.Helpers.Device;
+using AutoOS.Core.Helpers.Device.Models;
 
 namespace AutoOS.Core.Helpers.Scheduling;
 
@@ -9,8 +9,8 @@ public static partial class SchedulingHelper
 {
 	public static async Task OptimizeAffinities(DeviceInfo device = null, Action<DeviceType, string, DeviceInfo> onDeviceUpdated = null)
 	{
-		var cpuSetsInfo = CpuHelper.GetCpuSets();
-		var (pCores, eCores) = CpuHelper.GroupCpuSetsByEfficiencyClass(cpuSetsInfo);
+		CpuSetsInfo cpuSetsInfo = CpuHelper.GetCpuSets();
+		(List<CpuCore>? pCores, List<CpuCore>? eCores) = CpuHelper.GroupCpuSetsByEfficiencyClass(cpuSetsInfo);
 
 		if (pCores.Count < 4)
 			return;
@@ -33,10 +33,10 @@ public static partial class SchedulingHelper
 			audioMask = GetCoreMask(pCores[cores - 5]);
 		}
 
-		var audioDevices = (device == null || device.DeviceType == DeviceType.AudioController) ? [.. DeviceHelper.GetDevices(DeviceType.AudioController).Where(d => d.SupportsIrq)] : new List<DeviceInfo>();
-		var gpuDevices = (device == null || device.DeviceType == DeviceType.GPU) ? [.. DeviceHelper.GetDevices(DeviceType.GPU).Where(d => d.SupportsIrq)] : new List<DeviceInfo>();
-		var xhciDevices = (device == null || device.DeviceType == DeviceType.XHCI) ? [.. DeviceHelper.GetDevices(DeviceType.XHCI).Where(d => d.SupportsIrq)] : new List<DeviceInfo>();
-		var nicDevices = (device == null || device.DeviceType == DeviceType.NIC) ? [.. DeviceHelper.GetDevices(DeviceType.NIC).Where(d => d.SupportsIrq)] : new List<DeviceInfo>();
+		List<DeviceInfo> audioDevices = (device == null || device.DeviceType == DeviceType.AudioController) ? [.. DeviceHelper.GetDevices(DeviceType.AudioController).Where(d => d.SupportsIrq)] : new List<DeviceInfo>();
+		List<DeviceInfo> gpuDevices = (device == null || device.DeviceType == DeviceType.GPU) ? [.. DeviceHelper.GetDevices(DeviceType.GPU).Where(d => d.SupportsIrq)] : new List<DeviceInfo>();
+		List<DeviceInfo> xhciDevices = (device == null || device.DeviceType == DeviceType.XHCI) ? [.. DeviceHelper.GetDevices(DeviceType.XHCI).Where(d => d.SupportsIrq)] : new List<DeviceInfo>();
+		List<DeviceInfo> nicDevices = (device == null || device.DeviceType == DeviceType.NIC) ? [.. DeviceHelper.GetDevices(DeviceType.NIC).Where(d => d.SupportsIrq)] : new List<DeviceInfo>();
 
 		if (device != null)
 		{
@@ -50,22 +50,22 @@ public static partial class SchedulingHelper
 
 		if (audioDevices.Count > 0)
 		{
-			var result = ApplyAffinityOnly(audioDevices, audioMask, DeviceType.AudioController);
+			ApplyResult result = ApplyAffinityOnly(audioDevices, audioMask, DeviceType.AudioController);
 			allChangedDevices.AddRange(result.ChangedDevices.Select(d => (d, DeviceType.AudioController)));
 		}
 		if (gpuDevices.Count > 0)
 		{
-			var result = ApplyAffinityOnly(gpuDevices, gpuMask, DeviceType.GPU);
+			ApplyResult result = ApplyAffinityOnly(gpuDevices, gpuMask, DeviceType.GPU);
 			allChangedDevices.AddRange(result.ChangedDevices.Select(d => (d, DeviceType.GPU)));
 		}
 		if (xhciDevices.Count > 0)
 		{
-			var result = ApplyAffinityOnly(xhciDevices, xhciMask, DeviceType.XHCI);
+			ApplyResult result = ApplyAffinityOnly(xhciDevices, xhciMask, DeviceType.XHCI);
 			allChangedDevices.AddRange(result.ChangedDevices.Select(d => (d, DeviceType.XHCI)));
 		}
 		if (nicDevices.Count > 0)
 		{
-			var result = ApplyAffinityOnly(nicDevices, nicMask, DeviceType.NIC);
+			ApplyResult result = ApplyAffinityOnly(nicDevices, nicMask, DeviceType.NIC);
 			allChangedDevices.AddRange(result.ChangedDevices.Select(d => (d, DeviceType.NIC)));
 		}
 
@@ -73,7 +73,7 @@ public static partial class SchedulingHelper
 		{
 			if (onDeviceUpdated != null)
 			{
-				foreach (var (changedDevice, deviceType) in allChangedDevices)
+				foreach ((DeviceInfo? changedDevice, DeviceType deviceType) in allChangedDevices)
 				{
 					onDeviceUpdated(deviceType, changedDevice.PnpDeviceId, changedDevice);
 				}
@@ -93,7 +93,7 @@ public static partial class SchedulingHelper
 		var result = new ApplyResult();
 		var changedDevices = new List<DeviceInfo>();
 
-		foreach (var device in devices)
+		foreach (DeviceInfo device in devices)
 		{
 			bool msiChanged = device.MsiSupported != 1;
 			bool affinityChanged = device.DevicePolicy != 4 || device.AssignmentSetOverride != assignmentSetOverride;

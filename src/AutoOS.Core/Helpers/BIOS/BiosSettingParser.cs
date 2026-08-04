@@ -27,7 +27,7 @@ public partial class BiosSettingParser
 
 		for (int i = 0; i < lineList.Count; i++)
 		{
-			var line = lineList[i].Trim();
+			string line = lineList[i].Trim();
 			if (string.IsNullOrWhiteSpace(line)) continue;
 
 			if (line.StartsWith("Setup Question", StringComparison.OrdinalIgnoreCase))
@@ -44,12 +44,12 @@ public partial class BiosSettingParser
 				};
 				readingOptions = false;
 
-				var parts = line.Split('=', 2);
+				string[] parts = line.Split('=', 2);
 				if (parts.Length == 2)
 				{
-					var rawQuestion = parts[1].Trim().Replace('\uFFFD', '™');
+					string rawQuestion = parts[1].Trim().Replace('\uFFFD', '™');
 
-					var match = TrailingWordRegex().Match(rawQuestion);
+					Match match = TrailingWordRegex().Match(rawQuestion);
 					current.SetupQuestion = match.Success ? match.Groups[1].Value : rawQuestion;
 				}
 
@@ -84,15 +84,15 @@ public partial class BiosSettingParser
 
 			if (line.StartsWith("BIOS Default", StringComparison.OrdinalIgnoreCase))
 			{
-				var part = line.Split('=', 2)[1].Split("//")[0].Trim();
-				var match = Regex.Match(part, @"\[[^\]]+\](.+)");
+				string part = line.Split('=', 2)[1].Split("//")[0].Trim();
+				Match match = Regex.Match(part, @"\[[^\]]+\](.+)");
 				current.BiosDefault = match.Success ? match.Groups[1].Value.Trim() : ExtractValue(part);
 				continue;
 			}
 
 			if (line.StartsWith("Value", StringComparison.OrdinalIgnoreCase))
 			{
-				var valuePart = line.Split('=', 2)[1].Split("//")[0].Trim();
+				string valuePart = line.Split('=', 2)[1].Split("//")[0].Trim();
 				current.Value = ExtractValue(valuePart);
 				continue;
 			}
@@ -102,7 +102,7 @@ public partial class BiosSettingParser
 				current.Options = [];
 				readingOptions = true;
 
-				var inline = line[(line.IndexOf('=') + 1)..].Trim();
+				string inline = line[(line.IndexOf('=') + 1)..].Trim();
 				if (!string.IsNullOrWhiteSpace(inline))
 					ParseOptionLine(inline, current.Options);
 
@@ -143,13 +143,13 @@ public partial class BiosSettingParser
 
 		static void ParseOptionLine(string line, List<Option> options)
 		{
-			var match = Regex.Match(line, @"^\*?\[(\w+)\](.*)$");
+			Match match = Regex.Match(line, @"^\*?\[(\w+)\](.*)$");
 			if (!match.Success) return;
 
-			var isSelected = line.StartsWith("*");
-			var index = match.Groups[1].Value.Trim();
-			var label = match.Groups[2].Value.Trim();
-			var commentIndex = label.IndexOf("//");
+			bool isSelected = line.StartsWith("*");
+			string index = match.Groups[1].Value.Trim();
+			string label = match.Groups[2].Value.Trim();
+			int commentIndex = label.IndexOf("//");
 			if (commentIndex >= 0) label = label[..commentIndex].Trim();
 
 			options.Add(new Option

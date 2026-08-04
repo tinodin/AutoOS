@@ -1,17 +1,16 @@
-using AutoOS.Core.Helpers.ReadWrite;
-using Microsoft.Win32;
 using System.Collections.Concurrent;
 using System.Text.Json.Nodes;
+using AutoOS.Core.Helpers.Device.Models;
+using AutoOS.Core.Helpers.ReadWrite;
+using Microsoft.Win32;
 using Windows.Storage;
+using Windows.Win32;
 using Windows.Win32.Devices.DeviceAndDriverInstallation;
 using Windows.Win32.Foundation;
 using Windows.Win32.NetworkManagement.IpHelper;
 using Windows.Win32.NetworkManagement.Ndis;
-using Windows.Win32;
-
 using static Windows.Win32.Devices.DeviceAndDriverInstallation.SETUP_DI_GET_CLASS_DEVS_FLAGS;
 using static Windows.Win32.Devices.DeviceAndDriverInstallation.SETUP_DI_REGISTRY_PROPERTY;
-using AutoOS.Core.Helpers.Device.Models;
 
 namespace AutoOS.Core.Helpers.Device;
 
@@ -38,7 +37,7 @@ public static partial class DeviceHelper
 			_ => throw new ArgumentException("Unknown device type")
 		};
 
-		var flags = DIGCF_PRESENT;
+		SETUP_DI_GET_CLASS_DEVS_FLAGS flags = DIGCF_PRESENT;
 		HDEVINFO deviceInfoSetHandle = PInvoke.SetupDiGetClassDevs(&classGuid, null, HWND.Null, flags);
 		if ((IntPtr)deviceInfoSetHandle == (IntPtr)(-1)) return devices;
 
@@ -140,18 +139,18 @@ public static partial class DeviceHelper
 			uint msiSupported = 2, msiLimit = 0, devicePolicy = 0, devicePriority = 0;
 			ulong assignmentSetOverride = 0;
 
-			using (var deviceRegKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Enum\{pnpDeviceId}\Device Parameters", false))
+			using (RegistryKey? deviceRegKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Enum\{pnpDeviceId}\Device Parameters", false))
 			{
 				if (deviceRegKey != null)
 				{
-					using (var msiKeySub = deviceRegKey.OpenSubKey(@"Interrupt Management\MessageSignaledInterruptProperties"))
+					using (RegistryKey? msiKeySub = deviceRegKey.OpenSubKey(@"Interrupt Management\MessageSignaledInterruptProperties"))
 						if (msiKeySub != null)
 						{
 							msiSupported = Convert.ToUInt32(msiKeySub.GetValue("MSISupported") ?? 2);
 							msiLimit = Convert.ToUInt32(msiKeySub.GetValue("MessageNumberLimit") ?? 0);
 						}
 
-					using var affinityKey = deviceRegKey.OpenSubKey(@"Interrupt Management\Affinity Policy");
+					using RegistryKey? affinityKey = deviceRegKey.OpenSubKey(@"Interrupt Management\Affinity Policy");
 					if (affinityKey != null)
 					{
 						devicePolicy = Convert.ToUInt32(affinityKey.GetValue("DevicePolicy") ?? 0);
@@ -168,7 +167,7 @@ public static partial class DeviceHelper
 			}
 
 			uint maxMsiLimit = 0;
-			var msiPropKey = PInvoke.DEVPKEY_PciDevice_InterruptMessageMaximum;
+			DEVPROPKEY msiPropKey = PInvoke.DEVPKEY_PciDevice_InterruptMessageMaximum;
 			Windows.Win32.Devices.Properties.DEVPROPTYPE propertyType;
 			byte[] msiBuffer = new byte[4];
 			fixed (byte* pMsiBuf = msiBuffer)
@@ -186,7 +185,7 @@ public static partial class DeviceHelper
 
 			if (type == DeviceType.NIC)
 			{
-				using var classKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(registryPath);
+				using RegistryKey? classKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(registryPath);
 				nicDeviceType = classKey?.GetValue("*PhysicalMediaType")?.ToString() switch
 				{
 					"9" => NicDeviceType.WiFi,
@@ -244,7 +243,7 @@ public static partial class DeviceHelper
 		{
 			if (PInvoke.CM_Locate_DevNode(out uint devInst, pId, CM_LOCATE_DEVNODE_FLAGS.CM_LOCATE_DEVNODE_NORMAL) == CONFIGRET.CR_SUCCESS)
 			{
-				if (PInvoke.CM_Get_DevNode_Status(out var status, out var prob, devInst, 0) == CONFIGRET.CR_SUCCESS)
+				if (PInvoke.CM_Get_DevNode_Status(out CM_DEVNODE_STATUS_FLAGS status, out CM_PROB prob, devInst, 0) == CONFIGRET.CR_SUCCESS)
 				{
 					if ((status & CM_DEVNODE_STATUS_FLAGS.DN_STARTED) != 0)
 						return DeviceState.Enabled;
@@ -281,11 +280,11 @@ public static partial class DeviceHelper
 
 	public static void SetMSIMode(string pnpDeviceId, bool msiSupported, uint msiLimit)
 	{
-		using var interruptKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Enum\{pnpDeviceId}\Device Parameters", true).CreateSubKey("Interrupt Management");
+		using RegistryKey interruptKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Enum\{pnpDeviceId}\Device Parameters", true).CreateSubKey("Interrupt Management");
 
 		if (msiSupported)
 		{
-			using var msiKey = interruptKey.CreateSubKey("MessageSignaledInterruptProperties");
+			using RegistryKey msiKey = interruptKey.CreateSubKey("MessageSignaledInterruptProperties");
 
 			msiKey.SetValue("MSISupported", 1, RegistryValueKind.DWord);
 
@@ -302,7 +301,7 @@ public static partial class DeviceHelper
 
 	public static void SetAffinityPolicy(string pnpDeviceId, uint devicePolicy, uint devicePriority, ulong assignmentSetOverride)
 	{
-		using var devParamsKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Enum\{pnpDeviceId}\Device Parameters", true);
+		using RegistryKey? devParamsKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Enum\{pnpDeviceId}\Device Parameters", true);
 		if (devParamsKey == null) return;
 
 		if (devicePolicy == 0 && devicePriority == 0 && assignmentSetOverride == 0)
@@ -311,7 +310,7 @@ public static partial class DeviceHelper
 			return;
 		}
 
-		using var affinityKey = devParamsKey.CreateSubKey("Interrupt Management").CreateSubKey("Affinity Policy");
+		using RegistryKey affinityKey = devParamsKey.CreateSubKey("Interrupt Management").CreateSubKey("Affinity Policy");
 		affinityKey.SetValue("DevicePolicy", devicePolicy, RegistryValueKind.DWord);
 
 		if (devicePolicy == 4)
@@ -337,7 +336,7 @@ public static partial class DeviceHelper
 	{
 		var result = new ApplyResult();
 
-		foreach (var device in devices)
+		foreach (DeviceInfo device in devices)
 		{
 			bool changed = false;
 
@@ -375,7 +374,7 @@ public static partial class DeviceHelper
 
 	public static void SetRSS(DeviceInfo device, ulong assignmentSetOverride)
 	{
-		using var classKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(device.RegistryPath, true);
+		using RegistryKey? classKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(device.RegistryPath, true);
 		if (classKey?.GetValue("*PhysicalMediaType")?.ToString() != "14") return;
 
 		if (device.DevicePolicy == 4 && assignmentSetOverride != 0)
@@ -390,18 +389,18 @@ public static partial class DeviceHelper
 		}
 		else
 		{
-			foreach (var key in new[] { "*RssBaseProcGroup", "*RssBaseProcNumber", "*MaxProcessors" })
+			foreach (string? key in new[] { "*RssBaseProcGroup", "*RssBaseProcNumber", "*MaxProcessors" })
 				classKey.DeleteValue(key, false);
 		}
 	}
 
 	private static bool GetNicDriverType(RegistryKey classKey)
 	{
-		using var ndiKey = classKey.OpenSubKey("Ndi");
+		using RegistryKey? ndiKey = classKey.OpenSubKey("Ndi");
 		string serviceName = ndiKey?.GetValue("Service")?.ToString()?.TrimEnd('.');
 		if (string.IsNullOrEmpty(serviceName)) return false;
 
-		using var serviceKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{serviceName}");
+		using RegistryKey? serviceKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{serviceName}");
 		if (serviceKey?.GetValue("ImagePath") is not string imagePath) return false;
 
 		string systemRoot = Environment.GetEnvironmentVariable("SystemRoot")!;
@@ -431,7 +430,7 @@ public static partial class DeviceHelper
 				if (p->IfType == 24 || p->OperStatus != IF_OPER_STATUS.IfOperStatusUp) continue;
 
 				string guid = new((sbyte*)p->AdapterName.Value);
-				using var netKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Control\Network\{{4D36E972-E325-11CE-BFC1-08002BE10318}}\{guid}\Connection");
+				using RegistryKey? netKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Control\Network\{{4D36E972-E325-11CE-BFC1-08002BE10318}}\{guid}\Connection");
 				if (string.Equals(netKey?.GetValue("PnpInstanceID")?.ToString(), pnpDeviceId, StringComparison.OrdinalIgnoreCase)) return true;
 			}
 		}
@@ -440,7 +439,7 @@ public static partial class DeviceHelper
 
 	public unsafe static bool RestartDevice(DeviceInfo device)
 	{
-		using var hDevInfo = PInvoke.SetupDiCreateDeviceInfoList(null, default);
+		using SetupDiDestroyDeviceInfoListSafeHandle hDevInfo = PInvoke.SetupDiCreateDeviceInfoList(null, default);
 		if (hDevInfo.IsInvalid) return false;
 
 		SP_DEVINFO_DATA devData = new() { cbSize = (uint)sizeof(SP_DEVINFO_DATA) };
@@ -474,7 +473,7 @@ public static partial class DeviceHelper
 		int failedCount = 0;
 		var failedDevices = new ConcurrentBag<string>();
 
-		var tasks = devices.Select(async device =>
+		IEnumerable<Task> tasks = devices.Select(async device =>
 		{
 			bool success = await Task.Run(() => RestartDevice(device));
 			if (success)
@@ -535,7 +534,7 @@ public static partial class DeviceHelper
 
 				while (true)
 				{
-					var result = PInvoke.CM_Get_Next_Res_Des(out nuint nextResDes, currentHandle, 0, out CM_RESTYPE outResType, 0);
+					CONFIGRET result = PInvoke.CM_Get_Next_Res_Des(out nuint nextResDes, currentHandle, 0, out CM_RESTYPE outResType, 0);
 					resType = (uint)outResType;
 
 					if (!isFirst && resDes != 0)
@@ -599,8 +598,8 @@ public static partial class DeviceHelper
 
 	public static bool GetIMODState(DeviceInfo device, ReadWriteHelper sharedHw = null)
 	{
-		using var localHw = sharedHw == null ? new ReadWriteHelper() : null;
-		var hw = sharedHw ?? localHw;
+		using ReadWriteHelper? localHw = sharedHw == null ? new ReadWriteHelper() : null;
+		ReadWriteHelper? hw = sharedHw ?? localHw;
 
 		if (!TryGetRuntimeOffset(hw, device, out ulong runtime, out int max)) return false;
 
@@ -619,11 +618,11 @@ public static partial class DeviceHelper
 
 		if (!TryGetRuntimeOffset(hw, device, out ulong runtime, out int max)) return;
 
-		var json = ApplicationData.Current.LocalSettings.Values["XHCIs"]?.ToString();
-		var array = !string.IsNullOrEmpty(json) ? JsonNode.Parse(json)?.AsArray() : [];
+		string? json = ApplicationData.Current.LocalSettings.Values["XHCIs"]?.ToString();
+		JsonArray? array = !string.IsNullOrEmpty(json) ? JsonNode.Parse(json)?.AsArray() : [];
 
 		JsonObject obj = null;
-		foreach (var item in array)
+		foreach (JsonNode? item in array)
 		{
 			if (item?["PnpDeviceId"]?.ToString() == device.PnpDeviceId)
 			{
@@ -643,8 +642,8 @@ public static partial class DeviceHelper
 
 		if (enable)
 		{
-			var intervals = (obj["Intervals"]?.AsObject()) ?? throw new Exception("No saved intervals found.");
-			foreach (var kvp in intervals)
+			JsonObject intervals = (obj["Intervals"]?.AsObject()) ?? throw new Exception("No saved intervals found.");
+			foreach (KeyValuePair<string, JsonNode?> kvp in intervals)
 				if (ulong.TryParse(kvp.Key, out ulong addr) && uint.TryParse(kvp.Value?.ToString(), out uint val))
 				{
 					if (!hw.WriteMemory32(addr, val))
@@ -664,8 +663,8 @@ public static partial class DeviceHelper
 
 	public static void SaveImod(DeviceInfo device, ReadWriteHelper sharedHw = null)
 	{
-		using var localHw = sharedHw == null ? new ReadWriteHelper() : null;
-		var hw = sharedHw ?? localHw;
+		using ReadWriteHelper? localHw = sharedHw == null ? new ReadWriteHelper() : null;
+		ReadWriteHelper? hw = sharedHw ?? localHw;
 
 		if (!GetIMODState(device, hw)) return;
 		if (!TryGetRuntimeOffset(hw, device, out ulong runtime, out int max)) return;
@@ -678,11 +677,11 @@ public static partial class DeviceHelper
 			intervals[addr.ToString()] = val;
 		}
 
-		var json = ApplicationData.Current.LocalSettings.Values["XHCIs"]?.ToString();
-		var array = !string.IsNullOrEmpty(json) ? JsonNode.Parse(json)?.AsArray() : [];
+		string? json = ApplicationData.Current.LocalSettings.Values["XHCIs"]?.ToString();
+		JsonArray? array = !string.IsNullOrEmpty(json) ? JsonNode.Parse(json)?.AsArray() : [];
 
 		JsonObject obj = null;
-		foreach (var item in array)
+		foreach (JsonNode? item in array)
 		{
 			if (item?["PnpDeviceId"]?.ToString() == device.PnpDeviceId)
 			{

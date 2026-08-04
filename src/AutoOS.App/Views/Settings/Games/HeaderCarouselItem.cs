@@ -1,9 +1,9 @@
+using System.Numerics;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml.Hosting;
-using System.Numerics;
 using WinRT;
 
-namespace AutoOS.Views.Settings.Games;
+namespace AutoOS.App.Views.Settings.Games;
 
 [GeneratedBindableCustomProperty]
 [TemplatePart(Name = nameof(PART_ShadowHost), Type = typeof(Grid))]
@@ -58,7 +58,7 @@ public partial class HeaderCarouselItem : Button
 		_dropShadow.Opacity = 0.2f;
 		_dropShadow.BlurRadius = 12f;
 
-		var shadowVisual = compositor.CreateSpriteVisual();
+		SpriteVisual shadowVisual = compositor.CreateSpriteVisual();
 		shadowVisual.Shadow = _dropShadow;
 		shadowVisual.Size = visual.Size;
 
@@ -86,8 +86,8 @@ public partial class HeaderCarouselItem : Button
 		if (_shadowHost == null)
 			return;
 
-		var hostVisual = ElementCompositionPreview.GetElementVisual(_shadowHost);
-		var compositor = hostVisual.Compositor;
+		Visual hostVisual = ElementCompositionPreview.GetElementVisual(_shadowHost);
+		Compositor compositor = hostVisual.Compositor;
 
 		_cardShadow = compositor.CreateDropShadow();
 		_cardShadow.BlurRadius = 12f;
@@ -119,17 +119,17 @@ public partial class HeaderCarouselItem : Button
 		_dropShadow.StopAnimation(nameof(_dropShadow.Opacity));
 		_dropShadow.StopAnimation(nameof(_dropShadow.BlurRadius));
 
-		var scaleAnim = compositor.CreateVector3KeyFrameAnimation();
+		Vector3KeyFrameAnimation scaleAnim = compositor.CreateVector3KeyFrameAnimation();
 		scaleAnim.InsertKeyFrame(1f, new Vector3(1f, 1f, 1f));
 		scaleAnim.Duration = TimeSpan.FromMilliseconds(600);
 		visual.StartAnimation("Scale", scaleAnim);
 
-		var opacityAnim = compositor.CreateScalarKeyFrameAnimation();
+		ScalarKeyFrameAnimation opacityAnim = compositor.CreateScalarKeyFrameAnimation();
 		opacityAnim.InsertKeyFrame(1f, 0.4f);
 		opacityAnim.Duration = TimeSpan.FromMilliseconds(600);
 		_dropShadow.StartAnimation(nameof(_dropShadow.Opacity), opacityAnim);
 
-		var blurAnim = compositor.CreateScalarKeyFrameAnimation();
+		ScalarKeyFrameAnimation blurAnim = compositor.CreateScalarKeyFrameAnimation();
 		blurAnim.InsertKeyFrame(1f, 24f);
 		blurAnim.Duration = TimeSpan.FromMilliseconds(600);
 		_dropShadow.StartAnimation(nameof(_dropShadow.BlurRadius), blurAnim);
@@ -144,21 +144,21 @@ public partial class HeaderCarouselItem : Button
 		_dropShadow.StopAnimation(nameof(_dropShadow.BlurRadius));
 
 		// Scale animation to 0.8
-		var scaleAnim = compositor.CreateVector3KeyFrameAnimation();
+		Vector3KeyFrameAnimation scaleAnim = compositor.CreateVector3KeyFrameAnimation();
 		scaleAnim.InsertKeyFrame(1f, new Vector3(0.8f, 0.8f, 1f));
 		scaleAnim.Duration = TimeSpan.FromMilliseconds(350);
 
 		// Shadow opacity animation to 0.2
-		var opacityAnim = compositor.CreateScalarKeyFrameAnimation();
+		ScalarKeyFrameAnimation opacityAnim = compositor.CreateScalarKeyFrameAnimation();
 		opacityAnim.InsertKeyFrame(1f, 0.2f);
 		opacityAnim.Duration = TimeSpan.FromMilliseconds(350);
 
 		// Shadow blur radius animation to 12
-		var blurAnim = compositor.CreateScalarKeyFrameAnimation();
+		ScalarKeyFrameAnimation blurAnim = compositor.CreateScalarKeyFrameAnimation();
 		blurAnim.InsertKeyFrame(1f, 12f);
 		blurAnim.Duration = TimeSpan.FromMilliseconds(350);
 
-		var batch = compositor.CreateScopedBatch(CompositionBatchTypes.Animation);
+		CompositionScopedBatch batch = compositor.CreateScopedBatch(CompositionBatchTypes.Animation);
 		batch.Completed += (s, e) =>
 		{
 			Canvas.SetZIndex(this, 0);

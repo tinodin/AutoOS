@@ -1,9 +1,10 @@
-using AutoOS.Core.Helpers.Picker;
-using AutoOS.Views.Installer.Actions;
 using System.Diagnostics;
+using AutoOS.Core.Helpers.Picker;
+using AutoOS.App.Views.Installer.Actions;
 using Windows.Storage;
+using Windows.Storage.FileProperties;
 
-namespace AutoOS.Views.Settings;
+namespace AutoOS.App.Views.Settings;
 
 public sealed partial class DisplaysPage : Page
 {
@@ -42,11 +43,11 @@ public sealed partial class DisplaysPage : Page
 			ShowAllFilesOption = false
 		};
 		picker.FileTypeChoices.Add("CRU profile", ["*.exe"]);
-		var file = await picker.PickSingleFileAsync();
+		StorageFile? file = await picker.PickSingleFileAsync();
 
 		if (file != null)
 		{
-			var properties = await file.GetBasicPropertiesAsync();
+			BasicProperties properties = await file.GetBasicPropertiesAsync();
 			ulong fileSizeInBytes = properties.Size;
 			const ulong expectedSize = 53 * 1024;
 
@@ -71,7 +72,7 @@ public sealed partial class DisplaysPage : Page
 				// close obs studio
 				if (Process.GetProcessesByName("obs64").Length > 0)
 				{
-					foreach (var process in Process.GetProcessesByName("obs64"))
+					foreach (Process process in Process.GetProcessesByName("obs64"))
 					{
 						process.Kill();
 						process.WaitForExit();
@@ -213,7 +214,7 @@ public sealed partial class DisplaysPage : Page
 		// close obs studio
 		if (Process.GetProcessesByName("obs64").Length > 0)
 		{
-			foreach (var process in Process.GetProcessesByName("obs64"))
+			foreach (Process process in Process.GetProcessesByName("obs64"))
 			{
 				process.Kill();
 				process.WaitForExit();
@@ -280,7 +281,7 @@ public sealed partial class DisplaysPage : Page
 		// close obs studio
 		if (Process.GetProcessesByName("obs64").Length > 0)
 		{
-			foreach (var process in Process.GetProcessesByName("obs64"))
+			foreach (Process process in Process.GetProcessesByName("obs64"))
 			{
 				process.Kill();
 				process.WaitForExit();

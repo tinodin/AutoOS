@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using WinRT;
 
-namespace AutoOS.Views.Settings.Scheduling;
+namespace AutoOS.App.Views.Settings.Scheduling;
 
 [GeneratedBindableCustomProperty]
 public partial class SchedulingGroup : INotifyPropertyChanged

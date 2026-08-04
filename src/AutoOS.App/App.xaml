@@ -1,21 +1,38 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Application
-	x:Class="AutoOS.App"
+	x:Class="AutoOS.App.App"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:local="using:AutoOS">
+	xmlns:local="using:AutoOS"
+	xmlns:uc="using:AutoOS.App.UserControls">
 	<Application.Resources>
 		<ResourceDictionary>
 			<ResourceDictionary.MergedDictionaries>
 				<XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
 				<ResourceDictionary Source="ms-appx:///DevWinUI/Themes/Generic.xaml" />
-				<ResourceDictionary Source="ms-appx:///Themes/Styles.xaml" />
-				<ResourceDictionary Source="ms-appx:///Themes/ThemeResources.xaml" />
-				<ResourceDictionary Source="ms-appx:///Themes/NavigationViewItemStyle.xaml" />
-				<ResourceDictionary Source="ms-appx:///Themes/TextBox.xaml" />
+				<ResourceDictionary Source="ms-appx:///Styles/IconPaths.xaml" />
+				<ResourceDictionary Source="ms-appx:///Styles/LayoutMetrics.xaml" />
+				<ResourceDictionary Source="ms-appx:///Styles/ButtonStyles.xaml" />
+				<ResourceDictionary Source="ms-appx:///Styles/AutoSuggestBoxStyles.xaml" />
+				<ResourceDictionary Source="ms-appx:///Styles/ShortcutStyles.xaml" />
+				<ResourceDictionary Source="ms-appx:///Styles/TreeGridStyles.xaml" />
+				<ResourceDictionary Source="ms-appx:///Styles/NavigationViewItemStyle.xaml" />
+				<ResourceDictionary Source="ms-appx:///Styles/TextBox.xaml" />
 				<ResourceDictionary Source="ms-appx:///Views/Settings/Games/HeaderCarousel.xaml" />
 				<ResourceDictionary Source="ms-appx:///Views/Settings/Games/HeaderCarouselItem.xaml" />
 			</ResourceDictionary.MergedDictionaries>
+			<Style BasedOn="{StaticResource DefaultComboBoxStyle}" TargetType="uc:ComboBoxEx" />
+			<ResourceDictionary.ThemeDictionaries>
+				<ResourceDictionary x:Key="Light">
+					<x:String x:Key="HeaderCover">/Assets/FluentIcons/Pages/Home/CoverLight.png</x:String>
+				</ResourceDictionary>
+				<ResourceDictionary x:Key="Dark">
+					<x:String x:Key="HeaderCover">/Assets/FluentIcons/Pages/Home/CoverDark.png</x:String>
+				</ResourceDictionary>
+				<ResourceDictionary x:Key="HighContrast">
+					<x:String x:Key="HeaderCover">/Assets/FluentIcons/Pages/Home/CoverDark.png</x:String>
+				</ResourceDictionary>
+			</ResourceDictionary.ThemeDictionaries>
 			<!--  Other app resources here  -->
 		</ResourceDictionary>
 	</Application.Resources>

@@ -19,21 +19,21 @@ public static partial class IgdbHelper
 
 		try
 		{
-			var bucketJson = await httpClient.GetStringAsync($"https://raw.githubusercontent.com/LizardByte/GameDB/gh-pages/buckets/{GetSearchBucket(Clean(name))}.json");
+			string bucketJson = await httpClient.GetStringAsync($"https://raw.githubusercontent.com/LizardByte/GameDB/gh-pages/buckets/{GetSearchBucket(Clean(name))}.json");
 
-			var bucketRoot = JsonDocument.Parse(bucketJson).RootElement;
+			JsonElement bucketRoot = JsonDocument.Parse(bucketJson).RootElement;
 
 			var matchingIds = new List<string>();
 			string cleanName = Clean(name);
 
 			if (bucketRoot.ValueKind == JsonValueKind.Object)
 			{
-				foreach (var property in bucketRoot.EnumerateObject())
+				foreach (JsonProperty property in bucketRoot.EnumerateObject())
 				{
 					if (property.Value.ValueKind != JsonValueKind.Object)
 						continue;
 
-					if (!property.Value.TryGetProperty("name", out var nameProp))
+					if (!property.Value.TryGetProperty("name", out JsonElement nameProp))
 						continue;
 
 					string itemName = nameProp.GetString() ?? "";
@@ -46,24 +46,24 @@ public static partial class IgdbHelper
 			JsonElement? maxGame = null;
 			int maxFields = 0;
 
-			foreach (var id in matchingIds)
+			foreach (string id in matchingIds)
 			{
-				using var response = await httpClient.GetAsync($"https://raw.githubusercontent.com/LizardByte/GameDB/gh-pages/games/{id}.json");
+				using HttpResponseMessage response = await httpClient.GetAsync($"https://raw.githubusercontent.com/LizardByte/GameDB/gh-pages/games/{id}.json");
 
 				if (!response.IsSuccessStatusCode)
 					continue;
 
-				var json = await response.Content.ReadAsStringAsync();
+				string json = await response.Content.ReadAsStringAsync();
 
-				var root = JsonDocument.Parse(json).RootElement;
+				JsonElement root = JsonDocument.Parse(json).RootElement;
 
 				if (root.ValueKind != JsonValueKind.Object)
 					continue;
 
 				int count = 0;
-				foreach (var prop in root.EnumerateObject())
+				foreach (JsonProperty prop in root.EnumerateObject())
 				{
-					var val = prop.Value;
+					JsonElement val = prop.Value;
 					if (val.ValueKind == JsonValueKind.Object)
 						continue;
 
@@ -83,7 +83,7 @@ public static partial class IgdbHelper
 				}
 			}
 
-			if (maxGame.HasValue && maxGame.Value.TryGetProperty("cover", out var cover) && cover.ValueKind == JsonValueKind.Object && cover.TryGetProperty("url", out var url) && url.ValueKind == JsonValueKind.String)
+			if (maxGame.HasValue && maxGame.Value.TryGetProperty("cover", out JsonElement cover) && cover.ValueKind == JsonValueKind.Object && cover.TryGetProperty("url", out JsonElement url) && url.ValueKind == JsonValueKind.String)
 			{
 				string thumb = url.GetString() ?? "";
 				int dot = thumb.LastIndexOf('.');
@@ -95,14 +95,14 @@ public static partial class IgdbHelper
 
 					var developers = new List<string>();
 
-					if (maxGame.HasValue && maxGame.Value.TryGetProperty("involved_companies", out var companies))
+					if (maxGame.HasValue && maxGame.Value.TryGetProperty("involved_companies", out JsonElement companies))
 					{
-						foreach (var company in companies.EnumerateArray())
+						foreach (JsonElement company in companies.EnumerateArray())
 						{
 							if (company.GetProperty("developer").GetBoolean() &&
-								company.GetProperty("company").TryGetProperty("name", out var nameProp))
+								company.GetProperty("company").TryGetProperty("name", out JsonElement nameProp))
 							{
-								var devName = nameProp.GetString();
+								string? devName = nameProp.GetString();
 								if (!string.IsNullOrWhiteSpace(devName))
 									developers.Add(devName);
 							}
@@ -112,9 +112,9 @@ public static partial class IgdbHelper
 					string developerNames = developers != null && developers.Any() ? string.Join(", ", developers) : "Unknown";
 
 					string gameUrl = maxGame is JsonElement { ValueKind: JsonValueKind.Object } game &&
-										game.TryGetProperty("id", out var id) &&
+										game.TryGetProperty("id", out JsonElement id) &&
 										id.ValueKind == JsonValueKind.Number &&
-										id.TryGetInt32(out var gameId)
+										id.TryGetInt32(out int gameId)
 						? $"https://raw.githubusercontent.com/LizardByte/GameDB/gh-pages/games/{gameId}.json"
 						: "";
 
@@ -142,7 +142,7 @@ public static partial class IgdbHelper
 						_ => ""
 					};
 
-					var ratingTitles = ratingKey switch
+					Dictionary<string, string> ratingTitles = ratingKey switch
 					{
 						"PEGI" => new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
 						{
@@ -162,9 +162,9 @@ public static partial class IgdbHelper
 
 					JsonElement? ratingEntry = null;
 
-					if (maxGame.HasValue && maxGame.Value.TryGetProperty("age_ratings", out var ageRatings))
+					if (maxGame.HasValue && maxGame.Value.TryGetProperty("age_ratings", out JsonElement ageRatings))
 					{
-						foreach (var rating in ageRatings.EnumerateArray())
+						foreach (JsonElement rating in ageRatings.EnumerateArray())
 						{
 							if (string.Equals(
 								rating.GetProperty("organization").GetProperty("name").GetString(),
@@ -177,7 +177,7 @@ public static partial class IgdbHelper
 						}
 					}
 
-					if (ratingEntry is null || !ratingEntry.Value.TryGetProperty("rating_category", out var ratingCategory) || !ratingCategory.TryGetProperty("rating", out var ratingValue))
+					if (ratingEntry is null || !ratingEntry.Value.TryGetProperty("rating_category", out JsonElement ratingCategory) || !ratingCategory.TryGetProperty("rating", out JsonElement ratingValue))
 					{
 						return new Dictionary<string, string>
 						{
@@ -196,17 +196,17 @@ public static partial class IgdbHelper
 					string ratingKeyForUrl = ratingKey == "ESRB" &&
 												ratingCode.StartsWith("e10+", StringComparison.OrdinalIgnoreCase) ? "e10" : ratingCode;
 
-					string ratingTitle = ratingTitles.TryGetValue(ratingCode, out var title) ? title : ratingCode;
+					string ratingTitle = ratingTitles.TryGetValue(ratingCode, out string? title) ? title : ratingCode;
 
 					string ratingUrl = $"{baseUrl}{ratingKeyForUrl.ToLowerInvariant()}.png";
 
 					DateTimeOffset? releaseDate = null;
 
-					if (maxGame.HasValue && maxGame.Value.TryGetProperty("release_dates", out var releaseDates))
+					if (maxGame.HasValue && maxGame.Value.TryGetProperty("release_dates", out JsonElement releaseDates))
 					{
-						var firstRelease = releaseDates.EnumerateArray().FirstOrDefault();
+						JsonElement firstRelease = releaseDates.EnumerateArray().FirstOrDefault();
 						if (firstRelease.ValueKind != JsonValueKind.Undefined &&
-							firstRelease.TryGetProperty("date", out var dateProp) &&
+							firstRelease.TryGetProperty("date", out JsonElement dateProp) &&
 							dateProp.ValueKind == JsonValueKind.Number)
 						{
 							long unixTime = dateProp.GetInt64();

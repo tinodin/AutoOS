@@ -1,16 +1,16 @@
 #nullable enable
 using System.Runtime.InteropServices;
+using AutoOS.Core.Helpers.Picker;
+using AutoOS.Helpers.Picker;
+using DevWinUI;
+using Microsoft.UI.Xaml;
 using Windows.Storage;
-using WinRT.Interop;
+using Windows.Win32;
+using Windows.Win32.Foundation;
 using Windows.Win32.System.Com;
 using Windows.Win32.UI.Shell;
 using Windows.Win32.UI.Shell.Common;
-using Windows.Win32;
-using Windows.Win32.Foundation;
-using Microsoft.UI.Xaml;
-using AutoOS.Core.Helpers.Picker;
-using DevWinUI;
-using AutoOS.Helpers.Picker;
+using WinRT.Interop;
 
 namespace AutoOS.Core.Helpers.Picker;
 
@@ -40,7 +40,7 @@ public partial class FilePicker
 	/// <returns>Returns the path of the selected file or null if no file was selected.</returns>
 	public string? PickSingleFile()
 	{
-		var files = OpenFileDialog(false);
+		List<string> files = OpenFileDialog(false);
 		return files.Count > 0 ? files[0] : null;
 	}
 
@@ -50,7 +50,7 @@ public partial class FilePicker
 	/// <returns>Returns the selected file as a StorageFile or null if no file was selected.</returns>
 	public async Task<StorageFile?> PickSingleFileAsync()
 	{
-		var files = OpenFileDialog(false);
+		List<string> files = OpenFileDialog(false);
 		return files.Count > 0 ? await StorageFile.GetFileFromPathAsync(files[0]) : null;
 	}
 
@@ -69,9 +69,9 @@ public partial class FilePicker
 	/// <returns>Returns A list of StorageFile selected by the user.</returns>
 	public async Task<List<StorageFile>> PickMultipleFilesAsync()
 	{
-		var filePaths = OpenFileDialog(true);
+		List<string> filePaths = OpenFileDialog(true);
 		var storageFiles = new List<StorageFile>();
-		foreach (var path in filePaths)
+		foreach (string path in filePaths)
 		{
 			storageFiles.Add(await StorageFile.GetFileFromPathAsync(path));
 		}
@@ -84,7 +84,7 @@ public partial class FilePicker
 							typeof(FileOpenDialog).GUID,
 							null,
 							CLSCTX.CLSCTX_INPROC_SERVER,
-							out var fod);
+							out IFileOpenDialog* fod);
 		if (hr < 0)
 		{
 			Marshal.ThrowExceptionForHR(hr);
@@ -130,7 +130,7 @@ public partial class FilePicker
 				filters.Add(new COMDLG_FILTERSPEC { pszName = (char*)Marshal.StringToHGlobalUni("All Files (*.*)"), pszSpec = (char*)Marshal.StringToHGlobalUni("*.*") });
 			}
 
-			foreach (var kvp in FileTypeChoices)
+			foreach (KeyValuePair<string, IList<string>> kvp in FileTypeChoices)
 			{
 				string displayName = kvp.Key;
 

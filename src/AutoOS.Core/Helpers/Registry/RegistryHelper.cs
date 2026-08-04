@@ -1,17 +1,17 @@
-﻿using AutoOS.Core.Helpers.Services;
-using Microsoft.Win32.SafeHandles;
-using Microsoft.Win32;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.ServiceProcess;
+using AutoOS.Core.Helpers.Services;
+using Microsoft.Win32;
+using Microsoft.Win32.SafeHandles;
+using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.Security;
 using Windows.Win32.System.Registry;
 using Windows.Win32.System.Services;
 using Windows.Win32.System.Threading;
-using Windows.Win32;
 
 namespace AutoOS.Core.Helpers.Registry;
 
@@ -32,19 +32,19 @@ public static partial class RegistryHelper
 
 	public static void RunAs(Identity identity, Action action)
 	{
-		var impersonation = GetToken(identity);
+		SafeAccessTokenHandle impersonation = GetToken(identity);
 		WindowsIdentity.RunImpersonated(impersonation, action);
 	}
 
 	public static async Task RunAs(Identity identity, Func<Task> action)
 	{
-		var impersonation = GetToken(identity);
+		SafeAccessTokenHandle impersonation = GetToken(identity);
 		await WindowsIdentity.RunImpersonatedAsync(impersonation, action);
 	}
 
 	public static async Task RunAs(Identity identity, ProcessStartInfo psi)
 	{
-		var hToken = GetToken(identity);
+		SafeAccessTokenHandle hToken = GetToken(identity);
 
 		await Task.Run(() =>
 		{
@@ -104,8 +104,8 @@ public static partial class RegistryHelper
 	{
 		RunAs(identity, () =>
 		{
-			var (root, subKeyPath) = ParseKeyPath(keyPath);
-			using var key = root.CreateSubKey(subKeyPath, true);
+			(RegistryKey? root, string? subKeyPath) = ParseKeyPath(keyPath);
+			using RegistryKey key = root.CreateSubKey(subKeyPath, true);
 			if (key != null)
 			{
 				if (valueKind == RegistryValueKind.DWord)
@@ -126,8 +126,8 @@ public static partial class RegistryHelper
 
 			if (applyToDefault && identity == Identity.CurrentUser)
 			{
-				var (defaultRoot, defaultSubKeyPath) = ParseKeyPath(keyPath.Replace("HKEY_CURRENT_USER", @"HKEY_USERS\DefaultUser"));
-				using var defaultKey = defaultRoot.CreateSubKey(defaultSubKeyPath, true);
+				(RegistryKey? defaultRoot, string? defaultSubKeyPath) = ParseKeyPath(keyPath.Replace("HKEY_CURRENT_USER", @"HKEY_USERS\DefaultUser"));
+				using RegistryKey defaultKey = defaultRoot.CreateSubKey(defaultSubKeyPath, true);
 				if (defaultKey != null)
 				{
 					if (valueKind == RegistryValueKind.Unknown)
@@ -188,8 +188,8 @@ public static partial class RegistryHelper
 	{
 		RunAs(identity, () =>
 		{
-			var (root, subKeyPath) = ParseKeyPath(keyPath);
-			using var key = root.OpenSubKey(subKeyPath, true);
+			(RegistryKey? root, string? subKeyPath) = ParseKeyPath(keyPath);
+			using RegistryKey? key = root.OpenSubKey(subKeyPath, true);
 			key?.DeleteValue(valueName, false);
 		});
 	}
@@ -198,7 +198,7 @@ public static partial class RegistryHelper
 	{
 		RunAs(identity, () =>
 		{
-			var (root, subKeyPath) = ParseKeyPath(keyPath);
+			(RegistryKey? root, string? subKeyPath) = ParseKeyPath(keyPath);
 			root.DeleteSubKeyTree(subKeyPath, false);
 		});
 	}
@@ -208,8 +208,8 @@ public static partial class RegistryHelper
 		string[] names = [];
 		RunAs(identity, () =>
 		{
-			var (root, subKeyPath) = ParseKeyPath(keyPath);
-			using var key = root.OpenSubKey(subKeyPath, false);
+			(RegistryKey? root, string? subKeyPath) = ParseKeyPath(keyPath);
+			using RegistryKey? key = root.OpenSubKey(subKeyPath, false);
 			if (key != null)
 			{
 				names = key.GetValueNames();
@@ -274,7 +274,7 @@ public static partial class RegistryHelper
 
 	private static unsafe SafeAccessTokenHandle CreateSystemToken()
 	{
-		var winlogon = Process.GetProcessesByName("winlogon").FirstOrDefault() ?? throw new Exception("winlogon.exe not found.");
+		Process winlogon = Process.GetProcessesByName("winlogon").FirstOrDefault() ?? throw new Exception("winlogon.exe not found.");
 		if (!PInvoke.OpenProcessToken(winlogon.SafeHandle, TOKEN_ACCESS_MASK.TOKEN_DUPLICATE, out SafeFileHandle hToken))
 			throw new Win32Exception(Marshal.GetLastWin32Error());
 
@@ -291,7 +291,7 @@ public static partial class RegistryHelper
 
 	private static unsafe SafeAccessTokenHandle CreateTrustedInstallerToken()
 	{
-		using var sysToken = CreateSystemToken();
+		using SafeAccessTokenHandle sysToken = CreateSystemToken();
 		return WindowsIdentity.RunImpersonated(sysToken, () =>
 		{
 			EnablePrivilege("SeDebugPrivilege");
@@ -311,7 +311,7 @@ public static partial class RegistryHelper
 				}
 			}
 
-			var tiProcess = Process.GetProcessesByName("TrustedInstaller").FirstOrDefault() ?? throw new Exception("TrustedInstaller not found.");
+			Process tiProcess = Process.GetProcessesByName("TrustedInstaller").FirstOrDefault() ?? throw new Exception("TrustedInstaller not found.");
 			if (!PInvoke.OpenProcessToken(tiProcess.SafeHandle, (TOKEN_ACCESS_MASK)0x01FF, out SafeFileHandle tiToken))
 				throw new Win32Exception(Marshal.GetLastWin32Error());
 
@@ -367,7 +367,7 @@ public static partial class RegistryHelper
 
 	private static unsafe void EnablePrivilege(string privilege)
 	{
-		if (!PInvoke.LookupPrivilegeValue(null, privilege, out var luid)) return;
+		if (!PInvoke.LookupPrivilegeValue(null, privilege, out LUID luid)) return;
 
 		TOKEN_PRIVILEGES tp = new()
 		{

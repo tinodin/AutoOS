@@ -1,11 +1,11 @@
-using AutoOS.Core.Helpers.Device.Models;
-using AutoOS.Core.Helpers.Device;
-using AutoOS.Core.Helpers.Registry;
-using AutoOS.Views.Installer.Actions;
-using Microsoft.Win32;
 using System.Diagnostics;
+using AutoOS.Core.Helpers.Device;
+using AutoOS.Core.Helpers.Device.Models;
+using AutoOS.Core.Helpers.Registry;
+using AutoOS.App.Views.Installer.Actions;
+using Microsoft.Win32;
 
-namespace AutoOS.Views.Installer.Stages;
+namespace AutoOS.App.Views.Installer.Stages;
 
 public static class DevicesStage
 {
@@ -30,7 +30,7 @@ public static class DevicesStage
 			("Disabling ASMedia USB controllers", async () => await ProcessActions.RunPowerShell(@"Get-PnpDevice -FriendlyName ""*ASMedia USB*"" | Disable-PnpDevice -Confirm:$false"), null),
 
 			// disable xhci interrupt moderation (imod)
-			("Disabling XHCI Interrupt Moderation (IMOD)", async () => { foreach (var device in DeviceHelper.GetDevices(DeviceType.XHCI)) DeviceHelper.ToggleImod(device, false); }, null),
+			("Disabling XHCI Interrupt Moderation (IMOD)", async () => { foreach (DeviceInfo device in DeviceHelper.GetDevices(DeviceType.XHCI)) DeviceHelper.ToggleImod(device, false); }, null),
 			
 			// disable reserved storage
 			("Disabling reserved storage", async () => await ProcessActions.RunPowerShell(@"DISM /Online /Set-ReservedStorageState /State:Disabled"), null)

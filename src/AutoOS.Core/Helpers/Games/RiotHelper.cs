@@ -1,5 +1,5 @@
-using AutoOS.Core.Common;
 using System.Text.RegularExpressions;
+using AutoOS.Core.Common;
 
 namespace AutoOS.Core.Helpers.Games;
 
@@ -17,7 +17,7 @@ public static partial class RiotHelper
 
 	public static async Task ImportAccount(IStatusReporter reporter = null)
 	{
-		var systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));
+		string? systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));
 		var foundFolders = DriveInfo.GetDrives()
 			.Where(d => d.DriveType == DriveType.Fixed && d.Name != systemDrive)
 			.SelectMany(d =>
@@ -33,7 +33,7 @@ public static partial class RiotHelper
 			.OrderByDescending(f => f.LastWriteTime)
 			.ToList();
 
-		foreach (var folder in foundFolders)
+		foreach (DirectoryInfo? folder in foundFolders)
 		{
 			string yamlPath = Path.Combine(folder.FullName, "Data", "RiotGamesPrivateSettings.yaml");
 			if (!File.Exists(yamlPath))
@@ -51,13 +51,13 @@ public static partial class RiotHelper
 			{
 				Directory.CreateDirectory(RiotGamesDataPath);
 
-				foreach (var directory in Directory.GetDirectories(dataSource, "*", SearchOption.AllDirectories))
+				foreach (string directory in Directory.GetDirectories(dataSource, "*", SearchOption.AllDirectories))
 				{
 					string subDirPath = directory.Replace(dataSource, RiotGamesDataPath);
 					Directory.CreateDirectory(subDirPath);
 				}
 
-				foreach (var file in Directory.GetFiles(dataSource, "*.*", SearchOption.AllDirectories))
+				foreach (string file in Directory.GetFiles(dataSource, "*.*", SearchOption.AllDirectories))
 				{
 					string destFilePath = file.Replace(dataSource, RiotGamesDataPath);
 					File.Copy(file, destFilePath, true);
@@ -70,13 +70,13 @@ public static partial class RiotHelper
 			{
 				Directory.CreateDirectory(RiotGamesConfigPath);
 
-				foreach (var directory in Directory.GetDirectories(configSource, "*", SearchOption.AllDirectories))
+				foreach (string directory in Directory.GetDirectories(configSource, "*", SearchOption.AllDirectories))
 				{
 					string subDirPath = directory.Replace(configSource, RiotGamesConfigPath);
 					Directory.CreateDirectory(subDirPath);
 				}
 
-				foreach (var file in Directory.GetFiles(configSource, "*.*", SearchOption.AllDirectories))
+				foreach (string file in Directory.GetFiles(configSource, "*.*", SearchOption.AllDirectories))
 				{
 					string destFilePath = file.Replace(configSource, RiotGamesConfigPath);
 					File.Copy(file, destFilePath, true);
@@ -94,7 +94,7 @@ public static partial class RiotHelper
 	public static async Task ImportGames(IStatusReporter reporter = null)
 	{
 		// get all metadata folders from other drives
-		var systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));
+		string? systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));
 		var foundFolders = DriveInfo.GetDrives()
 			.Where(d => d.DriveType == DriveType.Fixed && d.Name != systemDrive)
 			.Select(d => Path.Combine(d.Name, "ProgramData", "Riot Games", "Metadata"))
@@ -112,20 +112,20 @@ public static partial class RiotHelper
 		Directory.CreateDirectory(RiotGamesMetadataPath);
 
 		// copy the whole folder
-		foreach (var directory in Directory.GetDirectories(newestFolder.FullName, "*", SearchOption.AllDirectories))
+		foreach (string directory in Directory.GetDirectories(newestFolder.FullName, "*", SearchOption.AllDirectories))
 		{
 			string subDirPath = directory.Replace(newestFolder.FullName, RiotGamesMetadataPath);
 			Directory.CreateDirectory(subDirPath);
 		}
 
-		foreach (var file in Directory.GetFiles(newestFolder.FullName, "*.*", SearchOption.AllDirectories))
+		foreach (string file in Directory.GetFiles(newestFolder.FullName, "*.*", SearchOption.AllDirectories))
 		{
 			string destFilePath = file.Replace(newestFolder.FullName, RiotGamesMetadataPath);
 			File.Copy(file, destFilePath, true);
 		}
 
 		// process each subfolder to update paths
-		foreach (var subFolder in Directory.GetDirectories(RiotGamesMetadataPath))
+		foreach (string subFolder in Directory.GetDirectories(RiotGamesMetadataPath))
 		{
 			string folderName = new DirectoryInfo(subFolder).Name;
 			string settingsFile = Path.Combine(subFolder, $"{folderName}.product_settings.yaml");
@@ -146,7 +146,7 @@ public static partial class RiotHelper
 			string newPath = null;
 
 			// check other drives for the path
-			foreach (var drive in DriveInfo.GetDrives().Where(d => d.DriveType == DriveType.Fixed && d.Name != systemDrive))
+			foreach (DriveInfo? drive in DriveInfo.GetDrives().Where(d => d.DriveType == DriveType.Fixed && d.Name != systemDrive))
 			{
 				string testPath = Path.Combine(drive.Name, relativePath);
 				if (Directory.Exists(testPath))

@@ -1,295 +1,294 @@
-using AutoOS.Core.Helpers.Device.Models;
-using AutoOS.Core.Helpers.Device;
-using AutoOS.Core.Helpers.Sound.Models;
-using AutoOS.Core.Helpers.Sound;
-using Microsoft.UI.Xaml.Controls.Primitives;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using AutoOS.Core.Helpers.Device;
+using AutoOS.Core.Helpers.Device.Models;
+using AutoOS.Core.Helpers.Sound;
+using AutoOS.Core.Helpers.Sound.Models;
+using Microsoft.UI.Xaml.Controls.Primitives;
+using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.Media.Audio;
-using Windows.Win32.System.Com.StructuredStorage;
 using Windows.Win32.System.Com;
+using Windows.Win32.System.Com.StructuredStorage;
 using Windows.Win32.System.Variant;
 using Windows.Win32.UI.Shell.PropertiesSystem;
-using Windows.Win32;
 
-namespace AutoOS.Views.Settings
+namespace AutoOS.App.Views.Settings;
+
+public sealed partial class SoundPage : Page, INotifyPropertyChanged
 {
-	public sealed partial class SoundPage : Page, INotifyPropertyChanged
+	public event PropertyChangedEventHandler PropertyChanged;
+	private void OnPropertyChanged([CallerMemberName] string name = null)
 	{
-		public event PropertyChangedEventHandler PropertyChanged;
-		private void OnPropertyChanged([CallerMemberName] string name = null)
-		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-		}
+		PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+	}
 
-		private DeviceInfo _currentOutput;
-		public DeviceInfo CurrentOutput
+	private DeviceInfo _currentOutput;
+	public DeviceInfo CurrentOutput
+	{
+		get => _currentOutput;
+		set
 		{
-			get => _currentOutput;
-			set
+			_currentOutput = value;
+			OnPropertyChanged();
+			OnPropertyChanged(nameof(HasOutputDevice));
+		}
+	}
+
+	private DeviceInfo _currentInput;
+	public DeviceInfo CurrentInput
+	{
+		get => _currentInput;
+		set
+		{
+			_currentInput = value;
+			OnPropertyChanged();
+			OnPropertyChanged(nameof(HasInputDevice));
+		}
+	}
+
+	public bool HasOutputDevice
+	{
+		get => CurrentOutput != null && !string.IsNullOrEmpty(CurrentOutput.RegistryPath);
+	}
+
+	public bool HasInputDevice
+	{
+		get => CurrentInput != null && !string.IsNullOrEmpty(CurrentInput.RegistryPath);
+	}
+
+	private bool isInitializingAudioState = true;
+	public ObservableCollection<DeviceInfo> AudioEndpoints { get; } = [];
+
+	public SoundPage()
+	{
+		GetAudioDevices();
+		InitializeComponent();
+		SoundHelper.RegisterDeviceChangeCallback(() =>
+		{
+			DispatcherQueue?.TryEnqueue(() =>
 			{
-				_currentOutput = value;
-				OnPropertyChanged();
-				OnPropertyChanged(nameof(HasOutputDevice));
-			}
-		}
-
-		private DeviceInfo _currentInput;
-		public DeviceInfo CurrentInput
-		{
-			get => _currentInput;
-			set
-			{
-				_currentInput = value;
-				OnPropertyChanged();
-				OnPropertyChanged(nameof(HasInputDevice));
-			}
-		}
-
-		public bool HasOutputDevice
-		{
-			get => CurrentOutput != null && !string.IsNullOrEmpty(CurrentOutput.RegistryPath);
-		}
-
-		public bool HasInputDevice
-		{
-			get => CurrentInput != null && !string.IsNullOrEmpty(CurrentInput.RegistryPath);
-		}
-
-		private bool isInitializingAudioState = true;
-		public ObservableCollection<DeviceInfo> AudioEndpoints { get; } = [];
-
-		public SoundPage()
-		{
-			GetAudioDevices();
-			InitializeComponent();
-			SoundHelper.RegisterDeviceChangeCallback(() =>
-			{
-				DispatcherQueue?.TryEnqueue(() =>
-				{
-					GetAudioDevices();
-				});
+				GetAudioDevices();
 			});
+		});
+	}
+
+	private unsafe void GetAudioDevices()
+	{
+		isInitializingAudioState = true;
+		PInvoke.CoInitializeEx(null, COINIT.COINIT_MULTITHREADED);
+
+		if (PInvoke.CoCreateInstance(typeof(MMDeviceEnumerator).GUID, null, (CLSCTX)7, typeof(IMMDeviceEnumerator).GUID, out void* pEnumerator).Succeeded)
+		{
+			IMMDeviceEnumerator* enumerator = (IMMDeviceEnumerator*)pEnumerator;
+
+			DeviceInfo newOutput = ProcessEndpoint(enumerator, EDataFlow.eRender);
+			UpdateDevice(ref _currentOutput, newOutput, nameof(CurrentOutput));
+
+			DeviceInfo newInput = ProcessEndpoint(enumerator, EDataFlow.eCapture);
+			UpdateDevice(ref _currentInput, newInput, nameof(CurrentInput));
+
+			enumerator->Release();
+		}
+		isInitializingAudioState = false;
+	}
+
+	private void UpdateDevice(ref DeviceInfo currentField, DeviceInfo newNode, string propertyName)
+	{
+		if (newNode == null)
+		{
+			if (currentField != null)
+			{
+				if (propertyName == nameof(CurrentOutput)) CurrentOutput = null;
+				else CurrentInput = null;
+			}
+			return;
 		}
 
-		private unsafe void GetAudioDevices()
+		if (currentField == null || currentField.PnpDeviceId != newNode.PnpDeviceId)
 		{
-			isInitializingAudioState = true;
-			PInvoke.CoInitializeEx(null, COINIT.COINIT_MULTITHREADED);
-
-			if (PInvoke.CoCreateInstance(typeof(MMDeviceEnumerator).GUID, null, (CLSCTX)7, typeof(IMMDeviceEnumerator).GUID, out void* pEnumerator).Succeeded)
-			{
-				IMMDeviceEnumerator* enumerator = (IMMDeviceEnumerator*)pEnumerator;
-
-				var newOutput = ProcessEndpoint(enumerator, EDataFlow.eRender);
-				UpdateDevice(ref _currentOutput, newOutput, nameof(CurrentOutput));
-
-				var newInput = ProcessEndpoint(enumerator, EDataFlow.eCapture);
-				UpdateDevice(ref _currentInput, newInput, nameof(CurrentInput));
-
-				enumerator->Release();
-			}
-			isInitializingAudioState = false;
-		}
-
-		private void UpdateDevice(ref DeviceInfo currentField, DeviceInfo newNode, string propertyName)
-		{
-			if (newNode == null)
-			{
-				if (currentField != null)
-				{
-					if (propertyName == nameof(CurrentOutput)) CurrentOutput = null;
-					else CurrentInput = null;
-				}
-				return;
-			}
-
-			if (currentField == null || currentField.PnpDeviceId != newNode.PnpDeviceId)
-			{
-				if (propertyName == nameof(CurrentOutput))
-					CurrentOutput = newNode;
-				else
-					CurrentInput = newNode;
-			}
+			if (propertyName == nameof(CurrentOutput))
+				CurrentOutput = newNode;
 			else
-			{
-				currentField.AvailableFormats = newNode.AvailableFormats;
-				currentField.BufferSizes = newNode.BufferSizes;
-				currentField.SelectedFormat = newNode.SelectedFormat;
-				currentField.SelectedBufferSize = newNode.SelectedBufferSize;
-				OnPropertyChanged(propertyName);
-			}
+				CurrentInput = newNode;
 		}
-
-		private unsafe DeviceInfo ProcessEndpoint(IMMDeviceEnumerator* enumerator, EDataFlow flow)
+		else
 		{
-			IMMDevice* endpoint = null;
-			try { enumerator->GetDefaultAudioEndpoint(flow, ERole.eConsole, &endpoint); } catch { }
-			if (endpoint == null)
-				return null;
+			currentField.AvailableFormats = newNode.AvailableFormats;
+			currentField.BufferSizes = newNode.BufferSizes;
+			currentField.SelectedFormat = newNode.SelectedFormat;
+			currentField.SelectedBufferSize = newNode.SelectedBufferSize;
+			OnPropertyChanged(propertyName);
+		}
+	}
 
-			PWSTR id = default;
-			endpoint->GetId(&id);
-			string deviceId = id.ToString();
+	private unsafe DeviceInfo ProcessEndpoint(IMMDeviceEnumerator* enumerator, EDataFlow flow)
+	{
+		IMMDevice* endpoint = null;
+		try { enumerator->GetDefaultAudioEndpoint(flow, ERole.eConsole, &endpoint); } catch { }
+		if (endpoint == null)
+			return null;
 
-			var device = new DeviceInfo
+		PWSTR id = default;
+		endpoint->GetId(&id);
+		string deviceId = id.ToString();
+
+		var device = new DeviceInfo
+		{
+			FriendlyName = "Unknown",
+			PnpDeviceId = deviceId,
+			RegistryPath = deviceId
+		};
+
+		IPropertyStore* store = null;
+		endpoint->OpenPropertyStore((uint)STGM.STGM_READ, &store);
+		if (store != null)
+		{
+			PROPVARIANT prop = default;
+			try
 			{
-				FriendlyName = "Unknown",
-				PnpDeviceId = deviceId,
-				RegistryPath = deviceId
-			};
-
-			IPropertyStore* store = null;
-			endpoint->OpenPropertyStore((uint)STGM.STGM_READ, &store);
-			if (store != null)
-			{
-				PROPVARIANT prop = default;
-				try
+				store->GetValue(PInvoke.PKEY_Device_FriendlyName, out prop);
+				if (prop.Anonymous.Anonymous.vt == VARENUM.VT_LPWSTR)
 				{
-					store->GetValue(PInvoke.PKEY_Device_FriendlyName, out prop);
-					if (prop.Anonymous.Anonymous.vt == VARENUM.VT_LPWSTR)
+					string fullName = prop.Anonymous.Anonymous.Anonymous.pwszVal.ToString();
+					if (fullName.Contains('(') && fullName.EndsWith(')'))
 					{
-						string fullName = prop.Anonymous.Anonymous.Anonymous.pwszVal.ToString();
-						if (fullName.Contains('(') && fullName.EndsWith(')'))
-						{
-							int splitIdx = fullName.IndexOf('(');
-							device.FriendlyName = fullName[..splitIdx].Trim();
-							device.Description = fullName.Substring(splitIdx + 1, fullName.Length - splitIdx - 2).Trim();
-						}
-						else
-						{
-							device.FriendlyName = fullName;
-						}
+						int splitIdx = fullName.IndexOf('(');
+						device.FriendlyName = fullName[..splitIdx].Trim();
+						device.Description = fullName.Substring(splitIdx + 1, fullName.Length - splitIdx - 2).Trim();
+					}
+					else
+					{
+						device.FriendlyName = fullName;
 					}
 				}
-				finally
-				{
-					PInvoke.PropVariantClear(&prop);
-					store->Release();
-				}
+			}
+			finally
+			{
+				PInvoke.PropVariantClear(&prop);
+				store->Release();
+			}
+		}
+
+		device.IsInputDevice = flow == EDataFlow.eCapture;
+
+		AudioDetails details = SoundHelper.GetAudioDetails(device);
+		device.SupportPerChannelVolume = details.SupportPerChannelVolume;
+		device.Volume = details.CurrentVolume;
+		device.LeftVolume = details.LeftVolume;
+		device.RightVolume = details.RightVolume;
+		device.IsMuted = details.IsMuted;
+		device.AvailableFormats = details.Formats;
+		device.SelectedFormat = details.Formats.FirstOrDefault(f => f.IsCurrent) ?? details.Formats.FirstOrDefault();
+
+		List<BufferSizeOption> bufferSizes = SoundHelper.GetBufferSizes(device);
+		device.BufferSizes = bufferSizes;
+		device.SelectedBufferSize = bufferSizes.FirstOrDefault(x => x.IsCurrent) ?? bufferSizes.FirstOrDefault();
+
+		SoundHelper.RegisterVolumeCallback(device, (vol, muted, left, right) =>
+		{
+			DispatcherQueue?.TryEnqueue(() =>
+			{
+				isInitializingAudioState = true;
+				device.Volume = vol;
+				device.IsMuted = muted;
+				device.LeftVolume = left;
+				device.RightVolume = right;
+				isInitializingAudioState = false;
+			});
+		});
+
+		PInvoke.CoTaskMemFree(id);
+		endpoint->Release();
+		return device;
+	}
+
+	private void Mute_Click(object sender, RoutedEventArgs e)
+	{
+		if (sender is Button btn && btn.DataContext is DeviceInfo device)
+		{
+			device.IsMuted = !device.IsMuted;
+			SoundHelper.SetAudioMute(device, device.IsMuted);
+		}
+	}
+
+	private void AudioEndpointBufferSize_SelectionChanged(object sender, SelectionChangedEventArgs e)
+	{
+		if (isInitializingAudioState) return;
+
+		if (sender is ComboBox comboBox && comboBox.DataContext is DeviceInfo device && comboBox.SelectedItem is BufferSizeOption option)
+		{
+			SoundHelper.ApplyAudioSettings(device, option);
+		}
+	}
+
+	private void Volume_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
+	{
+		if (isInitializingAudioState) return;
+
+		if (sender is Slider slider && slider.DataContext is DeviceInfo device)
+		{
+			float vol = (float)e.NewValue / 100f;
+
+			float actualVol = SoundHelper.SetAudioVolume(device, vol);
+			float actualPercentage = MathF.Round(actualVol * 100f);
+
+			device.Volume = actualPercentage;
+			device.LeftVolume = actualPercentage;
+			device.RightVolume = actualPercentage;
+
+			if (Math.Abs(slider.Value - actualPercentage) > 0.1)
+			{
+				slider.Value = actualPercentage;
 			}
 
-			device.IsInputDevice = flow == EDataFlow.eCapture;
+			if (!device.IsInputDevice)
+			{
+				if (actualPercentage == 0 && !device.IsMuted)
+				{
+					device.IsMuted = true;
+					SoundHelper.SetAudioMute(device, true);
+				}
+				else if (actualPercentage > 0 && device.IsMuted)
+				{
+					device.IsMuted = false;
+					SoundHelper.SetAudioMute(device, false);
+				}
+			}
+		}
+	}
 
-			var details = SoundHelper.GetAudioDetails(device);
-			device.SupportPerChannelVolume = details.SupportPerChannelVolume;
-			device.Volume = details.CurrentVolume;
-			device.LeftVolume = details.LeftVolume;
-			device.RightVolume = details.RightVolume;
-			device.IsMuted = details.IsMuted;
-			device.AvailableFormats = details.Formats;
-			device.SelectedFormat = details.Formats.FirstOrDefault(f => f.IsCurrent) ?? details.Formats.FirstOrDefault();
+	private void LeftVolume_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
+	{
+		if (isInitializingAudioState) return;
+		if (sender is Slider slider && slider.DataContext is DeviceInfo device)
+		{
+			float vol = (float)e.NewValue / 100f;
+			SoundHelper.SetAudioChannelVolume(device, 0, vol);
+		}
+	}
 
-			var bufferSizes = SoundHelper.GetBufferSizes(device);
+	private void RightVolume_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
+	{
+		if (isInitializingAudioState) return;
+		if (sender is Slider slider && slider.DataContext is DeviceInfo device)
+		{
+			float vol = (float)e.NewValue / 100f;
+			SoundHelper.SetAudioChannelVolume(device, 1, vol);
+		}
+	}
+
+	private void Format_SelectionChanged(object sender, SelectionChangedEventArgs e)
+	{
+		if (isInitializingAudioState) return;
+		if (sender is ComboBox comboBox && comboBox.DataContext is DeviceInfo device && comboBox.SelectedItem is AudioFormatOption format)
+		{
+			SoundHelper.SetAudioFormat(device, format);
+
+			List<BufferSizeOption> bufferSizes = SoundHelper.GetBufferSizes(device);
 			device.BufferSizes = bufferSizes;
 			device.SelectedBufferSize = bufferSizes.FirstOrDefault(x => x.IsCurrent) ?? bufferSizes.FirstOrDefault();
-
-			SoundHelper.RegisterVolumeCallback(device, (vol, muted, left, right) =>
-			{
-				DispatcherQueue?.TryEnqueue(() =>
-				{
-					isInitializingAudioState = true;
-					device.Volume = vol;
-					device.IsMuted = muted;
-					device.LeftVolume = left;
-					device.RightVolume = right;
-					isInitializingAudioState = false;
-				});
-			});
-
-			PInvoke.CoTaskMemFree(id);
-			endpoint->Release();
-			return device;
-		}
-
-		private void Mute_Click(object sender, RoutedEventArgs e)
-		{
-			if (sender is Button btn && btn.DataContext is DeviceInfo device)
-			{
-				device.IsMuted = !device.IsMuted;
-				SoundHelper.SetAudioMute(device, device.IsMuted);
-			}
-		}
-
-		private void AudioEndpointBufferSize_SelectionChanged(object sender, SelectionChangedEventArgs e)
-		{
-			if (isInitializingAudioState) return;
-
-			if (sender is ComboBox comboBox && comboBox.DataContext is DeviceInfo device && comboBox.SelectedItem is BufferSizeOption option)
-			{
-				SoundHelper.ApplyAudioSettings(device, option);
-			}
-		}
-
-		private void Volume_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
-		{
-			if (isInitializingAudioState) return;
-
-			if (sender is Slider slider && slider.DataContext is DeviceInfo device)
-			{
-				float vol = (float)e.NewValue / 100f;
-
-				float actualVol = SoundHelper.SetAudioVolume(device, vol);
-				float actualPercentage = MathF.Round(actualVol * 100f);
-
-				device.Volume = actualPercentage;
-				device.LeftVolume = actualPercentage;
-				device.RightVolume = actualPercentage;
-
-				if (Math.Abs(slider.Value - actualPercentage) > 0.1)
-				{
-					slider.Value = actualPercentage;
-				}
-
-				if (!device.IsInputDevice)
-				{
-					if (actualPercentage == 0 && !device.IsMuted)
-					{
-						device.IsMuted = true;
-						SoundHelper.SetAudioMute(device, true);
-					}
-					else if (actualPercentage > 0 && device.IsMuted)
-					{
-						device.IsMuted = false;
-						SoundHelper.SetAudioMute(device, false);
-					}
-				}
-			}
-		}
-
-		private void LeftVolume_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
-		{
-			if (isInitializingAudioState) return;
-			if (sender is Slider slider && slider.DataContext is DeviceInfo device)
-			{
-				float vol = (float)e.NewValue / 100f;
-				SoundHelper.SetAudioChannelVolume(device, 0, vol);
-			}
-		}
-
-		private void RightVolume_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
-		{
-			if (isInitializingAudioState) return;
-			if (sender is Slider slider && slider.DataContext is DeviceInfo device)
-			{
-				float vol = (float)e.NewValue / 100f;
-				SoundHelper.SetAudioChannelVolume(device, 1, vol);
-			}
-		}
-
-		private void Format_SelectionChanged(object sender, SelectionChangedEventArgs e)
-		{
-			if (isInitializingAudioState) return;
-			if (sender is ComboBox comboBox && comboBox.DataContext is DeviceInfo device && comboBox.SelectedItem is AudioFormatOption format)
-			{
-				SoundHelper.SetAudioFormat(device, format);
-
-				var bufferSizes = SoundHelper.GetBufferSizes(device);
-				device.BufferSizes = bufferSizes;
-				device.SelectedBufferSize = bufferSizes.FirstOrDefault(x => x.IsCurrent) ?? bufferSizes.FirstOrDefault();
-			}
 		}
 	}
 }

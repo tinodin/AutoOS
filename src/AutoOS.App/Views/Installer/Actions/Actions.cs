@@ -1,12 +1,12 @@
-﻿using AutoOS.Core.Helpers.Registry;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.Win32;
 using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Xml;
+using AutoOS.Core.Helpers.Registry;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.Win32;
 using WinRT.Interop;
 
-namespace AutoOS.Views.Installer.Actions;
+namespace AutoOS.App.Views.Installer.Actions;
 
 public static class ProcessActions
 {
@@ -34,7 +34,7 @@ public static class ProcessActions
 			{
 				using var client = new HttpClient();
 				client.DefaultRequestHeaders.UserAgent.Add(ProductInfoHeaderValue.Parse("AutoOS"));
-				var response = await client.GetAsync("http://www.google.com");
+				HttpResponseMessage response = await client.GetAsync("http://www.google.com");
 				if (response.IsSuccessStatusCode)
 				{
 					InstallPage.Info.Severity = InfoBarSeverity.Informational;
@@ -83,7 +83,7 @@ public static class ProcessActions
 		RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Explorer", "StartLayoutFile", xmlPath, RegistryValueKind.ExpandString);
 		RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Explorer", "LockedStartLayout", 1, RegistryValueKind.DWord);
 
-		foreach (var process in Process.GetProcessesByName("explorer"))
+		foreach (Process process in Process.GetProcessesByName("explorer"))
 		{
 			process.Kill();
 			process.WaitForExit();
@@ -94,9 +94,9 @@ public static class ProcessActions
 	{
 		Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon", "AutoRestartShell", 0, RegistryValueKind.DWord);
 
-		foreach (var name in new[] { "explorer", "StartAllBackCfg" })
+		foreach (string? name in new[] { "explorer", "StartAllBackCfg" })
 		{
-			foreach (var process in Process.GetProcessesByName(name))
+			foreach (Process process in Process.GetProcessesByName(name))
 			{
 				process.Kill();
 				await process.WaitForExitAsync();
@@ -106,13 +106,13 @@ public static class ProcessActions
 		Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon", "AutoRestartShell", 1, RegistryValueKind.DWord);
 
 		string dll = @"StartAllBack\StartAllBackX64.dll";
-		var paths = new[] {
+		IEnumerable<string> paths = new[] {
 			Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), dll),
 			Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), dll),
 			Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), dll)
 		}.Where(File.Exists);
 
-		foreach (var path in paths)
+		foreach (string path in paths)
 		{
 			string bak = path + ".bak";
 			string old = path + ".old";

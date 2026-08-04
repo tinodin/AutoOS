@@ -1,13 +1,13 @@
-using AutoOS.Core.Helpers.CPU.Models;
-using AutoOS.Core.Helpers.CPU;
-using AutoOS.Core.Helpers.Device.Models;
-using AutoOS.Core.Helpers.Device;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using AutoOS.Core.Helpers.CPU;
+using AutoOS.Core.Helpers.CPU.Models;
+using AutoOS.Core.Helpers.Device;
+using AutoOS.Core.Helpers.Device.Models;
 using WinRT;
 
-namespace AutoOS.Views.Settings.Scheduling.ViewModels;
+namespace AutoOS.App.Views.Settings.Scheduling.ViewModels;
 
 [GeneratedBindableCustomProperty]
 public sealed partial class IrqPolicyItem
@@ -181,16 +181,16 @@ public partial class DeviceAffinityViewModel : INotifyPropertyChanged
 
 	private void LoadCpuInformation(CpuSetsInfo cpuSetsInfo)
 	{
-		var groups = CpuHelper.GroupCpuSetsSequentially(cpuSetsInfo);
+		List<CpuCoreGroup> groups = CpuHelper.GroupCpuSetsSequentially(cpuSetsInfo);
 		int maxColumns = groups.Count switch { 1 => 5, 2 => 4, _ => 3 };
 
-		foreach (var group in groups)
+		foreach (CpuCoreGroup group in groups)
 			group.MaxColumns = maxColumns;
 
 		if (groups.Count > 1)
 		{
 			int maxRows = groups.Max(g => (g.Cores.Count + g.RecommendedColumns - 1) / g.RecommendedColumns);
-			foreach (var group in groups)
+			foreach (CpuCoreGroup group in groups)
 			{
 				int targetCols = (group.Cores.Count + maxRows - 1) / maxRows;
 				if (targetCols > 0 && targetCols < group.RecommendedColumns)
@@ -224,13 +224,13 @@ public partial class DeviceAffinityViewModel : INotifyPropertyChanged
 
 		SetCpuSelectionFromMask(ProcessMask);
 
-		foreach (var thread in CpuGroups.SelectMany(g => g.Cores).SelectMany(c => c.Threads))
+		foreach (CpuThread? thread in CpuGroups.SelectMany(g => g.Cores).SelectMany(c => c.Threads))
 			thread.PropertyChanged += Thread_PropertyChanged;
 	}
 
 	private void SetCpuSelectionFromMask(ulong mask)
 	{
-		foreach (var thread in CpuGroups.SelectMany(g => g.Cores).SelectMany(c => c.Threads))
+		foreach (CpuThread? thread in CpuGroups.SelectMany(g => g.Cores).SelectMany(c => c.Threads))
 			thread.IsSelected = (mask & thread.BitMask) != 0;
 	}
 
@@ -242,9 +242,9 @@ public partial class DeviceAffinityViewModel : INotifyPropertyChanged
 
 	public void ApplySettings()
 	{
-		var targetDevice = DeviceHelper.GetDevices(_selectedItem.DeviceType).FirstOrDefault(device => string.Equals(device.PnpDeviceId, _selectedItem.PnpDeviceId, StringComparison.OrdinalIgnoreCase));
+		DeviceInfo? targetDevice = DeviceHelper.GetDevices(_selectedItem.DeviceType).FirstOrDefault(device => string.Equals(device.PnpDeviceId, _selectedItem.PnpDeviceId, StringComparison.OrdinalIgnoreCase));
 
-		var result = DeviceHelper.ApplySettingsToDevices(
+		ApplyResult result = DeviceHelper.ApplySettingsToDevices(
 			[targetDevice],
 			MsiSupported,
 			(uint)MsiLimit,

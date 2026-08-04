@@ -1,10 +1,10 @@
+using System.Diagnostics;
+using System.Text.Json;
 using AutoOS.Core.Helpers.Download;
 using AutoOS.Core.Helpers.Games;
 using AutoOS.Core.Helpers.Monitor;
-using System.Diagnostics;
-using System.Text.Json;
 
-namespace AutoOS.Views.Installer.Stages;
+namespace AutoOS.App.Views.Installer.Stages;
 
 public static partial class GamesStage
 {

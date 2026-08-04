@@ -19,13 +19,13 @@ public static partial class ExtractHelper
 			UseShellExecute = false
 		});
 
-		var outputTask = process!.StandardOutput.ReadToEndAsync();
-		var errorTask = process.StandardError.ReadToEndAsync();
+		Task<string> outputTask = process!.StandardOutput.ReadToEndAsync();
+		Task<string> errorTask = process.StandardError.ReadToEndAsync();
 		await process.WaitForExitAsync();
 
-		var output = await outputTask;
-		var error = await errorTask;
-		var fullOutput = string.IsNullOrEmpty(output) ? error : output;
+		string output = await outputTask;
+		string error = await errorTask;
+		string fullOutput = string.IsNullOrEmpty(output) ? error : output;
 
 		if (!fullOutput.Contains("Everything is Ok"))
 			throw new InvalidOperationException($"7-Zip extraction failed: {fullOutput}");

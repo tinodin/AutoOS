@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ResourceDictionary
-	x:Class="AutoOS.Views.Settings.Games.HeaderCarouselDictionary"
+	x:Class="AutoOS.App.Views.Settings.Games.HeaderCarouselDictionary"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:controls="using:CommunityToolkit.WinUI.Controls"
 	xmlns:converters="using:CommunityToolkit.WinUI.Converters"
 	xmlns:dev="using:DevWinUI"
-	xmlns:local="using:AutoOS.Views.Settings.Games"
-	xmlns:views="using:AutoOS.Views.Settings">
+	xmlns:local="using:AutoOS.App.Views.Settings.Games"
+	xmlns:uc="using:AutoOS.App.UserControls"
+	xmlns:views="using:AutoOS.App.Views.Settings">
 	<Style TargetType="local:HeaderCarousel">
 		<Setter Property="ItemsPanel">
 			<Setter.Value>
@@ -230,7 +231,7 @@
 												Margin="0,2"
 												Fill="{ThemeResource ControlStrokeColorDefault}" />
 											<!--  Account  -->
-											<ComboBox
+											<uc:ComboBoxEx
 												x:Name="EpicGamesAccounts"
 												Padding="12,8"
 												HorizontalAlignment="Stretch"
@@ -313,7 +314,7 @@
 												Margin="0,2"
 												Fill="{ThemeResource ControlStrokeColorDefault}" />
 											<!--  Account  -->
-											<ComboBox
+											<uc:ComboBoxEx
 												x:Name="SteamAccounts"
 												Padding="12,8"
 												HorizontalAlignment="Stretch"

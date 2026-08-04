@@ -1,13 +1,13 @@
-using AutoOS.Core.Helpers.CPU.Models;
-using AutoOS.Core.Helpers.CPU;
-using AutoOS.Core.Helpers.Device.Models;
-using AutoOS.Core.Helpers.Device;
-using AutoOS.Core.Helpers.Scheduling;
-using AutoOS.Views.Settings.Scheduling;
-using DevWinUI;
 using System.Collections.ObjectModel;
+using AutoOS.Core.Helpers.CPU;
+using AutoOS.Core.Helpers.CPU.Models;
+using AutoOS.Core.Helpers.Device;
+using AutoOS.Core.Helpers.Device.Models;
+using AutoOS.Core.Helpers.Scheduling;
+using AutoOS.App.Views.Settings.Scheduling;
+using DevWinUI;
 
-namespace AutoOS.Views.Settings;
+namespace AutoOS.App.Views.Settings;
 
 public sealed partial class SchedulingPage : Page
 {
@@ -42,7 +42,7 @@ public sealed partial class SchedulingPage : Page
 	}
 	private static void LoadDeviceGroup(DeviceType type, SchedulingGroup group)
 	{
-		var devices = DeviceHelper.GetDevices(type);
+		List<DeviceInfo> devices = DeviceHelper.GetDevices(type);
 
 		var items = devices
 			.Where(device => device.SupportsIrq)
@@ -64,7 +64,7 @@ public sealed partial class SchedulingPage : Page
 			.OrderBy(i => i.Name, StringComparer.CurrentCultureIgnoreCase)
 			.ToList();
 
-		foreach (var item in items)
+		foreach (SchedulingItem? item in items)
 		{
 			group.SubItems.Add(item);
 		}
@@ -72,7 +72,7 @@ public sealed partial class SchedulingPage : Page
 
 	public void UpdateDevice(DeviceType deviceType, string pnpDeviceId, DeviceInfo targetDevice = null)
 	{
-		var item = Nodes.SelectMany(g => g.SubItems).FirstOrDefault(d => string.Equals(d.PnpDeviceId, pnpDeviceId, StringComparison.OrdinalIgnoreCase));
+		SchedulingItem? item = Nodes.SelectMany(g => g.SubItems).FirstOrDefault(d => string.Equals(d.PnpDeviceId, pnpDeviceId, StringComparison.OrdinalIgnoreCase));
 		if (item == null) return;
 
 		targetDevice ??= DeviceHelper.GetDevices(item.DeviceType).FirstOrDefault(d => string.Equals(d.PnpDeviceId, pnpDeviceId, StringComparison.OrdinalIgnoreCase));
@@ -137,7 +137,7 @@ public sealed partial class SchedulingPage : Page
 
 			if (applyResult != null)
 			{
-				if (applyResult.AppliedSettings.TryGetValue(device.PnpDeviceId, out var updatedDevice))
+				if (applyResult.AppliedSettings.TryGetValue(device.PnpDeviceId, out DeviceInfo? updatedDevice))
 				{
 					device.MsiSupported = updatedDevice.MsiSupported;
 					device.MsiLimit = updatedDevice.MsiLimit;
@@ -153,7 +153,7 @@ public sealed partial class SchedulingPage : Page
 			}
 		};
 
-		var result = await contentDialog.ShowAsync();
+		ContentDialogResult result = await contentDialog.ShowAsync();
 
 		if (result == ContentDialogResult.Primary && applyResult != null && applyResult.Success && applyResult.NeedsRestart)
 		{
@@ -169,9 +169,9 @@ public sealed partial class SchedulingPage : Page
 
 			if (await restartDialog.ShowAsync() == ContentDialogResult.Primary)
 			{
-				var restartDevicesResult = await DeviceHelper.RestartDevicesAsync(applyResult.ChangedDevices);
+				RestartResult restartDevicesResult = await DeviceHelper.RestartDevicesAsync(applyResult.ChangedDevices);
 
-				var message = restartDevicesResult.SuccessCount > 0 && restartDevicesResult.FailedCount == 0
+				string message = restartDevicesResult.SuccessCount > 0 && restartDevicesResult.FailedCount == 0
 					? $"{device.Name} was successfully restarted."
 					: restartDevicesResult.SuccessCount > 0
 					? $"{device.Name} was restarted. A reboot may be required."

@@ -1,33 +1,24 @@
 <Page
-	x:Class="AutoOS.Views.Settings.BiosSettingsPage"
+	x:Class="AutoOS.App.Views.Settings.BiosSettingsPage"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:bios="using:AutoOS.Core.Helpers.BIOS"
-	xmlns:common="using:AutoOS.Common"
+	xmlns:common="using:AutoOS.App.Common"
 	xmlns:converters="using:CommunityToolkit.WinUI.Converters"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:data="using:Syncfusion.UI.Xaml.Data"
 	xmlns:dev="using:DevWinUI"
 	xmlns:grid="using:Syncfusion.UI.Xaml.Grids"
-	xmlns:local="using:AutoOS.Views.Settings.BIOS"
+	xmlns:local="using:AutoOS.App.Views.Settings.BIOS"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:sfgrid="using:Syncfusion.UI.Xaml.TreeGrid"
-	xmlns:views="using:AutoOS.Views"
+	xmlns:uc="using:AutoOS.App.UserControls"
+	xmlns:views="using:AutoOS.App.Views"
 	mc:Ignorable="d">
 	<Page.Resources>
 		<ResourceDictionary>
 			<converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
 			<converters:StringVisibilityConverter x:Key="StringVisibilityConverter" />
-
-			<!--  Critical  -->
-			<Style x:Key="CriticalCellStyle" TargetType="sfgrid:TreeGridCell">
-				<Setter Property="Background" Value="{ThemeResource SystemFillColorCriticalBackgroundBrush}" />
-			</Style>
-
-			<!--  Success  -->
-			<Style x:Key="SuccessCellStyle" TargetType="sfgrid:TreeGridCell">
-				<Setter Property="Background" Value="{ThemeResource SystemFillColorSuccessBackgroundBrush}" />
-			</Style>
 
 			<!--  Caution  -->
 			<Style x:Key="CautionCellStyle" TargetType="sfgrid:TreeGridCell">
@@ -200,7 +191,7 @@
 
 			<!--  ComboBox template  -->
 			<DataTemplate x:Key="ComboBoxEditTemplate" x:DataType="local:BiosTreeNode">
-				<ComboBox
+				<uc:ComboBoxEx
 					HorizontalAlignment="Stretch"
 					BorderThickness="0"
 					CornerRadius="0"
@@ -208,12 +199,12 @@
 					Loaded="EditControl_Loaded"
 					SelectedItem="{x:Bind EditOption, Mode=TwoWay}"
 					UseSystemFocusVisuals="False">
-					<ComboBox.Resources>
+					<uc:ComboBoxEx.Resources>
 						<SolidColorBrush x:Key="ComboBoxBackgroundBorderBrushFocused" Color="Transparent" />
 						<SolidColorBrush x:Key="ComboBoxBackgroundFocused" Color="{ThemeResource ControlFillColorSecondary}" />
 						<Thickness x:Key="ComboBoxBackgroundBorderThicknessFocused">0</Thickness>
-					</ComboBox.Resources>
-					<ComboBox.ItemTemplate>
+					</uc:ComboBoxEx.Resources>
+					<uc:ComboBoxEx.ItemTemplate>
 						<DataTemplate x:DataType="bios:Option">
 							<TextBlock
 								Padding="0,2,0,0"
@@ -222,8 +213,8 @@
 								TextTrimming="CharacterEllipsis"
 								TextWrapping="NoWrap" />
 						</DataTemplate>
-					</ComboBox.ItemTemplate>
-				</ComboBox>
+					</uc:ComboBoxEx.ItemTemplate>
+				</uc:ComboBoxEx>
 			</DataTemplate>
 
 			<!--  TextBox template  -->
@@ -338,14 +329,19 @@
 				</DropDownButton>
 			</Grid>
 
-			<!--  Command Bar  -->
 			<Border
 				Margin="0,0,0,8"
 				Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
 				BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
 				BorderThickness="1"
 				CornerRadius="{ThemeResource OverlayCornerRadius}">
-				<CommandBar>
+
+				<!--  Command Bar  -->
+				<CommandBar
+					common:CommandBarExtensions.ApplyOverflowIndent="True"
+					common:CommandBarExtensions.CommandAlignment="Left"
+					common:CommandBarExtensions.OverflowButtonAlignment="Right"
+					DefaultLabelPosition="Right">
 
 					<!--  Undo  -->
 					<AppBarButton
@@ -373,9 +369,8 @@
 					<AppBarSeparator Margin="4,0" />
 
 					<!--  Merge Count  -->
-					<AppBarElementContainer Style="{StaticResource CommandBarElementContainerStyle}">
+					<AppBarElementContainer VerticalContentAlignment="Center">
 						<NumberBox
-							x:Name="MergeCountBox"
 							IsEnabled="{x:Bind ViewModel.CanMerge, Mode=OneWay}"
 							Maximum="{x:Bind ViewModel.RecommendedCount, Mode=OneWay}"
 							Minimum="0"

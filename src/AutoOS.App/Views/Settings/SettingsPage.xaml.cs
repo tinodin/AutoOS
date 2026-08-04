@@ -6,7 +6,7 @@ using Windows.Storage;
 using Windows.UI;
 using WinRT;
 
-namespace AutoOS.Views.Settings;
+namespace AutoOS.App.Views.Settings;
 
 public sealed partial class SettingsPage : Page
 {
@@ -42,13 +42,13 @@ public sealed partial class SettingsPage : Page
 			else
 			{
 				MainDropdownColorPicker.ResetColor();
-				ColorPalette.SelectedColor = Colors.Transparent;
+				ColorPalette.SelectedColor = ColorPalette.Colors.FirstOrDefault(color => color.Color.A == 0)?.Color ?? default;
 			}
 		}
 		else
 		{
 			MainDropdownColorPicker.ResetColor();
-			ColorPalette.SelectedColor = Colors.Transparent;
+			ColorPalette.SelectedColor = ColorPalette.Colors.FirstOrDefault(color => color.Color.A == 0)?.Color ?? default;
 		}
 
 		if (!localSettings.Values.TryGetValue("HideStartup", out object hideStartupValue))
@@ -132,10 +132,10 @@ public sealed partial class SettingsPage : Page
 
 	private void GetSwitchEmulator()
 	{
-		var selectedSwitchEmulator = localSettings.Values["SwitchEmulator"] as string ?? "Eden";
+		string selectedSwitchEmulator = localSettings.Values["SwitchEmulator"] as string ?? "Eden";
 		var switchEmulatorItems = SwitchEmulator.ItemsSource as List<SettingsGridViewItem>;
 
-		var itemToSelect = switchEmulatorItems?.FirstOrDefault(ext => ext.Text == selectedSwitchEmulator) ?? switchEmulatorItems?.FirstOrDefault(ext => ext.Text == "Eden");
+		SettingsGridViewItem? itemToSelect = switchEmulatorItems?.FirstOrDefault(ext => ext.Text == selectedSwitchEmulator) ?? switchEmulatorItems?.FirstOrDefault(ext => ext.Text == "Eden");
 
 		if (itemToSelect != null)
 		{
@@ -162,8 +162,8 @@ public sealed partial class SettingsPage : Page
 
 				if (string.IsNullOrWhiteSpace(DataLocationValue.Text))
 				{
-					var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), itemToSelect.Text);
-					var gamesDir = Path.Combine(path, "games");
+					string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), itemToSelect.Text);
+					string gamesDir = Path.Combine(path, "games");
 
 					if (Directory.Exists(gamesDir) && Directory.GetDirectories(gamesDir).Length > 0)
 					{
@@ -185,7 +185,7 @@ public sealed partial class SettingsPage : Page
 
 				if (string.IsNullOrWhiteSpace(DataLocationValue.Text))
 				{
-					var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), itemToSelect.Text.ToLowerInvariant());
+					string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), itemToSelect.Text.ToLowerInvariant());
 					if (File.Exists(Path.Combine(path, "cache", "game_list", "game_metadata_cache.json")))
 					{
 						localSettings.Values[dataKey] = path;
@@ -242,7 +242,7 @@ public sealed partial class SettingsPage : Page
 		var picker = new FilePicker(App.MainWindow) { ShowAllFilesOption = false };
 		picker.FileTypeChoices.Add("Emulator executable", ["*.exe"]);
 
-		var file = await picker.PickSingleFileAsync();
+		StorageFile? file = await picker.PickSingleFileAsync();
 		if (file != null && SwitchEmulator.SelectedItem is SettingsGridViewItem selectedItem)
 		{
 			string emulator = selectedItem.Text;
@@ -300,7 +300,7 @@ public sealed partial class SettingsPage : Page
 			InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)
 		};
 
-		var folder = await picker.PickSingleFolderAsync();
+		StorageFolder? folder = await picker.PickSingleFolderAsync();
 		if (folder == null)
 			return;
 

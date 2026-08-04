@@ -1,4 +1,4 @@
-namespace AutoOS.Views.Updater.Stages;
+namespace AutoOS.App.Views.Updater.Stages;
 
 public static class UpdateStage
 {

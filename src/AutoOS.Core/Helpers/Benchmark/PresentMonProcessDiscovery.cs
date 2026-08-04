@@ -160,7 +160,7 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 
 	private static void ProcessEvents(TraceEventSession session)
 	{
-		var defaultListener = Trace.Listeners.OfType<DefaultTraceListener>().FirstOrDefault();
+		DefaultTraceListener? defaultListener = Trace.Listeners.OfType<DefaultTraceListener>().FirstOrDefault();
 		if (defaultListener != null)
 			Trace.Listeners.Remove(defaultListener);
 
@@ -393,7 +393,7 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 		}
 
 		HashSet<string> candidates = [with(StringComparer.OrdinalIgnoreCase)];
-		foreach (var (name, processes) in processGroups)
+		foreach ((string? name, List<Process>? processes) in processGroups)
 		{
 			if (IsSnapshotCandidate(processes))
 				candidates.Add(name);

@@ -97,7 +97,7 @@ public partial class ReadWriteHelper : IDisposable
 	private static bool TryParseBdf(string bdf, out uint bus, out uint dev, out uint func)
 	{
 		bus = dev = func = 0;
-		var parts = bdf.Split(':');
+		string[] parts = bdf.Split(':');
 		if (parts.Length != 3) return false;
 
 		return uint.TryParse(parts[0], System.Globalization.NumberStyles.HexNumber, null, out bus) &&
@@ -251,7 +251,7 @@ public partial class ReadWriteHelper : IDisposable
 	private static bool TryParseBitRange(string range, out int start, out int end)
 	{
 		start = end = 0;
-		var parts = range.Split(':');
+		string[] parts = range.Split(':');
 		if (parts.Length == 1 && int.TryParse(parts[0], out start)) { end = start; return true; }
 		if (parts.Length == 2 && int.TryParse(parts[0], out start) && int.TryParse(parts[1], out end)) return true;
 		return false;

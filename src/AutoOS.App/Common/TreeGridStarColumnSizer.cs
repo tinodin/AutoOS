@@ -1,6 +1,6 @@
 using Syncfusion.UI.Xaml.TreeGrid;
 
-namespace AutoOS.Common;
+namespace AutoOS.App.Common;
 
 public static class StarRatio
 {
@@ -21,7 +21,7 @@ public partial class TreeGridStarColumnSizer : TreeGridColumnSizer
 	{
 		var removedColumn = new List<TreeGridColumn>();
 		var columns = remainingColumns.ToList();
-		var totalRemainingStarValue = TreeGrid.ActualWidth - 2.0001;
+		double totalRemainingStarValue = TreeGrid.ActualWidth - 2.0001;
 		double removedWidth = 0;
 		bool isRemoved;
 
@@ -29,7 +29,7 @@ public partial class TreeGridStarColumnSizer : TreeGridColumnSizer
 		{
 			isRemoved = false;
 			removedWidth = 0;
-			var columnsCount = 0;
+			int columnsCount = 0;
 
 			columns.ForEach((col) =>
 			{
@@ -37,7 +37,7 @@ public partial class TreeGridStarColumnSizer : TreeGridColumnSizer
 			});
 
 			double starWidth = Math.Floor(totalRemainingStarValue / columnsCount);
-			var column = columns.First();
+			TreeGridColumn column = columns.First();
 			starWidth *= StarRatio.GetColumnRatio(column);
 			double computedWidth = SetColumnWidth(column, starWidth);
 
@@ -46,7 +46,7 @@ public partial class TreeGridStarColumnSizer : TreeGridColumnSizer
 				isRemoved = true;
 				columns.Remove(column);
 
-				foreach (var remColumn in removedColumn)
+				foreach (TreeGridColumn remColumn in removedColumn)
 				{
 					if (!columns.Contains(remColumn))
 					{

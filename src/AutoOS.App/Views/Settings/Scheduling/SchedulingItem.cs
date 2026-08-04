@@ -1,9 +1,9 @@
-using AutoOS.Core.Helpers.Device.Models;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using AutoOS.Core.Helpers.Device.Models;
 using WinRT;
 
-namespace AutoOS.Views.Settings.Scheduling;
+namespace AutoOS.App.Views.Settings.Scheduling;
 
 [GeneratedBindableCustomProperty]
 public partial class SchedulingItem : INotifyPropertyChanged
@@ -80,8 +80,8 @@ public partial class SchedulingItem : INotifyPropertyChanged
 
 	public string MsiModeDisplay => MsiSupported == 1 ? "On" : "Off";
 	public string MsiLimitDisplay => MsiLimit == 0 ? "Auto" : MsiLimit.ToString("F0");
-	public string DevicePolicyDisplay => PolicyNames.TryGetValue(DevicePolicy, out var name) ? name : $"{DevicePolicy}";
-	public string DevicePriorityDisplay => PriorityNames.TryGetValue(DevicePriority, out var name) ? name : $"{DevicePriority}";
+	public string DevicePolicyDisplay => PolicyNames.TryGetValue(DevicePolicy, out string? name) ? name : $"{DevicePolicy}";
+	public string DevicePriorityDisplay => PriorityNames.TryGetValue(DevicePriority, out string? name) ? name : $"{DevicePriority}";
 	public string SpecifiedProcessorsDisplay => FormatProcessMask(AssignmentSetOverride);
 	public string MaxMsiLimitDisplay => MaxMsiLimit == 0 ? string.Empty : MaxMsiLimit.ToString("F0");
 

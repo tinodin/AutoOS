@@ -1,13 +1,13 @@
 #nullable enable
 using System.Runtime.InteropServices;
+using DevWinUI;
+using Microsoft.UI.Xaml;
 using Windows.Storage;
-using WinRT.Interop;
-using Windows.Win32.System.Com;
-using Windows.Win32.UI.Shell;
 using Windows.Win32;
 using Windows.Win32.Foundation;
-using Microsoft.UI.Xaml;
-using DevWinUI;
+using Windows.Win32.System.Com;
+using Windows.Win32.UI.Shell;
+using WinRT.Interop;
 
 namespace AutoOS.Helpers.Picker;
 
@@ -33,7 +33,7 @@ public partial class FolderPicker
 	/// <returns>Returns the path of the selected folder or null if no folder was selected.</returns>
 	public string? PickSingleFolder()
 	{
-		var folderPaths = OpenFolderDialog(false);
+		List<string> folderPaths = OpenFolderDialog(false);
 		return folderPaths.Count > 0 ? folderPaths[0] : null;
 	}
 
@@ -43,7 +43,7 @@ public partial class FolderPicker
 	/// <returns>Returns the selected folder as a StorageFolder or null if no folder was selected.</returns>
 	public async Task<StorageFolder?> PickSingleFolderAsync()
 	{
-		var folderPaths = OpenFolderDialog(false);
+		List<string> folderPaths = OpenFolderDialog(false);
 		return folderPaths.Count > 0 ? await StorageFolder.GetFolderFromPathAsync(folderPaths[0]) : null;
 	}
 
@@ -62,9 +62,9 @@ public partial class FolderPicker
 	/// <returns>Returns A list of StorageFolder selected by the user.</returns>
 	public async Task<List<StorageFolder>> PickMultipleFoldersAsync()
 	{
-		var folderPaths = OpenFolderDialog(true);
+		List<string> folderPaths = OpenFolderDialog(true);
 		var storageFolders = new List<StorageFolder>();
-		foreach (var path in folderPaths)
+		foreach (string path in folderPaths)
 		{
 			storageFolders.Add(await StorageFolder.GetFolderFromPathAsync(path));
 		}
@@ -77,7 +77,7 @@ public partial class FolderPicker
 							typeof(FileOpenDialog).GUID,
 							null,
 							CLSCTX.CLSCTX_INPROC_SERVER,
-							out var fpd);
+							out IFileOpenDialog* fpd);
 		if (hr < 0)
 		{
 			Marshal.ThrowExceptionForHR(hr);

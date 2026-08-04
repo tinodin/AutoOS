@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 using CommunityToolkit.WinUI.Controls;
 
-namespace AutoOS.Common;
+namespace AutoOS.App.Common;
 
 public static class CommandBarExtensions
 {
@@ -78,7 +78,7 @@ public static class CommandBarExtensions
         {
             if (tabbedCommandBar.IsLoaded)
             {
-                foreach (var item in tabbedCommandBar.MenuItems.OfType<TabbedCommandBarItem>())
+                foreach (TabbedCommandBarItem item in tabbedCommandBar.MenuItems.OfType<TabbedCommandBarItem>())
                     action(item);
             }
             else
@@ -87,7 +87,7 @@ public static class CommandBarExtensions
                 loadedHandler = (sender, args) =>
                 {
                     tabbedCommandBar.Loaded -= loadedHandler;
-                    foreach (var item in tabbedCommandBar.MenuItems.OfType<TabbedCommandBarItem>())
+                    foreach (TabbedCommandBarItem item in tabbedCommandBar.MenuItems.OfType<TabbedCommandBarItem>())
                         action(item);
                 };
                 tabbedCommandBar.Loaded += loadedHandler;
@@ -184,7 +184,7 @@ public static class CommandBarExtensions
 
     private static void AttachVisibilityTracking(CommandBar commandBar)
     {
-        var state = _stateMap.GetOrCreateValue(commandBar);
+		CommandBarState state = _stateMap.GetOrCreateValue(commandBar);
         if (state.VectorChangedHandler is null)
         {
             state.VectorChangedHandler = (_, _) =>
@@ -200,7 +200,7 @@ public static class CommandBarExtensions
 
     private static void DetachVisibilityTracking(CommandBar commandBar)
     {
-        if (!_stateMap.TryGetValue(commandBar, out var state))
+        if (!_stateMap.TryGetValue(commandBar, out CommandBarState? state))
             return;
 
         if (state.VectorChangedHandler is not null)
@@ -214,7 +214,7 @@ public static class CommandBarExtensions
 
     private static void AttachSizeChangedTracking(CommandBar commandBar)
     {
-        var state = _stateMap.GetOrCreateValue(commandBar);
+		CommandBarState state = _stateMap.GetOrCreateValue(commandBar);
         if (state.SizeChangedHandler is null)
         {
             state.SizeChangedHandler = (_, _) => QueueOverflowRefresh(commandBar);
@@ -224,7 +224,7 @@ public static class CommandBarExtensions
 
     private static void DetachSizeChangedTracking(CommandBar commandBar)
     {
-        if (!_stateMap.TryGetValue(commandBar, out var state))
+        if (!_stateMap.TryGetValue(commandBar, out CommandBarState? state))
             return;
 
         if (state.SizeChangedHandler is not null)
@@ -236,10 +236,10 @@ public static class CommandBarExtensions
 
     private static void HookVisibilityCallbacks(CommandBar commandBar)
     {
-        var state = _stateMap.GetOrCreateValue(commandBar);
+		CommandBarState state = _stateMap.GetOrCreateValue(commandBar);
         UnhookVisibilityCallbacks(state);
 
-        foreach (var element in commandBar.PrimaryCommands.OfType<UIElement>())
+        foreach (UIElement element in commandBar.PrimaryCommands.OfType<UIElement>())
         {
             long token = element.RegisterPropertyChangedCallback(
                 UIElement.VisibilityProperty,
@@ -250,14 +250,14 @@ public static class CommandBarExtensions
 
     private static void UnhookVisibilityCallbacks(CommandBarState state)
     {
-        foreach (var (element, token) in state.VisibilityTokens)
+        foreach ((UIElement? element, long token) in state.VisibilityTokens)
             element.UnregisterPropertyChangedCallback(UIElement.VisibilityProperty, token);
         state.VisibilityTokens.Clear();
     }
 
     private static void QueueOverflowRefresh(CommandBar commandBar)
     {
-        var state = _stateMap.GetOrCreateValue(commandBar);
+		CommandBarState state = _stateMap.GetOrCreateValue(commandBar);
         if (state.RefreshQueued)
         {
             state.RefreshDirty = true;
@@ -323,7 +323,7 @@ public static class CommandBarExtensions
 
     private static void SetOverflowButtonVisibility(CommandBar commandBar, bool show)
     {
-        var target = show
+		CommandBarOverflowButtonVisibility target = show
             ? CommandBarOverflowButtonVisibility.Visible
             : CommandBarOverflowButtonVisibility.Auto;
 
@@ -338,7 +338,7 @@ public static class CommandBarExtensions
         try
         {
             commandBar.ApplyTemplate();
-            var primaryItemsControl = FindVisualChild<ItemsControl>(commandBar, "PrimaryItemsControl");
+			ItemsControl primaryItemsControl = FindVisualChild<ItemsControl>(commandBar, "PrimaryItemsControl");
             primaryItemsControl?.HorizontalAlignment = alignment;
         }
         catch { }
@@ -349,7 +349,7 @@ public static class CommandBarExtensions
         try
         {
             commandBar.ApplyTemplate();
-            var moreButton = FindVisualChild<Button>(commandBar, "MoreButton");
+			Button moreButton = FindVisualChild<Button>(commandBar, "MoreButton");
             moreButton?.HorizontalAlignment = alignment;
         }
         catch { }
@@ -360,12 +360,12 @@ public static class CommandBarExtensions
         int count = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChildrenCount(parent);
         for (int index = 0; index < count; index++)
         {
-            var child = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(parent, index);
+			DependencyObject child = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(parent, index);
             if (child is T matched && (child as FrameworkElement)?.Name == childName)
             {
                 return matched;
             }
-            var childOfChild = FindVisualChild<T>(child, childName);
+            T childOfChild = FindVisualChild<T>(child, childName);
             if (childOfChild != null)
             {
                 return childOfChild;
@@ -388,15 +388,15 @@ public static class CommandBarExtensions
 
     private static void ApplyOverflowContainerMargins(CommandBar commandBar)
     {
-        var margins = _stateMap.GetOrCreateValue(commandBar).Margins;
+		Dictionary<AppBarElementContainer, Thickness> margins = _stateMap.GetOrCreateValue(commandBar).Margins;
 
-        foreach (var container in commandBar.PrimaryCommands.OfType<AppBarElementContainer>())
+        foreach (AppBarElementContainer container in commandBar.PrimaryCommands.OfType<AppBarElementContainer>())
         {
             if (container.IsInOverflow && margins.TryAdd(container, container.Margin))
                 container.Margin = new Thickness(32, 0, 32, 4);
         }
 
-        foreach (var container in commandBar.SecondaryCommands.OfType<AppBarElementContainer>())
+        foreach (AppBarElementContainer container in commandBar.SecondaryCommands.OfType<AppBarElementContainer>())
         {
             if (margins.TryAdd(container, container.Margin))
                 container.Margin = new Thickness(32, 0, 32, 4);
@@ -405,9 +405,9 @@ public static class CommandBarExtensions
 
     private static void RestoreOverflowContainerMargins(CommandBar commandBar)
     {
-        if (_stateMap.TryGetValue(commandBar, out var state))
+        if (_stateMap.TryGetValue(commandBar, out CommandBarState? state))
         {
-            foreach (var (container, margin) in state.Margins)
+            foreach ((AppBarElementContainer? container, Thickness margin) in state.Margins)
                 container.Margin = margin;
             state.Margins.Clear();
         }

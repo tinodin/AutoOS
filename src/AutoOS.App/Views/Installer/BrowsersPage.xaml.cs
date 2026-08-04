@@ -1,6 +1,6 @@
 using Windows.Storage;
 
-namespace AutoOS.Views.Installer;
+namespace AutoOS.App.Views.Installer;
 
 public sealed partial class BrowsersPage : Page
 {
@@ -65,7 +65,7 @@ public sealed partial class BrowsersPage : Page
 
 	private void GetBrowsers()
 	{
-		var selectedBrowsers = localSettings.Values["Browsers"] as string;
+		string? selectedBrowsers = localSettings.Values["Browsers"] as string;
 		var BrowsersItems = Browsers.ItemsSource as List<GridViewItem>;
 		Browsers.SelectedItems.AddRange(
 			selectedBrowsers?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
@@ -80,7 +80,7 @@ public sealed partial class BrowsersPage : Page
 	{
 		if (isInitializingBrowsersState) return;
 
-		var selectedBrowsers = Browsers.SelectedItems
+		string[] selectedBrowsers = Browsers.SelectedItems
 			.Cast<GridViewItem>()
 			.Select(item => item.Text)
 			.ToArray();
@@ -90,7 +90,7 @@ public sealed partial class BrowsersPage : Page
 
 	private void GetExtensions()
 	{
-		var selectedExtensions = localSettings.Values["Extensions"] as string;
+		string? selectedExtensions = localSettings.Values["Extensions"] as string;
 		var extensionsItems = Extensions.ItemsSource as List<GridViewItem>;
 		Extensions.SelectedItems.AddRange(
 			selectedExtensions?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
@@ -105,7 +105,7 @@ public sealed partial class BrowsersPage : Page
 	{
 		if (isInitializingExtensionsState) return;
 
-		var selectedExtensions = Extensions.SelectedItems
+		string[] selectedExtensions = Extensions.SelectedItems
 			.Cast<GridViewItem>()
 			.Select(item => item.Text)
 			.ToArray();

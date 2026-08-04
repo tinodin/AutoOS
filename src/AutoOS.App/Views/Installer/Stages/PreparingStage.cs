@@ -1,19 +1,19 @@
-﻿using AutoOS.Core.Helpers.CPU.Models;
+using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using AutoOS.Core.Helpers.CPU;
+using AutoOS.Core.Helpers.CPU.Models;
 using AutoOS.Core.Helpers.Database;
-using AutoOS.Core.Helpers.Device.Models;
 using AutoOS.Core.Helpers.Device;
+using AutoOS.Core.Helpers.Device.Models;
 using AutoOS.Core.Helpers.Games;
 using AutoOS.Core.Helpers.GPU.Models;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
-using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
 using ValveKeyValue;
 using Windows.Storage;
 using WinRT.Interop;
 
-namespace AutoOS.Views.Installer.Stages;
+namespace AutoOS.App.Views.Installer.Stages;
 
 public static partial class PreparingStage
 {
@@ -229,7 +229,7 @@ public static partial class PreparingStage
 
 	public static async Task<(bool DiscordAccount, bool DiscordKeybinds, bool EpicGamesAccount, bool EpicGamesGames, bool SteamGames, bool RiotClientAccount, bool RiotClientGames)> CheckAccountsAndGames()
 	{
-		var systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))?.ToUpperInvariant();
+		string? systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))?.ToUpperInvariant();
 
 
 		bool discordAccount = DriveInfo.GetDrives()
@@ -243,7 +243,7 @@ public static partial class PreparingStage
 			})
 			.SelectMany(userDir =>
 			{
-				var chromium = new[]
+				IEnumerable<string> chromium = new[]
 				{
 					@"AppData\Local\Microsoft\Edge\User Data\Default\Local Storage\leveldb",
 					@"AppData\Local\Google\Chrome\User Data\Default\Local Storage\leveldb",
@@ -257,7 +257,7 @@ public static partial class PreparingStage
 				.Select(path => Path.Combine(userDir, path))
 				.Where(Directory.Exists);
 
-				var firefox = new[]
+				IEnumerable<string> firefox = new[]
 				{
 					@"AppData\Roaming\Floorp\Profiles",
 					@"AppData\Roaming\librewolf\Profiles",
@@ -281,7 +281,7 @@ public static partial class PreparingStage
 			{
 				try
 				{
-					var tokenNode = DatabaseHelper.Read(databasePath, "_https://discord.com", "token");
+					JsonNode tokenNode = DatabaseHelper.Read(databasePath, "_https://discord.com", "token");
 					string token = tokenNode?.ToString();
 					return !string.IsNullOrEmpty(token);
 				}
@@ -306,7 +306,7 @@ public static partial class PreparingStage
 			{
 				try
 				{
-					var keybindsNode = DatabaseHelper.Read(databasePath, "_https://discord.com", "keybinds");
+					JsonNode keybindsNode = DatabaseHelper.Read(databasePath, "_https://discord.com", "keybinds");
 					string keybinds = keybindsNode?.ToString();
 					return !string.IsNullOrEmpty(keybinds);
 				}
@@ -341,7 +341,7 @@ public static partial class PreparingStage
 			});
 
 		bool epicGamesGames = false;
-		var epicLauncherFile = DriveInfo.GetDrives()
+		FileInfo? epicLauncherFile = DriveInfo.GetDrives()
 			.Where(d => d.DriveType == DriveType.Fixed && d.Name != systemDrive)
 			.Select(d => Path.Combine(d.Name, "ProgramData", "Epic", "UnrealEngineLauncher", "LauncherInstalled.dat"))
 			.Where(File.Exists)
@@ -365,8 +365,8 @@ public static partial class PreparingStage
 			.OrderByDescending(f => f.LastWriteTime)
 			.Select(file =>
 			{
-				using var stream = File.OpenRead(file.FullName);
-				var kv = KVSerializer.Create(KVSerializationFormat.KeyValues1Text).Deserialize(stream);
+				using FileStream stream = File.OpenRead(file.FullName);
+				KVDocument kv = KVSerializer.Create(KVSerializationFormat.KeyValues1Text).Deserialize(stream);
 				return kv?.Root.Children.Any() == true;
 			})
 			.FirstOrDefault(false);
@@ -611,12 +611,12 @@ public static partial class PreparingStage
 			Deluge = (localSettings.Values["Miscellaneous"]?.ToString().Contains("Deluge") ?? false);
 			FreeDownloadManager = (localSettings.Values["Miscellaneous"]?.ToString().Contains("Free Download Manager") ?? false);
 
-			var gpuArray = JsonNode.Parse(localSettings.Values["GPUs"]?.ToString() ?? "[]")?.AsArray();
+			JsonArray? gpuArray = JsonNode.Parse(localSettings.Values["GPUs"]?.ToString() ?? "[]")?.AsArray();
 			if (gpuArray != null)
 			{
-				foreach (var node in gpuArray)
+				foreach (JsonNode? node in gpuArray)
 				{
-					var obj = node?.AsObject();
+					JsonObject? obj = node?.AsObject();
 					if (obj == null) continue;
 
 					GPUs.Add(new GpuInfo
@@ -643,7 +643,7 @@ public static partial class PreparingStage
 			MSI = (localSettings.Values["MsiProfile"] != null);
 			CRU = (localSettings.Values["CruProfile"] != null);
 
-			var systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))?.ToUpperInvariant();
+			string? systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))?.ToUpperInvariant();
 			ImportMonitorConfig = DriveInfo.GetDrives()
 				.Where(d => d.DriveType == DriveType.Fixed && !d.Name.Equals(systemDrive, StringComparison.InvariantCultureIgnoreCase))
 				.Select(d => Path.Combine(d.Name, "Windows", "System32", "config", "SYSTEM"))
@@ -657,14 +657,14 @@ public static partial class PreparingStage
 			SpectreMeltdownMitigations = (localSettings.Values["SpectreMeltdownMitigations"]?.ToString() == "1");
 			ProcessMitigations = (localSettings.Values["ProcessMitigations"]?.ToString() == "1");
 
-			var cpuSetsInfo = CpuHelper.GetCpuSets();
-			var (pCores, _) = CpuHelper.GroupCpuSetsByEfficiencyClass(cpuSetsInfo);
+			CpuSetsInfo cpuSetsInfo = CpuHelper.GetCpuSets();
+			(List<CpuCore>? pCores, List<CpuCore> _) = CpuHelper.GroupCpuSetsByEfficiencyClass(cpuSetsInfo);
 			PCores = pCores.Count;
 			HyperThreading = cpuSetsInfo.HyperThreading;
 
 			(DiscordAccount, DiscordKeybinds, EpicGamesAccount, EpicGamesGames, SteamGames, RiotClientAccount, RiotClientGames) = await CheckAccountsAndGames();
 
-			var nics = DeviceHelper.GetDevices(DeviceType.NIC);
+			List<DeviceInfo> nics = DeviceHelper.GetDevices(DeviceType.NIC);
 			Wifi = nics.Any(device => device.NicType == NicDeviceType.WiFi);
 			TxIntDelay = nics.Any(device => Registry.LocalMachine.OpenSubKey(device.RegistryPath).GetValue("TxIntDelay") != null);
 			NetAdapterCx = nics.Any(device => device.IsActive && device.DriverType == NicDriverType.NetAdapterCx);

@@ -1,8 +1,8 @@
-﻿using AutoOS.Core.Helpers.BIOS;
-using CommunityToolkit.Mvvm.ComponentModel;
 using System.Collections.ObjectModel;
+using AutoOS.Core.Helpers.BIOS;
+using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace AutoOS.Views.Settings.BIOS;
+namespace AutoOS.App.Views.Settings.BIOS;
 
 public partial class BiosSettingViewModel : ObservableObject
 {
@@ -67,7 +67,7 @@ public partial class BiosSettingViewModel : ObservableObject
 		get => _mergeCount;
 		set
 		{
-			var clamped = Math.Clamp(value, 0, RecommendedCount);
+			int clamped = Math.Clamp(value, 0, RecommendedCount);
 			if (SetProperty(ref _mergeCount, clamped))
 			{
 				OnPropertyChanged(nameof(CanApplyMerge));
@@ -220,13 +220,13 @@ public partial class BiosSettingViewModel : ObservableObject
 
 		var allGroupNodes = new List<BiosTreeNode>();
 
-		foreach (var grp in groups)
+		foreach (IGrouping<string, BiosSettingModel>? grp in groups)
 		{
 			var members = grp.ToList();
 
 			if (members.Count == 1)
 			{
-				var leaf = MakeLeaf(members[0]);
+				BiosTreeNode leaf = MakeLeaf(members[0]);
 				allGroupNodes.Add(leaf);
 			}
 			else
@@ -237,9 +237,9 @@ public partial class BiosSettingViewModel : ObservableObject
 					DisplayName = $"{grp.Key} ({members.Count})"
 				};
 
-				foreach (var m in members)
+				foreach (BiosSettingModel? m in members)
 				{
-					var leaf = MakeLeaf(m);
+					BiosTreeNode leaf = MakeLeaf(m);
 					groupNode.Children.Add(leaf);
 				}
 
@@ -248,7 +248,7 @@ public partial class BiosSettingViewModel : ObservableObject
 			}
 		}
 
-		foreach (var leaf in _allLeaves)
+		foreach (BiosTreeNode leaf in _allLeaves)
 		{
 			leaf.Model.ModifiedChanged += (_, _) => OnModelModified(leaf);
 			leaf.Model.ErrorsChanged += (_, _) => OnModelErrorsChanged(leaf);
@@ -260,13 +260,13 @@ public partial class BiosSettingViewModel : ObservableObject
 			DisplayName = "Recommended"
 		};
 
-		foreach (var node in allGroupNodes)
+		foreach (BiosTreeNode node in allGroupNodes)
 		{
 			if (node.NodeKind == NodeKind.Leaf)
 			{
 				if (node.Model?.IsRecommended == true)
 				{
-					var clone = CloneNode(node);
+					BiosTreeNode clone = CloneNode(node);
 					recommendedRoot.Children.Add(clone);
 				}
 			}
@@ -276,7 +276,7 @@ public partial class BiosSettingViewModel : ObservableObject
 
 				if (recommendedChildren.Count == 1)
 				{
-					var clone = CloneNode(recommendedChildren[0]);
+					BiosTreeNode clone = CloneNode(recommendedChildren[0]);
 					recommendedRoot.Children.Add(clone);
 				}
 				else if (recommendedChildren.Count > 1)
@@ -287,9 +287,9 @@ public partial class BiosSettingViewModel : ObservableObject
 						DisplayName = node.DisplayName
 					};
 
-					foreach (var child in recommendedChildren)
+					foreach (BiosTreeNode? child in recommendedChildren)
 					{
-						var childClone = CloneNode(child);
+						BiosTreeNode childClone = CloneNode(child);
 						groupClone.Children.Add(childClone);
 					}
 
@@ -298,7 +298,7 @@ public partial class BiosSettingViewModel : ObservableObject
 			}
 		}
 
-		var recommendedCount = CountLeaves(recommendedRoot);
+		int recommendedCount = CountLeaves(recommendedRoot);
 		recommendedRoot.DisplayName = $"Recommended ({recommendedCount})";
 
 		var allRoot = new BiosTreeNode
@@ -308,10 +308,10 @@ public partial class BiosSettingViewModel : ObservableObject
 			SortOrder = 1
 		};
 
-		foreach (var node in allGroupNodes)
+		foreach (BiosTreeNode node in allGroupNodes)
 			allRoot.Children.Add(node);
 
-		var allCount = CountLeaves(allRoot);
+		int allCount = CountLeaves(allRoot);
 		allRoot.DisplayName = $"All Settings ({allCount})";
 
 		_recommendedRoot = recommendedRoot;
@@ -339,10 +339,10 @@ public partial class BiosSettingViewModel : ObservableObject
 			DisplayName = $"Changes ({modifiedLeaves.Count})"
 		};
 
-		var allRoot = TreeNodes.LastOrDefault();
+		BiosTreeNode? allRoot = TreeNodes.LastOrDefault();
 		if (allRoot != null)
 		{
-			foreach (var node in allRoot.Children)
+			foreach (BiosTreeNode node in allRoot.Children)
 			{
 				if (node.NodeKind == NodeKind.Leaf)
 				{
@@ -359,14 +359,14 @@ public partial class BiosSettingViewModel : ObservableObject
 					continue;
 				}
 
-				var baseName = GetGroupBaseName(node.DisplayName);
+				string baseName = GetGroupBaseName(node.DisplayName);
 				var group = new BiosTreeNode
 				{
 					NodeKind = NodeKind.Group,
 					DiffGroupKey = baseName,
 					DisplayName = $"{baseName} ({changedChildren.Count})"
 				};
-				foreach (var child in changedChildren)
+				foreach (BiosTreeNode? child in changedChildren)
 					group.Children.Add(child);
 				group.SubscribeToChildrenErrors();
 				changesRoot.Children.Add(group);
@@ -380,7 +380,7 @@ public partial class BiosSettingViewModel : ObservableObject
 
 	private void UpdateDiffNodeIncremental(BiosTreeNode leaf)
 	{
-		var changesRoot = DiffNodes.FirstOrDefault();
+		BiosTreeNode? changesRoot = DiffNodes.FirstOrDefault();
 		if (changesRoot == null)
 		{
 			UpdateDiffNodes();
@@ -400,16 +400,16 @@ public partial class BiosSettingViewModel : ObservableObject
 
 	private void UpdateDiffNodesBulk(HashSet<BiosSettingModel> modifiedModels)
 	{
-		var changesRoot = DiffNodes.FirstOrDefault();
+		BiosTreeNode? changesRoot = DiffNodes.FirstOrDefault();
 		if (changesRoot == null)
 		{
 			UpdateDiffNodes();
 			return;
 		}
 
-		foreach (var model in modifiedModels)
+		foreach (BiosSettingModel model in modifiedModels)
 		{
-			if (_modelToLeafMap.TryGetValue(model, out var leaf))
+			if (_modelToLeafMap.TryGetValue(model, out BiosTreeNode? leaf))
 			{
 				if (leaf.Model?.IsModified == true)
 					AddLeafToDiffTree(changesRoot, leaf);
@@ -426,7 +426,7 @@ public partial class BiosSettingViewModel : ObservableObject
 	private static int CountDiffTreeLeaves(BiosTreeNode root)
 	{
 		int count = 0;
-		foreach (var child in root.Children)
+		foreach (BiosTreeNode child in root.Children)
 		{
 			if (child.NodeKind != NodeKind.Group)
 				count++;
@@ -438,13 +438,13 @@ public partial class BiosSettingViewModel : ObservableObject
 
 	private static string GetGroupBaseName(string displayName)
 	{
-		var parenIndex = displayName.LastIndexOf(" (");
+		int parenIndex = displayName.LastIndexOf(" (");
 		return parenIndex > 0 ? displayName.Substring(0, parenIndex) : displayName;
 	}
 
 	private void AddLeafToDiffTree(BiosTreeNode changesRoot, BiosTreeNode leaf)
 	{
-		var parentGroup = FindParentGroup(leaf);
+		BiosTreeNode parentGroup = FindParentGroup(leaf);
 
 		if (parentGroup == null)
 		{
@@ -464,8 +464,8 @@ public partial class BiosSettingViewModel : ObservableObject
 			return;
 		}
 
-		var baseName = GetGroupBaseName(parentGroup.DisplayName);
-		var diffGroup = changesRoot.Children
+		string baseName = GetGroupBaseName(parentGroup.DisplayName);
+		BiosTreeNode? diffGroup = changesRoot.Children
 			.OfType<BiosTreeNode>()
 			.FirstOrDefault(group => group.NodeKind == NodeKind.Group && group.DiffGroupKey == baseName);
 
@@ -485,7 +485,7 @@ public partial class BiosSettingViewModel : ObservableObject
 				DiffGroupKey = baseName,
 				DisplayName = $"{baseName} ({modifiedSiblings.Count})"
 			};
-			foreach (var sibling in modifiedSiblings)
+			foreach (BiosTreeNode? sibling in modifiedSiblings)
 			{
 				changesRoot.Children.Remove(sibling);
 				diffGroup.Children.Add(sibling);
@@ -502,7 +502,7 @@ public partial class BiosSettingViewModel : ObservableObject
 			return;
 		}
 
-		var diffGroup = changesRoot.Children
+		BiosTreeNode? diffGroup = changesRoot.Children
 			.OfType<BiosTreeNode>()
 			.FirstOrDefault(group => group.NodeKind == NodeKind.Group && group.Children.Contains(leaf));
 
@@ -516,7 +516,7 @@ public partial class BiosSettingViewModel : ObservableObject
 		}
 		else if (diffGroup.Children.Count == 1)
 		{
-			var remaining = diffGroup.Children[0];
+			BiosTreeNode remaining = diffGroup.Children[0];
 			diffGroup.Children.Clear();
 			changesRoot.Children.Remove(diffGroup);
 			changesRoot.Children.Add(remaining);
@@ -529,13 +529,13 @@ public partial class BiosSettingViewModel : ObservableObject
 
 	private void RebuildRecommendedTree()
 	{
-		var recommendedRoot = _recommendedRoot;
-		var allRoot = TreeNodes.LastOrDefault();
+		BiosTreeNode recommendedRoot = _recommendedRoot;
+		BiosTreeNode? allRoot = TreeNodes.LastOrDefault();
 		if (recommendedRoot == null || allRoot == null)
 			return;
 
 		recommendedRoot.Children.Clear();
-		foreach (var node in allRoot.Children)
+		foreach (BiosTreeNode node in allRoot.Children)
 		{
 			if (node.NodeKind == NodeKind.Leaf)
 			{
@@ -557,7 +557,7 @@ public partial class BiosSettingViewModel : ObservableObject
 					DisplayName = node.DisplayName
 				};
 
-				foreach (var child in pendingChildren)
+				foreach (BiosTreeNode? child in pendingChildren)
 					groupClone.Children.Add(CloneNode(child));
 
 				groupClone.SubscribeToChildrenErrors();
@@ -565,7 +565,7 @@ public partial class BiosSettingViewModel : ObservableObject
 			}
 		}
 
-		var count = CountLeaves(recommendedRoot);
+		int count = CountLeaves(recommendedRoot);
 		recommendedRoot.DisplayName = $"Recommended ({count})";
 		HasRecommendations = count > 0;
 
@@ -583,13 +583,13 @@ public partial class BiosSettingViewModel : ObservableObject
 
 	private void UpdateRecommendedTreeIncremental(HashSet<BiosSettingModel> modifiedModels)
 	{
-		var recommendedRoot = _recommendedRoot;
-		var allRoot = TreeNodes.LastOrDefault();
+		BiosTreeNode recommendedRoot = _recommendedRoot;
+		BiosTreeNode? allRoot = TreeNodes.LastOrDefault();
 		if (recommendedRoot == null || allRoot == null)
 			return;
 
 		var groupLookup = new Dictionary<string, BiosTreeNode>();
-		foreach (var child in recommendedRoot.Children)
+		foreach (BiosTreeNode child in recommendedRoot.Children)
 		{
 			if (child.NodeKind == NodeKind.Group)
 				groupLookup[child.DisplayName] = child;
@@ -598,7 +598,7 @@ public partial class BiosSettingViewModel : ObservableObject
 		var nodesToRemove = new List<BiosTreeNode>();
 		var groupsToClean = new List<BiosTreeNode>();
 		
-		foreach (var node in recommendedRoot.Children)
+		foreach (BiosTreeNode node in recommendedRoot.Children)
 		{
 			if (node.NodeKind == NodeKind.Leaf && node.Model != null && modifiedModels.Contains(node.Model))
 			{
@@ -610,7 +610,7 @@ public partial class BiosSettingViewModel : ObservableObject
 				int originalCount = node.Children.Count;
 				for (int i = node.Children.Count - 1; i >= 0; i--)
 				{
-					var child = node.Children[i];
+					BiosTreeNode child = node.Children[i];
 					if (child.NodeKind == NodeKind.Leaf && 
 						child.Model != null && 
 						modifiedModels.Contains(child.Model) && 
@@ -627,35 +627,35 @@ public partial class BiosSettingViewModel : ObservableObject
 			}
 		}
 
-		foreach (var node in nodesToRemove)
+		foreach (BiosTreeNode node in nodesToRemove)
 		{
 			recommendedRoot.Children.Remove(node);
 			if (node.NodeKind == NodeKind.Group)
 				groupLookup.Remove(node.DisplayName);
 		}
 
-		foreach (var group in groupsToClean)
+		foreach (BiosTreeNode group in groupsToClean)
 		{
-			var remaining = group.Children[0];
-			var index = recommendedRoot.Children.IndexOf(group);
+			BiosTreeNode remaining = group.Children[0];
+			int index = recommendedRoot.Children.IndexOf(group);
 			recommendedRoot.Children.RemoveAt(index);
 			recommendedRoot.Children.Insert(index, CloneNode(remaining));
 			groupLookup.Remove(group.DisplayName);
 		}
 
-		foreach (var model in modifiedModels)
+		foreach (BiosSettingModel model in modifiedModels)
 		{
-			if (!_modelToLeafMap.TryGetValue(model, out var leaf))
+			if (!_modelToLeafMap.TryGetValue(model, out BiosTreeNode? leaf))
 				continue;
 			
 			if (!HasPendingRecommendation(leaf))
 				continue;
 
-			var parentGroup = FindParentGroup(leaf);
+			BiosTreeNode parentGroup = FindParentGroup(leaf);
 			if (parentGroup == null)
 			{
 				bool exists = false;
-				foreach (var child in recommendedRoot.Children)
+				foreach (BiosTreeNode child in recommendedRoot.Children)
 				{
 					if (child.NodeKind == NodeKind.Leaf && child.Model == model)
 					{
@@ -668,7 +668,7 @@ public partial class BiosSettingViewModel : ObservableObject
 			}
 			else
 			{
-				if (!groupLookup.TryGetValue(parentGroup.DisplayName, out var groupNode))
+				if (!groupLookup.TryGetValue(parentGroup.DisplayName, out BiosTreeNode? groupNode))
 				{
 					var newGroup = new BiosTreeNode
 					{
@@ -683,7 +683,7 @@ public partial class BiosSettingViewModel : ObservableObject
 				else
 				{
 					bool exists = false;
-					foreach (var child in groupNode.Children)
+					foreach (BiosTreeNode child in groupNode.Children)
 					{
 						if (child.NodeKind == NodeKind.Leaf && child.Model == model)
 						{
@@ -699,17 +699,17 @@ public partial class BiosSettingViewModel : ObservableObject
 
 		for (int i = recommendedRoot.Children.Count - 1; i >= 0; i--)
 		{
-			var child = recommendedRoot.Children[i];
+			BiosTreeNode child = recommendedRoot.Children[i];
 			if (child.NodeKind == NodeKind.Group && child.Children.Count == 1)
 			{
-				var remaining = child.Children[0];
+				BiosTreeNode remaining = child.Children[0];
 				recommendedRoot.Children.RemoveAt(i);
 				recommendedRoot.Children.Insert(i, CloneNode(remaining));
 				groupLookup.Remove(child.DisplayName);
 			}
 		}
 
-		var count = CountLeaves(recommendedRoot);
+		int count = CountLeaves(recommendedRoot);
 		recommendedRoot.DisplayName = $"Recommended ({count})";
 		HasRecommendations = count > 0;
 
@@ -757,7 +757,7 @@ public partial class BiosSettingViewModel : ObservableObject
 
 	private static bool HasPendingRecommendation(BiosTreeNode node)
 	{
-		var model = node.Model;
+		BiosSettingModel model = node.Model;
 		if (model == null)
 			return false;
 
@@ -806,17 +806,17 @@ public partial class BiosSettingViewModel : ObservableObject
 			NodeKind = source.NodeKind,
 			DisplayName = source.DisplayName
 		};
-		foreach (var child in source.Children)
+		foreach (BiosTreeNode child in source.Children)
 			clone.Children.Add(CloneNode(child));
 		return clone;
 	}
 
 	private BiosTreeNode FindParentGroup(BiosTreeNode leaf)
 	{
-		var allRoot = TreeNodes.LastOrDefault();
+		BiosTreeNode? allRoot = TreeNodes.LastOrDefault();
 		if (allRoot == null) return null;
 
-		foreach (var node in allRoot.Children)
+		foreach (BiosTreeNode node in allRoot.Children)
 		{
 			if (node.NodeKind == NodeKind.Group && node.Children.Contains(leaf))
 				return node;
@@ -826,7 +826,7 @@ public partial class BiosSettingViewModel : ObservableObject
 
 	public void ApplyChangesToLines()
 	{
-		foreach (var leaf in _allLeaves.Where(leafItem => leafItem.Model?.IsModified == true))
+		foreach (BiosTreeNode? leaf in _allLeaves.Where(leafItem => leafItem.Model?.IsModified == true))
 		{
 			if (leaf.Model.HasValueField)
 				BiosSettingUpdater.UpdateValue(leaf.Model, _originalLines);
@@ -845,7 +845,7 @@ public partial class BiosSettingViewModel : ObservableObject
 	{
 		BeginHistoryBatch();
 
-		var recommendedRoot = _recommendedRoot;
+		BiosTreeNode recommendedRoot = _recommendedRoot;
 		if (recommendedRoot == null)
 		{
 			EndHistoryBatch();
@@ -862,9 +862,9 @@ public partial class BiosSettingViewModel : ObservableObject
 
 		try
 		{
-			foreach (var leaf in recommendedLeaves)
+			foreach (BiosTreeNode? leaf in recommendedLeaves)
 			{
-				var model = leaf.Model;
+				BiosSettingModel model = leaf.Model;
 				model.OriginalValue ??= model.Value;
 				model.OriginalSelectedOption ??= model.SelectedOption;
 
@@ -921,7 +921,7 @@ public partial class BiosSettingViewModel : ObservableObject
 
 		IsAnyModified = _allLeaves.Any(leaf => leaf.Model?.IsModified == true);
 
-		var parent = FindParentGroup(leaf);
+		BiosTreeNode? parent = FindParentGroup(leaf);
 		parent?.RaiseIsModifiedChanged();
 		parent?.RaiseDisplayCurrentChanged();
 		parent?.RaiseHasPendingRecommendationChanged();
@@ -946,7 +946,7 @@ public partial class BiosSettingViewModel : ObservableObject
 
 	private void OnModelErrorsChanged(BiosTreeNode leaf)
 	{
-		var parent = FindParentGroup(leaf);
+		BiosTreeNode? parent = FindParentGroup(leaf);
 		parent?.RaiseDisplayCurrentChanged();
 		parent?.RaiseHasErrorsChanged();
 		parent?.RaiseErrorsChanged(nameof(BiosTreeNode.DisplayCurrent));
@@ -954,7 +954,7 @@ public partial class BiosSettingViewModel : ObservableObject
 		leaf.RaiseHasErrorsChanged();
 		leaf.RaiseErrorsChanged(nameof(BiosTreeNode.DisplayCurrent));
 
-		foreach (var node in GetAllNodes(TreeNodes.FirstOrDefault()))
+		foreach (BiosTreeNode node in GetAllNodes(TreeNodes.FirstOrDefault()))
 			node.RaiseDisplayCurrentChanged();
 
 		RefreshFilter();
@@ -977,7 +977,7 @@ public partial class BiosSettingViewModel : ObservableObject
 	{
 		if (_batchStartState == null) return;
 
-		var nextState = CaptureState();
+		List<SettingState> nextState = CaptureState();
 		if (!StatesEqual(_batchStartState, nextState))
 		{
 			_undoStates.Push(_batchStartState);
@@ -999,7 +999,7 @@ public partial class BiosSettingViewModel : ObservableObject
 
 	private void RecordCurrentState()
 	{
-		var nextState = CaptureState();
+		List<SettingState> nextState = CaptureState();
 		if (StatesEqual(_currentState, nextState)) return;
 
 		_undoStates.Push(_currentState);
@@ -1021,7 +1021,7 @@ public partial class BiosSettingViewModel : ObservableObject
 		
 		try
 		{
-			foreach (var setting in state)
+			foreach (SettingState setting in state)
 			{
 				if (setting.Model.HasOptions)
 				{
@@ -1067,15 +1067,15 @@ public partial class BiosSettingViewModel : ObservableObject
 
 		var refreshedParents = new HashSet<BiosTreeNode>();
 		
-		foreach (var model in modifiedModels)
+		foreach (BiosSettingModel model in modifiedModels)
 		{
-			if (_modelToLeafMap.TryGetValue(model, out var leaf))
+			if (_modelToLeafMap.TryGetValue(model, out BiosTreeNode? leaf))
 			{
 				leaf.RaiseDisplayCurrentChanged();
 				leaf.RaiseHasPendingRecommendationChanged();
 				leaf.RaiseIsModifiedChanged();
 
-				var parent = FindParentGroup(leaf);
+				BiosTreeNode parent = FindParentGroup(leaf);
 				if (parent != null && refreshedParents.Add(parent))
 				{
 					parent.RaiseIsModifiedChanged();
@@ -1095,9 +1095,9 @@ public partial class BiosSettingViewModel : ObservableObject
 	private static IEnumerable<BiosTreeNode> GetAllNodes(BiosTreeNode root)
 	{
 		yield return root;
-		foreach (var child in root.Children)
+		foreach (BiosTreeNode child in root.Children)
 		{
-			foreach (var descendant in GetAllNodes(child))
+			foreach (BiosTreeNode descendant in GetAllNodes(child))
 			{
 				yield return descendant;
 			}
@@ -1108,7 +1108,7 @@ public partial class BiosSettingViewModel : ObservableObject
 	{
 		get
 		{
-			var recommendedRoot = _recommendedRoot;
+			BiosTreeNode recommendedRoot = _recommendedRoot;
 			if (recommendedRoot == null) return 0;
 			return CountLeaves(recommendedRoot);
 		}

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:dev="using:DevWinUI">
+	<Style
+		x:Key="SmallShortcutStyle"
+		BasedOn="{StaticResource DefaultShortcutStyle}"
+		TargetType="dev:Shortcut">
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="dev:Shortcut">
+					<Grid HorizontalAlignment="Left" RowSpacing="0">
+						<Grid.RowDefinitions>
+							<RowDefinition Height="Auto" />
+						</Grid.RowDefinitions>
+						<Button
+							x:Name="PART_OpenDialog"
+							Grid.Row="0"
+							Height="32"
+							MinHeight="32"
+							MaxHeight="32"
+							Padding="0"
+							CornerRadius="{ThemeResource ControlCornerRadius}">
+							<StackPanel
+								Height="32"
+								Margin="4,0"
+								VerticalAlignment="Center"
+								Orientation="Horizontal"
+								Spacing="8">
+								<ItemsControl
+									VerticalAlignment="Center"
+									IsTabStop="False"
+									ItemsSource="{TemplateBinding Keys}">
+									<ItemsControl.ItemsPanel>
+										<ItemsPanelTemplate>
+											<StackPanel Orientation="Horizontal" Spacing="4" />
+										</ItemsPanelTemplate>
+									</ItemsControl.ItemsPanel>
+									<ItemsControl.ItemTemplate>
+										<DataTemplate>
+											<dev:KeyVisual
+												Width="32"
+												Height="24"
+												MinWidth="32"
+												MinHeight="24"
+												MaxWidth="32"
+												MaxHeight="24"
+												Margin="0"
+												Padding="0"
+												VerticalAlignment="Center"
+												AutomationProperties.AccessibilityView="Raw"
+												Content="{Binding}"
+												FontWeight="Normal"
+												IsTabStop="False"
+												VisualType="SmallOutline" />
+										</DataTemplate>
+									</ItemsControl.ItemTemplate>
+								</ItemsControl>
+							</StackPanel>
+						</Button>
+					</Grid>
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
+	</Style>
+</ResourceDictionary>

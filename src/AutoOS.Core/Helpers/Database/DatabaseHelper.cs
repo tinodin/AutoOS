@@ -1,6 +1,7 @@
-﻿using LevelDB;
+﻿using System.Text;
 using System.Text.Json.Nodes;
-using System.Text;
+using LevelDB;
+using Microsoft.Data.Sqlite;
 
 namespace AutoOS.Core.Helpers.Database;
 
@@ -41,7 +42,7 @@ public static partial class DatabaseHelper
 			{
 				Directory.CreateDirectory(tempDatabasePath);
 
-				foreach (var file in Directory.GetFiles(databasePath))
+				foreach (string file in Directory.GetFiles(databasePath))
 				{
 					if (Path.GetFileName(file).Equals("LOCK", StringComparison.OrdinalIgnoreCase))
 					{
@@ -135,7 +136,7 @@ public static partial class DatabaseHelper
 		using var cmd = new Microsoft.Data.Sqlite.SqliteCommand("SELECT value, compression_type, conversion_type FROM data WHERE key = @keyName;", connection);
 		cmd.Parameters.AddWithValue("@keyName", keyName);
 
-		using var reader = cmd.ExecuteReader();
+		using SqliteDataReader reader = cmd.ExecuteReader();
 		if (reader.Read())
 		{
 			byte[] rawBytes = (byte[])reader.GetValue(0);

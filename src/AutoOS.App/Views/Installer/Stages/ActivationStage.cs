@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace AutoOS.Views.Installer.Stages;
+namespace AutoOS.App.Views.Installer.Stages;
 
 public static class ActivationStage
 {

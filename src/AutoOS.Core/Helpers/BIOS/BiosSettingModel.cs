@@ -79,7 +79,7 @@ public partial class BiosSettingModel : INotifyPropertyChanged, INotifyDataError
 				_selectedOption = value;
 				OnPropertyChanged();
 
-				foreach (var opt in Options)
+				foreach (Option opt in Options)
 					opt.IsSelected = opt == value;
 
 				ValidateValue();
@@ -114,7 +114,7 @@ public partial class BiosSettingModel : INotifyPropertyChanged, INotifyDataError
 		if (string.IsNullOrEmpty(propertyName))
 			return _warnings.Values.SelectMany(v => v);
 
-		return _warnings.TryGetValue(propertyName, out var warnings) ? warnings : null;
+		return _warnings.TryGetValue(propertyName, out List<string>? warnings) ? warnings : null;
 	}
 
 	public bool HasErrors => _warnings.Count > 0;
@@ -179,7 +179,7 @@ public partial class Option : INotifyPropertyChanged
 
 				if (_isSelected && Parent != null)
 				{
-					foreach (var opt in Parent.Options)
+					foreach (Option opt in Parent.Options)
 					{
 						if (!ReferenceEquals(opt, this) && opt.IsSelected)
 							opt.IsSelected = false;

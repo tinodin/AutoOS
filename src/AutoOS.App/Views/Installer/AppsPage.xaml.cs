@@ -1,7 +1,7 @@
 using Windows.Storage;
 using WinRT;
 
-namespace AutoOS.Views.Installer;
+namespace AutoOS.App.Views.Installer;
 
 public sealed partial class AppsPage : Page
 {
@@ -230,7 +230,7 @@ public sealed partial class AppsPage : Page
 
 	private void GetMessaging()
 	{
-		var selectedMessaging = localSettings.Values["Messaging"] as string;
+		string? selectedMessaging = localSettings.Values["Messaging"] as string;
 		var messagingItems = Messaging.ItemsSource as List<GridViewItem>;
 		Messaging.SelectedItems.AddRange(
 			selectedMessaging?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
@@ -243,7 +243,7 @@ public sealed partial class AppsPage : Page
 
 	private void GetLaunchers()
 	{
-		var selectedLaunchers = localSettings.Values["Launchers"] as string;
+		string? selectedLaunchers = localSettings.Values["Launchers"] as string;
 		var launcherItems = Launchers.ItemsSource as List<GridViewItem>;
 		Launchers.SelectedItems.AddRange(
 			selectedLaunchers?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
@@ -256,7 +256,7 @@ public sealed partial class AppsPage : Page
 
 	private void GetMusic()
 	{
-		var selectedMusic = localSettings.Values["Music"] as string;
+		string? selectedMusic = localSettings.Values["Music"] as string;
 		var musicItems = Music.ItemsSource as List<GridViewItem>;
 		Music.SelectedItems.AddRange(
 			selectedMusic?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
@@ -269,7 +269,7 @@ public sealed partial class AppsPage : Page
 
 	private void GetPeripherals()
 	{
-		var selectedPeripherals = localSettings.Values["Peripherals"] as string;
+		string? selectedPeripherals = localSettings.Values["Peripherals"] as string;
 		var peripheralItems = Peripherals.ItemsSource as List<GridViewItem>;
 		Peripherals.SelectedItems.AddRange(
 			selectedPeripherals?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
@@ -282,7 +282,7 @@ public sealed partial class AppsPage : Page
 
 	private void GetControllers()
 	{
-		var selectedControllers = localSettings.Values["Controllers"] as string;
+		string? selectedControllers = localSettings.Values["Controllers"] as string;
 		var controllersItems = Controllers.ItemsSource as List<GridViewItem>;
 		Controllers.SelectedItems.AddRange(
 			selectedControllers?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
@@ -295,7 +295,7 @@ public sealed partial class AppsPage : Page
 
 	private void GetDevelopment()
 	{
-		var selectedDevelopment = localSettings.Values["Development"] as string;
+		string? selectedDevelopment = localSettings.Values["Development"] as string;
 		var developmentItems = Development.ItemsSource as List<GridViewItem>;
 		Development.SelectedItems.AddRange(
 			selectedDevelopment?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
@@ -308,7 +308,7 @@ public sealed partial class AppsPage : Page
 
 	private void GetSysinternals()
 	{
-		var selectedSysinternals = localSettings.Values["Sysinternals"] as string;
+		string? selectedSysinternals = localSettings.Values["Sysinternals"] as string;
 		var sysinternalsItems = Sysinternals.ItemsSource as List<GridViewItem>;
 		Sysinternals.SelectedItems.AddRange(
 			selectedSysinternals?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
@@ -321,7 +321,7 @@ public sealed partial class AppsPage : Page
 
 	private void GetOverclocking()
 	{
-		var selectedOverclocking = localSettings.Values["Overclocking"] as string;
+		string? selectedOverclocking = localSettings.Values["Overclocking"] as string;
 		var overclockingItems = Overclocking.ItemsSource as List<GridViewItem>;
 		Overclocking.SelectedItems.AddRange(
 			selectedOverclocking?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
@@ -334,7 +334,7 @@ public sealed partial class AppsPage : Page
 
 	private void GetMusicProduction()
 	{
-		var selectedMusicProduction = localSettings.Values["MusicProduction"] as string;
+		string? selectedMusicProduction = localSettings.Values["MusicProduction"] as string;
 		var musicProductionItems = MusicProduction.ItemsSource as List<GridViewItem>;
 		MusicProduction.SelectedItems.AddRange(
 			selectedMusicProduction?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
@@ -347,7 +347,7 @@ public sealed partial class AppsPage : Page
 
 	private void GetVideoProduction()
 	{
-		var selectedVideoProduction = localSettings.Values["VideoProduction"] as string;
+		string? selectedVideoProduction = localSettings.Values["VideoProduction"] as string;
 		var videoProductionItems = VideoProduction.ItemsSource as List<GridViewItem>;
 		VideoProduction.SelectedItems.AddRange(
 			selectedVideoProduction?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
@@ -360,7 +360,7 @@ public sealed partial class AppsPage : Page
 
 	private void GetMultimedia()
 	{
-		var selectedMultimedia = localSettings.Values["Multimedia"] as string;
+		string? selectedMultimedia = localSettings.Values["Multimedia"] as string;
 		var multimediaItems = Multimedia.ItemsSource as List<GridViewItem>;
 		Multimedia.SelectedItems.AddRange(
 			selectedMultimedia?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
@@ -373,7 +373,7 @@ public sealed partial class AppsPage : Page
 
 	private void GetOffice()
 	{
-		var selectedOffice = localSettings.Values["Office"] as string;
+		string? selectedOffice = localSettings.Values["Office"] as string;
 		var oficeItems = Office.ItemsSource as List<GridViewItem>;
 		Office.SelectedItems.AddRange(
 			selectedOffice?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
@@ -386,7 +386,7 @@ public sealed partial class AppsPage : Page
 
 	private void GetMiscellaneous()
 	{
-		var selectedMiscellaneous = localSettings.Values["Miscellaneous"] as string;
+		string? selectedMiscellaneous = localSettings.Values["Miscellaneous"] as string;
 		var miscellaneousItems = Miscellaneous.ItemsSource as List<GridViewItem>;
 		Miscellaneous.SelectedItems.AddRange(
 			selectedMiscellaneous?.Split([", "], StringSplitOptions.RemoveEmptyEntries)
@@ -401,7 +401,7 @@ public sealed partial class AppsPage : Page
 	{
 		if (isInitializingMessagingState) return;
 
-		var selectedMessaging = Messaging.SelectedItems
+		string[] selectedMessaging = Messaging.SelectedItems
 			.Cast<GridViewItem>()
 			.Select(item => item.Text)
 			.ToArray();
@@ -413,7 +413,7 @@ public sealed partial class AppsPage : Page
 	{
 		if (isInitializingLaunchersState) return;
 
-		var selectedLaunchers = Launchers.SelectedItems
+		string[] selectedLaunchers = Launchers.SelectedItems
 			.Cast<GridViewItem>()
 			.Select(item => item.Text)
 			.ToArray();
@@ -425,7 +425,7 @@ public sealed partial class AppsPage : Page
 	{
 		if (isInitializingMusicState) return;
 
-		var selectedMusic = Music.SelectedItems
+		string[] selectedMusic = Music.SelectedItems
 			.Cast<GridViewItem>()
 			.Select(item => item.Text)
 			.ToArray();
@@ -437,7 +437,7 @@ public sealed partial class AppsPage : Page
 	{
 		if (isInitializingPeripheralsState) return;
 
-		var selectedPeripherals = Peripherals.SelectedItems
+		string[] selectedPeripherals = Peripherals.SelectedItems
 			.Cast<GridViewItem>()
 			.Select(item => item.Text)
 			.ToArray();
@@ -449,7 +449,7 @@ public sealed partial class AppsPage : Page
 	{
 		if (isInitializingControllersState) return;
 
-		var selectedControllers = Controllers.SelectedItems
+		string[] selectedControllers = Controllers.SelectedItems
 			.Cast<GridViewItem>()
 			.Select(item => item.Text)
 			.ToArray();
@@ -461,7 +461,7 @@ public sealed partial class AppsPage : Page
 	{
 		if (isInitializingDevelopmentState) return;
 
-		var selectedDevelopment = Development.SelectedItems
+		string[] selectedDevelopment = Development.SelectedItems
 			.Cast<GridViewItem>()
 			.Select(item => item.Text)
 			.ToArray();
@@ -473,7 +473,7 @@ public sealed partial class AppsPage : Page
 	{
 		if (isInitializingSysinternalsState) return;
 
-		var selectedSysinternals = Sysinternals.SelectedItems
+		string[] selectedSysinternals = Sysinternals.SelectedItems
 			.Cast<GridViewItem>()
 			.Select(item => item.Text)
 			.ToArray();
@@ -485,7 +485,7 @@ public sealed partial class AppsPage : Page
 	{
 		if (isInitializingOverclockingState) return;
 
-		var selectedOverclocking = Overclocking.SelectedItems
+		string[] selectedOverclocking = Overclocking.SelectedItems
 			.Cast<GridViewItem>()
 			.Select(item => item.Text)
 			.ToArray();
@@ -497,7 +497,7 @@ public sealed partial class AppsPage : Page
 	{
 		if (isInitializingMusicProductionState) return;
 
-		var selectedMusicProduction = MusicProduction.SelectedItems
+		string[] selectedMusicProduction = MusicProduction.SelectedItems
 			.Cast<GridViewItem>()
 			.Select(item => item.Text)
 			.ToArray();
@@ -509,7 +509,7 @@ public sealed partial class AppsPage : Page
 	{
 		if (isInitializingVideoProductionState) return;
 
-		var selectedVideoProduction = VideoProduction.SelectedItems
+		string[] selectedVideoProduction = VideoProduction.SelectedItems
 			.Cast<GridViewItem>()
 			.Select(item => item.Text)
 			.ToArray();
@@ -521,7 +521,7 @@ public sealed partial class AppsPage : Page
 	{
 		if (isInitializingMultimediaState) return;
 
-		var selectedMultimedia = Multimedia.SelectedItems
+		string[] selectedMultimedia = Multimedia.SelectedItems
 			.Cast<GridViewItem>()
 			.Select(item => item.Text)
 			.ToArray();
@@ -533,7 +533,7 @@ public sealed partial class AppsPage : Page
 	{
 		if (isInitializingOfficeState) return;
 
-		var selectedOffice = Office.SelectedItems
+		string[] selectedOffice = Office.SelectedItems
 			.Cast<GridViewItem>()
 			.Select(item => item.Text)
 			.ToArray();
@@ -545,7 +545,7 @@ public sealed partial class AppsPage : Page
 	{
 		if (isInitializingMiscellaneousState) return;
 
-		var selectedMiscellaneous = Miscellaneous.SelectedItems
+		string[] selectedMiscellaneous = Miscellaneous.SelectedItems
 			.Cast<GridViewItem>()
 			.Select(item => item.Text)
 			.ToArray();

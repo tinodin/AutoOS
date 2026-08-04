@@ -1,4 +1,9 @@
-﻿using AutoOS.Core.Common;
+﻿using System.Diagnostics;
+using System.Net.Http.Headers;
+using System.Net.Security;
+using System.Security.Authentication;
+using System.Text.Json;
+using AutoOS.Core.Common;
 using AutoOS.Core.Helpers.Download;
 using AutoOS.Core.Helpers.Extract;
 using AutoOS.Core.Helpers.GPU.Models;
@@ -6,13 +11,8 @@ using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.Store;
 using DevWinUI;
 using Microsoft.Win32;
-using System.Diagnostics;
-using System.Net.Http.Headers;
-using System.Net.Security;
-using System.Security.Authentication;
-using System.Text.Json;
-using Windows.Win32.System.Power;
 using Windows.Win32;
+using Windows.Win32.System.Power;
 
 namespace AutoOS.Core.Helpers.GPU;
 
@@ -62,7 +62,7 @@ public static partial class NvidiaHelper
             string bestMatchKey = null;
             double bestScore = -1;
 
-            foreach (var prop in section.EnumerateObject())
+            foreach (JsonProperty prop in section.EnumerateObject())
             {
                 string keyLower = prop.Name.ToLower();
                 var deviceWords = new HashSet<string>(deviceNameLower.Split(' ', '/', '-', '+'));
@@ -89,11 +89,11 @@ public static partial class NvidiaHelper
             string response = await httpClient.GetStringAsync($"https://gfwsl.geforce.com/services_toolkit/services/com/nvidia/services/AjaxDriverService.php?func=DriverManualLookup&pfid={gpuId}&osID=135&dch=1&upCRD=0");
 
             using var respDoc = JsonDocument.Parse(response);
-            var root = respDoc.RootElement;
+			JsonElement root = respDoc.RootElement;
 
             if (int.TryParse(root.GetProperty("Success").GetString(), out int success) && success == 1)
             {
-                var info = root.GetProperty("IDS")[0].GetProperty("downloadInfo");
+				JsonElement info = root.GetProperty("IDS")[0].GetProperty("downloadInfo");
                 newestVersion = info.GetProperty("Version").GetString();
                 newestDownloadUrl = info.GetProperty("DownloadURL").GetString();
             }
@@ -102,11 +102,11 @@ public static partial class NvidiaHelper
                 response = await httpClient.GetStringAsync($"https://gfwsl.geforce.com/services_toolkit/services/com/nvidia/services/AjaxDriverService.php?func=DriverManualLookup&pfid={gpuId}&osID=57&dch=1&upCRD=0");
 
                 using var respDoc2 = JsonDocument.Parse(response);
-                var root2 = respDoc2.RootElement;
+				JsonElement root2 = respDoc2.RootElement;
 
                 if (int.TryParse(root2.GetProperty("Success").GetString(), out int success2) && success2 == 1)
                 {
-                    var info = root2.GetProperty("IDS")[0].GetProperty("downloadInfo");
+					JsonElement info = root2.GetProperty("IDS")[0].GetProperty("downloadInfo");
                     newestVersion = info.GetProperty("Version").GetString();
                     newestDownloadUrl = info.GetProperty("DownloadURL").GetString();
                 }
@@ -118,7 +118,7 @@ public static partial class NvidiaHelper
 
     public static async Task StripDriver()
     {
-        foreach (var directory in Directory.GetDirectories(Path.Combine(Path.GetTempPath(), "NVIDIA", "driver")))
+        foreach (string directory in Directory.GetDirectories(Path.Combine(Path.GetTempPath(), "NVIDIA", "driver")))
         {
             string folderName = Path.GetFileName(directory);
 
@@ -132,7 +132,7 @@ public static partial class NvidiaHelper
 
         if (File.Exists(setupCfgPath))
         {
-            var lines = await File.ReadAllLinesAsync(setupCfgPath);
+			string[] lines = await File.ReadAllLinesAsync(setupCfgPath);
             var newLines = lines.Where(line => !line.Contains("<file name=\"${{EulaHtmlFile}}\"/>") && !line.Contains("<file name=\"${{FunctionalConsentFile}}\"/>") && !line.Contains("<file name=\"${{PrivacyPolicyFile}}\"/>")).ToList();
 
             await File.WriteAllLinesAsync(setupCfgPath, newLines);
@@ -142,7 +142,7 @@ public static partial class NvidiaHelper
 
         if (File.Exists(presentationsCfgPath))
         {
-            var lines = await File.ReadAllLinesAsync(presentationsCfgPath);
+			string[] lines = await File.ReadAllLinesAsync(presentationsCfgPath);
             var newLines = lines.Select(line =>
             {
                 if (line.Contains("<string name=\"ProgressPresentationUrl\""))

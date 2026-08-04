@@ -1,11 +1,12 @@
-using AutoOS.Core.Helpers.Device.Models;
+using System.Collections.ObjectModel;
 using AutoOS.Core.Helpers.Device;
+using AutoOS.Core.Helpers.Device.Models;
 using AutoOS.Core.Helpers.Network.Models;
 using Microsoft.UI.Xaml.Media;
-using System.Collections.ObjectModel;
+using Microsoft.Win32;
 using Windows.Win32;
 
-namespace AutoOS.Views.Settings;
+namespace AutoOS.App.Views.Settings;
 
 public sealed partial class InternetPage : Page
 {
@@ -28,7 +29,7 @@ public sealed partial class InternetPage : Page
 	private void GetNetworkAdapters()
 	{
 		NetworkAdapters.Clear();
-		foreach (var device in DeviceHelper.GetDevices(DeviceType.NIC))
+		foreach (DeviceInfo device in DeviceHelper.GetDevices(DeviceType.NIC))
 		{
 			if (device.NicType == NicDeviceType.WiFi || device.NicType == NicDeviceType.LAN)
 			{
@@ -42,10 +43,10 @@ public sealed partial class InternetPage : Page
 	{
 		if (sender is not SettingsGroup settingsGroup) return;
 		if (settingsGroup.DataContext is not DeviceInfo device) return;
-		var settings = device.AdvancedSettings;
+		List<NetworkAdvancedSetting> settings = device.AdvancedSettings;
 		settingsGroup.Description = $"Current version: {device.DriverType} {device.CurrentVersion}";
 
-		foreach (var setting in settings.OrderBy(s => string.IsNullOrEmpty(s.Name) || !char.IsDigit(s.Name[0])).ThenBy(s => s.Name, Comparer<string>.Create(NaturalSort)))
+		foreach (NetworkAdvancedSetting? setting in settings.OrderBy(s => string.IsNullOrEmpty(s.Name) || !char.IsDigit(s.Name[0])).ThenBy(s => s.Name, Comparer<string>.Create(NaturalSort)))
 		{
 			FrameworkElement control = setting.Type switch
 			{
@@ -167,25 +168,25 @@ public sealed partial class InternetPage : Page
 
 	private void ChangeSetting(FrameworkElement control, NetworkAdvancedSetting setting, string value, string displayValue)
 	{
-		var settingsGroup = FindParent<SettingsGroup>(control);
+		SettingsGroup settingsGroup = FindParent<SettingsGroup>(control);
 		if (settingsGroup?.DataContext is not DeviceInfo device) return;
 
 		if (!_pendingChanges.ContainsKey(device))
 			_pendingChanges[device] = [];
 
-		var deviceChanges = _pendingChanges[device];
+		Dictionary<string, (string Value, string DisplayValue)> deviceChanges = _pendingChanges[device];
 
 		if (setting.CurrentValue == value)
 			deviceChanges.Remove(setting.Key);
 		else
 			deviceChanges[setting.Key] = (value, displayValue);
 
-		var repeaterItem = FindParent<StackPanel>(settingsGroup);
+		StackPanel repeaterItem = FindParent<StackPanel>(settingsGroup);
 		if (repeaterItem == null) return;
 		var infoBarContainer = (StackPanel)repeaterItem.FindName("AdapterInfo");
 		if (infoBarContainer == null) return;
 
-		if (!_pendingChanges.TryGetValue(device, out var changes) || changes.Count == 0)
+		if (!_pendingChanges.TryGetValue(device, out Dictionary<string, (string Value, string DisplayValue)>? changes) || changes.Count == 0)
 		{
 			infoBarContainer.Children.Clear();
 			return;
@@ -221,7 +222,7 @@ public sealed partial class InternetPage : Page
 
 			bool success = await Task.Run(() =>
 			{
-				foreach (var change in changes)
+				foreach (KeyValuePair<string, (string Value, string DisplayValue)> change in changes)
 					Core.Helpers.Network.NetworkHelper.SetAdvancedSetting(device, change.Key, change.Value.Value);
 
 				return DeviceHelper.RestartDevice(device);
@@ -258,14 +259,14 @@ public sealed partial class InternetPage : Page
 	private async void Optimize_Checked(object sender, RoutedEventArgs e)
 	{
 		var button = (ProgressButton)sender;
-		var settingsGroup = FindParent<SettingsGroup>(button);
+		SettingsGroup settingsGroup = FindParent<SettingsGroup>(button);
 
 		if (settingsGroup?.DataContext is not DeviceInfo device) return;
 
 		_pendingChanges.Remove(device);
 		UpdateSettings(settingsGroup, device);
 
-		var repeaterItem = FindParent<StackPanel>(settingsGroup);
+		StackPanel repeaterItem = FindParent<StackPanel>(settingsGroup);
 		if (repeaterItem != null)
 		{
 			var infoBarContainer = (StackPanel)repeaterItem.FindName("AdapterInfo");
@@ -292,9 +293,9 @@ public sealed partial class InternetPage : Page
 	{
 		isInitializingAdvancedNetworkSettings = true;
 
-		using var deviceKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(device.RegistryPath);
+		using RegistryKey? deviceKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(device.RegistryPath);
 
-		foreach (var item in settingsGroup.Items)
+		foreach (object? item in settingsGroup.Items)
 		{
 			if (item is not SettingsCard card || card.Content is not FrameworkElement control) continue;
 			if (control.Tag is not NetworkAdvancedSetting setting) continue;

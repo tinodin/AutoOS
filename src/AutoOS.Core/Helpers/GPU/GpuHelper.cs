@@ -1,9 +1,9 @@
+using System.Net.Security;
 using AutoOS.Core.Helpers.GPU.Models;
 using DevWinUI;
-using System.Net.Security;
+using Windows.Win32;
 using Windows.Win32.Devices.DeviceAndDriverInstallation;
 using Windows.Win32.Foundation;
-using Windows.Win32;
 
 namespace AutoOS.Core.Helpers.GPU;
 
@@ -82,7 +82,7 @@ public static partial class GpuHelper
 
 					if (vendorId == "10de")
 					{
-						var versionParts = currentVersion.Split('.');
+						string[] versionParts = currentVersion.Split('.');
 						if (versionParts.Length >= 4)
 						{
 							currentVersion = string.Concat(versionParts[2].AsSpan()[1..], versionParts[3].AsSpan()[..2], ".", versionParts[3].AsSpan(2, 2));
@@ -100,9 +100,9 @@ public static partial class GpuHelper
 					{
 						pciDb ??= LoadPciDatabase();
 
-						if (pciDb.TryGetValue(vendorId, out var vendor) && vendor.Devices.TryGetValue(deviceId, out var name))
+						if (pciDb.TryGetValue(vendorId, out (string Vendor, Dictionary<string, string> Devices) vendor) && vendor.Devices.TryGetValue(deviceId, out string? name))
 						{
-							var versionParts = currentVersion?.Split('.');
+							string[]? versionParts = currentVersion?.Split('.');
 							currentVersion = versionParts?.Length >= 4 ? versionParts[2] + "." + versionParts[3] : currentVersion;
 							codename = name.Split('[')[0].Trim();
 						}
@@ -131,7 +131,7 @@ public static partial class GpuHelper
 									{
 										if (PInvoke.CM_Locate_DevNode(out uint devInst, pAudioBuffer, CM_LOCATE_DEVNODE_FLAGS.CM_LOCATE_DEVNODE_NORMAL) == CONFIGRET.CR_SUCCESS)
 										{
-											if (PInvoke.CM_Get_DevNode_Status(out var status, out var prob, devInst, 0) == CONFIGRET.CR_SUCCESS)
+											if (PInvoke.CM_Get_DevNode_Status(out CM_DEVNODE_STATUS_FLAGS status, out CM_PROB prob, devInst, 0) == CONFIGRET.CR_SUCCESS)
 											{
 												hdmidpaudio = (status & CM_DEVNODE_STATUS_FLAGS.DN_STARTED) != 0;
 												break;
@@ -151,7 +151,7 @@ public static partial class GpuHelper
 				{
 					pciDb ??= LoadPciDatabase();
 
-					if (pciDb.TryGetValue(vendorId, out var vendor) && vendor.Devices.TryGetValue(deviceId, out var name))
+					if (pciDb.TryGetValue(vendorId, out (string Vendor, Dictionary<string, string> Devices) vendor) && vendor.Devices.TryGetValue(deviceId, out string? name))
 					{
 						if (vendorId == "8086")
 							codename = name.Split('[')[0].Trim();
@@ -195,26 +195,26 @@ public static partial class GpuHelper
 		string pciPath = Path.Combine(PathHelper.GetAppDataFolderPath(), "pci.ids");
 		if (!File.Exists(pciPath))
 		{
-			var data = httpClient.GetByteArrayAsync("https://raw.githubusercontent.com/pciutils/pciids/master/pci.ids").GetAwaiter().GetResult();
+			byte[] data = httpClient.GetByteArrayAsync("https://raw.githubusercontent.com/pciutils/pciids/master/pci.ids").GetAwaiter().GetResult();
 			File.WriteAllBytes(pciPath, data);
 		}
 
 		var db = new Dictionary<string, (string Vendor, Dictionary<string, string> Devices)>(StringComparer.OrdinalIgnoreCase);
 		string currentVendor = null;
 
-		foreach (var line in File.ReadLines(pciPath))
+		foreach (string line in File.ReadLines(pciPath))
 		{
 			if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#")) continue;
 			if (!char.IsWhiteSpace(line[0]))
 			{
-				var parts = line.Split(' ', 2);
+				string[] parts = line.Split(' ', 2);
 				if (parts.Length < 2) continue;
 				currentVendor = parts[0].ToLowerInvariant();
 				db[currentVendor] = (parts[1].Trim(), new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase));
 			}
 			else if (line.StartsWith("\t") && currentVendor != null)
 			{
-				var parts = line.Trim().Split(' ', 2);
+				string[] parts = line.Trim().Split(' ', 2);
 				if (parts.Length < 2) continue;
 				db[currentVendor].Devices[parts[0].ToLowerInvariant()] = parts[1].Trim();
 			}
@@ -224,9 +224,9 @@ public static partial class GpuHelper
 
 	public static void RefreshGpu(GpuInfo gpu)
 	{
-		var all = GetGPUs();
+		List<GpuInfo> all = GetGPUs();
 
-		var updated = all.FirstOrDefault(x => x.PnPDeviceId == gpu.PnPDeviceId);
+		GpuInfo? updated = all.FirstOrDefault(x => x.PnPDeviceId == gpu.PnPDeviceId);
 
 		if (updated == null)
 			return;
@@ -266,7 +266,7 @@ public static partial class GpuHelper
 	{
 		uint requiredSize;
 		Windows.Win32.Devices.Properties.DEVPROPTYPE propType;
-		var propertyKey = PInvoke.DEVPKEY_Device_DriverVersion;
+		DEVPROPKEY propertyKey = PInvoke.DEVPKEY_Device_DriverVersion;
 
 		PInvoke.SetupDiGetDeviceProperty(
 			hDevInfo,

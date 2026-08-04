@@ -1,11 +1,11 @@
-﻿using AutoOS.Common;
+using System.Diagnostics;
+using AutoOS.App.Common;
 using AutoOS.Core.Helpers.Processes;
 using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.Store;
 using AutoOS.Core.Helpers.TaskScheduler;
-using System.Diagnostics;
 
-namespace AutoOS.Views.Installer.Stages;
+namespace AutoOS.App.Views.Installer.Stages;
 
 public static class AppxStage
 {
@@ -17,8 +17,8 @@ public static class AppxStage
 			("Uninstalling OneDrive", async () => { foreach (Process process in new[] { "OneDrive", "OneDrive.Sync.Service", "UserOOBEBroker", "FileCoAuth", "OneDrivePatcher" }.SelectMany(Process.GetProcessesByName)) { process.Kill(); process.WaitForExit(); }}, null),
 			("Uninstalling OneDrive", async () => await Process.Start(new ProcessStartInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "OneDriveSetup.exe"), "/uninstall") { CreateNoWindow = true })!.WaitForExitAsync(), null),
 			("Uninstalling OneDrive", async () => await Task.Delay(2000), null),
-			("Uninstalling OneDrive", async () => { var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft OneDrive"); foreach (var process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => Directory.Delete(path, true)); }, null),
-			("Uninstalling OneDrive", async () => { var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "OneDrive"); foreach (var process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => Directory.Delete(path, true)); }, null),
+			("Uninstalling OneDrive", async () => { string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft OneDrive"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => Directory.Delete(path, true)); }, null),
+			("Uninstalling OneDrive", async () => { string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "OneDrive"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => Directory.Delete(path, true)); }, null),
 			("Uninstalling OneDrive", async () => await RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, async () => File.Move(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "OneDriveSetup.exe"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "OneDriveSetup.exee"))), null),
 			("Uninstalling OneDrive", async () => TaskSchedulerHelper.Unregister("OneDrive Startup Task"), null)
 		};
@@ -48,7 +48,7 @@ public static class AppxStage
 			"MicrosoftWindows.Client.WebExperience_cw5n1h2txyewy"
 		};
 
-		foreach (var package in packagesToRemove)
+		foreach (string package in packagesToRemove)
 		{
 			actions.Add(($"Deprovisioning {package}", async () => await StoreHelper.Deprovision(package), null));
 			actions.Add(($"Uninstalling {package}", async () => await StoreHelper.Remove(package), null));
@@ -86,7 +86,7 @@ public static class AppxStage
 			"Microsoft.AVCEncoderVideoExtension_8wekyb3d8bbwe"
 		};
 
-		foreach (var package in packagesToUpdate)
+		foreach (string package in packagesToUpdate)
 		{
 			actions.Add(($"Updating {package}", async () => await StoreHelper.Update(package, new InstallPageReporter()), null));
 		}

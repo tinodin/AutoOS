@@ -1,13 +1,13 @@
+using System.Diagnostics;
 using AutoOS.Core.Helpers.Logging;
 using AutoOS.Core.Helpers.OS;
-using AutoOS.Views.Installer.Stages;
+using AutoOS.App.Views.Installer.Stages;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
-using System.Diagnostics;
 using Windows.Storage;
 using WinRT.Interop;
 
-namespace AutoOS.Views.Installer;
+namespace AutoOS.App.Views.Installer;
 
 public sealed partial class InstallPage : Page
 {
@@ -29,16 +29,16 @@ public sealed partial class InstallPage : Page
 	private async void InstallPage_Loaded(object sender, RoutedEventArgs e)
 	{
 		// get navview
-		var navView = MainWindow.Instance.GetNavView();
+		NavigationView navView = MainWindow.Instance.GetNavView();
 
 		// disable all menu items
-		foreach (var item in navView.MenuItems.OfType<NavigationViewItem>())
+		foreach (NavigationViewItem item in navView.MenuItems.OfType<NavigationViewItem>())
 		{
 			item.IsEnabled = false;
 		}
 
 		// rename footer item to installing autoos...
-		foreach (var item in navView.FooterMenuItems.OfType<NavigationViewItem>())
+		foreach (NavigationViewItem item in navView.FooterMenuItems.OfType<NavigationViewItem>())
 		{
 			item.Content = "Installing AutoOS...";
 		}
@@ -140,7 +140,7 @@ public sealed partial class InstallPage : Page
 			return;
 		}
 
-		var windowHandle = WindowNative.GetWindowHandle(App.MainWindow);
+		nint windowHandle = WindowNative.GetWindowHandle(App.MainWindow);
 		Status.Text = status;
 
 		var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();
@@ -160,13 +160,13 @@ public sealed partial class InstallPage : Page
 		List<Func<Task>> currentGroup = [];
 
 		int globalIndex = 0;
-		foreach (var (title, action, _) in filteredActions)
+		foreach ((string? title, Func<Task>? action, Func<bool> _) in filteredActions)
 		{
 			if (previousTitle != string.Empty && (previousTitle != title || title.Contains("downloading", StringComparison.OrdinalIgnoreCase)) && currentGroup.Count > 0)
 			{
 				int groupIndex = globalIndex - currentGroup.Count;
 				bool executed = false;
-				foreach (var groupedAction in currentGroup)
+				foreach (Func<Task> groupedAction in currentGroup)
 				{
 					if (stageIndex == savedStage && groupIndex <= savedAction) { groupIndex++; continue; }
 
@@ -239,7 +239,7 @@ public sealed partial class InstallPage : Page
 		{
 			int groupIndex = filteredActions.Count - currentGroup.Count;
 			bool executed = false;
-			foreach (var groupedAction in currentGroup)
+			foreach (Func<Task> groupedAction in currentGroup)
 			{
 				if (stageIndex == savedStage && groupIndex <= savedAction) { groupIndex++; continue; }
 

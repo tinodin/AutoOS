@@ -1,11 +1,11 @@
-using AutoOS.Core.Helpers.Device.Models;
-using AutoOS.Core.Helpers.Device;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using AutoOS.Core.Helpers.Device;
+using AutoOS.Core.Helpers.Device.Models;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.Win32;
 
-namespace AutoOS.Views.Settings;
+namespace AutoOS.App.Views.Settings;
 
 public sealed partial class DevicesPage : Page
 {
@@ -31,21 +31,21 @@ public sealed partial class DevicesPage : Page
 	private void GetBluetoothState()
 	{
 		// declare services and drivers
-		var groups = new[]
+		(string[], int)[] groups = new[]
 		{
 			(new[] { "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DeviceAssociationService", "DevicesFlowUserSvc", "DsmSvc", "NcbService", "WFDSConMgrSvc", "BthA2dp", "BthEnum", "BthHFAud", "BthHFEnum", "BthLEEnum", "BTHMODEM", "BthMini", "BthPan", "BTHPORT", "BTHUSB", "HidBth", "Microsoft_Bluetooth_AvrcpTransport", "RFCOMM", "ibtusb" }, 3),
 			(["SystemEventsBroker"], 2)
 		};
 
 		// check if values match
-		foreach (var group in groups)
+		foreach ((string[], int) group in groups)
 		{
-			foreach (var service in group.Item1)
+			foreach (string service in group.Item1)
 			{
-				using var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}");
+				using RegistryKey? key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}");
 				if (key == null) continue;
 
-				var startValue = key.GetValue("Start");
+				object? startValue = key.GetValue("Start");
 				if (startValue == null || (int)startValue != group.Item2)
 				{
 					isInitializingBluetoothState = false;
@@ -80,17 +80,17 @@ public sealed partial class DevicesPage : Page
 		});
 
 		// declare services and drivers
-		var groups = new[]
+		(string[], int)[] groups = new[]
 		{
 			(new[] { "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DeviceAssociationService", "DevicesFlowUserSvc", "DsmSvc", "NcbService", "WFDSConMgrSvc", "BthA2dp", "BthEnum", "BthHFAud", "BthHFEnum", "BthLEEnum", "BTHMODEM", "BthMini", "BthPan", "BTHPORT", "BTHUSB", "HidBth", "Microsoft_Bluetooth_AvrcpTransport", "RFCOMM", "ibtusb" }, 3),
 		};
 
 		// set start values
-		foreach (var group in groups)
+		foreach ((string[], int) group in groups)
 		{
-			foreach (var service in group.Item1)
+			foreach (string service in group.Item1)
 			{
-				using var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}", writable: true);
+				using RegistryKey? key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}", writable: true);
 				if (key == null) continue;
 
 				Registry.SetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\{service}", "Start", Bluetooth.IsOn ? group.Item2 : 4);
@@ -141,10 +141,10 @@ public sealed partial class DevicesPage : Page
 
 	private void GetXHCIControllers()
 	{
-		var devices = DeviceHelper.GetDevices(DeviceType.XHCI);
+		List<DeviceInfo> devices = DeviceHelper.GetDevices(DeviceType.XHCI);
 		XHCIs.Clear();
 
-		foreach (var device in devices)
+		foreach (DeviceInfo device in devices)
 		{
 			XHCIs.Add(device);
 			device.IsActive = DeviceHelper.GetIMODState(device);

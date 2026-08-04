@@ -1,16 +1,16 @@
-namespace AutoOS.Assets.NavViewMenu;
+namespace AutoOS.App.Assets.NavViewMenu;
 
 public partial class NavigationPageMappingsInstaller
 {
 	public static Dictionary<string, Type> PageDictionary { get; } = new Dictionary<string, Type>
 	{
-		{"AutoOS.Views.Installer.HomePage", typeof(AutoOS.Views.Installer.HomePage)},
-		{"AutoOS.Views.Installer.PersonalizationPage", typeof(AutoOS.Views.Installer.PersonalizationPage)},
-		{"AutoOS.Views.Installer.BrowsersPage", typeof(AutoOS.Views.Installer.BrowsersPage)},
-		{"AutoOS.Views.Installer.AppsPage", typeof(AutoOS.Views.Installer.AppsPage)},
-		{"AutoOS.Views.Installer.DisplaysPage", typeof(AutoOS.Views.Installer.DisplaysPage)},
-		{"AutoOS.Views.Installer.GraphicsPage", typeof(AutoOS.Views.Installer.GraphicsPage)},
-		{"AutoOS.Views.Installer.SecurityPage", typeof(AutoOS.Views.Installer.SecurityPage)},
-		{"AutoOS.Views.Installer.InstallPage", typeof(AutoOS.Views.Installer.InstallPage)},
+		{"AutoOS.App.Views.Installer.HomePage", typeof(AutoOS.App.Views.Installer.HomePage)},
+		{"AutoOS.App.Views.Installer.PersonalizationPage", typeof(AutoOS.App.Views.Installer.PersonalizationPage)},
+		{"AutoOS.App.Views.Installer.BrowsersPage", typeof(AutoOS.App.Views.Installer.BrowsersPage)},
+		{"AutoOS.App.Views.Installer.AppsPage", typeof(AutoOS.App.Views.Installer.AppsPage)},
+		{"AutoOS.App.Views.Installer.DisplaysPage", typeof(AutoOS.App.Views.Installer.DisplaysPage)},
+		{"AutoOS.App.Views.Installer.GraphicsPage", typeof(AutoOS.App.Views.Installer.GraphicsPage)},
+		{"AutoOS.App.Views.Installer.SecurityPage", typeof(AutoOS.App.Views.Installer.SecurityPage)},
+		{"AutoOS.App.Views.Installer.InstallPage", typeof(AutoOS.App.Views.Installer.InstallPage)},
 	};
 }

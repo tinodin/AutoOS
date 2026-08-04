@@ -1,14 +1,14 @@
-using AutoOS.Core.Helpers.Registry;
-using AutoOS.Views.Installer.Actions;
-using Microsoft.UI.Xaml.Media.Imaging;
-using Microsoft.UI.Xaml.Media;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
-using Windows.Storage.FileProperties;
+using AutoOS.Core.Helpers.Registry;
+using AutoOS.App.Views.Installer.Actions;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Storage;
+using Windows.Storage.FileProperties;
 
-namespace AutoOS.Views.Settings;
+namespace AutoOS.App.Views.Settings;
 
 public sealed partial class DiskCleanupPage : Page
 {
@@ -37,7 +37,7 @@ public sealed partial class DiskCleanupPage : Page
 	{
 		var result = new ObservableCollection<DriveModel>();
 
-		foreach (var drive in DriveInfo.GetDrives().Where(d => d.IsReady))
+		foreach (DriveInfo? drive in DriveInfo.GetDrives().Where(d => d.IsReady))
 		{
 			double totalGiB = drive.TotalSize / 1073741824d;
 			double freeGiB = drive.TotalFreeSpace / 1073741824d;
@@ -53,8 +53,8 @@ public sealed partial class DiskCleanupPage : Page
 
 			try
 			{
-				var folder = await StorageFolder.GetFolderFromPathAsync(drive.Name);
-				using var thumb = await folder.GetThumbnailAsync(ThumbnailMode.SingleItem, 32, ThumbnailOptions.UseCurrentScale);
+				StorageFolder folder = await StorageFolder.GetFolderFromPathAsync(drive.Name);
+				using StorageItemThumbnail thumb = await folder.GetThumbnailAsync(ThumbnailMode.SingleItem, 32, ThumbnailOptions.UseCurrentScale);
 				if (thumb != null)
 				{
 					var bmp = new BitmapImage();
@@ -72,9 +72,9 @@ public sealed partial class DiskCleanupPage : Page
 
 	private void UpdateDrives()
 	{
-		foreach (var drive in DriveInfo.GetDrives().Where(d => d.IsReady))
+		foreach (DriveInfo? drive in DriveInfo.GetDrives().Where(d => d.IsReady))
 		{
-			var model = drives.FirstOrDefault(d => d.Name == drive.Name.TrimEnd('\\'));
+			DriveModel? model = drives.FirstOrDefault(d => d.Name == drive.Name.TrimEnd('\\'));
 			if (model == null) continue;
 
 			double totalGiB = drive.TotalSize / 1073741824d;
@@ -116,7 +116,7 @@ public sealed partial class DiskCleanupPage : Page
 
 	private void RunDiskCleanup_Unchecked(object sender, RoutedEventArgs e)
 	{
-		foreach (var proc in Process.GetProcessesByName("cleanmgr"))
+		foreach (Process proc in Process.GetProcessesByName("cleanmgr"))
 			proc.Kill(true);
 
 		UpdateDrives();

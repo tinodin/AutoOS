@@ -1,8 +1,8 @@
-﻿using DevWinUI;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using DevWinUI;
 
 namespace AutoOS.Core.Helpers.Games;
 
@@ -22,32 +22,32 @@ public static partial class RyujinxHelper
 
 			if (!File.Exists(filePath))
 			{
-				var content = await httpClient.GetStringAsync("https://raw.githubusercontent.com/blawar/titledb/refs/heads/master/US.en.json");
+				string content = await httpClient.GetStringAsync("https://raw.githubusercontent.com/blawar/titledb/refs/heads/master/US.en.json");
 				Directory.CreateDirectory(Path.GetDirectoryName(filePath));
 				await File.WriteAllTextAsync(filePath, content);
 			}
 
 			// get game dirs
-			using var stream = File.OpenRead(Path.Combine(dataPath, "Config.json"));
-			using var configDoc = await JsonDocument.ParseAsync(stream);
-			var config = configDoc.RootElement;
+			using FileStream stream = File.OpenRead(Path.Combine(dataPath, "Config.json"));
+			using JsonDocument configDoc = await JsonDocument.ParseAsync(stream);
+			JsonElement config = configDoc.RootElement;
 
 			var gameDirs = new List<string>();
-			if (config.TryGetProperty("game_dirs", out var dirs) && dirs.ValueKind == JsonValueKind.Array)
-				foreach (var dir in dirs.EnumerateArray())
+			if (config.TryGetProperty("game_dirs", out JsonElement dirs) && dirs.ValueKind == JsonValueKind.Array)
+				foreach (JsonElement dir in dirs.EnumerateArray())
 					gameDirs.Add(dir.GetString() ?? "");
 
 			// read json database
-			using var fs = File.OpenRead(Path.Combine(PathHelper.GetAppDataFolderPath(), "Ryujinx", "US.en.json"));
-			using var doc = await JsonDocument.ParseAsync(fs);
+			using FileStream fs = File.OpenRead(Path.Combine(PathHelper.GetAppDataFolderPath(), "Ryujinx", "US.en.json"));
+			using JsonDocument doc = await JsonDocument.ParseAsync(fs);
 
 			var jsonById = new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
 
-			foreach (var kvp in doc.RootElement.EnumerateObject())
+			foreach (JsonProperty kvp in doc.RootElement.EnumerateObject())
 			{
-				if (kvp.Value.TryGetProperty("id", out var idElem))
+				if (kvp.Value.TryGetProperty("id", out JsonElement idElem))
 				{
-					var key = idElem.GetString()?.ToLowerInvariant();
+					string? key = idElem.GetString()?.ToLowerInvariant();
 					if (!string.IsNullOrEmpty(key))
 					{
 						jsonById.TryAdd(key, kvp.Value);
@@ -59,11 +59,11 @@ public static partial class RyujinxHelper
 			var candidatesPerDir = new Dictionary<string, List<string>>();
 			var validExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ".nsp", ".xci" };
 
-			foreach (var gameDir in gameDirs)
+			foreach (string gameDir in gameDirs)
 			{
 				if (!Directory.Exists(gameDir)) continue;
 
-				var matches = Directory.EnumerateFiles(gameDir)
+				IEnumerable<string> matches = Directory.EnumerateFiles(gameDir)
 				.Where(f => validExtensions.Contains(Path.GetExtension(f)));
 
 				candidatesPerDir[gameDir] = [.. matches];
@@ -72,11 +72,11 @@ public static partial class RyujinxHelper
 			await Parallel.ForEachAsync(Directory.GetDirectories(Path.Combine(dataPath, "games")), new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount * 2 }, (Func<string, CancellationToken, ValueTask>)(async (folder, _) =>
 			{
 				// check if game exists in database
-				if (!jsonById.TryGetValue(Path.GetFileName(folder).Trim().ToLowerInvariant(), out var entry))
+				if (!jsonById.TryGetValue(Path.GetFileName(folder).Trim().ToLowerInvariant(), out JsonElement entry))
 					return;
 
 				// get name from database
-				string name = entry.TryGetProperty("name", out var nameElement) ? nameElement.GetString() : null;
+				string name = entry.TryGetProperty("name", out JsonElement nameElement) ? nameElement.GetString() : null;
 
 				// clean name for searching
 				if (string.IsNullOrWhiteSpace(name)) return;
@@ -88,12 +88,12 @@ public static partial class RyujinxHelper
 				// find install location
 				string bestInstallLocation = null;
 
-				foreach (var gameDir in candidatesPerDir.Keys)
+				foreach (string gameDir in candidatesPerDir.Keys)
 				{
-					var candidates = candidatesPerDir[gameDir];
+					List<string> candidates = candidatesPerDir[gameDir];
 					bestInstallLocation = candidates.FirstOrDefault((Func<string, bool>)(candidate =>
 					{
-						var simpleFileName = SimpleCleanNameRegex().Replace(Path.GetFileNameWithoutExtension(candidate).ToLowerInvariant(), "");
+						string simpleFileName = SimpleCleanNameRegex().Replace(Path.GetFileNameWithoutExtension(candidate).ToLowerInvariant(), "");
 						return simpleFileName.StartsWith(simpleCleanName, StringComparison.Ordinal);
 					}))?.Replace("/", "\\");
 					if (bestInstallLocation != null)
@@ -104,19 +104,19 @@ public static partial class RyujinxHelper
 					return;
 
 				// search on igdb
-				var result = await IgdbHelper.SearchCovers(cleanName);
+				Dictionary<string, string> result = await IgdbHelper.SearchCovers(cleanName);
 				if (result == null) return;
 
 				// get playtime
 				string metadataPath = Path.Combine(folder, "gui", "metadata.json");
 				if (!File.Exists(metadataPath)) return;
 
-				var metadataText = await File.ReadAllTextAsync(metadataPath);
+				string metadataText = await File.ReadAllTextAsync(metadataPath);
 				using var metadataDoc = JsonDocument.Parse(metadataText);
-				var metadataObj = metadataDoc.RootElement;
+				JsonElement metadataObj = metadataDoc.RootElement;
 
 				string playTime = "0m";
-				if (metadataObj.TryGetProperty("timespan_played", out var timespanElement) && TimeSpan.TryParse(timespanElement.GetString(), out TimeSpan ts))
+				if (metadataObj.TryGetProperty("timespan_played", out JsonElement timespanElement) && TimeSpan.TryParse(timespanElement.GetString(), out TimeSpan ts))
 				{
 					playTime = (int)ts.TotalHours > 0 ? $"{(int)ts.TotalHours}h {ts.Minutes}m" : $"{ts.Minutes}m";
 				}
@@ -125,7 +125,7 @@ public static partial class RyujinxHelper
 				long sizeBytes = new FileInfo(bestInstallLocation).Length;
 
 				using var docData = JsonDocument.Parse(await httpClient.GetStringAsync(result["game_url"], _));
-				var data = docData.RootElement.Clone();
+				JsonElement data = docData.RootElement.Clone();
 
 				games.Add(new GameModel
 				{

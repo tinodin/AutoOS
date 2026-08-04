@@ -35,7 +35,7 @@ public static class RecordingAnalyzer
         List<double> untilDisplayed = [with(4096)];
         List<double> renderPresentLatency = [with(4096)];
 
-        using var reader = Sep.Reader(o => o with { Sep = new Sep(','), Unescape = true, ColNameComparer = StringComparer.OrdinalIgnoreCase }).FromFile(filePath);
+        using SepReader reader = Sep.Reader(o => o with { Sep = new Sep(','), Unescape = true, ColNameComparer = StringComparer.OrdinalIgnoreCase }).FromFile(filePath);
 
         reader.Header.TryIndexOf("MsBetweenDisplayChange", out int idxDisplayChange);
         reader.Header.TryIndexOf("MsBetweenPresents", out int idxPresents);
@@ -45,7 +45,7 @@ public static class RecordingAnalyzer
 
         while (reader.MoveNext())
         {
-            var row = reader.Current;
+			SepReader.Row row = reader.Current;
             if (idxDisplayChange >= 0 && idxDisplayChange < row.ColCount &&
                 row[idxDisplayChange].TryParse(out double displayChangeValue))
                 displayChange.Add(displayChangeValue);
@@ -92,7 +92,7 @@ public static class RecordingAnalyzer
     {
         if (raw.Count == 0)
             return new Metrics();
-        var values = isFps ? raw.Where(v => v > 0).Select(v => 1000.0 / v).ToArray() : [.. raw];
+		double[] values = isFps ? raw.Where(v => v > 0).Select(v => 1000.0 / v).ToArray() : [.. raw];
         return BenchmarkStatistics.CalculateMetrics(values, isFpsMetric: isFps);
     }
 
@@ -102,7 +102,7 @@ public static class RecordingAnalyzer
             return [];
 
         int sampleSize = Convert.ToInt32(Math.Sqrt(sequence.Average()) * 10);
-        var result = new double[sequence.Count];
+		double[] result = new double[sequence.Count];
 
         for (int i = 0; i < sequence.Count; i++)
         {

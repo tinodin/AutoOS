@@ -1,9 +1,9 @@
-﻿using AutoOS.Core.Helpers.Registry;
-using Microsoft.Win32;
 using System.Diagnostics;
 using System.ServiceProcess;
+using AutoOS.Core.Helpers.Registry;
+using Microsoft.Win32;
 
-namespace AutoOS.Views.Settings;
+namespace AutoOS.App.Views.Settings;
 
 public sealed partial class ServicesPage : Page
 {
@@ -28,7 +28,7 @@ public sealed partial class ServicesPage : Page
 	private void GetServicesState()
 	{
 		// check state
-		using (var key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\Beep"))
+		using (RegistryKey? key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\Beep"))
 		{
 			Services.IsOn = (int)(key.GetValue("Start", 0)) == 1;
 		}
@@ -151,8 +151,8 @@ public sealed partial class ServicesPage : Page
 	private void GetWIFIState()
 	{
 		// define services and drivers
-		var services = new[] { "WlanSvc", "Netman", "NetSetupSvc", "NlaSvc", "Wcmsvc", "WinHttpAutoProxySvc" };
-		var drivers = new[] { "# tdx", "# vwififlt", "# Netwtw10", "# Netwtw14" };
+		string[] services = new[] { "WlanSvc", "Netman", "NetSetupSvc", "NlaSvc", "Wcmsvc", "WinHttpAutoProxySvc" };
+		string[] drivers = new[] { "# tdx", "# vwififlt", "# Netwtw10", "# Netwtw14" };
 
 		// check state
 		WIFI.IsChecked = services.All(service => File.ReadAllLines(list).Any(line => line.Trim() == service))
@@ -184,11 +184,11 @@ public sealed partial class ServicesPage : Page
 		});
 
 		// read list
-		var lines = await File.ReadAllLinesAsync(list);
+		string[] lines = await File.ReadAllLinesAsync(list);
 
 		// define services and drivers
-		var services = new[] { "WlanSvc", "Netman", "NetSetupSvc", "NlaSvc", "Wcmsvc", "WinHttpAutoProxySvc" };
-		var drivers = new[] { "tdx", "vwififlt", "Netwtw10", "Netwtw14" };
+		string[] services = new[] { "WlanSvc", "Netman", "NetSetupSvc", "NlaSvc", "Wcmsvc", "WinHttpAutoProxySvc" };
+		string[] drivers = new[] { "tdx", "vwififlt", "Netwtw10", "Netwtw14" };
 
 		// make changes
 		bool isChecked = WIFI.IsChecked == true;
@@ -223,11 +223,11 @@ public sealed partial class ServicesPage : Page
 			];
 
 			// set start values
-			foreach (var group in groups)
+			foreach ((string[], int) group in groups)
 			{
-				foreach (var service in group.Item1)
+				foreach (string service in group.Item1)
 				{
-					using (var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}", writable: true))
+					using (RegistryKey? key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}", writable: true))
 					{
 						if (key == null) continue;
 
@@ -306,8 +306,8 @@ public sealed partial class ServicesPage : Page
 	private void GetBluetoothState()
 	{
 		// define services and drivers
-		var services = new[] { "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DeviceAssociationService", "DevicesFlowUserSvc", "DsmSvc", "NcbService", "WFDSConMgrSvc" };
-		var drivers = new[] { "# BthA2dp", "# BthEnum", "# BthHFAud", "# BthHFEnum", "# BthLEEnum", "# BthMini", "# BTHMODEM", "# BthPan", "# BTHPORT", "# BTHUSB", "# HidBth", "# ibtusb", "# Microsoft_Bluetooth_AvrcpTransport", "# RFCOMM" };
+		string[] services = new[] { "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DeviceAssociationService", "DevicesFlowUserSvc", "DsmSvc", "NcbService", "WFDSConMgrSvc" };
+		string[] drivers = new[] { "# BthA2dp", "# BthEnum", "# BthHFAud", "# BthHFEnum", "# BthLEEnum", "# BthMini", "# BTHMODEM", "# BthPan", "# BTHPORT", "# BTHUSB", "# HidBth", "# ibtusb", "# Microsoft_Bluetooth_AvrcpTransport", "# RFCOMM" };
 
 		// check state
 		Bluetooth.IsChecked = services.All(service => File.ReadAllLines(list).Any(line => line.Trim() == service))
@@ -339,11 +339,11 @@ public sealed partial class ServicesPage : Page
 		});
 
 		// read list
-		var lines = await File.ReadAllLinesAsync(list);
+		string[] lines = await File.ReadAllLinesAsync(list);
 
 		// define services and drivers
-		var services = new[] { "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DeviceAssociationService", "DevicesFlowUserSvc", "DsmSvc", "NcbService", "WFDSConMgrSvc" };
-		var drivers = new[] { "BthA2dp", "BthEnum", "BthHFAud", "BthHFEnum", "BthLEEnum", "BthMini", "BTHMODEM", "BthPan", "BTHPORT", "BTHUSB", "HidBth", "ibtusb", "Microsoft_Bluetooth_AvrcpTransport", "RFCOMM" };
+		string[] services = new[] { "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DeviceAssociationService", "DevicesFlowUserSvc", "DsmSvc", "NcbService", "WFDSConMgrSvc" };
+		string[] drivers = new[] { "BthA2dp", "BthEnum", "BthHFAud", "BthHFEnum", "BthLEEnum", "BthMini", "BTHMODEM", "BthPan", "BTHPORT", "BTHUSB", "HidBth", "ibtusb", "Microsoft_Bluetooth_AvrcpTransport", "RFCOMM" };
 
 		// make changes
 		bool isChecked = Bluetooth.IsChecked == true;
@@ -370,17 +370,17 @@ public sealed partial class ServicesPage : Page
 		if (isChecked)
 		{
 			// declare services and drivers
-			var groups = new[]
+			(string[], int)[] groups = new[]
 			{
 				(new[] { "BluetoothUserService", "BTAGService", "BthAvctpSvc", "bthserv", "DeviceAssociationService", "DevicesFlowUserSvc", "DsmSvc", "NcbService", "WFDSConMgrSvc", "BthA2dp", "BthEnum", "BthHFAud", "BthHFEnum", "BthLEEnum", "BTHMODEM", "BthMini", "BthPan", "BTHPORT", "BTHUSB", "HidBth", "Microsoft_Bluetooth_AvrcpTransport", "RFCOMM", "ibtusb" }, 3),
 			};
 
 			// set start values
-			foreach (var group in groups)
+			foreach ((string[], int) group in groups)
 			{
-				foreach (var service in group.Item1)
+				foreach (string service in group.Item1)
 				{
-					using (var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}", writable: true))
+					using (RegistryKey? key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}", writable: true))
 					{
 						if (key == null) continue;
 

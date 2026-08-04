@@ -1,6 +1,7 @@
-using AutoOS.Views.Settings.BIOS;
+using System.Reflection;
+using AutoOS.App.Views.Settings.BIOS;
 
-namespace AutoOS.Common;
+namespace AutoOS.App.Common;
 
 public class TreeGridSortComparer : IComparer<object>
 {
@@ -17,9 +18,9 @@ public class TreeGridSortComparer : IComparer<object>
         if (node1.IsRoot) return -1;
         if (node2.IsRoot) return 1;
 
-        var prop = typeof(BiosTreeNode).GetProperty(PropertyName);
-        var val1 = prop?.GetValue(node1)?.ToString() ?? string.Empty;
-        var val2 = prop?.GetValue(node2)?.ToString() ?? string.Empty;
+		PropertyInfo? prop = typeof(BiosTreeNode).GetProperty(PropertyName);
+		string val1 = prop?.GetValue(node1)?.ToString() ?? string.Empty;
+		string val2 = prop?.GetValue(node2)?.ToString() ?? string.Empty;
 
         return string.Compare(val1, val2, StringComparison.OrdinalIgnoreCase);
     }

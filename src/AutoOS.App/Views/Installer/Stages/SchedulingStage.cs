@@ -2,7 +2,7 @@ using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.Scheduling;
 using Microsoft.Win32;
 
-namespace AutoOS.Views.Installer.Stages;
+namespace AutoOS.App.Views.Installer.Stages;
 
 public static class SchedulingStage
 {

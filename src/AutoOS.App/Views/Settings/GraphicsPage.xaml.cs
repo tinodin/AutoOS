@@ -1,20 +1,20 @@
-using AutoOS.Common;
-using AutoOS.Core.Helpers.Device.Models;
-using AutoOS.Core.Helpers.Device;
-using AutoOS.Core.Helpers.GPU.Models;
-using AutoOS.Core.Helpers.GPU;
-using AutoOS.Core.Helpers.Picker;
-using AutoOS.Core.Helpers.Registry;
-using AutoOS.Core.Helpers.Scheduling;
-using AutoOS.Views.Installer.Actions;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.ServiceProcess;
+using AutoOS.App.Common;
+using AutoOS.Core.Helpers.Device;
+using AutoOS.Core.Helpers.Device.Models;
+using AutoOS.Core.Helpers.GPU;
+using AutoOS.Core.Helpers.GPU.Models;
+using AutoOS.Core.Helpers.Picker;
+using AutoOS.Core.Helpers.Registry;
+using AutoOS.Core.Helpers.Scheduling;
+using AutoOS.App.Views.Installer.Actions;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.Win32;
 using Windows.Storage;
 
-namespace AutoOS.Views.Settings;
+namespace AutoOS.App.Views.Settings;
 
 public sealed partial class GraphicsPage : Page
 {
@@ -46,29 +46,29 @@ public sealed partial class GraphicsPage : Page
 
 	public void GetGpus()
 	{
-		var detectedGpus = GpuHelper.GetGPUs();
+		List<GpuInfo> detectedGpus = GpuHelper.GetGPUs();
 		detectedGpus = [.. detectedGpus.OrderBy(g => g.Location)];
 		GPUs.Clear();
 
-		foreach (var gpu in detectedGpus)
+		foreach (GpuInfo gpu in detectedGpus)
 		{
 			GPUs.Add(gpu);
 
 			if (!gpu.IsInstalled)
 			{
-				if (localSettings.Values.TryGetValue($"PStates_{gpu.PnPDeviceId}", out var pstates))
+				if (localSettings.Values.TryGetValue($"PStates_{gpu.PnPDeviceId}", out object? pstates))
 					gpu.PStates = Convert.ToBoolean(pstates);
 
-				if (localSettings.Values.TryGetValue($"ECC_{gpu.PnPDeviceId}", out var ecc))
+				if (localSettings.Values.TryGetValue($"ECC_{gpu.PnPDeviceId}", out object? ecc))
 					gpu.ECC = Convert.ToBoolean(ecc);
 
-				if (localSettings.Values.TryGetValue($"GspFirmware_{gpu.PnPDeviceId}", out var gspfirmware))
+				if (localSettings.Values.TryGetValue($"GspFirmware_{gpu.PnPDeviceId}", out object? gspfirmware))
 					gpu.GspFirmware = Convert.ToBoolean(gspfirmware);
 
-				if (localSettings.Values.TryGetValue($"HDCP_{gpu.PnPDeviceId}", out var hdcp))
+				if (localSettings.Values.TryGetValue($"HDCP_{gpu.PnPDeviceId}", out object? hdcp))
 					gpu.HDCP = Convert.ToBoolean(hdcp);
 
-				if (localSettings.Values.TryGetValue($"HDMIDPAudio_{gpu.PnPDeviceId}", out var hdmidpaudio))
+				if (localSettings.Values.TryGetValue($"HDMIDPAudio_{gpu.PnPDeviceId}", out object? hdmidpaudio))
 					gpu.HDMIDPAudio = Convert.ToBoolean(hdmidpaudio);
 			}
 		}
@@ -100,12 +100,12 @@ public sealed partial class GraphicsPage : Page
 				if (new ServiceController("Beep").Status == ServiceControllerStatus.Running)
 				{
 					// save affinity
-					var savedConfig = SaveAffinity();
+					Dictionary<string, DeviceInfo> savedConfig = SaveAffinity();
 
 					// close obs studio
 					if (Process.GetProcessesByName("obs64").Length > 0)
 					{
-						foreach (var process in Process.GetProcessesByName("obs64"))
+						foreach (Process process in Process.GetProcessesByName("obs64"))
 						{
 							process.Kill();
 							await process.WaitForExitAsync();
@@ -173,7 +173,7 @@ public sealed partial class GraphicsPage : Page
 					// close obs studio
 					if (Process.GetProcessesByName("obs64").Length > 0)
 					{
-						foreach (var process in Process.GetProcessesByName("obs64"))
+						foreach (Process process in Process.GetProcessesByName("obs64"))
 						{
 							process.Kill();
 							await process.WaitForExitAsync();
@@ -203,7 +203,7 @@ public sealed partial class GraphicsPage : Page
 
 					if (!wasInstalled)
 					{
-						var deviceInfo = DeviceHelper.GetDevices(DeviceType.GPU).FirstOrDefault(device => device.PnpDeviceId == gpu.PnPDeviceId);
+						DeviceInfo? deviceInfo = DeviceHelper.GetDevices(DeviceType.GPU).FirstOrDefault(device => device.PnpDeviceId == gpu.PnPDeviceId);
 						if (deviceInfo != null)
 						{
 							await SchedulingHelper.OptimizeAffinities(deviceInfo);
@@ -262,7 +262,7 @@ public sealed partial class GraphicsPage : Page
 			{
 				await Task.Delay(500);
 
-				var currentVersion = gpu.CurrentVersion;
+				string currentVersion = gpu.CurrentVersion;
 
 				if (string.Compare(newestVersion, currentVersion, StringComparison.Ordinal) > 0)
 				{
@@ -301,13 +301,13 @@ public sealed partial class GraphicsPage : Page
 		List<Func<Task>> currentGroup = [];
 		string previousTitle = string.Empty;
 
-		foreach (var (title, action, _) in filteredActions)
+		foreach ((string? title, Func<Task>? action, Func<bool> _) in filteredActions)
 		{
 			if (!string.IsNullOrEmpty(previousTitle) && previousTitle != title && currentGroup.Count > 0)
 			{
 				progressButton.CheckedContent = previousTitle;
 
-				foreach (var groupedAction in currentGroup)
+				foreach (Func<Task> groupedAction in currentGroup)
 				{
 					await groupedAction();
 				}
@@ -323,7 +323,7 @@ public sealed partial class GraphicsPage : Page
 		if (currentGroup.Count > 0)
 		{
 			progressButton.CheckedContent = previousTitle;
-			foreach (var groupedAction in currentGroup)
+			foreach (Func<Task> groupedAction in currentGroup)
 			{
 				await groupedAction();
 			}
@@ -339,9 +339,9 @@ public sealed partial class GraphicsPage : Page
 	internal static Dictionary<string, DeviceInfo> SaveAffinity()
 	{
 		var deviceConfig = new Dictionary<string, DeviceInfo>();
-		var gpuDevices = DeviceHelper.GetDevices(DeviceType.GPU);
+		List<DeviceInfo> gpuDevices = DeviceHelper.GetDevices(DeviceType.GPU);
 
-		foreach (var device in gpuDevices)
+		foreach (DeviceInfo device in gpuDevices)
 		{
 			string deviceKey = !string.IsNullOrEmpty(device.PnpDeviceId) ? device.PnpDeviceId : device.DevObjName ?? string.Empty;
 			deviceConfig[deviceKey] = device;
@@ -359,13 +359,13 @@ public sealed partial class GraphicsPage : Page
 		await Task.Delay(500);
 
 		var changedDevices = new List<DeviceInfo>();
-		var gpuDevicesAfterUpdate = DeviceHelper.GetDevices(DeviceType.GPU);
+		List<DeviceInfo> gpuDevicesAfterUpdate = DeviceHelper.GetDevices(DeviceType.GPU);
 
-		foreach (var device in gpuDevicesAfterUpdate)
+		foreach (DeviceInfo device in gpuDevicesAfterUpdate)
 		{
 			string deviceKey = !string.IsNullOrEmpty(device.PnpDeviceId) ? device.PnpDeviceId : device.DevObjName ?? string.Empty;
 
-			if (!string.IsNullOrEmpty(deviceKey) && deviceConfig.TryGetValue(deviceKey, out var savedDevice))
+			if (!string.IsNullOrEmpty(deviceKey) && deviceConfig.TryGetValue(deviceKey, out DeviceInfo? savedDevice))
 			{
 				bool settingsChanged = device.DevicePolicy != savedDevice.DevicePolicy || device.DevicePriority != savedDevice.DevicePriority || device.AssignmentSetOverride != savedDevice.AssignmentSetOverride;
 
@@ -420,7 +420,7 @@ public sealed partial class GraphicsPage : Page
 		{
 			if (toggleSwitch.IsOn)
 			{
-				using var key = Registry.LocalMachine.OpenSubKey(gpu.RegistryPath["HKEY_LOCAL_MACHINE\\".Length..], writable: true);
+				using RegistryKey? key = Registry.LocalMachine.OpenSubKey(gpu.RegistryPath["HKEY_LOCAL_MACHINE\\".Length..], writable: true);
 				key?.DeleteValue("DisableDynamicPstate", false);
 				key?.DeleteValue("DisableAsyncPstates", false);
 			}
@@ -434,7 +434,7 @@ public sealed partial class GraphicsPage : Page
 		// close obs studio
 		if (Process.GetProcessesByName("obs64").Length > 0)
 		{
-			foreach (var process in Process.GetProcessesByName("obs64"))
+			foreach (Process process in Process.GetProcessesByName("obs64"))
 			{
 				process.Kill();
 				await process.WaitForExitAsync();
@@ -520,7 +520,7 @@ public sealed partial class GraphicsPage : Page
 			if (toggleSwitch.IsOn)
 			{
 				await RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, new ProcessStartInfo { FileName = "nvidia-smi.exe", Arguments = "-e 1", CreateNoWindow = true });
-				using var key = Registry.LocalMachine.OpenSubKey(gpu.RegistryPath["HKEY_LOCAL_MACHINE\\".Length..], writable: true);
+				using RegistryKey? key = Registry.LocalMachine.OpenSubKey(gpu.RegistryPath["HKEY_LOCAL_MACHINE\\".Length..], writable: true);
 				key?.DeleteValue("RMEnableL1ECC", false);
 				key?.DeleteValue("RMEnableSMECC", false);
 				key?.DeleteValue("RMEnableSHMECC", false);
@@ -539,7 +539,7 @@ public sealed partial class GraphicsPage : Page
 		// close obs studio
 		if (Process.GetProcessesByName("obs64").Length > 0)
 		{
-			foreach (var process in Process.GetProcessesByName("obs64"))
+			foreach (Process process in Process.GetProcessesByName("obs64"))
 			{
 				process.Kill();
 				await process.WaitForExitAsync();
@@ -629,7 +629,7 @@ public sealed partial class GraphicsPage : Page
 			}
 			else
 			{
-				using var key = Registry.LocalMachine.OpenSubKey(gpu.RegistryPath["HKEY_LOCAL_MACHINE\\".Length..], writable: true);
+				using RegistryKey? key = Registry.LocalMachine.OpenSubKey(gpu.RegistryPath["HKEY_LOCAL_MACHINE\\".Length..], writable: true);
 				key?.DeleteValue("EnableGpuFirmware", false);
 				key?.DeleteValue("EnableGpuFirmwareLogs", false);
 			}
@@ -638,7 +638,7 @@ public sealed partial class GraphicsPage : Page
 		// close obs studio
 		if (Process.GetProcessesByName("obs64").Length > 0)
 		{
-			foreach (var process in Process.GetProcessesByName("obs64"))
+			foreach (Process process in Process.GetProcessesByName("obs64"))
 			{
 				process.Kill();
 				await process.WaitForExitAsync();
@@ -724,7 +724,7 @@ public sealed partial class GraphicsPage : Page
 			if (toggleSwitch.IsOn)
 			{
 				Registry.SetValue(gpu.RegistryPath, "RMHdcpKeyglobZero", 0, RegistryValueKind.DWord);
-				using var key = Registry.LocalMachine.OpenSubKey(gpu.RegistryPath["HKEY_LOCAL_MACHINE\\".Length..], writable: true);
+				using RegistryKey? key = Registry.LocalMachine.OpenSubKey(gpu.RegistryPath["HKEY_LOCAL_MACHINE\\".Length..], writable: true);
 				key?.DeleteValue("RmDisableHdcp22", false);
 			}
 			else
@@ -737,7 +737,7 @@ public sealed partial class GraphicsPage : Page
 		// close obs studio
 		if (Process.GetProcessesByName("obs64").Length > 0)
 		{
-			foreach (var process in Process.GetProcessesByName("obs64"))
+			foreach (Process process in Process.GetProcessesByName("obs64"))
 			{
 				process.Kill();
 				await process.WaitForExitAsync();
@@ -875,7 +875,7 @@ public sealed partial class GraphicsPage : Page
 			ShowAllFilesOption = false
 		};
 		picker.FileTypeChoices.Add("MSI Afterburner profile", ["*.cfg"]);
-		var file = await picker.PickSingleFileAsync();
+		StorageFile? file = await picker.PickSingleFileAsync();
 
 		if (file?.Path != null)
 		{
@@ -1086,7 +1086,7 @@ public sealed partial class GraphicsPage : Page
 			// close obs studio
 			if (Process.GetProcessesByName("obs64").Length > 0)
 			{
-				foreach (var process in Process.GetProcessesByName("obs64"))
+				foreach (Process process in Process.GetProcessesByName("obs64"))
 				{
 					process.Kill();
 					await process.WaitForExitAsync();

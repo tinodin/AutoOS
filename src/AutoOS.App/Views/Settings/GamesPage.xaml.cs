@@ -2,7 +2,7 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml.Input;
 using WinRT.Interop;
 
-namespace AutoOS.Views.Settings;
+namespace AutoOS.App.Views.Settings;
 
 public sealed partial class GamesPage : Page
 {
@@ -22,8 +22,8 @@ public sealed partial class GamesPage : Page
 		WindowId windowId = Win32Interop.GetWindowIdFromWindow(hWnd);
 		AppWindow appWindow = AppWindow.GetFromWindowId(windowId);
 
-		var navView = MainWindow.Instance.GetNavView();
-		var titleBar = MainWindow.Instance.GetTitleBar();
+		NavigationView navView = MainWindow.Instance.GetNavView();
+		TitleBar titleBar = MainWindow.Instance.GetTitleBar();
 
 		if (appWindow.Presenter.Kind == AppWindowPresenterKind.FullScreen)
 		{

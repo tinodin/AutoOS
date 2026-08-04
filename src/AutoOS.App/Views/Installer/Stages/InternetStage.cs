@@ -1,14 +1,14 @@
-using AutoOS.Common;
-using AutoOS.Core.Helpers.Device.Models;
-using AutoOS.Core.Helpers.Device;
-using AutoOS.Core.Helpers.Network.Models;
-using AutoOS.Core.Helpers.Network;
-using AutoOS.Core.Helpers.Registry;
-using AutoOS.Views.Installer.Actions;
-using Microsoft.Win32;
 using System.Diagnostics;
+using AutoOS.App.Common;
+using AutoOS.Core.Helpers.Device;
+using AutoOS.Core.Helpers.Device.Models;
+using AutoOS.Core.Helpers.Network;
+using AutoOS.Core.Helpers.Network.Models;
+using AutoOS.Core.Helpers.Registry;
+using AutoOS.App.Views.Installer.Actions;
+using Microsoft.Win32;
 
-namespace AutoOS.Views.Installer.Stages;
+namespace AutoOS.App.Views.Installer.Stages;
 
 public static class InternetStage
 {
@@ -45,7 +45,7 @@ public static class InternetStage
 			(@"Disabling ""Packet Coalescing Filter""", async () => await ProcessActions.RunPowerShell(@"Set-NetOffloadGlobalSetting -PacketCoalescingFilter Disabled"), null)
 		};
 
-		foreach (var adapter in DeviceHelper.GetDevices(DeviceType.NIC).Where(d => d.NicType == NicDeviceType.WiFi || d.NicType == NicDeviceType.LAN).ToList())
+		foreach (DeviceInfo? adapter in DeviceHelper.GetDevices(DeviceType.NIC).Where(d => d.NicType == NicDeviceType.WiFi || d.NicType == NicDeviceType.LAN).ToList())
 		{
 			actions.Add(($@"Optimizing advanced network adapter settings for {adapter.FriendlyName}", async () => await Task.Run(() => Core.Helpers.Network.NetworkHelper.OptimizeAdapter(adapter)), null));
 			actions.Add(($@"Optimizing advanced network adapter settings for {adapter.FriendlyName}", async () => await Task.Delay(500), null));

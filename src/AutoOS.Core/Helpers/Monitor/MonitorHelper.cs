@@ -1,9 +1,10 @@
-﻿using AutoOS.Core.Helpers.Monitor.Models;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text;
+using AutoOS.Core.Helpers.Monitor.Models;
+using Microsoft.Win32;
+using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.Graphics.Gdi;
-using Windows.Win32;
 
 namespace AutoOS.Core.Helpers.Monitor;
 
@@ -14,7 +15,7 @@ public static partial class MonitorHelper
 	public static unsafe List<MonitorInfo> GetMonitors()
 	{
 		List<MonitorInfo> monitors = [];
-		var hardwareNames = GetModelNamesFromRegistry();
+		Dictionary<string, string> hardwareNames = GetModelNamesFromRegistry();
 		DISPLAY_DEVICEW adapter = new() { cb = (uint)sizeof(DISPLAY_DEVICEW) };
 		uint i = 0;
 
@@ -37,7 +38,7 @@ public static partial class MonitorHelper
 
 						monitors.Add(new MonitorInfo
 						{
-							DeviceName = hardwareNames.TryGetValue(hwId, out var name) ? name : deviceString,
+							DeviceName = hardwareNames.TryGetValue(hwId, out string? name) ? name : deviceString,
 							DevicePath = adapterPath,
 							Resolution = (dm.dmPelsWidth, dm.dmPelsHeight),
 							RefreshRate = dm.dmDisplayFrequency
@@ -54,17 +55,17 @@ public static partial class MonitorHelper
 		var results = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 		try
 		{
-			using var monitorKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Enum\DISPLAY");
+			using RegistryKey? monitorKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Enum\DISPLAY");
 			if (monitorKey == null) return results;
 
-			foreach (var hwId in monitorKey.GetSubKeyNames())
+			foreach (string hwId in monitorKey.GetSubKeyNames())
 			{
-				using var instanceKey = monitorKey.OpenSubKey(hwId);
+				using RegistryKey? instanceKey = monitorKey.OpenSubKey(hwId);
 				if (instanceKey == null) continue;
 
-				foreach (var instance in instanceKey.GetSubKeyNames())
+				foreach (string instance in instanceKey.GetSubKeyNames())
 				{
-					using var details = instanceKey.OpenSubKey($@"{instance}\Device Parameters");
+					using RegistryKey? details = instanceKey.OpenSubKey($@"{instance}\Device Parameters");
 					if (details == null) continue;
 
 					if (details.GetValue("EDID") is byte[] edid)
@@ -81,7 +82,7 @@ public static partial class MonitorHelper
 
 	private static string ExtractHardwareId(string path)
 	{
-		var parts = path.Split('#');
+		string[] parts = path.Split('#');
 		return parts.Length > 1 ? parts[1] : "";
 	}
 
@@ -135,7 +136,7 @@ public static partial class MonitorHelper
 
 	public static async Task ImportMonitorConfig()
 	{
-		var systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))?.ToUpperInvariant();
+		string? systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))?.ToUpperInvariant();
 		var target = DriveInfo.GetDrives()
 			.Where(d => d.DriveType == DriveType.Fixed && d.Name.ToUpperInvariant() != systemDrive)
 			.Select(d => new { Drive = d.Name, SystemHivePath = Path.Combine(d.Name, "Windows", "System32", "config", "SYSTEM") })
@@ -155,7 +156,7 @@ public static partial class MonitorHelper
 		})!.WaitForExitAsync();
 
 		string[] keysToCopy = ["Configuration", "Connectivity", "ScaleFactors"];
-		foreach (var key in keysToCopy)
+		foreach (string key in keysToCopy)
 		{
 			await Process.Start(new ProcessStartInfo
 			{

@@ -1,11 +1,11 @@
-using AutoOS.Common;
+using System.Diagnostics;
+using AutoOS.App.Common;
 using AutoOS.Core.Helpers.Download;
 using AutoOS.Core.Helpers.Extract;
 using AutoOS.Core.Helpers.Registry;
 using Microsoft.Win32;
-using System.Diagnostics;
 
-namespace AutoOS.Views.Installer.Stages;
+namespace AutoOS.App.Views.Installer.Stages;
 
 public static class RuntimesStage
 {

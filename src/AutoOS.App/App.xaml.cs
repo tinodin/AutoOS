@@ -1,8 +1,8 @@
-using AutoOS.Core.Helpers.Logging;
 using AutoOS.Core;
-using AutoOS.Views.Installer.Stages;
-using AutoOS.Views.Startup;
-using AutoOS.Views;
+using AutoOS.Core.Helpers.Logging;
+using AutoOS.App.Views;
+using AutoOS.App.Views.Installer.Stages;
+using AutoOS.App.Views.Startup;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
@@ -11,7 +11,7 @@ using Windows.Graphics;
 using Windows.Storage;
 using WinRT.Interop;
 
-namespace AutoOS;
+namespace AutoOS.App;
 
 public partial class App : Application
 {
@@ -48,7 +48,7 @@ public partial class App : Application
 				MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
 
 				Window window = MainWindow;
-				var monitor = DisplayMonitorHelper.GetMonitorInfo(window);
+				DisplayMonitorDetails monitor = DisplayMonitorHelper.GetMonitorInfo(window);
 				int X = (int)monitor.RectMonitor.Width;
 				int Y = (int)monitor.RectMonitor.Height;
 
@@ -122,8 +122,8 @@ public partial class App : Application
 
 						if (e.DidPositionChange || e.DidSizeChange)
 						{
-							var pos = MainWindow.AppWindow.Position;
-							var size = MainWindow.AppWindow.Size;
+							PointInt32 pos = MainWindow.AppWindow.Position;
+							SizeInt32 size = MainWindow.AppWindow.Size;
 							localSettings.Values["WindowPositionX"] = pos.X;
 							localSettings.Values["WindowPositionY"] = pos.Y;
 							localSettings.Values["WindowWidth"] = size.Width;

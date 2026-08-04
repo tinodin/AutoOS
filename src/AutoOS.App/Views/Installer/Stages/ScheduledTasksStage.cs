@@ -1,7 +1,7 @@
-using AutoOS.Common;
+using AutoOS.App.Common;
 using AutoOS.Core.Helpers.TaskScheduler;
 
-namespace AutoOS.Views.Installer.Stages;
+namespace AutoOS.App.Views.Installer.Stages;
 
 public static class ScheduledTasksStage
 {
@@ -41,7 +41,7 @@ public static class ScheduledTasksStage
 			@"\Microsoft\Windows\Windows Error Reporting\QueueReporting",
 		};
 
-		foreach (var task in tasks)
+		foreach (string task in tasks)
 		{
 			actions.Add((@$"Disabling ""{task}""", async () => TaskSchedulerHelper.Toggle(task, false), null));
 		}

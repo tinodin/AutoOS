@@ -1,26 +1,26 @@
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Globalization;
+using System.ServiceProcess;
+using System.Text;
+using System.Text.RegularExpressions;
 using AutoOS.Core.Helpers.Games;
 using AutoOS.Core.Helpers.Processes;
-using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.Services;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
-using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Globalization;
-using System.ServiceProcess;
-using System.Text.RegularExpressions;
-using System.Text;
 using ValveKeyValue;
 using Windows.Foundation;
+using Windows.Foundation.Collections;
 using Windows.Gaming.Input;
 using Windows.Storage;
 using Windows.System;
 using Windows.UI.Input.Preview.Injection;
 using WinRT;
 
-namespace AutoOS.Views.Settings.Games;
+namespace AutoOS.App.Views.Settings.Games;
 
 [TemplatePart(Name = nameof(PART_BackDropImage), Type = typeof(AnimatedImage))]
 [TemplatePart(Name = nameof(PART_ScrollViewer), Type = typeof(ScrollViewer))]
@@ -264,14 +264,14 @@ public partial class HeaderCarousel : ItemsControl
 
 	private static void GamepadPollingTimer_Tick(object sender, object e)
 	{
-		var activeInstance = _activeInstances.FirstOrDefault();
+		HeaderCarousel? activeInstance = _activeInstances.FirstOrDefault();
 		if (activeInstance?.XamlRoot is not XamlRoot root) return;
 
-		var gamepads = Gamepad.Gamepads;
+		IReadOnlyList<Gamepad> gamepads = Gamepad.Gamepads;
 		if (gamepads.Count == 0) return;
 
-		var reading = gamepads[0].GetCurrentReading();
-		var buttons = reading.Buttons;
+		GamepadReading reading = gamepads[0].GetCurrentReading();
+		GamepadButtons buttons = reading.Buttons;
 
 		if (reading.LeftThumbstickX < -ThumbstickThreshold) buttons |= GamepadButtons.DPadLeft;
 		if (reading.LeftThumbstickX > ThumbstickThreshold) buttons |= GamepadButtons.DPadRight;
@@ -350,7 +350,7 @@ public partial class HeaderCarousel : ItemsControl
 			}
 			else if (!_lastHorizontalState)
 			{
-				var direction = isLeft ? FocusNavigationDirection.Left : FocusNavigationDirection.Right;
+				FocusNavigationDirection direction = isLeft ? FocusNavigationDirection.Left : FocusNavigationDirection.Right;
 				var next = FocusManager.FindNextElement(direction, new FindNextElementOptions { SearchRoot = root.Content }) as UIElement;
 
 				if (next != null && currentFocused is UIElement currentUI)
@@ -512,7 +512,7 @@ public partial class HeaderCarousel : ItemsControl
 	{
 		if ((current & target) != 0)
 		{
-			var now = DateTimeOffset.Now;
+			DateTimeOffset now = DateTimeOffset.Now;
 			if ((_lastButtons & target) == 0)
 			{
 				_buttonPressStartTimes[target] = now;
@@ -521,12 +521,12 @@ public partial class HeaderCarousel : ItemsControl
 			}
 			else
 			{
-				if (_buttonPressStartTimes.TryGetValue(target, out var startTime))
+				if (_buttonPressStartTimes.TryGetValue(target, out DateTimeOffset startTime))
 				{
-					var holdDuration = now - startTime;
+					TimeSpan holdDuration = now - startTime;
 					if (holdDuration >= _initialRepeatDelay)
 					{
-						if (_lastButtonRepeatTimes.TryGetValue(target, out var lastRepeat) && (now - lastRepeat) >= _subsequentRepeatDelay)
+						if (_lastButtonRepeatTimes.TryGetValue(target, out DateTimeOffset lastRepeat) && (now - lastRepeat) >= _subsequentRepeatDelay)
 						{
 							_lastButtonRepeatTimes[target] = now;
 							if (!suppressInjection) InjectKey(key);
@@ -633,7 +633,7 @@ public partial class HeaderCarousel : ItemsControl
 
 		Items.Clear();
 
-		foreach (var task in tasks)
+		foreach (Task<List<GameModel>> task in tasks)
 		{
 			if (task.Status == TaskStatus.RanToCompletion && task.Result != null)
 			{
@@ -645,7 +645,7 @@ public partial class HeaderCarousel : ItemsControl
 			}
 		}
 
-		foreach (var exception in exceptions)
+		foreach (Exception exception in exceptions)
 		{
 			DispatcherQueue.TryEnqueue(() => { throw exception; });
 		}
@@ -684,7 +684,7 @@ public partial class HeaderCarousel : ItemsControl
 
 	private void AddGames(List<GameModel> games)
 	{
-		foreach (var game in games)
+		foreach (GameModel game in games)
 		{
 			Items.Add(new HeaderCarouselItem
 			{
@@ -750,7 +750,7 @@ public partial class HeaderCarousel : ItemsControl
 
 		ElementSoundPlayer.State = ElementSoundPlayerState.Off;
 
-		if (!string.IsNullOrEmpty(ArtifactId) && epicGameStartTimes.TryGetValue(ArtifactId, out var startTime))
+		if (!string.IsNullOrEmpty(ArtifactId) && epicGameStartTimes.TryGetValue(ArtifactId, out DateTime startTime))
 		{
 			EpicGamesHelper.AddPlaytime(ArtifactId, startTime);
 			epicGameStartTimes.Remove(ArtifactId);
@@ -872,7 +872,7 @@ public partial class HeaderCarousel : ItemsControl
 		{
 			selectedTile = tile;
 
-			var panel = ItemsPanelRoot;
+			Panel panel = ItemsPanelRoot;
 			if (panel != null && scrollViewer != null)
 			{
 				GeneralTransform transform = selectedTile.TransformToVisual(panel);
@@ -1147,7 +1147,7 @@ public partial class HeaderCarousel : ItemsControl
 
 	private void SearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
 	{
-		var query = args.QueryText?.Trim();
+		string? query = args.QueryText?.Trim();
 		if (string.IsNullOrEmpty(query))
 			return;
 
@@ -1159,7 +1159,7 @@ public partial class HeaderCarousel : ItemsControl
 		if (string.IsNullOrEmpty(title) || Items.Count == 0)
 			return;
 
-		var tile = Items
+		HeaderCarouselItem? tile = Items
 			.OfType<HeaderCarouselItem>()
 			.FirstOrDefault(t => string.Equals(t.Title, title, StringComparison.CurrentCultureIgnoreCase));
 
@@ -1176,7 +1176,7 @@ public partial class HeaderCarousel : ItemsControl
 
 		UnsubscribeToEvents();
 
-		var panel = ItemsPanelRoot;
+		Panel panel = ItemsPanelRoot;
 		if (panel != null)
 		{
 			GeneralTransform transform = selectedTile.TransformToVisual(panel);
@@ -1246,16 +1246,16 @@ public partial class HeaderCarousel : ItemsControl
 				.ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase),
 			"Recently Played" => ascending
 				? items.OrderBy(g =>
-					localSettings.Values.TryGetValue($"LastPlayed_{g.Title}", out var val) && val is long ts ? ts : 0)
+					localSettings.Values.TryGetValue($"LastPlayed_{g.Title}", out object? val) && val is long ts ? ts : 0)
 				.ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase)
 				: items.OrderByDescending(g =>
-					localSettings.Values.TryGetValue($"LastPlayed_{g.Title}", out var val) && val is long ts ? ts : 0)
+					localSettings.Values.TryGetValue($"LastPlayed_{g.Title}", out object? val) && val is long ts ? ts : 0)
 				.ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase),
 			_ => items
 		};
 
 		Items.Clear();
-		foreach (var item in result)
+		foreach (HeaderCarouselItem item in result)
 		{
 			Items.Add(item);
 		}
@@ -1272,7 +1272,7 @@ public partial class HeaderCarousel : ItemsControl
 
 	private void LoadSortSettings()
 	{
-		var settings = ApplicationData.Current.LocalSettings.Values;
+		IPropertySet settings = ApplicationData.Current.LocalSettings.Values;
 		currentSortKey = settings["SortKey"] as string ?? "Time Played";
 
 		ascending = settings["SortAscending"] as bool? ?? false;
@@ -1296,7 +1296,7 @@ public partial class HeaderCarousel : ItemsControl
 		if (string.IsNullOrWhiteSpace(time))
 			return 0;
 
-		var match = PlayTimeMinutesRegex().Match(time);
+		Match match = PlayTimeMinutesRegex().Match(time);
 		if (match.Success)
 		{
 			int hours = match.Groups[1].Success ? int.Parse(match.Groups[1].Value) : 0;
@@ -1312,7 +1312,7 @@ public partial class HeaderCarousel : ItemsControl
 		if (File.Exists(EpicGamesHelper.EpicGamesPath))
 		{
 			// get all accounts
-			var accounts = EpicGamesHelper.GetEpicGamesAccounts();
+			List<EpicGamesHelper.EpicAccountInfo> accounts = EpicGamesHelper.GetEpicGamesAccounts();
 
 			// reset ui elements
 			EpicGamesAccounts.Items.Clear();
@@ -1335,7 +1335,7 @@ public partial class HeaderCarousel : ItemsControl
 				EpicGamesAccounts.SelectedItem = notLoggedIn;
 				RemoveEpicGamesAccount.IsEnabled = false;
 
-				foreach (var account in accounts)
+				foreach (EpicGamesHelper.EpicAccountInfo account in accounts)
 				{
 					var item = new ComboBoxItem
 					{
@@ -1348,7 +1348,7 @@ public partial class HeaderCarousel : ItemsControl
 			}
 			else
 			{
-				foreach (var account in accounts)
+				foreach (EpicGamesHelper.EpicAccountInfo account in accounts)
 				{
 					var item = new ComboBoxItem
 					{
@@ -1381,7 +1381,7 @@ public partial class HeaderCarousel : ItemsControl
 		// update config before switching
 		if (EpicGamesHelper.ValidateData(EpicGamesHelper.ActiveEpicGamesAccountPath))
 		{
-			var (oldAccountId, _, _, _) = EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath);
+			(string? oldAccountId, string _, string _, int _) = EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath);
 
 			string accountDir = Path.Combine(EpicGamesHelper.EpicGamesAccountDir, oldAccountId);
 			if (Directory.Exists(accountDir))
@@ -1412,7 +1412,7 @@ public partial class HeaderCarousel : ItemsControl
 		LoadEpicGamesAccounts();
 
 		// refresh library
-		foreach (var item in Items.OfType<HeaderCarouselItem>().Where(item => item.Launcher == "Epic Games" || item.Launcher == "Ubisoft Connect" || item.Launcher == "The EA App" || item.Launcher == "Origin").ToList())
+		foreach (HeaderCarouselItem? item in Items.OfType<HeaderCarouselItem>().Where(item => item.Launcher == "Epic Games" || item.Launcher == "Ubisoft Connect" || item.Launcher == "The EA App" || item.Launcher == "Origin").ToList())
 			Items.Remove(item);
 
 		AddGames(await EpicGamesHelper.GetGames());
@@ -1486,7 +1486,7 @@ public partial class HeaderCarousel : ItemsControl
 		LoadEpicGamesAccounts();
 
 		// refresh library
-		foreach (var item in Items.OfType<HeaderCarouselItem>().Where(item => item.Launcher == "Epic Games" || item.Launcher == "Ubisoft Connect" || item.Launcher == "The EA App" || item.Launcher == "Origin").ToList())
+		foreach (HeaderCarouselItem? item in Items.OfType<HeaderCarouselItem>().Where(item => item.Launcher == "Epic Games" || item.Launcher == "Ubisoft Connect" || item.Launcher == "The EA App" || item.Launcher == "Origin").ToList())
 			Items.Remove(item);
 
 		AddGames(await EpicGamesHelper.GetGames());
@@ -1579,7 +1579,7 @@ public partial class HeaderCarousel : ItemsControl
 			LoadEpicGamesAccounts();
 
 			// refresh library
-			foreach (var item in Items.OfType<HeaderCarouselItem>().Where(item => item.Launcher == "Epic Games" || item.Launcher == "Ubisoft Connect" || item.Launcher == "The EA App" || item.Launcher == "Origin").ToList())
+			foreach (HeaderCarouselItem? item in Items.OfType<HeaderCarouselItem>().Where(item => item.Launcher == "Epic Games" || item.Launcher == "Ubisoft Connect" || item.Launcher == "The EA App" || item.Launcher == "Origin").ToList())
 				Items.Remove(item);
 
 			AddGames(await EpicGamesHelper.GetGames());
@@ -1632,7 +1632,7 @@ public partial class HeaderCarousel : ItemsControl
 			LoadEpicGamesAccounts();
 
 			// remove all epic games titles
-			foreach (var item in Items.OfType<HeaderCarouselItem>().Where(item => item.Launcher == "Epic Games").ToList())
+			foreach (HeaderCarouselItem? item in Items.OfType<HeaderCarouselItem>().Where(item => item.Launcher == "Epic Games").ToList())
 				Items.Remove(item);
 		}
 	}
@@ -1642,7 +1642,7 @@ public partial class HeaderCarousel : ItemsControl
 		if (File.Exists(SteamHelper.SteamPath))
 		{
 			// get all accounts
-			var accounts = SteamHelper.GetSteamAccounts();
+			List<SteamHelper.SteamAccountInfo> accounts = SteamHelper.GetSteamAccounts();
 
 			// reset ui elements
 			SteamAccounts.Items.Clear();
@@ -1665,14 +1665,14 @@ public partial class HeaderCarousel : ItemsControl
 				SteamAccounts.SelectedItem = notLoggedIn;
 				RemoveSteamAccount.IsEnabled = false;
 
-				foreach (var account in accounts)
+				foreach (SteamHelper.SteamAccountInfo account in accounts)
 				{
 					SteamAccounts.Items.Add(account.AccountName);
 				}
 			}
 			else
 			{
-				foreach (var account in accounts)
+				foreach (SteamHelper.SteamAccountInfo account in accounts)
 				{
 					SteamAccounts.Items.Add(account.AccountName);
 				}
@@ -1712,7 +1712,7 @@ public partial class HeaderCarousel : ItemsControl
 		}
 
 		// make all accounts inactive
-		foreach (var user in kv.Root.Children)
+		foreach (KeyValuePair<string, KVObject> user in kv.Root.Children)
 		{
 			if (user.Value["AccountName"]?.ToString() == SteamAccounts.SelectedItem.ToString())
 			{
@@ -1741,7 +1741,7 @@ public partial class HeaderCarousel : ItemsControl
 		LoadSteamAccounts();
 
 		// refresh library
-		foreach (var item in Items.OfType<HeaderCarouselItem>().Where(item => item.Launcher == "Steam").ToList())
+		foreach (HeaderCarouselItem? item in Items.OfType<HeaderCarouselItem>().Where(item => item.Launcher == "Steam").ToList())
 			Items.Remove(item);
 
 		AddGames(await SteamHelper.GetGames());
@@ -1799,7 +1799,7 @@ public partial class HeaderCarousel : ItemsControl
 				}
 
 				// make all accounts inactive
-				foreach (var user in kv.Root.Children)
+				foreach (KeyValuePair<string, KVObject> user in kv.Root.Children)
 				{
 					user.Value["MostRecent"] = "0";
 					user.Value["AllowAutoLogin"] = "0";
@@ -1865,7 +1865,7 @@ public partial class HeaderCarousel : ItemsControl
 			LoadSteamAccounts();
 
 			// refresh library
-			foreach (var item in Items.OfType<HeaderCarouselItem>().Where(item => item.Launcher == "Steam").ToList())
+			foreach (HeaderCarouselItem? item in Items.OfType<HeaderCarouselItem>().Where(item => item.Launcher == "Steam").ToList())
 				Items.Remove(item);
 
 			AddGames(await SteamHelper.GetGames());
@@ -1924,7 +1924,7 @@ public partial class HeaderCarousel : ItemsControl
 			// remove selected account
 			var newChildren = kv.Root.Children.Where(c => c.Key != kv.Root.Children.First(child => child.Value["AccountName"]?.ToString() == SteamAccounts.SelectedItem.ToString()).Key).ToList();
 			var newRoot = new KVObject();
-			foreach (var child in newChildren)
+			foreach (KeyValuePair<string, KVObject> child in newChildren)
 			{
 				newRoot[child.Key] = child.Value;
 			}
@@ -1950,7 +1950,7 @@ public partial class HeaderCarousel : ItemsControl
 			LoadSteamAccounts();
 
 			// remove all steam titles
-			foreach (var item in Items.OfType<HeaderCarouselItem>().Where(item => item.Launcher == "Steam").ToList())
+			foreach (HeaderCarouselItem? item in Items.OfType<HeaderCarouselItem>().Where(item => item.Launcher == "Steam").ToList())
 				Items.Remove(item);
 		}
 	}
@@ -1984,29 +1984,29 @@ public partial class HeaderCarousel : ItemsControl
 	{
 		selectionTimer?.Stop();
 
-		var tile = selectedTile;
+		HeaderCarouselItem tile = selectedTile;
 		if (tile == null)
 			return;
 
-		var launcher = tile.Launcher;
-		var installLocation = tile.InstallLocation;
-		var launchExecutable = tile.LaunchExecutable;
-		var launchCommand = tile.LaunchCommand;
-		var launcherLocation = tile.LauncherLocation;
-		var gameLocation = tile.GameLocation;
-		var dataLocation = tile.DataLocation;
-		var gameId = tile.GameID;
-		var appName = tile.AppName;
-		var catalogNamespace = tile.CatalogNamespace;
-		var catalogItemId = tile.CatalogItemId;
-		var artifactId = tile.ArtifactId;
+		string launcher = tile.Launcher;
+		string installLocation = tile.InstallLocation;
+		string launchExecutable = tile.LaunchExecutable;
+		string launchCommand = tile.LaunchCommand;
+		string launcherLocation = tile.LauncherLocation;
+		string gameLocation = tile.GameLocation;
+		string dataLocation = tile.DataLocation;
+		string gameId = tile.GameID;
+		string appName = tile.AppName;
+		string catalogNamespace = tile.CatalogNamespace;
+		string catalogItemId = tile.CatalogItemId;
+		string artifactId = tile.ArtifactId;
 
 		if (launcher == "Epic Games")
 		{
 			string exchangeCode = await EpicGamesHelper.Exchange();
-			var (accountId, displayName, _, _) = EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath);
+			(string? accountId, string? displayName, string _, int _) = EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath);
 
-			var arguments = $@"{launchCommand} -AUTH_LOGIN=unused -AUTH_PASSWORD={exchangeCode} -AUTH_TYPE=exchangeCode -epicenv=Prod -EpicPortal -epicapp={appName} -epicusername={displayName} -epicuserid={accountId} -epiclocale=en -epicsandboxid={catalogNamespace}";
+			string arguments = $@"{launchCommand} -AUTH_LOGIN=unused -AUTH_PASSWORD={exchangeCode} -AUTH_TYPE=exchangeCode -epicenv=Prod -EpicPortal -epicapp={appName} -epicusername={displayName} -epicuserid={accountId} -epiclocale=en -epicsandboxid={catalogNamespace}";
 
 			var iniHelper = new InIHelper(EpicGamesHelper.ActiveEpicGamesAccountPath);
 			string settingsSection = $"{accountId}_Settings";
@@ -2038,7 +2038,7 @@ public partial class HeaderCarousel : ItemsControl
 		else if (launcher == "The EA App" || launcher == "Origin")
 		{
 			string exchangeCode = await EpicGamesHelper.Exchange();
-			var (accountId, displayName, _, _) = EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath);
+			(string? accountId, string? displayName, string _, int _) = EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath);
 
 			var startInfo = new ProcessStartInfo
 			{
@@ -2126,7 +2126,7 @@ public partial class HeaderCarousel : ItemsControl
 		{
 
 			// close dllhost processes
-			foreach (var proc in Process.GetProcessesByName("dllhost"))
+			foreach (Process proc in Process.GetProcessesByName("dllhost"))
 			{
 				string cmdLine = ProcessesHelper.GetCommandLine(proc);
 
@@ -2140,7 +2140,7 @@ public partial class HeaderCarousel : ItemsControl
 			// close executables
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon", "AutoRestartShell", 0, RegistryValueKind.DWord);
 
-			var processNames = new[]
+			string[] processNames = new[]
 			{
 				"ApplicationFrameHost",
 				//"backgroundTaskHost",
@@ -2185,9 +2185,9 @@ public partial class HeaderCarousel : ItemsControl
 				"XboxPcAppFT"
 			};
 
-			foreach (var name in processNames)
+			foreach (string? name in processNames)
 			{
-				foreach (var process in Process.GetProcessesByName(name))
+				foreach (Process process in Process.GetProcessesByName(name))
 				{
 					process.Kill();
 					process.WaitForExit();
@@ -2197,7 +2197,7 @@ public partial class HeaderCarousel : ItemsControl
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon", "AutoRestartShell", 1, RegistryValueKind.DWord);
 
 			// stop services
-			var serviceNames = new[]
+			string[] serviceNames = new[]
 			{
 				"AudioEndpointBuilder",
 				"Appinfo",
@@ -2243,7 +2243,7 @@ public partial class HeaderCarousel : ItemsControl
 				"WpnUserService"
 			};
 
-			foreach (var serviceName in serviceNames)
+			foreach (string? serviceName in serviceNames)
 			{
 				try
 				{
@@ -2255,7 +2255,7 @@ public partial class HeaderCarousel : ItemsControl
 				}
 			}
 
-			foreach (var serviceName in serviceNames)
+			foreach (string? serviceName in serviceNames)
 			{
 				try
 				{
@@ -2295,7 +2295,7 @@ public partial class HeaderCarousel : ItemsControl
 		catch { }
 
 		// restart services
-		var serviceNames = new[]
+		string[] serviceNames = new[]
 		{
 			"AudioEndpointBuilder",
 			"Appinfo",
@@ -2340,7 +2340,7 @@ public partial class HeaderCarousel : ItemsControl
 			"WpnUserService"
 		};
 
-		foreach (var serviceName in serviceNames)
+		foreach (string? serviceName in serviceNames)
 		{
 			try
 			{
@@ -2422,11 +2422,11 @@ public partial class HeaderCarousel : ItemsControl
 					{
 						epicGameStartTimes[ArtifactId] = DateTime.Now;
 					}
-					else if (!isRunning && epicGameStartTimes.TryGetValue(ArtifactId, out var startTime))
+					else if (!isRunning && epicGameStartTimes.TryGetValue(ArtifactId, out DateTime startTime))
 					{
 						EpicGamesHelper.AddPlaytime(ArtifactId, startTime, (artId, newPlaytime) =>
 						{
-							foreach (var item in Items)
+							foreach (object? item in Items)
 							{
 								if (item is HeaderCarouselItem tile && tile.ArtifactId == artId)
 								{
@@ -2472,7 +2472,7 @@ public partial class HeaderCarousel : ItemsControl
 
 			StartGameWatcher(() =>
 			{
-				var running = Process.GetProcesses().Where(p => !p.ProcessName.Equals("EpicGamesLauncher", StringComparison.OrdinalIgnoreCase)).ToArray();
+				Process[] running = Process.GetProcesses().Where(p => !p.ProcessName.Equals("EpicGamesLauncher", StringComparison.OrdinalIgnoreCase)).ToArray();
 				return (!string.IsNullOrEmpty(offlineExecutable) && running.Any(p => p.ProcessName.Contains(Path.GetFileNameWithoutExtension(offlineExecutable), StringComparison.OrdinalIgnoreCase))) ||
 			(!string.IsNullOrEmpty(onlineExecutable) && running.Any(p => p.ProcessName.Contains(Path.GetFileNameWithoutExtension(onlineExecutable), StringComparison.OrdinalIgnoreCase))) ||
 			(ProcessNames?.Any(process => !string.IsNullOrEmpty(process) && running.Any(p => p.ProcessName.Contains(Path.GetFileNameWithoutExtension(process), StringComparison.OrdinalIgnoreCase))) ?? false);
@@ -2490,8 +2490,8 @@ public partial class HeaderCarousel : ItemsControl
 		{
 			StartGameWatcher(() =>
 			{
-				var running = Process.GetProcesses();
-				if (ProcessNames != null && ProcessNames.Any())
+				Process[] running = Process.GetProcesses();
+				if (ProcessNames != null && ProcessNames.Count != 0)
 				{
 					if (ProcessNames.Any(name => running.Any(p => p.ProcessName.Contains(Path.GetFileNameWithoutExtension(name), StringComparison.OrdinalIgnoreCase))))
 						return true;
@@ -2499,7 +2499,7 @@ public partial class HeaderCarousel : ItemsControl
 
 				if (!string.IsNullOrEmpty(InstallLocation) && Directory.Exists(InstallLocation))
 				{
-					var exeFiles = Directory.GetFiles(InstallLocation, "*.exe", SearchOption.AllDirectories);
+					string[] exeFiles = Directory.GetFiles(InstallLocation, "*.exe", SearchOption.AllDirectories);
 					var exeNames = exeFiles.Select(Path.GetFileNameWithoutExtension).Distinct().ToList();
 					var exeSet = new HashSet<string>(exeFiles, StringComparer.OrdinalIgnoreCase);
 
@@ -2514,7 +2514,7 @@ public partial class HeaderCarousel : ItemsControl
 		{
 			StartGameWatcher(() =>
 			{
-				foreach (var proc in Process.GetProcessesByName(Path.GetFileName(LauncherLocation).Replace(".exe", "")))
+				foreach (Process proc in Process.GetProcessesByName(Path.GetFileName(LauncherLocation).Replace(".exe", "")))
 				{
 					string cmdLine = ProcessesHelper.GetCommandLine(proc);
 
@@ -2528,7 +2528,7 @@ public partial class HeaderCarousel : ItemsControl
 		{
 			StartGameWatcher(() =>
 			{
-				foreach (var proc in Process.GetProcessesByName(Path.GetFileName(LauncherLocation).Replace(".exe", "")))
+				foreach (Process proc in Process.GetProcessesByName(Path.GetFileName(LauncherLocation).Replace(".exe", "")))
 				{
 					string cmdLine = ProcessesHelper.GetCommandLine(proc);
 
@@ -2542,7 +2542,7 @@ public partial class HeaderCarousel : ItemsControl
 		{
 			StartGameWatcher(() =>
 			{
-				foreach (var proc in Process.GetProcessesByName(Path.GetFileName(LauncherLocation).Replace(".exe", "")))
+				foreach (Process proc in Process.GetProcessesByName(Path.GetFileName(LauncherLocation).Replace(".exe", "")))
 				{
 					string cmdLine = ProcessesHelper.GetCommandLine(proc);
 

@@ -1,17 +1,17 @@
-using AutoOS.Core.Helpers.Device.Models;
+using System.Diagnostics;
+using System.Text.Json.Nodes;
 using AutoOS.Core.Helpers.Device;
+using AutoOS.Core.Helpers.Device.Models;
 using AutoOS.Core.Helpers.Logging;
 using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.Services;
 using AutoOS.Core.Helpers.Sound;
-using AutoOS.Views.Installer.Actions;
+using AutoOS.App.Views.Installer.Actions;
 using Microsoft.UI.Xaml.Media;
-using System.Diagnostics;
-using System.Text.Json.Nodes;
 using Windows.Storage;
 using Windows.Win32.System.Services;
 
-namespace AutoOS.Views.Startup.Stages;
+namespace AutoOS.App.Views.Startup.Stages;
 
 public static class StartupStage
 {
@@ -21,7 +21,7 @@ public static class StartupStage
 		if (localSettings.Values["XHCIs"] == null)
 		{
 			var json = new JsonArray();
-			foreach (var device in DeviceHelper.GetDevices(DeviceType.XHCI))
+			foreach (DeviceInfo device in DeviceHelper.GetDevices(DeviceType.XHCI))
 				json.Add((JsonNode)new JsonObject { ["PnpDeviceId"] = JsonValue.Create(device.PnpDeviceId), ["IsActive"] = JsonValue.Create(false) });
 			localSettings.Values["XHCIs"] = json.ToJsonString();
 		}
@@ -48,7 +48,7 @@ public static class StartupStage
 			("Applying sound buffer sizes", async () => SoundHelper.SetBufferSizes(), () => SOUND == true),
 
 			// disable xhci interrupt moderation (imod)
-			("Disabling XHCI Interrupt Moderation (IMOD)", async () => { foreach (var device in DeviceHelper.GetDevices(DeviceType.XHCI)) if (JsonNode.Parse(localSettings.Values["XHCIs"]?.ToString() ?? "[]")?.AsArray()?.FirstOrDefault(x => x?["PnpDeviceId"]?.ToString() == device.PnpDeviceId)?["IsActive"]?.GetValue<bool>() == false) DeviceHelper.ToggleImod(device, false); }, () => IMOD),
+			("Disabling XHCI Interrupt Moderation (IMOD)", async () => { foreach (DeviceInfo device in DeviceHelper.GetDevices(DeviceType.XHCI)) if (JsonNode.Parse(localSettings.Values["XHCIs"]?.ToString() ?? "[]")?.AsArray()?.FirstOrDefault(x => x?["PnpDeviceId"]?.ToString() == device.PnpDeviceId)?["IsActive"]?.GetValue<bool>() == false) DeviceHelper.ToggleImod(device, false); }, () => IMOD),
 
 			// launch obs studio
 			("Launching OBS Studio", async () => ProcessActions.CleanDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "obs-studio", ".sentinel")), () => OBS == true),
@@ -82,11 +82,11 @@ public static class StartupStage
 
 		int executedGroupsCount = 0;
 
-		foreach (var (title, action, condition) in filteredActions)
+		foreach ((string? title, Func<Task>? action, Func<bool>? condition) in filteredActions)
 		{
 			if (previousTitle != string.Empty && previousTitle != title && currentGroup.Count > 0)
 			{
-				foreach (var groupedAction in currentGroup)
+				foreach (Func<Task> groupedAction in currentGroup)
 				{
 					try
 					{
@@ -117,7 +117,7 @@ public static class StartupStage
 
 		if (currentGroup.Count > 0)
 		{
-			foreach (var groupedAction in currentGroup)
+			foreach (Func<Task> groupedAction in currentGroup)
 			{
 				try
 				{

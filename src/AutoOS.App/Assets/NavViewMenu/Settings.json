@@ -10,119 +10,119 @@
       "IsExpanded": false,
       "Items": [
         {
-          "UniqueId": "AutoOS.Views.Settings.HomePage",
+          "UniqueId": "AutoOS.App.Views.Settings.HomePage",
           "Title": "Home",
           "Subtitle": "Home Page",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Home.png",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Settings.SoundPage",
+          "UniqueId": "AutoOS.App.Views.Settings.SoundPage",
           "Title": "Sound",
           "Subtitle": "Sound",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Sound.png",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Settings.DisplaysPage",
+          "UniqueId": "AutoOS.App.Views.Settings.DisplaysPage",
           "Title": "Displays",
           "Subtitle": "Displays",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Display.png",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Settings.GraphicsPage",
+          "UniqueId": "AutoOS.App.Views.Settings.GraphicsPage",
           "Title": "Graphics Cards",
           "Subtitle": "Graphics Cards",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Gpu.png",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Settings.SchedulingPage",
+          "UniqueId": "AutoOS.App.Views.Settings.SchedulingPage",
           "Title": "Per-CPU Scheduling",
           "Subtitle": "Per-CPU Scheduling",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Cpu.png",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Settings.DevicesPage",
+          "UniqueId": "AutoOS.App.Views.Settings.DevicesPage",
           "Title": "Bluetooth & Devices",
           "Subtitle": "Bluetooth & Devices",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Bluetooth.png",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Settings.InternetPage",
+          "UniqueId": "AutoOS.App.Views.Settings.InternetPage",
           "Title": "Network & Internet",
           "Subtitle": "Network & Internet",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Internet.png",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Settings.PowerPage",
+          "UniqueId": "AutoOS.App.Views.Settings.PowerPage",
           "Title": "Energy & Power",
           "Subtitle": "Energy & Power",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Power.png",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Settings.ServicesPage",
+          "UniqueId": "AutoOS.App.Views.Settings.ServicesPage",
           "Title": "Services & Drivers",
           "Subtitle": "Services & Drivers",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Services.png",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Settings.BiosSettingsPage",
+          "UniqueId": "AutoOS.App.Views.Settings.BiosSettingsPage",
           "Title": "BIOS Settings",
           "Subtitle": "BIOS Settings",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Bios.png",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Settings.DiskCleanupPage",
+          "UniqueId": "AutoOS.App.Views.Settings.DiskCleanupPage",
           "Title": "Disk Cleanup",
           "Subtitle": "Disk Cleanup",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/DiskCleanup.png",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Settings.SecurityPage",
+          "UniqueId": "AutoOS.App.Views.Settings.SecurityPage",
           "Title": "Windows Security",
           "Subtitle": "Windows Security",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Security.png",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Settings.UpdatePage",
+          "UniqueId": "AutoOS.App.Views.Settings.UpdatePage",
           "Title": "Windows Update",
           "Subtitle": "Windows Update",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Update.png",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Settings.BrowsersPage",
+          "UniqueId": "AutoOS.App.Views.Settings.BrowsersPage",
           "Title": "Browsers",
           "Subtitle": "Browsers",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Browsers.png",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Settings.AppsPage",
-          "Title": "Applications",
-          "Subtitle": "Applications",
-          "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Applications.png",
+          "UniqueId": "AutoOS.App.Views.Settings.AppsPage",
+          "Title": "Apps",
+          "Subtitle": "Apps",
+          "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Apps.png",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Settings.BenchmarksPage",
+          "UniqueId": "AutoOS.App.Views.Settings.BenchmarksPage",
           "Title": "Benchmarks",
           "Subtitle": "Benchmarks",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Benchmarks.png",
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.Views.Settings.GamesPage",
+          "UniqueId": "AutoOS.App.Views.Settings.GamesPage",
           "Title": "Games",
           "Subtitle": "Games",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Games.png",

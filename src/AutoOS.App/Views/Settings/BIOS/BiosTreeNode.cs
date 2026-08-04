@@ -1,10 +1,10 @@
-﻿using AutoOS.Core.Helpers.BIOS;
-using CommunityToolkit.Mvvm.ComponentModel;
-using System.Collections.ObjectModel;
 using System.Collections;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
+using AutoOS.Core.Helpers.BIOS;
+using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace AutoOS.Views.Settings.BIOS;
+namespace AutoOS.App.Views.Settings.BIOS;
 
 public enum NodeKind { Root, Group, Leaf }
 
@@ -101,7 +101,7 @@ public partial class BiosTreeNode : ObservableObject, INotifyDataErrorInfo
 			if (NodeKind == NodeKind.Root || Children.Count == 0)
 				return string.Empty;
 
-			var leaves = GetLeaves();
+			IEnumerable<BiosTreeNode> leaves = GetLeaves();
 			var distinct = leaves.Select(leaf => leaf.Model?.BiosDefault ?? string.Empty).Distinct().ToList();
 			if (distinct.Count == 1) return distinct[0];
 			return "Mixed";
@@ -118,7 +118,7 @@ public partial class BiosTreeNode : ObservableObject, INotifyDataErrorInfo
 			if (NodeKind == NodeKind.Root || Children.Count == 0)
 				return string.Empty;
 
-			var leaves = GetLeaves();
+			IEnumerable<BiosTreeNode> leaves = GetLeaves();
 			var distinct = leaves.Select(leaf => leaf.Model?.SelectedOption?.Label ?? leaf.Model?.Value ?? string.Empty).Distinct().ToList();
 			if (distinct.Count == 1) return distinct[0];
 			return "Mixed";
@@ -130,7 +130,7 @@ public partial class BiosTreeNode : ObservableObject, INotifyDataErrorInfo
 				if (Model == null) return;
 				if (Model.HasOptions)
 				{
-					var match = Model.Options.FirstOrDefault(option =>
+					Option? match = Model.Options.FirstOrDefault(option =>
 						LabelsEqual(option.Label, value));
 					if (match != null)
 						Model.SelectedOption = match;
@@ -156,12 +156,12 @@ public partial class BiosTreeNode : ObservableObject, INotifyDataErrorInfo
 				if (DisplayCurrent == "Mixed" && _mixedValues == null)
 					RememberMixedValues();
 
-			foreach (var child in GetLeaves().ToList())
+			foreach (BiosTreeNode? child in GetLeaves().ToList())
 			{
 				if (child.Model == null) continue;
 				if (GroupUsesOptions)
 				{
-					var match = child.Model.Options.FirstOrDefault(option =>
+						Option? match = child.Model.Options.FirstOrDefault(option =>
 						LabelsEqual(option.Label, value));
 					if (match != null)
 						child.Model.SelectedOption = match;
@@ -186,7 +186,7 @@ public partial class BiosTreeNode : ObservableObject, INotifyDataErrorInfo
 			if (NodeKind == NodeKind.Root || Children.Count == 0)
 				return string.Empty;
 
-			var leaves = GetLeaves();
+			IEnumerable<BiosTreeNode> leaves = GetLeaves();
 			bool hasOptions = leaves.Any(leaf => leaf.Model?.HasOptions == true);
 			var distinct = leaves
 				.Select(leaf => leaf.Model?.RecommendedOption?.Label ?? leaf.Model?.RecommendedValue ?? string.Empty)
@@ -316,8 +316,8 @@ public partial class BiosTreeNode : ObservableObject, INotifyDataErrorInfo
 			yield return this;
 			yield break;
 		}
-		foreach (var child in Children)
-			foreach (var leaf in child.GetLeaves())
+		foreach (BiosTreeNode child in Children)
+			foreach (BiosTreeNode leaf in child.GetLeaves())
 				yield return leaf;
 	}
 
@@ -328,7 +328,7 @@ public partial class BiosTreeNode : ObservableObject, INotifyDataErrorInfo
 
 	private void RestoreMixedValues()
 	{
-		foreach (var saved in _mixedValues)
+		foreach (GroupValueState saved in _mixedValues)
 		{
 			if (saved.Model.HasOptions)
 				saved.Model.SelectedOption = saved.SelectedOption;
@@ -341,7 +341,7 @@ public partial class BiosTreeNode : ObservableObject, INotifyDataErrorInfo
 
 	private void NotifyGroupValueChanged()
 	{
-		foreach (var child in GetLeaves().ToList())
+		foreach (BiosTreeNode? child in GetLeaves().ToList())
 		{
 			child.OnPropertyChanged(nameof(DisplayCurrent));
 			child.OnPropertyChanged(nameof(IsModified));
@@ -364,7 +364,7 @@ public partial class BiosTreeNode : ObservableObject, INotifyDataErrorInfo
 	{
 		if (NodeKind == NodeKind.Group)
 		{
-			foreach (var child in Children)
+			foreach (BiosTreeNode child in Children)
 			{
 				child.PropertyChanged += (s, e) =>
 				{
@@ -420,17 +420,17 @@ public partial class BiosTreeNode : ObservableObject, INotifyDataErrorInfo
 				return null;
 
 			var allErrors = new List<string>();
-			foreach (var leaf in GetLeaves())
+			foreach (BiosTreeNode leaf in GetLeaves())
 			{
 				if (leaf.Model.HasOptions)
 				{
-					var errors = leaf.Model.GetErrors(nameof(BiosSettingModel.SelectedOption));
+					IEnumerable errors = leaf.Model.GetErrors(nameof(BiosSettingModel.SelectedOption));
 					if (errors != null)
 						allErrors.AddRange(errors.Cast<string>());
 				}
 				else
 				{
-					var errors = leaf.Model.GetErrors(nameof(BiosSettingModel.Value));
+					IEnumerable errors = leaf.Model.GetErrors(nameof(BiosSettingModel.Value));
 					if (errors != null)
 						allErrors.AddRange(errors.Cast<string>());
 				}

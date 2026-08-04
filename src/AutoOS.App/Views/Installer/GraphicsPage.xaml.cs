@@ -1,12 +1,11 @@
-using AutoOS.Core.Helpers.GPU.Converters;
-using AutoOS.Core.Helpers.GPU.Models;
-using AutoOS.Core.Helpers.GPU;
-using AutoOS.Core.Helpers.Picker;
 using System.Collections.ObjectModel;
 using System.Text.Json.Nodes;
+using AutoOS.Core.Helpers.GPU;
+using AutoOS.Core.Helpers.GPU.Models;
+using AutoOS.Core.Helpers.Picker;
 using Windows.Storage;
 
-namespace AutoOS.Views.Installer;
+namespace AutoOS.App.Views.Installer;
 
 public sealed partial class GraphicsPage : Page
 {
@@ -32,7 +31,7 @@ public sealed partial class GraphicsPage : Page
 	private void GraphicsPage_Unloaded(object sender, RoutedEventArgs e)
 	{
 		var array = new JsonArray();
-		foreach (var gpu in GPUs)
+		foreach (GpuInfo gpu in GPUs)
 		{
 			array.Add((JsonNode)new JsonObject
 			{
@@ -66,12 +65,12 @@ public sealed partial class GraphicsPage : Page
 		{
 			try
 			{
-				var array = JsonNode.Parse(savedObj.ToString())?.AsArray();
+				JsonArray? array = JsonNode.Parse(savedObj.ToString())?.AsArray();
 				if (array != null)
 				{
-					foreach (var node in array)
+					foreach (JsonNode? node in array)
 					{
-						var obj = node?.AsObject();
+						JsonObject? obj = node?.AsObject();
 						if (obj == null) continue;
 
 						savedGpus.Add(new GpuInfo
@@ -98,12 +97,12 @@ public sealed partial class GraphicsPage : Page
 			catch { }
 		}
 
-		var detectedGpus = GpuHelper.GetGPUs();
+		List<GpuInfo> detectedGpus = GpuHelper.GetGPUs();
 		detectedGpus = [.. detectedGpus.OrderBy(g => g.Location)];
 
-		foreach (var gpu in detectedGpus)
+		foreach (GpuInfo gpu in detectedGpus)
 		{
-			var saved = savedGpus?.FirstOrDefault(x => x.PnPDeviceId == gpu.PnPDeviceId);
+			GpuInfo? saved = savedGpus?.FirstOrDefault(x => x.PnPDeviceId == gpu.PnPDeviceId);
 
 			if (saved != null)
 			{
@@ -121,7 +120,7 @@ public sealed partial class GraphicsPage : Page
 
 	private void GetMsiProfile()
 	{
-		var value = localSettings.Values["MsiProfile"] as string;
+		string? value = localSettings.Values["MsiProfile"] as string;
 		if (!string.IsNullOrEmpty(value))
 		{
 			var infoBar = new InfoBar
@@ -164,7 +163,7 @@ public sealed partial class GraphicsPage : Page
 			ShowAllFilesOption = false
 		};
 		picker.FileTypeChoices.Add("MSI Afterburner profile", ["*.cfg"]);
-		var file = await picker.PickSingleFileAsync();
+		StorageFile? file = await picker.PickSingleFileAsync();
 
 		if (file != null)
 		{

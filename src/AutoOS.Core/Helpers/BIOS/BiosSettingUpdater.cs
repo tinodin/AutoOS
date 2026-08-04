@@ -1,6 +1,6 @@
-﻿using AutoOS.Core.Helpers.Logging;
+﻿using System.Text.RegularExpressions;
+using AutoOS.Core.Helpers.Logging;
 using DevWinUI;
-using System.Text.RegularExpressions;
 
 namespace AutoOS.Core.Helpers.BIOS;
 
@@ -9,7 +9,7 @@ public static class BiosSettingUpdater
 	public static void SaveSingleSetting(BiosSettingModel setting)
 	{
 		// get lines from nvram
-		var lines = setting.OriginalLines;
+		List<string> lines = setting.OriginalLines;
 
 		// update settings
 		if (setting.HasValueField)
@@ -28,10 +28,10 @@ public static class BiosSettingUpdater
 	public static void SaveAllSettings(IEnumerable<BiosSettingModel> modifiedSettings)
 	{
 		// get lines from nvram
-		var lines = modifiedSettings.First().OriginalLines;
+		List<string> lines = modifiedSettings.First().OriginalLines;
 
 		// update settings
-		foreach (var setting in modifiedSettings)
+		foreach (BiosSettingModel setting in modifiedSettings)
 		{
 			if (setting.HasValueField)
 			{
@@ -130,13 +130,13 @@ public static class BiosSettingUpdater
 		string prefix = optionsPart[..(eq + 1)];
 		string optionsText = optionsPart[(eq + 1)..];
 
-		var matches = Regex.Matches(optionsText, @"(\*?\[\w+\][^\[\]\n\r\t\f\v]*)");
+		MatchCollection matches = Regex.Matches(optionsText, @"(\*?\[\w+\][^\[\]\n\r\t\f\v]*)");
 		var newParts = new List<string>(matches.Count);
 
 		foreach (Match m in matches)
 		{
 			string opt = m.Value;
-			var idm = Regex.Match(opt, @"\*?\[(\w+)\]");
+			Match idm = Regex.Match(opt, @"\*?\[(\w+)\]");
 			string idx = idm.Success ? idm.Groups[1].Value : null;
 			string withoutStar = opt.TrimStart('*');
 
@@ -169,7 +169,7 @@ public static class BiosSettingUpdater
 
 			if (trimmed.StartsWith('[') || trimmed.StartsWith("*["))
 			{
-				var idxM = Regex.Match(trimmed, @"^\*?\[(\w+)\]");
+				Match idxM = Regex.Match(trimmed, @"^\*?\[(\w+)\]");
 				string idx = idxM.Success ? idxM.Groups[1].Value : null;
 				string indent = original[..(original.Length - trimmed.Length)];
 				string withoutStar = trimmed.StartsWith('*') ? trimmed[1..] : trimmed;

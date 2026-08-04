@@ -1,9 +1,9 @@
+using System.Diagnostics;
 using AutoOS.Core.Helpers.Power;
 using AutoOS.Core.Helpers.Registry;
 using Microsoft.Win32;
-using System.Diagnostics;
 
-namespace AutoOS.Views.Installer.Stages;
+namespace AutoOS.App.Views.Installer.Stages;
 
 public static class PowerStage
 {

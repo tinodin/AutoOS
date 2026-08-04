@@ -1,4 +1,4 @@
-namespace AutoOS.Themes;
+namespace AutoOS.App.Themes;
 
 public partial class NavigationViewItemAttach
 {
@@ -21,8 +21,8 @@ public partial class NavigationViewItemAttach
 
 		if (navItem != null)
 		{
-			var isSubmenu = (bool)e.NewValue;
-			var resources = Application.Current.Resources;
+			bool isSubmenu = (bool)e.NewValue;
+			ResourceDictionary resources = Application.Current.Resources;
 
 			if (!resources.ContainsKey("NavigationViewItemExPadding"))
 			{

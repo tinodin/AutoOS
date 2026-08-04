@@ -1,7 +1,8 @@
-using AutoOS.Core.Helpers.CPU.Models;
 using System.Runtime.InteropServices;
-using Windows.Win32.Foundation;
+using AutoOS.Core.Helpers.CPU.Models;
+using Microsoft.Win32;
 using Windows.Win32;
+using Windows.Win32.Foundation;
 
 namespace AutoOS.Core.Helpers.CPU;
 
@@ -9,13 +10,13 @@ public static partial class CpuHelper
 {
 	public static CpuArchitecture GetCpuArchitecture()
 	{
-		using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"HARDWARE\DESCRIPTION\System\CentralProcessor\0");
+		using RegistryKey? key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"HARDWARE\DESCRIPTION\System\CentralProcessor\0");
 
-		var vendorId = key?.GetValue("VendorIdentifier")?.ToString() ?? "";
-		var processorName = key?.GetValue("ProcessorNameString")?.ToString() ?? "";
-		var identifier = key?.GetValue("Identifier")?.ToString() ?? "";
+		string vendorId = key?.GetValue("VendorIdentifier")?.ToString() ?? "";
+		string processorName = key?.GetValue("ProcessorNameString")?.ToString() ?? "";
+		string identifier = key?.GetValue("Identifier")?.ToString() ?? "";
 
-		var vendor = CpuVendor.Unknown;
+		CpuVendor vendor = CpuVendor.Unknown;
 		if (vendorId.Contains("GenuineIntel", StringComparison.OrdinalIgnoreCase))
 			vendor = CpuVendor.Intel;
 		else if (vendorId.Contains("AuthenticAMD", StringComparison.OrdinalIgnoreCase))
@@ -23,7 +24,7 @@ public static partial class CpuHelper
 
 		uint family = 0, model = 0, stepping = 0;
 
-		var parts = identifier.Split(' ');
+		string[] parts = identifier.Split(' ');
 		for (int i = 0; i < parts.Length; i++)
 		{
 			if (parts[i] == "Family" && i + 1 < parts.Length && uint.TryParse(parts[i + 1], out uint f))
@@ -183,10 +184,10 @@ public static partial class CpuHelper
 				int offset = 0;
 				while (offset < (int)returnedLength)
 				{
-					var cpuSetInfo = Marshal.PtrToStructure<SYSTEM_CPU_SET_INFORMATION>(IntPtr.Add(buffer, offset));
+					SYSTEM_CPU_SET_INFORMATION cpuSetInfo = Marshal.PtrToStructure<SYSTEM_CPU_SET_INFORMATION>(IntPtr.Add(buffer, offset));
 					if (cpuSetInfo.Size == 0) break;
 
-					var cpuSet = cpuSetInfo.Anonymous.CpuSet;
+					SYSTEM_CPU_SET_INFORMATION_CPU_SET cpuSet = cpuSetInfo.Anonymous.CpuSet;
 					cpuSets.Add(new CpuSet
 					{
 						Id = cpuSet.Id,
@@ -221,7 +222,7 @@ public static partial class CpuHelper
 		byte firstLevelCache = cpuSets[0].LastLevelCacheIndex;
 		byte firstNumaNodeIndex = cpuSets[0].NumaNodeIndex;
 
-		foreach (var cpuSet in cpuSets)
+		foreach (CpuSet cpuSet in cpuSets)
 		{
 			if (cpuSet.CoreIndex != cpuSet.LogicalProcessorIndex)
 			{
@@ -258,9 +259,9 @@ public static partial class CpuHelper
 			.OrderBy(g => g.Key)
 			.ToList();
 
-		foreach (var group in groupedByEfficiency)
+		foreach (IGrouping<byte, CpuSet>? group in groupedByEfficiency)
 		{
-			var cores = GroupCpuSetsByCore([.. group]);
+			List<CpuCore> cores = GroupCpuSetsByCore([.. group]);
 			if (GetCpuArchitecture().Vendor == CpuVendor.Intel)
 			{
 				if (group.Key == 0) eCores.AddRange(cores);
@@ -287,12 +288,12 @@ public static partial class CpuHelper
 
 		for (int i = 1; i < cpuSets.Count; i++)
 		{
-			var previous = cpuSets[i - 1];
-			var current = cpuSets[i];
+			CpuSet previous = cpuSets[i - 1];
+			CpuSet current = cpuSets[i];
 
 			if (previous.EfficiencyClass != current.EfficiencyClass || previous.LastLevelCacheIndex != current.LastLevelCacheIndex || previous.NumaNodeIndex != current.NumaNodeIndex)
 			{
-				var group = CreateGroup(currentSets, previous, cpuSetsInfo, groupIndex++, coreOffset);
+				CpuCoreGroup group = CreateGroup(currentSets, previous, cpuSetsInfo, groupIndex++, coreOffset);
 				groups.Add(group);
 				coreOffset += group.Cores.Count;
 				currentSets = [];
@@ -333,9 +334,9 @@ public static partial class CpuHelper
 		var cores = new Dictionary<byte, CpuCore>();
 		int sequentialNumber = offset;
 
-		foreach (var cpuSet in cpuSets.OrderBy(c => c.LogicalProcessorIndex))
+		foreach (CpuSet? cpuSet in cpuSets.OrderBy(c => c.LogicalProcessorIndex))
 		{
-			if (!cores.TryGetValue(cpuSet.CoreIndex, out var core))
+			if (!cores.TryGetValue(cpuSet.CoreIndex, out CpuCore? core))
 			{
 				core = new CpuCore
 				{

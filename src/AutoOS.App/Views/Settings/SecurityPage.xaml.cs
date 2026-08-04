@@ -1,13 +1,13 @@
+using System.Diagnostics;
+using System.ServiceProcess;
 using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.Services;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
-using System.Diagnostics;
-using System.ServiceProcess;
 using Windows.Win32;
 
-namespace AutoOS.Views.Settings;
+namespace AutoOS.App.Views.Settings;
 
 public sealed partial class SecurityPage : Page
 {
@@ -48,14 +48,14 @@ public sealed partial class SecurityPage : Page
 
 		// check if values match
 		bool isEnabled = true;
-		foreach (var group in groups)
+		foreach ((string[], int) group in groups)
 		{
-			foreach (var service in group.Item1)
+			foreach (string service in group.Item1)
 			{
-				using var key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}");
+				using RegistryKey? key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}");
 				if (key == null) continue;
 
-				var startValue = key.GetValue("Start");
+				object? startValue = key.GetValue("Start");
 				if (startValue == null || (int)startValue != group.Item2)
 				{
 					isEnabled = false;
@@ -258,7 +258,7 @@ public sealed partial class SecurityPage : Page
 								Text = "Windows Security is disabled. Click done to continue."
 							});
 
-							foreach (var process in Process.GetProcessesByName("SecHealthUI"))
+							foreach (Process process in Process.GetProcessesByName("SecHealthUI"))
 								process.Kill();
 
 							break;
@@ -374,7 +374,7 @@ public sealed partial class SecurityPage : Page
 		});
 
 		// toggle uac
-		using (var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", true))
+		using (RegistryKey? key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", true))
 		{
 			key.SetValue("EnableLUA", UAC.IsOn ? 1 : 0, RegistryValueKind.DWord);
 			key.SetValue("PromptOnSecureDesktop", UAC.IsOn ? 1 : 0, RegistryValueKind.DWord);
@@ -429,7 +429,7 @@ public sealed partial class SecurityPage : Page
 		int policy = (int)PInvoke.GetSystemDEPPolicy();
 
 		// get state
-		var output = Process.Start(new ProcessStartInfo("cmd.exe", "/c bcdedit /enum {current}") { CreateNoWindow = true, RedirectStandardOutput = true }).StandardOutput.ReadToEnd();
+		string output = Process.Start(new ProcessStartInfo("cmd.exe", "/c bcdedit /enum {current}") { CreateNoWindow = true, RedirectStandardOutput = true }).StandardOutput.ReadToEnd();
 
 		if (output.Contains("nx                      OptIn"))
 		{
@@ -513,7 +513,7 @@ public sealed partial class SecurityPage : Page
 		});
 
 		// toggle dep
-		var output = Process.Start(new ProcessStartInfo("cmd.exe", $"/c {(DEP.IsOn ? "bcdedit /set nx OptIn" : "bcdedit /set nx AlwaysOff")}") { CreateNoWindow = true, RedirectStandardOutput = true }).StandardOutput.ReadToEnd();
+		string output = Process.Start(new ProcessStartInfo("cmd.exe", $"/c {(DEP.IsOn ? "bcdedit /set nx OptIn" : "bcdedit /set nx AlwaysOff")}") { CreateNoWindow = true, RedirectStandardOutput = true }).StandardOutput.ReadToEnd();
 
 		if (output.Contains("error"))
 		{
@@ -717,7 +717,7 @@ public sealed partial class SecurityPage : Page
 					XamlRoot = XamlRoot
 				};
 
-				var result = await dialog.ShowAsync();
+				ContentDialogResult result = await dialog.ShowAsync();
 
 				if (result == ContentDialogResult.Primary)
 				{
@@ -930,7 +930,7 @@ public sealed partial class SecurityPage : Page
 		});
 
 		// toggle process mitigations
-		var key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Session Manager\kernel", true);
+		RegistryKey? key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Session Manager\kernel", true);
 		if (key != null)
 		{
 			if (ProcessMitigations.IsOn)

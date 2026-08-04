@@ -1,7 +1,8 @@
 using AutoOS.Core.Helpers.Picker;
 using Windows.Storage;
+using Windows.Storage.FileProperties;
 
-namespace AutoOS.Views.Installer;
+namespace AutoOS.App.Views.Installer;
 
 public sealed partial class DisplaysPage : Page
 {
@@ -22,7 +23,7 @@ public sealed partial class DisplaysPage : Page
 
 	private void GetCruProfile()
 	{
-		var value = localSettings.Values["CruProfile"] as string;
+		string? value = localSettings.Values["CruProfile"] as string;
 		if (!string.IsNullOrEmpty(value))
 		{
 			var infoBar = new InfoBar
@@ -67,11 +68,11 @@ public sealed partial class DisplaysPage : Page
 			ShowAllFilesOption = false
 		};
 		picker.FileTypeChoices.Add("CRU profile", ["*.exe"]);
-		var file = await picker.PickSingleFileAsync();
+		StorageFile? file = await picker.PickSingleFileAsync();
 
 		if (file != null)
 		{
-			var properties = await file.GetBasicPropertiesAsync();
+			BasicProperties properties = await file.GetBasicPropertiesAsync();
 			ulong fileSizeInBytes = properties.Size;
 			const ulong expectedSize = 53 * 1024;
 

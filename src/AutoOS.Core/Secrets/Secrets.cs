@@ -29,9 +29,9 @@ public static partial class Secrets
 	{
 		if (data.Length == 0 || Key.Length == 0)
 			return string.Empty;
-		
-		var plain = new byte[data.Length];
-		for (var i = 0; i < data.Length; i++)
+
+		byte[] plain = new byte[data.Length];
+		for (int i = 0; i < data.Length; i++)
 			plain[i] = (byte)(data[i] ^ Key[i % Key.Length]);
 		return Encoding.UTF8.GetString(plain);
 	}

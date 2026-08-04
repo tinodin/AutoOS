@@ -1,9 +1,9 @@
-using AutoOS.Common;
-using AutoOS.Views.Installer.Stages;
-using AutoOS.Views.Updater;
 using System.Collections.ObjectModel;
+using AutoOS.App.Common;
+using AutoOS.App.Views.Installer.Stages;
+using AutoOS.App.Views.Updater;
 
-namespace AutoOS.Views.Settings;
+namespace AutoOS.App.Views.Settings;
 
 public sealed partial class BrowsersPage : Page
 {
@@ -42,7 +42,7 @@ public sealed partial class BrowsersPage : Page
 			new() { Text = "Floorp", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Floorp.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Ablaze Floorp", "floorp.exe")) },
 			new() { Text = "Mullvad Browser", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Mullvad.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mullvad", "MullvadBrowser", "Release", "mullvadbrowser.exe")) }
 		};
-		foreach (var item in browsers.Where(item => !item.IsInstalled))
+		foreach (GridViewItem? item in browsers.Where(item => !item.IsInstalled))
 			browserItems.Add(item);
 
 		var extensions = new List<GridViewItem>
@@ -63,7 +63,7 @@ public sealed partial class BrowsersPage : Page
 			new() { Text = "Bitwarden", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/Bitwarden.png" },
 			new() { Text = "1Password", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/1Password.png" }
 		};
-		foreach (var item in extensions)
+		foreach (GridViewItem item in extensions)
 			extensionItems.Add(item);
 	}
 
@@ -115,7 +115,7 @@ public sealed partial class BrowsersPage : Page
 
 		var updateDialog = new UpdateDialog();
 		var reporter = new UpdateDialogReporter(updateDialog);
-		var actions = BrowsersStage.GetActions(reporter, selection);
+		List<(string Title, Func<Task> Action, Func<bool> Condition)> actions = BrowsersStage.GetActions(reporter, selection);
 
 		var dialog = new ContentDialog
 		{
@@ -138,7 +138,7 @@ public sealed partial class BrowsersPage : Page
 		await Task.Delay(1000);
 		dialog.Hide();
 
-		foreach (var item in selectedBrowsersItems)
+		foreach (GridViewItem? item in selectedBrowsersItems)
 			browserItems.Remove(item);
 
 		Extensions.SelectedItems.Clear();

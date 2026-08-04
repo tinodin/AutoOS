@@ -11,19 +11,19 @@ public static partial class NetworkHelper
 		var settings = new List<NetworkAdvancedSetting>();
 		if (string.IsNullOrEmpty(device.RegistryPath)) return settings;
 
-		using var deviceKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(device.RegistryPath);
+		using RegistryKey? deviceKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(device.RegistryPath);
 		if (deviceKey == null) return settings;
 
-		using var paramsKey = deviceKey.OpenSubKey(@"Ndi\Params");
+		using RegistryKey? paramsKey = deviceKey.OpenSubKey(@"Ndi\Params");
 		if (paramsKey == null) return settings;
 
-		foreach (var paramKeyName in paramsKey.GetSubKeyNames())
+		foreach (string paramKeyName in paramsKey.GetSubKeyNames())
 		{
-			using var paramKey = paramsKey.OpenSubKey(paramKeyName);
+			using RegistryKey? paramKey = paramsKey.OpenSubKey(paramKeyName);
 			if (paramKey == null) continue;
 
-			var typeValue = paramKey.GetValue("type")?.ToString()?.ToLowerInvariant();
-			var type = typeValue switch
+			string? typeValue = paramKey.GetValue("type")?.ToString()?.ToLowerInvariant();
+			NetworkSettingType type = typeValue switch
 			{
 				"enum" => NetworkSettingType.Enum,
 				"dword" => NetworkSettingType.Dword,
@@ -42,17 +42,17 @@ public static partial class NetworkHelper
 				Type = type
 			};
 
-			foreach (var vn in paramKey.GetValueNames())
+			foreach (string vn in paramKey.GetValueNames())
 				setting.RawMetadata[vn] = paramKey.GetValue(vn)?.ToString() ?? string.Empty;
 
 			switch (type)
 			{
 				case NetworkSettingType.Enum:
-					using (var enumKey = paramKey.OpenSubKey("Enum"))
+					using (RegistryKey? enumKey = paramKey.OpenSubKey("Enum"))
 					{
 						if (enumKey != null)
 						{
-							foreach (var valueName in enumKey.GetValueNames())
+							foreach (string valueName in enumKey.GetValueNames())
 							{
 								setting.Options.Add(new NetworkSettingOption
 								{
@@ -78,10 +78,10 @@ public static partial class NetworkHelper
 					if (int.TryParse(paramKey.GetValue("LimitText")?.ToString(), out int limit))
 						setting.LimitText = limit;
 
-					var upperCaseValue = paramKey.GetValue("UpperCase")?.ToString();
+					string? upperCaseValue = paramKey.GetValue("UpperCase")?.ToString();
 					setting.UpperCase = upperCaseValue == "1" || upperCaseValue?.ToLowerInvariant() == "true";
 
-					var optionalValue = paramKey.GetValue("Optional")?.ToString();
+					string? optionalValue = paramKey.GetValue("Optional")?.ToString();
 					setting.Optional = optionalValue == "1" || optionalValue?.ToLowerInvariant() == "true";
 					break;
 			}
@@ -108,7 +108,7 @@ public static partial class NetworkHelper
 
 	public static bool OptimizeAdapter(DeviceInfo device)
 	{
-		var settings = GetAdvancedSettings(device);
+		List<NetworkAdvancedSetting> settings = GetAdvancedSettings(device);
 		bool anyChanged = false;
 
 		if (device.NicType == NicDeviceType.WiFi)
@@ -260,10 +260,10 @@ public static partial class NetworkHelper
 
 	private static bool ApplySetting(DeviceInfo device, List<NetworkAdvancedSetting> settings, string displayName, string displayValue)
 	{
-		var setting = settings.FirstOrDefault(s => s.Name == displayName);
+		NetworkAdvancedSetting? setting = settings.FirstOrDefault(s => s.Name == displayName);
 		if (setting == null) return false;
 
-		var option = setting.Options.FirstOrDefault(o => o.Name == displayValue);
+		NetworkSettingOption? option = setting.Options.FirstOrDefault(o => o.Name == displayValue);
 		if (option == null) return false;
 
 		string currentVal = (setting.CurrentValue ?? "").Trim();

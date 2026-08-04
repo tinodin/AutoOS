@@ -1,6 +1,6 @@
 using Syncfusion.UI.Xaml.TreeGrid;
 
-namespace AutoOS.Views.Settings.BIOS;
+namespace AutoOS.App.Views.Settings.BIOS;
 
 public partial class EditTemplateSelector : DataTemplateSelector
 {
@@ -41,8 +41,8 @@ public partial class CellStyleSelector : StyleSelector
 
 		if (container is TreeGridCell cell)
 		{
-			var column = cell.ColumnBase?.TreeGridColumn;
-			var mappingName = column.MappingName;
+			TreeGridColumn? column = cell.ColumnBase?.TreeGridColumn;
+			string mappingName = column.MappingName;
 
 			if (node.HasErrors && mappingName == "DisplayCurrent")
 				return CautionStyle;
@@ -56,7 +56,7 @@ public partial class CellStyleSelector : StyleSelector
 					
 					if (node.NodeKind == NodeKind.Group)
 					{
-						var leaves = node.GetLeaves();
+						IEnumerable<BiosTreeNode> leaves = node.GetLeaves();
 						return leaves.All(leaf => leaf.IsModified) ? CriticalStyle : null;
 					}
 				}
@@ -68,7 +68,7 @@ public partial class CellStyleSelector : StyleSelector
 					
 					if (node.NodeKind == NodeKind.Group)
 					{
-						var leaves = node.GetLeaves();
+						IEnumerable<BiosTreeNode> leaves = node.GetLeaves();
 						if (leaves.All(leaf => leaf.IsModified))
 						{
 							return leaves.Any(leaf => leaf.HasErrors) ? CriticalStyle : SuccessStyle;

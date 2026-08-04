@@ -1,7 +1,7 @@
 using Microsoft.Win32;
 using Windows.Storage;
 
-namespace AutoOS.Views.Installer;
+namespace AutoOS.App.Views.Installer;
 
 public sealed partial class SecurityPage : Page
 {
@@ -36,7 +36,7 @@ public sealed partial class SecurityPage : Page
 
 	private void GetWindowsDefenderState()
 	{
-		var value = localSettings.Values["WindowsDefender"];
+		object value = localSettings.Values["WindowsDefender"];
 
 		if (value == null)
 		{
@@ -60,7 +60,7 @@ public sealed partial class SecurityPage : Page
 
 	private void GetUACState()
 	{
-		var value = localSettings.Values["UserAccountControl"];
+		object value = localSettings.Values["UserAccountControl"];
 
 		if (value == null)
 		{
@@ -84,12 +84,12 @@ public sealed partial class SecurityPage : Page
 
 	private void GetDEPState()
 	{
-		var value = localSettings.Values["DataExecutionPrevention"];
+		object value = localSettings.Values["DataExecutionPrevention"];
 
 		if (value == null)
 		{
-			using var secureBootKey = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\SecureBoot\State");
-			var secureBootValue = secureBootKey?.GetValue("UEFISecureBootEnabled");
+			using RegistryKey? secureBootKey = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\SecureBoot\State");
+			object? secureBootValue = secureBootKey?.GetValue("UEFISecureBootEnabled");
 
 			if (secureBootValue != null && (int)secureBootValue == 1)
 			{
@@ -118,7 +118,7 @@ public sealed partial class SecurityPage : Page
 
 	private void GetMemoryIntegrityState()
 	{
-		var value = localSettings.Values["MemoryIntegrity"];
+		object value = localSettings.Values["MemoryIntegrity"];
 		if (value == null)
 		{
 			localSettings.Values["MemoryIntegrity"] = 0;
@@ -140,7 +140,7 @@ public sealed partial class SecurityPage : Page
 
 	private void GetVBSState()
 	{
-		var value = localSettings.Values["VirtualizationBasedSecurity"];
+		object value = localSettings.Values["VirtualizationBasedSecurity"];
 		if (value == null)
 		{
 			localSettings.Values["VirtualizationBasedSecurity"] = 0;
@@ -162,7 +162,7 @@ public sealed partial class SecurityPage : Page
 
 	private void GetSpectreMeltdownState()
 	{
-		var value = localSettings.Values["SpectreMeltdownMitigations"];
+		object value = localSettings.Values["SpectreMeltdownMitigations"];
 
 		if (value == null)
 		{
@@ -194,7 +194,7 @@ public sealed partial class SecurityPage : Page
 
 	private void GetProcessMitigationsState()
 	{
-		var value = localSettings.Values["ProcessMitigations"];
+		object value = localSettings.Values["ProcessMitigations"];
 		if (value == null)
 		{
 			localSettings.Values["ProcessMitigations"] = 0;

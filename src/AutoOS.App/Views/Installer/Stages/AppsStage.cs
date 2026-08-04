@@ -1,4 +1,9 @@
-using AutoOS.Common;
+using System.Diagnostics;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
+using System.Xml.Linq;
+using AutoOS.App.Common;
 using AutoOS.Core.Common;
 using AutoOS.Core.Helpers.Database;
 using AutoOS.Core.Helpers.Download;
@@ -10,18 +15,13 @@ using AutoOS.Core.Helpers.Services;
 using AutoOS.Core.Helpers.Shortcut;
 using AutoOS.Core.Helpers.Store;
 using AutoOS.Core.Helpers.TaskScheduler;
-using AutoOS.Views.Installer.Actions;
+using AutoOS.App.Views.Installer.Actions;
 using Microsoft.VisualBasic.FileIO;
 using Microsoft.Win32;
-using System.Diagnostics;
-using System.Text.Json.Nodes;
-using System.Text.Json;
-using System.Text.RegularExpressions;
-using System.Xml.Linq;
-using Windows.Win32.Foundation;
 using Windows.Win32;
+using Windows.Win32.Foundation;
 
-namespace AutoOS.Views.Installer.Stages;
+namespace AutoOS.App.Views.Installer.Stages;
 
 public class ApplicationSelection
 {
@@ -434,7 +434,7 @@ public static class AppsStage
 
 			// install 1password
 			("Installing 1Password", async () => await StoreHelper.Install("DC5C6510.2032887045529_2v019pwa6amcg"), () => OnePassword == true),
-			("Installing 1Password", async () => { var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "1Password", "settings", "settings.json"); Directory.CreateDirectory(Path.GetDirectoryName(path) !); await File.WriteAllTextAsync(path, "{ \"version\": 1, \"updates.updateChannel\": \"PRODUCTION\", \"authTags\": {}, \"app.keepInTray\": false }"); }, () => OnePassword == true),
+			("Installing 1Password", async () => { string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "1Password", "settings", "settings.json"); Directory.CreateDirectory(Path.GetDirectoryName(path) !); await File.WriteAllTextAsync(path, "{ \"version\": 1, \"updates.updateChannel\": \"PRODUCTION\", \"authTags\": {}, \"app.keepInTray\": false }"); }, () => OnePassword == true),
 
 			// disable 1password startup entry
 			("Disabling 1Password startup entry", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\SystemAppData\DC5C6510.2032887045529_2v019pwa6amcg\1PasswordStartup", "State", 1, RegistryValueKind.DWord), () => OnePassword == true),
@@ -678,7 +678,7 @@ public static class AppsStage
 
 			// update epic games launcher
 			("Updating Epic Games Launcher", async () => await Process.Start(new ProcessStartInfo { FileName = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Epic Games", "Launcher", "Portal", "Binaries", "Win64", "EpicGamesLauncher.exe")) ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Epic Games", "Launcher", "Portal", "Binaries", "Win64", "EpicGamesLauncher.exe") : File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Epic Games", "Launcher", "Portal", "Binaries", "Win32", "EpicGamesLauncher.exe")) ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Epic Games", "Launcher", "Portal", "Binaries", "Win32", "EpicGamesLauncher.exe") : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Epic Games", "Launcher", "Engine", "Binaries", "Win64", "EpicGamesLauncher.exe") })!.WaitForExitAsync(), () => EpicGames == true),
-			("Updating Epic Games Launcher", async () => { while (true) { foreach (var proc in Process.GetProcessesByName("EpicGamesLauncher")) { if (ProcessesHelper.GetCommandLine(proc).Contains("-AllowSoftwareRendering -SaveToUserDir -Messaging", StringComparison.OrdinalIgnoreCase)) { EpicGamesHelper.CloseEpicGames(); return; } } await Task.Delay(100); } }, () => EpicGames == true),
+			("Updating Epic Games Launcher", async () => { while (true) { foreach (Process proc in Process.GetProcessesByName("EpicGamesLauncher")) { if (ProcessesHelper.GetCommandLine(proc).Contains("-AllowSoftwareRendering -SaveToUserDir -Messaging", StringComparison.OrdinalIgnoreCase)) { EpicGamesHelper.CloseEpicGames(); return; } } await Task.Delay(100); } }, () => EpicGames == true),
 			
 			// import epic games launcher account
 			("Importing Epic Games Launcher Account", async () => await EpicGamesHelper.ImportAccount(), () => EpicGames == true && EpicGamesAccount == true),
@@ -733,7 +733,7 @@ public static class AppsStage
 			("Importing Riot Client Games", async () => Valorant = File.Exists(Path.Combine(RiotHelper.RiotGamesMetadataPath, "valorant.live", "valorant.live.product_settings.yaml")) && !string.IsNullOrEmpty(Regex.Match(await File.ReadAllTextAsync(Path.Combine(RiotHelper.RiotGamesMetadataPath, "valorant.live", "valorant.live.product_settings.yaml")), @"product_install_full_path:\s*(.+)").Groups[1].Value.Trim()), () => RiotClient == true && RiotClientGames == true),
 
 			// optimize riot client settings
-			("Optimizing Riot Client settings", async () => { var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Riot Games\Riot Client\Config\RiotClientSettings.yaml"); await File.WriteAllTextAsync(path, Regex.Replace(await File.ReadAllTextAsync(path), @"(launch_on_computer_set_by_default|enable_run_in_background_set_by_player|enable_launch_on_computer_start_set_by_player):.*", "$1: false")); }, () => RiotClient == true),
+			("Optimizing Riot Client settings", async () => { string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Riot Games\Riot Client\Config\RiotClientSettings.yaml"); await File.WriteAllTextAsync(path, Regex.Replace(await File.ReadAllTextAsync(path), @"(launch_on_computer_set_by_default|enable_run_in_background_set_by_player|enable_launch_on_computer_start_set_by_player):.*", "$1: false")); }, () => RiotClient == true),
 
 			// disable riot client startup entry
 			("Disabling Riot Client startup entry", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", "RiotClient", new byte[] { 0x01 }, RegistryValueKind.Binary), () => RiotClient == true),

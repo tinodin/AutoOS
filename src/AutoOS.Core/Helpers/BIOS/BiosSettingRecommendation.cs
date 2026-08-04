@@ -1,5 +1,5 @@
-﻿using AutoOS.Core.Helpers.CPU.Models;
-using AutoOS.Core.Helpers.CPU;
+﻿using AutoOS.Core.Helpers.CPU;
+using AutoOS.Core.Helpers.CPU.Models;
 
 namespace AutoOS.Core.Helpers.BIOS;
 

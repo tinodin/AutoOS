@@ -1,8 +1,9 @@
+using System.Diagnostics;
 using AutoOS.Core.Helpers.BIOS;
 using AutoOS.Core.Helpers.Logging;
 using AutoOS.Core.Helpers.Picker;
-using AutoOS.Views.Installer.Stages;
-using AutoOS.Views.Settings.BIOS;
+using AutoOS.App.Views.Installer.Stages;
+using AutoOS.App.Views.Settings.BIOS;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.VisualBasic.FileIO;
 using Microsoft.Win32;
@@ -10,10 +11,10 @@ using Syncfusion.UI.Xaml.Data;
 using Syncfusion.UI.Xaml.DataGrid;
 using Syncfusion.UI.Xaml.Grids;
 using Syncfusion.UI.Xaml.TreeGrid;
-using System.Diagnostics;
+using Windows.Storage;
 using Windows.System;
 
-namespace AutoOS.Views.Settings;
+namespace AutoOS.App.Views.Settings;
 
 public sealed partial class BiosSettingsPage : Page
 {
@@ -72,7 +73,7 @@ public sealed partial class BiosSettingsPage : Page
 		string manufacturer = "Unknown";
 		string product = "Unknown";
 
-		using (var key = Registry.LocalMachine.OpenSubKey(@"HARDWARE\DESCRIPTION\System\BIOS"))
+		using (RegistryKey? key = Registry.LocalMachine.OpenSubKey(@"HARDWARE\DESCRIPTION\System\BIOS"))
 		{
 			if (key != null)
 			{
@@ -92,7 +93,7 @@ public sealed partial class BiosSettingsPage : Page
 		{
 			if (manufacturer.Contains("asus") || manufacturer.Contains("asustek"))
 			{
-				var protectedChipsets = new[] { "Z790", "B760", "H770", "X870", "X670", "B650", "A620" };
+				string[] protectedChipsets = ["Z790", "B760", "H770", "X870", "X670", "B650", "A620"];
 				SwitchPresenter.Value = protectedChipsets.Any(chipset => product.Contains(chipset))
 					? "HII Resources (Protected)"
 					: "HII Resources (Regular)";
@@ -132,7 +133,7 @@ public sealed partial class BiosSettingsPage : Page
 		{
 			if (manufacturer.Contains("asus") || manufacturer.Contains("asustek"))
 			{
-				var protectedChipsets = new[] { "Z790", "B760", "H770", "X870", "X670", "B650", "A620" };
+				string[] protectedChipsets = ["Z790", "B760", "H770", "X870", "X670", "B650", "A620"];
 				SwitchPresenter.Value = protectedChipsets.Any(chipset => product.Contains(chipset)) ? "HII Resources (Protected)" : "HII Resources (Regular)";
 			}
 			else
@@ -146,7 +147,7 @@ public sealed partial class BiosSettingsPage : Page
 		if (!Directory.Exists(backupDirectory))
 			Directory.CreateDirectory(backupDirectory);
 
-		var currentLines = await File.ReadAllLinesAsync(nvram);
+		string[] currentLines = await File.ReadAllLinesAsync(nvram);
 
 		var existingBackups = Directory.GetFiles(backupDirectory, "*.txt").OrderByDescending(file => Path.GetFileName(file)).ToList();
 
@@ -154,7 +155,7 @@ public sealed partial class BiosSettingsPage : Page
 
 		if (existingBackups.Count > 0)
 		{
-			var lastBackupLines = await File.ReadAllLinesAsync(existingBackups[0]);
+			string[] lastBackupLines = await File.ReadAllLinesAsync(existingBackups[0]);
 			var currentSettings = BiosSettingParser.ParseFromLines(currentLines).ToList();
 			var backupSettings = BiosSettingParser.ParseFromLines(lastBackupLines).ToList();
 
@@ -167,8 +168,8 @@ public sealed partial class BiosSettingsPage : Page
 			{
 				for (int i = 0; i < currentSettings.Count; i++)
 				{
-					var currentSetting = currentSettings[i];
-					var backupSetting = backupSettings[i];
+					BiosSettingModel currentSetting = currentSettings[i];
+					BiosSettingModel backupSetting = backupSettings[i];
 
 					if (currentSetting.SetupQuestion != backupSetting.SetupQuestion || currentSetting.Value != backupSetting.Value || currentSetting.Options.Count != backupSetting.Options.Count)
 					{
@@ -209,14 +210,14 @@ public sealed partial class BiosSettingsPage : Page
 		// parse
 		List<BiosSettingModel> parsedList;
 
-		using var stream = File.OpenRead(nvram);
+		using FileStream stream = File.OpenRead(nvram);
 		parsedList = await Task.Run(() =>
 		{
 			var settings = BiosSettingParser.ParseFromStream(stream).ToList();
 
-			foreach (var setting in settings)
+			foreach (BiosSettingModel? setting in settings)
 			{
-				foreach (var option in setting.Options)
+				foreach (Option option in setting.Options)
 					option.Parent = setting;
 
 				setting.InitializeSelectedOption();
@@ -233,14 +234,14 @@ public sealed partial class BiosSettingsPage : Page
 					.OrderByDescending(rule => rule.Condition != null)
 					.ToList();
 
-				foreach (var rule in matchingRules)
+				foreach (BiosSettingRecommendation? rule in matchingRules)
 				{
 					string recommendedLabel = rule.RecommendedOption?.Trim().ToLowerInvariant();
 					bool ruleApplicable = false;
 
 					if ((rule.Type?.Equals("Option", StringComparison.OrdinalIgnoreCase) ?? false) && setting.HasOptions)
 					{
-						var recommended = setting.Options
+						Option? recommended = setting.Options
 							.FirstOrDefault(option => option.Label?.Trim().ToLowerInvariant() == recommendedLabel);
 
 						if (recommended != null)
@@ -352,7 +353,7 @@ public sealed partial class BiosSettingsPage : Page
 			InitialDirectory = backupDirectory
 		};
 		picker.FileTypeChoices.Add("NVRAM Backup", ["*.txt"]);
-		var file = await picker.PickSingleFileAsync();
+		StorageFile? file = await picker.PickSingleFileAsync();
 
 		if (file != null)
 		{
@@ -380,7 +381,7 @@ public sealed partial class BiosSettingsPage : Page
 			string manufacturer = "Unknown";
 			string product = "Unknown";
 
-			using (var key = Registry.LocalMachine.OpenSubKey(@"HARDWARE\DESCRIPTION\System\BIOS"))
+			using (RegistryKey? key = Registry.LocalMachine.OpenSubKey(@"HARDWARE\DESCRIPTION\System\BIOS"))
 			{
 				if (key != null)
 				{
@@ -442,7 +443,7 @@ public sealed partial class BiosSettingsPage : Page
 		string manufacturer = "Unknown";
 		string product = "Unknown";
 
-		using (var key = Registry.LocalMachine.OpenSubKey(@"HARDWARE\DESCRIPTION\System\BIOS"))
+		using (RegistryKey? key = Registry.LocalMachine.OpenSubKey(@"HARDWARE\DESCRIPTION\System\BIOS"))
 		{
 			if (key != null)
 			{
@@ -479,7 +480,7 @@ public sealed partial class BiosSettingsPage : Page
 	{
 		if (e.NewSize.Width > 0)
 		{
-			foreach (var col in BiosTreeGrid.Columns)
+			foreach (TreeGridColumn? col in BiosTreeGrid.Columns)
 				col.Width = double.NaN;
 			BiosTreeGrid.InvalidateMeasure();
 			BiosTreeGrid.UpdateLayout();
@@ -490,7 +491,7 @@ public sealed partial class BiosSettingsPage : Page
 	{
 		if (e.NewSize.Width > 0)
 		{
-			foreach (var col in BiosDiffTreeGrid.Columns)
+			foreach (TreeGridColumn? col in BiosDiffTreeGrid.Columns)
 				col.Width = double.NaN;
 			BiosDiffTreeGrid.InvalidateMeasure();
 			BiosDiffTreeGrid.UpdateLayout();
@@ -571,7 +572,7 @@ public sealed partial class BiosSettingsPage : Page
 
 	private void BiosTreeGrid_CurrentCellBeginEdit(object sender, TreeGridCurrentCellBeginEditEventArgs e)
 	{
-		var node = BiosTreeGrid.GetNodeAtRowIndex(e.RowColumnIndex.RowIndex)?.Item as BiosTreeNode ?? BiosTreeGrid.CurrentItem as BiosTreeNode;
+		BiosTreeNode? node = BiosTreeGrid.GetNodeAtRowIndex(e.RowColumnIndex.RowIndex)?.Item as BiosTreeNode ?? BiosTreeGrid.CurrentItem as BiosTreeNode;
 		if (node?.NodeKind == NodeKind.Root)
 		{
 			e.Cancel = true;
@@ -582,7 +583,7 @@ public sealed partial class BiosSettingsPage : Page
 
 	private void BiosDiffTreeGrid_CurrentCellBeginEdit(object sender, TreeGridCurrentCellBeginEditEventArgs e)
 	{
-		var node = BiosDiffTreeGrid.GetNodeAtRowIndex(e.RowColumnIndex.RowIndex)?.Item as BiosTreeNode ?? BiosDiffTreeGrid.CurrentItem as BiosTreeNode;
+		BiosTreeNode? node = BiosDiffTreeGrid.GetNodeAtRowIndex(e.RowColumnIndex.RowIndex)?.Item as BiosTreeNode ?? BiosDiffTreeGrid.CurrentItem as BiosTreeNode;
 		if (node?.NodeKind == NodeKind.Root)
 		{
 			e.Cancel = true;
@@ -593,7 +594,7 @@ public sealed partial class BiosSettingsPage : Page
 
 	private void BiosTreeGrid_CurrentCellEndEdit(object sender, CurrentCellEndEditEventArgs e)
 	{
-		var node = BiosTreeGrid.GetNodeAtRowIndex(e.RowColumnIndex.RowIndex)?.Item as BiosTreeNode ?? BiosTreeGrid.CurrentItem as BiosTreeNode;
+		BiosTreeNode? node = BiosTreeGrid.GetNodeAtRowIndex(e.RowColumnIndex.RowIndex)?.Item as BiosTreeNode ?? BiosTreeGrid.CurrentItem as BiosTreeNode;
 		if (node?.NodeKind == NodeKind.Group)
 			ViewModel.BatchEdit(() => node.CommitCellEdit());
 		else
@@ -602,7 +603,7 @@ public sealed partial class BiosSettingsPage : Page
 
 	private void BiosDiffTreeGrid_CurrentCellEndEdit(object sender, CurrentCellEndEditEventArgs e)
 	{
-		var node = BiosDiffTreeGrid.GetNodeAtRowIndex(e.RowColumnIndex.RowIndex)?.Item as BiosTreeNode ?? BiosDiffTreeGrid.CurrentItem as BiosTreeNode;
+		BiosTreeNode? node = BiosDiffTreeGrid.GetNodeAtRowIndex(e.RowColumnIndex.RowIndex)?.Item as BiosTreeNode ?? BiosDiffTreeGrid.CurrentItem as BiosTreeNode;
 		if (node?.NodeKind == NodeKind.Group)
 			ViewModel.BatchEdit(() => node.CommitCellEdit());
 		else
@@ -633,15 +634,15 @@ public sealed partial class BiosSettingsPage : Page
 		if (e.ContextFlyoutType != Syncfusion.UI.Xaml.TreeGrid.ContextFlyoutType.HeaderCell)
 			return;
 
-		var col = grid.Columns[grid.ResolveToGridVisibleColumnIndex(e.RowColumnIndex.ColumnIndex)];
+		TreeGridColumn col = grid.Columns[grid.ResolveToGridVisibleColumnIndex(e.RowColumnIndex.ColumnIndex)];
 
 		e.ContextFlyout.Items.Clear();
 
 		if (col == null || !col.AllowSorting)
 			return;
 
-		var isAscending = grid.SortColumnDescriptions.Any(description => description.ColumnName == col.MappingName && description.SortDirection == SortDirection.Ascending);
-		var isDescending = grid.SortColumnDescriptions.Any(description => description.ColumnName == col.MappingName && description.SortDirection == SortDirection.Descending);
+		bool isAscending = grid.SortColumnDescriptions.Any(description => description.ColumnName == col.MappingName && description.SortDirection == SortDirection.Ascending);
+		bool isDescending = grid.SortColumnDescriptions.Any(description => description.ColumnName == col.MappingName && description.SortDirection == SortDirection.Descending);
 
 		var sortAsc = new RadioMenuFlyoutItem
 		{
@@ -686,19 +687,19 @@ public sealed partial class BiosSettingsPage : Page
 
 	private void EnsureNodesExpanded()
 	{
-		foreach (var root in ViewModel.TreeNodes.Where(node => node.NodeKind == NodeKind.Root))
+		foreach (BiosTreeNode? root in ViewModel.TreeNodes.Where(node => node.NodeKind == NodeKind.Root))
 		{
 			if (root.IsExpanded)
 			{
-				var node = BiosTreeGrid.View?.Nodes?.FirstOrDefault(treeNode => treeNode.Item == root);
+				TreeNode? node = BiosTreeGrid.View?.Nodes?.FirstOrDefault(treeNode => treeNode.Item == root);
 				if (node != null && !node.IsExpanded)
 					BiosTreeGrid.ExpandNode(node);
 
-				foreach (var child in root.Children.Where(c => c.NodeKind == NodeKind.Group))
+				foreach (BiosTreeNode? child in root.Children.Where(c => c.NodeKind == NodeKind.Group))
 				{
 					if (child.IsExpanded)
 					{
-						var childNode = BiosTreeGrid.View?.Nodes?.FirstOrDefault(treeNode => treeNode.Item == child);
+						TreeNode? childNode = BiosTreeGrid.View?.Nodes?.FirstOrDefault(treeNode => treeNode.Item == child);
 						if (childNode != null && !childNode.IsExpanded)
 							BiosTreeGrid.ExpandNode(childNode);
 					}
@@ -714,10 +715,10 @@ public sealed partial class BiosSettingsPage : Page
 		BiosTreeGrid.View?.RefreshFilter();
 		BiosDiffTreeGrid.View?.RefreshFilter();
 
-		var searchText = Search.Text;
+		string searchText = Search.Text;
 		bool isSearchEmpty = string.IsNullOrWhiteSpace(searchText);
 
-		var allRoot = ViewModel.TreeNodes.LastOrDefault();
+		BiosTreeNode? allRoot = ViewModel.TreeNodes.LastOrDefault();
 		if (allRoot != null)
 		{
 			int totalCount = CountMatchingNodes(allRoot, searchText, isSearchEmpty);
@@ -729,7 +730,7 @@ public sealed partial class BiosSettingsPage : Page
 			int diffCount = CountMatchingNodes(changesRoot, searchText, isSearchEmpty);
 			changesRoot.DisplayName = $"{(isSearchEmpty ? "Changes" : "Results")} ({diffCount})";
 
-			foreach (var child in changesRoot.Children)
+			foreach (BiosTreeNode child in changesRoot.Children)
 			{
 				if (child.NodeKind != NodeKind.Group) continue;
 				int childCount = CountMatchingNodes(child, searchText, isSearchEmpty);
@@ -766,7 +767,7 @@ public sealed partial class BiosSettingsPage : Page
 		int count = 0;
 		if (node.Children != null)
 		{
-			foreach (var child in node.Children)
+			foreach (BiosTreeNode child in node.Children)
 			{
 				count += CountMatchingNodes(child, searchText, isSearchEmpty);
 			}
@@ -785,8 +786,8 @@ public sealed partial class BiosSettingsPage : Page
 	{
 		if (obj is not BiosTreeNode node) return true;
 
-		var searchText = Search.Text;
-		var hasSearch = !string.IsNullOrWhiteSpace(searchText);
+		string searchText = Search.Text;
+		bool hasSearch = !string.IsNullOrWhiteSpace(searchText);
 
 		if (node.NodeKind == NodeKind.Root) return true;
 
@@ -817,12 +818,12 @@ public sealed partial class BiosSettingsPage : Page
 	{
 		if (obj is not BiosTreeNode node) return true;
 
-		var searchText = Search.Text;
-		var hasSearch = !string.IsNullOrWhiteSpace(searchText);
+		string searchText = Search.Text;
+		bool hasSearch = !string.IsNullOrWhiteSpace(searchText);
 
 		if (node.NodeKind == NodeKind.Root)
 		{
-			var isRecommended = node.DisplayName.StartsWith("Recommended");
+			bool isRecommended = node.DisplayName.StartsWith("Recommended");
 			if ((ViewChanges.IsChecked == true || hasSearch) && isRecommended) return false;
 			return true;
 		}

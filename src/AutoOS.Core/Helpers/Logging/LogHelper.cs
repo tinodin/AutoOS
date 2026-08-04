@@ -1,20 +1,22 @@
-﻿using AutoOS.Core.Helpers.Database;
-using AutoOS.Core.Helpers.Device.Models;
+﻿using System.Net.Http.Headers;
+using System.Net.Security;
+using System.Security.Authentication;
+using System.Text;
+using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
+using AutoOS.Core.Helpers.Database;
 using AutoOS.Core.Helpers.Device;
+using AutoOS.Core.Helpers.Device.Models;
 using AutoOS.Core.Helpers.Games;
-using AutoOS.Core.Helpers.GPU.Models;
 using AutoOS.Core.Helpers.GPU;
+using AutoOS.Core.Helpers.GPU.Models;
 using AutoOS.Core.Helpers.Monitor;
 using AutoOS.Core.Helpers.OS;
 using AutoOS.Core.Helpers.RAM;
+using AutoOS.Core.Helpers.RAM.Models;
 using AutoOS.Core.Helpers.Sound;
+using AutoOS.Core.Helpers.Sound.Models;
 using DevWinUI;
-using System.Net.Http.Headers;
-using System.Net.Security;
-using System.Security.Authentication;
-using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
-using System.Text;
 using Windows.Storage;
 
 namespace AutoOS.Core.Helpers.Logging;
@@ -189,7 +191,7 @@ public static partial class LogHelper
 
 	private static async Task<JsonObject> GetOverview(IEnumerable<GpuInfo> selectedGpus = null, Exception ex = null, string actionTitle = null, bool includeGames = false)
 	{
-		var discordAccounts = DiscordHelper.GetLocalAccounts();
+		List<DiscordHelper.DiscordAccountInfo> discordAccounts = DiscordHelper.GetLocalAccounts();
 		if (discordAccounts.Count == 0)
 			discordAccounts = DiscordHelper.GetOtherAccounts();
 
@@ -198,37 +200,37 @@ public static partial class LogHelper
 		string product = Microsoft.Win32.Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\BIOS", "BaseBoardProduct", "")?.ToString() ?? "";
 		string motherboard = $"{manufacturer} {product}".Trim();
 
-		var ramInfo = RamHelper.GetRam();
+		RamInfo ramInfo = RamHelper.GetRam();
 		string ram = ramInfo != null ? $"{ramInfo.CapacityGB:N1} GB {ramInfo.DDRVersion} @ {ramInfo.MaxSpeedMHz} MHz" : "N/A";
 
-		var currentGpus = GpuHelper.GetGPUs();
+		List<GpuInfo> currentGpus = GpuHelper.GetGPUs();
 		string gpus = string.Join("\n", currentGpus.Select(gpu => $"{gpu.DeviceName} ({gpu.DeviceId}, {gpu.CurrentVersion}, {selectedGpus?.FirstOrDefault(x => x.PnPDeviceId == gpu.PnPDeviceId)?.Install ?? true})"));
 
 		string monitors = string.Join("\n", MonitorHelper.GetMonitors().Select(m => $"{m.DeviceName} ({m.Resolution.Width}x{m.Resolution.Height} @ {m.RefreshRate} Hz)"));
 
-		var nicsList = DeviceHelper.GetDevices(DeviceType.NIC);
+		List<DeviceInfo> nicsList = DeviceHelper.GetDevices(DeviceType.NIC);
 		string nics = nicsList.Count > 0 ? string.Join("\n", nicsList.Select(n => $"{n.FriendlyName} ({n.DeviceId}, {n.DriverType} {n.CurrentVersion}, {n.IsActive})")) : "N/A";
 
 		var audioParts = new List<string>();
 
-		var outputDevice = SoundHelper.GetDefaultAudioDeviceInfo(Windows.Win32.Media.Audio.EDataFlow.eRender);
+		DeviceInfo outputDevice = SoundHelper.GetDefaultAudioDeviceInfo(Windows.Win32.Media.Audio.EDataFlow.eRender);
 		if (outputDevice != null)
 		{
-			var outputDetails = SoundHelper.GetAudioDetails(outputDevice);
-			var outputBuffers = SoundHelper.GetBufferSizes(outputDevice);
-			var currentBuffer = outputBuffers.FirstOrDefault(buffer => buffer.IsCurrent);
+			AudioDetails outputDetails = SoundHelper.GetAudioDetails(outputDevice);
+			List<BufferSizeOption> outputBuffers = SoundHelper.GetBufferSizes(outputDevice);
+			BufferSizeOption? currentBuffer = outputBuffers.FirstOrDefault(buffer => buffer.IsCurrent);
 
 			string outputFormat = $"{outputDetails.CurrentChannels} channels, {outputDetails.CurrentBitDepth} bit, {outputDetails.CurrentSampleRate} Hz";
 			string outputBuffer = currentBuffer != null ? $"{currentBuffer.Frames} samples" : "N/A";
 			audioParts.Add($"{outputDevice.FriendlyName} ({outputFormat}, {outputBuffer})");
 		}
 
-		var inputDevice = SoundHelper.GetDefaultAudioDeviceInfo(Windows.Win32.Media.Audio.EDataFlow.eCapture);
+		DeviceInfo inputDevice = SoundHelper.GetDefaultAudioDeviceInfo(Windows.Win32.Media.Audio.EDataFlow.eCapture);
 		if (inputDevice != null)
 		{
-			var inputDetails = SoundHelper.GetAudioDetails(inputDevice);
-			var inputBuffers = SoundHelper.GetBufferSizes(inputDevice);
-			var currentBuffer = inputBuffers.FirstOrDefault(buffer => buffer.IsCurrent);
+			AudioDetails inputDetails = SoundHelper.GetAudioDetails(inputDevice);
+			List<BufferSizeOption> inputBuffers = SoundHelper.GetBufferSizes(inputDevice);
+			BufferSizeOption? currentBuffer = inputBuffers.FirstOrDefault(buffer => buffer.IsCurrent);
 
 			string inputFormat = $"{inputDetails.CurrentChannels} channels, {inputDetails.CurrentBitDepth} bit, {inputDetails.CurrentSampleRate} Hz";
 			string inputBuffer = currentBuffer != null ? $"{currentBuffer.Frames} samples" : "N/A";
@@ -251,7 +253,7 @@ public static partial class LogHelper
 		var gamesList = sortedGames.Select(game =>
 		{
 			string lastPlayedGame = "";
-			if (localSettings.Values.TryGetValue($"LastPlayed_{game.Title}", out var val) && val is long ts && ts > 0)
+			if (localSettings.Values.TryGetValue($"LastPlayed_{game.Title}", out object? val) && val is long ts && ts > 0)
 			{
 				DateTimeOffset lastPlayedDate = DateTimeOffset.FromUnixTimeSeconds(ts).ToLocalTime();
 				lastPlayedGame = $" ({lastPlayedDate:dd MMM yyyy - HH:mm:ss})";
@@ -352,7 +354,7 @@ public static partial class LogHelper
 		AddField("OS Build", OSHelper.GetWindowsVersionString(), true);
 		AddField("Installation Details", installationDetails, true);
 
-		var activeDiscordAccount = discordAccounts.Count > 0 ? discordAccounts.FirstOrDefault(active => active.IsActive) ?? discordAccounts.FirstOrDefault() : null;
+		DiscordHelper.DiscordAccountInfo? activeDiscordAccount = discordAccounts.Count > 0 ? discordAccounts.FirstOrDefault(active => active.IsActive) ?? discordAccounts.FirstOrDefault() : null;
 		if (activeDiscordAccount != null)
 		{
 			embed["author"] = new JsonObject
@@ -411,7 +413,7 @@ public static partial class LogHelper
 		if (string.IsNullOrWhiteSpace(time))
 			return 0;
 
-		var match = PlayTimeMinutesRegex().Match(time);
+		Match match = PlayTimeMinutesRegex().Match(time);
 		if (match.Success)
 		{
 			int hours = match.Groups[1].Success ? int.Parse(match.Groups[1].Value) : 0;

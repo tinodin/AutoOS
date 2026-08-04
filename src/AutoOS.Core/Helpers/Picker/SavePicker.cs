@@ -1,14 +1,14 @@
 #nullable enable
+using System.Runtime.InteropServices;
+using DevWinUI;
+using Microsoft.UI.Xaml;
+using Windows.Storage;
+using Windows.Win32;
+using Windows.Win32.Foundation;
 using Windows.Win32.System.Com;
 using Windows.Win32.UI.Shell;
 using Windows.Win32.UI.Shell.Common;
-using Windows.Win32;
-using Windows.Win32.Foundation;
 using WinRT.Interop;
-using System.Runtime.InteropServices;
-using Windows.Storage;
-using Microsoft.UI.Xaml;
-using DevWinUI;
 
 namespace AutoOS.Helpers.Picker;
 
@@ -47,7 +47,7 @@ public partial class SavePicker
 	/// <returns>Returns the selected storage file or null if no file was chosen.</returns>
 	public async Task<StorageFile?> PickSaveFileAsync()
 	{
-		var filePath = SaveFileDialog();
+		string? filePath = SaveFileDialog();
 		return filePath != null ? await GetStorageFileOrCreateAsync(filePath) : null;
 	}
 	private async Task<StorageFile> GetStorageFileOrCreateAsync(string filePath)
@@ -58,11 +58,11 @@ public partial class SavePicker
 		}
 		else
 		{
-			var folder = Path.GetDirectoryName(filePath);
-			var fileName = Path.GetFileName(filePath);
-			var storageFolder = await StorageFolder.GetFolderFromPathAsync(folder);
+			string? folder = Path.GetDirectoryName(filePath);
+			string fileName = Path.GetFileName(filePath);
+			StorageFolder storageFolder = await StorageFolder.GetFolderFromPathAsync(folder);
 
-			var storageFile = await storageFolder.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
+			StorageFile storageFile = await storageFolder.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
 			await storageFile.DeleteAsync();
 			return storageFile;
 		}
@@ -74,7 +74,7 @@ public partial class SavePicker
 									typeof(FileSaveDialog).GUID,
 									null,
 									CLSCTX.CLSCTX_INPROC_SERVER,
-									out var fsd);
+									out IFileSaveDialog* fsd);
 		if (hr < 0)
 		{
 			Marshal.ThrowExceptionForHR(hr);
@@ -120,7 +120,7 @@ public partial class SavePicker
 				filters.Add(new COMDLG_FILTERSPEC { pszName = (char*)Marshal.StringToHGlobalUni("All Files (*.*)"), pszSpec = (char*)Marshal.StringToHGlobalUni("*.*") });
 			}
 
-			foreach (var kvp in FileTypeChoices)
+			foreach (KeyValuePair<string, IList<string>> kvp in FileTypeChoices)
 			{
 				string displayName = kvp.Key;
 

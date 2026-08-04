@@ -1,8 +1,7 @@
-using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media.Imaging;
 
-namespace AutoOS.Core.Helpers.Sound.Converters;
+namespace AutoOS.App.Converters;
 
 public partial class FormFactorToImageIconConverter : IValueConverter
 {

@@ -1,8 +1,9 @@
 using System.Security.Cryptography.X509Certificates;
+using Windows.Foundation;
 using Windows.Management.Deployment;
 using Windows.Win32;
 
-namespace AutoOS.Views.Updater.Stages;
+namespace AutoOS.App.Views.Updater.Stages;
 
 public static class PackageStage
 {
@@ -18,8 +19,8 @@ public static class PackageStage
 		using (X509Store store = new(StoreName.Root, StoreLocation.LocalMachine))
 		{
 			store.Open(OpenFlags.ReadWrite);
-			var cert = X509CertificateLoader.LoadCertificateFromFile(cerFilePath);
-			foreach (var oldCert in store.Certificates.Find(X509FindType.FindBySubjectDistinguishedName, cert.Subject, false))
+			X509Certificate2 cert = X509CertificateLoader.LoadCertificateFromFile(cerFilePath);
+			foreach (X509Certificate2 oldCert in store.Certificates.Find(X509FindType.FindBySubjectDistinguishedName, cert.Subject, false))
 			{
 				if (oldCert.Thumbprint != cert.Thumbprint)
 					store.Remove(oldCert);
@@ -32,7 +33,7 @@ public static class PackageStage
 		dialog.SetStatus("Installing Update...");
 		PInvoke.RegisterApplicationRestart(null, 0);
 		var packageManager = new PackageManager();
-		var deploymentOperation = packageManager.AddPackageAsync(new Uri(tempFilePath), null, DeploymentOptions.ForceApplicationShutdown);
+		IAsyncOperationWithProgress<DeploymentResult, DeploymentProgress> deploymentOperation = packageManager.AddPackageAsync(new Uri(tempFilePath), null, DeploymentOptions.ForceApplicationShutdown);
 		deploymentOperation.Progress = (info, progress) =>
 		{
 			_ = dialog.DispatcherQueue.TryEnqueue(() =>

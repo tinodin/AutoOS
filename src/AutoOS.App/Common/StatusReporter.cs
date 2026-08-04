@@ -1,8 +1,8 @@
 using AutoOS.Core.Common;
-using AutoOS.Views.Installer;
-using AutoOS.Views.Updater;
+using AutoOS.App.Views.Installer;
+using AutoOS.App.Views.Updater;
 
-namespace AutoOS.Common;
+namespace AutoOS.App.Common;
 
 public class InstallPageReporter : IStatusReporter
 {

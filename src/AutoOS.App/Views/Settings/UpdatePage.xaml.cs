@@ -1,6 +1,6 @@
 using Microsoft.Win32;
 
-namespace AutoOS.Views.Settings;
+namespace AutoOS.App.Views.Settings;
 
 public sealed partial class UpdatePage : Page
 {
@@ -17,10 +17,9 @@ public sealed partial class UpdatePage : Page
 	private void GetWindowsUpdateState()
 	{
 		// check registry
-		if (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings", "PauseUpdatesExpiryTime", null) == null)
-		{
-			WindowsUpdate.IsOn = true;
-		}
+		object? expiryValue = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings", "PauseUpdatesExpiryTime", null);
+		bool isPaused = expiryValue is string expiryString && DateTimeOffset.TryParse(expiryString, out DateTimeOffset expiryDate) && expiryDate > DateTimeOffset.UtcNow;
+		WindowsUpdate.IsOn = !isPaused;
 
 		isInitializingWindowsUpdateState = false;
 	}
@@ -49,7 +48,7 @@ public sealed partial class UpdatePage : Page
 		if (WindowsUpdate.IsOn)
 		{
 			// delete registry keys
-			var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\WindowsUpdate\UX\Settings", true);
+			RegistryKey? key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\WindowsUpdate\UX\Settings", true);
 			key?.DeleteValue("PauseFeatureUpdatesStartTime", false);
 			key?.DeleteValue("PauseFeatureUpdatesEndTime", false);
 			key?.DeleteValue("PauseQualityUpdatesStartTime", false);
@@ -66,7 +65,7 @@ public sealed partial class UpdatePage : Page
 			// pause for 100 years
 			string start = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssK");
 			string end = DateTime.UtcNow.AddYears(100).ToString("yyyy-MM-ddTHH:mm:ssK");
-			using var key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Microsoft\WindowsUpdate\UX\Settings");
+			using RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Microsoft\WindowsUpdate\UX\Settings");
 			key.SetValue("PauseFeatureUpdatesStartTime", start, RegistryValueKind.String);
 			key.SetValue("PauseFeatureUpdatesEndTime", end, RegistryValueKind.String);
 			key.SetValue("PauseQualityUpdatesStartTime", start, RegistryValueKind.String);
@@ -116,7 +115,7 @@ public sealed partial class UpdatePage : Page
 
 		string version = "Default";
 
-		using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate", false);
+		using RegistryKey? key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate", false);
 		if (key?.GetValue("TargetReleaseVersion") is int trv && trv == 1)
 			version = key.GetValue("TargetReleaseVersionInfo") as string ?? "Default";
 
@@ -140,7 +139,7 @@ public sealed partial class UpdatePage : Page
 		{
 			string version = selectedItem.Content.ToString();
 
-			using var key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate", true);
+			using RegistryKey? key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate", true);
 
 			if (version == "Default")
 			{

@@ -1,4 +1,4 @@
-namespace AutoOS.Common;
+namespace AutoOS.App.Common;
 
 public partial class DropdownColorPicker : DevWinUI.DropdownColorPicker
 {

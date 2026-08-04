@@ -1,6 +1,6 @@
-using AutoOS.Core.Helpers.Network.Models;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using AutoOS.Core.Helpers.Network.Models;
 using WinRT;
 
 namespace AutoOS.Core.Helpers.Device.Models;

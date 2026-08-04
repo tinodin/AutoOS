@@ -1,9 +1,11 @@
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices.WindowsRuntime;
 using AutoOS.Core.Helpers.Benchmark;
+using AutoOS.Core.Helpers.Benchmark.Models;
 using AutoOS.Helpers.Picker;
-using AutoOS.ViewModels;
+using AutoOS.App.ViewModels;
 using CommunityToolkit.WinUI.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
@@ -13,13 +15,15 @@ using Syncfusion.UI.Xaml.Grids;
 using Syncfusion.UI.Xaml.TreeGrid;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
+using Windows.Storage.Streams;
 using Windows.System;
+using Windows.UI;
 using Windows.UI.ViewManagement;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.Media.Audio;
 
-namespace AutoOS.Views.Settings;
+namespace AutoOS.App.Views.Settings;
 
 public sealed record BarColumnChartData(
 	List<BarPoint> DisplayedFpsBars1,
@@ -47,9 +51,9 @@ public sealed partial class BenchmarksPage : Page
 	public BenchmarksPageViewModel ViewModel { get; } = new();
 
 	internal PresentMonProcessDiscovery PresentingProcesses { get; } = new();
-	private GlobalKeyboardHook _globalKeyboardHook;
-	private Process _activeProcess;
-	private CancellationTokenSource _recordingCts;
+	private GlobalKeyboardHook? _globalKeyboardHook;
+	private Process? _activeProcess;
+	private CancellationTokenSource? _recordingCts;
 
 	public BenchmarksPage()
 	{
@@ -115,7 +119,7 @@ public sealed partial class BenchmarksPage : Page
 	private async void ProcessComboBox_DropDownOpened(object sender, object e)
 	{
 		PresentingProcesses.Start();
-		var processes = await Task.Run(() => PresentingProcesses.GetRecordableProcesses(true));
+		List<string> processes = await Task.Run(() => PresentingProcesses.GetRecordableProcesses(true));
 		ViewModel.SetRecordableProcesses(processes);
 		if (ProcessComboBox.IsDropDownOpen)
 			PresentingProcesses.ProcessesChanged += ProcessDiscovery_ProcessesChanged;
@@ -127,7 +131,7 @@ public sealed partial class BenchmarksPage : Page
 		PresentingProcesses.Dispose();
 	}
 
-	private void ProcessDiscovery_ProcessesChanged(object sender, EventArgs e)
+	private void ProcessDiscovery_ProcessesChanged(object? sender, EventArgs e)
 	{
 		DispatcherQueue.TryEnqueue(() =>
 		{
@@ -140,10 +144,10 @@ public sealed partial class BenchmarksPage : Page
 		HotkeyShortcut.UpdatePreviewKeys();
 		HotkeyShortcut.CloseContentDialog();
 
-		var modifiers = VirtualKeyModifiers.None;
-		var key = VirtualKey.None;
+		VirtualKeyModifiers modifiers = VirtualKeyModifiers.None;
+		VirtualKey key = VirtualKey.None;
 
-		foreach (var keyItem in HotkeyShortcut.Keys)
+		foreach (object? keyItem in HotkeyShortcut.Keys)
 		{
 			string keyName;
 			VirtualKey? virtKey = null;
@@ -168,7 +172,7 @@ public sealed partial class BenchmarksPage : Page
 				modifiers |= VirtualKeyModifiers.Windows;
 			else if (virtKey.HasValue && virtKey.Value != VirtualKey.None)
 				key = virtKey.Value;
-			else if (Enum.TryParse<VirtualKey>(keyName, ignoreCase: true, out var parsed) &&
+			else if (Enum.TryParse<VirtualKey>(keyName, true, out VirtualKey parsed) &&
 				parsed != VirtualKey.None)
 				key = parsed;
 		}
@@ -177,7 +181,7 @@ public sealed partial class BenchmarksPage : Page
 		ViewModel.ShortcutKey = key;
 	}
 
-	private void OnGlobalKeyDown(object sender, KeyboardHookEventArgs e)
+	private void OnGlobalKeyDown(object? sender, KeyboardHookEventArgs e)
 	{
 		if (e.Key == ViewModel.ShortcutKey &&
 			e.IsCtrl == ViewModel.ShortcutModifiers.HasFlag(VirtualKeyModifiers.Control) &&
@@ -260,6 +264,14 @@ public sealed partial class BenchmarksPage : Page
 		};
 
 		var process = Process.Start(startInfo);
+		if (process is null)
+		{
+			ViewModel.IsRecording = false;
+			Record.IsChecked = false;
+			await MessageBox.ShowErrorAsync(App.MainWindow, "PresentMon failed to start.", "Recording Error");
+			return;
+		}
+
 		_activeProcess = process;
 		ViewModel.ShowDuration();
 
@@ -322,8 +334,8 @@ public sealed partial class BenchmarksPage : Page
 		_recordingCts?.Cancel();
 		if (_activeProcess is { HasExited: false })
 		{
-			var found = false;
-			var hwnd = HWND.Null;
+			bool found = false;
+			HWND hwnd = HWND.Null;
 			while ((hwnd = PInvoke.FindWindowEx((HWND)(IntPtr)(-3), hwnd, "PresentMon", "PresentMonWnd")) != HWND.Null)
 			{
 				PInvoke.GetWindowThreadProcessId(hwnd, out uint pid);
@@ -345,7 +357,7 @@ public sealed partial class BenchmarksPage : Page
 	{
 		if (e.NewSize.Width > 0)
 		{
-			foreach (var col in RecordingsTreeGrid.Columns)
+			foreach (TreeGridColumn? col in RecordingsTreeGrid.Columns)
 				col.Width = double.NaN;
 			RecordingsTreeGrid.InvalidateMeasure();
 			RecordingsTreeGrid.UpdateLayout();
@@ -354,7 +366,12 @@ public sealed partial class BenchmarksPage : Page
 
 	private void RecordingsTreeGrid_SelectionChanged(object sender, GridSelectionChangedEventArgs e)
 	{
-		ViewModel.SetSelectedRecordings(RecordingsTreeGrid.SelectedItems.OfType<RecordingItem>().Append(RecordingsTreeGrid.SelectedItem as RecordingItem).Where(recording => recording is not null).DistinctBy(recording => recording.FilePath, StringComparer.OrdinalIgnoreCase).ToList());
+		AnalyzeRecordings();
+	}
+
+	private void AnalyzeRecordings()
+	{
+		ViewModel.SetSelectedRecordings(RecordingsTreeGrid.SelectedItems.OfType<RecordingItem>().Append(RecordingsTreeGrid.SelectedItem as RecordingItem).OfType<RecordingItem>().DistinctBy(recording => recording.FilePath, StringComparer.OrdinalIgnoreCase).ToList());
 
 		if (ViewModel.SelectedRecordings.Count is 0 or > 2)
 			return;
@@ -376,8 +393,8 @@ public sealed partial class BenchmarksPage : Page
 		if (RecordingsTreeGrid.GetNodeAtRowIndex(e.RowColumnIndex.RowIndex)?.Item is not RecordingItem recording)
 			return;
 
-		var ext = Path.GetExtension(recording.FilePath);
-		var newPath = Path.Combine(Path.GetDirectoryName(recording.FilePath), recording.Title + ext);
+		string ext = Path.GetExtension(recording.FilePath);
+		string newPath = Path.Combine(Path.GetDirectoryName(recording.FilePath) ?? string.Empty, recording.Title + ext);
 		if (newPath == recording.FilePath)
 			return;
 
@@ -402,12 +419,12 @@ public sealed partial class BenchmarksPage : Page
 		recording.FilePath = newPath;
 		recording.FileName = recording.Title + ext;
 
-		RecordingsTreeGrid_SelectionChanged(RecordingsTreeGrid, null);
+		AnalyzeRecordings();
 	}
 
 	private void AnalysisChartTypeSelector_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
 	{
-		var oldChartType = ViewModel.AnalysisChartType;
+		string oldChartType = ViewModel.AnalysisChartType;
 		ViewModel.AnalysisChartType = sender.SelectedItem switch
 		{
 			var item when item == BarChartItem => "Bar",
@@ -415,10 +432,10 @@ public sealed partial class BenchmarksPage : Page
 			var item when item == LineChartItem => "Line",
 			var item when item == ScatterChartItem => "Scatter",
 			var item when item == PieChartItem => "Pie",
-			_ => null
+			_ => string.Empty
 		};
 
-		var newChartType = ViewModel.AnalysisChartType;
+		string newChartType = ViewModel.AnalysisChartType;
 		if (newChartType == oldChartType)
 			return;
 		ReplayAnimation();
@@ -426,14 +443,14 @@ public sealed partial class BenchmarksPage : Page
 
 	private void Statistic_SelectionChanged()
 	{
-		var presentation = BuildBarColumnChartData(ViewModel.CachedAnalysis);
+		BarColumnChartData presentation = BuildBarColumnChartData(ViewModel.CachedAnalysis);
 		BindBarColumnChart(presentation);
 	}
 
 	private void MetricComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
 	{
-		var metric = (Metric1ComboBox.SelectedItem as ComboBoxItem)?.Content as string ?? string.Empty;
-		var data = BuildLineScatterChartData(ViewModel.CachedAnalysis, metric);
+		string metric = (Metric1ComboBox.SelectedItem as ComboBoxItem)?.Content as string ?? string.Empty;
+		LineScatterChartData data = BuildLineScatterChartData(ViewModel.CachedAnalysis, metric);
 		BindLineScatterChart(data.Pts1, data.Pts2, data.Label1, data.Label2);
 	}
 
@@ -444,7 +461,7 @@ public sealed partial class BenchmarksPage : Page
 
         if (ViewModel.AnalysisChartType == "Pie")
 		{
-			var pieData = BuildPieChartData(ViewModel.CachedAnalysis, ViewModel.StutterFactor, args.NewValue);
+			PieChartData pieData = BuildPieChartData(ViewModel.CachedAnalysis, ViewModel.StutterFactor, args.NewValue);
 			BindPieChart(pieData);
 		}
 		UpdateStutterStatistics();
@@ -457,7 +474,7 @@ public sealed partial class BenchmarksPage : Page
 
         if (ViewModel.AnalysisChartType == "Pie")
 		{
-			var pieData = BuildPieChartData(ViewModel.CachedAnalysis, args.NewValue, ViewModel.LowFpsThreshold);
+			PieChartData pieData = BuildPieChartData(ViewModel.CachedAnalysis, args.NewValue, ViewModel.LowFpsThreshold);
 			BindPieChart(pieData);
 		}
 		UpdateStutterStatistics();
@@ -479,7 +496,7 @@ public sealed partial class BenchmarksPage : Page
 	{
 		if (e.NewSize.Width > 0)
 		{
-			foreach (var col in StatisticsTreeGrid.Columns)
+			foreach (TreeGridColumn? col in StatisticsTreeGrid.Columns)
 				col.Width = double.NaN;
 			StatisticsTreeGrid.InvalidateMeasure();
 			StatisticsTreeGrid.UpdateLayout();
@@ -491,14 +508,14 @@ public sealed partial class BenchmarksPage : Page
 		if (ViewModel.CachedAnalysis.Count == 0)
 			return;
 
-		var metric = (Metric1ComboBox.SelectedItem as ComboBoxItem)?.Content as string;
-		var presentation = BuildBarColumnChartData(ViewModel.CachedAnalysis);
+		string? metric = (Metric1ComboBox.SelectedItem as ComboBoxItem)?.Content as string;
+		BarColumnChartData presentation = BuildBarColumnChartData(ViewModel.CachedAnalysis);
 		BindBarColumnChart(presentation);
 
-		var data = BuildLineScatterChartData(ViewModel.CachedAnalysis, metric);
+		LineScatterChartData data = BuildLineScatterChartData(ViewModel.CachedAnalysis, metric ?? string.Empty);
 		BindLineScatterChart(data.Pts1, data.Pts2, data.Label1, data.Label2);
 
-		var pieData = BuildPieChartData(ViewModel.CachedAnalysis, ViewModel.StutterFactor, ViewModel.LowFpsThreshold);
+		PieChartData pieData = BuildPieChartData(ViewModel.CachedAnalysis, ViewModel.StutterFactor, ViewModel.LowFpsThreshold);
 		BindPieChart(pieData);
 	}
 
@@ -514,7 +531,7 @@ public sealed partial class BenchmarksPage : Page
 		string renderedFpsLabel2 = string.Empty;
 
 		int fpsSeriesIdx = 0;
-		foreach (var result in results)
+		foreach (RecordingAnalysis result in results)
 		{
 			List<BarPoint> displayedTarget = fpsSeriesIdx == 0 ? displayedFpsBars1 : displayedFpsBars2;
 			List<BarPoint> renderedTarget = fpsSeriesIdx == 0 ? renderedFpsBars1 : renderedFpsBars2;
@@ -585,10 +602,10 @@ public sealed partial class BenchmarksPage : Page
 	{
 		bool hasSecondRecording = ViewModel.HasTwoRecordings;
 
-		ViewModel.BarColumnChartDisplayedData1 = null;
-		ViewModel.BarColumnChartRenderedData1 = null;
-		ViewModel.BarColumnChartDisplayedData2 = null;
-		ViewModel.BarColumnChartRenderedData2 = null;
+		ViewModel.BarColumnChartDisplayedData1 = [];
+		ViewModel.BarColumnChartRenderedData1 = [];
+		ViewModel.BarColumnChartDisplayedData2 = [];
+		ViewModel.BarColumnChartRenderedData2 = [];
 		ViewModel.BarColumnChartDisplayedLabel1 = presentation.DisplayedFpsLabel1;
 		ViewModel.BarColumnChartRenderedLabel1 = presentation.RenderedFpsLabel1;
 		ViewModel.BarColumnChartDisplayedLabel2 = presentation.DisplayedFpsLabel2;
@@ -602,8 +619,8 @@ public sealed partial class BenchmarksPage : Page
 
 		ViewModel.BarColumnChartDisplayedData1 = [.. displayed1];
 		ViewModel.BarColumnChartRenderedData1 = [.. rendered1];
-		ViewModel.BarColumnChartDisplayedData2 = hasSecondRecording ? [.. displayed2] : null;
-		ViewModel.BarColumnChartRenderedData2 = hasSecondRecording ? [.. rendered2] : null;
+		ViewModel.BarColumnChartDisplayedData2 = hasSecondRecording ? [.. displayed2] : [];
+		ViewModel.BarColumnChartRenderedData2 = hasSecondRecording ? [.. rendered2] : [];
 
 		if (BarChart != null)
 		{
@@ -665,13 +682,13 @@ public sealed partial class BenchmarksPage : Page
 
 	private static PieChartData BuildPieChartData(List<RecordingAnalysis> results, double stutterFactor, double lowFpsThreshold)
 	{
-		return new PieChartData(BuildPiePoints(results[0], stutterFactor, lowFpsThreshold), results.Count > 1 ? BuildPiePoints(results[1], stutterFactor, lowFpsThreshold) : null);
+		return new PieChartData(BuildPiePoints(results[0], stutterFactor, lowFpsThreshold), results.Count > 1 ? BuildPiePoints(results[1], stutterFactor, lowFpsThreshold) : []);
 	}
 
 	private static List<PiePoint> BuildPiePoints(RecordingAnalysis result, double stutterFactor, double lowFpsThreshold)
 	{
-		var sequence = result.Analysis.MsBetweenPresents;
-		var movingAverage = result.Analysis.StutterMovingAverage;
+		IReadOnlyList<double> sequence = result.Analysis.MsBetweenPresents;
+		IReadOnlyList<double> movingAverage = result.Analysis.StutterMovingAverage;
 		if (sequence.Count == 0 || movingAverage.Count != sequence.Count)
 			return [];
 
@@ -709,10 +726,10 @@ public sealed partial class BenchmarksPage : Page
 	{
 		if (ViewModel.AnalysisChartType is "Bar" or "Column")
 		{
-			var oldDisplayedData1 = ViewModel.BarColumnChartDisplayedData1;
-			var oldRenderedData1 = ViewModel.BarColumnChartRenderedData1;
-			var oldDisplayedData2 = ViewModel.BarColumnChartDisplayedData2;
-			var oldRenderedData2 = ViewModel.BarColumnChartRenderedData2;
+			ObservableCollection<BarPoint> oldDisplayedData1 = ViewModel.BarColumnChartDisplayedData1;
+			ObservableCollection<BarPoint> oldRenderedData1 = ViewModel.BarColumnChartRenderedData1;
+			ObservableCollection<BarPoint> oldDisplayedData2 = ViewModel.BarColumnChartDisplayedData2;
+			ObservableCollection<BarPoint> oldRenderedData2 = ViewModel.BarColumnChartRenderedData2;
 			ViewModel.BarColumnChartDisplayedData1 = [];
 			ViewModel.BarColumnChartRenderedData1 = [];
 			ViewModel.BarColumnChartDisplayedData2 = [];
@@ -725,8 +742,8 @@ public sealed partial class BenchmarksPage : Page
 
 		else if (ViewModel.AnalysisChartType is "Line" or "Scatter")
 		{
-			var oldData1 = ViewModel.LineScatterChartData1;
-			var oldData2 = ViewModel.LineScatterChartData2;
+			ObservableCollection<SeriesPoint> oldData1 = ViewModel.LineScatterChartData1;
+			ObservableCollection<SeriesPoint> oldData2 = ViewModel.LineScatterChartData2;
 			ViewModel.LineScatterChartData1 = [];
 			ViewModel.LineScatterChartData2 = [];
 			ViewModel.LineScatterChartData1 = oldData1;
@@ -734,8 +751,8 @@ public sealed partial class BenchmarksPage : Page
 		}
 		else
 		{
-			var oldData1 = ViewModel.PieChartData1;
-			var oldData2 = ViewModel.PieChartData2;
+			ObservableCollection<PiePoint> oldData1 = ViewModel.PieChartData1;
+			ObservableCollection<PiePoint> oldData2 = ViewModel.PieChartData2;
 			ViewModel.PieChartData1 = [];
 			ViewModel.PieChartData2 = [];
 			ViewModel.PieChartData1 = oldData1;
@@ -747,7 +764,7 @@ public sealed partial class BenchmarksPage : Page
 	{
 		ApplyStatisticsColumns();
 
-		var results = ViewModel.CachedAnalysis;
+		List<RecordingAnalysis> results = ViewModel.CachedAnalysis;
 		if (results.Count == 0)
 		{
 			ViewModel.StatisticsRows = [];
@@ -755,17 +772,17 @@ public sealed partial class BenchmarksPage : Page
 		}
 
 		List<ResultRow> groups = [];
-		foreach (var (name, selector, statistics) in BenchmarkCsv.GetStatisticGroups(ViewModel.StutterFactor, ViewModel.LowFpsThreshold))
+		foreach ((string? name, Func<AnalysisResult, Metrics>? selector, Dictionary<string, BenchmarkCsv.StatisticDefinition>? statistics) in BenchmarkCsv.GetStatisticGroups(ViewModel.StutterFactor, ViewModel.LowFpsThreshold))
 		{
-			var m0 = selector(results[0].Analysis);
-			var m1 = results.Count > 1 ? selector(results[1].Analysis) : null;
+			Metrics m0 = selector(results[0].Analysis);
+			Metrics? m1 = results.Count > 1 ? selector(results[1].Analysis) : null;
 
 			var group = new ResultRow
 			{
 				Statistic = name,
-				Tooltip = BenchmarkCsv.MetricDescriptions.TryGetValue(name, out var tip) ? tip : "Benchmark statistic."
+				Tooltip = BenchmarkCsv.MetricDescriptions.TryGetValue(name, out string? tip) ? tip : "Benchmark statistic."
 			};
-			foreach (var (key, definition) in statistics)
+			foreach ((string? key, BenchmarkCsv.StatisticDefinition definition) in statistics)
 			{
 				double valueA = BenchmarkCsv.GetStatistic(m0, key);
 				double valueB = m1 == null ? 0 : BenchmarkCsv.GetStatistic(m1, key);
@@ -817,7 +834,7 @@ public sealed partial class BenchmarksPage : Page
 			return sign + Math.Abs(value).ToString(format, CultureInfo.CurrentCulture) + suffix;
 		}
 
-		foreach (var row in rows)
+		foreach (ResultRow row in rows)
 		{
 			if (row.RecordingAValue is not double valueA || row.RecordingBValue is not double valueB)
 			{
@@ -846,7 +863,7 @@ public sealed partial class BenchmarksPage : Page
 				if (delta != 0)
 				{
 					bool comparisonIsBetter = row.Definition.HigherIsBetter ? delta > 0 : delta < 0;
-					var baselineComparison = comparisonIsBetter ? ComparisonResult.Worse : ComparisonResult.Better;
+					ComparisonResult baselineComparison = comparisonIsBetter ? ComparisonResult.Worse : ComparisonResult.Better;
 					if (baselineIndex == 0)
 						row.RecordingAComparison = baselineComparison;
 					else
@@ -878,17 +895,17 @@ public sealed partial class BenchmarksPage : Page
 
     private void UpdateStutterStatistics()
     {
-        var results = ViewModel.CachedAnalysis;
-        var stutterGroup = ViewModel.StatisticsRows.FirstOrDefault(row => row.Statistic == "Stutter Analysis");
+		List<RecordingAnalysis> results = ViewModel.CachedAnalysis;
+		ResultRow? stutterGroup = ViewModel.StatisticsRows.FirstOrDefault(row => row.Statistic == "Stutter Analysis");
         if (results.Count == 0 || stutterGroup is null)
             return;
 
-        var m0 = RecordingAnalyzer.GetStutterMetrics(results[0].Analysis, ViewModel.StutterFactor, ViewModel.LowFpsThreshold);
-        var m1 = results.Count > 1 ? RecordingAnalyzer.GetStutterMetrics(results[1].Analysis, ViewModel.StutterFactor, ViewModel.LowFpsThreshold) : null;
+		Metrics m0 = RecordingAnalyzer.GetStutterMetrics(results[0].Analysis, ViewModel.StutterFactor, ViewModel.LowFpsThreshold);
+		Metrics? m1 = results.Count > 1 ? RecordingAnalyzer.GetStutterMetrics(results[1].Analysis, ViewModel.StutterFactor, ViewModel.LowFpsThreshold) : null;
 
-        foreach (var (key, definition) in BenchmarkCsv.StutterStatistics)
+        foreach ((string? key, BenchmarkCsv.StatisticDefinition definition) in BenchmarkCsv.StutterStatistics)
         {
-            var row = stutterGroup.Children.FirstOrDefault(child => child.Statistic == definition.Label);
+			ResultRow? row = stutterGroup.Children.FirstOrDefault(child => child.Statistic == definition.Label);
             if (row is null)
                 continue;
             double valueA = BenchmarkCsv.GetStatistic(m0, key);
@@ -954,7 +971,7 @@ public sealed partial class BenchmarksPage : Page
 
 		string fileName = $"{recordingNames} - {ViewModel.AnalysisChartType} Chart";
 
-		var saveTarget = ViewModel.AnalysisChartType == "Pie" ? (FrameworkElement)PieChartContainer : chart;
+		FrameworkElement saveTarget = ViewModel.AnalysisChartType == "Pie" ? (FrameworkElement)PieChartContainer : chart;
 
 		var flyout = new MenuFlyout();
 
@@ -980,7 +997,7 @@ public sealed partial class BenchmarksPage : Page
 		};
 		picker.FileTypeChoices.Add($"{extension} image", [$"*.{extension}"]);
 
-		string filePath = picker.PickSaveFile();
+		string? filePath = picker.PickSaveFile();
 		if (string.IsNullOrWhiteSpace(filePath))
 			return;
 		if (!filePath.EndsWith($".{extension}", StringComparison.OrdinalIgnoreCase))
@@ -991,12 +1008,12 @@ public sealed partial class BenchmarksPage : Page
 		if (bitmap.PixelWidth == 0 || bitmap.PixelHeight == 0)
 			return;
 
-		var pixels = await bitmap.GetPixelsAsync();
+		IBuffer pixels = await bitmap.GetPixelsAsync();
 		byte[] pixelData = pixels.ToArray();
 
 		if (flattenBackground)
 		{
-			var background = new UISettings().GetColorValue(UIColorType.Background);
+			Color background = new UISettings().GetColorValue(UIColorType.Background);
 			for (int i = 0; i < pixelData.Length; i += 4)
 			{
 				int alpha = pixelData[i + 3];
@@ -1013,7 +1030,7 @@ public sealed partial class BenchmarksPage : Page
 
 		StorageFolder folder = await StorageFolder.GetFolderFromPathAsync(Path.GetDirectoryName(filePath));
 		StorageFile file = await folder.CreateFileAsync(Path.GetFileName(filePath), CreationCollisionOption.ReplaceExisting);
-		using var stream = await file.OpenAsync(FileAccessMode.ReadWrite);
+		using IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.ReadWrite);
 		BitmapEncoder encoder = await BitmapEncoder.CreateAsync(encoderId, stream);
 		encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied, (uint)bitmap.PixelWidth, (uint)bitmap.PixelHeight, 96, 96, pixelData);
 		await encoder.FlushAsync();

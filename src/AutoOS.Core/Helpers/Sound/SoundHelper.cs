@@ -1,22 +1,22 @@
-using AutoOS.Core.Helpers.Device.Models;
-using AutoOS.Core.Helpers.Device;
-using AutoOS.Core.Helpers.Sound.Clients;
-using AutoOS.Core.Helpers.Sound.Models;
-using AutoOS.Core.Helpers.Sound;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json.Nodes;
+using AutoOS.Core.Helpers.Device;
+using AutoOS.Core.Helpers.Device.Models;
+using AutoOS.Core.Helpers.Sound;
+using AutoOS.Core.Helpers.Sound.Clients;
+using AutoOS.Core.Helpers.Sound.Models;
 using Windows.Storage;
+using Windows.Win32;
 using Windows.Win32.Foundation;
-using Windows.Win32.Media.Audio.Endpoints;
 using Windows.Win32.Media.Audio;
-using Windows.Win32.System.Com.StructuredStorage;
+using Windows.Win32.Media.Audio.Endpoints;
 using Windows.Win32.System.Com;
+using Windows.Win32.System.Com.StructuredStorage;
 using Windows.Win32.System.Variant;
 using Windows.Win32.UI.Shell.PropertiesSystem;
-using Windows.Win32;
 
 namespace AutoOS.Core.Helpers.Sound;
 
@@ -140,11 +140,11 @@ public static partial class SoundHelper
 							: [(ushort)1, (ushort)2];
 
 					var formats = new List<AudioFormatOption>();
-					foreach (var ch in testChannels.Distinct())
+					foreach (ushort ch in testChannels.Distinct())
 					{
-						foreach (var rate in testRates)
+						foreach (uint rate in testRates)
 						{
-							foreach (var bit in testBits)
+							foreach (ushort bit in testBits)
 							{
 								bool isSupported = false;
 								ushort actualBits = bit;
@@ -222,11 +222,11 @@ public static partial class SoundHelper
 
 					if (formats.Count == 0)
 					{
-						foreach (var ch in testChannels.Distinct())
+						foreach (ushort ch in testChannels.Distinct())
 						{
-							foreach (var rate in testRates)
+							foreach (uint rate in testRates)
 							{
-								foreach (var bit in testBits)
+								foreach (ushort bit in testBits)
 								{
 									string quality = (bit, rate) switch
 									{
@@ -350,7 +350,7 @@ public static partial class SoundHelper
 									if (current > 0) options.Add(current);
 
 									double factor = 1000.0 / format->nSamplesPerSec;
-									foreach (var frames in options)
+									foreach (uint frames in options)
 									{
 										float ms = (float)Math.Round(frames * factor, 2);
 										bufferSizes.Add(new BufferSizeOption
@@ -609,7 +609,7 @@ public static partial class SoundHelper
 	public static unsafe void RegisterVolumeCallback(DeviceInfo device, Action<float, bool, float, float> onNotify)
 	{
 		PInvoke.CoInitializeEx(null, COINIT.COINIT_MULTITHREADED);
-		Observers.TryRemove(device.RegistryPath, out var old);
+		Observers.TryRemove(device.RegistryPath, out object? old);
 		if (old is IDisposable disp) disp.Dispose();
 
 		HRESULT hrEnum = PInvoke.CoCreateInstance(typeof(MMDeviceEnumerator).GUID, null, (CLSCTX)7, typeof(IMMDeviceEnumerator).GUID, out void* pEnumerator);
@@ -637,7 +637,7 @@ public static partial class SoundHelper
 	public static unsafe void RegisterDeviceChangeCallback(Action onNotify)
 	{
 		PInvoke.CoInitializeEx(null, COINIT.COINIT_MULTITHREADED);
-		Observers.TryRemove("DeviceChange", out var old);
+		Observers.TryRemove("DeviceChange", out object? old);
 		if (old is IDisposable disp) disp.Dispose();
 
 		HRESULT hrEnum = PInvoke.CoCreateInstance(typeof(MMDeviceEnumerator).GUID, null, (CLSCTX)7, typeof(IMMDeviceEnumerator).GUID, out void* pEnumerator);
@@ -738,11 +738,11 @@ public static partial class SoundHelper
 	{
 		if (option == null) return;
 
-		var json = localSettings.Values["Sound"]?.ToString();
-		var array = JsonNode.Parse(json ?? "[]")?.AsArray() ?? [];
+		string? json = localSettings.Values["Sound"]?.ToString();
+		JsonArray array = JsonNode.Parse(json ?? "[]")?.AsArray() ?? [];
 
 		JsonObject obj = null;
-		foreach (var item in array)
+		foreach (JsonNode? item in array)
 		{
 			if (item?["PnpDeviceId"]?.ToString() == device.PnpDeviceId)
 			{
@@ -766,16 +766,16 @@ public static partial class SoundHelper
 
 	public static unsafe void SetBufferSizes()
 	{
-		foreach (var process in Process.GetProcessesByName("AutoOS.Sound"))
+		foreach (Process process in Process.GetProcessesByName("AutoOS.Sound"))
 		{
 			process.Kill();
 			process.WaitForExit();
 		}
 
-		var json = localSettings.Values["Sound"]?.ToString();
+		string? json = localSettings.Values["Sound"]?.ToString();
 		if (string.IsNullOrEmpty(json)) return;
 
-		var array = JsonNode.Parse(json)?.AsArray();
+		JsonArray? array = JsonNode.Parse(json)?.AsArray();
 		if (array == null || array.Count == 0) return;
 
 		PInvoke.CoInitializeEx(null, COINIT.COINIT_MULTITHREADED);
@@ -785,7 +785,7 @@ public static partial class SoundHelper
 		float outputMs = 0;
 		float inputMs = 0;
 
-		foreach (var item in array)
+		foreach (JsonNode? item in array)
 		{
 			string id = item["PnpDeviceId"]?.GetValue<string>();
 			float ms = item["BufferSize"]?.GetValue<float>() ?? 0;

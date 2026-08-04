@@ -1,8 +1,8 @@
-﻿using AutoOS.Core.Common;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text.Json.Nodes;
-using Windows.Win32.Foundation;
+using AutoOS.Core.Common;
 using Windows.Win32;
+using Windows.Win32.Foundation;
 
 namespace AutoOS.Core.Helpers.Database;
 
@@ -22,7 +22,7 @@ public static partial class DiscordHelper
 
 	private static IEnumerable<(string Path, string Browser, DateTime LastWriteTime)> GetBrowserDatabases(string userDir)
 	{
-		var chromium = new[]
+		IEnumerable<(string Path, string Browser, DateTime LastWriteTime)> chromium = new[]
 		{
 			(@"AppData\Local\Microsoft\Edge\User Data\Default\Local Storage\leveldb", "Edge"),
 			(@"AppData\Local\Google\Chrome\User Data\Default\Local Storage\leveldb", "Chrome"),
@@ -36,7 +36,7 @@ public static partial class DiscordHelper
 		.Where(entry => Directory.Exists(Path.Combine(userDir, entry.Item1)))
 		.Select(entry => (Path: Path.Combine(userDir, entry.Item1), Browser: entry.Item2, LastWriteTime: new DirectoryInfo(Path.Combine(userDir, entry.Item1)).LastWriteTime));
 
-		var firefox = new[]
+		IEnumerable<(string Path, string Browser, DateTime LastWriteTime)> firefox = new[]
 		{
 			(@"AppData\Roaming\Floorp\Profiles", "Floorp"),
 			(@"AppData\Roaming\librewolf\Profiles", "LibreWolf"),
@@ -140,7 +140,7 @@ public static partial class DiscordHelper
 		//    }
 		//}
 
-		var systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));
+		string? systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));
 		var foundDatabasePaths = DriveInfo.GetDrives()
 			.Where(drive => drive.DriveType == DriveType.Fixed && drive.Name != systemDrive)
 			.SelectMany(drive =>
@@ -157,11 +157,11 @@ public static partial class DiscordHelper
 		string foundBrowser = null;
 		string foundToken = null;
 
-		foreach (var databasePath in foundDatabasePaths)
+		foreach ((string Path, string Browser, DateTime LastWriteTime) databasePath in foundDatabasePaths)
 		{
 			try
 			{
-				var tokenNode = DatabaseHelper.Read(databasePath.Path, "_https://discord.com", "token");
+				JsonNode tokenNode = DatabaseHelper.Read(databasePath.Path, "_https://discord.com", "token");
 				string token = tokenNode?.ToString();
 
 				if (!string.IsNullOrEmpty(token))
@@ -182,7 +182,7 @@ public static partial class DiscordHelper
 		{
 			DatabaseHelper.Write(LevelDbPath, "_https://discord.com", "token", foundToken);
 
-			var accounts = GetAccountData(foundDatabasePath);
+			List<DiscordAccountInfo> accounts = GetAccountData(foundDatabasePath);
 			if (accounts != null && accounts.Count > 0)
 			{
 				var accountNames = accounts.Select(account => account.Username).ToList();
@@ -201,7 +201,7 @@ public static partial class DiscordHelper
 
 	public static async Task ImportKeybinds(IStatusReporter reporter = null)
 	{
-		var systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));
+		string? systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));
 		var foundFolders = DriveInfo.GetDrives()
 			.Where(drive => drive.DriveType == DriveType.Fixed && drive.Name != systemDrive)
 			.SelectMany(drive =>
@@ -220,11 +220,11 @@ public static partial class DiscordHelper
 		DirectoryInfo newestFolder = null;
 		string foundKeybinds = null;
 
-		foreach (var folder in foundFolders)
+		foreach (DirectoryInfo? folder in foundFolders)
 		{
 			try
 			{
-				var keybindsNode = DatabaseHelper.Read(folder.FullName, "_https://discord.com", "keybinds");
+				JsonNode keybindsNode = DatabaseHelper.Read(folder.FullName, "_https://discord.com", "keybinds");
 				string keybinds = keybindsNode?.ToString();
 
 				if (!string.IsNullOrEmpty(keybinds))
@@ -303,21 +303,21 @@ public static partial class DiscordHelper
 	{
 		var accounts = new List<DiscordAccountInfo>();
 
-		var localDiscordAccounts = GetAccountData(LevelDbPath, "Discord");
+		List<DiscordAccountInfo> localDiscordAccounts = GetAccountData(LevelDbPath, "Discord");
 		if (localDiscordAccounts != null)
 			accounts.AddRange(localDiscordAccounts);
 
-		var systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));
+		string? systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));
 		string usersPath = Path.Combine(systemDrive, "Users");
 		if (Directory.Exists(usersPath))
 		{
-			var localDbs = Directory.GetDirectories(usersPath)
+			IOrderedEnumerable<(string Path, string Browser, DateTime LastWriteTime)> localDbs = Directory.GetDirectories(usersPath)
 				.SelectMany(GetBrowserDatabases)
 				.OrderByDescending(db => db.LastWriteTime);
 
-			foreach (var databasePath in localDbs)
+			foreach ((string Path, string Browser, DateTime LastWriteTime) databasePath in localDbs)
 			{
-				var browserAccounts = GetAccountData(databasePath.Path, databasePath.Browser);
+				List<DiscordAccountInfo> browserAccounts = GetAccountData(databasePath.Path, databasePath.Browser);
 				if (browserAccounts != null)
 					accounts.AddRange(browserAccounts);
 			}
@@ -329,35 +329,35 @@ public static partial class DiscordHelper
 	public static List<DiscordAccountInfo> GetOtherAccounts()
 	{
 		var accounts = new List<DiscordAccountInfo>();
-		var systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));
+		string? systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));
 
-		foreach (var drive in DriveInfo.GetDrives().Where(drive => drive.DriveType == DriveType.Fixed && drive.Name != systemDrive))
+		foreach (DriveInfo? drive in DriveInfo.GetDrives().Where(drive => drive.DriveType == DriveType.Fixed && drive.Name != systemDrive))
 		{
 			string driveLabel = drive.Name.TrimEnd('\\');
 			string usersPath = Path.Combine(drive.Name, "Users");
 			if (!Directory.Exists(usersPath))
 				continue;
 
-			var discordPaths = Directory.GetDirectories(usersPath)
+			IOrderedEnumerable<DirectoryInfo> discordPaths = Directory.GetDirectories(usersPath)
 				.Select(userDir => Path.Combine(userDir, "AppData", "Roaming", "discord", "Local Storage", "leveldb"))
 				.Where(Directory.Exists)
 				.Select(path => new DirectoryInfo(path))
 				.OrderByDescending(dir => dir.LastWriteTime);
 
-			foreach (var folder in discordPaths)
+			foreach (DirectoryInfo? folder in discordPaths)
 			{
-				var discordAccounts = GetAccountData(folder.FullName, $"Discord ({driveLabel})");
+				List<DiscordAccountInfo> discordAccounts = GetAccountData(folder.FullName, $"Discord ({driveLabel})");
 				if (discordAccounts != null)
 					accounts.AddRange(discordAccounts);
 			}
 
-			var otherDbs = Directory.GetDirectories(usersPath)
+			IOrderedEnumerable<(string Path, string Browser, DateTime LastWriteTime)> otherDbs = Directory.GetDirectories(usersPath)
 				.SelectMany(GetBrowserDatabases)
 				.OrderByDescending(db => db.LastWriteTime);
 
-			foreach (var databasePath in otherDbs)
+			foreach ((string Path, string Browser, DateTime LastWriteTime) databasePath in otherDbs)
 			{
-				var browserAccounts = GetAccountData(databasePath.Path, $"{databasePath.Browser} ({driveLabel})");
+				List<DiscordAccountInfo> browserAccounts = GetAccountData(databasePath.Path, $"{databasePath.Browser} ({driveLabel})");
 				if (browserAccounts != null)
 					accounts.AddRange(browserAccounts);
 			}

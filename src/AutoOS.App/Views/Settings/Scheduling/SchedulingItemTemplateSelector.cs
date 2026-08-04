@@ -1,4 +1,4 @@
-namespace AutoOS.Views.Settings.Scheduling;
+namespace AutoOS.App.Views.Settings.Scheduling;
 
 public sealed partial class SchedulingItemTemplateSelector : DataTemplateSelector
 {

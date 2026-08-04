@@ -1,13 +1,14 @@
-using Microsoft.Win32;
 using System.Runtime.InteropServices;
+using Microsoft.Win32;
+using Windows.Devices.Geolocation;
 using Windows.Storage;
+using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.System.Com;
 using Windows.Win32.UI.WindowsAndMessaging;
-using Windows.Win32;
 using WinRT;
 
-namespace AutoOS.Views.Installer;
+namespace AutoOS.App.Views.Installer;
 
 public sealed partial class PersonalizationPage : Page
 {
@@ -68,7 +69,7 @@ public sealed partial class PersonalizationPage : Page
 				IntPtr vtable = Marshal.ReadIntPtr(handle);
 				IntPtr applyThemePtr = Marshal.ReadIntPtr(vtable, IntPtr.Size * 4);
 
-				var applyTheme = Marshal.GetDelegateForFunctionPointer<ApplyThemeFunc>(applyThemePtr);
+				ApplyThemeFunc applyTheme = Marshal.GetDelegateForFunctionPointer<ApplyThemeFunc>(applyThemePtr);
 				applyTheme(handle, themePath);
 
 				fixed (char* pMessage = "ImmersiveColorSet")
@@ -103,7 +104,7 @@ public sealed partial class PersonalizationPage : Page
 
 	private void GetTheme()
 	{
-		using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes");
+		using RegistryKey? key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes");
 		string currentTheme = key?.GetValue("CurrentTheme") as string ?? string.Empty;
 
 		if (currentTheme == Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "resources", "Themes", "aero.theme") || currentTheme == Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "resources", "Themes", "dark.theme"))
@@ -121,7 +122,7 @@ public sealed partial class PersonalizationPage : Page
 
 	private async Task UpdateTheme()
 	{
-		var now = DateTime.Now.TimeOfDay;
+		TimeSpan now = DateTime.Now.TimeOfDay;
 		bool shouldBeLight;
 
 		if (TimeLine.StartTime <= TimeLine.EndTime)
@@ -157,15 +158,15 @@ public sealed partial class PersonalizationPage : Page
 			};
 
 			// load custom
-			LightTime.Time = (localSettings.Values["LightTime"] is string lightTimeStr && TimeSpan.TryParse(lightTimeStr, out var lt)) ? lt : TimeSpan.Parse("07:00");
+			LightTime.Time = (localSettings.Values["LightTime"] is string lightTimeStr && TimeSpan.TryParse(lightTimeStr, out TimeSpan lt)) ? lt : TimeSpan.Parse("07:00");
 			localSettings.Values["LightTime"] = LightTime.Time.ToString(@"hh\:mm");
 
-			DarkTime.Time = (localSettings.Values["DarkTime"] is string darkTimeStr && TimeSpan.TryParse(darkTimeStr, out var dt)) ? dt : TimeSpan.Parse("19:00");
+			DarkTime.Time = (localSettings.Values["DarkTime"] is string darkTimeStr && TimeSpan.TryParse(darkTimeStr, out TimeSpan dt)) ? dt : TimeSpan.Parse("19:00");
 			localSettings.Values["DarkTime"] = DarkTime.Time.ToString(@"hh\:mm");
 
 			// calculate sunrise sunset
-			var pos = await LocationHelper.GetGeoLocationAsync();
-			var sunTimes = SunTimesHelper.CalculateSunriseSunset(pos.Coordinate.Point.Position.Latitude, pos.Coordinate.Point.Position.Longitude, DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day);
+			Geoposition pos = await LocationHelper.GetGeoLocationAsync();
+			SunTimes sunTimes = SunTimesHelper.CalculateSunriseSunset(pos.Coordinate.Point.Position.Latitude, pos.Coordinate.Point.Position.Longitude, DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day);
 
 			TimeLine.Sunrise = new TimeSpan(sunTimes.SunriseHour, sunTimes.SunriseMinute, 0);
 			TimeLine.Sunset = new TimeSpan(sunTimes.SunsetHour, sunTimes.SunsetMinute, 0);
@@ -235,7 +236,7 @@ public sealed partial class PersonalizationPage : Page
 
 	private void UpdateTimeCardsVisibility()
 	{
-		var mode = (ScheduleMode.SelectedItem as ComboBoxItem)?.Content as string;
+		string? mode = (ScheduleMode.SelectedItem as ComboBoxItem)?.Content as string;
 
 		LightTimeCard.Visibility = mode == "Custom" ? Visibility.Visible : Visibility.Collapsed;
 		DarkTimeCard.Visibility = mode == "Custom" ? Visibility.Visible : Visibility.Collapsed;
@@ -271,8 +272,8 @@ public sealed partial class PersonalizationPage : Page
 			localSettings.Values["LeftTaskbarAlignment"] = 0;
 		}
 
-		using var key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced");
-		var obj = key?.GetValue("TaskbarAl");
+		using RegistryKey key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced");
+		object? obj = key?.GetValue("TaskbarAl");
 		int alignment = obj is int i && (i == 0 || i == 1) ? i : 1;
 
 		TaskbarAlignment.SelectedIndex = alignment;

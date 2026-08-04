@@ -1,7 +1,7 @@
 using AutoOS.Core.Helpers.CPU.Models;
-using AutoOS.Views.Settings.Scheduling.ViewModels;
+using AutoOS.App.Views.Settings.Scheduling.ViewModels;
 
-namespace AutoOS.Views.Settings.Scheduling;
+namespace AutoOS.App.Views.Settings.Scheduling;
 
 public sealed partial class SchedulingDialog : Page
 {

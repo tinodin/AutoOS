@@ -1,24 +1,25 @@
-using AutoOS.Common;
+using System.Diagnostics;
+using System.Text.Json;
+using AutoOS.App.Common;
 using AutoOS.Core.Helpers.Download;
 using AutoOS.Core.Helpers.Extract;
 using AutoOS.Core.Helpers.GPU;
+using AutoOS.Core.Helpers.GPU.Models;
 using AutoOS.Core.Helpers.Monitor;
 using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.Shortcut;
 using Microsoft.VisualBasic.FileIO;
 using Microsoft.Win32;
-using System.Diagnostics;
-using System.Text.Json;
 using Windows.Storage;
 
-namespace AutoOS.Views.Installer.Stages;
+namespace AutoOS.App.Views.Installer.Stages;
 
 public static class GraphicsStage
 {
 	private static readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 	public static async Task<List<(string Title, Func<Task> Action, Func<bool> Condition)>> GetActions()
 	{
-		var GPUs = PreparingStage.GPUs;
+		List<GpuInfo> GPUs = PreparingStage.GPUs;
 		bool MSI = PreparingStage.MSI;
 		bool CRU = PreparingStage.CRU;
 		bool ImportMonitorConfig = PreparingStage.ImportMonitorConfig;
@@ -122,7 +123,7 @@ public static class GraphicsStage
 		var driverInstallActions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>();
 		var driverTweakActions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>();
 
-		foreach (var gpu in gpus)
+		foreach (GpuInfo? gpu in gpus)
 		{
 			(string newestVersion, string newestDownloadUrl) = gpu.VendorId switch
 			{
@@ -132,7 +133,7 @@ public static class GraphicsStage
 				_ => ("", "")
 			};
 
-			if (!latestDrivers.TryGetValue(gpu.VendorId, out var driver) || driver.Version != newestVersion)
+			if (!latestDrivers.TryGetValue(gpu.VendorId, out (string Version, string Url) driver) || driver.Version != newestVersion)
 			{
 				latestDrivers[gpu.VendorId] = (newestVersion, newestDownloadUrl);
 

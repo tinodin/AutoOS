@@ -3,7 +3,7 @@ using Microsoft.UI.Xaml.Media;
 using Syncfusion.UI.Xaml.TreeGrid;
 using Windows.System;
 
-namespace AutoOS.Common;
+namespace AutoOS.App.Common;
 
 public static class TreeGridSelectionControllerHelper
 {
@@ -53,7 +53,7 @@ public sealed partial class TreeGridSelectionController : TreeGridRowSelectionCo
 
 			if (focused is Microsoft.UI.Xaml.Controls.TextBox textBox)
 			{
-				var parent = VisualTreeHelper.GetParent(textBox);
+				DependencyObject parent = VisualTreeHelper.GetParent(textBox);
 				while (parent != null)
 				{
 					if (parent is TreeGridCell)
@@ -62,7 +62,7 @@ public sealed partial class TreeGridSelectionController : TreeGridRowSelectionCo
 				}
 			}
 
-			var current = focused;
+			DependencyObject current = focused;
 			while (current != null)
 			{
 				if (current == _treeGrid)

@@ -1,7 +1,7 @@
-﻿using AutoOS.Core.Helpers.Services;
-using AutoOS.Views.Installer.Actions;
+using AutoOS.Core.Helpers.Services;
+using AutoOS.App.Views.Installer.Actions;
 
-namespace AutoOS.Views.Installer.Stages;
+namespace AutoOS.App.Views.Installer.Stages;
 
 public static class OptionalFeatureStage
 {

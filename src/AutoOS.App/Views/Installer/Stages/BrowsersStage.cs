@@ -1,18 +1,18 @@
-﻿using AutoOS.Common;
+using System.Diagnostics;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using AutoOS.App.Common;
 using AutoOS.Core.Common;
 using AutoOS.Core.Helpers.Download;
 using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.Services;
 using AutoOS.Core.Helpers.Store;
 using AutoOS.Core.Helpers.TaskScheduler;
-using AutoOS.Views.Installer.Actions;
+using AutoOS.App.Views.Installer.Actions;
 using Microsoft.Win32;
-using System.Diagnostics;
-using System.Text.Json.Nodes;
-using System.Text.Json;
 using Windows.Management.Deployment;
 
-namespace AutoOS.Views.Installer.Stages;
+namespace AutoOS.App.Views.Installer.Stages;
 
 public class BrowserSelection
 {
@@ -1007,11 +1007,11 @@ public static class BrowsersStage
 
 	private static void UpdatePolicies(string policiesPath, string extensionUrl)
 	{
-		var json = File.ReadAllText(policiesPath);
-		var root = JsonNode.Parse(json)?.AsObject();
-		if (root != null && root.TryGetPropertyValue("policies", out var policiesNode))
+		string json = File.ReadAllText(policiesPath);
+		JsonObject? root = JsonNode.Parse(json)?.AsObject();
+		if (root != null && root.TryGetPropertyValue("policies", out JsonNode? policiesNode))
 		{
-			var policies = policiesNode?.AsObject() ?? [];
+			JsonObject policies = policiesNode?.AsObject() ?? [];
 			JsonNode extensionNode = JsonValue.Create(extensionUrl)!;
 			if (!policies.ContainsKey("Extensions"))
 			{
@@ -1019,20 +1019,20 @@ public static class BrowsersStage
 			}
 			else
 			{
-				var extensions = policies["Extensions"]?.AsObject();
+				JsonObject? extensions = policies["Extensions"]?.AsObject();
 				if (extensions != null)
 				{
-					if (!extensions.TryGetPropertyValue("Install", out var installNode))
+					if (!extensions.TryGetPropertyValue("Install", out JsonNode? installNode))
 					{
 						extensions["Install"] = new JsonArray(JsonValue.Create(extensionUrl));
 					}
 					else
 					{
-						var installArray = installNode?.AsArray();
+						JsonArray? installArray = installNode?.AsArray();
 						if (installArray != null)
 						{
 							bool alreadyExists = false;
-							foreach (var item in installArray)
+							foreach (JsonNode? item in installArray)
 							{
 								if (item?.ToString() == extensionUrl)
 								{

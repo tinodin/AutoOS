@@ -1,4 +1,4 @@
-namespace AutoOS.Views.Settings.Games;
+namespace AutoOS.App.Views.Settings.Games;
 
 public class HeaderCarouselEventArgs : EventArgs
 {

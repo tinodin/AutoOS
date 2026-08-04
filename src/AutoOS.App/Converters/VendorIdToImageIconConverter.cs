@@ -2,7 +2,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media.Imaging;
 
-namespace AutoOS.Core.Helpers.GPU.Converters;
+namespace AutoOS.App.Converters;
 
 public partial class VendorIdToImageIconConverter : IValueConverter
 {

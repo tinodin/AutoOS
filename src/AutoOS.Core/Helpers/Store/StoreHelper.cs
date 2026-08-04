@@ -1,13 +1,15 @@
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using AutoOS.Core.Common;
 using AutoOS.Core.Helpers.Download;
 using AutoOS.Core.Helpers.Logging;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Text.Json;
-using System.Text.RegularExpressions;
-using System.Text;
-using System.Xml.Linq;
+using Windows.ApplicationModel;
 using Windows.ApplicationModel.Store.Preview.InstallControl;
+using Windows.Foundation;
 using Windows.Management.Deployment;
 using Windows.Storage;
 
@@ -35,32 +37,32 @@ public static partial class StoreHelper
 
 	public static async Task Download(string identifier, int index = 0, IStatusReporter reporter = null)
 	{
-		var product = await GetProductID(identifier);
+		string product = await GetProductID(identifier);
 		if (string.IsNullOrEmpty(product))
 		{
 			await LogHelper.LogError(new Exception($"[StoreHelper] ProductID not found for {identifier}."));
 			return;
 		}
 
-		var category = await GetCategoryID(product);
+		string category = await GetCategoryID(product);
 		if (string.IsNullOrEmpty(category))
 		{
 			await LogHelper.LogError(new Exception($"[StoreHelper] CategoryID not found for {identifier} (Product: {product})."));
 			return;
 		}
 
-		var folderPath = Path.Combine(Path.Combine(Path.GetTempPath(), "StoreHelper"), identifier);
+		string folderPath = Path.Combine(Path.Combine(Path.GetTempPath(), "StoreHelper"), identifier);
 		Directory.CreateDirectory(folderPath);
 
 		try
 		{
-			var files = await GetFiles(identifier, category, index);
+			List<StoreInfo> files = await GetFiles(identifier, category, index);
 			if (files.Count == 0)
 			{
 				await LogHelper.LogError(new Exception($"[StoreHelper] No files found for {identifier}"), actionTitle: $"[StoreHelper] Download failed for {identifier}");
 				return;
 			}
-			var main = files.First();
+			StoreInfo main = files.First();
 			Debug.WriteLine($"[StoreHelper] Selected Package: {main.Name}");
 
 			await DownloadHelper.Download(main.ResourceUri, folderPath, reporter: reporter);
@@ -73,7 +75,7 @@ public static partial class StoreHelper
 
 	public static async Task Install(string identifier)
 	{
-		var folderPath = Path.Combine(Path.Combine(Path.GetTempPath(), "StoreHelper"), identifier);
+		string folderPath = Path.Combine(Path.Combine(Path.GetTempPath(), "StoreHelper"), identifier);
 
 		try
 		{
@@ -84,7 +86,7 @@ public static partial class StoreHelper
 							f.EndsWith(".msixbundle", StringComparison.OrdinalIgnoreCase))
 				.ToList();
 
-			var mainPath = allFiles.FirstOrDefault(f => Path.GetFileName(f).StartsWith(identifier.Split('_')[0], StringComparison.OrdinalIgnoreCase)) ?? allFiles.First();
+			string mainPath = allFiles.FirstOrDefault(f => Path.GetFileName(f).StartsWith(identifier.Split('_')[0], StringComparison.OrdinalIgnoreCase)) ?? allFiles.First();
 
 			await new PackageManager().StagePackageAsync(new Uri(mainPath), null);
 			await new PackageManager().ProvisionPackageForAllUsersAsync(identifier);
@@ -106,14 +108,14 @@ public static partial class StoreHelper
 		{
 			var manager = new PackageManager();
 
-			foreach (var package in manager.FindPackagesForUser(string.Empty, packageFamilyName))
+			foreach (Package? package in manager.FindPackagesForUser(string.Empty, packageFamilyName))
 			{
 				await manager.RemovePackageAsync(package.Id.FullName, RemovalOptions.RemoveForAllUsers);
 			}
 		}
 		catch (UnauthorizedAccessException)
 		{
-			var localSettings = ApplicationData.Current.LocalSettings;
+			ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 			int actionIndex = localSettings.Values["actionIndex"] as int? ?? 0;
 			localSettings.Values["actionIndex"] = actionIndex - 1;
 			Process.Start(new ProcessStartInfo { FileName = "shutdown", Arguments = "/r /t 0", CreateNoWindow = true, UseShellExecute = false });
@@ -128,7 +130,7 @@ public static partial class StoreHelper
 		}
 		catch (UnauthorizedAccessException)
 		{
-			var localSettings = ApplicationData.Current.LocalSettings;
+			ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 			int actionIndex = localSettings.Values["actionIndex"] as int? ?? 0;
 			localSettings.Values["actionIndex"] = actionIndex - 1;
 			Process.Start(new ProcessStartInfo { FileName = "shutdown", Arguments = "/r /t 0", CreateNoWindow = true, UseShellExecute = false });
@@ -145,16 +147,16 @@ public static partial class StoreHelper
 			AllowForcedAppRestart = true
 		};
 
-		var operation = installManager.SearchForAllUpdatesAsync(string.Empty, string.Empty, updateOptions);
+		IAsyncOperation<IReadOnlyList<AppInstallItem>> operation = installManager.SearchForAllUpdatesAsync(string.Empty, string.Empty, updateOptions);
 
-		var results = await operation;
+		IReadOnlyList<AppInstallItem> results = await operation;
 
 		return [.. results];
 	}
 
 	public static async Task Update(string identifier, IStatusReporter reporter = null)
 	{
-		var uiContext = SynchronizationContext.Current;
+		SynchronizationContext? uiContext = SynchronizationContext.Current;
 
 		reporter?.Report(isIndeterminate: true, progress: 0);
 
@@ -166,7 +168,7 @@ public static partial class StoreHelper
 		{
 			if (args.Item.PackageFamilyName == identifier)
 			{
-				var status = args.Item.GetCurrentStatus();
+				AppInstallStatus status = args.Item.GetCurrentStatus();
 
 				uiContext?.Post(_ =>
 				{
@@ -190,7 +192,7 @@ public static partial class StoreHelper
 			return;
 		}
 
-		var initialStatus = updateItem.GetCurrentStatus();
+		AppInstallStatus initialStatus = updateItem.GetCurrentStatus();
 		if (initialStatus.InstallState == AppInstallState.Completed || initialStatus.InstallState == AppInstallState.Canceled || initialStatus.InstallState == AppInstallState.Error)
 		{
 			installManager.ItemStatusChanged -= OnItemStatusChanged;
@@ -209,9 +211,9 @@ public static partial class StoreHelper
 	public static string GetVersion(string packageFamilyName)
 	{
 		var manager = new PackageManager();
-		foreach (var package in manager.FindPackagesForUser(string.Empty, packageFamilyName))
+		foreach (Package? package in manager.FindPackagesForUser(string.Empty, packageFamilyName))
 		{
-			var version = package.Id.Version;
+			PackageVersion version = package.Id.Version;
 			return $"{version.Major}.{version.Minor}.{version.Build}.{version.Revision}";
 		}
 		return string.Empty;
@@ -222,23 +224,23 @@ public static partial class StoreHelper
 		try
 		{
 			var manager = new PackageManager();
-			var package = manager.FindPackagesForUser(string.Empty, packageFamilyName).FirstOrDefault();
+			Package? package = manager.FindPackagesForUser(string.Empty, packageFamilyName).FirstOrDefault();
 			if (package == null) return;
 
 			string manifestPath = Path.Combine(package.InstalledLocation.Path, "AppxManifest.xml");
 			if (!File.Exists(manifestPath)) return;
 
 			var doc = XDocument.Load(manifestPath);
-			var ns = doc.Root.Name.Namespace;
-			var applications = doc.Descendants(ns + "Application");
+			XNamespace ns = doc.Root.Name.Namespace;
+			IEnumerable<XElement> applications = doc.Descendants(ns + "Application");
 
-			foreach (var app in applications)
+			foreach (XElement app in applications)
 			{
-				var exe = app.Attribute("Executable")?.Value;
+				string? exe = app.Attribute("Executable")?.Value;
 				if (!string.IsNullOrEmpty(exe))
 				{
-					var processName = Path.GetFileNameWithoutExtension(exe);
-					foreach (var process in Process.GetProcessesByName(processName))
+					string processName = Path.GetFileNameWithoutExtension(exe);
+					foreach (Process process in Process.GetProcessesByName(processName))
 					{
 						try
 						{
@@ -257,32 +259,32 @@ public static partial class StoreHelper
 
 	private static async Task<string> GetProductID(string term)
 	{
-		var dcatUrl = $"https://displaycatalog.mp.microsoft.com/v7.0/products/lookup?alternateId=PackageFamilyName&Value={Uri.EscapeDataString(term)}&market=US&languages=en-US";
-		var dcatRaw = await httpClient.GetStringAsync(dcatUrl);
+		string dcatUrl = $"https://displaycatalog.mp.microsoft.com/v7.0/products/lookup?alternateId=PackageFamilyName&Value={Uri.EscapeDataString(term)}&market=US&languages=en-US";
+		string dcatRaw = await httpClient.GetStringAsync(dcatUrl);
 		using var dcatJson = JsonDocument.Parse(dcatRaw);
-		if (dcatJson.RootElement.TryGetProperty("Products", out var prods) && prods.GetArrayLength() > 0)
+		if (dcatJson.RootElement.TryGetProperty("Products", out JsonElement prods) && prods.GetArrayLength() > 0)
 		{
-			if (prods[0].TryGetProperty("ProductId", out var pid))
+			if (prods[0].TryGetProperty("ProductId", out JsonElement pid))
 				return pid.GetString();
 		}
 
-		var searchBase = term.Split('_')[0];
-		var raw = await httpClient.GetStringAsync($"https://apps.microsoft.com/api/products/search?gl=US&hl=en-us&query={Uri.EscapeDataString(searchBase)}&mediaType=all");
+		string searchBase = term.Split('_')[0];
+		string raw = await httpClient.GetStringAsync($"https://apps.microsoft.com/api/products/search?gl=US&hl=en-us&query={Uri.EscapeDataString(searchBase)}&mediaType=all");
 		using var json = JsonDocument.Parse(raw);
 
 		var targets = new List<JsonElement>();
-		if (json.RootElement.TryGetProperty("highlightedList", out var h)) targets.AddRange(h.EnumerateArray());
-		if (json.RootElement.TryGetProperty("productsList", out var p)) targets.AddRange(p.EnumerateArray());
+		if (json.RootElement.TryGetProperty("highlightedList", out JsonElement h)) targets.AddRange(h.EnumerateArray());
+		if (json.RootElement.TryGetProperty("productsList", out JsonElement p)) targets.AddRange(p.EnumerateArray());
 
-		foreach (var item in targets)
+		foreach (JsonElement item in targets)
 		{
-			var title = item.TryGetProperty("title", out var t) ? t.GetString() : null;
+			string? title = item.TryGetProperty("title", out JsonElement t) ? t.GetString() : null;
 			if (title != null && title.Equals(searchBase, StringComparison.OrdinalIgnoreCase))
 				return item.GetProperty("productId").GetString();
 
-			if (item.TryGetProperty("packageFamilyNames", out var pfnList))
+			if (item.TryGetProperty("packageFamilyNames", out JsonElement pfnList))
 			{
-				foreach (var pfn in pfnList.EnumerateArray())
+				foreach (JsonElement pfn in pfnList.EnumerateArray())
 				{
 					if (pfn.GetString().Contains(term, StringComparison.OrdinalIgnoreCase) ||
 						pfn.GetString().Contains(searchBase, StringComparison.OrdinalIgnoreCase))
@@ -296,7 +298,7 @@ public static partial class StoreHelper
 	private static async Task<string> GetCategoryID(string productId)
 	{
 		string url = $"https://storeedgefd.dsx.mp.microsoft.com/v9.0/products/{productId}?market=US&locale=en-us&deviceFamily=Windows.Desktop";
-		var response = await httpClient.GetAsync(url);
+		HttpResponseMessage response = await httpClient.GetAsync(url);
 		if (response.IsSuccessStatusCode)
 		{
 			string jsonResponse = await response.Content.ReadAsStringAsync();
@@ -310,7 +312,7 @@ public static partial class StoreHelper
 					string fulfillmentData = fulfillmentDataElement.GetString();
 					if (!string.IsNullOrEmpty(fulfillmentData))
 					{
-						var match = Regex.Match(fulfillmentData, "\"WuCategoryId\":\"([^\"]+)\"");
+						Match match = Regex.Match(fulfillmentData, "\"WuCategoryId\":\"([^\"]+)\"");
 						if (match.Success && match.Groups.Count > 1)
 						{
 							return match.Groups[1].Value;
@@ -324,69 +326,69 @@ public static partial class StoreHelper
 
 	private static async Task<List<StoreInfo>> GetFiles(string name, string catId, int index = 0)
 	{
-		var token = await Auth();
+		string token = await Auth();
 
-		var response = await PostSoap(SoapTemplates.Sync(token, catId, "WIF"), "https://fe3.delivery.mp.microsoft.com/ClientWebService/client.asmx");
+		string response = await PostSoap(SoapTemplates.Sync(token, catId, "WIF"), "https://fe3.delivery.mp.microsoft.com/ClientWebService/client.asmx");
 
 		if (string.IsNullOrEmpty(response)) return [];
 
 		var doc = XDocument.Parse(response.Replace("&lt;", "<").Replace("&gt;", ">"));
 
 		var filePool = new Dictionary<string, (string ext, string hash, DateTime modified)>();
-		foreach (var node in doc.Descendants().Where(x => x.Name.LocalName == "File"))
+		foreach (XElement? node in doc.Descendants().Where(x => x.Name.LocalName == "File"))
 		{
-			var id = node.Attribute("InstallerSpecificIdentifier")?.Value;
-			var hash = node.Attribute("Digest")?.Value;
-			var fileName = node.Attribute("FileName")?.Value;
-			var lastModified = node.Attribute("Modified")?.Value;
+			string? id = node.Attribute("InstallerSpecificIdentifier")?.Value;
+			string? hash = node.Attribute("Digest")?.Value;
+			string? fileName = node.Attribute("FileName")?.Value;
+			string? lastModified = node.Attribute("Modified")?.Value;
 			_ = DateTime.TryParse(lastModified, out DateTime modified);
 
 			if (id != null && hash != null && fileName != null)
 			{
-				if (!filePool.TryGetValue(id, out var existing) || modified > existing.modified)
+				if (!filePool.TryGetValue(id, out (string ext, string hash, DateTime modified) existing) || modified > existing.modified)
 				{
 					filePool[id] = (Path.GetExtension(fileName).TrimStart('.'), hash, modified);
 				}
 			}
 		}
 
-		var arch = RuntimeInformation.OSArchitecture.ToString().ToLower();
+		string arch = RuntimeInformation.OSArchitecture.ToString().ToLower();
 		var results = new List<StoreInfo>();
 
-		var searchName = name.Split('_')[0];
+		string searchName = name.Split('_')[0];
 
-		foreach (var node in doc.Descendants().Where(x => x.Name.LocalName == "SecuredFragment"))
+		foreach (XElement? node in doc.Descendants().Where(x => x.Name.LocalName == "SecuredFragment"))
 		{
-			var root = node.Parent?.Parent;
+			XElement? root = node.Parent?.Parent;
 			if (root == null) continue;
 
-			var appxMetadata = root.Descendants().FirstOrDefault(x => x.Name.LocalName == "AppxMetadata");
-			var identity = appxMetadata?.Attribute("PackageMoniker")?.Value;
-			var versionStr = appxMetadata?.Attribute("Version")?.Value;
+			XElement? appxMetadata = root.Descendants().FirstOrDefault(x => x.Name.LocalName == "AppxMetadata");
+			string? identity = appxMetadata?.Attribute("PackageMoniker")?.Value;
+			string? versionStr = appxMetadata?.Attribute("Version")?.Value;
 
 			if (identity != null)
 			{
-				var match = PackageIdentityRegex().Match(identity);
+				Match match = PackageIdentityRegex().Match(identity);
 				if (match.Success)
 				{
 					if (string.IsNullOrEmpty(versionStr)) versionStr = match.Groups[2].Value;
 				}
 			}
 
-			if (identity != null && filePool.TryGetValue(identity, out var info))
+			if (identity != null && filePool.TryGetValue(identity, out (string ext, string hash, DateTime modified) info))
 			{
 				if (!identity.Contains(arch) && !identity.Contains("neutral") && !identity.Contains("x86")) continue;
 				if (info.ext.StartsWith("e")) continue;
 
 				if (identity.StartsWith(searchName, StringComparison.OrdinalIgnoreCase))
 				{
-					var idNode = root.Descendants().FirstOrDefault(x => x.Name.LocalName == "UpdateIdentity");
+					XElement? idNode = root.Descendants().FirstOrDefault(x => x.Name.LocalName == "UpdateIdentity");
 					if (idNode == null) continue;
 
-					var updateIdentifier = idNode.Attribute("UpdateID")?.Value;
-					var revision = idNode.Attribute("RevisionNumber")?.Value;
+					string? updateIdentifier = idNode.Attribute("UpdateID")?.Value;
+					string? revision = idNode.Attribute("RevisionNumber")?.Value;
 
-					var link = await ResolveUrl(updateIdentifier, revision, info.hash);
+					string link = await ResolveUrl(updateIdentifier, revision, info.hash);
 					var infoItem = new StoreInfo
 					{
 						Name = identity,
@@ -405,7 +407,7 @@ public static partial class StoreHelper
 		}
 
 		return [.. results
-		.OrderByDescending(r => Version.TryParse(r.Version, out var v) ? v : new Version(0, 0, 0, 0))
+		.OrderByDescending(r => Version.TryParse(r.Version, out Version? v) ? v : new Version(0, 0, 0, 0))
 		.ThenByDescending(r => r.Name.Contains(arch))
 		.ThenByDescending(r => r.Name.Contains("neutral"))
 		.ThenByDescending(r => r.LastModified)
@@ -416,11 +418,11 @@ public static partial class StoreHelper
 	private static async Task<string> Auth()
 	{
 		if (sessionToken != null) return sessionToken;
-		var res = await PostSoap(SoapTemplates.Cookie, "https://fe3.delivery.mp.microsoft.com/ClientWebService/client.asmx");
+		string res = await PostSoap(SoapTemplates.Cookie, "https://fe3.delivery.mp.microsoft.com/ClientWebService/client.asmx");
 		if (string.IsNullOrEmpty(res)) return string.Empty;
 
 		var doc = XDocument.Parse(res);
-		var encrypted = doc.Descendants().FirstOrDefault(x => x.Name.LocalName == "EncryptedData");
+		XElement? encrypted = doc.Descendants().FirstOrDefault(x => x.Name.LocalName == "EncryptedData");
 
 		sessionToken = encrypted.Value;
 		return sessionToken;
@@ -428,15 +430,15 @@ public static partial class StoreHelper
 
 	private static async Task<string> ResolveUrl(string uid, string rev, string hash)
 	{
-		var payload = SoapTemplates.Url(uid, rev, "WIF");
-		var response = await PostSoap(payload, "https://fe3.delivery.mp.microsoft.com/ClientWebService/client.asmx/secured");
+		string payload = SoapTemplates.Url(uid, rev, "WIF");
+		string response = await PostSoap(payload, "https://fe3.delivery.mp.microsoft.com/ClientWebService/client.asmx/secured");
 		if (string.IsNullOrEmpty(response)) return string.Empty;
 
 		var doc = XDocument.Parse(response);
 
-		foreach (var node in doc.Descendants().Where(x => x.Name.LocalName == "FileLocation"))
+		foreach (XElement? node in doc.Descendants().Where(x => x.Name.LocalName == "FileLocation"))
 		{
-			var digest = node.Descendants().FirstOrDefault(x => x.Name.LocalName == "FileDigest")?.Value;
+			string? digest = node.Descendants().FirstOrDefault(x => x.Name.LocalName == "FileDigest")?.Value;
 			if (digest == hash)
 				return node.Descendants().FirstOrDefault(x => x.Name.LocalName == "Url")?.Value ?? string.Empty;
 		}
@@ -450,10 +452,10 @@ public static partial class StoreHelper
 			Content = new StringContent(body, Encoding.UTF8, "application/soap+xml")
 		};
 
-		var res = await httpClient.SendAsync(req);
+		HttpResponseMessage res = await httpClient.SendAsync(req);
 		if (!res.IsSuccessStatusCode)
 		{
-			var error = await res.Content.ReadAsStringAsync();
+			string error = await res.Content.ReadAsStringAsync();
 			Debug.WriteLine($"[StoreHelper] SOAP request failed: {res.StatusCode} - {error}");
 			return string.Empty;
 		}

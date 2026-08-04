@@ -1,7 +1,7 @@
-using DevWinUI;
 using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using DevWinUI;
 
 namespace AutoOS.Core.Helpers.Games;
 
@@ -21,43 +21,43 @@ public static partial class EdenHelper
 
 			if (!File.Exists(filePath))
 			{
-				var content = await httpClient.GetStringAsync("https://raw.githubusercontent.com/blawar/titledb/refs/heads/master/US.en.json");
+				string content = await httpClient.GetStringAsync("https://raw.githubusercontent.com/blawar/titledb/refs/heads/master/US.en.json");
 				Directory.CreateDirectory(Path.GetDirectoryName(filePath));
 				await File.WriteAllTextAsync(filePath, content);
 			}
 
 			// get game list
-			using var stream = File.OpenRead(Path.Combine(dataPath, "cache", "game_list", "game_metadata_cache.json"));
-			using var configDoc = await JsonDocument.ParseAsync(stream);
-			var config = configDoc.RootElement;
+			using FileStream stream = File.OpenRead(Path.Combine(dataPath, "cache", "game_list", "game_metadata_cache.json"));
+			using JsonDocument configDoc = await JsonDocument.ParseAsync(stream);
+			JsonElement config = configDoc.RootElement;
 
 			// read json database
-			using var fs = File.OpenRead(Path.Combine(PathHelper.GetAppDataFolderPath(), "Switch", "US.en.json"));
-			using var doc = await JsonDocument.ParseAsync(fs);
+			using FileStream fs = File.OpenRead(Path.Combine(PathHelper.GetAppDataFolderPath(), "Switch", "US.en.json"));
+			using JsonDocument doc = await JsonDocument.ParseAsync(fs);
 
 			var jsonById = new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
 
-			foreach (var kvp in doc.RootElement.EnumerateObject())
+			foreach (JsonProperty kvp in doc.RootElement.EnumerateObject())
 			{
-				if (kvp.Value.TryGetProperty("id", out var idElem))
+				if (kvp.Value.TryGetProperty("id", out JsonElement idElem))
 				{
-					var key = idElem.GetString()?.ToLowerInvariant();
+					string? key = idElem.GetString()?.ToLowerInvariant();
 					if (!string.IsNullOrEmpty(key))
 						jsonById.TryAdd(key, kvp.Value);
 				}
 			}
 
-			if (config.TryGetProperty("entries", out var entries) && entries.ValueKind == JsonValueKind.Array)
+			if (config.TryGetProperty("entries", out JsonElement entries) && entries.ValueKind == JsonValueKind.Array)
 			{
 				await Parallel.ForEachAsync(entries.EnumerateArray(), new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount * 2 }, async (edenEntry, _) =>
 				{
 					// check if game id exists in database
 					string id = "0" + edenEntry.GetProperty("program_id").GetString();
-					if (!jsonById.TryGetValue(id, out var entry))
+					if (!jsonById.TryGetValue(id, out JsonElement entry))
 						return;
 
 					// get name from database
-					string name = entry.TryGetProperty("name", out var nameElement) ? nameElement.GetString() : null;
+					string name = entry.TryGetProperty("name", out JsonElement nameElement) ? nameElement.GetString() : null;
 
 					// clean name for searching
 					if (string.IsNullOrWhiteSpace(name)) return;
@@ -82,14 +82,14 @@ public static partial class EdenHelper
 					}
 
 					// get size
-					long sizeBytes = edenEntry.TryGetProperty("file_size", out var sizeElem) ? sizeElem.GetInt64() : 0;
+					long sizeBytes = edenEntry.TryGetProperty("file_size", out JsonElement sizeElem) ? sizeElem.GetInt64() : 0;
 
 					// search on igdb
-					var result = await IgdbHelper.SearchCovers(cleanName);
+					Dictionary<string, string> result = await IgdbHelper.SearchCovers(cleanName);
 					if (result == null) return;
 
 					using var docData = JsonDocument.Parse(await httpClient.GetStringAsync(result["game_url"], _));
-					var data = docData.RootElement.Clone();
+					JsonElement data = docData.RootElement.Clone();
 
 					games.Add(new GameModel
 					{

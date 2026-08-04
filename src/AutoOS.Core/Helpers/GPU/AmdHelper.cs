@@ -1,12 +1,12 @@
-﻿using AutoOS.Core.Common;
+﻿using System.Diagnostics;
+using System.Text.Json.Nodes;
+using AutoOS.Core.Common;
 using AutoOS.Core.Helpers.Download;
 using AutoOS.Core.Helpers.Extract;
 using AutoOS.Core.Helpers.GPU.Models;
 using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.TaskScheduler;
 using Microsoft.Win32;
-using System.Diagnostics;
-using System.Text.Json.Nodes;
 
 namespace AutoOS.Core.Helpers.GPU;
 
@@ -20,7 +20,7 @@ public static partial class AmdHelper
 		string newestVersion = null;
 		string newestDownloadUrl = null;
 
-		var endpoints = new[]
+		string[] endpoints = new[]
 		{
 		"https://www2.ati.com/drivers/installer/json/DrvDldDetails_Consumer_Legacy_Win10.json",
 		"https://www2.ati.com/drivers/installer/json/DrvDldDetails_Consumer_WHQL_Win11.json",
@@ -36,26 +36,26 @@ public static partial class AmdHelper
 		httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Cache-Control", "no-cache");
 		httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Connection", "Keep-Alive");
 
-		var jsonTasks = endpoints.Select(endpoint => httpClient.GetStringAsync(endpoint));
-		var responses = await Task.WhenAll(jsonTasks);
+		IEnumerable<Task<string>> jsonTasks = endpoints.Select(endpoint => httpClient.GetStringAsync(endpoint));
+		string[] responses = await Task.WhenAll(jsonTasks);
 
 		for (int i = 0; i < responses.Length; i++)
 		{
-			var json = responses[i];
-			var currentEndpoint = endpoints[i];
+			string json = responses[i];
+			string currentEndpoint = endpoints[i];
 
-			var builds = JsonNode.Parse(json).AsArray();
+			JsonArray builds = JsonNode.Parse(json).AsArray();
 			if (builds == null) continue;
 
-			foreach (var buildNode in builds)
+			foreach (JsonNode? buildNode in builds)
 			{
-				var build = buildNode.AsObject();
+				JsonObject build = buildNode.AsObject();
 				if (build == null) continue;
 
-				if (!build.TryGetPropertyValue("skus", out var skusNode) || skusNode is not JsonArray skusArray)
+				if (!build.TryGetPropertyValue("skus", out JsonNode? skusNode) || skusNode is not JsonArray skusArray)
 					continue;
 
-				foreach (var sku in skusArray)
+				foreach (JsonNode? sku in skusArray)
 				{
 					if (sku?.ToString().Contains(deviceId, StringComparison.InvariantCultureIgnoreCase) != true)
 						continue;
@@ -97,7 +97,7 @@ public static partial class AmdHelper
 			($@"Stripping AMD driver {newestVersion}", async () => await Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RadeonSoftwareSlimmer", "RadeonSoftwareSlimmer.exe"), $@"--extracted-installer ""{Path.Combine(Path.GetTempPath(), "AMD", "driver")}"" --config ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "RadeonSoftwareSlimmer", "config.ini")}""") { CreateNoWindow = true })!.WaitForExitAsync(), null),
 
 			// install amd driver
-			(gpu.IsInstalled ? $"Updating to AMD driver {newestVersion}" : $"Installing AMD driver {newestVersion}", async () => { var path = Path.Combine(Path.GetTempPath(), "AMD", "driver", "Packages", "Apps", "VC22RTx64", "vcredist_x64", "VC_redist.x64.exe"); if (File.Exists(path)) await Process.Start(new ProcessStartInfo(path, "/install /quiet /norestart") { CreateNoWindow = true })!.WaitForExitAsync(); }, null),
+			(gpu.IsInstalled ? $"Updating to AMD driver {newestVersion}" : $"Installing AMD driver {newestVersion}", async () => { string path = Path.Combine(Path.GetTempPath(), "AMD", "driver", "Packages", "Apps", "VC22RTx64", "vcredist_x64", "VC_redist.x64.exe"); if (File.Exists(path)) await Process.Start(new ProcessStartInfo(path, "/install /quiet /norestart") { CreateNoWindow = true })!.WaitForExitAsync(); }, null),
             (gpu.IsInstalled ? $"Updating to AMD driver {newestVersion}" : $"Installing AMD driver {newestVersion}", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "AMD", "driver", "Setup.exe"), Arguments = "-install", UseShellExecute = false, CreateNoWindow = true })!.WaitForExitAsync(), null),
 			(gpu.IsInstalled ? $"Updating to AMD driver {newestVersion}" : $"Installing AMD driver {newestVersion}", async () => await Task.Delay(3000), null),
 			(gpu.IsInstalled ? $"Updating to AMD driver {newestVersion}" : $"Installing AMD driver {newestVersion}", async () => GpuHelper.RefreshGpu(gpu), null),
