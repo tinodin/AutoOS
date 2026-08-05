@@ -192,7 +192,7 @@
 
 			<!--  ComboBox template  -->
 			<DataTemplate x:Key="ComboBoxEditTemplate" x:DataType="local:BiosTreeNode">
-				<uc:ComboBoxEx
+				<ComboBox
 					HorizontalAlignment="Stretch"
 					BorderThickness="0"
 					CornerRadius="0"
@@ -200,12 +200,12 @@
 					Loaded="EditControl_Loaded"
 					SelectedItem="{x:Bind EditOption, Mode=TwoWay}"
 					UseSystemFocusVisuals="False">
-					<uc:ComboBoxEx.Resources>
+					<ComboBox.Resources>
 						<SolidColorBrush x:Key="ComboBoxBackgroundBorderBrushFocused" Color="Transparent" />
 						<SolidColorBrush x:Key="ComboBoxBackgroundFocused" Color="{ThemeResource ControlFillColorSecondary}" />
 						<Thickness x:Key="ComboBoxBackgroundBorderThicknessFocused">0</Thickness>
-					</uc:ComboBoxEx.Resources>
-					<uc:ComboBoxEx.ItemTemplate>
+					</ComboBox.Resources>
+					<ComboBox.ItemTemplate>
 						<DataTemplate x:DataType="bios:Option">
 							<TextBlock
 								Padding="0,2,0,0"
@@ -214,8 +214,8 @@
 								TextTrimming="CharacterEllipsis"
 								TextWrapping="NoWrap" />
 						</DataTemplate>
-					</uc:ComboBoxEx.ItemTemplate>
-				</uc:ComboBoxEx>
+					</ComboBox.ItemTemplate>
+				</ComboBox>
 			</DataTemplate>
 
 			<!--  TextBox template  -->

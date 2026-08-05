@@ -88,9 +88,9 @@
 							<ImageIcon Source="/Assets/FluentIcons/Pages/Settings/Theme.png" />
 						</dev:SettingsCard.HeaderIcon>
 						<uc:ComboBoxEx dev:ThemeServiceAttach.ThemeService="{x:Bind local:App.Current.ThemeService}">
+							<ComboBoxItem Content="Use system setting" Tag="Default" />
 							<ComboBoxItem Content="Light" Tag="Light" />
 							<ComboBoxItem Content="Dark" Tag="Dark" />
-							<ComboBoxItem Content="Default" Tag="Default" />
 						</uc:ComboBoxEx>
 					</dev:SettingsCard>
 					<dev:SettingsCard Description="Change the appearance of the backdrop material behind your app. You can choose from none, acrylic, or acrylic thin, mica and mica alt options." Header="Material">
@@ -107,7 +107,7 @@
 					</dev:SettingsCard>
 					<dev:SettingsExpander
 						Description="Add tint to your window to make your experience more personalized."
-						Header="TintColor"
+						Header="Tint Color"
 						HeaderIcon="{dev:BitmapIcon Source=Assets/FluentIcons/Pages/Settings/Tint.png}"
 						IsExpanded="True">
 						<uc:DropdownColorPicker
