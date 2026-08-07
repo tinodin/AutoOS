@@ -1,8 +1,8 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
-using AutoOS.Core.Helpers.Registry;
 using AutoOS.App.Views.Installer.Actions;
+using AutoOS.Core.Helpers.Registry;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Storage;

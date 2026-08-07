@@ -2,7 +2,7 @@
 	x:Class="AutoOS.App.Views.Settings.BiosSettingsPage"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:bios="using:AutoOS.Core.Helpers.BIOS"
+	xmlns:bios="using:AutoOS.App.Data.Models.Bios"
 	xmlns:converters="using:CommunityToolkit.WinUI.Converters"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:data="using:Syncfusion.UI.Xaml.Data"
@@ -10,11 +10,12 @@
 	xmlns:ext="using:AutoOS.App.Extensions"
 	xmlns:grid="using:Syncfusion.UI.Xaml.Grids"
 	xmlns:helpers="using:AutoOS.App.Helpers"
-	xmlns:local="using:AutoOS.App.Views.Settings.BIOS"
+	xmlns:local="using:AutoOS.App.Data.Models.Bios"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:selectors="using:AutoOS.App.Data.TemplateSelectors.Bios"
 	xmlns:sfgrid="using:Syncfusion.UI.Xaml.TreeGrid"
-	xmlns:uc="using:AutoOS.App.UserControls"
 	xmlns:views="using:AutoOS.App.Views"
+	DataContext="{x:Bind ViewModel, Mode=OneWay}"
 	mc:Ignorable="d">
 	<Page.Resources>
 		<ResourceDictionary>
@@ -175,7 +176,7 @@
 			</ControlTemplate>
 
 			<!--  Cell style selector  -->
-			<local:CellStyleSelector
+			<selectors:CellStyleSelector
 				x:Key="BiosCellStyleSelector"
 				CautionStyle="{StaticResource CautionCellStyle}"
 				CriticalStyle="{StaticResource CriticalCellStyle}"
@@ -183,7 +184,7 @@
 				SuccessStyle="{StaticResource SuccessCellStyle}" />
 
 			<!--  Diff grid cell style selector  -->
-			<local:CellStyleSelector
+			<selectors:CellStyleSelector
 				x:Key="DiffCellStyleSelector"
 				CautionStyle="{StaticResource CautionCellStyle}"
 				CriticalStyle="{StaticResource CriticalCellStyle}"
@@ -193,13 +194,10 @@
 			<!--  ComboBox template  -->
 			<DataTemplate x:Key="ComboBoxEditTemplate" x:DataType="local:BiosTreeNode">
 				<ComboBox
-					HorizontalAlignment="Stretch"
-					BorderThickness="0"
-					CornerRadius="0"
 					ItemsSource="{x:Bind Options}"
 					Loaded="EditControl_Loaded"
 					SelectedItem="{x:Bind EditOption, Mode=TwoWay}"
-					UseSystemFocusVisuals="False">
+					Style="{StaticResource TreeGridComboBoxStyle}">
 					<ComboBox.Resources>
 						<SolidColorBrush x:Key="ComboBoxBackgroundBorderBrushFocused" Color="Transparent" />
 						<SolidColorBrush x:Key="ComboBoxBackgroundFocused" Color="{ThemeResource ControlFillColorSecondary}" />
@@ -221,11 +219,8 @@
 			<!--  TextBox template  -->
 			<DataTemplate x:Key="TextBoxEditTemplate" x:DataType="local:BiosTreeNode">
 				<TextBox
-					Padding="12,5,6,6"
-					BorderThickness="0"
-					CornerRadius="0"
-					FontFamily="Segoe UI Variable Static Text"
 					Loaded="EditControl_Loaded"
+					Style="{StaticResource TreeGridTextBoxStyle}"
 					Text="{x:Bind EditValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
 					<TextBox.Resources>
 						<SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="Transparent" />
@@ -235,7 +230,7 @@
 				</TextBox>
 			</DataTemplate>
 
-			<local:EditTemplateSelector
+			<selectors:EditTemplateSelector
 				x:Key="EditTemplateSelector"
 				ComboBoxTemplate="{StaticResource ComboBoxEditTemplate}"
 				TextBoxTemplate="{StaticResource TextBoxEditTemplate}" />
@@ -265,7 +260,7 @@
 				</Grid.ColumnDefinitions>
 
 				<!--  Search  -->
-				<uc:TextBox
+				<dev:TextBox
 					x:Name="Search"
 					Grid.Column="0"
 					IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"
@@ -273,16 +268,16 @@
 					PlaceholderText="Search..."
 					TextChanged="Search_TextChanged"
 					ToolTipService.ToolTip="Search (Ctrl+F)">
-					<uc:TextBox.KeyboardAccelerators>
+					<dev:TextBox.KeyboardAccelerators>
 						<KeyboardAccelerator
 							Key="F"
 							Invoked="Search_AcceleratorInvoked"
 							Modifiers="Control" />
-					</uc:TextBox.KeyboardAccelerators>
-					<uc:TextBox.Content>
+					</dev:TextBox.KeyboardAccelerators>
+					<dev:TextBox.Content>
 						<Button Content="&#xE71E;" />
-					</uc:TextBox.Content>
-				</uc:TextBox>
+					</dev:TextBox.Content>
+				</dev:TextBox>
 
 				<!--  Filter  -->
 				<DropDownButton

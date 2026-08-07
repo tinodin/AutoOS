@@ -209,26 +209,26 @@
 									</GridView.ItemsPanel>
 								</GridView>
 								<dev:SettingsCard Header="Executable Location" HeaderIcon="{dev:FontIcon FontFamily={StaticResource SymbolThemeFontFamily}, Glyph=&#xE8A5;}">
-									<uc:TextBox
+									<dev:TextBox
 										x:Name="ExecutableLocationValue"
 										MinWidth="300"
 										PlaceholderText="Executable Location..."
 										TextChanged="ExecutableLocation_TextChanged">
-										<uc:TextBox.Content>
+										<dev:TextBox.Content>
 											<Button Click="ExecutableLocation_Click" Content="&#xE838;" />
-										</uc:TextBox.Content>
-									</uc:TextBox>
+										</dev:TextBox.Content>
+									</dev:TextBox>
 								</dev:SettingsCard>
 								<dev:SettingsCard Header="Data Location" HeaderIcon="{dev:FontIcon FontFamily={StaticResource SymbolThemeFontFamily}, Glyph=&#xE8B7;}">
-									<uc:TextBox
+									<dev:TextBox
 										x:Name="DataLocationValue"
 										MinWidth="300"
 										PlaceholderText="Data Location..."
 										TextChanged="DataLocation_TextChanged">
-										<uc:TextBox.Content>
+										<dev:TextBox.Content>
 											<Button Click="DataLocation_Click" Content="&#xE838;" />
-										</uc:TextBox.Content>
-									</uc:TextBox>
+										</dev:TextBox.Content>
+									</dev:TextBox>
 								</dev:SettingsCard>
 							</StackPanel>
 						</dev:Card.Content>

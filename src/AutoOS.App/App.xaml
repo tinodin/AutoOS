@@ -15,9 +15,9 @@
 				<ResourceDictionary Source="ms-appx:///Styles/ButtonStyles.xaml" />
 				<ResourceDictionary Source="ms-appx:///Styles/AutoSuggestBoxStyles.xaml" />
 				<ResourceDictionary Source="ms-appx:///Styles/ShortcutStyles.xaml" />
-				<ResourceDictionary Source="ms-appx:///Styles/TreeGridStyles.xaml" />
+				<ResourceDictionary Source="ms-appx:///Styles/TreeGridCellStyles.xaml" />
+				<ResourceDictionary Source="ms-appx:///Styles/TreeGridEditStyles.xaml" />
 				<ResourceDictionary Source="ms-appx:///Styles/NavigationViewItemStyle.xaml" />
-				<ResourceDictionary Source="ms-appx:///Styles/TextBox.xaml" />
 				<ResourceDictionary Source="ms-appx:///Views/Settings/Games/HeaderCarousel.xaml" />
 				<ResourceDictionary Source="ms-appx:///Views/Settings/Games/HeaderCarouselItem.xaml" />
 			</ResourceDictionary.MergedDictionaries>

@@ -158,13 +158,15 @@ public sealed partial class BenchmarksPage : Page
 
 	private void RecordingsTreeGrid_SizeChanged(object sender, SizeChangedEventArgs e)
 	{
-		if (e.NewSize.Width > 0)
+		if (e.NewSize.Width <= 0 || e.NewSize.Width == e.PreviousSize.Width)
 		{
-			foreach (TreeGridColumn? col in RecordingsTreeGrid.Columns)
-				col.Width = double.NaN;
-			RecordingsTreeGrid.InvalidateMeasure();
-			RecordingsTreeGrid.UpdateLayout();
+			return;
 		}
+
+		foreach (TreeGridColumn? col in RecordingsTreeGrid.Columns)
+			col.Width = double.NaN;
+		RecordingsTreeGrid.InvalidateMeasure();
+		RecordingsTreeGrid.UpdateLayout();
 	}
 
 	private void RecordingsTreeGrid_SelectionChanged(object sender, GridSelectionChangedEventArgs e)
@@ -401,7 +403,8 @@ public sealed partial class BenchmarksPage : Page
 
 	private void Chart_RightTapped(object sender, RightTappedRoutedEventArgs e)
 	{
-		if (sender is not FrameworkElement chart) return;
+		if (sender is not FrameworkElement chart)
+			return;
 
 		string[] stats;
 		if (ViewModel.AnalysisChartType is "Bar" or "Column")

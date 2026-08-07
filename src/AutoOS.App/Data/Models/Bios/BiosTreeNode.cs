@@ -1,16 +1,14 @@
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using AutoOS.Core.Helpers.BIOS;
+using AutoOS.App.Data.Enums.Bios;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace AutoOS.App.Views.Settings.BIOS;
-
-public enum NodeKind { Root, Group, Leaf }
+namespace AutoOS.App.Data.Models.Bios;
 
 public partial class BiosTreeNode : ObservableObject, INotifyDataErrorInfo
 {
-	public event EventHandler<DataErrorsChangedEventArgs> ErrorsChanged;
+	public event EventHandler<DataErrorsChangedEventArgs>? ErrorsChanged;
 
 	public NodeKind NodeKind { get; init; }
 
@@ -25,7 +23,7 @@ public partial class BiosTreeNode : ObservableObject, INotifyDataErrorInfo
 		set => SetProperty(ref _displayName, value);
 	}
 
-	public string DiffGroupKey { get; set; }
+	public string DiffGroupKey { get; set; } = string.Empty;
 
 	private bool _isExpanded = true;
 	public bool IsExpanded
@@ -34,7 +32,7 @@ public partial class BiosTreeNode : ObservableObject, INotifyDataErrorInfo
 		set => SetProperty(ref _isExpanded, value);
 	}
 
-	public string ToolTipText
+	public string? ToolTipText
 	{
 		get
 		{
@@ -76,8 +74,8 @@ public partial class BiosTreeNode : ObservableObject, INotifyDataErrorInfo
 		}
 	}
 
-	private BiosSettingModel _model;
-	public BiosSettingModel Model
+	private BiosSettingsModel _model = null!;
+	public BiosSettingsModel Model
 	{
 		get => _model;
 		init
@@ -88,7 +86,7 @@ public partial class BiosTreeNode : ObservableObject, INotifyDataErrorInfo
 	}
 
 	public ObservableCollection<BiosTreeNode> Children { get; } = [];
-	private List<GroupValueState> _mixedValues;
+	private List<GroupValueState>? _mixedValues;
 	private readonly Option _mixedOption = new() { Label = "Mixed", Index = "Mixed" };
 
 	public string DisplayDefault
@@ -215,7 +213,7 @@ public partial class BiosTreeNode : ObservableObject, INotifyDataErrorInfo
 	}
 
 	private string _editValue = string.Empty;
-	private Option _editOption;
+	private Option? _editOption;
 
 	public string EditValue
 	{
@@ -223,7 +221,7 @@ public partial class BiosTreeNode : ObservableObject, INotifyDataErrorInfo
 		set => SetProperty(ref _editValue, value);
 	}
 	
-	public Option EditOption
+	public Option? EditOption
 	{
 		get => _editOption;
 		set => SetProperty(ref _editOption, value);
@@ -250,7 +248,7 @@ public partial class BiosTreeNode : ObservableObject, INotifyDataErrorInfo
 		}
 	}
 
-	public List<Option> Options
+	public List<Option>? Options
 	{
 		get
 		{
@@ -279,7 +277,7 @@ public partial class BiosTreeNode : ObservableObject, INotifyDataErrorInfo
 		}
 	}
 
-	public Option SelectedOption
+	public Option? SelectedOption
 	{
 		get
 		{
@@ -291,9 +289,9 @@ public partial class BiosTreeNode : ObservableObject, INotifyDataErrorInfo
 
 			return Options?.FirstOrDefault(option => LabelsEqual(option.Label, DisplayCurrent));
 		}
-		set => DisplayCurrent = value?.Label;
+		set => DisplayCurrent = value?.Label ?? string.Empty;
 	}
-	
+
 	public bool HasOptions => Model?.HasOptions == true || (NodeKind == NodeKind.Group && GroupUsesOptions);
 
 	public bool CanEditCurrent => NodeKind == NodeKind.Leaf || (NodeKind == NodeKind.Group && GetLeaves().Any() && GetLeaves().All(leaf => leaf.Model?.HasOptions == GroupUsesOptions));
@@ -328,6 +326,8 @@ public partial class BiosTreeNode : ObservableObject, INotifyDataErrorInfo
 
 	private void RestoreMixedValues()
 	{
+		if (_mixedValues == null)
+			return;
 		foreach (GroupValueState saved in _mixedValues)
 		{
 			if (saved.Model.HasOptions)
@@ -352,7 +352,7 @@ public partial class BiosTreeNode : ObservableObject, INotifyDataErrorInfo
 		OnPropertyChanged(nameof(Options));
 	}
 
-	private sealed record GroupValueState(BiosSettingModel Model, Option SelectedOption, string Value);
+	private sealed record GroupValueState(BiosSettingsModel Model, Option? SelectedOption, string? Value);
 
 	private static bool LabelsEqual(string left, string right) => string.Equals(NormalizeLabel(left), NormalizeLabel(right), StringComparison.OrdinalIgnoreCase);
 
@@ -396,50 +396,50 @@ public partial class BiosTreeNode : ObservableObject, INotifyDataErrorInfo
 	public void RaiseErrorsChanged(string propertyName) =>
 		ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(propertyName));
 
-	public IEnumerable GetErrors(string propertyName)
+	public IEnumerable GetErrors(string? propertyName)
 	{
 		if (NodeKind == NodeKind.Leaf)
 		{
 			if (_model == null)
-				return null;
+				return Array.Empty<string>();
 			
 			if (propertyName == nameof(DisplayCurrent))
 			{
 				if (_model.HasOptions)
-					return _model.GetErrors(nameof(BiosSettingModel.SelectedOption));
+					return _model.GetErrors(nameof(BiosSettingsModel.SelectedOption));
 				else
-					return _model.GetErrors(nameof(BiosSettingModel.Value));
+					return _model.GetErrors(nameof(BiosSettingsModel.Value));
 			}
 
-			return null;
+			return Array.Empty<string>();
 		}
 
 		if (NodeKind == NodeKind.Group && propertyName == nameof(DisplayCurrent))
 		{
 			if (!GetLeaves().All(leaf => leaf.Model?.HasErrors == true))
-				return null;
+				return Array.Empty<string>();
 
 			var allErrors = new List<string>();
 			foreach (BiosTreeNode leaf in GetLeaves())
 			{
 				if (leaf.Model.HasOptions)
 				{
-					IEnumerable errors = leaf.Model.GetErrors(nameof(BiosSettingModel.SelectedOption));
+					IEnumerable errors = leaf.Model.GetErrors(nameof(BiosSettingsModel.SelectedOption));
 					if (errors != null)
 						allErrors.AddRange(errors.Cast<string>());
 				}
 				else
 				{
-					IEnumerable errors = leaf.Model.GetErrors(nameof(BiosSettingModel.Value));
+					IEnumerable errors = leaf.Model.GetErrors(nameof(BiosSettingsModel.Value));
 					if (errors != null)
 						allErrors.AddRange(errors.Cast<string>());
 				}
 			}
 
-			return allErrors.Count > 0 ? allErrors : null;
+			return allErrors.Count > 0 ? allErrors : Array.Empty<string>();
 		}
 
-		return null;
+		return Array.Empty<string>();
 	}
 
 	public bool HasErrors
@@ -462,7 +462,7 @@ public partial class BiosTreeNode : ObservableObject, INotifyDataErrorInfo
 		{
 			_model.PropertyChanged += (s, e) =>
 			{
-				if (e.PropertyName == nameof(BiosSettingModel.Value) || e.PropertyName == nameof(BiosSettingModel.SelectedOption))
+				if (e.PropertyName == nameof(BiosSettingsModel.Value) || e.PropertyName == nameof(BiosSettingsModel.SelectedOption))
 				{
 					RaiseErrorsChanged(nameof(DisplayCurrent));
 					OnPropertyChanged(nameof(HasErrors));

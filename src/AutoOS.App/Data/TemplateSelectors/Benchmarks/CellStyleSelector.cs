@@ -1,10 +1,10 @@
-using AutoOS.App.Data.Enums;
+using AutoOS.App.Data.Enums.Benchmarks;
 using AutoOS.App.ViewModels;
 using Syncfusion.UI.Xaml.TreeGrid;
 
-namespace AutoOS.App.Data.TemplateSelectors;
+namespace AutoOS.App.Data.TemplateSelectors.Benchmarks;
 
-public sealed partial class StatisticsCellStyleSelector : StyleSelector
+public sealed partial class CellStyleSelector : StyleSelector
 {
 	public Style? SuccessStyle { get; set; }
 	public Style? CriticalStyle { get; set; }

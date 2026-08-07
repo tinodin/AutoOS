@@ -1,6 +1,6 @@
 using System.Diagnostics;
-using AutoOS.Core.Helpers.Picker;
 using AutoOS.App.Views.Installer.Actions;
+using AutoOS.Core.Helpers.Picker;
 using Windows.Storage;
 using Windows.Storage.FileProperties;
 

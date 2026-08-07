@@ -1,4 +1,3 @@
-#nullable enable
 using System.Runtime.InteropServices;
 using DevWinUI;
 using Microsoft.UI.Xaml;

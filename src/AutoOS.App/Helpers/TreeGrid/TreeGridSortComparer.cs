@@ -1,13 +1,13 @@
 using System.Reflection;
-using AutoOS.App.Views.Settings.BIOS;
+using AutoOS.App.Data.Models.Bios;
 
 namespace AutoOS.App.Helpers;
 
 public class TreeGridSortComparer : IComparer<object>
 {
-    public string PropertyName { get; set; }
+    public string PropertyName { get; set; } = string.Empty;
 
-    public int Compare(object x, object y)
+    public int Compare(object? x, object? y)
     {
         if (x is not BiosTreeNode node1 || y is not BiosTreeNode node2)
             return 0;
