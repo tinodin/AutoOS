@@ -520,6 +520,7 @@ public static partial class PreparingStage
 			GMenu = (localSettings.Values["Peripherals"]?.ToString().Contains("G-Menu") ?? false);
 			EndgameGear = (localSettings.Values["Peripherals"]?.ToString().Contains("Endgame Gear") ?? false);
 			GloriousCORE = (localSettings.Values["Peripherals"]?.ToString().Contains("Glorious CORE") ?? false);
+			MCHOSE = (localSettings.Values["Peripherals"]?.ToString().Contains("MCHOSE") ?? false);
 			CorsairICue = (localSettings.Values["Peripherals"]?.ToString().Contains("Corsair iCUE") ?? false);
 			OpenRGB = (localSettings.Values["Peripherals"]?.ToString().Contains("OpenRGB") ?? false);
 			FanControl = (localSettings.Values["Peripherals"]?.ToString().Contains("FanControl") ?? false);
