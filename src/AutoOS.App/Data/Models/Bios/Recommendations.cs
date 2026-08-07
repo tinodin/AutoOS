@@ -1,4 +1,4 @@
-﻿using AutoOS.Core.Helpers.CPU;
+using AutoOS.Core.Helpers.CPU;
 using AutoOS.Core.Helpers.CPU.Models;
 
 namespace AutoOS.App.Data.Models.Bios;
@@ -712,6 +712,7 @@ public static class Recommendations
 		new Recommendation { SetupQuestion = "Device Sleep for AHCI Port 1", Type = "Option", RecommendedOption = "Disable" },
 		new Recommendation { SetupQuestion = "Device Sleep for AHCI Port 2", Type = "Option", RecommendedOption = "Disable" },
 		new Recommendation { SetupQuestion = "Device Sleep for AHCI Port 3", Type = "Option", RecommendedOption = "Disable" },
+		new Recommendation { SetupQuestion = "dGPU Only Mode", Type = "Option", RecommendedOption = "Disabled", Condition = _ => APU == false },
 		new Recommendation { SetupQuestion = "Disable Current Limiter", Type = "Option", RecommendedOption = "Enabled" },
 		new Recommendation { SetupQuestion = "Disable DF sync flood propagation", Type = "Option", RecommendedOption = "Sync flood disabled" },
 		new Recommendation { SetupQuestion = "Disable DF to external IP SyncFloodPropagation", Type = "Option", RecommendedOption = "Sync flood disabled" },
@@ -773,8 +774,8 @@ public static class Recommendations
 		// new Recommendation { SetupQuestion = "I2C 4 Enable", Type = "Option", RecommendedOption = "Disabled" },
 		// new Recommendation { SetupQuestion = "I2C 5 D3 Support", Type = "Option", RecommendedOption = "Disabled" },
 		// new Recommendation { SetupQuestion = "I2C 5 Enable", Type = "Option", RecommendedOption = "Disabled" },
-		//new Recommendation { SetupQuestion = "I3C/I2C 0 Enable", Type = "Option", RecommendedOption = "Both Disabled" }, // cause no boot for some people (gigabyte)
-		//new Recommendation { SetupQuestion = "I3C/I2C 1 Enable", Type = "Option", RecommendedOption = "Both Disabled" }, // cause no boot for some people (gigabyte)
+		// new Recommendation { SetupQuestion = "I3C/I2C 0 Enable", Type = "Option", RecommendedOption = "Both Disabled" }, // cause no boot for some people (gigabyte)
+		// new Recommendation { SetupQuestion = "I3C/I2C 1 Enable", Type = "Option", RecommendedOption = "Both Disabled" }, // cause no boot for some people (gigabyte)
 		// new Recommendation { SetupQuestion = "I3C/I2C 2 Enable", Type = "Option", RecommendedOption = "Both Disabled" },
 		// new Recommendation { SetupQuestion = "I3C/I2C 3 Enable", Type = "Option", RecommendedOption = "Both Disabled" },
 		new Recommendation { SetupQuestion = "IBUF_LPWR_MODE", Type = "Option", RecommendedOption = "Disabled" },

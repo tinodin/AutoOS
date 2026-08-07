@@ -24,6 +24,7 @@ public sealed partial class PowerPage : Page
 	{
 		base.OnNavigatedTo(e);
 		ViewModel.RefreshFilterAction = RefreshSearchFilter;
+		ViewModel.RefreshFilterOnlyAction = RefreshFilterOnly;
 		_ = ViewModel.LoadPlansAsync();
 	}
 
@@ -103,7 +104,9 @@ public sealed partial class PowerPage : Page
 			return;
 
 		Node? node = treeGrid.GetNodeAtRowIndex(e.RowColumnIndex.RowIndex)?.Item as Node ?? treeGrid.CurrentItem as Node;
-		if (ViewModel.CommitEdit(node))
+		int visibleIndex = treeGrid.ResolveToGridVisibleColumnIndex(e.RowColumnIndex.ColumnIndex);
+		string mappingName = treeGrid.Columns[visibleIndex].MappingName;
+		if (ViewModel.CommitEdit(node, mappingName))
 			DispatcherQueue.TryEnqueue(ViewModel.RefreshAfterEdit);
 	}
 
@@ -164,14 +167,31 @@ public sealed partial class PowerPage : Page
 		});
 	}
 
+	private void FilterMode_Contains_Click(object sender, RoutedEventArgs e) => ViewModel.FilterMode = Data.Enums.Power.FilterMode.Contains;
+
+	private void FilterMode_ExactMatch_Click(object sender, RoutedEventArgs e) => ViewModel.FilterMode = Data.Enums.Power.FilterMode.ExactMatch;
+
+	private void RefreshFilterOnly()
+	{
+		TreeGrid.View?.RefreshFilter();
+		CompareTreeGrid.View?.RefreshFilter();
+		ChangesTreeGrid.View?.RefreshFilter();
+	}
+
 	private void RefreshSearchFilter()
 	{
-		TreeGrid.View?.Filter = ViewModel.MatchesFilter;
-		TreeGrid.View?.RefreshFilter();
-		CompareTreeGrid.View?.Filter = ViewModel.MatchesFilter;
-		CompareTreeGrid.View?.RefreshFilter();
-		ChangesTreeGrid.View?.Filter = ViewModel.MatchesFilter;
-		ChangesTreeGrid.View?.RefreshFilter();
 		ViewModel.UpdateNodeCounts();
+		ApplyFilter(TreeGrid, ViewModel);
+		ApplyFilter(CompareTreeGrid, ViewModel);
+		ApplyFilter(ChangesTreeGrid, ViewModel);
+	}
+
+	private static void ApplyFilter(SfTreeGrid treeGrid, PowerPageViewModel viewModel)
+	{
+		TreeGridView? view = treeGrid.View;
+		if (view == null)
+			return;
+		view.Filter = viewModel.MatchesFilter;
+		view.RefreshFilter();
 	}
 }

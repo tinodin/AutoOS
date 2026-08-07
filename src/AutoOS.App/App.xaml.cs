@@ -32,7 +32,7 @@ public partial class App : Application
 		.AddSingleton<IFilePickerService, FilePickerService>()
 		.AddSingleton<IDialogService, DialogService>()
 		.AddSingleton<IPowerPlanService, PowerPlanService>()
-		.AddSingleton<PowerPageViewModel>()
+		.AddTransient<PowerPageViewModel>()
 		.BuildServiceProvider();
 
 	public App()

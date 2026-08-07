@@ -24,7 +24,7 @@
 
 		<TextBox
 			x:Name="DescriptionTextBox"
-			MaxHeight="160"
+			MaxHeight="500"
 			AcceptsReturn="True"
 			Header="Description:"
 			PlaceholderText="Optional"

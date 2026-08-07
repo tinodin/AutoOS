@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using AutoOS.App.Data.Enums.Power;
 using AutoOS.App.Data.Models.Power;
 using AutoOS.Core.Helpers.Power;
 
@@ -112,14 +111,12 @@ public sealed class PowerPlanService : IPowerPlanService
 			string name = PowerHelper.ReadFriendlyName(scheme, subgroupGuid, settingGuid);
 
 			List<Option> options = BuildOptions(subgroupGuid, settingGuid, minimum, maximum, increment);
-			bool isOptions = options.Count > 0;
 
 			var setting = new Setting(
 				subgroupGuid,
 				settingGuid,
 				name,
 				PowerHelper.ReadDescription(scheme, subgroupGuid, settingGuid),
-				isOptions ? SettingType.Options : SettingType.Numeric,
 				minimum,
 				maximum,
 				increment,
