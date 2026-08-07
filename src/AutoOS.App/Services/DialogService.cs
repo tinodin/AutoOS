@@ -1,8 +1,8 @@
 using System.ComponentModel;
 using AutoOS.App.Data.Enums;
+using AutoOS.App.Dialogs;
 using AutoOS.App.ViewModels.Dialogs;
 using AutoOS.App.ViewModels.Dialogs.Power;
-using AutoOS.App.Views.Settings.Dialogs.Power;
 
 namespace AutoOS.App.Services;
 
