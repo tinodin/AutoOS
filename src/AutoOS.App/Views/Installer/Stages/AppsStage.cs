@@ -1566,8 +1566,8 @@ public static class AppsStage
 			("Installing Java", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "jre-windows-x64.exe"), Arguments = "/s REBOOT=0", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Java == true),
 			("Cleaning up Java files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "jre-windows-x64.exe")), () => Java == true),
 
-			// disable java update scheduler startup entry
-			("Disabling Java Update Scheduler startup entry", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32", "SunJavaUpdateSched", new byte[] { 0x03 }, RegistryValueKind.Binary), () => Java == true),
+			// disable java startup entry
+			("Disabling Java startup entry", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32", "SunJavaUpdateSched", new byte[] { 0x03 }, RegistryValueKind.Binary), () => Java == true),
 
 			// download go
 			("Downloading Go", async () => await DownloadHelper.Download("https://go.dev/dl/go1.26.4.windows-amd64.msi", Path.GetTempPath(), "gowindows-amd64.msi", reporter: reporter), () => Go == true),
