@@ -30,7 +30,7 @@ public sealed partial class ServicesPage : Page
 		// check state
 		using (RegistryKey? key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\Beep"))
 		{
-			Services.IsOn = (int)(key.GetValue("Start", 0)) == 1;
+			Services.IsOn = (int)(key?.GetValue("Start", 0))! == 1;
 		}
 
 		var serviceController = new ServiceController("Beep");
@@ -87,7 +87,7 @@ public sealed partial class ServicesPage : Page
 		if (Directory.Exists(buildPath) && Directory.EnumerateDirectories(buildPath).Any())
 		{
 			// get latest build
-			string folderName = Directory.GetDirectories(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+			string folderName = Directory.GetDirectories(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last() ?? "";
 
 			// toggle services
 			await RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, new ProcessStartInfo(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build", folderName, Services.IsOn ? "Services-Enable.bat" : "Services-Disable.bat")) { CreateNoWindow = true });
@@ -98,7 +98,7 @@ public sealed partial class ServicesPage : Page
 			await RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "Service-list-builder", "service-list-builder.exe"), $@"--config ""{Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "lists.ini")}"" --disable-service-warning --output-dir ""{Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")}""") { CreateNoWindow = true });
 
 			// get latest build
-			string folderName = Directory.GetDirectories(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+			string folderName = Directory.GetDirectories(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last() ?? "";
 
 			// toggle services
 			await RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, new ProcessStartInfo(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build", folderName, Services.IsOn ? "Services-Enable.bat" : "Services-Disable.bat")) { CreateNoWindow = true });
@@ -206,7 +206,7 @@ public sealed partial class ServicesPage : Page
 		if (!Services.IsOn)
 		{
 			// get latest build
-			string folderName = Directory.GetDirectories(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+			string folderName = Directory.GetDirectories(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last() ?? "";
 
 			// enable services
 			await RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, new ProcessStartInfo(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build", folderName, "Services-Enable.bat")) { CreateNoWindow = true });
@@ -243,7 +243,7 @@ public sealed partial class ServicesPage : Page
 		if (!Services.IsOn)
 		{
 			// get latest build
-			string folderName = Directory.GetDirectories(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+			string folderName = Directory.GetDirectories(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last() ?? "";
 
 			// disable services
 			await RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, new ProcessStartInfo(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build", folderName, "Services-Disable.bat")) { CreateNoWindow = true });
@@ -361,7 +361,7 @@ public sealed partial class ServicesPage : Page
 		if (!Services.IsOn)
 		{
 			// get latest build
-			string folderName = Directory.GetDirectories(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+			string folderName = Directory.GetDirectories(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last() ?? "";
 
 			// enable services
 			await RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, new ProcessStartInfo(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build", folderName, "Services-Enable.bat")) { CreateNoWindow = true });
@@ -396,7 +396,7 @@ public sealed partial class ServicesPage : Page
 		if (!Services.IsOn)
 		{
 			// get latest build
-			string folderName = Directory.GetDirectories(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last();
+			string folderName = Directory.GetDirectories(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build")).OrderByDescending(d => Directory.GetLastWriteTime(d)).FirstOrDefault()?.Split('\\').Last() ?? "";
 
 			// disable services
 			await RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, new ProcessStartInfo(Path.Combine(PathHelper.GetAppDataFolderPath(), "Service-list-builder", "build", folderName, "Services-Disable.bat")) { CreateNoWindow = true });

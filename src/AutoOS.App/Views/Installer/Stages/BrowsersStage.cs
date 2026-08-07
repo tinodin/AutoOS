@@ -48,7 +48,7 @@ public class BrowserSelection
 
 public static class BrowsersStage
 {
-	public static List<(string Title, Func<Task> Action, Func<bool> Condition)> GetActions(IStatusReporter reporter = null, BrowserSelection selection = null)
+	public static List<(string Title, Func<Task> Action, Func<bool>? Condition)> GetActions(IStatusReporter? reporter = null, BrowserSelection? selection = null)
 	{
 		if (reporter == null && selection == null)
 		{
@@ -96,7 +96,7 @@ public static class BrowsersStage
 		string cometVersion = "";
 		string firefoxVersion = "";
 
-		var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
+		var actions = new List<(string Title, Func<Task> Action, Func<bool>? Condition)>
 		{
 			// optimize microsoft edge settings
 			(@"Enabling ""Configure Do Not Track"" policy", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge", "ConfigureDoNotTrack", 1, RegistryValueKind.DWord), () => selection == null),
@@ -107,7 +107,7 @@ public static class BrowsersStage
 			(@"Enabling ""Turn off tracking of app usage"" policy", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\EdgeUI", "DisableMFUTracking", 1, RegistryValueKind.DWord), () => selection == null),
 
 			// disable microsoft edge services
-			("Disabling Microsoft Edge services", async () => edgeVersion = FileVersionInfo.GetVersionInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Microsoft", "Edge", "Application", "msedge.exe")).ProductVersion, () => selection == null),
+			("Disabling Microsoft Edge services", async () => edgeVersion = FileVersionInfo.GetVersionInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Microsoft", "Edge", "Application", "msedge.exe")).ProductVersion ?? "", () => selection == null),
 			("Disabling Microsoft Edge services", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\AutorunsDisabled\{9459C573-B17A-45AE-9F64-1857B5D58CEE}", "", "Microsoft Edge", RegistryValueKind.String), () => selection == null),
 			("Disabling Microsoft Edge services", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\AutorunsDisabled\{9459C573-B17A-45AE-9F64-1857B5D58CEE}", "Localized Name", "Microsoft Edge", RegistryValueKind.String), () => selection == null),
 			("Disabling Microsoft Edge services", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\AutorunsDisabled\{9459C573-B17A-45AE-9F64-1857B5D58CEE}", "StubPath", $@"""{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Microsoft", "Edge", "Application", edgeVersion, "Installer", "setup.exe")}"" --configure-user-settings --verbose-logging --system-level --msedge --channel=stable", RegistryValueKind.String), () => selection == null),
@@ -146,9 +146,9 @@ public static class BrowsersStage
 
 			// install google chrome
 			("Installing Google Chrome", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "ChromeSetup.exe"), Arguments = "--silent --install --system-level --do-not-launch-chrome", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Chrome == true),
-			("Installing Google Chrome", async () => chromeVersion = FileVersionInfo.GetVersionInfo(Path.Combine(Path.GetTempPath(), "ChromeSetup.exe")).ProductVersion, () => Chrome == true),
-			("Installing Google Chrome", async () => chromeVersion2 = FileVersionInfo.GetVersionInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Google", "Chrome", "Application", "chrome.exe")).ProductVersion, () => Chrome == true),
-			("Installing Google Chrome", async () => { using var process = Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Google", "Chrome", "Application", "chrome.exe"), WindowStyle = ProcessWindowStyle.Maximized }); while (!File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Google", "Chrome", "Application", "PlatformExperienceHelper", "platform_experience_helper.exe"))) await Task.Delay(100); process.Kill(); }, () => Chrome == true),
+			("Installing Google Chrome", async () => chromeVersion = FileVersionInfo.GetVersionInfo(Path.Combine(Path.GetTempPath(), "ChromeSetup.exe")).ProductVersion ?? "", () => Chrome == true),
+			("Installing Google Chrome", async () => chromeVersion2 = FileVersionInfo.GetVersionInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Google", "Chrome", "Application", "chrome.exe")).ProductVersion ?? "", () => Chrome == true),
+			("Installing Google Chrome", async () => { using var process = Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Google", "Chrome", "Application", "chrome.exe"), WindowStyle = ProcessWindowStyle.Maximized }); while (!File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Google", "Chrome", "Application", "PlatformExperienceHelper", "platform_experience_helper.exe"))) await Task.Delay(100); process?.Kill(); }, () => Chrome == true),
             ("Cleaning up Google Chrome files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "ChromeSetup.exe")), () => Chrome == true),
 
 			// pin google chrome to the taskbar
@@ -215,7 +215,7 @@ public static class BrowsersStage
 			("Disabling Google Chrome services", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\AutorunsDisabled\{8A69D345-D564-463c-AFF1-A69D9E530F96}", "Version", "43,0,0,0", RegistryValueKind.String), () => Chrome == true),
 			("Disabling Google Chrome services", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\AutorunsDisabled\{8A69D345-D564-463c-AFF1-A69D9E530F96}", "IsInstalled", 1, RegistryValueKind.DWord), () => Chrome == true),
 			("Disabling Google Chrome services", async () => RegistryHelper.DeleteKey(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\{8A69D345-D564-463c-AFF1-A69D9E530F96}"), () => Chrome == true),
-			("Disabling Google Chrome services", async () => chromePlatformExperienceHelperVersion = FileVersionInfo.GetVersionInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Google", "Chrome", "Application", "PlatformExperienceHelper", "platform_experience_helper.exe")).ProductVersion, () => Chrome == true),
+			("Disabling Google Chrome services", async () => chromePlatformExperienceHelperVersion = FileVersionInfo.GetVersionInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Google", "Chrome", "Application", "PlatformExperienceHelper", "platform_experience_helper.exe")).ProductVersion ?? "", () => Chrome == true),
 			("Disabling Google Chrome services", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\AutorunsDisabled\{49210152-871f-4ffa-961d-a172abcbc09d}", "", "Google Platform Experience Helper", RegistryValueKind.String), () => Chrome == true),
 			("Disabling Google Chrome services", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\AutorunsDisabled\{49210152-871f-4ffa-961d-a172abcbc09d}", "Localized Name", "Google Platform Experience Helper", RegistryValueKind.String), () => Chrome == true),
 			("Disabling Google Chrome services", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, $@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\AutorunsDisabled\{{49210152-871f-4ffa-961d-a172abcbc09d}}", "StubPath", $@"""{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Google", "Chrome", "Application", "PlatformExperienceHelper", "platform_experience_helper.exe")}"" --first-run", RegistryValueKind.String), () => Chrome == true),
@@ -227,11 +227,11 @@ public static class BrowsersStage
 			("Disabling Google Chrome services", async () => TaskSchedulerHelper.Toggle(@"\GoogleUserPEH\RunPlatformExperienceHelper_Metrics", false), () => Chrome == true),
 
 			// download thorium
-			("Downloading Thorium", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/Alex313031/Thorium-Win/releases")).RootElement.EnumerateArray().First(r => r.GetProperty("assets").EnumerateArray().Any(a => a.GetProperty("name").GetString().Contains("thorium_SSE4_mini_installer.exe"))).GetProperty("assets").EnumerateArray().First(a => a.GetProperty("name").GetString().Contains("thorium_SSE4_mini_installer.exe")).GetProperty("browser_download_url").GetString(), Path.GetTempPath(), "ThoriumSetup.exe", reporter ?? new InstallPageReporter()), () => Thorium == true),
+			("Downloading Thorium", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/Alex313031/Thorium-Win/releases")).RootElement.EnumerateArray().First(r => r.GetProperty("assets").EnumerateArray().Any(a => a.GetProperty("name").GetString()?.Contains("thorium_SSE4_mini_installer.exe") ?? false)).GetProperty("assets").EnumerateArray().First(a => a.GetProperty("name").GetString()?.Contains("thorium_SSE4_mini_installer.exe") ?? false).GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "ThoriumSetup.exe", reporter ?? new InstallPageReporter()), () => Thorium == true),
 			
 			// install thorium
 			("Installing Thorium", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "ThoriumSetup.exe"), Arguments = "--silent --install --system-level --do-not-launch-chrome", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Thorium == true),
-			("Installing Thorium", async () => thoriumVersion = FileVersionInfo.GetVersionInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Thorium", "Application", "thorium.exe")).ProductVersion, () => Thorium == true),
+			("Installing Thorium", async () => thoriumVersion = FileVersionInfo.GetVersionInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Thorium", "Application", "thorium.exe")).ProductVersion ?? "", () => Thorium == true),
 			("Cleaning up Thorium files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "ThoriumSetup.exe")), () => Thorium == true),
 
 			// disable thorium services
@@ -291,11 +291,11 @@ public static class BrowsersStage
 			("Removing Thorium shortcut from the desktop", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Thorium.lnk")), () => Thorium == true),
 
 			// download helium
-			("Downloading Helium", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/imputnet/helium-windows/releases/latest")).RootElement.GetProperty("assets").EnumerateArray().First(a => a.GetProperty("name").GetString().Contains("_x64-installer.exe")).GetProperty("browser_download_url").GetString(), Path.GetTempPath(), "helium_x64-installer.exe", reporter ?? new InstallPageReporter()), () => Helium == true),
+			("Downloading Helium", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/imputnet/helium-windows/releases/latest")).RootElement.GetProperty("assets").EnumerateArray().First(a => a.GetProperty("name").GetString()?.Contains("_x64-installer.exe") ?? false).GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "helium_x64-installer.exe", reporter ?? new InstallPageReporter()), () => Helium == true),
 
 			// install helium
 			("Installing Helium", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "helium_x64-installer.exe"), Arguments = "/S /SYSTEM", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Helium == true),
-			("Installing Helium", async () => heliumVersion = FileVersionInfo.GetVersionInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "imput", "Helium", "Application", "chrome.exe")).ProductVersion, () => Helium == true),
+			("Installing Helium", async () => heliumVersion = FileVersionInfo.GetVersionInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "imput", "Helium", "Application", "chrome.exe")).ProductVersion ?? "", () => Helium == true),
 			("Cleaning up Helium files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "helium_x64-installer.exe")), () => Helium == true),
 
 			// disable helium services
@@ -357,11 +357,11 @@ public static class BrowsersStage
 			("Removing Helium shortcut from the desktop", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Helium.lnk")), () => Helium == true),
 
 			// download brave
-			("Downloading Brave", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/brave/brave-browser/releases/latest")).RootElement.GetProperty("assets").EnumerateArray().First(a => a.GetProperty("name").GetString() == "BraveBrowserStandaloneSetup.exe").GetProperty("browser_download_url").GetString(), Path.GetTempPath(), "BraveBrowserStandaloneSetup.exe", reporter ?? new InstallPageReporter()), () => Brave == true),
+			("Downloading Brave", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/brave/brave-browser/releases/latest")).RootElement.GetProperty("assets").EnumerateArray().First(a => a.GetProperty("name").GetString() == "BraveBrowserStandaloneSetup.exe").GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "BraveBrowserStandaloneSetup.exe", reporter ?? new InstallPageReporter()), () => Brave == true),
 			
 			// install brave
 			("Installing Brave", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "BraveBrowserStandaloneSetup.exe"), Arguments = "/silent /install", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Brave == true),
-			("Installing Brave", async () => braveVersion = FileVersionInfo.GetVersionInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "BraveSoftware", "Brave-Browser", "Application", "brave.exe")).ProductVersion, () => Brave == true),
+			("Installing Brave", async () => braveVersion = FileVersionInfo.GetVersionInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "BraveSoftware", "Brave-Browser", "Application", "brave.exe")).ProductVersion ?? "", () => Brave == true),
 			("Cleaning up Brave files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "BraveBrowserStandaloneSetup.exe")), () => Brave == true),
 
 			// pin brave to the taskbar
@@ -441,7 +441,7 @@ public static class BrowsersStage
 
 			// install vivaldi
 			("Installing Vivaldi", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "Vivaldi.x64.exe"), Arguments = "--vivaldi-silent --do-not-launch-chrome --system-level", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Vivaldi == true),
-			("Installing Vivaldi", async () => vivaldiVersion = FileVersionInfo.GetVersionInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Vivaldi", "Application", "vivaldi.exe")).ProductVersion, () => Vivaldi == true),
+			("Installing Vivaldi", async () => vivaldiVersion = FileVersionInfo.GetVersionInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Vivaldi", "Application", "vivaldi.exe")).ProductVersion ?? "", () => Vivaldi == true),
 			("Cleaning up Vivaldi files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Vivaldi.x64.exe")), () => Vivaldi == true),
 
 			// pin vivaldi to the taskbar
@@ -515,7 +515,7 @@ public static class BrowsersStage
 
 			// install arc
 			("Installing Arc", async () => await new PackageManager().AddPackageAsync(new Uri(Path.Combine(Path.GetTempPath(), "Arc.x64.msix")), null, DeploymentOptions.None), () => Arc == true),
-			("Installing Arc", async () => arcVersion = StoreHelper.GetVersion("TheBrowserCompany.Arc_ttt1ap7aakyb4"), () => Arc == true),
+			("Installing Arc", async () => arcVersion = StoreHelper.GetVersion("TheBrowserCompany.Arc_ttt1ap7aakyb4") ?? "", () => Arc == true),
 			("Cleaning up Arc files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Arc.x64.msix")), () => Arc == true),
 
 			// pin arc to the taskbar
@@ -568,7 +568,7 @@ public static class BrowsersStage
 
 			// install comet
 			("Installing Comet", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "Comet.exe"), Arguments = "-silent --do-not-launch-chrome --system-level", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Comet == true),
-			("Installing Comet", async () => cometVersion = FileVersionInfo.GetVersionInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Perplexity", "Comet", "Application", "comet.exe")).ProductVersion, () => Comet == true),
+			("Installing Comet", async () => cometVersion = FileVersionInfo.GetVersionInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Perplexity", "Comet", "Application", "comet.exe")).ProductVersion ?? "", () => Comet == true),
 			("Cleaning up Comet files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Comet.exe")), () => Comet == true),
 
 			// pin comet to the taskbar
@@ -635,7 +635,7 @@ public static class BrowsersStage
 			("Disabling Comet services", async () => TaskSchedulerHelper.Toggle("CometUpdaterTaskSystem", false), () => Comet == true),
 
 			// download firefox
-			("Downloading Firefox", async () => firefoxVersion = JsonDocument.Parse(await ProcessActions.httpClient.GetStringAsync("https://product-details.mozilla.org/1.0/firefox_versions.json")).RootElement.GetProperty("LATEST_FIREFOX_VERSION").GetString(), () => Firefox == true),
+			("Downloading Firefox", async () => firefoxVersion = JsonDocument.Parse(await ProcessActions.httpClient.GetStringAsync("https://product-details.mozilla.org/1.0/firefox_versions.json")).RootElement.GetProperty("LATEST_FIREFOX_VERSION").GetString() ?? "", () => Firefox == true),
 			("Downloading Firefox", async () => await DownloadHelper.Download($"https://releases.mozilla.org/pub/firefox/releases/{firefoxVersion}/win64/en-US/Firefox%20Setup%20{firefoxVersion}.exe", Path.GetTempPath(), "FirefoxSetup.exe", reporter ?? new InstallPageReporter()), () => Firefox == true),
 
 			// install firefox
@@ -822,7 +822,7 @@ public static class BrowsersStage
 			("Installing 1Password Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Waterfox", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/1password-x-password-manager"), () => Waterfox == true && OnePassword == true),
 			
 			// download librewolf
-			("Downloading LibreWolf", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://codeberg.org/api/v1/repos/librewolf/bsys6/releases")).RootElement.EnumerateArray().First(release => release.GetProperty("assets").EnumerateArray().Any(asset => asset.GetProperty("name").GetString().Contains("windows-x86_64-setup.exe"))).GetProperty("assets").EnumerateArray().First(asset => asset.GetProperty("name").GetString().Contains("windows-x86_64-setup.exe")).GetProperty("browser_download_url").GetString(), Path.GetTempPath(), "librewolf-windows-x86_64-setup.exe", reporter: reporter), () => LibreWolf == true),
+			("Downloading LibreWolf", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://codeberg.org/api/v1/repos/librewolf/bsys6/releases")).RootElement.EnumerateArray().First(release => release.GetProperty("assets").EnumerateArray().Any(asset => asset.GetProperty("name").GetString()?.Contains("windows-x86_64-setup.exe") ?? false)).GetProperty("assets").EnumerateArray().First(asset => asset.GetProperty("name").GetString()?.Contains("windows-x86_64-setup.exe") ?? false).GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "librewolf-windows-x86_64-setup.exe", reporter: reporter), () => LibreWolf == true),
 			
 			// install librewolf
 			("Installing LibreWolf", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "librewolf-windows-x86_64-setup.exe"), Arguments = "/S /MaintenanceService=false /DesktopShortcut=false /StartMenuShortcut=true", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => LibreWolf == true),
@@ -1063,7 +1063,7 @@ public static class BrowsersStage
 			var indices = valueNames
 				.Select(n => int.TryParse(n, out int i) ? (int?)i : null)
 				.Where(i => i.HasValue)
-				.Select(i => i.Value)
+				.Select(i => i!.Value)
 				.ToList();
 
 			if (indices.Count > 0)

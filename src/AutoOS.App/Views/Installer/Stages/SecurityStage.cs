@@ -11,7 +11,7 @@ namespace AutoOS.App.Views.Installer.Stages;
 
 public static class SecurityStage
 {
-	public static async Task<List<(string Title, Func<Task> Action, Func<bool> Condition)>> GetActions()
+	public static async Task<List<(string Title, Func<Task> Action, Func<bool>? Condition)>> GetActions()
 	{
 		bool WindowsDefender = PreparingStage.WindowsDefender;
 		bool UserAccountControl = PreparingStage.UserAccountControl;

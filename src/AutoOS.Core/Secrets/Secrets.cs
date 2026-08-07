@@ -4,7 +4,7 @@ namespace AutoOS.Core;
 
 public static partial class Secrets
 {
-	private static byte[] Key;
+	private static byte[] Key = [];
 
 	static partial void Initialize();
 

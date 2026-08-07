@@ -24,9 +24,9 @@ public static partial class RegistryHelper
 	public const uint ApplicationDataInt32 = 0x5f5e107;
 
 	public enum Identity { CurrentUser, TrustedInstaller, System }
-	private static SafeAccessTokenHandle _currentUserToken;
-	private static SafeAccessTokenHandle _trustedInstallerToken;
-	private static SafeAccessTokenHandle _systemToken;
+	private static SafeAccessTokenHandle? _currentUserToken;
+	private static SafeAccessTokenHandle? _trustedInstallerToken;
+	private static SafeAccessTokenHandle? _systemToken;
 
 	private static readonly Lock _lock = new();
 

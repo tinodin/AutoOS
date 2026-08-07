@@ -558,6 +558,6 @@ public sealed partial class AppsPage : Page
 [GeneratedBindableCustomProperty]
 public partial class GridViewItem
 {
-	public string Text { get; set; }
-	public string ImageSource { get; set; }
+	public string Text { get; set; } = string.Empty;
+	public string ImageSource { get; set; } = string.Empty;
 }

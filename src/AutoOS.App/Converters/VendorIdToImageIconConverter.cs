@@ -6,10 +6,10 @@ namespace AutoOS.App.Converters;
 
 public partial class VendorIdToImageIconConverter : IValueConverter
 {
-	public object Convert(object value, Type targetType, object parameter, string language)
+	public object? Convert(object value, Type targetType, object parameter, string language)
 	{
-		string vendorId = value as string;
-		string icon = vendorId switch
+		string? vendorId = value as string;
+		string? icon = vendorId switch
 		{
 			"10de" => "Nvidia.png",
 			"1002" => "Amd.png",

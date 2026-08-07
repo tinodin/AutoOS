@@ -16,26 +16,26 @@ internal sealed class TlsClient
 	private static readonly Lock LoadGate = new();
 	private static bool _loaded;
 	private static nint _handle;
-	private static RequestFn _request;
-	private static FreeMemoryFn _freeMemory;
-	private static DestroySessionFn _destroySession;
+	private static RequestFn? _request;
+	private static FreeMemoryFn? _freeMemory;
+	private static DestroySessionFn? _destroySession;
 
 	private readonly string _sessionId = Guid.NewGuid().ToString();
 	private readonly TlsClientOptions _options;
 
-	public TlsClient(TlsClientOptions options = null)
+	public TlsClient(TlsClientOptions? options = null)
 	{
 		_options = options ?? new TlsClientOptions();
 		EnsureLoaded();
 	}
 
-	public Task<TlsResponse> GetAsync(string url, IReadOnlyDictionary<string, string> headers = null)
+	public Task<TlsResponse> GetAsync(string url, IReadOnlyDictionary<string, string>? headers = null)
 		=> Task.Run(() => Execute("GET", url, null, headers));
 
-	public Task<TlsResponse> PostAsync(string url, string body, IReadOnlyDictionary<string, string> headers = null)
+	public Task<TlsResponse> PostAsync(string url, string body, IReadOnlyDictionary<string, string>? headers = null)
 		=> Task.Run(() => Execute("POST", url, body, headers));
 
-	private TlsResponse Execute(string method, string url, string body, IReadOnlyDictionary<string, string> headers)
+	private TlsResponse Execute(string method, string url, string? body, IReadOnlyDictionary<string, string>? headers)
 	{
 		Dictionary<string, string> mergedHeaders = MergeHeaders(_options.DefaultHeaders, headers);
 		var payload = new JsonObject
@@ -109,8 +109,8 @@ internal sealed class TlsClient
 	}
 
 	private static Dictionary<string, string> MergeHeaders(
-		IReadOnlyDictionary<string, string> baseHeaders,
-		IReadOnlyDictionary<string, string> overrideHeaders)
+		IReadOnlyDictionary<string, string>? baseHeaders,
+		IReadOnlyDictionary<string, string>? overrideHeaders)
 	{
 		var headers = new Dictionary<string, string>(StringComparer.Ordinal);
 		if (baseHeaders != null)
@@ -149,7 +149,7 @@ internal sealed class TlsClient
 	private static string Request(string payloadJson)
 	{
 		EnsureLoaded();
-		nint ptr = _request(payloadJson);
+		nint ptr = _request!(payloadJson);
 		if (ptr == IntPtr.Zero)
 			throw new InvalidOperationException("Native request returned null.");
 
@@ -167,7 +167,7 @@ internal sealed class TlsClient
 			{
 				string? id = idElement.GetString();
 				if (id != null)
-					_freeMemory(id);
+					_freeMemory!(id);
 			}
 		}
 		catch
@@ -189,14 +189,14 @@ internal sealed class TlsClientOptions
 {
 	public string ClientIdentifier { get; set; } = "chrome_120";
 	public int Timeout { get; set; } = 30000;
-	public string Proxy { get; set; }
+	public string? Proxy { get; set; }
 	public Dictionary<string, string> DefaultHeaders { get; set; } = new()
 	{
 		{ "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" },
 		{ "Accept", "application/json" },
 		{ "Accept-Language", "en-US,en;q=0.9" }
 	};
-	public List<string> HeaderOrder { get; set; }
+	public List<string>? HeaderOrder { get; set; }
 	public bool RandomTlsExtensionOrder { get; set; } = true;
 	public bool InsecureSkipVerify { get; set; }
 	public bool ForceHttp1 { get; set; }
@@ -205,7 +205,7 @@ internal sealed class TlsClientOptions
 internal sealed class TlsResponse
 {
 	public int Status { get; init; }
-	public string Body { get; init; }
-	public string Url { get; init; }
+	public string? Body { get; init; }
+	public string? Url { get; init; }
 	public bool IsSuccess => Status is >= 200 and <= 299;
 }

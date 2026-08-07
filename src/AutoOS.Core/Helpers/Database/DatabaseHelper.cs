@@ -7,7 +7,7 @@ namespace AutoOS.Core.Helpers.Database;
 
 public static partial class DatabaseHelper
 {
-	public static JsonNode Read(string databasePath, string domain, string keyName)
+	public static JsonNode? Read(string databasePath, string domain, string keyName)
 	{
 		if (string.IsNullOrEmpty(databasePath))
 			return null;
@@ -29,7 +29,7 @@ public static partial class DatabaseHelper
 		Buffer.BlockCopy(separatorBytes, 0, finalKeyBytes, prefixBytes.Length, separatorBytes.Length);
 		Buffer.BlockCopy(keyNameBytes, 0, finalKeyBytes, prefixBytes.Length + separatorBytes.Length, keyNameBytes.Length);
 
-		JsonNode result = null;
+		JsonNode? result = null;
 		try
 		{
 			result = ReadFromDatabase(databasePath, finalKeyBytes);
@@ -73,7 +73,7 @@ public static partial class DatabaseHelper
 		return result;
 	}
 
-	private static JsonNode ReadFromDatabase(string databasePath, byte[] finalKeyBytes)
+	private static JsonNode? ReadFromDatabase(string databasePath, byte[] finalKeyBytes)
 	{
 		using var database = new DB(new Options(), databasePath);
 		byte[] valueBytes = database.Get(finalKeyBytes);
@@ -89,7 +89,7 @@ public static partial class DatabaseHelper
 		return JsonNode.Parse(value);
 	}
 
-	public static bool Write(string databasePath, string domain, string keyName, JsonNode jsonContent)
+	public static bool Write(string databasePath, string domain, string keyName, JsonNode? jsonContent)
 	{
 		byte[] prefixBytes = Encoding.UTF8.GetBytes(domain);
 		byte[] separatorBytes = [0x00, 0x01];
@@ -100,7 +100,7 @@ public static partial class DatabaseHelper
 		Buffer.BlockCopy(separatorBytes, 0, finalKeyBytes, prefixBytes.Length, separatorBytes.Length);
 		Buffer.BlockCopy(keyNameBytes, 0, finalKeyBytes, prefixBytes.Length + separatorBytes.Length, keyNameBytes.Length);
 
-		byte[] jsonBytes = Encoding.UTF8.GetBytes(jsonContent.ToJsonString());
+		byte[] jsonBytes = Encoding.UTF8.GetBytes(jsonContent!.ToJsonString());
 
 		byte[] finalValueBytes = new byte[1 + jsonBytes.Length];
 		finalValueBytes[0] = 0x01;
@@ -128,7 +128,7 @@ public static partial class DatabaseHelper
 		return true;
 	}
 
-	private static JsonNode ReadSqlite(string sqlitePath, string keyName)
+	private static JsonNode? ReadSqlite(string sqlitePath, string keyName)
 	{
 		using var connection = new Microsoft.Data.Sqlite.SqliteConnection(new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder { DataSource = sqlitePath, Mode = Microsoft.Data.Sqlite.SqliteOpenMode.ReadOnly }.ToString());
 		connection.Open();

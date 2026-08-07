@@ -158,13 +158,13 @@ public sealed partial class DevicesPage : Page
 		ToggleSwitch toggleSwitch = (ToggleSwitch)sender;
 		DeviceInfo device = (DeviceInfo)toggleSwitch.DataContext;
 		bool isOn = toggleSwitch.IsOn;
-		var DevicesInfo = FindParent<StackPanel>(toggleSwitch).FindName("DevicesInfo") as StackPanel;
+		StackPanel? DevicesInfo = FindParent<StackPanel>(toggleSwitch)!.FindName("DevicesInfo") as StackPanel;
 
 		// disable hittestvisible to avoid double-clicking
 		toggleSwitch.IsHitTestVisible = false;
 
 		// remove infobar
-		DevicesInfo.Children.Clear();
+		DevicesInfo!.Children.Clear();
 
 		// add infobar
 		DevicesInfo.Children.Add(new InfoBar
@@ -205,9 +205,9 @@ public sealed partial class DevicesPage : Page
 		DevicesInfo.Children.Clear();
 	}
 
-	public static T FindParent<T>(DependencyObject child) where T : DependencyObject
+	public static T? FindParent<T>(DependencyObject child) where T : DependencyObject
 	{
-		DependencyObject parent = VisualTreeHelper.GetParent(child);
+		DependencyObject? parent = VisualTreeHelper.GetParent(child);
 
 		while (parent != null && parent is not T)
 			parent = VisualTreeHelper.GetParent(parent);

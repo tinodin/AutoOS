@@ -19,11 +19,11 @@ namespace AutoOS.App;
 
 public partial class App : Application
 {
-	public new static App Current => (App)Application.Current;
-	public static Window MainWindow = Window.Current;
+	public new static App Current => (App)Application.Current!;
+	public static Window MainWindow = Window.Current!;
 	public static IntPtr Hwnd => WindowNative.GetWindowHandle(MainWindow);
-	public JsonNavigationService NavService { get; set; }
-	public IThemeService ThemeService { get; set; }
+	public JsonNavigationService NavService { get; set; } = null!;
+	public IThemeService? ThemeService { get; set; }
 	internal static bool IsInstalled { get; private set; }
 	internal static double Scaling { get; set; }
 	private readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
@@ -72,7 +72,7 @@ public partial class App : Application
 
 				MainWindow.AppWindow.MoveAndResize(new RectInt32(posX, posY, windowWidth, windowHeight));
 
-				if (!localSettings.Values.TryGetValue("HideStartup", out object value) || (int)value == 0)
+				if (!localSettings.Values.TryGetValue("HideStartup", out object? value) || (int)value! == 0)
 				{
 					MainWindow.Activate();
 				}
@@ -84,7 +84,7 @@ public partial class App : Application
 				MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
 				ThemeService = new ThemeService().Initialize(MainWindow);
 
-				if (localSettings.Values.TryGetValue("TintColor", out object tintValue) && tintValue is string tintHex)
+				if (localSettings.Values.TryGetValue("TintColor", out object? tintValue) && tintValue is string tintHex)
 				{
 					if (MainWindow.Content is Grid rootGrid)
 					{
@@ -92,19 +92,19 @@ public partial class App : Application
 					}
 				}
 
-				if (localSettings.Values.TryGetValue("RestoreWindowState", out object restore) && (bool)restore)
+				if (localSettings.Values.TryGetValue("RestoreWindowState", out object? restore) && (bool)restore!)
 				{
-					if (localSettings.Values.TryGetValue("WindowPositionX", out object posX) && localSettings.Values.TryGetValue("WindowPositionY", out object posY) && localSettings.Values.TryGetValue("WindowWidth", out object windowWidth) && localSettings.Values.TryGetValue("WindowHeight", out object windowHeight))
+					if (localSettings.Values.TryGetValue("WindowPositionX", out object? posX) && localSettings.Values.TryGetValue("WindowPositionY", out object? posY) && localSettings.Values.TryGetValue("WindowWidth", out object? windowWidth) && localSettings.Values.TryGetValue("WindowHeight", out object? windowHeight))
 					{
-						int x = (int)posX;
-						int y = (int)posY;
-						int width = (int)windowWidth;
-						int height = (int)windowHeight;
+						int x = (int)posX!;
+						int y = (int)posY!;
+						int width = (int)windowWidth!;
+						int height = (int)windowHeight!;
 
 						MainWindow.AppWindow.MoveAndResize(new RectInt32(x, y, width, height));
 					}
 
-					if (localSettings.Values.TryGetValue("IsMaximized", out object isMaximized) && (bool)isMaximized)
+					if (localSettings.Values.TryGetValue("IsMaximized", out object? isMaximized) && (bool)isMaximized!)
 					{
 						if (MainWindow.AppWindow.Presenter is OverlappedPresenter overlappedPresenter)
 						{
@@ -119,7 +119,7 @@ public partial class App : Application
 
 				MainWindow.AppWindow.Changed += (s, e) =>
 				{
-					if (localSettings.Values.TryGetValue("RestoreWindowState", out object restoreState) && (bool)restoreState)
+					if (localSettings.Values.TryGetValue("RestoreWindowState", out object? restoreState) && (bool)restoreState!)
 					{
 						if (MainWindow.AppWindow.Presenter is OverlappedPresenter overlappedPresenter)
 						{
@@ -159,7 +159,7 @@ public partial class App : Application
 		}
 	}
 
-	private async void Current_UnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
+	private async void Current_UnhandledException(object? sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
 	{
 		e.Handled = true;
 		await ShowErrorMessage(e.Exception);
@@ -173,7 +173,7 @@ public partial class App : Application
 		}
 	}
 
-	private void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
+	private void TaskScheduler_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
 	{
 		e.SetObserved();
 

@@ -9,9 +9,9 @@ namespace AutoOS.App.Views.Installer.Stages;
 
 public static class AppxStage
 {
-	public static List<(string Title, Func<Task> Action, Func<bool> Condition)> GetActions()
+	public static List<(string Title, Func<Task> Action, Func<bool>? Condition)> GetActions()
 	{
-		var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
+		var actions = new List<(string Title, Func<Task> Action, Func<bool>? Condition)>
 		{
 			// onedrive
 			("Uninstalling OneDrive", async () => { foreach (Process process in new[] { "OneDrive", "OneDrive.Sync.Service", "UserOOBEBroker", "FileCoAuth", "OneDrivePatcher" }.SelectMany(Process.GetProcessesByName)) { process.Kill(); process.WaitForExit(); }}, null),

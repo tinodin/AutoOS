@@ -52,6 +52,8 @@ public sealed partial class PowerPage : Page
 			column.Width = double.NaN;
 		treeGrid.InvalidateMeasure();
 		treeGrid.UpdateLayout();
+
+		RefreshFilterOnly();
 	}
 	
 	private void TreeGrid_CellToolTipOpening(object sender, TreeGridCellToolTipOpeningEventArgs e)
@@ -173,17 +175,15 @@ public sealed partial class PowerPage : Page
 
 	private void RefreshFilterOnly()
 	{
-		TreeGrid.View?.RefreshFilter();
-		CompareTreeGrid.View?.RefreshFilter();
-		ChangesTreeGrid.View?.RefreshFilter();
+		ApplyFilter(TreeGrid, ViewModel);
+		ApplyFilter(CompareTreeGrid, ViewModel);
+		ApplyFilter(ChangesTreeGrid, ViewModel);
 	}
 
 	private void RefreshSearchFilter()
 	{
 		ViewModel.UpdateNodeCounts();
-		ApplyFilter(TreeGrid, ViewModel);
-		ApplyFilter(CompareTreeGrid, ViewModel);
-		ApplyFilter(ChangesTreeGrid, ViewModel);
+		RefreshFilterOnly();
 	}
 
 	private static void ApplyFilter(SfTreeGrid treeGrid, PowerPageViewModel viewModel)

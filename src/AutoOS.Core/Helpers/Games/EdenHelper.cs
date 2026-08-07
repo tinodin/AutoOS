@@ -23,7 +23,7 @@ public static partial class EdenHelper
 			if (!File.Exists(filePath))
 			{
 				string content = await httpClient.GetStringAsync("https://raw.githubusercontent.com/blawar/titledb/refs/heads/master/US.en.json");
-				Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+				Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
 				await File.WriteAllTextAsync(filePath, content);
 			}
 
@@ -58,14 +58,14 @@ public static partial class EdenHelper
 						return;
 
 					// get name from database
-					string name = entry.TryGetProperty("name", out JsonElement nameElement) ? nameElement.GetString() : null;
+					string? name = entry.TryGetProperty("name", out JsonElement nameElement) ? nameElement.GetString() : null;
 
 					// clean name for searching
 					if (string.IsNullOrWhiteSpace(name)) return;
 					string cleanName = CleanNameRegex().Replace(name.Replace('’', '\''), "");
 
 					// get install location
-					string installLocation = edenEntry.GetProperty("file_path").GetString()?.Replace("/", "\\");
+					string? installLocation = edenEntry.GetProperty("file_path").GetString()?.Replace("/", "\\");
 
 					// get playtime
 					string playTime = "0m";
@@ -86,10 +86,10 @@ public static partial class EdenHelper
 					long sizeBytes = edenEntry.TryGetProperty("file_size", out JsonElement sizeElem) ? sizeElem.GetInt64() : 0;
 
 					// search on igdb
-					Dictionary<string, string> result = await IgdbHelper.SearchCovers(cleanName);
-					if (result == null) return;
+Dictionary<string, string?>? result = await IgdbHelper.SearchCovers(cleanName);
+				if (result == null) return;
 
-					using var docData = JsonDocument.Parse(await httpClient.GetStringAsync(result["game_url"], _));
+					using var docData = JsonDocument.Parse(await httpClient.GetStringAsync(result["game_url"]!, _));
 					JsonElement data = docData.RootElement.Clone();
 
 					games.Add(new GameModel
@@ -103,8 +103,8 @@ public static partial class EdenHelper
 						ImageUrl = result["cover_url"],
 						BackgroundImageUrl = entry.GetProperty("bannerUrl").GetString(),
 						Developers = result["developers"],
-						Genres = [.. data.GetProperty("genres").EnumerateArray().Select(g => g.GetProperty("name").GetString())],
-						Features = [.. data.GetProperty("game_modes").EnumerateArray().Select(m => m.GetProperty("name").GetString())],
+						Genres = [.. data.GetProperty("genres").EnumerateArray().Select(g => g.GetProperty("name").GetString() ?? "")],
+						Features = [.. data.GetProperty("game_modes").EnumerateArray().Select(m => m.GetProperty("name").GetString() ?? "")],
 						Rating = Math.Round(data.GetProperty("aggregated_rating").GetDouble() / 20.0, 2),
 						PlayTime = playTime,
 						AgeRatingUrl = result["age_rating_url"],
@@ -113,7 +113,7 @@ public static partial class EdenHelper
 												? entry.GetProperty("ratingContent")[0].GetString()
 												: null,
 						Description = data.GetProperty("summary").GetString(),
-						Screenshots = [.. entry.GetProperty("screenshots").EnumerateArray().Select(x => x.GetString())],
+						Screenshots = [.. entry.GetProperty("screenshots").EnumerateArray().Select(x => x.GetString() ?? "")],
 						ReleaseDate = result["release_date"],
 						Size = sizeBytes >= 1024 * 1024 * 1024
 								? $"{sizeBytes / (1024d * 1024d * 1024d):F1} GB"

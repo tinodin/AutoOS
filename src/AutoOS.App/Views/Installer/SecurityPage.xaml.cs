@@ -166,12 +166,12 @@ public sealed partial class SecurityPage : Page
 
 		if (value == null)
 		{
-			string cpuVendor = (string)Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\CentralProcessor\0", "VendorIdentifier", null);
-			if (cpuVendor.Contains("GenuineIntel"))
+			string? cpuVendor = (string?)Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\CentralProcessor\0", "VendorIdentifier", null);
+			if (cpuVendor?.Contains("GenuineIntel") == true)
 			{
 				localSettings.Values["SpectreMeltdownMitigations"] = 0;
 			}
-			else if (cpuVendor.Contains("AuthenticAMD"))
+			else if (cpuVendor?.Contains("AuthenticAMD") == true)
 			{
 				localSettings.Values["SpectreMeltdownMitigations"] = 1;
 				SpectreMeltdown.IsOn = true;

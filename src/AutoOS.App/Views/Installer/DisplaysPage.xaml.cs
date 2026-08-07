@@ -48,7 +48,7 @@ public sealed partial class DisplaysPage : Page
 
 	private async void BrowseCru_Click(object sender, RoutedEventArgs e)
 	{
-		var senderButton = sender as Button;
+		var senderButton = (Button)sender;
 		senderButton.IsEnabled = false;
 		CruInfo.Children.Clear();
 

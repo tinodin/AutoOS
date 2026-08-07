@@ -10,24 +10,24 @@ public partial class SchedulingItem : INotifyPropertyChanged
 {
 	public DeviceType DeviceType { get; set; }
 
-	private string _deviceDescription;
+	private string _deviceDescription = string.Empty;
 	public string DeviceDescription
 	{
 		get => _deviceDescription;
 		set { _deviceDescription = value; OnPropertyChanged(); OnPropertyChanged(nameof(Name)); }
 	}
 
-	private string _friendlyName;
+	private string _friendlyName = string.Empty;
 	public string FriendlyName
 	{
 		get => _friendlyName;
 		set { _friendlyName = value; OnPropertyChanged(); OnPropertyChanged(nameof(Name)); }
 	}
 
-	public string DevObjName { get; set; }
-	public string PnpDeviceId { get; set; }
+	public string DevObjName { get; set; } = string.Empty;
+	public string PnpDeviceId { get; set; } = string.Empty;
 
-	private string _location;
+	private string _location = string.Empty;
 	public string Location
 	{
 		get => _location;
@@ -116,7 +116,7 @@ public partial class SchedulingItem : INotifyPropertyChanged
 		return string.Join(", ", processors);
 	}
 
-	public event PropertyChangedEventHandler PropertyChanged;
-	protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+	public event PropertyChangedEventHandler? PropertyChanged;
+	protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
 		=> PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 }

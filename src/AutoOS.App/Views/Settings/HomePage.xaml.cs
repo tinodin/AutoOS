@@ -162,7 +162,7 @@ public sealed partial class HomePage : Page
 		Version currentVersion = new(ProcessInfoHelper.Version);
 
 		localSettings.Values.TryGetValue("Version", out object? storedVersionObj);
-		Version storedVersion = storedVersionObj is string storedVersionStr ? new(storedVersionStr) : null;
+		Version? storedVersion = storedVersionObj is string storedVersionStr ? new(storedVersionStr) : null;
 
 		if (currentVersion.CompareTo(storedVersion) > 0)
 		{
@@ -172,7 +172,7 @@ public sealed partial class HomePage : Page
 
 				if (doc.RootElement.TryGetProperty("body", out JsonElement body))
 				{
-					string rawChangelog = body.GetString();
+					string rawChangelog = body.GetString()!;
 					string changelog = rawChangelog.Replace("`", "")[rawChangelog.IndexOf("- ")..];
 
 					var contentDialog = new ContentDialog
@@ -201,7 +201,7 @@ public sealed partial class HomePage : Page
 			{ }
 
 			var updateDialog = new UpdateDialog();
-			List<(string Title, Func<Task> Action, Func<bool> Condition)> actions = UpdateStage.UpdateActions(updateDialog);
+			List<(string Title, Func<Task> Action, Func<bool>? Condition)> actions = UpdateStage.UpdateActions(updateDialog);
 
 			if (actions.Count > 0)
 			{
@@ -248,7 +248,7 @@ public sealed partial class HomePage : Page
 			var releases = releasesDoc.RootElement.EnumerateArray()
 				.Select(release =>
 				{
-					string tag = release.GetProperty("tag_name").GetString();
+					string tag = release.GetProperty("tag_name").GetString()!;
 					return new
 					{
 						Version = Version.Parse(tag.TrimStart('v')),
@@ -266,8 +266,8 @@ public sealed partial class HomePage : Page
 			var assets = nextRelease.Json.GetProperty("assets");
 			string downloadUrl = assets.EnumerateArray()
 				.First(a => a.GetProperty("name").GetString() == "AutoOS.msix")
-				.GetProperty("browser_download_url")
-				.GetString();
+					.GetProperty("browser_download_url")
+					.GetString()!;
 
 			Version nextVersion = nextRelease.Version;
 

@@ -11,8 +11,8 @@ public static class CommandBarExtensions
     {
         public Dictionary<AppBarElementContainer, Thickness> Margins { get; } = [];
         public List<(UIElement Element, long Token)> VisibilityTokens { get; } = [];
-        public Windows.Foundation.Collections.VectorChangedEventHandler<ICommandBarElement> VectorChangedHandler { get; set; }
-        public SizeChangedEventHandler SizeChangedHandler { get; set; }
+        public Windows.Foundation.Collections.VectorChangedEventHandler<ICommandBarElement>? VectorChangedHandler { get; set; }
+        public SizeChangedEventHandler? SizeChangedHandler { get; set; }
         public bool RefreshQueued { get; set; }
         public bool RefreshDirty { get; set; }
     }
@@ -83,7 +83,7 @@ public static class CommandBarExtensions
             }
             else
             {
-                RoutedEventHandler loadedHandler = null;
+                RoutedEventHandler? loadedHandler = null;
                 loadedHandler = (sender, args) =>
                 {
                     tabbedCommandBar.Loaded -= loadedHandler;
@@ -119,7 +119,7 @@ public static class CommandBarExtensions
                 }
                 else
                 {
-                    RoutedEventHandler loadedHandler = null;
+                    RoutedEventHandler? loadedHandler = null;
                     loadedHandler = (sender, eventArgs) =>
                     {
                         commandBar.Loaded -= loadedHandler;
@@ -151,7 +151,7 @@ public static class CommandBarExtensions
                 UpdateCommandAlignment(commandBar, alignment);
             else
             {
-                RoutedEventHandler loadedHandler = null;
+                RoutedEventHandler? loadedHandler = null;
                 loadedHandler = (sender, eventArgs) =>
                 {
                     commandBar.Loaded -= loadedHandler;
@@ -171,7 +171,7 @@ public static class CommandBarExtensions
                 UpdateOverflowButtonAlignment(commandBar, alignment);
             else
             {
-                RoutedEventHandler loadedHandler = null;
+                RoutedEventHandler? loadedHandler = null;
                 loadedHandler = (sender, eventArgs) =>
                 {
                     commandBar.Loaded -= loadedHandler;
@@ -200,7 +200,7 @@ public static class CommandBarExtensions
 
     private static void DetachVisibilityTracking(CommandBar commandBar)
     {
-        if (!_stateMap.TryGetValue(commandBar, out CommandBarState? state))
+        if (!_stateMap.TryGetValue(commandBar, out CommandBarState? state) || state is null)
             return;
 
         if (state.VectorChangedHandler is not null)
@@ -224,7 +224,7 @@ public static class CommandBarExtensions
 
     private static void DetachSizeChangedTracking(CommandBar commandBar)
     {
-        if (!_stateMap.TryGetValue(commandBar, out CommandBarState? state))
+        if (!_stateMap.TryGetValue(commandBar, out CommandBarState? state) || state is null)
             return;
 
         if (state.SizeChangedHandler is not null)
@@ -250,7 +250,7 @@ public static class CommandBarExtensions
 
     private static void UnhookVisibilityCallbacks(CommandBarState state)
     {
-        foreach ((UIElement? element, long token) in state.VisibilityTokens)
+        foreach ((UIElement element, long token) in state.VisibilityTokens)
             element.UnregisterPropertyChangedCallback(UIElement.VisibilityProperty, token);
         state.VisibilityTokens.Clear();
     }
@@ -338,7 +338,7 @@ public static class CommandBarExtensions
         try
         {
             commandBar.ApplyTemplate();
-			ItemsControl primaryItemsControl = FindVisualChild<ItemsControl>(commandBar, "PrimaryItemsControl");
+			ItemsControl? primaryItemsControl = FindVisualChild<ItemsControl>(commandBar, "PrimaryItemsControl");
             primaryItemsControl?.HorizontalAlignment = alignment;
         }
         catch { }
@@ -349,13 +349,13 @@ public static class CommandBarExtensions
         try
         {
             commandBar.ApplyTemplate();
-			Button moreButton = FindVisualChild<Button>(commandBar, "MoreButton");
+			Button? moreButton = FindVisualChild<Button>(commandBar, "MoreButton");
             moreButton?.HorizontalAlignment = alignment;
         }
         catch { }
     }
 
-    private static T FindVisualChild<T>(DependencyObject parent, string childName) where T : DependencyObject
+    private static T? FindVisualChild<T>(DependencyObject parent, string childName) where T : DependencyObject
     {
         int count = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChildrenCount(parent);
         for (int index = 0; index < count; index++)
@@ -365,7 +365,7 @@ public static class CommandBarExtensions
             {
                 return matched;
             }
-            T childOfChild = FindVisualChild<T>(child, childName);
+            T? childOfChild = FindVisualChild<T>(child, childName);
             if (childOfChild != null)
             {
                 return childOfChild;
@@ -374,13 +374,13 @@ public static class CommandBarExtensions
         return null;
     }
 
-    private static void CommandBar_Opening(object sender, object eventArgs)
+    private static void CommandBar_Opening(object? sender, object? eventArgs)
     {
         if (sender is CommandBar commandBar)
             ApplyOverflowContainerMargins(commandBar);
     }
 
-    private static void CommandBar_Closed(object sender, object eventArgs)
+    private static void CommandBar_Closed(object? sender, object? eventArgs)
     {
         if (sender is CommandBar commandBar)
             RestoreOverflowContainerMargins(commandBar);
@@ -405,9 +405,9 @@ public static class CommandBarExtensions
 
     private static void RestoreOverflowContainerMargins(CommandBar commandBar)
     {
-        if (_stateMap.TryGetValue(commandBar, out CommandBarState? state))
+        if (_stateMap.TryGetValue(commandBar, out CommandBarState? state) && state is not null)
         {
-            foreach ((AppBarElementContainer? container, Thickness margin) in state.Margins)
+            foreach ((AppBarElementContainer container, Thickness margin) in state.Margins)
                 container.Margin = margin;
             state.Margins.Clear();
         }

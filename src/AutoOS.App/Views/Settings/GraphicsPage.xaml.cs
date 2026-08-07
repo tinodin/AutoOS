@@ -84,8 +84,8 @@ public sealed partial class GraphicsPage : Page
 	private async void ProgressButton_Checked(object sender, RoutedEventArgs e)
 	{
 
-		string newestVersion = string.Empty;
-		string newestDownloadUrl = string.Empty;
+		string? newestVersion = null;
+		string? newestDownloadUrl = null;
 
 		ProgressButton progressButton = (ProgressButton)sender;
 		GpuInfo gpu = (GpuInfo)progressButton.DataContext;
@@ -95,7 +95,7 @@ public sealed partial class GraphicsPage : Page
 		try
 		{
 			// update logic
-			if (progressButton.Content?.ToString().Contains("Update to") == true)
+			if (progressButton.Content?.ToString()?.Contains("Update to") == true)
 			{
 				if (new ServiceController("Beep").Status == ServiceControllerStatus.Running)
 				{
@@ -116,17 +116,17 @@ public sealed partial class GraphicsPage : Page
 					{
 						case "10de":
 							(newestVersion, newestDownloadUrl) = await NvidiaHelper.CheckUpdate(gpu);
-							var nvidiaActions = NvidiaHelper.InstallActions(gpu, newestVersion, newestDownloadUrl, new ProgressButtonReporter(progressButton)).Concat(NvidiaHelper.TweakActions(gpu, newestVersion)).ToList();
+							var nvidiaActions = NvidiaHelper.InstallActions(gpu, newestVersion ?? "", newestDownloadUrl ?? "", new ProgressButtonReporter(progressButton)).Concat(NvidiaHelper.TweakActions(gpu, newestVersion ?? "")).ToList();
 							await RunActions(progressButton, nvidiaActions);
 							break;
 						case "1002":
 							(newestVersion, newestDownloadUrl) = await AmdHelper.CheckUpdate(gpu);
-							var amdActions = AmdHelper.InstallActions(gpu, newestVersion, newestDownloadUrl, new ProgressButtonReporter(progressButton)).Concat(AmdHelper.TweakActions(gpu)).ToList();
+							var amdActions = AmdHelper.InstallActions(gpu, newestVersion ?? "", newestDownloadUrl ?? "", new ProgressButtonReporter(progressButton)).Concat(AmdHelper.TweakActions(gpu)).ToList();
 							await RunActions(progressButton, amdActions);
 							break;
 						case "8086":
 							(newestVersion, newestDownloadUrl) = await IntelHelper.CheckUpdate(gpu);
-							var intelActions = IntelHelper.InstallActions(gpu, newestVersion, newestDownloadUrl, new ProgressButtonReporter(progressButton)).Concat(IntelHelper.TweakActions(gpu)).ToList();
+							var intelActions = IntelHelper.InstallActions(gpu, newestVersion ?? "", newestDownloadUrl ?? "", new ProgressButtonReporter(progressButton)).Concat(IntelHelper.TweakActions(gpu)).ToList();
 							await RunActions(progressButton, intelActions);
 							break;
 					}
@@ -166,7 +166,7 @@ public sealed partial class GraphicsPage : Page
 				return;
 			}
 			// install logic
-			else if (progressButton.Content?.ToString().Contains("Install") == true)
+			else if (progressButton.Content?.ToString()?.Contains("Install") == true)
 			{
 				if (new ServiceController("Beep").Status == ServiceControllerStatus.Running)
 				{
@@ -186,17 +186,17 @@ public sealed partial class GraphicsPage : Page
 					{
 						case "10de":
 							(newestVersion, newestDownloadUrl) = await NvidiaHelper.CheckUpdate(gpu);
-							var nvidiaActions = NvidiaHelper.InstallActions(gpu, newestVersion, newestDownloadUrl, new ProgressButtonReporter(progressButton)).Concat(NvidiaHelper.TweakActions(gpu, newestVersion)).ToList();
+							var nvidiaActions = NvidiaHelper.InstallActions(gpu, newestVersion ?? "", newestDownloadUrl ?? "", new ProgressButtonReporter(progressButton)).Concat(NvidiaHelper.TweakActions(gpu, newestVersion ?? "")).ToList();
 							await RunActions(progressButton, nvidiaActions);
 							break;
 						case "1002":
 							(newestVersion, newestDownloadUrl) = await AmdHelper.CheckUpdate(gpu);
-							var amdActions = AmdHelper.InstallActions(gpu, newestVersion, newestDownloadUrl, new ProgressButtonReporter(progressButton)).Concat(AmdHelper.TweakActions(gpu)).ToList();
+							var amdActions = AmdHelper.InstallActions(gpu, newestVersion ?? "", newestDownloadUrl ?? "", new ProgressButtonReporter(progressButton)).Concat(AmdHelper.TweakActions(gpu)).ToList();
 							await RunActions(progressButton, amdActions);
 							break;
 						case "8086":
 							(newestVersion, newestDownloadUrl) = await IntelHelper.CheckUpdate(gpu);
-							var intelActions = IntelHelper.InstallActions(gpu, newestVersion, newestDownloadUrl, new ProgressButtonReporter(progressButton)).Concat(IntelHelper.TweakActions(gpu)).ToList();
+							var intelActions = IntelHelper.InstallActions(gpu, newestVersion ?? "", newestDownloadUrl ?? "", new ProgressButtonReporter(progressButton)).Concat(IntelHelper.TweakActions(gpu)).ToList();
 							await RunActions(progressButton, intelActions);
 							break;
 					}
@@ -264,7 +264,7 @@ public sealed partial class GraphicsPage : Page
 
 				string currentVersion = gpu.CurrentVersion;
 
-				if (string.Compare(newestVersion, currentVersion, StringComparison.Ordinal) > 0)
+				if (string.Compare(newestVersion ?? "", currentVersion, StringComparison.Ordinal) > 0)
 				{
 					progressButton.Content = $"Update to {newestVersion}";
 				}
@@ -291,7 +291,7 @@ public sealed partial class GraphicsPage : Page
 		}
 	}
 
-	public static async Task RunActions(ProgressButton progressButton, List<(string Title, Func<Task> Action, Func<bool> Condition)> actions)
+	public static async Task RunActions(ProgressButton progressButton, List<(string Title, Func<Task> Action, Func<bool>? Condition)> actions)
 	{
 		if (actions == null || actions.Count == 0) return;
 
@@ -301,7 +301,7 @@ public sealed partial class GraphicsPage : Page
 		List<Func<Task>> currentGroup = [];
 		string previousTitle = string.Empty;
 
-		foreach ((string? title, Func<Task>? action, Func<bool> _) in filteredActions)
+		foreach ((string? title, Func<Task> action, Func<bool>? _) in filteredActions)
 		{
 			if (!string.IsNullOrEmpty(previousTitle) && previousTitle != title && currentGroup.Count > 0)
 			{
@@ -392,7 +392,8 @@ public sealed partial class GraphicsPage : Page
 
 		ToggleSwitch toggleSwitch = (ToggleSwitch)sender;
 		GpuInfo gpu = (GpuInfo)toggleSwitch.DataContext;
-		var GpuInfo = FindParent<StackPanel>(toggleSwitch).FindName("GpuInfo") as StackPanel;
+		var GpuInfo = FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") as StackPanel;
+		if (GpuInfo is null) return;
 		if (!gpu.IsInstalled)
 		{
 			localSettings.Values[$"PStates_{gpu.PnPDeviceId}"] = toggleSwitch.IsOn;
@@ -491,7 +492,8 @@ public sealed partial class GraphicsPage : Page
 
 		ToggleSwitch toggleSwitch = (ToggleSwitch)sender;
 		GpuInfo gpu = (GpuInfo)toggleSwitch.DataContext;
-		var GpuInfo = FindParent<StackPanel>(toggleSwitch).FindName("GpuInfo") as StackPanel;
+		var GpuInfo = FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") as StackPanel;
+		if (GpuInfo is null) return;
 		if (!gpu.IsInstalled)
 		{
 			localSettings.Values[$"ECC_{gpu.PnPDeviceId}"] = toggleSwitch.IsOn;
@@ -596,7 +598,8 @@ public sealed partial class GraphicsPage : Page
 
 		ToggleSwitch toggleSwitch = (ToggleSwitch)sender;
 		GpuInfo gpu = (GpuInfo)toggleSwitch.DataContext;
-		var GpuInfo = FindParent<StackPanel>(toggleSwitch).FindName("GpuInfo") as StackPanel;
+		var GpuInfo = FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") as StackPanel;
+		if (GpuInfo is null) return;
 		if (!gpu.IsInstalled)
 		{
 			localSettings.Values[$"GspFirmware_{gpu.PnPDeviceId}"] = toggleSwitch.IsOn;
@@ -695,7 +698,8 @@ public sealed partial class GraphicsPage : Page
 
 		ToggleSwitch toggleSwitch = (ToggleSwitch)sender;
 		GpuInfo gpu = (GpuInfo)toggleSwitch.DataContext;
-		var GpuInfo = FindParent<StackPanel>(toggleSwitch).FindName("GpuInfo") as StackPanel;
+		var GpuInfo = FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") as StackPanel;
+		if (GpuInfo is null) return;
 		if (!gpu.IsInstalled)
 		{
 			localSettings.Values[$"HDCP_{gpu.PnPDeviceId}"] = toggleSwitch.IsOn;
@@ -794,7 +798,8 @@ public sealed partial class GraphicsPage : Page
 
 		ToggleSwitch toggleSwitch = (ToggleSwitch)sender;
 		GpuInfo gpu = (GpuInfo)toggleSwitch.DataContext;
-		var GpuInfo = FindParent<StackPanel>(toggleSwitch).FindName("GpuInfo") as StackPanel;
+		var GpuInfo = FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") as StackPanel;
+		if (GpuInfo is null) return;
 		if (!gpu.IsInstalled)
 		{
 			localSettings.Values[$"HDMIDPAudio_{gpu.PnPDeviceId}"] = toggleSwitch.IsOn;
@@ -850,8 +855,8 @@ public sealed partial class GraphicsPage : Page
 	private async void BrowseMsi_Click(object sender, RoutedEventArgs e)
 	{
 		// disable the button to avoid double-clicking
-		var senderButton = sender as Button;
-		senderButton.IsEnabled = false;
+var senderButton = (Button)sender;
+	senderButton.IsEnabled = false;
 
 		// remove infobar
 		MsiAfterburnerInfo.Children.Clear();
@@ -1038,7 +1043,7 @@ public sealed partial class GraphicsPage : Page
 
 	private void GetOBSState()
 	{
-		if (!localSettings.Values.TryGetValue("OBS", out object value))
+		if (!localSettings.Values.TryGetValue("OBS", out object? value))
 		{
 			localSettings.Values["OBS"] = 0;
 		}
@@ -1121,9 +1126,9 @@ public sealed partial class GraphicsPage : Page
 		ObsStudioInfo.Children.Clear();
 	}
 
-	public static T FindParent<T>(DependencyObject child) where T : DependencyObject
+	public static T? FindParent<T>(DependencyObject child) where T : DependencyObject
 	{
-		DependencyObject parent = VisualTreeHelper.GetParent(child);
+		DependencyObject? parent = VisualTreeHelper.GetParent(child);
 
 		while (parent != null && parent is not T)
 			parent = VisualTreeHelper.GetParent(parent);

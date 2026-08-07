@@ -234,7 +234,7 @@ public sealed partial class SecurityPage : Page
 					Content = panel,
 					PrimaryButtonText = "Done",
 					IsPrimaryButtonEnabled = false,
-					XamlRoot = XamlRoot
+					XamlRoot = XamlRoot!
 				};
 
 				contentDialog.Resources["ContentDialogMaxWidth"] = 800;
@@ -376,9 +376,9 @@ public sealed partial class SecurityPage : Page
 		// toggle uac
 		using (RegistryKey? key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", true))
 		{
-			key.SetValue("EnableLUA", UAC.IsOn ? 1 : 0, RegistryValueKind.DWord);
-			key.SetValue("PromptOnSecureDesktop", UAC.IsOn ? 1 : 0, RegistryValueKind.DWord);
-			key.SetValue("ConsentPromptBehaviorAdmin", UAC.IsOn ? 5 : 0, RegistryValueKind.DWord);
+			key?.SetValue("EnableLUA", UAC.IsOn ? 1 : 0, RegistryValueKind.DWord);
+			key?.SetValue("PromptOnSecureDesktop", UAC.IsOn ? 1 : 0, RegistryValueKind.DWord);
+			key?.SetValue("ConsentPromptBehaviorAdmin", UAC.IsOn ? 5 : 0, RegistryValueKind.DWord);
 		}
 
 		// delay
@@ -429,7 +429,7 @@ public sealed partial class SecurityPage : Page
 		int policy = (int)PInvoke.GetSystemDEPPolicy();
 
 		// get state
-		string output = Process.Start(new ProcessStartInfo("cmd.exe", "/c bcdedit /enum {current}") { CreateNoWindow = true, RedirectStandardOutput = true }).StandardOutput.ReadToEnd();
+		string output = Process.Start(new ProcessStartInfo("cmd.exe", "/c bcdedit /enum {current}") { CreateNoWindow = true, RedirectStandardOutput = true })?.StandardOutput.ReadToEnd() ?? string.Empty;
 
 		if (output.Contains("nx                      OptIn"))
 		{
@@ -513,7 +513,7 @@ public sealed partial class SecurityPage : Page
 		});
 
 		// toggle dep
-		string output = Process.Start(new ProcessStartInfo("cmd.exe", $"/c {(DEP.IsOn ? "bcdedit /set nx OptIn" : "bcdedit /set nx AlwaysOff")}") { CreateNoWindow = true, RedirectStandardOutput = true }).StandardOutput.ReadToEnd();
+		string output = Process.Start(new ProcessStartInfo("cmd.exe", $"/c {(DEP.IsOn ? "bcdedit /set nx OptIn" : "bcdedit /set nx AlwaysOff")}") { CreateNoWindow = true, RedirectStandardOutput = true })?.StandardOutput.ReadToEnd() ?? string.Empty;
 
 		if (output.Contains("error"))
 		{
@@ -714,7 +714,7 @@ public sealed partial class SecurityPage : Page
 					PrimaryButtonText = "Yes",
 					DefaultButton = ContentDialogButton.Close,
 					CloseButtonText = "No",
-					XamlRoot = XamlRoot
+					XamlRoot = XamlRoot!
 				};
 
 				ContentDialogResult result = await dialog.ShowAsync();
@@ -785,10 +785,10 @@ public sealed partial class SecurityPage : Page
 	private void GetSpectreMeltdownState()
 	{
 		// check registry
-		string cpuVendor = (string)Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\CentralProcessor\0", "VendorIdentifier", null);
-		int? featureSettings = (int?)Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "FeatureSettings", null);
-		int? featureSettingsOverrideMask = (int?)Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "FeatureSettingsOverrideMask", null);
-		int? featureSettingsOverride = (int?)Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "FeatureSettingsOverride", null);
+		string cpuVendor = (string)Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\CentralProcessor\0", "VendorIdentifier", null!)!;
+		int? featureSettings = (int?)Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "FeatureSettings", null!);
+		int? featureSettingsOverrideMask = (int?)Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "FeatureSettingsOverrideMask", null!);
+		int? featureSettingsOverride = (int?)Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "FeatureSettingsOverride", null!);
 
 		if (cpuVendor.Contains("GenuineIntel"))
 		{
@@ -831,14 +831,14 @@ public sealed partial class SecurityPage : Page
 
 		if (SpectreMeltdown.IsOn)
 		{
-			string cpuVendor = (string)Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\CentralProcessor\0", "VendorIdentifier", null);
+			string cpuVendor = (string)Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\CentralProcessor\0", "VendorIdentifier", null!)!;
 
 			if (cpuVendor.Contains("GenuineIntel"))
 			{
 				// restore default values for enabling on intel
 				Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "FeatureSettings", 0, RegistryValueKind.DWord);
-				Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", writable: true).DeleteValue("FeatureSettingsOverrideMask", throwOnMissingValue: false);
-				Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", writable: true).DeleteValue("FeatureSettingsOverride", throwOnMissingValue: false);
+				Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", writable: true)?.DeleteValue("FeatureSettingsOverrideMask", throwOnMissingValue: false);
+				Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", writable: true)?.DeleteValue("FeatureSettingsOverride", throwOnMissingValue: false);
 			}
 			else if (cpuVendor.Contains("AuthenticAMD"))
 			{
@@ -901,7 +901,7 @@ public sealed partial class SecurityPage : Page
 	private void GetProcessMitigationsState()
 	{
 		// get state
-		if (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\kernel", "MitigationOptions", null) == null && Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\kernel", "MitigationAuditOptions", null) == null)
+		if (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\kernel", "MitigationOptions", null!) == null && Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\kernel", "MitigationAuditOptions", null!) == null)
 		{
 			ProcessMitigations.IsOn = true;
 			initialProcessMitigationsState = true;

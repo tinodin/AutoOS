@@ -37,7 +37,7 @@ public sealed partial class DiskCleanupPage : Page
 	{
 		var result = new ObservableCollection<DriveModel>();
 
-		foreach (DriveInfo? drive in DriveInfo.GetDrives().Where(d => d.IsReady))
+		foreach (DriveInfo drive in DriveInfo.GetDrives().Where(d => d.IsReady))
 		{
 			double totalGiB = drive.TotalSize / 1073741824d;
 			double freeGiB = drive.TotalFreeSpace / 1073741824d;
@@ -54,7 +54,7 @@ public sealed partial class DiskCleanupPage : Page
 			try
 			{
 				StorageFolder folder = await StorageFolder.GetFolderFromPathAsync(drive.Name);
-				using StorageItemThumbnail thumb = await folder.GetThumbnailAsync(ThumbnailMode.SingleItem, 32, ThumbnailOptions.UseCurrentScale);
+				using StorageItemThumbnail? thumb = await folder.GetThumbnailAsync(ThumbnailMode.SingleItem, 32, ThumbnailOptions.UseCurrentScale);
 				if (thumb != null)
 				{
 					var bmp = new BitmapImage();
@@ -72,7 +72,7 @@ public sealed partial class DiskCleanupPage : Page
 
 	private void UpdateDrives()
 	{
-		foreach (DriveInfo? drive in DriveInfo.GetDrives().Where(d => d.IsReady))
+		foreach (DriveInfo drive in DriveInfo.GetDrives().Where(d => d.IsReady))
 		{
 			DriveModel? model = drives.FirstOrDefault(d => d.Name == drive.Name.TrimEnd('\\'));
 			if (model == null) continue;
@@ -103,7 +103,7 @@ public sealed partial class DiskCleanupPage : Page
 			ProcessActions.CleanDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "SystemTemp"));
 			ProcessActions.CleanDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp"));
 			ProcessActions.CleanDirectory(Path.GetTempPath());
-			File.Delete(Path.Combine(Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System)), "DumpStack.log"));
+			File.Delete(Path.Combine(Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))!, "DumpStack.log"));
 		});
 
 		// run disk cleanup
@@ -128,10 +128,10 @@ public partial class DriveModel : INotifyPropertyChanged
 	private double total;
 	private double used;
 	private string free = "";
-	private ImageSource icon;
+	private ImageSource? icon;
 
-	public string Name { get; set; }
-	public string Label { get; set; }
+	public string Name { get; set; } = string.Empty;
+	public string Label { get; set; } = string.Empty;
 
 	public double Total
 	{
@@ -145,7 +145,7 @@ public partial class DriveModel : INotifyPropertyChanged
 		set { used = value; OnPropertyChanged(nameof(Used)); }
 	}
 
-	public ImageSource Icon
+	public ImageSource? Icon
 	{
 		get => icon;
 		set { icon = value; OnPropertyChanged(nameof(Icon)); }
@@ -157,7 +157,7 @@ public partial class DriveModel : INotifyPropertyChanged
 		set { free = value; OnPropertyChanged(nameof(Free)); }
 	}
 
-	public event PropertyChangedEventHandler PropertyChanged;
+	public event PropertyChangedEventHandler? PropertyChanged;
 	private void OnPropertyChanged(string propertyName) =>
 		PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 }

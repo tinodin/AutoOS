@@ -2,8 +2,8 @@ namespace AutoOS.App.Views.Settings.Scheduling;
 
 public sealed partial class SchedulingItemTemplateSelector : DataTemplateSelector
 {
-	public DataTemplate GroupTemplate { get; set; }
-	public DataTemplate ItemTemplate { get; set; }
+	public DataTemplate GroupTemplate { get; set; } = null!;
+	public DataTemplate ItemTemplate { get; set; } = null!;
 
 	protected override DataTemplate SelectTemplateCore(object item)
 	{

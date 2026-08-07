@@ -29,7 +29,7 @@ public static partial class GpuHelper
 	public unsafe static List<GpuInfo> GetGPUs()
 	{
 		var gpus = new List<GpuInfo>();
-		Dictionary<string, (string Vendor, Dictionary<string, string> Devices)> pciDb = null;
+		Dictionary<string, (string Vendor, Dictionary<string, string> Devices)> pciDb = null!;
 
 		Guid guid = new("4d36e968-e325-11ce-bfc1-08002be10318");
 		HDEVINFO hDevInfo = PInvoke.SetupDiGetClassDevs(&guid, null, HWND.Null, SETUP_DI_GET_CLASS_DEVS_FLAGS.DIGCF_PRESENT);
@@ -94,7 +94,7 @@ public static partial class GpuHelper
 					}
 					else if (vendorId == "1002")
 					{
-						currentVersion = (Microsoft.Win32.Registry.GetValue(registryPath, "RadeonSoftwareVersion", null) ?? Microsoft.Win32.Registry.GetValue(registryPath, "FireproSoftwareVersion", null))?.ToString();
+						currentVersion = (Microsoft.Win32.Registry.GetValue(registryPath, "RadeonSoftwareVersion", null) ?? Microsoft.Win32.Registry.GetValue(registryPath, "FireproSoftwareVersion", null))?.ToString() ?? string.Empty;
 					}
 					else if (vendorId == "8086")
 					{
@@ -102,8 +102,9 @@ public static partial class GpuHelper
 
 						if (pciDb.TryGetValue(vendorId, out (string Vendor, Dictionary<string, string> Devices) vendor) && vendor.Devices.TryGetValue(deviceId, out string? name))
 						{
-							string[]? versionParts = currentVersion?.Split('.');
-							currentVersion = versionParts?.Length >= 4 ? versionParts[2] + "." + versionParts[3] : currentVersion;
+string[] versionParts = currentVersion.Split('.');
+						if (versionParts.Length >= 4)
+							currentVersion = versionParts[2] + "." + versionParts[3];
 							codename = name.Split('[')[0].Trim();
 						}
 					}
@@ -200,7 +201,7 @@ public static partial class GpuHelper
 		}
 
 		var db = new Dictionary<string, (string Vendor, Dictionary<string, string> Devices)>(StringComparer.OrdinalIgnoreCase);
-		string currentVendor = null;
+		string currentVendor = null!;
 
 		foreach (string line in File.ReadLines(pciPath))
 		{
@@ -280,7 +281,7 @@ public static partial class GpuHelper
 		);
 
 		if (requiredSize == 0)
-			return null;
+			return string.Empty;
 
 		byte* buffer = stackalloc byte[(int)requiredSize];
 
@@ -293,7 +294,7 @@ public static partial class GpuHelper
 				requiredSize,
 				null,
 				0))
-			return null;
+			return string.Empty;
 
 		return new string((char*)buffer);
 	}
@@ -334,7 +335,7 @@ public static partial class GpuHelper
 		string driverKey = new((char*)buffer);
 
 		if (string.IsNullOrEmpty(driverKey))
-			return null;
+			return string.Empty;
 
 		return $@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\{driverKey}";
 	}

@@ -27,13 +27,13 @@ public static class StartupStage
 		}
 
 		bool MSI = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "MSI Afterburner", "MSIAfterburner.exe")) && Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "MSI Afterburner", "Profiles")) && Directory.GetFiles(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "MSI Afterburner", "Profiles")).Any(f => !f.EndsWith("MSIAfterburner.cfg", StringComparison.OrdinalIgnoreCase));
-		bool SOUND = JsonNode.Parse(localSettings.Values["Sound"]?.ToString() ?? "[]")?.AsArray()?.Any(x => x?["BufferSize"]?.GetValue<float>() < 10f) == true;
+		bool SOUND = JsonNode.Parse(localSettings.Values["Sound"]?.ToString() ?? "[]")?.AsArray()?.Any(x => (x?["BufferSize"]?.GetValue<float>() ?? 0f) < 10f) == true;
 		bool IMOD = JsonNode.Parse(localSettings.Values["XHCIs"]?.ToString() ?? "[]")?.AsArray()?.Any(x => x?["IsActive"]?.GetValue<bool>() == false) == true;
 		bool OBS = localSettings.Values["OBS"]?.ToString() == "1" && File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "obs-studio", "bin", "64bit", "obs64.exe"));
 
 		string previousTitle = string.Empty;
 
-		var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
+		var actions = new List<(string Title, Func<Task> Action, Func<bool>? Condition)>
 		{
 			// sync time
 			("Syncing time", async () => ServicesHelper.SetStartupType("W32Time", SERVICE_START_TYPE.SERVICE_DEMAND_START), null),
@@ -82,7 +82,7 @@ public static class StartupStage
 
 		int executedGroupsCount = 0;
 
-		foreach ((string? title, Func<Task>? action, Func<bool>? condition) in filteredActions)
+		foreach ((string? title, Func<Task> action, Func<bool>? condition) in filteredActions)
 		{
 			if (previousTitle != string.Empty && previousTitle != title && currentGroup.Count > 0)
 			{

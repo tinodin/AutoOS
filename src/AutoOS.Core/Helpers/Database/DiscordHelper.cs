@@ -10,11 +10,11 @@ public static partial class DiscordHelper
 {
 	public class DiscordAccountInfo
 	{
-		public string UserId { get; set; }
-		public string Username { get; set; }
-		public string Avatar { get; set; }
+		public string? UserId { get; set; }
+		public string? Username { get; set; }
+		public string? Avatar { get; set; }
 		public bool IsActive { get; set; }
-		public string Origin { get; set; }
+		public string? Origin { get; set; }
 		public bool IsMember { get; set; }
 	}
 
@@ -54,7 +54,7 @@ public static partial class DiscordHelper
 		return chromium.Concat(firefox);
 	}
 
-	public static async Task ImportAccount(IStatusReporter reporter = null)
+	public static async Task ImportAccount(IStatusReporter? reporter = null)
 	{
 		// get all leveldb folders from other drives
 		//var systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));
@@ -153,16 +153,16 @@ public static partial class DiscordHelper
 			.OrderByDescending(pathEntry => pathEntry.LastWriteTime)
 			.ToList();
 
-		string foundDatabasePath = null;
-		string foundBrowser = null;
-		string foundToken = null;
+		string? foundDatabasePath = null;
+		string? foundBrowser = null;
+		string? foundToken = null;
 
 		foreach ((string Path, string Browser, DateTime LastWriteTime) databasePath in foundDatabasePaths)
 		{
 			try
 			{
-				JsonNode tokenNode = DatabaseHelper.Read(databasePath.Path, "_https://discord.com", "token");
-				string token = tokenNode?.ToString();
+JsonNode? tokenNode = DatabaseHelper.Read(databasePath.Path, "_https://discord.com", "token");
+			string? token = tokenNode?.ToString();
 
 				if (!string.IsNullOrEmpty(token))
 				{
@@ -182,13 +182,13 @@ public static partial class DiscordHelper
 		{
 			DatabaseHelper.Write(LevelDbPath, "_https://discord.com", "token", foundToken);
 
-			List<DiscordAccountInfo> accounts = GetAccountData(foundDatabasePath);
+			List<DiscordAccountInfo>? accounts = GetAccountData(foundDatabasePath!);
 			if (accounts != null && accounts.Count > 0)
 			{
 				var accountNames = accounts.Select(account => account.Username).ToList();
 				string accountsString = accountNames.Count switch
 				{
-					1 => accountNames[0],
+1 => accountNames[0] ?? "",
 					2 => $"{accountNames[0]} and {accountNames[1]}",
 					_ => $"{string.Join(", ", accountNames.Take(accountNames.Count - 1))}, and {accountNames.Last()}"
 				};
@@ -199,7 +199,7 @@ public static partial class DiscordHelper
 		}
 	}
 
-	public static async Task ImportKeybinds(IStatusReporter reporter = null)
+	public static async Task ImportKeybinds(IStatusReporter? reporter = null)
 	{
 		string? systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));
 		var foundFolders = DriveInfo.GetDrives()
@@ -217,15 +217,15 @@ public static partial class DiscordHelper
 			.OrderByDescending(folder => folder.LastWriteTime)
 			.ToList();
 
-		DirectoryInfo newestFolder = null;
-		string foundKeybinds = null;
+		DirectoryInfo? newestFolder = null;
+		string? foundKeybinds = null;
 
 		foreach (DirectoryInfo? folder in foundFolders)
 		{
 			try
 			{
-				JsonNode keybindsNode = DatabaseHelper.Read(folder.FullName, "_https://discord.com", "keybinds");
-				string keybinds = keybindsNode?.ToString();
+JsonNode? keybindsNode = DatabaseHelper.Read(folder.FullName, "_https://discord.com", "keybinds");
+			string? keybinds = keybindsNode?.ToString();
 
 				if (!string.IsNullOrEmpty(keybinds))
 				{
@@ -262,23 +262,23 @@ public static partial class DiscordHelper
 		}
 	}
 
-	public static List<DiscordAccountInfo> GetAccountData(string levelDbPath, string origin = null)
+	public static List<DiscordAccountInfo>? GetAccountData(string levelDbPath, string? origin = null)
 	{
-		JsonNode multiAccountStore = DatabaseHelper.Read(levelDbPath, "_https://discord.com", "MultiAccountStore");
-		JsonNode userIdCache = DatabaseHelper.Read(levelDbPath, "_https://discord.com", "user_id_cache");
+		JsonNode? multiAccountStore = DatabaseHelper.Read(levelDbPath, "_https://discord.com", "MultiAccountStore");
+		JsonNode? userIdCache = DatabaseHelper.Read(levelDbPath, "_https://discord.com", "user_id_cache");
 
 		if (multiAccountStore != null)
 		{
 			var accounts = new List<DiscordAccountInfo>();
-			JsonNode users = multiAccountStore["_state"]?["users"];
-			JsonNode apexExperimentStore = DatabaseHelper.Read(levelDbPath, "_https://discord.com", "ApexExperimentStore");
+			JsonNode? users = multiAccountStore["_state"]?["users"];
+			JsonNode? apexExperimentStore = DatabaseHelper.Read(levelDbPath, "_https://discord.com", "ApexExperimentStore");
 			bool isMember = apexExperimentStore != null && apexExperimentStore.ToJsonString().Contains("1148987246746279977", StringComparison.Ordinal);
 
 			if (users != null && users is JsonArray usersArray)
 			{
-				foreach (JsonNode user in usersArray)
+				foreach (JsonNode? user in usersArray)
 				{
-					string id = user?["id"]?.ToString();
+					string? id = user?["id"]?.ToString();
 					bool isActive = id == userIdCache?.ToString();
 
 					accounts.Add(new DiscordAccountInfo
@@ -303,12 +303,12 @@ public static partial class DiscordHelper
 	{
 		var accounts = new List<DiscordAccountInfo>();
 
-		List<DiscordAccountInfo> localDiscordAccounts = GetAccountData(LevelDbPath, "Discord");
+		List<DiscordAccountInfo>? localDiscordAccounts = GetAccountData(LevelDbPath, "Discord");
 		if (localDiscordAccounts != null)
 			accounts.AddRange(localDiscordAccounts);
 
 		string? systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));
-		string usersPath = Path.Combine(systemDrive, "Users");
+		string usersPath = Path.Combine(systemDrive ?? "", "Users");
 		if (Directory.Exists(usersPath))
 		{
 			IOrderedEnumerable<(string Path, string Browser, DateTime LastWriteTime)> localDbs = Directory.GetDirectories(usersPath)
@@ -317,7 +317,7 @@ public static partial class DiscordHelper
 
 			foreach ((string Path, string Browser, DateTime LastWriteTime) databasePath in localDbs)
 			{
-				List<DiscordAccountInfo> browserAccounts = GetAccountData(databasePath.Path, databasePath.Browser);
+				List<DiscordAccountInfo>? browserAccounts = GetAccountData(databasePath.Path, databasePath.Browser);
 				if (browserAccounts != null)
 					accounts.AddRange(browserAccounts);
 			}
@@ -346,7 +346,7 @@ public static partial class DiscordHelper
 
 			foreach (DirectoryInfo? folder in discordPaths)
 			{
-				List<DiscordAccountInfo> discordAccounts = GetAccountData(folder.FullName, $"Discord ({driveLabel})");
+				List<DiscordAccountInfo>? discordAccounts = GetAccountData(folder.FullName, $"Discord ({driveLabel})");
 				if (discordAccounts != null)
 					accounts.AddRange(discordAccounts);
 			}
@@ -357,7 +357,7 @@ public static partial class DiscordHelper
 
 			foreach ((string Path, string Browser, DateTime LastWriteTime) databasePath in otherDbs)
 			{
-				List<DiscordAccountInfo> browserAccounts = GetAccountData(databasePath.Path, $"{databasePath.Browser} ({driveLabel})");
+				List<DiscordAccountInfo>? browserAccounts = GetAccountData(databasePath.Path, $"{databasePath.Browser} ({driveLabel})");
 				if (browserAccounts != null)
 					accounts.AddRange(browserAccounts);
 			}
@@ -413,7 +413,7 @@ public static partial class DiscordHelper
 	public static async Task DisableClips(string databasePath)
 	{
 		await KillDiscord();
-		JsonNode ClipsStore = DatabaseHelper.Read(databasePath, "https://discordapp.com", "ClipsStore");
+		JsonNode? ClipsStore = DatabaseHelper.Read(databasePath, "https://discordapp.com", "ClipsStore");
 
 		if (ClipsStore != null)
 		{

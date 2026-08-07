@@ -6,9 +6,9 @@ namespace AutoOS.App.Data.Models.Bios;
 public class Recommendation
 {
 	public string SetupQuestion { get; set; } = string.Empty;
-	public string Type { get; set; }
+	public string Type { get; set; } = string.Empty;
 	public string RecommendedOption { get; set; } = string.Empty;
-	public Func<IEnumerable<BiosSettingsModel>, bool> Condition { get; set; } = null;
+	public Func<IEnumerable<BiosSettingsModel>, bool> Condition { get; set; } = null!;
 }
 
 public static class Recommendations
@@ -76,7 +76,7 @@ public static class Recommendations
 		new Recommendation { SetupQuestion = "ASUS MultiCore Enhancement", Type = "Option", RecommendedOption = "Enabled  Remove All limits" },
 		new Recommendation { SetupQuestion = "ASUS MultiCore Enhancement", Type = "Option", RecommendedOption = "Enabled - Remove All limits" },
 		new Recommendation { SetupQuestion = "AVX2", Type = "Option", RecommendedOption = "Enabled" },
-		new Recommendation { SetupQuestion = "Above 4GB MMIO BIOS assignment", Type = "Option", RecommendedOption = "Enabled", Condition = (settings) => settings.Any(s => s.SetupQuestion.Contains("BAR Support", StringComparison.OrdinalIgnoreCase)) },
+		new Recommendation { SetupQuestion = "Above 4GB MMIO BIOS assignment", Type = "Option", RecommendedOption = "Enabled", Condition = (settings) => settings.Any(s => s.SetupQuestion?.Contains("BAR Support", StringComparison.OrdinalIgnoreCase) == true) },
 		new Recommendation { SetupQuestion = "Active Policy", Type = "Option", RecommendedOption = "Disabled" },
 		new Recommendation { SetupQuestion = "AddOn ROM Display", Type = "Option", RecommendedOption = "Disabled" },
 		new Recommendation { SetupQuestion = "Adjacent Cache Line Prefetch", Type = "Option", RecommendedOption = "Enabled" },

@@ -6,14 +6,14 @@ namespace AutoOS.App.Common;
 
 public class InstallPageReporter : IStatusReporter
 {
-	private readonly SynchronizationContext _uiContext;
+	private readonly SynchronizationContext? _uiContext;
 
 	public InstallPageReporter()
 	{
 		_uiContext = SynchronizationContext.Current;
 	}
 
-	public void Report(string message = null, double? progress = null, bool? isIndeterminate = null)
+	public void Report(string? message = null, double? progress = null, bool? isIndeterminate = null)
 	{
 		_uiContext?.Post(_ =>
 		{
@@ -44,10 +44,10 @@ public class InstallPageReporter : IStatusReporter
 
 public class ProgressButtonReporter(ProgressButton progressButton) : IStatusReporter
 {
-	private readonly SynchronizationContext _uiContext = SynchronizationContext.Current;
+	private readonly SynchronizationContext? _uiContext = SynchronizationContext.Current;
 	private readonly ProgressButton _progressButton = progressButton;
 
-	public void Report(string message = null, double? progress = null, bool? isIndeterminate = null)
+	public void Report(string? message = null, double? progress = null, bool? isIndeterminate = null)
 	{
 		_uiContext?.Post(_ =>
 		{
@@ -64,10 +64,10 @@ public class ProgressButtonReporter(ProgressButton progressButton) : IStatusRepo
 
 public class UpdateDialogReporter(UpdateDialog updateDialog) : IStatusReporter
 {
-	private readonly SynchronizationContext _uiContext = SynchronizationContext.Current;
+	private readonly SynchronizationContext? _uiContext = SynchronizationContext.Current;
 	private readonly UpdateDialog _updateDialog = updateDialog;
 
-	public void Report(string message = null, double? progress = null, bool? isIndeterminate = null)
+	public void Report(string? message = null, double? progress = null, bool? isIndeterminate = null)
 	{
 		_uiContext?.Post(_ =>
 		{

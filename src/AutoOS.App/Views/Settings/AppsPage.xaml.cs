@@ -56,14 +56,14 @@ public sealed partial class AppsPage : Page
 			new() { Text = "Thunderbird", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/Thunderbird.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Mozilla Thunderbird", "thunderbird.exe")) },
 			new() { Text = "Signal", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/Signal.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "signal-desktop", "Signal.exe")) }
 		};
-		foreach (GridViewItem? item in messagingList.Where(item => !item.IsInstalled))
+		foreach (GridViewItem item in messagingList.Where(item => !item.IsInstalled))
 			messagingItems.Add(item);
 
 		var launchersList = new List<GridViewItem>
 		{
 			new() { Text = "Epic Games", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/Epicgames.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Epic Games", "Launcher", "Portal", "Binaries", "Win64", "EpicGamesLauncher.exe")) },
 			new() { Text = "Steam", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/Steam.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Steam", "steam.exe")) },
-			new() { Text = "Riot Client", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/RiotClient.png", IsInstalled = File.Exists(Path.Combine(Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System)), "Riot Games", "Riot Client", "RiotClientServices.exe")) },
+			new() { Text = "Riot Client", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/RiotClient.png", IsInstalled = File.Exists(Path.Combine(Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))!, "Riot Games", "Riot Client", "RiotClientServices.exe")) },
 			new() { Text = "Ubisoft Connect", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/UbisoftConnect.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Ubisoft", "Ubisoft Game Launcher", "UbisoftConnect.exe")) },
 			new() { Text = "EA", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/EA.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Electronic Arts", "EA Desktop", "EA Desktop", "EADesktop.exe")) },
 			new() { Text = "Battle.Net", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/BattleNet.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Battle.net", "Battle.net.exe")) },
@@ -81,7 +81,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "FACEIT AC", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/FACEITAC.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "FACEIT AC", "faceitclient.exe")) },
 			new() { Text = "Eden", ImageSource = "ms-appx:///Assets/FluentIcons/Pages/Settings/Eden.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Eden", "eden.exe")) }
 		};
-		foreach (GridViewItem? item in launchersList.Where(item => !item.IsInstalled))
+		foreach (GridViewItem item in launchersList.Where(item => !item.IsInstalled))
 			launchersItems.Add(item);
 
 		var musicList = new List<GridViewItem>
@@ -94,7 +94,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "Spotify", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Music/Spotify.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Spotify", "Spotify.exe")) },
 			new() { Text = "MusicBee", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Music/MusicBee.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "50072StevenMayall.MusicBee_kcr266et74avj")) }
 		};
-		foreach (GridViewItem? item in musicList.Where(item => !item.IsInstalled))
+		foreach (GridViewItem item in musicList.Where(item => !item.IsInstalled))
 			musicItems.Add(item);
 
 		var peripheralsList = new List<GridViewItem>
@@ -113,7 +113,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "FanControl", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/FanControl.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "FanControl", "FanControl.exe")) },
 			new() { Text = "GHelper", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/GHelper.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "GHelper", "GHelper.exe")) }
 		};
-		foreach (GridViewItem? item in peripheralsList.Where(item => !item.IsInstalled))
+		foreach (GridViewItem item in peripheralsList.Where(item => !item.IsInstalled))
 			peripheralsItems.Add(item);
 
 		var controllersList = new List<GridViewItem>
@@ -125,7 +125,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "PlayStation® Accessories", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Controllers/PlaystationAccessories.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Sony", "PlayStationAccessories", "PlayStationAccessories.exe")) },
 			new() { Text = "Xbox Accessories", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Controllers/XboxAccessories.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "Microsoft.XboxDevices_8wekyb3d8bbwe")) },
 		};
-		foreach (GridViewItem? item in controllersList.Where(item => !item.IsInstalled))
+		foreach (GridViewItem item in controllersList.Where(item => !item.IsInstalled))
 			controllersItems.Add(item);
 
 		var devList = new List<GridViewItem>
@@ -149,7 +149,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "Go", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Go.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Go", "bin", "go.exe")) },
 			new() { Text = "Trello", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Trello.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "45273LiamForsyth.PawsforTrello_7pb5ddty8z1pa")) }
 		};
-		foreach (GridViewItem? item in devList.Where(item => !item.IsInstalled))
+		foreach (GridViewItem item in devList.Where(item => !item.IsInstalled))
 			developmentItems.Add(item);
 
 		var sysinternalsList = new List<GridViewItem>
@@ -158,7 +158,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "Process Explorer", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Sysinternals/ProcessExplorer.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Process Explorer", "procexp64.exe")) },
 			new() { Text = "Process Monitor", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Sysinternals/ProcessMonitor.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Process Monitor", "Procmon64.exe")) }
 		};
-		foreach (GridViewItem? item in sysinternalsList.Where(item => !item.IsInstalled))
+		foreach (GridViewItem item in sysinternalsList.Where(item => !item.IsInstalled))
 			sysinternalsItems.Add(item);
 
 		var overclockingList = new List<GridViewItem>
@@ -174,7 +174,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "AIDA64 Extreme", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Overclocking/Aida64Extreme.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "FinalWire", "AIDA64 Extreme", "aida64.exe")) },
 			new() { Text = "Memtest Vulkan", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Overclocking/Default.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Memtest Vulkan", "memtest_vulkan.exe")) }
 		};
-		foreach (GridViewItem? item in overclockingList.Where(item => !item.IsInstalled))
+		foreach (GridViewItem item in overclockingList.Where(item => !item.IsInstalled))
 			overclockingItems.Add(item);
 
 		var musicProductionList = new List<GridViewItem>
@@ -187,7 +187,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "Arturia MIDI Control Center", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Music Production/ArturiaMidiControlCenter.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Arturia", "MIDI Control Center", "MIDI Control Center.exe")) },
 			new() { Text = "Voicemeeter", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Music Production/Voicemeeter.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "VB", "Voicemeeter", "voicemeeter.exe")) }
 		};
-		foreach (GridViewItem? item in musicProductionList.Where(item => !item.IsInstalled))
+		foreach (GridViewItem item in musicProductionList.Where(item => !item.IsInstalled))
 			musicProductionItems.Add(item);
 
 		var videoProductionList = new List<GridViewItem>
@@ -197,7 +197,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "CapCut", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Video Production/CapCut.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapCut", "Apps", "CapCut.exe")) },
 			new() { Text = "LosslessCut", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Video Production/LosslessCut.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "LosslessCut", "LosslessCut.exe")) }
 		};
-		foreach (GridViewItem? item in videoProductionList.Where(item => !item.IsInstalled))
+		foreach (GridViewItem item in videoProductionList.Where(item => !item.IsInstalled))
 			videoProductionItems.Add(item);
 
 		var multimediaList = new List<GridViewItem>
@@ -210,7 +210,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "VLC", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Multimedia/VLC.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "VideoLAN", "VLC", "vlc.exe")) },
 			new() { Text = "MediaInfo", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Multimedia/MediaInfo.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "MediaInfo", "MediaInfo.exe")) || Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "MediaArea.net.MediaInfo_9bzbd7xajy7ar")) }
 		};
-		foreach (GridViewItem? item in multimediaList.Where(item => !item.IsInstalled))
+		foreach (GridViewItem item in multimediaList.Where(item => !item.IsInstalled))
 			multimediaItems.Add(item);
 
 		var officeList = new List<GridViewItem>
@@ -223,7 +223,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "Outlook", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Office/Outlook.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Microsoft Office", "root", "Office16", "OUTLOOK.EXE")) },
 			new() { Text = "OneDrive", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Office/OneDrive.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "OneDrive", "OneDrive.exe")) }
 		};
-		foreach (GridViewItem? item in officeList.Where(item => !item.IsInstalled))
+		foreach (GridViewItem item in officeList.Where(item => !item.IsInstalled))
 			officeItems.Add(item);
 
 		var miscellaneousList = new List<GridViewItem>
@@ -248,7 +248,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "Deluge", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/Deluge.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Deluge", "Deluge.exe")) },
 			new() { Text = "Free Download Manager", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/FreeDownloadManager.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Softdeluxe", "Free Download Manager", "fdm.exe")) }
 		};
-		foreach (GridViewItem? item in miscellaneousList.Where(item => !item.IsInstalled))
+		foreach (GridViewItem item in miscellaneousList.Where(item => !item.IsInstalled))
 			miscellaneousItems.Add(item);
 	}
 
@@ -438,7 +438,7 @@ public sealed partial class AppsPage : Page
 
 		var updateDialog = new UpdateDialog();
 		var reporter = new UpdateDialogReporter(updateDialog);
-		List<(string Title, Func<Task> Action, Func<bool> Condition)> actions = AppsStage.GetActions(reporter, selection);
+		List<(string Title, Func<Task> Action, Func<bool>? Condition)> actions = AppsStage.GetActions(reporter, selection);
 
 		if (actions.Count > 0)
 		{
@@ -463,46 +463,46 @@ public sealed partial class AppsPage : Page
 			await Task.Delay(1000);
 			updater.Hide();
 
-			foreach (GridViewItem? item in selectedMessagingItems)
+			foreach (GridViewItem item in selectedMessagingItems)
 				messagingItems.Remove(item);
 
-			foreach (GridViewItem? item in selectedLaunchersItems)
+			foreach (GridViewItem item in selectedLaunchersItems)
 				launchersItems.Remove(item);
 
-			foreach (GridViewItem? item in selectedMusicItems)
+			foreach (GridViewItem item in selectedMusicItems)
 				musicItems.Remove(item);
 
-			foreach (GridViewItem? item in selectedPeripheralsItems)
+			foreach (GridViewItem item in selectedPeripheralsItems)
 				peripheralsItems.Remove(item);
 
-			foreach (GridViewItem? item in selectedControllersItems)
+			foreach (GridViewItem item in selectedControllersItems)
 				controllersItems.Remove(item);
 
-			foreach (GridViewItem? item in selectedDevItems)
+			foreach (GridViewItem item in selectedDevItems)
 				developmentItems.Remove(item);
 
-			foreach (GridViewItem? item in selectedSysinternalsItems)
+			foreach (GridViewItem item in selectedSysinternalsItems)
 				sysinternalsItems.Remove(item);
 
-			foreach (GridViewItem? item in selectedOverclockingItems)
+			foreach (GridViewItem item in selectedOverclockingItems)
 				overclockingItems.Remove(item);
 
-			foreach (GridViewItem? item in selectedMusicProductionItems)
+			foreach (GridViewItem item in selectedMusicProductionItems)
 				musicProductionItems.Remove(item);
 
-			foreach (GridViewItem? item in selectedVideoProductionItems)
+			foreach (GridViewItem item in selectedVideoProductionItems)
 				videoProductionItems.Remove(item);
 
-			foreach (GridViewItem? item in selectedMultimediaItems)
+			foreach (GridViewItem item in selectedMultimediaItems)
 				multimediaItems.Remove(item);
 
-			foreach (GridViewItem? item in selectedOfficeItems)
+			foreach (GridViewItem item in selectedOfficeItems)
 				officeItems.Remove(item);
 
-			foreach (GridViewItem? item in selectedMiscellaneousItems)
+			foreach (GridViewItem item in selectedMiscellaneousItems)
 				miscellaneousItems.Remove(item);
 
-			GridView_SelectionChanged(null, null);
+			GridView_SelectionChanged(null!, null!);
 		}
 	}
 }
@@ -510,7 +510,7 @@ public sealed partial class AppsPage : Page
 [GeneratedBindableCustomProperty]
 public partial class GridViewItem
 {
-	public string Text { get; set; }
-	public string ImageSource { get; set; }
+	public string Text { get; set; } = string.Empty;
+	public string ImageSource { get; set; } = string.Empty;
 	public bool IsInstalled { get; set; }
 }

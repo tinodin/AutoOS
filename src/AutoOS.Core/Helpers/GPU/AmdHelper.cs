@@ -14,11 +14,11 @@ public static partial class AmdHelper
 {
 	private static readonly HttpClient httpClient = new();
 
-	public static async Task<(string newestVersion, string newestDownloadUrl)> CheckUpdate(GpuInfo gpu)
+	public static async Task<(string? newestVersion, string? newestDownloadUrl)> CheckUpdate(GpuInfo gpu)
 	{
 		string deviceId = gpu.DeviceId;
-		string newestVersion = null;
-		string newestDownloadUrl = null;
+		string? newestVersion = null;
+		string? newestDownloadUrl = null;
 
 		string[] endpoints = new[]
 		{
@@ -44,12 +44,12 @@ public static partial class AmdHelper
 			string json = responses[i];
 			string currentEndpoint = endpoints[i];
 
-			JsonArray builds = JsonNode.Parse(json).AsArray();
+			JsonArray? builds = JsonNode.Parse(json)?.AsArray();
 			if (builds == null) continue;
 
 			foreach (JsonNode? buildNode in builds)
 			{
-				JsonObject build = buildNode.AsObject();
+				JsonObject? build = buildNode?.AsObject();
 				if (build == null) continue;
 
 				if (!build.TryGetPropertyValue("skus", out JsonNode? skusNode) || skusNode is not JsonArray skusArray)
@@ -60,7 +60,8 @@ public static partial class AmdHelper
 					if (sku?.ToString().Contains(deviceId, StringComparison.InvariantCultureIgnoreCase) != true)
 						continue;
 
-					newestVersion = string.Join(".", build["externalbuildversion"].ToString().Split('.').Take(3));
+					if (build["externalbuildversion"] is JsonNode externalVersionNode)
+					newestVersion = string.Join(".", externalVersionNode.ToString().Split('.').Take(3));
 
 					if (currentEndpoint.EndsWith("DrvDldDetails_Consumer_WHQL_Win7.json", StringComparison.OrdinalIgnoreCase))
 					{
@@ -83,9 +84,9 @@ public static partial class AmdHelper
 		return (newestVersion, newestDownloadUrl);
 	}
 
-	public static List<(string Title, Func<Task> Action, Func<bool> Condition)> InstallActions(GpuInfo gpu, string newestVersion, string newestDownloadUrl, IStatusReporter reporter = null)
+	public static List<(string Title, Func<Task> Action, Func<bool>? Condition)> InstallActions(GpuInfo gpu, string newestVersion, string newestDownloadUrl, IStatusReporter? reporter = null)
 	{
-		var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
+		var actions = new List<(string Title, Func<Task> Action, Func<bool>? Condition)>
 		{
 			// download amd driver
 			($@"Downloading AMD driver {newestVersion}", async () => await DownloadHelper.Download(newestDownloadUrl, Path.Combine(Path.GetTempPath(), "AMD"), "driver.exe", reporter), null),
@@ -107,9 +108,9 @@ public static partial class AmdHelper
 		return actions;
 	}
 
-	public static List<(string Title, Func<Task> Action, Func<bool> Condition)> TweakActions(GpuInfo gpu)
+	public static List<(string Title, Func<Task> Action, Func<bool>? Condition)> TweakActions(GpuInfo gpu)
 	{
-		var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
+		var actions = new List<(string Title, Func<Task> Action, Func<bool>? Condition)>
 		{
 			// skip setup wizard
 			("Skipping Setup Wizard", async () => await Process.Start(new ProcessStartInfo { FileName = "reg.exe", Arguments = $@"load HKU\DefaultUser ""{Path.Combine(Path.GetPathRoot(Environment.SystemDirectory)!, "Users", "Default", "NTUSER.DAT")}""", CreateNoWindow = true })!.WaitForExitAsync(), null),

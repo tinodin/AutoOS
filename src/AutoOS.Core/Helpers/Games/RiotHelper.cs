@@ -15,7 +15,7 @@ public static partial class RiotHelper
 	public static readonly string RiotGamesConfigPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Riot Games\Riot Client\Config";
 	public static readonly string RiotGamesMetadataPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData) + @"\Riot Games\Metadata";
 
-	public static async Task ImportAccount(IStatusReporter reporter = null)
+	public static async Task ImportAccount(IStatusReporter? reporter = null)
 	{
 		string? systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));
 		var foundFolders = DriveInfo.GetDrives()
@@ -91,7 +91,7 @@ public static partial class RiotHelper
 		}
 	}
 
-	public static async Task ImportGames(IStatusReporter reporter = null)
+	public static async Task ImportGames(IStatusReporter? reporter = null)
 	{
 		// get all metadata folders from other drives
 		string? systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));
@@ -143,7 +143,7 @@ public static partial class RiotHelper
 			string originalDrive = Path.GetPathRoot(originalPath) ?? "";
 			string relativePath = originalPath[originalDrive.Length..];
 
-			string newPath = null;
+			string? newPath = null;
 
 			// check other drives for the path
 			foreach (DriveInfo? drive in DriveInfo.GetDrives().Where(d => d.DriveType == DriveType.Fixed && d.Name != systemDrive))

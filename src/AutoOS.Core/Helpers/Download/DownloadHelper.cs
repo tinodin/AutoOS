@@ -21,12 +21,12 @@ public static partial class DownloadHelper
 		}
 	};
 
-	public static async Task Download(string url, string path, string file = null, IStatusReporter reporter = null)
+	public static async Task Download(string url, string path, string? file = null, IStatusReporter? reporter = null)
 	{
 		await Download([url], path, file != null ? new[] { file } : null, reporter);
 	}
 
-	public static async Task Download(IEnumerable<string> urls, string path, IEnumerable<string> files = null, IStatusReporter reporter = null)
+	public static async Task Download(IEnumerable<string> urls, string path, IEnumerable<string>? files = null, IStatusReporter? reporter = null)
 	{
 		Directory.CreateDirectory(path);
 		var urlList = urls.ToList();
@@ -56,7 +56,7 @@ public static partial class DownloadHelper
 		for (int i = 0; i < urlList.Count; i++)
 		{
 			string url = urlList[i];
-			string file = fileList.Count > i ? fileList[i] : null;
+			string? file = fileList.Count > i ? fileList[i] : null;
 			string fileName = string.IsNullOrWhiteSpace(file) ? Path.GetFileName(url) : file;
 			string destination = Path.Combine(path, fileName);
 
@@ -123,7 +123,7 @@ public static partial class DownloadHelper
 			IDownload download = downloadBuilder.Build();
 			long fileBytesDownloaded = 0;
 			long fileTotalBytes = 0;
-			Exception downloaderError = null;
+			Exception? downloaderError = null;
 			DateTime downloaderStartTime = DateTime.Now;
 
 			if (urlList.Count == 1)
@@ -188,7 +188,7 @@ public static partial class DownloadHelper
 
 			if (urlList.Count == 1)
 			{
-				string singleFileName = download.Package?.FileName ?? (!string.IsNullOrEmpty(file) ? Path.Combine(path, file) : null);
+				string? singleFileName = download.Package?.FileName ?? (!string.IsNullOrEmpty(file) ? Path.Combine(path, file) : null);
 				if (!File.Exists(singleFileName))
 				{
 					var errorDetails = new StringBuilder();
@@ -221,7 +221,7 @@ public static partial class DownloadHelper
 					errorDetails.AppendLine(statusCode.HasValue ? $"HTTP Status Code: {(int)statusCode.Value} ({statusCode.Value})" : "HTTP status unknown");
 					errorDetails.AppendLine($"Content-Length: {contentLength}, Accept-Ranges: {acceptRanges}, Content-Range: {contentRange}");
 
-					Exception fallbackError = null;
+					Exception? fallbackError = null;
 					DateTime httpClientStartTime = DateTime.Now;
 					DateTime httpClientEndTime = DateTime.Now;
 					if (statusCode.HasValue && (int)statusCode.Value >= 200 && (int)statusCode.Value <= 299)
@@ -243,7 +243,7 @@ public static partial class DownloadHelper
 
 								Directory.CreateDirectory(Path.GetDirectoryName(singleFileName)!);
 								using Stream contentStream = await response.Content.ReadAsStreamAsync();
-								using var fileStream = new FileStream(singleFileName, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
+								using var fileStream = new FileStream(singleFileName!, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
 
 								totalBytes = response.Content.Headers.ContentLength ?? -1L;
 								double clientTotalSizeMB = totalBytes / (1024.0 * 1024.0);

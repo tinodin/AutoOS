@@ -61,11 +61,11 @@ public sealed partial class GraphicsPage : Page
 
 		List<GpuInfo> savedGpus = [];
 
-		if (localSettings.Values.TryGetValue("GPUs", out object savedObj))
+		if (localSettings.Values.TryGetValue("GPUs", out object? savedObj))
 		{
 			try
 			{
-				JsonArray? array = JsonNode.Parse(savedObj.ToString())?.AsArray();
+				JsonArray? array = JsonNode.Parse(savedObj!.ToString()!)?.AsArray();
 				if (array != null)
 				{
 					foreach (JsonNode? node in array)
@@ -75,21 +75,21 @@ public sealed partial class GraphicsPage : Page
 
 						savedGpus.Add(new GpuInfo
 						{
-							DeviceName = obj["Name"]?.ToString(),
-							PnPDeviceId = obj["PnPDeviceId"]?.ToString(),
-							VendorId = obj["VendorId"]?.ToString(),
-							DeviceId = obj["DeviceId"]?.ToString(),
-							Codename = obj["Codename"]?.ToString(),
+							DeviceName = obj["Name"]?.ToString() ?? string.Empty,
+							PnPDeviceId = obj["PnPDeviceId"]?.ToString() ?? string.Empty,
+							VendorId = obj["VendorId"]?.ToString() ?? string.Empty,
+							DeviceId = obj["DeviceId"]?.ToString() ?? string.Empty,
+							Codename = obj["Codename"]?.ToString() ?? string.Empty,
 							Install = obj["Install"]?.GetValue<bool>() ?? false,
 							IsInstalled = obj["IsInstalled"]?.GetValue<bool>() ?? false,
-							RegistryPath = obj["RegistryPath"]?.ToString(),
-							Location = obj["Location"]?.ToString(),
+							RegistryPath = obj["RegistryPath"]?.ToString() ?? string.Empty,
+							Location = obj["Location"]?.ToString() ?? string.Empty,
 							PStates = obj["PStates"]?.GetValue<bool>() ?? false,
 							ECC = obj["ECC"]?.GetValue<bool>() ?? false,
 							GspFirmware = obj["GspFirmware"]?.GetValue<bool>() ?? false,
 							HDCP = obj["HDCP"]?.GetValue<bool>() ?? false,
 							HDMIDPAudio = obj["HDMIDPAudio"]?.GetValue<bool>() ?? false,
-							CurrentVersion = obj["CurrentVersion"]?.ToString()
+							CurrentVersion = obj["CurrentVersion"]?.ToString() ?? string.Empty
 						});
 					}
 				}
@@ -144,7 +144,7 @@ public sealed partial class GraphicsPage : Page
 	private async void BrowseMsi_Click(object sender, RoutedEventArgs e)
 	{
 		var senderButton = sender as Button;
-		senderButton.IsEnabled = false;
+		senderButton!.IsEnabled = false;
 		MsiAfterburnerInfo.Children.Clear();
 
 		MsiAfterburnerInfo.Children.Add(new InfoBar
@@ -171,7 +171,7 @@ public sealed partial class GraphicsPage : Page
 
 			if (fileContent.Contains("[Startup]"))
 			{
-				senderButton.IsEnabled = true;
+				senderButton!.IsEnabled = true;
 				MsiAfterburnerInfo.Children.Clear();
 
 				localSettings.Values["MsiProfile"] = file.Path;
@@ -194,7 +194,7 @@ public sealed partial class GraphicsPage : Page
 			}
 			else
 			{
-				senderButton.IsEnabled = true;
+				senderButton!.IsEnabled = true;
 				MsiAfterburnerInfo.Children.Clear();
 
 				MsiAfterburnerInfo.Children.Add(new InfoBar
@@ -212,7 +212,7 @@ public sealed partial class GraphicsPage : Page
 		}
 		else
 		{
-			senderButton.IsEnabled = true;
+			senderButton!.IsEnabled = true;
 			MsiAfterburnerInfo.Children.Clear();
 			GetMsiProfile();
 		}
@@ -220,7 +220,7 @@ public sealed partial class GraphicsPage : Page
 
 	private void GetOBSState()
 	{
-		if (!localSettings.Values.TryGetValue("OBS", out object value))
+		if (!localSettings.Values.TryGetValue("OBS", out object? value))
 		{
 			localSettings.Values["OBS"] = 0;
 		}

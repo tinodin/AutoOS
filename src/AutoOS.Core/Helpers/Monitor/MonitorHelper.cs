@@ -103,7 +103,7 @@ public static partial class MonitorHelper
 		DISPLAY_DEVICEW adapter = new() { cb = (uint)sizeof(DISPLAY_DEVICEW) };
 		uint i = 0;
 
-		while (PInvoke.EnumDisplayDevices((string)null, i++, ref adapter, 0))
+		while (PInvoke.EnumDisplayDevices(null, i++, ref adapter, 0))
 		{
 			string adapterPath = adapter.DeviceName.ToString();
 			DEVMODEW current = new() { dmSize = (ushort)sizeof(DEVMODEW) };

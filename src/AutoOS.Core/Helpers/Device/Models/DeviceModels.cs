@@ -75,19 +75,19 @@ public partial class DeviceInfo : INotifyPropertyChanged
 	public ulong BaseAddress { get; set; }
 	public string CurrentVersion { get; set; } = string.Empty;
 
-	public object AudioChannels { get; set; }
-	public object AudioBitDepths { get; set; }
-	public object AudioSampleRates { get; set; }
+	public object AudioChannels { get; set; } = null!;
+	public object AudioBitDepths { get; set; } = null!;
+	public object AudioSampleRates { get; set; } = null!;
 
-	private object availableFormats;
+	private object availableFormats = null!;
 	public object AvailableFormats
 	{
 		get => availableFormats;
 		set { if (availableFormats != value) { availableFormats = value; OnPropertyChanged(); } }
 	}
 
-	private object selectedFormat;
-	public object SelectedFormat
+	private object? selectedFormat;
+	public object? SelectedFormat
 	{
 		get => selectedFormat;
 		set { if (selectedFormat != value) { selectedFormat = value; OnPropertyChanged(); } }
@@ -130,15 +130,15 @@ public partial class DeviceInfo : INotifyPropertyChanged
 		set { if (_supportPerChannelVolume != value) { _supportPerChannelVolume = value; OnPropertyChanged(); } }
 	}
 
-	private object bufferSizes;
+	private object bufferSizes = null!;
 	public object BufferSizes
 	{
 		get => bufferSizes;
 		set { if (bufferSizes != value) { bufferSizes = value; OnPropertyChanged(); } }
 	}
 
-	private object selectedBufferSize;
-	public object SelectedBufferSize
+	private object? selectedBufferSize;
+	public object? SelectedBufferSize
 	{
 		get => selectedBufferSize;
 		set { if (selectedBufferSize != value) { selectedBufferSize = value; OnPropertyChanged(); } }
@@ -149,10 +149,10 @@ public partial class DeviceInfo : INotifyPropertyChanged
 
 	public bool IsWiFi => NicType == NicDeviceType.WiFi;
 	public bool IsLAN => NicType == NicDeviceType.LAN;
-	public List<NetworkAdvancedSetting> AdvancedSettings { get; set; }
+	public List<NetworkAdvancedSetting> AdvancedSettings { get; set; } = [];
 
-	public event PropertyChangedEventHandler PropertyChanged;
-	private void OnPropertyChanged([CallerMemberName] string name = null)
+	public event PropertyChangedEventHandler? PropertyChanged;
+	private void OnPropertyChanged([CallerMemberName] string? name = null)
 		=> PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }
 

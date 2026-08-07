@@ -79,7 +79,7 @@ public static partial class IntelHelper
 			CreateNoWindow = true
 		};
 
-		using var process = Process.Start(startInfo);
+		using var process = Process.Start(startInfo)!;
 		string domHtml = await process.StandardOutput.ReadToEndAsync();
 		await process.WaitForExitAsync();
 
@@ -87,8 +87,9 @@ public static partial class IntelHelper
 		if (versionMatch.Success)
 		{
 			newestVersion = versionMatch.Groups[1].Value;
-			string[]? versionParts = newestVersion?.Split('.');
-			newestVersion = versionParts?.Length >= 4 ? versionParts[2] + "." + versionParts[3] : newestVersion;
+			string[] versionParts = newestVersion.Split('.');
+			if (versionParts.Length >= 4)
+				newestVersion = versionParts[2] + "." + versionParts[3];
 		}
 
 		Match fileMatch = (is3rd || is4to5) ? LegacyZipFileRegex().Match(domHtml) : ((is6th) ? ZipFileRegex().Match(domHtml) : ExeFileRegex().Match(domHtml));
@@ -103,7 +104,7 @@ public static partial class IntelHelper
 		return (newestVersion, newestDownloadUrl);
 	}
 
-	public static List<(string Title, Func<Task> Action, Func<bool> Condition)> InstallActions(GpuInfo gpu, string newestVersion, string newestDownloadUrl, IStatusReporter reporter = null)
+	public static List<(string Title, Func<Task> Action, Func<bool>? Condition)> InstallActions(GpuInfo gpu, string newestVersion, string newestDownloadUrl, IStatusReporter? reporter = null)
 	{
 		string codename = gpu.Codename;
 		static string Normalize(string s) => s.Replace(" ", "").Replace("-", "").ToLowerInvariant();
@@ -131,7 +132,7 @@ public static partial class IntelHelper
 		if (intelArc.Any(c => Normalize(codename).Contains(Normalize(c))))
 			Intel_Arc = true;
 
-		var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
+		var actions = new List<(string Title, Func<Task> Action, Func<bool>? Condition)>
 		{
 			// download intel driver
 			($@"Downloading INTEL driver {newestVersion}", async () => await DownloadHelper.Download(newestDownloadUrl, Path.Combine(Path.GetTempPath(), "INTEL"), "driver.zip", reporter), () => Intel_3rd == true || Intel_4th_5th == true || Intel_6th == true),
@@ -160,7 +161,7 @@ public static partial class IntelHelper
 		return actions;
 	}
 
-	public static List<(string Title, Func<Task> Action, Func<bool> Condition)> TweakActions(GpuInfo gpu)
+	public static List<(string Title, Func<Task> Action, Func<bool>? Condition)> TweakActions(GpuInfo gpu)
 	{
 		string codename = gpu.Codename;
 		static string Normalize(string s) => s.Replace(" ", "").Replace("-", "").ToLowerInvariant();
@@ -177,7 +178,6 @@ public static partial class IntelHelper
 		bool Intel_6th = false;
 		bool Intel_7th_10th = false;
 		bool Intel_11th_14th = false;
-		bool Intel_Arc = false;
 
 		if (intel3.Any(c => Normalize(codename).Contains(Normalize(c))))
 			Intel_3rd = true;
@@ -189,10 +189,8 @@ public static partial class IntelHelper
 			Intel_7th_10th = true;
 		else if (intel11to14.Any(c => Normalize(codename).Contains(Normalize(c))))
 			Intel_11th_14th = true;
-		else if (intelArc.Any(c => Normalize(codename).Contains(Normalize(c))))
-			Intel_Arc = true;
 
-		var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
+		var actions = new List<(string Title, Func<Task> Action, Func<bool>? Condition)>
 		{
 			// disable intel® graphics software startup entry
 			("Disabling Intel® Graphics Software startup entry", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32", "Intel® Graphics Software", new byte[] { 0x03 }, RegistryValueKind.Binary), null),

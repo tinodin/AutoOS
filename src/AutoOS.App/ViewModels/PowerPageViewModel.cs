@@ -491,7 +491,7 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		return true;
 	}
 
-	private bool ApplyEditedValue(Setting setting, SettingState values, string mappingName, out bool changed)
+	private static bool ApplyEditedValue(Setting setting, SettingState values, string mappingName, out bool changed)
 	{
 		changed = false;
 		if (mappingName == nameof(Node.DisplayAc))

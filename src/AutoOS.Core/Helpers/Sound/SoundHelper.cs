@@ -51,10 +51,10 @@ public static partial class SoundHelper
 		PInvoke.CoInitializeEx(null, COINIT.COINIT_MULTITHREADED);
 		var details = new AudioDetails();
 
-		HRESULT hrEnum = PInvoke.CoCreateInstance(typeof(MMDeviceEnumerator).GUID, null, (CLSCTX)7, typeof(IMMDeviceEnumerator).GUID, out void* pEnumerator);
+		HRESULT hrEnum = PInvoke.CoCreateInstance<IMMDeviceEnumerator>(typeof(MMDeviceEnumerator).GUID, null, (CLSCTX)7, out IMMDeviceEnumerator* pEnumerator);
 		if (hrEnum.Succeeded)
 		{
-			IMMDeviceEnumerator* enumerator = (IMMDeviceEnumerator*)pEnumerator;
+			IMMDeviceEnumerator* enumerator = pEnumerator;
 			IMMDevice* endpoint = null;
 			fixed (char* pId = device.RegistryPath) { enumerator->GetDevice(pId, &endpoint); }
 
@@ -64,7 +64,7 @@ public static partial class SoundHelper
 				endpoint->Activate(volId, (CLSCTX)7, null, out void* pVolume);
 				if (pVolume != null)
 				{
-					IAudioEndpointVolume* endpointVolume = (IAudioEndpointVolume*)pVolume;
+					var endpointVolume = (IAudioEndpointVolume*)pVolume;
 					endpointVolume->GetMasterVolumeLevelScalar(out float vol);
 					details.CurrentVolume = MathF.Round(vol * 100f);
 
@@ -106,7 +106,7 @@ public static partial class SoundHelper
 					store->GetValue(&keyDeviceFormat, &prop);
 					if (prop.Anonymous.Anonymous.vt == VARENUM.VT_BLOB)
 					{
-						WAVEFORMATEX* waveFormat = (WAVEFORMATEX*)prop.Anonymous.Anonymous.Anonymous.blob.pBlobData;
+						var waveFormat = (WAVEFORMATEX*)prop.Anonymous.Anonymous.Anonymous.blob.pBlobData;
 						details.CurrentSampleRate = waveFormat->nSamplesPerSec;
 						details.CurrentBitDepth = waveFormat->wBitsPerSample;
 						details.CurrentChannels = waveFormat->nChannels;
@@ -131,7 +131,7 @@ public static partial class SoundHelper
 				endpoint->Activate(clientId, (CLSCTX)7, null, out void* pAudioClient);
 				if (pAudioClient != null)
 				{
-					IAudioClient3* audioClient = (IAudioClient3*)pAudioClient;
+					var audioClient = (IAudioClient3*)pAudioClient;
 					uint[] testRates = [8000, 16000, 22050, 32000, 44100, 48000, 88200, 96000, 176400, 192000, 352800, 384000];
 					ushort[] testBits = [16, 24, 32];
 					ushort[] testChannels =
@@ -300,10 +300,10 @@ public static partial class SoundHelper
 		PInvoke.CoInitializeEx(null, COINIT.COINIT_MULTITHREADED);
 		var bufferSizes = new List<BufferSizeOption>();
 
-		HRESULT hrEnum = PInvoke.CoCreateInstance(typeof(MMDeviceEnumerator).GUID, null, (CLSCTX)7, typeof(IMMDeviceEnumerator).GUID, out void* pEnumerator);
+		HRESULT hrEnum = PInvoke.CoCreateInstance<IMMDeviceEnumerator>(typeof(MMDeviceEnumerator).GUID, null, (CLSCTX)7, out IMMDeviceEnumerator* pEnumerator);
 		if (hrEnum.Succeeded)
 		{
-			IMMDeviceEnumerator* enumerator = (IMMDeviceEnumerator*)pEnumerator;
+			IMMDeviceEnumerator* enumerator = pEnumerator;
 			IMMDevice* endpoint = null;
 			fixed (char* pId = device.RegistryPath) { enumerator->GetDevice(pId, &endpoint); }
 
@@ -313,7 +313,7 @@ public static partial class SoundHelper
 				endpoint->Activate(clientId, (CLSCTX)7, null, out void* pAudioClient);
 				if (pAudioClient != null)
 				{
-					IAudioClient3* audioClient = (IAudioClient3*)pAudioClient;
+					var audioClient = (IAudioClient3*)pAudioClient;
 					WAVEFORMATEX* format = null;
 					WAVEFORMATEXTENSIBLE selectedFormat = default;
 					bool freeFormat = false;
@@ -389,10 +389,10 @@ public static partial class SoundHelper
 	{
 		uint rate = 0;
 		PInvoke.CoInitializeEx(null, COINIT.COINIT_MULTITHREADED);
-		HRESULT hrEnum = PInvoke.CoCreateInstance(typeof(MMDeviceEnumerator).GUID, null, (CLSCTX)7, typeof(IMMDeviceEnumerator).GUID, out void* pEnumerator);
+		HRESULT hrEnum = PInvoke.CoCreateInstance<IMMDeviceEnumerator>(typeof(MMDeviceEnumerator).GUID, null, (CLSCTX)7, out IMMDeviceEnumerator* pEnumerator);
 		if (hrEnum.Succeeded)
 		{
-			IMMDeviceEnumerator* enumerator = (IMMDeviceEnumerator*)pEnumerator;
+			IMMDeviceEnumerator* enumerator = pEnumerator;
 			IMMDevice* endpoint = null;
 			enumerator->GetDefaultAudioEndpoint(flow, ERole.eConsole, &endpoint);
 			if (endpoint != null)
@@ -400,7 +400,7 @@ public static partial class SoundHelper
 				endpoint->Activate(typeof(IAudioClient3).GUID, (CLSCTX)7, null, out void* pAudioClient);
 				if (pAudioClient != null)
 				{
-					IAudioClient3* audioClient = (IAudioClient3*)pAudioClient;
+					var audioClient = (IAudioClient3*)pAudioClient;
 					WAVEFORMATEX* format = null;
 					audioClient->GetMixFormat(&format);
 					if (format != null)
@@ -423,11 +423,11 @@ public static partial class SoundHelper
 		float actualVol = 1.0f;
 
 		PInvoke.CoInitializeEx(null, COINIT.COINIT_MULTITHREADED);
-		HRESULT hrEnum = PInvoke.CoCreateInstance(typeof(MMDeviceEnumerator).GUID, null, (CLSCTX)7, typeof(IMMDeviceEnumerator).GUID, out void* pEnumerator);
+		HRESULT hrEnum = PInvoke.CoCreateInstance<IMMDeviceEnumerator>(typeof(MMDeviceEnumerator).GUID, null, (CLSCTX)7, out IMMDeviceEnumerator* pEnumerator);
 
 		if (hrEnum.Succeeded)
 		{
-			IMMDeviceEnumerator* enumerator = (IMMDeviceEnumerator*)pEnumerator;
+			IMMDeviceEnumerator* enumerator = pEnumerator;
 			IMMDevice* endpoint = null;
 			fixed (char* pId = device.RegistryPath) { enumerator->GetDevice(pId, &endpoint); }
 
@@ -452,10 +452,10 @@ public static partial class SoundHelper
 	public static unsafe void SetAudioMute(DeviceInfo device, bool muted)
 	{
 		PInvoke.CoInitializeEx(null, COINIT.COINIT_MULTITHREADED);
-		HRESULT hrEnum = PInvoke.CoCreateInstance(typeof(MMDeviceEnumerator).GUID, null, (CLSCTX)7, typeof(IMMDeviceEnumerator).GUID, out void* pEnumerator);
+		HRESULT hrEnum = PInvoke.CoCreateInstance<IMMDeviceEnumerator>(typeof(MMDeviceEnumerator).GUID, null, (CLSCTX)7, out IMMDeviceEnumerator* pEnumerator);
 		if (hrEnum.Succeeded)
 		{
-			IMMDeviceEnumerator* enumerator = (IMMDeviceEnumerator*)pEnumerator;
+			IMMDeviceEnumerator* enumerator = pEnumerator;
 			IMMDevice* endpoint = null;
 			fixed (char* pId = device.RegistryPath) { enumerator->GetDevice(pId, &endpoint); }
 			if (endpoint != null)
@@ -478,11 +478,11 @@ public static partial class SoundHelper
 		float safeVol = float.IsFinite(volume) ? Math.Clamp(volume, 0.0f, 1.0f) : 0.0f;
 
 		PInvoke.CoInitializeEx(null, COINIT.COINIT_MULTITHREADED);
-		HRESULT hrEnum = PInvoke.CoCreateInstance(typeof(MMDeviceEnumerator).GUID, null, (CLSCTX)7, typeof(IMMDeviceEnumerator).GUID, out void* pEnumerator);
+		HRESULT hrEnum = PInvoke.CoCreateInstance<IMMDeviceEnumerator>(typeof(MMDeviceEnumerator).GUID, null, (CLSCTX)7, out IMMDeviceEnumerator* pEnumerator);
 
 		if (hrEnum.Succeeded)
 		{
-			IMMDeviceEnumerator* enumerator = (IMMDeviceEnumerator*)pEnumerator;
+			IMMDeviceEnumerator* enumerator = pEnumerator;
 			IMMDevice* endpoint = null;
 			fixed (char* pId = device.RegistryPath) { enumerator->GetDevice(pId, &endpoint); }
 
@@ -493,7 +493,7 @@ public static partial class SoundHelper
 
 				if (pVolume != null)
 				{
-					IAudioEndpointVolume* ev = (IAudioEndpointVolume*)pVolume;
+					var ev = (IAudioEndpointVolume*)pVolume;
 					ev->GetChannelCount(out uint actualChannelCount);
 
 					if (channel < actualChannelCount)
@@ -519,11 +519,10 @@ public static partial class SoundHelper
 
 		PInvoke.CoInitializeEx(null, COINIT.COINIT_MULTITHREADED);
 		Guid clsidEnum = typeof(MMDeviceEnumerator).GUID;
-		Guid iidEnum = typeof(IMMDeviceEnumerator).GUID;
 
-		if (PInvoke.CoCreateInstance(in clsidEnum, null, CLSCTX.CLSCTX_ALL, in iidEnum, out void* pEnumerator).Value >= 0)
+		if (PInvoke.CoCreateInstance<IMMDeviceEnumerator>(clsidEnum, null, CLSCTX.CLSCTX_ALL, out IMMDeviceEnumerator* pEnumerator).Value >= 0)
 		{
-			IMMDeviceEnumerator* enumerator = (IMMDeviceEnumerator*)pEnumerator;
+			IMMDeviceEnumerator* enumerator = pEnumerator;
 			IMMDevice* endpoint = null;
 			fixed (char* pId = device.RegistryPath) { enumerator->GetDevice(pId, &endpoint); }
 			if (endpoint != null)
@@ -553,7 +552,8 @@ public static partial class SoundHelper
 					Guid clsidPolicy = new("870af99c-171d-4f9e-af0d-e63df40c2bc9");
 					Guid iidPolicy = new("f8679f50-850a-41cf-9c72-430f290290c8");
 
-					if (PInvoke.CoCreateInstance(clsidPolicy, null, CLSCTX.CLSCTX_ALL, iidPolicy, out void* pPolicyOut).Value >= 0)
+					void* pPolicyOut;
+					if (PInvoke.CoCreateInstance(&clsidPolicy, null, CLSCTX.CLSCTX_ALL, &iidPolicy, &pPolicyOut).Value >= 0)
 					{
 						var policy = (IPolicyConfigNativeOut*)pPolicyOut;
 						fixed (char* pwzDeviceId = device.RegistryPath)
@@ -612,10 +612,10 @@ public static partial class SoundHelper
 		Observers.TryRemove(device.RegistryPath, out object? old);
 		if (old is IDisposable disp) disp.Dispose();
 
-		HRESULT hrEnum = PInvoke.CoCreateInstance(typeof(MMDeviceEnumerator).GUID, null, (CLSCTX)7, typeof(IMMDeviceEnumerator).GUID, out void* pEnumerator);
+		HRESULT hrEnum = PInvoke.CoCreateInstance<IMMDeviceEnumerator>(typeof(MMDeviceEnumerator).GUID, null, (CLSCTX)7, out IMMDeviceEnumerator* pEnumerator);
 		if (hrEnum.Succeeded)
 		{
-			IMMDeviceEnumerator* enumerator = (IMMDeviceEnumerator*)pEnumerator;
+			IMMDeviceEnumerator* enumerator = pEnumerator;
 			IMMDevice* endpoint = null;
 			fixed (char* pId = device.RegistryPath) { enumerator->GetDevice(pId, &endpoint); }
 			if (endpoint != null)
@@ -640,22 +640,22 @@ public static partial class SoundHelper
 		Observers.TryRemove("DeviceChange", out object? old);
 		if (old is IDisposable disp) disp.Dispose();
 
-		HRESULT hrEnum = PInvoke.CoCreateInstance(typeof(MMDeviceEnumerator).GUID, null, (CLSCTX)7, typeof(IMMDeviceEnumerator).GUID, out void* pEnumerator);
+		HRESULT hrEnum = PInvoke.CoCreateInstance<IMMDeviceEnumerator>(typeof(MMDeviceEnumerator).GUID, null, (CLSCTX)7, out IMMDeviceEnumerator* pEnumerator);
 		if (hrEnum.Succeeded)
 		{
-			IMMDeviceEnumerator* enumerator = (IMMDeviceEnumerator*)pEnumerator;
+			IMMDeviceEnumerator* enumerator = pEnumerator;
 			var client = new DeviceNotificationClient(onNotify, enumerator);
 			enumerator->RegisterEndpointNotificationCallback((IMMNotificationClient*)client.GetComPointer());
 			Observers["DeviceChange"] = client;
 		}
 	}
 
-	internal static unsafe string GetDefaultAudioEndpointId(EDataFlow flow)
+	internal static unsafe string? GetDefaultAudioEndpointId(EDataFlow flow)
 	{
 		PInvoke.CoInitializeEx(null, COINIT.COINIT_MULTITHREADED);
-		if (PInvoke.CoCreateInstance(typeof(MMDeviceEnumerator).GUID, null, CLSCTX.CLSCTX_ALL, typeof(IMMDeviceEnumerator).GUID, out void* pEnumerator).Value >= 0)
+		if (PInvoke.CoCreateInstance<IMMDeviceEnumerator>(typeof(MMDeviceEnumerator).GUID, null, CLSCTX.CLSCTX_ALL, out IMMDeviceEnumerator* pEnumerator).Value >= 0)
 		{
-			IMMDeviceEnumerator* enumerator = (IMMDeviceEnumerator*)pEnumerator;
+			IMMDeviceEnumerator* enumerator = pEnumerator;
 			IMMDevice* endpoint = null;
 			try
 			{
@@ -677,13 +677,13 @@ public static partial class SoundHelper
 		return null;
 	}
 
-	public static unsafe DeviceInfo GetDefaultAudioDeviceInfo(EDataFlow flow)
+	public static unsafe DeviceInfo? GetDefaultAudioDeviceInfo(EDataFlow flow)
 	{
 		PInvoke.CoInitializeEx(null, COINIT.COINIT_MULTITHREADED);
 
-		if (PInvoke.CoCreateInstance(typeof(MMDeviceEnumerator).GUID, null, CLSCTX.CLSCTX_ALL, typeof(IMMDeviceEnumerator).GUID, out void* pEnumerator).Value >= 0)
+		if (PInvoke.CoCreateInstance<IMMDeviceEnumerator>(typeof(MMDeviceEnumerator).GUID, null, CLSCTX.CLSCTX_ALL, out IMMDeviceEnumerator* pEnumerator).Value >= 0)
 		{
-			IMMDeviceEnumerator* enumerator = (IMMDeviceEnumerator*)pEnumerator;
+			IMMDeviceEnumerator* enumerator = pEnumerator;
 			IMMDevice* endpoint = null;
 
 			try
@@ -741,7 +741,7 @@ public static partial class SoundHelper
 		string? json = localSettings.Values["Sound"]?.ToString();
 		JsonArray array = JsonNode.Parse(json ?? "[]")?.AsArray() ?? [];
 
-		JsonObject obj = null;
+		JsonObject? obj = null;
 		foreach (JsonNode? item in array)
 		{
 			if (item?["PnpDeviceId"]?.ToString() == device.PnpDeviceId)
@@ -779,16 +779,16 @@ public static partial class SoundHelper
 		if (array == null || array.Count == 0) return;
 
 		PInvoke.CoInitializeEx(null, COINIT.COINIT_MULTITHREADED);
-		string currentOutputId = GetDefaultAudioEndpointId(EDataFlow.eRender)?.Replace(@"SWD\MMDEVAPI\", "");
-		string currentInputId = GetDefaultAudioEndpointId(EDataFlow.eCapture)?.Replace(@"SWD\MMDEVAPI\", "");
+		string? currentOutputId = GetDefaultAudioEndpointId(EDataFlow.eRender)?.Replace(@"SWD\MMDEVAPI\", "");
+		string? currentInputId = GetDefaultAudioEndpointId(EDataFlow.eCapture)?.Replace(@"SWD\MMDEVAPI\", "");
 
 		float outputMs = 0;
 		float inputMs = 0;
 
 		foreach (JsonNode? item in array)
 		{
-			string id = item["PnpDeviceId"]?.GetValue<string>();
-			float ms = item["BufferSize"]?.GetValue<float>() ?? 0;
+			string? id = item?["PnpDeviceId"]?.GetValue<string>();
+			float ms = item?["BufferSize"]?.GetValue<float>() ?? 0;
 			if (ms > 0 && ms < 10)
 			{
 				if (id == currentOutputId) outputMs = ms;

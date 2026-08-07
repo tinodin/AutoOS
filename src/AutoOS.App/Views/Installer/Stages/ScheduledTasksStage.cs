@@ -5,9 +5,9 @@ namespace AutoOS.App.Views.Installer.Stages;
 
 public static class ScheduledTasksStage
 {
-	public static List<(string Title, Func<Task> Action, Func<bool> Condition)> GetActions()
+	public static List<(string Title, Func<Task> Action, Func<bool>? Condition)> GetActions()
 	{
-		var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>();
+		var actions = new List<(string Title, Func<Task> Action, Func<bool>? Condition)>();
 
 		// add scheduled task actions
 		var tasks = new List<string>

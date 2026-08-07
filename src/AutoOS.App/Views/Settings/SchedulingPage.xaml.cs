@@ -12,7 +12,7 @@ namespace AutoOS.App.Views.Settings;
 public sealed partial class SchedulingPage : Page
 {
 	public ObservableCollection<SchedulingGroup> Nodes { get; } = [];
-	private CpuSetsInfo _cpuSetsInfo;
+	private CpuSetsInfo _cpuSetsInfo = null!;
 
 	public SchedulingPage()
 	{
@@ -70,7 +70,7 @@ public sealed partial class SchedulingPage : Page
 		}
 	}
 
-	public void UpdateDevice(DeviceType deviceType, string pnpDeviceId, DeviceInfo targetDevice = null)
+	public void UpdateDevice(DeviceType deviceType, string pnpDeviceId, DeviceInfo? targetDevice = null)
 	{
 		SchedulingItem? item = Nodes.SelectMany(g => g.SubItems).FirstOrDefault(d => string.Equals(d.PnpDeviceId, pnpDeviceId, StringComparison.OrdinalIgnoreCase));
 		if (item == null) return;
@@ -121,7 +121,7 @@ public sealed partial class SchedulingPage : Page
 		contentDialog.Resources["ContentDialogMaxWidth"] = 1350;
 		contentDialog.Resources["ContentDialogMaxHeight"] = 900;
 
-		ApplyResult applyResult = null;
+		ApplyResult? applyResult = null;
 		var applyEventCompleted = new TaskCompletionSource<bool>();
 
 		schedulingDialog.ViewModel.OnSettingsApplied += result =>

@@ -18,14 +18,14 @@ namespace AutoOS.App.Views.Settings;
 
 public sealed partial class SoundPage : Page, INotifyPropertyChanged
 {
-	public event PropertyChangedEventHandler PropertyChanged;
-	private void OnPropertyChanged([CallerMemberName] string name = null)
+	public event PropertyChangedEventHandler? PropertyChanged;
+	private void OnPropertyChanged([CallerMemberName] string name = null!)
 	{
 		PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 	}
 
-	private DeviceInfo _currentOutput;
-	public DeviceInfo CurrentOutput
+	private DeviceInfo? _currentOutput;
+	public DeviceInfo? CurrentOutput
 	{
 		get => _currentOutput;
 		set
@@ -36,8 +36,8 @@ public sealed partial class SoundPage : Page, INotifyPropertyChanged
 		}
 	}
 
-	private DeviceInfo _currentInput;
-	public DeviceInfo CurrentInput
+	private DeviceInfo? _currentInput;
+	public DeviceInfo? CurrentInput
 	{
 		get => _currentInput;
 		set
@@ -79,14 +79,14 @@ public sealed partial class SoundPage : Page, INotifyPropertyChanged
 		isInitializingAudioState = true;
 		PInvoke.CoInitializeEx(null, COINIT.COINIT_MULTITHREADED);
 
-		if (PInvoke.CoCreateInstance(typeof(MMDeviceEnumerator).GUID, null, (CLSCTX)7, typeof(IMMDeviceEnumerator).GUID, out void* pEnumerator).Succeeded)
+		if (PInvoke.CoCreateInstance<IMMDeviceEnumerator>(typeof(MMDeviceEnumerator).GUID, null, (CLSCTX)7, out IMMDeviceEnumerator* pEnumerator).Succeeded)
 		{
-			IMMDeviceEnumerator* enumerator = (IMMDeviceEnumerator*)pEnumerator;
+			IMMDeviceEnumerator* enumerator = pEnumerator;
 
-			DeviceInfo newOutput = ProcessEndpoint(enumerator, EDataFlow.eRender);
+			DeviceInfo? newOutput = ProcessEndpoint(enumerator, EDataFlow.eRender);
 			UpdateDevice(ref _currentOutput, newOutput, nameof(CurrentOutput));
 
-			DeviceInfo newInput = ProcessEndpoint(enumerator, EDataFlow.eCapture);
+			DeviceInfo? newInput = ProcessEndpoint(enumerator, EDataFlow.eCapture);
 			UpdateDevice(ref _currentInput, newInput, nameof(CurrentInput));
 
 			enumerator->Release();
@@ -94,7 +94,7 @@ public sealed partial class SoundPage : Page, INotifyPropertyChanged
 		isInitializingAudioState = false;
 	}
 
-	private void UpdateDevice(ref DeviceInfo currentField, DeviceInfo newNode, string propertyName)
+	private void UpdateDevice(ref DeviceInfo? currentField, DeviceInfo? newNode, string propertyName)
 	{
 		if (newNode == null)
 		{
@@ -123,7 +123,7 @@ public sealed partial class SoundPage : Page, INotifyPropertyChanged
 		}
 	}
 
-	private unsafe DeviceInfo ProcessEndpoint(IMMDeviceEnumerator* enumerator, EDataFlow flow)
+	private unsafe DeviceInfo? ProcessEndpoint(IMMDeviceEnumerator* enumerator, EDataFlow flow)
 	{
 		IMMDevice* endpoint = null;
 		try { enumerator->GetDefaultAudioEndpoint(flow, ERole.eConsole, &endpoint); } catch { }

@@ -11,12 +11,12 @@ public partial class HeaderCarouselItem : Button
 {
 	private const string PART_ShadowHost = "PART_ShadowHost";
 
-	private DropShadow _cardShadow;
-	private DropShadow _dropShadow;
-	private SpriteVisual _cardShadowVisual;
-	private FrameworkElement _shadowHost;
-	private Visual visual;
-	private Compositor compositor;
+	private DropShadow? _cardShadow;
+	private DropShadow? _dropShadow;
+	private SpriteVisual? _cardShadowVisual;
+	private FrameworkElement? _shadowHost;
+	private Visual? visual;
+	private Compositor? compositor;
 
 	public HeaderCarouselItem()
 	{
@@ -28,7 +28,7 @@ public partial class HeaderCarouselItem : Button
 		base.OnApplyTemplate();
 
 		visual = ElementCompositionPreview.GetElementVisual(this);
-		compositor = visual.Compositor;
+		compositor = visual!.Compositor;
 
 		_shadowHost = GetTemplateChild(PART_ShadowHost) as FrameworkElement;
 
@@ -54,13 +54,13 @@ public partial class HeaderCarouselItem : Button
 	}
 	private void InitializeShadow()
 	{
-		_dropShadow = compositor.CreateDropShadow();
-		_dropShadow.Opacity = 0.2f;
-		_dropShadow.BlurRadius = 12f;
+		_dropShadow = compositor!.CreateDropShadow();
+		_dropShadow!.Opacity = 0.2f;
+		_dropShadow!.BlurRadius = 12f;
 
-		SpriteVisual shadowVisual = compositor.CreateSpriteVisual();
-		shadowVisual.Shadow = _dropShadow;
-		shadowVisual.Size = visual.Size;
+		SpriteVisual shadowVisual = compositor!.CreateSpriteVisual();
+		shadowVisual.Shadow = _dropShadow!;
+		shadowVisual.Size = visual!.Size;
 
 		ElementCompositionPreview.SetElementChildVisual(this, shadowVisual);
 	}
@@ -89,17 +89,17 @@ public partial class HeaderCarouselItem : Button
 		Visual hostVisual = ElementCompositionPreview.GetElementVisual(_shadowHost);
 		Compositor compositor = hostVisual.Compositor;
 
-		_cardShadow = compositor.CreateDropShadow();
-		_cardShadow.BlurRadius = 12f;
-		_cardShadow.Opacity = 0.2f;
-		_cardShadow.Color = Colors.Black;
-		_cardShadow.Offset = new Vector3(0, 0, 0);
+		_cardShadow = compositor!.CreateDropShadow();
+		_cardShadow!.BlurRadius = 12f;
+		_cardShadow!.Opacity = 0.2f;
+		_cardShadow!.Color = Colors.Black;
+		_cardShadow!.Offset = new Vector3(0, 0, 0);
 
-		_cardShadowVisual = compositor.CreateSpriteVisual();
-		_cardShadowVisual.Shadow = _cardShadow;
-		_cardShadowVisual.Size = new Vector2((float)_shadowHost.ActualWidth, (float)_shadowHost.ActualHeight);
+		_cardShadowVisual = compositor!.CreateSpriteVisual();
+		_cardShadowVisual!.Shadow = _cardShadow!;
+		_cardShadowVisual!.Size = new Vector2((float)_shadowHost.ActualWidth, (float)_shadowHost.ActualHeight);
 
-		ElementCompositionPreview.SetElementChildVisual(_shadowHost, _cardShadowVisual);
+		ElementCompositionPreview.SetElementChildVisual(_shadowHost, _cardShadowVisual!);
 
 		_shadowHost.SizeChanged += OnShadowHostSizeChanged;
 	}

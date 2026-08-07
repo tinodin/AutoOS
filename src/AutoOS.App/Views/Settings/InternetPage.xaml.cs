@@ -46,7 +46,7 @@ public sealed partial class InternetPage : Page
 		List<NetworkAdvancedSetting> settings = device.AdvancedSettings;
 		settingsGroup.Description = $"Current version: {device.DriverType} {device.CurrentVersion}";
 
-		foreach (NetworkAdvancedSetting? setting in settings.OrderBy(s => string.IsNullOrEmpty(s.Name) || !char.IsDigit(s.Name[0])).ThenBy(s => s.Name, Comparer<string>.Create(NaturalSort)))
+		foreach (NetworkAdvancedSetting setting in settings.OrderBy(s => string.IsNullOrEmpty(s.Name) || !char.IsDigit(s.Name[0])).ThenBy(s => s.Name, Comparer<string>.Create(NaturalSort)))
 		{
 			FrameworkElement control = setting.Type switch
 			{
@@ -168,7 +168,7 @@ public sealed partial class InternetPage : Page
 
 	private void ChangeSetting(FrameworkElement control, NetworkAdvancedSetting setting, string value, string displayValue)
 	{
-		SettingsGroup settingsGroup = FindParent<SettingsGroup>(control);
+		SettingsGroup? settingsGroup = FindParent<SettingsGroup>(control);
 		if (settingsGroup?.DataContext is not DeviceInfo device) return;
 
 		if (!_pendingChanges.ContainsKey(device))
@@ -181,12 +181,12 @@ public sealed partial class InternetPage : Page
 		else
 			deviceChanges[setting.Key] = (value, displayValue);
 
-		StackPanel repeaterItem = FindParent<StackPanel>(settingsGroup);
+		StackPanel? repeaterItem = FindParent<StackPanel>(settingsGroup);
 		if (repeaterItem == null) return;
-		var infoBarContainer = (StackPanel)repeaterItem.FindName("AdapterInfo");
+		var infoBarContainer = (StackPanel)repeaterItem.FindName("AdapterInfo")!;
 		if (infoBarContainer == null) return;
 
-		if (!_pendingChanges.TryGetValue(device, out Dictionary<string, (string Value, string DisplayValue)>? changes) || changes.Count == 0)
+		if (!_pendingChanges.TryGetValue(device, out Dictionary<string, (string Value, string DisplayValue)>? changes) || changes == null || changes.Count == 0)
 		{
 			infoBarContainer.Children.Clear();
 			return;
@@ -212,7 +212,7 @@ public sealed partial class InternetPage : Page
 			Margin = new Thickness(0, -52, 16, 0)
 		};
 
-		var applyBtn = new Button { Content = "Apply", Style = (Style)Application.Current.Resources["AccentButtonStyle"] };
+		var applyBtn = new Button { Content = "Apply", Style = (Style)Application.Current.Resources["AccentButtonStyle"]! };
 		applyBtn.Click += async (s, e) =>
 		{
 			infoBar.Severity = InfoBarSeverity.Informational;
@@ -259,17 +259,17 @@ public sealed partial class InternetPage : Page
 	private async void Optimize_Checked(object sender, RoutedEventArgs e)
 	{
 		var button = (ProgressButton)sender;
-		SettingsGroup settingsGroup = FindParent<SettingsGroup>(button);
+		SettingsGroup? settingsGroup = FindParent<SettingsGroup>(button);
 
 		if (settingsGroup?.DataContext is not DeviceInfo device) return;
 
 		_pendingChanges.Remove(device);
 		UpdateSettings(settingsGroup, device);
 
-		StackPanel repeaterItem = FindParent<StackPanel>(settingsGroup);
+		StackPanel? repeaterItem = FindParent<StackPanel>(settingsGroup);
 		if (repeaterItem != null)
 		{
-			var infoBarContainer = (StackPanel)repeaterItem.FindName("AdapterInfo");
+			var infoBarContainer = (StackPanel)repeaterItem.FindName("AdapterInfo")!;
 			if (infoBarContainer != null)
 				infoBarContainer.Children.Clear();
 		}
@@ -300,13 +300,13 @@ public sealed partial class InternetPage : Page
 			if (item is not SettingsCard card || card.Content is not FrameworkElement control) continue;
 			if (control.Tag is not NetworkAdvancedSetting setting) continue;
 
-			string newValue = deviceKey.GetValue(setting.Key)?.ToString() ?? string.Empty;
+			string newValue = deviceKey?.GetValue(setting.Key)?.ToString() ?? string.Empty;
 			setting.CurrentValue = newValue;
 
 			switch (control)
 			{
 				case ComboBox combobox:
-					var options = (List<NetworkSettingOption>)combobox.ItemsSource;
+					var options = (List<NetworkSettingOption>)combobox.ItemsSource!;
 					int idx = options.FindIndex(opt => string.Equals(opt.Value, newValue, StringComparison.OrdinalIgnoreCase));
 					if (idx < 0)
 						idx = options.FindIndex(opt => string.Equals(opt.Value, setting.DefaultValue, StringComparison.OrdinalIgnoreCase));
@@ -359,9 +359,9 @@ public sealed partial class InternetPage : Page
 		return PInvoke.StrCmpLogical(x, y);
 	}
 
-	public static T FindParent<T>(DependencyObject child) where T : DependencyObject
+	public static T? FindParent<T>(DependencyObject child) where T : DependencyObject
 	{
-		DependencyObject parent = VisualTreeHelper.GetParent(child);
+		DependencyObject? parent = VisualTreeHelper.GetParent(child);
 
 		while (parent != null && parent is not T)
 			parent = VisualTreeHelper.GetParent(parent);

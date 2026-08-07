@@ -20,7 +20,7 @@ public sealed partial class UpdateDialog : UserControl
 		CurrentGroupTarget = 100;
 	}
 
-	public string CurrentTitle { get; set; }
+	public string CurrentTitle { get; set; } = null!;
 
 	public string GetStatus() => StatusText.Text;
 
@@ -55,7 +55,7 @@ public sealed partial class UpdateDialog : UserControl
 		ProgressBar.ClearValue(ProgressBar.ForegroundProperty);
 	}
 
-	public async Task RunActions(List<(string Title, Func<Task> Action, Func<bool> Condition)> actions)
+	public async Task RunActions(List<(string Title, Func<Task> Action, Func<bool>? Condition)> actions)
 	{
 		var filteredActions = actions.Where(a => a.Condition == null || a.Condition.Invoke()).ToList();
 
@@ -141,7 +141,7 @@ public sealed partial class UpdateDialog : UserControl
 		SetStatus(displayTitle + "...");
 
 		SynchronizationContext? uiContext = SynchronizationContext.Current;
-		var reporter = new UpdateStatusReporter(uiContext, StatusText, ProgressBar, displayTitle, startValue, targetValue);
+		var reporter = new UpdateStatusReporter(uiContext!, StatusText, ProgressBar, displayTitle, startValue, targetValue);
 
 		await DownloadHelper.Download(url, path, file, reporter);
 
@@ -161,7 +161,7 @@ public sealed partial class UpdateDialog : UserControl
 		private readonly double _startValue = startValue;
 		private readonly double _targetValue = targetValue;
 
-		public void Report(string message = null, double? progress = null, bool? isIndeterminate = null)
+		public void Report(string? message = null, double? progress = null, bool? isIndeterminate = null)
 		{
 			_uiContext?.Post(_ =>
 			{
