@@ -1,9 +1,9 @@
 using System.Text;
 using System.Text.Json.Nodes;
+using AutoOS.App.Views.Installer.Stages;
 using AutoOS.Core.Common;
 using AutoOS.Core.Helpers.Download;
 using AutoOS.Core.Helpers.Logging;
-using AutoOS.App.Views.Installer.Stages;
 using Microsoft.UI.Xaml.Media;
 
 namespace AutoOS.App.Views.Updater;

@@ -1,34 +1,10 @@
+using AutoOS.App.Data.Enums.Bios;
+using AutoOS.App.Data.Models.Bios;
 using Syncfusion.UI.Xaml.TreeGrid;
 
-namespace AutoOS.App.Views.Settings.BIOS;
+namespace AutoOS.App.Data.TemplateSelectors.Bios;
 
-public partial class EditTemplateSelector : DataTemplateSelector
-{
-	public DataTemplate ComboBoxTemplate { get; set; }
-	public DataTemplate TextBoxTemplate { get; set; }
-
-	protected override DataTemplate SelectTemplateCore(object item, DependencyObject container)
-	{
-		if (item is BiosTreeNode node && node.HasOptions)
-			return ComboBoxTemplate;
-		return TextBoxTemplate;
-	}
-}
-
-public partial class DiffLeafCellStyleSelector : StyleSelector
-{
-	public Style LeafStyle { get; set; } = null!;
-
-	protected override Style SelectStyleCore(object item, DependencyObject container)
-	{
-		if (item is BiosTreeNode node && node.NodeKind == NodeKind.Leaf)
-			return LeafStyle;
-
-		return null;
-	}
-}
-
-public partial class CellStyleSelector : StyleSelector
+public sealed partial class CellStyleSelector : StyleSelector
 {
 	public Style CriticalStyle { get; set; }
 	public Style SuccessStyle { get; set; }

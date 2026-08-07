@@ -1,8 +1,8 @@
 using System.Diagnostics;
+using AutoOS.App.Views.Installer.Actions;
 using AutoOS.Core.Helpers.Device;
 using AutoOS.Core.Helpers.Device.Models;
 using AutoOS.Core.Helpers.Registry;
-using AutoOS.App.Views.Installer.Actions;
 using Microsoft.Win32;
 
 namespace AutoOS.App.Views.Installer.Stages;

@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using System.ServiceProcess;
+using AutoOS.App.Views.Installer.Actions;
 using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.Services;
-using AutoOS.App.Views.Installer.Actions;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;

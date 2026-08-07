@@ -1,12 +1,12 @@
 using System.Diagnostics;
 using System.Text.Json.Nodes;
+using AutoOS.App.Views.Installer.Actions;
 using AutoOS.Core.Helpers.Device;
 using AutoOS.Core.Helpers.Device.Models;
 using AutoOS.Core.Helpers.Logging;
 using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.Services;
 using AutoOS.Core.Helpers.Sound;
-using AutoOS.App.Views.Installer.Actions;
 using Microsoft.UI.Xaml.Media;
 using Windows.Storage;
 using Windows.Win32.System.Services;

@@ -20,10 +20,10 @@ public static class PowerStage
 			(@"Creating ""AutoOS"" Power plan", async () => guid = PowerHelper.DuplicateScheme(new Guid("8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c"), "AutoOS", "AutoOS Power Plan"), null),
 
 			// hard disk
-			(@"Disabling ""NVMe NOPPME""", async () => PowerHelper.WriteACValueIndex(guid, new Guid("0012ee47-9041-4b5d-9b77-535fba8b1442"), new Guid("fc7372b6-ab2d-43ee-8797-15e9841f2cca"), 0), null),
-			(@"Setting ""Primary NVMe Idle Timeout"" to 0", async () => PowerHelper.WriteACValueIndex(guid, new Guid("0012ee47-9041-4b5d-9b77-535fba8b1442"), new Guid("d639518a-e56d-4345-8af2-b9f32fb26109"), 0), null),
-			(@"Setting ""Secondary NVMe Idle Timeout"" to 0", async () => PowerHelper.WriteACValueIndex(guid, new Guid("0012ee47-9041-4b5d-9b77-535fba8b1442"), new Guid("d3d55efd-c1ff-424e-9dc3-441be7833010"), 0), null),
 			(@"Setting ""Turn off hard disk after"" to 0", async () => PowerHelper.WriteACValueIndex(guid, new Guid("0012ee47-9041-4b5d-9b77-535fba8b1442"), new Guid("6738e2c4-e8a5-4a42-b16a-e040e769756e"), 0), null),
+			(@"Setting ""Secondary NVMe Idle Timeout"" to 0", async () => PowerHelper.WriteACValueIndex(guid, new Guid("0012ee47-9041-4b5d-9b77-535fba8b1442"), new Guid("d3d55efd-c1ff-424e-9dc3-441be7833010"), 0), null),
+			(@"Setting ""Primary NVMe Idle Timeout"" to 0", async () => PowerHelper.WriteACValueIndex(guid, new Guid("0012ee47-9041-4b5d-9b77-535fba8b1442"), new Guid("d639518a-e56d-4345-8af2-b9f32fb26109"), 0), null),
+			(@"Disabling ""NVMe NOPPME""", async () => PowerHelper.WriteACValueIndex(guid, new Guid("0012ee47-9041-4b5d-9b77-535fba8b1442"), new Guid("fc7372b6-ab2d-43ee-8797-15e9841f2cca"), 0), null),
 
 			// sleep
 			(@"Disabling ""Allow Away Mode Policy""", async () => PowerHelper.WriteACValueIndex(guid, new Guid("238c9fa8-0aad-41ed-83f4-97be242c8f20"), new Guid("25dfa149-5dd1-4736-b5ab-e8a37b5b8187"), 0), null),

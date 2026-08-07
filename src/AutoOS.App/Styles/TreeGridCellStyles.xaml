@@ -9,6 +9,11 @@
 		<Setter Property="Background" Value="{ThemeResource SystemFillColorCriticalBackgroundBrush}" />
 	</Style>
 
+	<!--  Caution  -->
+	<Style x:Key="CautionCellStyle" TargetType="sfgrid:TreeGridCell">
+		<Setter Property="Background" Value="{ThemeResource SystemFillColorCautionBackgroundBrush}" />
+	</Style>
+
 	<!--  Success  -->
 	<Style x:Key="SuccessCellStyle" TargetType="sfgrid:TreeGridCell">
 		<Setter Property="Background" Value="{ThemeResource SystemFillColorSuccessBackgroundBrush}" />

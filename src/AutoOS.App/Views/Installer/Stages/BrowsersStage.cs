@@ -2,13 +2,13 @@ using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using AutoOS.App.Common;
+using AutoOS.App.Views.Installer.Actions;
 using AutoOS.Core.Common;
 using AutoOS.Core.Helpers.Download;
 using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.Services;
 using AutoOS.Core.Helpers.Store;
 using AutoOS.Core.Helpers.TaskScheduler;
-using AutoOS.App.Views.Installer.Actions;
 using Microsoft.Win32;
 using Windows.Management.Deployment;
 

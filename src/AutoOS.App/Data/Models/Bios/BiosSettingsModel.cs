@@ -2,13 +2,13 @@ using System.Collections;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace AutoOS.Core.Helpers.BIOS;
+namespace AutoOS.App.Data.Models.Bios;
 
-public partial class BiosSettingModel : INotifyPropertyChanged, INotifyDataErrorInfo
+public partial class BiosSettingsModel : INotifyPropertyChanged, INotifyDataErrorInfo
 {
 	private bool _isLoaded = false;
-	private string _value;
-	private Option _selectedOption;
+	private string? _value;
+	private Option? _selectedOption;
 	private readonly Dictionary<string, List<string>> _warnings = [];
 	private static bool _isBatchMode;
 
@@ -18,10 +18,10 @@ public partial class BiosSettingModel : INotifyPropertyChanged, INotifyDataError
 		set => _isBatchMode = value;
 	}
 
-	public event PropertyChangedEventHandler PropertyChanged;
-	public event EventHandler<DataErrorsChangedEventArgs> ErrorsChanged;
+	public event PropertyChangedEventHandler? PropertyChanged;
+	public event EventHandler<DataErrorsChangedEventArgs>? ErrorsChanged;
 
-	protected void OnPropertyChanged([CallerMemberName] string propertyName = null) =>
+	protected void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>
 		PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
 	private void RaiseErrorsChanged(string propertyName) =>
@@ -34,20 +34,20 @@ public partial class BiosSettingModel : INotifyPropertyChanged, INotifyDataError
 	}
 
 	public int Line { get; set; }
-	public List<string> OriginalLines { get; set; }
-	public string OriginalValue { get; set; }
-	public Option OriginalSelectedOption { get; set; }
-	public string SetupQuestion { get; set; }
-	public string HelpString { get; set; }
-	public string Token { get; set; }
-	public string Offset { get; set; }
-	public string Width { get; set; }
-	public string BiosDefault { get; set; }
+	public List<string>? OriginalLines { get; set; }
+	public string? OriginalValue { get; set; }
+	public Option? OriginalSelectedOption { get; set; }
+	public string? SetupQuestion { get; set; }
+	public string? HelpString { get; set; }
+	public string? Token { get; set; }
+	public string? Offset { get; set; }
+	public string? Width { get; set; }
+	public string? BiosDefault { get; set; }
 	public bool IsRecommended { get; set; }
-	public string RecommendedValue { get; set; }
-	public Option RecommendedOption { get; set; }
+	public string? RecommendedValue { get; set; }
+	public Option? RecommendedOption { get; set; }
 
-	public string Value
+	public string? Value
 	{
 		get => _value;
 		set
@@ -69,7 +69,7 @@ public partial class BiosSettingModel : INotifyPropertyChanged, INotifyDataError
 
 	public List<Option> Options { get; set; } = [];
 
-	public Option SelectedOption
+	public Option? SelectedOption
 	{
 		get => _selectedOption;
 		set
@@ -102,19 +102,19 @@ public partial class BiosSettingModel : INotifyPropertyChanged, INotifyDataError
 		? SelectedOption != OriginalSelectedOption
 		: Value != OriginalValue;
 
-	public event EventHandler ModifiedChanged;
+	public event EventHandler? ModifiedChanged;
 
 	private void RaiseModifiedChanged()
 	{
 		ModifiedChanged?.Invoke(this, EventArgs.Empty);
 	}
 
-	public IEnumerable GetErrors(string propertyName)
+	public IEnumerable GetErrors(string? propertyName)
 	{
 		if (string.IsNullOrEmpty(propertyName))
 			return _warnings.Values.SelectMany(v => v);
 
-		return _warnings.TryGetValue(propertyName, out List<string>? warnings) ? warnings : null;
+		return _warnings.TryGetValue(propertyName, out List<string>? warnings) ? warnings : null!;
 	}
 
 	public bool HasErrors => _warnings.Count > 0;
@@ -149,44 +149,6 @@ public partial class BiosSettingModel : INotifyPropertyChanged, INotifyDataError
 			{
 				_warnings.Remove(optionPropertyName);
 				RaiseErrorsChanged(optionPropertyName);
-			}
-		}
-	}
-}
-
-public partial class Option : INotifyPropertyChanged
-{
-	private bool _isSelected;
-
-	public event PropertyChangedEventHandler PropertyChanged;
-	protected void OnPropertyChanged([CallerMemberName] string propertyName = null) =>
-		PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-
-	public string Index { get; set; }
-	public string Label { get; set; }
-
-	public BiosSettingModel Parent { get; set; }
-
-	public bool IsSelected
-	{
-		get => _isSelected;
-		set
-		{
-			if (_isSelected != value)
-			{
-				_isSelected = value;
-				OnPropertyChanged();
-
-				if (_isSelected && Parent != null)
-				{
-					foreach (Option opt in Parent.Options)
-					{
-						if (!ReferenceEquals(opt, this) && opt.IsSelected)
-							opt.IsSelected = false;
-					}
-
-					Parent.SelectedOption = this;
-				}
 			}
 		}
 	}

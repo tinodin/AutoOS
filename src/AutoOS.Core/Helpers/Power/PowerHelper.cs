@@ -1,4 +1,4 @@
-﻿using System.Runtime.InteropServices;
+using System.Diagnostics;
 using System.Text;
 using Windows.Win32;
 using Windows.Win32.Foundation;
@@ -6,17 +6,8 @@ using Windows.Win32.System.Power;
 
 namespace AutoOS.Core.Helpers.Power;
 
-namespace AutoOS.Core.Helpers.Power;
-
 public static unsafe class PowerHelper
 {
-    public static IntPtr AllocGuid(Guid guid)
-    {
-        IntPtr ptr = Marshal.AllocHGlobal(Marshal.SizeOf<Guid>());
-        Marshal.StructureToPtr(guid, ptr, false);
-        return ptr;
-    }
-
     public static string ReadFriendlyName(Guid scheme, Guid? subgroup, Guid? setting)
     {
         uint size = 512;
@@ -285,5 +276,18 @@ public static unsafe class PowerHelper
         {
             PInvoke.LocalFree((HLOCAL)destination);
         }
+    }
+
+    public static void ExportPowerScheme(Guid scheme, string path)
+    {
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powercfg.exe",
+            Arguments = @$"-export ""{path}"" {scheme:D}",
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+        using var process = Process.Start(startInfo);
+        process?.WaitForExit();
     }
 }

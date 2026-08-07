@@ -1,15 +1,16 @@
 using System.Text.RegularExpressions;
+using AutoOS.App.Data.Models.Bios;
 
-namespace AutoOS.Core.Helpers.BIOS;
+namespace AutoOS.App.Services.Bios;
 
-public partial class BiosSettingParser
+public partial class BiosSettingsParser
 {
-	public static IEnumerable<BiosSettingModel> ParseFromStream(Stream stream)
+	public static IEnumerable<BiosSettingsModel> ParseFromStream(Stream stream)
 	{
 		var lines = new List<string>();
 		using (var reader = new StreamReader(stream))
 		{
-			string line;
+			string? line;
 			while ((line = reader.ReadLine()) != null)
 			{
 				lines.Add(line);
@@ -19,9 +20,9 @@ public partial class BiosSettingParser
 		return ParseFromLines(lines);
 	}
 
-	public static IEnumerable<BiosSettingModel> ParseFromLines(IEnumerable<string> lines)
+	public static IEnumerable<BiosSettingsModel> ParseFromLines(IEnumerable<string> lines)
 	{
-		BiosSettingModel current = null;
+		BiosSettingsModel? current = null;
 		bool readingOptions = false;
 		var lineList = lines.ToList();
 
@@ -37,7 +38,7 @@ public partial class BiosSettingParser
 					yield return current;
 				}
 
-				current = new BiosSettingModel
+				current = new BiosSettingsModel
 				{
 					Line = i,
 					OriginalLines = lineList

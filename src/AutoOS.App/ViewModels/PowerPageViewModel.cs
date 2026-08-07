@@ -1,79 +1,82 @@
-﻿using AutoOS.Core.Helpers.Power;
-using CommunityToolkit.Mvvm.ComponentModel;
-using System.Collections;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Globalization;
-using Syncfusion.UI.Xaml.TreeGrid;
+using AutoOS.App.Data.Enums;
+using AutoOS.App.Data.Enums.Power;
+using AutoOS.App.Data.Models.Power;
+using AutoOS.App.Services;
+using AutoOS.App.Services.Power;
+using AutoOS.App.ViewModels.Dialogs.Power;
+using AutoOS.App.Views.Installer.Stages;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
-namespace AutoOS.ViewModels;
-
-public enum PowerPageMode
-{
-	Normal,
-	Comparison,
-	ViewChanges
-}
-
-public enum PowerNodeKind
-{
-	Subgroup,
-	Setting,
-	Message
-}
-
-public enum PowerProjectionKind
-{
-	Normal,
-	Comparison,
-	ViewChanges
-}
-
-public enum PowerFilterMode
-{
-	Contains,
-	ExactMatch
-}
+namespace AutoOS.App.ViewModels;
 
 public sealed partial class PowerPageViewModel : ObservableObject
 {
-	private static readonly PowerPlan EmptyComparePlan = new()
+	private static readonly Plan EmptyComparePlan = new(Guid.Empty, "None", "Select another Power Plan to compare.");
+
+	private const string POWER_SCHEME_FILTER_NAME = "Power Scheme Files";
+	private const string POWER_SCHEME_EXTENSIONS = "*.pow";
+
+	private readonly IPowerPlanService _powerService;
+	private readonly IDialogService _dialogService;
+	private readonly IFilePickerService _filePickerService;
+
+	private readonly Stack<Dictionary<Setting, Value>> _undoStates = [];
+	private readonly Stack<Dictionary<Setting, Value>> _redoStates = [];
+	private readonly Dictionary<Setting, Value> _comparisonValues = [];
+	private readonly Dictionary<Setting, SettingState> _values = [];
+	private readonly List<Setting> _settings = [];
+	private IReadOnlyList<Subgroup> _subgroups = [];
+	private Node? _editingNode = null;
+	private string _editingMappingName = string.Empty;
+	private bool _suppressActivePlanChange;
+	private bool _suppressComparePlanChange;
+
+	public PowerPageViewModel(IPowerPlanService powerService, IDialogService dialogService, IFilePickerService filePickerService)
 	{
-		Guid = Guid.Empty,
-		Name = "Select plan to compare",
-		Description = "Select a power plan to compare against the active plan.",
-		IsPlaceholder = true
-	};
+		_powerService = powerService;
+		_dialogService = dialogService;
+		_filePickerService = filePickerService;
+	}
 
-	private readonly Stack<List<PowerSettingValueState>> _undoStates = [];
-	private readonly Stack<List<PowerSettingValueState>> _redoStates = [];
-	private readonly Dictionary<PowerSettingKey, PowerValues> _comparisonValues = [];
-	private readonly Dictionary<PowerExpansionKey, bool> _expansion = [];
-	private readonly List<PowerSettingState> _settings = [];
-	private PowerTreeNode _editingNode;
-	private IReadOnlyList<PowerSubgroupState> _subgroups = [];
+	public Action? RefreshFilterAction { get; set; }
 
-	public Action RefreshFilterAction { get; set; }
+	public ObservableCollection<Plan> Plans { get; } = [];
 
-	public ObservableCollection<PowerPlan> PowerPlans { get; } = [];
+	public ObservableCollection<Plan> ComparePlans { get; } = [];
 
-	public ObservableCollection<PowerPlan> ComparePlans { get; } = [];
+	public ObservableCollection<Node> TreeNodes { get; } = [];
 
-	public ObservableCollection<PowerTreeNode> TreeNodes { get; } = [];
+	public ObservableCollection<Node> CompareNodes { get; } = [];
 
-	public ObservableCollection<PowerTreeNode> CompareNodes { get; } = [];
+	public ObservableCollection<Node> ChangeNodes { get; } = [];
 
-	public ObservableCollection<PowerTreeNode> ChangeNodes { get; } = [];
+	private bool HasComparePlan => ComparePlan != null && ComparePlan.Guid != Guid.Empty;
 
 	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(CanSave))]
+	[NotifyCanExecuteChangedFor(nameof(UndoCommand))]
+	[NotifyCanExecuteChangedFor(nameof(RedoCommand))]
+	[NotifyCanExecuteChangedFor(nameof(SaveChangesCommand))]
+	[NotifyCanExecuteChangedFor(nameof(ToggleViewChangesCommand))]
+	[NotifyCanExecuteChangedFor(nameof(RestoreCommand))]
+	[NotifyCanExecuteChangedFor(nameof(ImportCommand))]
 	public partial bool IsLoaded { get; set; }
 
 	[ObservableProperty]
-	public partial PowerPlan ActivePlan { get; set; }
+	public partial string SwitchValue { get; set; } = "Loading";
 
 	[ObservableProperty]
-	public partial PowerPlan ComparePlan { get; set; }
+	[NotifyCanExecuteChangedFor(nameof(EditCommand))]
+	[NotifyCanExecuteChangedFor(nameof(DuplicateCommand))]
+	[NotifyCanExecuteChangedFor(nameof(ExportCommand))]
+	[NotifyPropertyChangedFor(nameof(ActivePlanToolTip))]
+	public partial Plan ActivePlan { get; set; }
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(ComparePlanToolTip))]
+	public partial Plan ComparePlan { get; set; }
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(Mode))]
@@ -98,28 +101,23 @@ public sealed partial class PowerPageViewModel : ObservableObject
 	public partial bool FilterGuid { get; set; } = true;
 
 	[ObservableProperty]
-	public partial PowerFilterMode FilterMode { get; set; } = PowerFilterMode.Contains;
+	public partial FilterMode FilterMode { get; set; } = FilterMode.Contains;
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(ViewChangesLabel))]
-	[NotifyPropertyChangedFor(nameof(CanSave))]
+	[NotifyCanExecuteChangedFor(nameof(SaveChangesCommand))]
 	public partial int ModifiedCount { get; set; }
-
-	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(CanSave))]
-	public partial bool HasValidationErrors { get; set; }
-
-	[ObservableProperty]
-	public partial bool HasSearchResults { get; set; } = true;
-
-	[ObservableProperty]
-	public partial string ComparisonState { get; set; } = "Content";
 
 	public bool CanUndo => IsLoaded && _undoStates.Count > 0;
 
 	public bool CanRedo => IsLoaded && _redoStates.Count > 0;
 
-	public bool CanSave => IsLoaded && ModifiedCount > 0 && !HasValidationErrors;
+	public bool CanSave => IsLoaded && ModifiedCount > 0;
+
+	public bool CanDelete => Plans.Count > 1;
+
+	public bool CanRestore => IsLoaded;
+	public bool CanEditPlan => ActivePlan != null;
 
 	public string ViewChangesLabel => $"View Changes ({ModifiedCount})";
 
@@ -127,37 +125,41 @@ public sealed partial class PowerPageViewModel : ObservableObject
 
 	public string ActivePlanDcHeader => $"{ActivePlan?.Name ?? "Power Plan 1"} (DC)";
 
-	public string ComparePlanAcHeader => $"{(ComparePlan is { IsPlaceholder: false } ? ComparePlan.Name : "Power Plan 2")} (AC)";
+	public string ComparePlanAcHeader => $"{(HasComparePlan ? ComparePlan.Name : "Power Plan 2")} (AC)";
 
-	public string ComparePlanDcHeader => $"{(ComparePlan is { IsPlaceholder: false } ? ComparePlan.Name : "Power Plan 2")} (DC)";
+	public string ComparePlanDcHeader => $"{(HasComparePlan ? ComparePlan.Name : "Power Plan 2")} (DC)";
 
-	public Visibility NormalVisibility => Mode == PowerPageMode.Normal ? Visibility.Visible : Visibility.Collapsed;
+	public string ActivePlanToolTip => ActivePlan is { Description.Length: > 0 } plan ? plan.Description : ActivePlan?.Name ?? string.Empty;
 
-	public Visibility ComparisonVisibility => Mode == PowerPageMode.Comparison ? Visibility.Visible : Visibility.Collapsed;
+	public string ComparePlanToolTip => ComparePlan is { Description.Length: > 0 } plan ? plan.Description : ComparePlan?.Name ?? string.Empty;
 
-	public Visibility ViewChangesVisibility => Mode == PowerPageMode.ViewChanges ? Visibility.Visible : Visibility.Collapsed;
+	public Visibility NormalVisibility => Mode == PageMode.Normal ? Visibility.Visible : Visibility.Collapsed;
+
+	public Visibility ComparisonVisibility => Mode == PageMode.Comparison ? Visibility.Visible : Visibility.Collapsed;
+
+	public Visibility ViewChangesVisibility => Mode == PageMode.ViewChanges ? Visibility.Visible : Visibility.Collapsed;
 
 	public bool FilterContains
 	{
-		get => FilterMode == PowerFilterMode.Contains;
+		get => FilterMode == FilterMode.Contains;
 		set
 		{
 			if (value)
-				FilterMode = PowerFilterMode.Contains;
+				FilterMode = FilterMode.Contains;
 		}
 	}
 
 	public bool FilterExactMatch
 	{
-		get => FilterMode == PowerFilterMode.ExactMatch;
+		get => FilterMode == FilterMode.ExactMatch;
 		set
 		{
 			if (value)
-				FilterMode = PowerFilterMode.ExactMatch;
+				FilterMode = FilterMode.ExactMatch;
 		}
 	}
 
-	public PowerPageMode Mode => ViewChanges ? PowerPageMode.ViewChanges : ComparePlan is { IsPlaceholder: false } ? PowerPageMode.Comparison : PowerPageMode.Normal;
+	public PageMode Mode => ViewChanges ? PageMode.ViewChanges : HasComparePlan ? PageMode.Comparison : PageMode.Normal;
 
 	partial void OnSearchTextChanged(string value) => RefreshFilter();
 
@@ -171,36 +173,67 @@ public sealed partial class PowerPageViewModel : ObservableObject
 
 	partial void OnFilterGuidChanged(bool value) => RefreshFilter();
 
-	partial void OnFilterModeChanged(PowerFilterMode value)
+	partial void OnFilterModeChanged(FilterMode value)
 	{
 		OnPropertyChanged(nameof(FilterContains));
 		OnPropertyChanged(nameof(FilterExactMatch));
 		RefreshFilter();
 	}
 
+	partial void OnActivePlanChanged(Plan value)
+	{
+		if (value == null || _suppressActivePlanChange || !IsLoaded)
+			return;
+		_ = SwitchActivePlanAsync();
+	}
+
+	partial void OnComparePlanChanged(Plan value)
+	{
+		if (value == null || _suppressComparePlanChange)
+			return;
+		if (HasComparePlan)
+			ViewChanges = false;
+		_comparisonValues.Clear();
+		RefreshComparisonValues();
+		NotifyModeChanged();
+		NotifyPlanHeaders();
+		RefreshTrees();
+	}
+
+	private async Task SwitchActivePlanAsync()
+	{
+		_powerService.SetActiveScheme(ActivePlan.Guid);
+		RefreshComparePlans();
+		await ReloadActiveValuesAsync();
+	}
+
 	public void SetIsLoaded(bool isLoaded)
 	{
 		IsLoaded = isLoaded;
-		OnPropertyChanged(nameof(CanUndo));
-		OnPropertyChanged(nameof(CanRedo));
+		UndoCommand.NotifyCanExecuteChanged();
+		RedoCommand.NotifyCanExecuteChanged();
+		SaveChangesCommand.NotifyCanExecuteChanged();
 	}
 
-	public void SetPlans(IEnumerable<PowerPlan> plans, Guid activeGuid, bool selectFallback = true)
+	public void SetPlans(IEnumerable<Plan> plans, Guid activeGuid, bool selectFallback = true)
 	{
-		IsLoaded = false;
-		PowerPlans.Clear();
-		ComparePlans.Clear();
+		Plans.Clear();
 
-		foreach (var plan in plans)
-			PowerPlans.Add(plan);
+		foreach (Plan plan in plans)
+			Plans.Add(plan);
 
-		ActivePlan = PowerPlans.FirstOrDefault(plan => plan.Guid == activeGuid);
-		if (ActivePlan == null && selectFallback)
-			ActivePlan = PowerPlans.FirstOrDefault();
-		ComparePlans.Add(EmptyComparePlan);
-		foreach (var plan in PowerPlans.Where(plan => plan.Guid != ActivePlan?.Guid))
-			ComparePlans.Add(plan);
-		ComparePlan = EmptyComparePlan;
+		_suppressActivePlanChange = true;
+		try
+		{
+			ActivePlan = Plans.FirstOrDefault(plan => plan.Guid == activeGuid)!;
+			if (ActivePlan == null && selectFallback)
+				ActivePlan = Plans.FirstOrDefault()!;
+		}
+		finally
+		{
+			_suppressActivePlanChange = false;
+		}
+		RefreshComparePlans();
 		if (ActivePlan == null)
 		{
 			_subgroups = [];
@@ -213,51 +246,57 @@ public sealed partial class PowerPageViewModel : ObservableObject
 		}
 		NotifyModeChanged();
 		NotifyPlanHeaders();
+		OnPropertyChanged(nameof(CanDelete));
 	}
 
-	public void LoadActivePlan(PowerPlan plan, IReadOnlyList<PowerSubgroupState> subgroups)
+	private void LoadActivePlan(Plan plan, IReadOnlyList<Subgroup> subgroups, IReadOnlyDictionary<Setting, Value> initialValues)
 	{
 		IsLoaded = false;
 		ActivePlan = plan;
-		RefreshComparePlans();
 		_subgroups = subgroups;
 		_settings.Clear();
 		_settings.AddRange(subgroups.SelectMany(subgroup => subgroup.Settings));
+		_values.Clear();
+		foreach ((Setting setting, Value value) in initialValues)
+		{
+			_values[setting] = new SettingState
+			{
+				AcValue = value.AcValue,
+				DcValue = value.DcValue,
+				OriginalAcValue = value.AcValue,
+				OriginalDcValue = value.DcValue
+			};
+		}
+
 		_comparisonValues.Clear();
-		ComparePlan = ComparePlans.FirstOrDefault(item => item.IsPlaceholder);
+		RefreshComparisonValues();
 		ViewChanges = false;
 		NotifyModeChanged();
 		ResetHistory();
 		RefreshState();
 		IsLoaded = true;
 		NotifyPlanHeaders();
-		OnPropertyChanged(nameof(CanSave));
-		OnPropertyChanged(nameof(CanUndo));
-		OnPropertyChanged(nameof(CanRedo));
+		SaveChangesCommand.NotifyCanExecuteChanged();
+		UndoCommand.NotifyCanExecuteChanged();
+		RedoCommand.NotifyCanExecuteChanged();
 	}
 
-	public void SetComparePlan(PowerPlan plan)
+	public void SetComparePlan(Plan plan)
 	{
-		ComparePlan = plan ?? ComparePlans.FirstOrDefault(item => item.IsPlaceholder);
-		if (ComparePlan is { IsPlaceholder: false })
-			ViewChanges = false;
-		_comparisonValues.Clear();
+		ComparePlan = plan ?? ComparePlans.FirstOrDefault(item => item.Guid == Guid.Empty)!;
+	}
 
-		if (ComparePlan is { IsPlaceholder: false })
+	private void RefreshComparisonValues()
+	{
+		if (HasComparePlan)
 		{
-			foreach (var setting in _settings)
+			foreach (Setting setting in _settings)
 			{
-				if (PowerHelper.TryReadAcValueIndex(ComparePlan.Guid, setting.SubgroupGuid, setting.Guid, out uint acValue) &&
-					PowerHelper.TryReadDcValueIndex(ComparePlan.Guid, setting.SubgroupGuid, setting.Guid, out uint dcValue))
-				{
-					_comparisonValues[setting.Key] = new PowerValues(acValue, dcValue);
-				}
+				Value? value = _powerService.ReadValues(ComparePlan.Guid, setting.SubgroupGuid, setting.Guid);
+				if (value.HasValue)
+					_comparisonValues[setting] = value.Value;
 			}
 		}
-
-		NotifyModeChanged();
-		NotifyPlanHeaders();
-		RebuildTrees();
 	}
 
 	public void SetViewChanges(bool value)
@@ -265,13 +304,23 @@ public sealed partial class PowerPageViewModel : ObservableObject
 		ViewChanges = value;
 		if (value)
 		{
-			ComparePlan = ComparePlans.FirstOrDefault(item => item.IsPlaceholder);
+			_suppressComparePlanChange = true;
+			ComparePlan = ComparePlans.First(item => item.Guid == Guid.Empty)!;
+			_suppressComparePlanChange = false;
 			_comparisonValues.Clear();
 		}
 		NotifyModeChanged();
 		NotifyPlanHeaders();
-		RebuildTrees();
+		RefreshTrees();
 	}
+
+	[RelayCommand(CanExecute = nameof(CanToggleViewChanges))]
+	private void ToggleViewChanges()
+	{
+		SetViewChanges(ViewChanges);
+	}
+
+	public bool CanToggleViewChanges => IsLoaded;
 
 	public void NotifyPlanHeaders()
 	{
@@ -283,53 +332,101 @@ public sealed partial class PowerPageViewModel : ObservableObject
 
 	public void RefreshComparePlans()
 	{
+		Plan? previouslySelected = HasComparePlan ? ComparePlan : null;
 		ComparePlans.Clear();
 		ComparePlans.Add(EmptyComparePlan);
-		foreach (var plan in PowerPlans.Where(plan => plan.Guid != ActivePlan?.Guid))
+		foreach (Plan plan in Plans.Where(plan => plan.Guid != ActivePlan?.Guid))
 			ComparePlans.Add(plan);
-		ComparePlan = EmptyComparePlan;
+
+		_suppressComparePlanChange = true;
+		ComparePlan = previouslySelected != null && ComparePlans.Any(plan => plan.Guid == previouslySelected.Guid) ? previouslySelected : EmptyComparePlan;
+		_suppressComparePlanChange = false;
+		OnPropertyChanged(nameof(ComparePlan));
 	}
 
-	public async Task LoadPowerPlansAsync(Guid? preferredGuid = null)
+	public async Task LoadPlansAsync(Guid? preferredGuid = null)
 	{
+		SwitchValue = "Loading";
 		SetIsLoaded(false);
-		(List<PowerPlan> plans, Guid activeGuid) = await Task.Run(ReadPowerPlans);
-
+		IReadOnlyList<Plan> plans = await Task.Run(_powerService.GetPlans);
+		Guid activeGuid = await Task.Run(_powerService.GetActivePlanGuid);
 		bool hasTarget = preferredGuid.HasValue || activeGuid != Guid.Empty;
 		SetPlans(plans, preferredGuid ?? activeGuid, hasTarget);
-		if (ActivePlan == null)
+
+		(Plan plan, IReadOnlyList<Subgroup> subgroups, IReadOnlyDictionary<Setting, Value> values) = await Task.Run(() => _powerService.ReadCompleteScheme(ActivePlan.Guid));
+		LoadActivePlan(plan, subgroups, values);
+		SwitchValue = "Loaded";
+	}
+
+	private async Task ReloadActiveValuesAsync()
+	{
+		IReadOnlyDictionary<Setting, Value> values = await Task.Run(() => _powerService.ReadValues(ActivePlan.Guid, _settings));
+		ApplyNewSchemeValues(values);
+		ViewChanges = false;
+		NotifyModeChanged();
+		NotifyPlanHeaders();
+		RefreshTrees();
+	}
+
+	private void ApplyNewSchemeValues(IReadOnlyDictionary<Setting, Value> values)
+	{
+		foreach ((Setting setting, Value value) in values)
+		{
+			if (_values.TryGetValue(setting, out SettingState? current) && current is not null)
+			{
+				current.AcValue = value.AcValue;
+				current.DcValue = value.DcValue;
+				current.OriginalAcValue = value.AcValue;
+				current.OriginalDcValue = value.DcValue;
+			}
+		}
+
+		ModifiedCount = 0;
+		ResetHistory();
+	}
+
+	public async Task ImportPlanAsync(string filePath)
+	{
+		Guid importedGuid = await Task.Run(() => _powerService.ImportScheme(filePath));
+		if (importedGuid == Guid.Empty)
 			return;
 
-		IReadOnlyList<PowerSubgroupState> settings = await Task.Run(() => LoadPowerPlanSettings(ActivePlan.Guid));
-		LoadActivePlan(ActivePlan, settings);
+		_powerService.SetActiveScheme(importedGuid);
+		SetPlans(await Task.Run(_powerService.GetPlans), importedGuid);
+		await ReloadActiveValuesAsync();
 	}
 
-	public async Task SetActivePlanAsync(PowerPlan plan)
+	[RelayCommand(CanExecute = nameof(CanEditPlan))]
+	private async Task EditAsync()
 	{
-		if (plan == null || plan == ActivePlan)
+		if (ActivePlan is not Plan plan)
 			return;
 
-		PowerHelper.PowerSetActiveScheme(plan.Guid);
-		SetIsLoaded(false);
-		IReadOnlyList<PowerSubgroupState> settings = await Task.Run(() => LoadPowerPlanSettings(plan.Guid));
-		LoadActivePlan(plan, settings);
+		var editDialogViewModel = new EditDialogViewModel(plan.Name, plan.Description);
+		if (await _dialogService.ShowDialogAsync(editDialogViewModel) != DialogResult.Primary)
+			return;
+
+		Plan updated = _powerService.UpdatePlanMetadata(plan, editDialogViewModel.Name, editDialogViewModel.Description);
+		int index = Plans.IndexOf(plan);
+		if (index < 0)
+			return;
+		_suppressActivePlanChange = true;
+		if (ReferenceEquals(ActivePlan, plan))
+			ActivePlan = updated;
+		Plans[index] = updated;
+		_suppressActivePlanChange = false;
+		NotifyPlanHeaders();
 	}
 
-	public async Task RestoreDefaultPlansAsync()
+	[RelayCommand(CanExecute = nameof(CanEditPlan))]
+	private async Task DuplicateAsync()
 	{
-		PowerHelper.RestoreDefaultPowerSchemes();
-		await LoadPowerPlansAsync();
-	}
+		if (ActivePlan is not Plan plan)
+			return;
 
-	public async Task ImportPowerPlanAsync(string filePath)
-	{
-		Guid importedGuid = PowerHelper.ImportPowerScheme(filePath);
-		PowerHelper.PowerSetActiveScheme(importedGuid);
-		await LoadPowerPlansAsync(importedGuid);
-	}
+		if (await _dialogService.ShowConfirmationDialogAsync("Duplicate Power Plan", @$"Are you sure you want to duplicate ""{plan.Name}""?", "Yes", "No") != DialogResult.Primary)
+			return;
 
-	public async Task DuplicatePlanAsync(PowerPlan plan)
-	{
 		int number = 1;
 		string name;
 		do
@@ -337,152 +434,193 @@ public sealed partial class PowerPageViewModel : ObservableObject
 			name = number == 1 ? $"{plan.Name} - Copy" : $"{plan.Name} - Copy ({number})";
 			number++;
 		}
-		while (PowerPlans.Any(item => item.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase)));
+		while (Plans.Any(item => item.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase)));
 
-		Guid guid = PowerHelper.DuplicateScheme(plan.Guid, name, plan.Description);
-		PowerHelper.PowerSetActiveScheme(guid);
-		await LoadPowerPlansAsync(guid);
+		Guid guid = _powerService.DuplicateScheme(plan.Guid, name, plan.Description);
+		_powerService.SetActiveScheme(guid);
+		SetPlans(await Task.Run(_powerService.GetPlans), guid);
+		await ReloadActiveValuesAsync();
 	}
 
-	public async Task DeletePlanAsync(PowerPlan plan)
+	[RelayCommand(CanExecute = nameof(CanEditPlan))]
+	private async Task ExportAsync()
 	{
-		if (PowerPlans.Count <= 1)
+		if (ActivePlan is not Plan plan)
 			return;
 
-		int index = PowerPlans.IndexOf(plan);
-		PowerPlan nextPlan = index > 0 ? PowerPlans[index - 1] : PowerPlans[index + 1];
-		PowerHelper.PowerSetActiveScheme(nextPlan.Guid);
-		PowerHelper.DeleteScheme(plan.Guid);
-		await LoadPowerPlansAsync(nextPlan.Guid);
+		string? filePath = await _filePickerService.PickSaveFileAsync(POWER_SCHEME_FILTER_NAME, [POWER_SCHEME_EXTENSIONS], plan.Name);
+		if (filePath == null)
+			return;
+
+		await Task.Run(() => _powerService.ExportScheme(plan.Guid, filePath));
 	}
 
-	public void UpdatePlanMetadata(PowerPlan plan, string name, string description)
+	[RelayCommand(CanExecute = nameof(CanDelete))]
+	private async Task DeleteAsync()
 	{
-		PowerHelper.WriteSchemeFriendlyName(plan.Guid, name);
-		PowerHelper.WriteSchemeDescription(plan.Guid, description);
-		plan.Name = PowerHelper.ReadFriendlyName(plan.Guid, null, null);
-		plan.Description = PowerHelper.ReadDescription(plan.Guid);
-		NotifyPlanHeaders();
+		if (ActivePlan == null)
+			return;
+
+		if (await _dialogService.ShowConfirmationDialogAsync("Delete power plan", @$"Are you sure that you want to delete ""{ActivePlan.Name}""?", "Yes", "No") != DialogResult.Primary)
+			return;
+
+		Plan planToDelete = ActivePlan;
+		if (Plans.Count <= 1)
+			return;
+
+		int index = Plans.IndexOf(planToDelete);
+		Plan nextPlan = index > 0 ? Plans[index - 1] : Plans[index + 1];
+		_powerService.SetActiveScheme(nextPlan.Guid);
+		_powerService.DeleteScheme(planToDelete.Guid);
+		SetPlans(await Task.Run(_powerService.GetPlans), nextPlan.Guid);
+		await ReloadActiveValuesAsync();
 	}
 
-	private static (List<PowerPlan> Plans, Guid ActiveGuid) ReadPowerPlans()
+	[RelayCommand(CanExecute = nameof(CanRestore))]
+	private async Task RestoreAsync()
 	{
-		List<PowerPlan> plans = [];
-		foreach (Guid guid in PowerHelper.EnumerateSchemes())
-			plans.Add(new PowerPlan
-			{
-				Guid = guid,
-				Name = PowerHelper.ReadFriendlyName(guid, null, null),
-				Description = PowerHelper.ReadDescription(guid)
-			});
+		if (await _dialogService.ShowConfirmationDialogAsync("Restore default power plans", "Are you sure that you want to restore the default power plans and re-apply the AutoOS power plan?", "Yes", "No") != DialogResult.Primary)
+			return;
 
-		return (plans, PowerHelper.ReadActiveScheme());
-	}
-
-	private static List<PowerSubgroupState> LoadPowerPlanSettings(Guid scheme)
-	{
-		Guid noneSubgroupGuid = new("fea3413e-7e05-4911-9a71-700331f1c294");
-		List<PowerSubgroupState> subgroups = [];
-		var noneSubgroup = new PowerSubgroupState
+		foreach ((_, Func<Task>? action, Func<bool>? condition) in PowerStage.GetActions())
 		{
-			Guid = noneSubgroupGuid,
-			Name = "None"
-		};
-		foreach (var setting in EnumerateSettings(scheme, noneSubgroupGuid, null))
-			noneSubgroup.Settings.Add(setting);
-		subgroups.Add(noneSubgroup);
-
-		foreach (Guid subgroupGuid in PowerHelper.EnumerateSubgroups(scheme))
-		{
-			string name = subgroupGuid == new Guid("9596fb26-9850-41fd-ac3e-f7c3c00afd4b") ? "Multimedia settings" : PowerHelper.ReadFriendlyName(scheme, subgroupGuid, null);
-			if (string.IsNullOrWhiteSpace(name))
-				continue;
-
-			var subgroup = new PowerSubgroupState
-			{
-				Guid = subgroupGuid,
-				Name = name,
-				Description = PowerHelper.ReadDescription(scheme, subgroupGuid)
-			};
-			foreach (var setting in EnumerateSettings(scheme, subgroupGuid, subgroupGuid))
-				subgroup.Settings.Add(setting);
-			if (subgroup.Settings.Count > 0)
-				subgroups.Add(subgroup);
+			if (condition == null || condition())
+				await action();
 		}
 
-		subgroups.Remove(noneSubgroup);
-		subgroups.Insert(0, noneSubgroup);
-		return subgroups;
+		Guid activeGuid = await Task.Run(_powerService.GetActivePlanGuid);
+		SetPlans(await Task.Run(_powerService.GetPlans), activeGuid, activeGuid != Guid.Empty);
+		await ReloadActiveValuesAsync();
 	}
 
-	private static List<PowerSettingState> EnumerateSettings(Guid scheme, Guid subgroupGuid, Guid? enumerationSubgroup)
+	[RelayCommand(CanExecute = nameof(CanRestore))]
+	private async Task ImportAsync()
 	{
-		List<PowerSettingState> settings = [];
-		foreach (Guid settingGuid in PowerHelper.EnumerateSettings(scheme, enumerationSubgroup))
+		string? filePath = await _filePickerService.PickSingleFileAsync(POWER_SCHEME_FILTER_NAME, [POWER_SCHEME_EXTENSIONS], Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"));
+		if (filePath == null)
+			return;
+
+		await ImportPlanAsync(filePath);
+	}
+
+	private void RefreshTrees()
+	{
+		Node root = BuildTree(Mode);
+		switch (Mode)
 		{
-			if (!PowerHelper.TryReadAcValueIndex(scheme, subgroupGuid, settingGuid, out uint acValue) ||
-				!PowerHelper.TryReadDcValueIndex(scheme, subgroupGuid, settingGuid, out uint dcValue))
+			case PageMode.Normal:
+				TreeNodes.Clear();
+				TreeNodes.Add(root);
+				break;
+			case PageMode.Comparison:
+				CompareNodes.Clear();
+				CompareNodes.Add(root);
+				break;
+			case PageMode.ViewChanges:
+				ChangeNodes.Clear();
+				ChangeNodes.Add(root);
+				break;
+		}
+		RefreshFilter();
+	}
+
+	private Node BuildTree(PageMode mode)
+	{
+		string baseRootName = mode switch
+		{
+			PageMode.Comparison => "Differences",
+			PageMode.ViewChanges => "Changes",
+			_ => "All Settings"
+		};
+
+		var rootChildren = new List<Node>();
+		foreach (Subgroup subgroup in _subgroups)
+		{
+			var children = new List<Node>();
+			foreach (Setting setting in subgroup.Settings)
 			{
-				continue;
+				if (CreateSettingNode(setting, mode) is { } settingNode)
+					children.Add(settingNode);
 			}
 
-			uint? minimum = PowerHelper.TryReadValueMin(subgroupGuid, settingGuid, out uint minimumValue) ? minimumValue : null;
-			uint? maximum = PowerHelper.TryReadValueMax(subgroupGuid, settingGuid, out uint maximumValue) ? maximumValue : null;
-			uint? increment = PowerHelper.TryReadValueIncrement(subgroupGuid, settingGuid, out uint incrementValue) ? incrementValue : null;
-			var setting = new PowerSettingState
-			{
-				SubgroupGuid = subgroupGuid,
-				Guid = settingGuid,
-				Name = PowerHelper.ReadFriendlyName(scheme, subgroupGuid, settingGuid),
-				Description = PowerHelper.ReadDescription(scheme, subgroupGuid, settingGuid),
-				AcValue = acValue,
-				DcValue = dcValue,
-				OriginalAcValue = acValue,
-				OriginalDcValue = dcValue,
-				Minimum = minimum,
-				Maximum = maximum,
-				Increment = increment,
-				Unit = PowerHelper.ReadValueUnitsSpecifier(subgroupGuid, settingGuid)
-			};
-			if (string.IsNullOrWhiteSpace(setting.Name))
-				setting.Name = settingGuid.ToString();
-			setting.PrimeDisplayData();
-			settings.Add(setting);
+			if (children.Count == 0)
+				continue;
+
+			var subgroupNode = new Node(NodeKind.Subgroup, mode, $"{subgroup.Name} ({CountVisibleSettings(children)})", subgroup.Description, subgroup.Guid, baseDisplayName: subgroup.Name);
+			foreach (Node child in children)
+				subgroupNode.Children.Add(child);
+			rootChildren.Add(subgroupNode);
 		}
 
-		return settings;
+		int totalCount = CountVisibleSettings(rootChildren);
+		string rootDisplayName = string.IsNullOrWhiteSpace(SearchText) ? $"{baseRootName} ({totalCount})" : $"Results ({totalCount})";
+		var root = new Node(NodeKind.Root, mode, rootDisplayName, string.Empty, Guid.Empty, baseDisplayName: baseRootName);
+		foreach (Node child in rootChildren)
+			root.Children.Add(child);
+
+		return root;
 	}
 
-	private void NotifyModeChanged()
+	private Node? CreateSettingNode(Setting setting, PageMode mode)
 	{
-		OnPropertyChanged(nameof(Mode));
-		OnPropertyChanged(nameof(NormalVisibility));
-		OnPropertyChanged(nameof(ComparisonVisibility));
-		OnPropertyChanged(nameof(ViewChangesVisibility));
-	}
+		if (!_values.TryGetValue(setting, out SettingState? values) || values is null)
+			return null;
 
-	public void BeginEdit(PowerTreeNode node, string mappingName)
-	{
-        _editingNode?.ErrorsChanged -= EditingNode_ErrorsChanged;
-		_editingNode = node;
-		if (_editingNode == null)
-			return;
-		_editingNode.ErrorsChanged += EditingNode_ErrorsChanged;
-		_editingNode.BeginCellEdit(mappingName);
-		HasValidationErrors = _editingNode.HasErrors;
-	}
-
-	public bool CommitEdit(PowerTreeNode node, string mappingName)
-	{
-		if (node?.Setting == null)
-			return false;
-
-		var previous = CaptureState();
-		if (!node.CommitCellEdit(mappingName, out bool changed))
+		switch (mode)
 		{
-			HasValidationErrors = node.HasErrors;
-			return false;
+			case PageMode.Comparison:
+				if (!_comparisonValues.TryGetValue(setting, out Value compare))
+					return null;
+				bool isAcDifferent = !string.Equals(Node.GetDisplayValue(setting, values.AcValue), Node.GetDisplayValue(setting, compare.AcValue), StringComparison.Ordinal);
+				bool isDcDifferent = !string.Equals(Node.GetDisplayValue(setting, values.DcValue), Node.GetDisplayValue(setting, compare.DcValue), StringComparison.Ordinal);
+				if (!isAcDifferent && !isDcDifferent)
+					return null;
+				return new Node(NodeKind.Setting, mode, setting.Name, setting.Description, setting.Guid, setting, values, compare, isAcDifferent, isDcDifferent);
+			case PageMode.ViewChanges:
+				if (!values.IsModified)
+					return null;
+				return new Node(NodeKind.Setting, mode, setting.Name, setting.Description, setting.Guid, setting, values, isAcDifferent: values.AcValue != values.OriginalAcValue, isDcDifferent: values.DcValue != values.OriginalDcValue);
+			default:
+				return new Node(NodeKind.Setting, mode, setting.Name, setting.Description, setting.Guid, setting, values);
 		}
+	}
+
+	public void BeginEdit(Node? node, string mappingName)
+	{
+		_editingNode = node;
+		_editingMappingName = mappingName;
+		if (node is not { Setting: { } setting, IsAdjustable: true })
+			return;
+		if (!_values.TryGetValue(setting, out SettingState? values) || values is null)
+			return;
+
+		if (mappingName == nameof(Node.DisplayAc))
+		{
+			if (node.HasOptions)
+				values.EditAcOption = setting.Options.FirstOrDefault(option => option.Index == values.AcValue);
+			else
+				values.EditAcValue = values.AcValue.ToString(CultureInfo.InvariantCulture);
+		}
+		else if (mappingName == nameof(Node.DisplayDc))
+		{
+			if (node.HasOptions)
+				values.EditDcOption = setting.Options.FirstOrDefault(option => option.Index == values.DcValue);
+			else
+				values.EditDcValue = values.DcValue.ToString(CultureInfo.InvariantCulture);
+		}
+	}
+
+	public bool CommitEdit(Node? node)
+	{
+		if (node?.Setting is not Setting setting)
+			return false;
+
+		if (!_values.TryGetValue(setting, out SettingState? values) || values is null)
+			return false;
+
+		Dictionary<Setting, Value> previous = CaptureState();
+		if (!ApplyEditedValue(setting, values, out bool changed))
+			return false;
 
 		FinishEdit();
 		if (!changed)
@@ -490,16 +628,97 @@ public sealed partial class PowerPageViewModel : ObservableObject
 
 		_undoStates.Push(previous);
 		_redoStates.Clear();
+		if (Mode == PageMode.Normal && CreateSettingNode(setting, Mode) is { } replacement)
+			ReplaceNodeInCollection(node, replacement);
 		RefreshState(false);
 		return true;
 	}
 
-	public void CancelEdit(PowerTreeNode node)
+	private bool ApplyEditedValue(Setting setting, SettingState values, out bool changed)
 	{
-		(node ?? _editingNode)?.CancelCellEdit();
-		FinishEdit();
+		changed = false;
+		if (_editingMappingName == nameof(Node.DisplayAc))
+		{
+			if (!TryGetEditedValue(setting, values.EditAcValue, values.EditAcOption, out uint value))
+				return false;
+			changed = value != values.AcValue;
+			if (changed)
+				values.AcValue = value;
+		}
+		else if (_editingMappingName == nameof(Node.DisplayDc))
+		{
+			if (!TryGetEditedValue(setting, values.EditDcValue, values.EditDcOption, out uint value))
+				return false;
+			changed = value != values.DcValue;
+			if (changed)
+				values.DcValue = value;
+		}
+
+		return true;
 	}
 
+	private static bool TryGetEditedValue(Setting setting, string text, Option? option, out uint value)
+	{
+		if (setting.Options.Count > 0)
+		{
+			value = option?.Index ?? 0;
+			return option != null;
+		}
+
+		value = 0;
+		if (!setting.Minimum.HasValue || !setting.Maximum.HasValue || !setting.Increment.HasValue)
+			return false;
+
+		if (!ulong.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out ulong wide))
+			return false;
+
+		value = wide > uint.MaxValue ? uint.MaxValue : (uint)wide;
+		if (value < setting.Minimum!.Value || value > setting.Maximum!.Value)
+			return false;
+
+		return true;
+	}
+
+	private void ReplaceNodeInCollection(Node oldNode, Node newNode)
+	{
+		ObservableCollection<Node> collection = Mode switch
+		{
+			PageMode.Comparison => CompareNodes,
+			PageMode.ViewChanges => ChangeNodes,
+			_ => TreeNodes
+		};
+		if (collection.Count == 0)
+			return;
+
+		newNode.IsExpanded = oldNode.IsExpanded;
+		if (TryReplaceInChildren(collection[0], oldNode, newNode))
+			return;
+
+		if (ReferenceEquals(collection[0], oldNode))
+			collection[0] = newNode;
+		else
+			RefreshTrees();
+	}
+
+	private bool TryReplaceInChildren(Node parent, Node oldNode, Node newNode)
+	{
+		for (int i = 0; i < parent.Children.Count; i++)
+		{
+			Node child = parent.Children[i];
+			if (ReferenceEquals(child, oldNode))
+			{
+				parent.Children[i] = newNode;
+				return true;
+			}
+
+			if (TryReplaceInChildren(child, oldNode, newNode))
+				return true;
+		}
+
+		return false;
+	}
+
+	[RelayCommand(CanExecute = nameof(CanUndo))]
 	public void Undo()
 	{
 		if (!CanUndo)
@@ -510,6 +729,7 @@ public sealed partial class PowerPageViewModel : ObservableObject
 		RefreshState();
 	}
 
+	[RelayCommand(CanExecute = nameof(CanRedo))]
 	public void Redo()
 	{
 		if (!CanRedo)
@@ -522,118 +742,50 @@ public sealed partial class PowerPageViewModel : ObservableObject
 
 	public void DiscardChanges()
 	{
-		foreach (var setting in _settings)
-			setting.SetValues(setting.OriginalAcValue, setting.OriginalDcValue);
+		foreach (Setting setting in _settings)
+		{
+			SettingState values = _values[setting];
+			values.AcValue = values.OriginalAcValue;
+			values.DcValue = values.OriginalDcValue;
+		}
 
 		ResetHistory();
 		RefreshState();
 	}
 
-	public PowerSaveResult SaveChanges()
+	[RelayCommand(CanExecute = nameof(CanSave))]
+	private void SaveChanges()
 	{
 		if (!CanSave || ActivePlan == null)
-			return new PowerSaveResult(false, "There are no power setting changes to save.");
+			return;
 
-		var modified = _settings.Where(setting => setting.IsModified).ToList();
-		var errors = new List<string>();
-		var successfulWrites = new List<SuccessfulPowerWrite>();
-
-		foreach (var setting in modified)
+		var changes = new List<(Setting Setting, Value Value)>();
+		foreach (Setting setting in _settings.Where(setting => _values[setting].IsModified))
 		{
-			if (setting.AcValue != setting.OriginalAcValue)
-			{
-				uint result = PowerHelper.WriteACValueIndex(ActivePlan.Guid, setting.SubgroupGuid, setting.Guid, setting.AcValue);
-				if (result != 0)
-					errors.Add($"{setting.Name} (AC): error {result}");
-				else
-					successfulWrites.Add(new SuccessfulPowerWrite(setting, true, setting.OriginalAcValue));
-			}
-
-			if (setting.DcValue != setting.OriginalDcValue)
-			{
-				uint result = PowerHelper.WriteDCValueIndex(ActivePlan.Guid, setting.SubgroupGuid, setting.Guid, setting.DcValue);
-				if (result != 0)
-					errors.Add($"{setting.Name} (DC): error {result}");
-				else
-					successfulWrites.Add(new SuccessfulPowerWrite(setting, false, setting.OriginalDcValue));
-			}
+			SettingState values = _values[setting];
+			changes.Add((setting, new Value(values.AcValue, values.DcValue)));
+			values.OriginalAcValue = values.AcValue;
+			values.OriginalDcValue = values.DcValue;
 		}
 
-		if (errors.Count > 0)
-		{
-			errors.AddRange(RollbackWrites(successfulWrites));
-			return new PowerSaveResult(false, string.Join(Environment.NewLine, errors));
-		}
-
-		foreach (var setting in modified)
-		{
-			bool readAc = PowerHelper.TryReadAcValueIndex(ActivePlan.Guid, setting.SubgroupGuid, setting.Guid, out uint acValue);
-			bool readDc = PowerHelper.TryReadDcValueIndex(ActivePlan.Guid, setting.SubgroupGuid, setting.Guid, out uint dcValue);
-			if (!readAc || !readDc || acValue != setting.AcValue || dcValue != setting.DcValue)
-			{
-				var readbackErrors = new List<string> { $"Windows did not retain the requested value for {setting.Name}." };
-				readbackErrors.AddRange(RollbackWrites(successfulWrites));
-				return new PowerSaveResult(false, string.Join(Environment.NewLine, readbackErrors));
-			}
-		}
-
-		uint activationResult = PowerHelper.PowerSetActiveScheme(ActivePlan.Guid);
-		if (activationResult != 0)
-		{
-			var activationErrors = new List<string> { $"Windows could not activate the updated power plan: error {activationResult}" };
-			activationErrors.AddRange(RollbackWrites(successfulWrites));
-			return new PowerSaveResult(false, string.Join(Environment.NewLine, activationErrors));
-		}
-
-		foreach (var setting in modified)
-			setting.AcceptCurrentValues();
-
+		_powerService.CommitChanges(ActivePlan.Guid, changes);
 		ResetHistory();
 		RefreshState();
-		return new PowerSaveResult(true, string.Empty);
-	}
-
-	private IEnumerable<string> RollbackWrites(IEnumerable<SuccessfulPowerWrite> writes)
-	{
-		var errors = new List<string>();
-		bool wroteAny = false;
-		foreach (var write in writes.Reverse())
-		{
-			wroteAny = true;
-			uint result;
-			if (write.IsAc)
-				result = PowerHelper.WriteACValueIndex(ActivePlan.Guid, write.Setting.SubgroupGuid, write.Setting.Guid, write.OriginalValue);
-			else
-				result = PowerHelper.WriteDCValueIndex(ActivePlan.Guid, write.Setting.SubgroupGuid, write.Setting.Guid, write.OriginalValue);
-			if (result != 0)
-				errors.Add($"Rollback failed for {write.Setting.Name} ({(write.IsAc ? "AC" : "DC")}): error {result}");
-		}
-
-		if (wroteAny && errors.Count == 0)
-		{
-			uint activationResult = PowerHelper.PowerSetActiveScheme(ActivePlan.Guid);
-			if (activationResult != 0)
-				errors.Add($"Rollback activation failed: error {activationResult}");
-		}
-		return errors;
 	}
 
 	public bool MatchesFilter(object item)
 	{
-		if (item is not PowerTreeNode node)
+		if (item is not Node node)
 			return true;
 
 		string query = SearchText?.Trim() ?? string.Empty;
 		if (query.Length == 0)
 			return true;
 
-		if (node.NodeKind == PowerNodeKind.Message)
-			return false;
-
 		return NodeOrDescendantMatches(node, query);
 	}
 
-	private bool NodeOrDescendantMatches(PowerTreeNode node, string query)
+	private bool NodeOrDescendantMatches(Node node, string query)
 	{
 		if (NodeMatches(node, query))
 			return true;
@@ -641,9 +793,9 @@ public sealed partial class PowerPageViewModel : ObservableObject
 		return node.Children.Any(child => NodeOrDescendantMatches(child, query));
 	}
 
-	private bool NodeMatches(PowerTreeNode node, string query)
+	private bool NodeMatches(Node node, string query)
 	{
-		var setting = node.Setting;
+		Setting? setting = node.Setting;
 		if (setting == null)
 			return false;
 
@@ -653,24 +805,26 @@ public sealed partial class PowerPageViewModel : ObservableObject
 			return true;
 		if (FilterGuid && (TextMatches(setting.Guid.ToString(), query) || TextMatches(setting.SubgroupGuid.ToString(), query)))
 			return true;
-		if (FilterAc && ValuesMatch(setting, query, true))
+		if (FilterAc && ValuesMatch(node, query, true))
 			return true;
-		if (FilterDc && ValuesMatch(setting, query, false))
+		if (FilterDc && ValuesMatch(node, query, false))
 			return true;
 
 		return false;
 	}
 
-	private bool ValuesMatch(PowerSettingState setting, string query, bool isAc)
+	private bool ValuesMatch(Node node, string query, bool isAc)
 	{
-		uint[] values = Mode switch
+		Setting setting = node.Setting!;
+		SettingState values = _values[setting];
+		uint[] candidates = Mode switch
 		{
-			PowerPageMode.Comparison when _comparisonValues.TryGetValue(setting.Key, out var comparison) => isAc ? new[] { setting.AcValue, comparison.AcValue } : new[] { setting.DcValue, comparison.DcValue },
-			PowerPageMode.ViewChanges => isAc ? new[] { setting.OriginalAcValue, setting.AcValue } : new[] { setting.OriginalDcValue, setting.DcValue },
-			_ => isAc ? new[] { setting.AcValue } : new[] { setting.DcValue }
+			PageMode.Comparison when _comparisonValues.TryGetValue(setting, out Value comparison) => isAc ? [values.AcValue, comparison.AcValue] : [values.DcValue, comparison.DcValue],
+			PageMode.ViewChanges => isAc ? [values.OriginalAcValue, values.AcValue] : [values.OriginalDcValue, values.DcValue],
+			_ => isAc ? [values.AcValue] : [values.DcValue]
 		};
 
-		return values.Any(value => TextMatches(setting.GetDisplayValue(value), query) || TextMatches(value.ToString(CultureInfo.InvariantCulture), query));
+		return candidates.Any(value => TextMatches(Node.GetDisplayValue(setting, value), query) || TextMatches(value.ToString(CultureInfo.InvariantCulture), query));
 	}
 
 	private bool TextMatches(string text, string query)
@@ -678,148 +832,135 @@ public sealed partial class PowerPageViewModel : ObservableObject
 		if (string.IsNullOrWhiteSpace(text))
 			return false;
 
-		return FilterMode == PowerFilterMode.ExactMatch ? text.Equals(query, StringComparison.OrdinalIgnoreCase) : text.Contains(query, StringComparison.OrdinalIgnoreCase);
+		return FilterMode == FilterMode.ExactMatch ? text.Equals(query, StringComparison.OrdinalIgnoreCase) : text.Contains(query, StringComparison.OrdinalIgnoreCase);
 	}
 
 	public void RefreshFilter()
 	{
-		string query = SearchText?.Trim() ?? string.Empty;
-		IEnumerable<PowerTreeNode> nodes = Mode switch
-		{
-			PowerPageMode.Comparison => CompareNodes,
-			PowerPageMode.ViewChanges => ChangeNodes,
-			_ => TreeNodes
-		};
-		HasSearchResults = query.Length == 0 || nodes.Any(node => MatchesFilter(node));
 		RefreshFilterAction?.Invoke();
+	}
+
+	public void UpdateNodeCounts()
+	{
+		RecountCollection(TreeNodes);
+		RecountCollection(CompareNodes);
+		RecountCollection(ChangeNodes);
+	}
+
+	private void RecountCollection(ObservableCollection<Node> collection)
+	{
+		if (collection.Count == 0)
+			return;
+
+		Node oldRoot = collection[0];
+		Node newRoot = RebuildCountedNode(oldRoot);
+		newRoot.IsExpanded = oldRoot.IsExpanded;
+		collection[0] = newRoot;
+	}
+
+	private Node RebuildCountedNode(Node node)
+	{
+		if (node.NodeKind == NodeKind.Setting)
+			return node;
+
+		var children = new List<Node>(node.Children.Count);
+		foreach (Node child in node.Children)
+			children.Add(RebuildCountedNode(child));
+
+		int count = CountVisibleSettings(children);
+		string displayName = node.NodeKind == NodeKind.Root && !string.IsNullOrWhiteSpace(SearchText)
+			? $"Results ({count})"
+			: $"{node.BaseDisplayName} ({count})";
+
+		var rebuilt = new Node(node.NodeKind, node.Mode, displayName, node.Description, node.Guid, baseDisplayName: node.BaseDisplayName);
+		rebuilt.IsExpanded = node.IsExpanded;
+		foreach (Node child in children)
+			rebuilt.Children.Add(child);
+		return rebuilt;
+	}
+
+	private int CountVisibleSettings(IEnumerable<Node> nodes)
+	{
+		int count = 0;
+		foreach (Node node in nodes)
+		{
+			if (node.NodeKind == NodeKind.Setting)
+			{
+				if (IsVisible(node))
+				{
+					if (node.Mode == PageMode.Normal)
+						count++;
+					else
+					{
+						if (node.IsAcDifferent)
+							count++;
+						if (node.IsDcDifferent)
+							count++;
+					}
+				}
+			}
+			else
+			{
+				count += CountVisibleSettings(node.Children);
+			}
+		}
+
+		return count;
+	}
+
+	private bool IsVisible(Node node)
+	{
+		string query = SearchText?.Trim() ?? string.Empty;
+		return query.Length == 0 || NodeMatches(node, query);
 	}
 
 	public void RefreshAfterEdit()
 	{
-		if (Mode == PowerPageMode.Normal)
+		if (Mode == PageMode.Normal)
 			RefreshFilter();
 		else
-			RebuildTrees();
+			RefreshTrees();
 	}
 
 	private void RefreshState(bool rebuildTree = true)
 	{
-		ModifiedCount = _settings.Count(setting => setting.IsModified);
-		OnPropertyChanged(nameof(CanUndo));
-		OnPropertyChanged(nameof(CanRedo));
-		OnPropertyChanged(nameof(CanSave));
+		ModifiedCount = _settings.Sum(setting => CountModifiedValues(_values[setting]));
+		UndoCommand.NotifyCanExecuteChanged();
+		RedoCommand.NotifyCanExecuteChanged();
+		SaveChangesCommand.NotifyCanExecuteChanged();
 		if (rebuildTree)
-			RebuildTrees();
+			RefreshTrees();
 	}
 
-	private void EditingNode_ErrorsChanged(object sender, DataErrorsChangedEventArgs e)
+	private static int CountModifiedValues(SettingState values)
 	{
-		HasValidationErrors = _editingNode?.HasErrors == true;
+		int count = 0;
+		if (values.AcValue != values.OriginalAcValue)
+			count++;
+		if (values.DcValue != values.OriginalDcValue)
+			count++;
+		return count;
 	}
 
 	private void FinishEdit()
 	{
-		if (_editingNode != null)
-			_editingNode.ErrorsChanged -= EditingNode_ErrorsChanged;
 		_editingNode = null;
-		HasValidationErrors = false;
 	}
 
-	private void RebuildTrees()
+	private Dictionary<Setting, Value> CaptureState() => _settings.ToDictionary(setting => setting, setting =>
 	{
-		CaptureExpansion(TreeNodes, _expansion);
-		CaptureExpansion(CompareNodes, _expansion);
-		CaptureExpansion(ChangeNodes, _expansion);
+		SettingState values = _values[setting];
+		return new Value(values.AcValue, values.DcValue);
+	});
 
-		TreeNodes.Clear();
-		CompareNodes.Clear();
-		ChangeNodes.Clear();
-		BuildNormalTree(_expansion);
-		BuildComparisonTree(_expansion);
-		BuildChangesTree(_expansion);
-
-		RefreshFilter();
-	}
-
-	private void BuildNormalTree(IReadOnlyDictionary<PowerExpansionKey, bool> expansion)
+	private void RestoreState(IEnumerable<KeyValuePair<Setting, Value>> state)
 	{
-		foreach (var subgroup in _subgroups)
+		foreach ((Setting setting, Value value) in state)
 		{
-			var subgroupNode = PowerTreeNode.CreateSubgroup(subgroup, GetExpansion(expansion, PowerNodeKind.Subgroup, subgroup.Guid));
-			foreach (var setting in subgroup.Settings)
-				subgroupNode.Children.Add(PowerTreeNode.CreateSetting(setting));
-			TreeNodes.Add(subgroupNode);
+			SettingState values = _values[setting];
+			values.AcValue = value.AcValue;
+			values.DcValue = value.DcValue;
 		}
-
-		if (TreeNodes.Count == 0)
-			TreeNodes.Add(PowerTreeNode.CreateMessage("No power settings found"));
-	}
-
-	private void BuildComparisonTree(IReadOnlyDictionary<PowerExpansionKey, bool> expansion)
-	{
-		foreach (var subgroup in _subgroups)
-		{
-			var subgroupNode = PowerTreeNode.CreateSubgroup(subgroup, GetExpansion(expansion, PowerNodeKind.Subgroup, subgroup.Guid));
-			foreach (var setting in subgroup.Settings)
-			{
-				if (!_comparisonValues.TryGetValue(setting.Key, out var compareValues))
-					continue;
-
-				bool isAcDifferent = !string.Equals(setting.GetDisplayValue(setting.AcValue), setting.GetDisplayValue(compareValues.AcValue), StringComparison.Ordinal);
-				bool isDcDifferent = !string.Equals(setting.GetDisplayValue(setting.DcValue), setting.GetDisplayValue(compareValues.DcValue), StringComparison.Ordinal);
-				if (!isAcDifferent && !isDcDifferent)
-					continue;
-
-				subgroupNode.Children.Add(PowerTreeNode.CreateComparison(setting, compareValues.AcValue, compareValues.DcValue, isAcDifferent, isDcDifferent));
-			}
-
-			if (subgroupNode.Children.Count > 0)
-				CompareNodes.Add(subgroupNode);
-		}
-
-		ComparisonState = CompareNodes.Count == 0 ? "Identical" : "Content";
-	}
-
-	private void BuildChangesTree(IReadOnlyDictionary<PowerExpansionKey, bool> expansion)
-	{
-		foreach (var subgroup in _subgroups)
-		{
-			var subgroupNode = PowerTreeNode.CreateSubgroup(subgroup, GetExpansion(expansion, PowerNodeKind.Subgroup, subgroup.Guid));
-			foreach (var setting in subgroup.Settings.Where(setting => setting.IsModified))
-			{
-				bool isAcDifferent = setting.AcValue != setting.OriginalAcValue;
-				bool isDcDifferent = setting.DcValue != setting.OriginalDcValue;
-				subgroupNode.Children.Add(PowerTreeNode.CreateViewChanges(setting, isAcDifferent, isDcDifferent));
-			}
-
-			if (subgroupNode.Children.Count > 0)
-				ChangeNodes.Add(subgroupNode);
-		}
-
-		if (ChangeNodes.Count == 0)
-			ChangeNodes.Add(PowerTreeNode.CreateMessage("No changes"));
-	}
-
-	private static void CaptureExpansion(IEnumerable<PowerTreeNode> nodes, IDictionary<PowerExpansionKey, bool> expansion)
-	{
-		foreach (var node in nodes)
-		{
-			if (node.Children.Count > 0)
-				expansion[GetExpansionKey(node)] = node.IsExpanded;
-			CaptureExpansion(node.Children, expansion);
-		}
-	}
-
-	private static PowerExpansionKey GetExpansionKey(PowerTreeNode node) => new(node.NodeKind, node.Guid, node.Setting?.SubgroupGuid ?? Guid.Empty);
-
-	private static bool GetExpansion(IReadOnlyDictionary<PowerExpansionKey, bool> expansion, PowerNodeKind kind, Guid guid, Guid parentGuid = default) => !expansion.TryGetValue(new PowerExpansionKey(kind, guid, parentGuid), out bool expanded) || expanded;
-
-	private List<PowerSettingValueState> CaptureState() => [.. _settings.Select(setting => new PowerSettingValueState(setting, setting.AcValue, setting.DcValue))];
-
-	private static void RestoreState(IEnumerable<PowerSettingValueState> state)
-	{
-		foreach (var item in state)
-			item.Setting.SetValues(item.AcValue, item.DcValue);
 	}
 
 	private void ResetHistory()
@@ -827,592 +968,15 @@ public sealed partial class PowerPageViewModel : ObservableObject
 		FinishEdit();
 		_undoStates.Clear();
 		_redoStates.Clear();
-		OnPropertyChanged(nameof(CanUndo));
-		OnPropertyChanged(nameof(CanRedo));
+		UndoCommand.NotifyCanExecuteChanged();
+		RedoCommand.NotifyCanExecuteChanged();
 	}
 
-	private sealed record PowerSettingValueState(PowerSettingState Setting, uint AcValue, uint DcValue);
-
-	private sealed record SuccessfulPowerWrite(PowerSettingState Setting, bool IsAc, uint OriginalValue);
-}
-
-public readonly record struct PowerSettingKey(Guid SubgroupGuid, Guid SettingGuid);
-
-public readonly record struct PowerExpansionKey(PowerNodeKind NodeKind, Guid Guid, Guid ParentGuid);
-
-public readonly record struct PowerValues(uint AcValue, uint DcValue);
-
-public sealed record PowerSaveResult(bool Succeeded, string ErrorMessage);
-
-[WinRT.GeneratedBindableCustomProperty]
-public sealed partial class PowerPlan : ObservableObject
-{
-	[ObservableProperty]
-	public partial Guid Guid { get; set; }
-
-	[ObservableProperty]
-	public partial string Name { get; set; } = string.Empty;
-
-	[ObservableProperty]
-	public partial string Description { get; set; } = string.Empty;
-
-	[ObservableProperty]
-	public partial bool IsPlaceholder { get; set; }
-}
-
-public sealed partial class PowerSubgroupState : ObservableObject
-{
-	[ObservableProperty]
-	public partial Guid Guid { get; set; }
-
-	[ObservableProperty]
-	public partial string Name { get; set; } = string.Empty;
-
-	[ObservableProperty]
-	public partial string Description { get; set; } = string.Empty;
-
-	public ObservableCollection<PowerSettingState> Settings { get; } = [];
-}
-
-public sealed partial class PowerSettingState : ObservableObject
-{
-	private readonly Dictionary<uint, string> _descriptionCache = [];
-	private readonly Dictionary<uint, string> _friendlyNameCache = [];
-	private bool _optionsLoaded;
-
-	public PowerSettingKey Key => new(SubgroupGuid, Guid);
-
-	[ObservableProperty]
-	public partial Guid SubgroupGuid { get; set; }
-
-	[ObservableProperty]
-	public partial Guid Guid { get; set; }
-
-	[ObservableProperty]
-	public partial string Name { get; set; } = string.Empty;
-
-	[ObservableProperty]
-	public partial string Description { get; set; } = string.Empty;
-
-	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(IsModified))]
-	public partial uint AcValue { get; set; }
-
-	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(IsModified))]
-	public partial uint DcValue { get; set; }
-
-	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(IsModified))]
-	public partial uint OriginalAcValue { get; set; }
-
-	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(IsModified))]
-	public partial uint OriginalDcValue { get; set; }
-
-	[ObservableProperty]
-	public partial uint? Minimum { get; set; }
-
-	[ObservableProperty]
-	public partial uint? Maximum { get; set; }
-
-	[ObservableProperty]
-	public partial uint? Increment { get; set; }
-
-	[ObservableProperty]
-	public partial string Unit { get; set; } = string.Empty;
-
-	public ObservableCollection<PowerSettingOption> Options { get; } = [];
-
-	public bool HasOptions => Options.Count > 0;
-
-	public bool IsOptionSetting => !(Minimum.HasValue && Maximum.HasValue && Increment.HasValue && Maximum.Value > Minimum.Value && Increment.Value > 0);
-
-	public bool IsModified => AcValue != OriginalAcValue || DcValue != OriginalDcValue;
-
-	public void LoadOptions()
+	private void NotifyModeChanged()
 	{
-		if (_optionsLoaded)
-			return;
-		_optionsLoaded = true;
-		Options.Clear();
-		if (!IsOptionSetting)
-			return;
-		for (uint index = 0; index < 4096; index++)
-		{
-			string friendlyName = PowerHelper.ReadPossibleFriendlyName(SubgroupGuid, Guid, index);
-			if (string.IsNullOrWhiteSpace(friendlyName))
-				break;
-
-			string description = PowerHelper.ReadPossibleDescription(SubgroupGuid, Guid, index);
-			_friendlyNameCache[index] = friendlyName;
-			_descriptionCache[index] = description;
-			Options.Add(new PowerSettingOption
-			{
-				Index = index,
-				FriendlyName = friendlyName,
-				Description = description
-			});
-		}
-	}
-
-	public void PrimeDisplayData()
-	{
-		GetDisplayValue(AcValue);
-		GetDisplayValue(DcValue);
-		GetValueToolTip(AcValue);
-		GetValueToolTip(DcValue);
-	}
-
-	public string GetDisplayValue(uint value)
-	{
-		if (!IsOptionSetting)
-			return value.ToString(CultureInfo.InvariantCulture);
-
-		if (!_friendlyNameCache.TryGetValue(value, out string friendlyName))
-		{
-			friendlyName = PowerHelper.ReadPossibleFriendlyName(SubgroupGuid, Guid, value);
-			_friendlyNameCache[value] = friendlyName ?? string.Empty;
-		}
-
-		return string.IsNullOrWhiteSpace(friendlyName) ? value.ToString(CultureInfo.InvariantCulture) : friendlyName;
-	}
-
-	public string GetValueToolTip(uint value)
-	{
-		if (IsOptionSetting)
-		{
-			if (!_descriptionCache.TryGetValue(value, out string description))
-			{
-				description = PowerHelper.ReadPossibleDescription(SubgroupGuid, Guid, value);
-				_descriptionCache[value] = description ?? string.Empty;
-			}
-			return description ?? string.Empty;
-		}
-
-		var lines = new List<string>();
-		if (Minimum.HasValue && Maximum.HasValue)
-			lines.Add($"Range: {Minimum.Value} - {Maximum.Value}");
-		if (Increment.HasValue)
-			lines.Add($"Increment: {Increment.Value}");
-		if (!string.IsNullOrWhiteSpace(Unit))
-			lines.Add($"Unit: {char.ToUpperInvariant(Unit[0])}{Unit[1..]}");
-		return string.Join(Environment.NewLine, lines);
-	}
-
-	public PowerSettingOption GetOption(uint value) => Options.FirstOrDefault(option => option.Index == value);
-
-	public bool TryParseValue(string text, out uint value, out string error)
-	{
-		if (!uint.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out value))
-		{
-			error = "Enter a whole number from 0 to 4294967295.";
-			return false;
-		}
-
-		if (Minimum.HasValue && value < Minimum.Value)
-		{
-			error = $"Value must be at least {Minimum.Value}.";
-			return false;
-		}
-
-		if (Maximum.HasValue && value > Maximum.Value)
-		{
-			error = $"Value must not exceed {Maximum.Value}.";
-			return false;
-		}
-
-		if (Increment.HasValue && Increment.Value > 0 && Minimum.HasValue && (value - Minimum.Value) % Increment.Value != 0)
-		{
-			error = $"Value must use increments of {Increment.Value} from {Minimum.Value}.";
-			return false;
-		}
-
-		error = string.Empty;
-		return true;
-	}
-
-	public void SetValues(uint acValue, uint dcValue)
-	{
-		AcValue = acValue;
-		DcValue = dcValue;
-		OnPropertyChanged(nameof(IsModified));
-	}
-
-	public void AcceptCurrentValues()
-	{
-		OriginalAcValue = AcValue;
-		OriginalDcValue = DcValue;
-		OnPropertyChanged(nameof(IsModified));
-	}
-}
-
-[WinRT.GeneratedBindableCustomProperty]
-public sealed partial class PowerSettingOption : ObservableObject
-{
-	[ObservableProperty]
-	public partial uint Index { get; set; }
-
-	[ObservableProperty]
-	public partial string FriendlyName { get; set; } = string.Empty;
-
-	[ObservableProperty]
-	public partial string Description { get; set; } = string.Empty;
-}
-
-[WinRT.GeneratedBindableCustomProperty]
-public sealed partial class PowerTreeNode : ObservableObject, INotifyDataErrorInfo
-{
-	private readonly Dictionary<string, string> _errors = [];
-	private uint _compareAcValue;
-	private uint _compareDcValue;
-	private string _editAcValue = string.Empty;
-	private string _editDcValue = string.Empty;
-	private PowerSettingOption _editAcOption;
-	private PowerSettingOption _editDcOption;
-
-	public event EventHandler<DataErrorsChangedEventArgs> ErrorsChanged;
-
-	public PowerNodeKind NodeKind { get; private init; }
-
-	public PowerProjectionKind ProjectionKind { get; private init; }
-
-	public PowerSettingState Setting { get; private init; }
-
-	public ObservableCollection<PowerTreeNode> Children { get; } = [];
-
-	[ObservableProperty]
-	public partial Guid Guid { get; set; }
-
-	[ObservableProperty]
-	public partial string DisplayName { get; set; } = string.Empty;
-
-	[ObservableProperty]
-	public partial string Description { get; set; } = string.Empty;
-
-	[ObservableProperty]
-	public partial bool IsExpanded { get; set; } = true;
-
-	public bool HasValues => NodeKind == PowerNodeKind.Setting;
-
-	public uint AcValue => Setting?.AcValue ?? 0;
-
-	public uint DcValue => Setting?.DcValue ?? 0;
-
-	public string DisplayAc => HasValues ? Setting?.GetDisplayValue(AcValue) ?? string.Empty : string.Empty;
-
-	public string DisplayDc => HasValues ? Setting?.GetDisplayValue(DcValue) ?? string.Empty : string.Empty;
-
-	public string AcToolTip => HasValues ? Setting?.GetValueToolTip(AcValue) ?? string.Empty : string.Empty;
-
-	public string DcToolTip => HasValues ? Setting?.GetValueToolTip(DcValue) ?? string.Empty : string.Empty;
-
-	public string DisplayCompareAc => HasValues ? Setting?.GetDisplayValue(_compareAcValue) ?? string.Empty : string.Empty;
-
-	public string DisplayCompareDc => HasValues ? Setting?.GetDisplayValue(_compareDcValue) ?? string.Empty : string.Empty;
-
-	public string CompareAcToolTip => HasValues ? Setting?.GetValueToolTip(_compareAcValue) ?? string.Empty : string.Empty;
-
-	public string CompareDcToolTip => HasValues ? Setting?.GetValueToolTip(_compareDcValue) ?? string.Empty : string.Empty;
-
-	public string DisplayOriginalAc => HasValues ? Setting?.GetDisplayValue(Setting.OriginalAcValue) ?? string.Empty : string.Empty;
-
-	public string DisplayOriginalDc => HasValues ? Setting?.GetDisplayValue(Setting.OriginalDcValue) ?? string.Empty : string.Empty;
-
-	public string OriginalAcToolTip => HasValues ? Setting?.GetValueToolTip(Setting.OriginalAcValue) ?? string.Empty : string.Empty;
-
-	public string OriginalDcToolTip => HasValues ? Setting?.GetValueToolTip(Setting.OriginalDcValue) ?? string.Empty : string.Empty;
-
-	public ObservableCollection<PowerSettingOption> Options => Setting?.Options;
-
-	public bool HasOptions => Setting?.HasOptions == true;
-
-	public bool IsAcDifferent { get; private init; }
-
-	public bool IsDcDifferent { get; private init; }
-
-	public bool HasAcError => _errors.ContainsKey(nameof(DisplayAc));
-
-	public bool HasDcError => _errors.ContainsKey(nameof(DisplayDc));
-
-	public string EditAcValue
-	{
-		get => _editAcValue;
-		set
-		{
-			if (SetProperty(ref _editAcValue, value))
-				ValidateValue(nameof(DisplayAc), value);
-		}
-	}
-
-	public string EditDcValue
-	{
-		get => _editDcValue;
-		set
-		{
-			if (SetProperty(ref _editDcValue, value))
-				ValidateValue(nameof(DisplayDc), value);
-		}
-	}
-
-	public PowerSettingOption EditAcOption
-	{
-		get => _editAcOption;
-		set
-		{
-			if (SetProperty(ref _editAcOption, value))
-				OnPropertyChanged(nameof(EditAcToolTip));
-		}
-	}
-
-	public PowerSettingOption EditDcOption
-	{
-		get => _editDcOption;
-		set
-		{
-			if (SetProperty(ref _editDcOption, value))
-				OnPropertyChanged(nameof(EditDcToolTip));
-		}
-	}
-
-	public string EditAcToolTip => HasOptions ? EditAcOption?.Description ?? string.Empty : Setting?.GetValueToolTip(AcValue) ?? string.Empty;
-
-	public string EditDcToolTip => HasOptions ? EditDcOption?.Description ?? string.Empty : Setting?.GetValueToolTip(DcValue) ?? string.Empty;
-
-	public bool HasErrors => _errors.Count > 0;
-
-	public static PowerTreeNode CreateSubgroup(PowerSubgroupState subgroup, bool isExpanded) => new()
-	{
-		NodeKind = PowerNodeKind.Subgroup,
-		Guid = subgroup.Guid,
-		DisplayName = subgroup.Name,
-		Description = subgroup.Description,
-		IsExpanded = isExpanded
-	};
-
-	public static PowerTreeNode CreateSetting(PowerSettingState setting) => new()
-	{
-		NodeKind = PowerNodeKind.Setting,
-		ProjectionKind = PowerProjectionKind.Normal,
-		Guid = setting.Guid,
-		DisplayName = setting.Name,
-		Description = setting.Description,
-		Setting = setting
-	};
-
-	public static PowerTreeNode CreateComparison(PowerSettingState setting, uint compareAcValue, uint compareDcValue, bool isAcDifferent, bool isDcDifferent) => new()
-	{
-		NodeKind = PowerNodeKind.Setting,
-		ProjectionKind = PowerProjectionKind.Comparison,
-		Guid = setting.Guid,
-		DisplayName = setting.Name,
-		Description = setting.Description,
-		Setting = setting,
-		_compareAcValue = compareAcValue,
-		_compareDcValue = compareDcValue,
-		IsAcDifferent = isAcDifferent,
-		IsDcDifferent = isDcDifferent
-	};
-
-	public static PowerTreeNode CreateViewChanges(PowerSettingState setting, bool isAcDifferent, bool isDcDifferent) => new()
-	{
-		NodeKind = PowerNodeKind.Setting,
-		ProjectionKind = PowerProjectionKind.ViewChanges,
-		Guid = setting.Guid,
-		DisplayName = setting.Name,
-		Description = setting.Description,
-		Setting = setting,
-		IsAcDifferent = isAcDifferent,
-		IsDcDifferent = isDcDifferent
-	};
-
-	public static PowerTreeNode CreateMessage(string message) => new()
-	{
-		NodeKind = PowerNodeKind.Message,
-		DisplayName = message
-	};
-
-	public void BeginCellEdit(string mappingName)
-	{
-		ClearErrors();
-		Setting.LoadOptions();
-		OnPropertyChanged(nameof(HasOptions));
-		OnPropertyChanged(nameof(Options));
-		if (mappingName == nameof(DisplayAc))
-		{
-			if (HasOptions)
-				EditAcOption = Setting.GetOption(Setting.AcValue);
-			else
-				EditAcValue = Setting.AcValue.ToString(CultureInfo.InvariantCulture);
-		}
-		else if (mappingName == nameof(DisplayDc))
-		{
-			if (HasOptions)
-				EditDcOption = Setting.GetOption(Setting.DcValue);
-			else
-				EditDcValue = Setting.DcValue.ToString(CultureInfo.InvariantCulture);
-		}
-	}
-
-	public void CancelCellEdit() => ClearErrors();
-
-	public bool CommitCellEdit(string mappingName, out bool changed)
-	{
-		changed = false;
-		if (Setting == null || NodeKind != PowerNodeKind.Setting || Children.Count > 0)
-			return false;
-
-		if (mappingName == nameof(DisplayAc))
-		{
-			if (!TryGetEditedValue(mappingName, EditAcValue, EditAcOption, out uint value))
-				return false;
-			changed = value != Setting.AcValue;
-			if (changed)
-				Setting.AcValue = value;
-		}
-		else if (mappingName == nameof(DisplayDc))
-		{
-			if (!TryGetEditedValue(mappingName, EditDcValue, EditDcOption, out uint value))
-				return false;
-			changed = value != Setting.DcValue;
-			if (changed)
-				Setting.DcValue = value;
-		}
-
-		if (changed)
-		{
-			OnPropertyChanged(nameof(DisplayAc));
-			OnPropertyChanged(nameof(DisplayDc));
-			OnPropertyChanged(nameof(AcToolTip));
-			OnPropertyChanged(nameof(DcToolTip));
-		}
-
-		return true;
-	}
-
-	public IEnumerable GetErrors(string propertyName)
-	{
-		if (propertyName != null && _errors.TryGetValue(propertyName, out string error))
-			return new[] { error };
-		return Array.Empty<string>();
-	}
-
-	private bool TryGetEditedValue(string mappingName, string text, PowerSettingOption option, out uint value)
-	{
-		if (HasOptions)
-		{
-			value = option?.Index ?? 0;
-			if (option != null)
-			{
-				ClearError(mappingName);
-				return true;
-			}
-
-			SetError(mappingName, "Select a value.");
-			return false;
-		}
-
-		if (Setting.TryParseValue(text, out value, out string error))
-		{
-			ClearError(mappingName);
-			return true;
-		}
-
-		SetError(mappingName, error);
-		return false;
-	}
-
-	private void ValidateValue(string mappingName, string text)
-	{
-		if (Setting == null || HasOptions)
-			return;
-
-		if (Setting.TryParseValue(text, out _, out string error))
-			ClearError(mappingName);
-		else
-			SetError(mappingName, error);
-	}
-
-	private void SetError(string propertyName, string error)
-	{
-		if (_errors.TryGetValue(propertyName, out string existing) && existing == error)
-			return;
-
-		_errors[propertyName] = error;
-		ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(propertyName));
-		OnPropertyChanged(nameof(HasErrors));
-		OnPropertyChanged(propertyName == nameof(DisplayAc) ? nameof(HasAcError) : nameof(HasDcError));
-	}
-
-	private void ClearError(string propertyName)
-	{
-		if (!_errors.Remove(propertyName))
-			return;
-
-		ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(propertyName));
-		OnPropertyChanged(nameof(HasErrors));
-		OnPropertyChanged(propertyName == nameof(DisplayAc) ? nameof(HasAcError) : nameof(HasDcError));
-	}
-
-	private void ClearErrors()
-	{
-		foreach (string propertyName in _errors.Keys.ToList())
-			ClearError(propertyName);
-	}
-}
-
-public sealed partial class PowerEditTemplateSelector : DataTemplateSelector
-{
-	public DataTemplate ComboBoxTemplate { get; set; }
-
-	public DataTemplate TextBoxTemplate { get; set; }
-
-	protected override DataTemplate SelectTemplateCore(object item, DependencyObject container)
-	{
-		if (item is not PowerTreeNode { NodeKind: PowerNodeKind.Setting, HasValues: true } node)
-			return null;
-		return node.HasOptions ? ComboBoxTemplate : TextBoxTemplate;
-	}
-}
-
-public sealed partial class PowerCellStyleSelector : StyleSelector
-{
-	public Style CriticalStyle { get; set; }
-
-	public Style SuccessStyle { get; set; }
-
-	public Style CautionStyle { get; set; }
-
-	protected override Style SelectStyleCore(object item, DependencyObject container)
-	{
-		if (item is not PowerTreeNode node || container is not TreeGridCell cell)
-			return null;
-
-		string mappingName = cell.ColumnBase?.TreeGridColumn?.MappingName;
-		bool isActiveAc = mappingName == nameof(PowerTreeNode.DisplayAc);
-		bool isActiveDc = mappingName == nameof(PowerTreeNode.DisplayDc);
-		bool isAc = mappingName is nameof(PowerTreeNode.DisplayAc) or nameof(PowerTreeNode.DisplayCompareAc) or nameof(PowerTreeNode.DisplayOriginalAc);
-		bool isDc = mappingName is nameof(PowerTreeNode.DisplayDc) or nameof(PowerTreeNode.DisplayCompareDc) or nameof(PowerTreeNode.DisplayOriginalDc);
-		if (!isAc && !isDc)
-			return null;
-
-		if (isActiveAc && node.HasAcError || isActiveDc && node.HasDcError)
-			return CautionStyle;
-
-		bool isDifferent = isAc ? node.IsAcDifferent : node.IsDcDifferent;
-		if (!isDifferent)
-			return null;
-
-		if (mappingName is nameof(PowerTreeNode.DisplayCompareAc) or nameof(PowerTreeNode.DisplayCompareDc))
-			return SuccessStyle;
-		if (mappingName is nameof(PowerTreeNode.DisplayOriginalAc) or nameof(PowerTreeNode.DisplayOriginalDc))
-			return CriticalStyle;
-
-		return node.ProjectionKind switch
-		{
-			PowerProjectionKind.Comparison => CriticalStyle,
-			PowerProjectionKind.ViewChanges => SuccessStyle,
-			_ => null
-		};
+		OnPropertyChanged(nameof(Mode));
+		OnPropertyChanged(nameof(NormalVisibility));
+		OnPropertyChanged(nameof(ComparisonVisibility));
+		OnPropertyChanged(nameof(ViewChangesVisibility));
 	}
 }

@@ -13,9 +13,9 @@
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:sfdata="using:Syncfusion.UI.Xaml.DataGrid"
 	xmlns:sfgrid="using:Syncfusion.UI.Xaml.TreeGrid"
-	xmlns:templateselectors="using:AutoOS.App.Data.TemplateSelectors"
+	xmlns:templateselectors="using:AutoOS.App.Data.TemplateSelectors.Benchmarks"
 	xmlns:uc="using:AutoOS.App.UserControls"
-	xmlns:viewmodel="using:AutoOS.App.ViewModels"
+	xmlns:viewmodels="using:AutoOS.App.ViewModels"
 	mc:Ignorable="d">
 	<Page.Resources>
 
@@ -26,8 +26,8 @@
 			TrueValue="False" />
 
 		<!--  Cell style selector  -->
-		<templateselectors:StatisticsCellStyleSelector
-			x:Key="StatisticsCellStyleSelector"
+		<templateselectors:CellStyleSelector
+			x:Key="CellStyleSelector"
 			CriticalStyle="{StaticResource CriticalCellStyle}"
 			SuccessStyle="{StaticResource SuccessCellStyle}" />
 
@@ -1196,7 +1196,7 @@
 									HeaderText="Statistic"
 									MappingName="Statistic">
 									<sfgrid:TreeGridTemplateColumn.CellTemplate>
-										<DataTemplate x:DataType="viewmodel:ResultRow">
+										<DataTemplate x:DataType="viewmodels:ResultRow">
 											<TextBlock
 												Margin="12,0"
 												VerticalAlignment="Center"
@@ -1212,7 +1212,7 @@
 								<sfgrid:TreeGridTextColumn
 									x:Name="StatisticsRecordingAColumn"
 									helpers:StarRatio.ColumnRatio="1"
-									CellStyleSelector="{StaticResource StatisticsCellStyleSelector}"
+									CellStyleSelector="{StaticResource CellStyleSelector}"
 									HeaderText="{x:Bind ViewModel.RecordingAHeader, Mode=OneWay}"
 									MappingName="RecordingA" />
 
@@ -1220,7 +1220,7 @@
 								<sfgrid:TreeGridTextColumn
 									x:Name="StatisticsRecordingBColumn"
 									helpers:StarRatio.ColumnRatio="1"
-									CellStyleSelector="{StaticResource StatisticsCellStyleSelector}"
+									CellStyleSelector="{StaticResource CellStyleSelector}"
 									HeaderText="{x:Bind ViewModel.RecordingBHeader, Mode=OneWay}"
 									MappingName="RecordingB" />
 
@@ -1228,7 +1228,7 @@
 								<sfgrid:TreeGridTextColumn
 									x:Name="StatisticsDeltaColumn"
 									helpers:StarRatio.ColumnRatio="1"
-									CellStyleSelector="{StaticResource StatisticsCellStyleSelector}"
+									CellStyleSelector="{StaticResource CellStyleSelector}"
 									HeaderText="{x:Bind ViewModel.DeltaHeader, Mode=OneWay}"
 									MappingName="Delta" />
 							</sfgrid:SfTreeGrid.Columns>

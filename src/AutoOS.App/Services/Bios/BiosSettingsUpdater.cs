@@ -1,15 +1,16 @@
 ﻿using System.Text.RegularExpressions;
+using AutoOS.App.Data.Models.Bios;
 using AutoOS.Core.Helpers.Logging;
 using DevWinUI;
 
-namespace AutoOS.Core.Helpers.BIOS;
+namespace AutoOS.App.Services.Bios;
 
-public static class BiosSettingUpdater
+public static class BiosSettingsUpdater
 {
-	public static void SaveSingleSetting(BiosSettingModel setting)
+	public static void SaveSingleSetting(BiosSettingsModel setting)
 	{
 		// get lines from nvram
-		List<string> lines = setting.OriginalLines;
+		List<string> lines = setting.OriginalLines!;
 
 		// update settings
 		if (setting.HasValueField)
@@ -25,13 +26,13 @@ public static class BiosSettingUpdater
 		File.WriteAllLines(Path.Combine(PathHelper.GetAppDataFolderPath(), "SCEWIN", "nvram.txt"), lines);
 	}
 
-	public static void SaveAllSettings(IEnumerable<BiosSettingModel> modifiedSettings)
+	public static void SaveAllSettings(IEnumerable<BiosSettingsModel> modifiedSettings)
 	{
 		// get lines from nvram
-		List<string> lines = modifiedSettings.First().OriginalLines;
+		List<string> lines = modifiedSettings.First().OriginalLines!;
 
 		// update settings
-		foreach (BiosSettingModel setting in modifiedSettings)
+		foreach (BiosSettingsModel setting in modifiedSettings)
 		{
 			if (setting.HasValueField)
 			{
@@ -47,8 +48,10 @@ public static class BiosSettingUpdater
 		File.WriteAllLines(Path.Combine(PathHelper.GetAppDataFolderPath(), "SCEWIN", "nvram.txt"), lines);
 	}
 
-	public static void UpdateValue(BiosSettingModel setting, List<string> lines = null)
+	public static void UpdateValue(BiosSettingsModel setting, List<string>? lines)
 	{
+		if (lines == null)
+			return;
 		if (setting.Line < 0 || setting.Line >= lines.Count)
 			return;
 
@@ -100,8 +103,10 @@ public static class BiosSettingUpdater
 		}
 	}
 
-	public static void UpdateOption(BiosSettingModel setting, List<string> lines = null)
+	public static void UpdateOption(BiosSettingsModel setting, List<string>? lines)
 	{
+		if (lines == null)
+			return;
 		if (setting.Line < 0 || setting.Line >= lines.Count)
 			return;
 
@@ -137,7 +142,7 @@ public static class BiosSettingUpdater
 		{
 			string opt = m.Value;
 			Match idm = Regex.Match(opt, @"\*?\[(\w+)\]");
-			string idx = idm.Success ? idm.Groups[1].Value : null;
+			string? idx = idm.Success ? idm.Groups[1].Value : null;
 			string withoutStar = opt.TrimStart('*');
 
 			if (setting.SelectedOption == null)
@@ -170,7 +175,7 @@ public static class BiosSettingUpdater
 			if (trimmed.StartsWith('[') || trimmed.StartsWith("*["))
 			{
 				Match idxM = Regex.Match(trimmed, @"^\*?\[(\w+)\]");
-				string idx = idxM.Success ? idxM.Groups[1].Value : null;
+				string? idx = idxM.Success ? idxM.Groups[1].Value : null;
 				string indent = original[..(original.Length - trimmed.Length)];
 				string withoutStar = trimmed.StartsWith('*') ? trimmed[1..] : trimmed;
 

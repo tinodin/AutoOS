@@ -1,4 +1,4 @@
-namespace AutoOS.App.Data.Enums;
+namespace AutoOS.App.Data.Enums.Benchmarks;
 
 public enum ComparisonResult
 {

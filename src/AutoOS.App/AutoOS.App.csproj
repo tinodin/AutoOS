@@ -65,6 +65,7 @@
     <PackageReference Include="CommunityToolkit.WinUI.Converters" />
     <PackageReference Include="DevWinUI" />
     <PackageReference Include="Sep" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Windows.CsWin32" />
     <PackageReference Include="Microsoft.Windows.CsWinRT" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" />

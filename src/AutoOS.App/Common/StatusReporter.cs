@@ -1,6 +1,6 @@
-using AutoOS.Core.Common;
 using AutoOS.App.Views.Installer;
 using AutoOS.App.Views.Updater;
+using AutoOS.Core.Common;
 
 namespace AutoOS.App.Common;
 

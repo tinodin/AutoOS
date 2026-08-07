@@ -1,8 +1,12 @@
-using AutoOS.Core;
-using AutoOS.Core.Helpers.Logging;
 using AutoOS.App.Views;
 using AutoOS.App.Views.Installer.Stages;
 using AutoOS.App.Views.Startup;
+using AutoOS.App.Services;
+using AutoOS.App.Services.Power;
+using AutoOS.App.ViewModels;
+using AutoOS.Core.Helpers.Logging;
+using CommunityToolkit.Mvvm.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
@@ -24,9 +28,17 @@ public partial class App : Application
 	internal static double Scaling { get; set; }
 	private readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 
+	private static IServiceProvider BuildServiceProvider() => new ServiceCollection()
+		.AddSingleton<IFilePickerService, FilePickerService>()
+		.AddSingleton<IDialogService, DialogService>()
+		.AddSingleton<IPowerPlanService, PowerPlanService>()
+		.AddSingleton<PowerPageViewModel>()
+		.BuildServiceProvider();
+
 	public App()
 	{
 		InitializeComponent();
+		Ioc.Default.ConfigureServices(BuildServiceProvider());
 		NavService = new JsonNavigationService();
 		IsInstalled = (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\AutoOS", "IsInstalled", 0) as int? ?? 0) == 1 || Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS")?.GetValue("Stage") as string == "Installed";
 		Application.Current.UnhandledException += Current_UnhandledException;

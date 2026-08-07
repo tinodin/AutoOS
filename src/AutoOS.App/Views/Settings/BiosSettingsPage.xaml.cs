@@ -1,9 +1,11 @@
 using System.Diagnostics;
-using AutoOS.Core.Helpers.BIOS;
+using AutoOS.App.Data.Enums.Bios;
+using AutoOS.App.Data.Models.Bios;
+using AutoOS.App.Services.Bios;
+using AutoOS.App.ViewModels;
+using AutoOS.App.Views.Installer.Stages;
 using AutoOS.Core.Helpers.Logging;
 using AutoOS.Core.Helpers.Picker;
-using AutoOS.App.Views.Installer.Stages;
-using AutoOS.App.Views.Settings.BIOS;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.VisualBasic.FileIO;
 using Microsoft.Win32;
@@ -11,6 +13,7 @@ using Syncfusion.UI.Xaml.Data;
 using Syncfusion.UI.Xaml.DataGrid;
 using Syncfusion.UI.Xaml.Grids;
 using Syncfusion.UI.Xaml.TreeGrid;
+using TreeNode = Syncfusion.UI.Xaml.TreeGrid.TreeNode;
 using Windows.Storage;
 using Windows.System;
 
@@ -20,7 +23,7 @@ public sealed partial class BiosSettingsPage : Page
 {
 	private readonly string nvram = Path.Combine(PathHelper.GetAppDataFolderPath(), "SCEWIN", "nvram.txt");
 	private readonly string backupDirectory = Path.Combine(PathHelper.GetAppDataFolderPath(), "SCEWIN", "Backups");
-	public BiosSettingViewModel ViewModel { get; } = new();
+	public BiosSettingsPageViewModel ViewModel { get; } = new();
 
 	public BiosSettingsPage()
 	{
@@ -77,8 +80,8 @@ public sealed partial class BiosSettingsPage : Page
 		{
 			if (key != null)
 			{
-				manufacturer = key.GetValue("BaseBoardManufacturer")?.ToString().ToLowerInvariant() ?? "Unknown";
-				product = key.GetValue("BaseBoardProduct")?.ToString().ToUpperInvariant() ?? "Unknown";
+				manufacturer = key.GetValue("BaseBoardManufacturer")?.ToString()?.ToLowerInvariant() ?? "Unknown";
+				product = key.GetValue("BaseBoardProduct")?.ToString()?.ToUpperInvariant() ?? "Unknown";
 			}
 		}
 
@@ -156,8 +159,8 @@ public sealed partial class BiosSettingsPage : Page
 		if (existingBackups.Count > 0)
 		{
 			string[] lastBackupLines = await File.ReadAllLinesAsync(existingBackups[0]);
-			var currentSettings = BiosSettingParser.ParseFromLines(currentLines).ToList();
-			var backupSettings = BiosSettingParser.ParseFromLines(lastBackupLines).ToList();
+			var currentSettings = BiosSettingsParser.ParseFromLines(currentLines).ToList();
+			var backupSettings = BiosSettingsParser.ParseFromLines(lastBackupLines).ToList();
 
 			bool isEqual = true;
 			if (currentSettings.Count != backupSettings.Count)
@@ -168,8 +171,8 @@ public sealed partial class BiosSettingsPage : Page
 			{
 				for (int i = 0; i < currentSettings.Count; i++)
 				{
-					BiosSettingModel currentSetting = currentSettings[i];
-					BiosSettingModel backupSetting = backupSettings[i];
+					BiosSettingsModel currentSetting = currentSettings[i];
+					BiosSettingsModel backupSetting = backupSettings[i];
 
 					if (currentSetting.SetupQuestion != backupSetting.SetupQuestion || currentSetting.Value != backupSetting.Value || currentSetting.Options.Count != backupSetting.Options.Count)
 					{
@@ -185,7 +188,8 @@ public sealed partial class BiosSettingsPage : Page
 							break;
 						}
 					}
-					if (!isEqual) break;
+					if (!isEqual)
+						break;
 				}
 			}
 			needsBackup = !isEqual;
@@ -208,14 +212,14 @@ public sealed partial class BiosSettingsPage : Page
 		}
 
 		// parse
-		List<BiosSettingModel> parsedList;
+		List<BiosSettingsModel> parsedList;
 
 		using FileStream stream = File.OpenRead(nvram);
 		parsedList = await Task.Run(() =>
 		{
-			var settings = BiosSettingParser.ParseFromStream(stream).ToList();
+			var settings = BiosSettingsParser.ParseFromStream(stream).ToList();
 
-			foreach (BiosSettingModel? setting in settings)
+			foreach (BiosSettingsModel? setting in settings)
 			{
 				foreach (Option option in setting.Options)
 					option.Parent = setting;
@@ -228,15 +232,15 @@ public sealed partial class BiosSettingsPage : Page
 				if (setting.HasOptions)
 					setting.OriginalSelectedOption = setting.SelectedOption;
 
-				var matchingRules = BiosSettingRecommendationsList.Rules
+				var matchingRules = Recommendations.Rules
 					.Where(rule => string.Equals(rule.SetupQuestion?.Trim(), setting.SetupQuestion?.Trim(), StringComparison.OrdinalIgnoreCase))
 					.Where(rule => rule.Condition == null || rule.Condition(settings))
 					.OrderByDescending(rule => rule.Condition != null)
 					.ToList();
 
-				foreach (BiosSettingRecommendation? rule in matchingRules)
+				foreach (Recommendation? rule in matchingRules)
 				{
-					string recommendedLabel = rule.RecommendedOption?.Trim().ToLowerInvariant();
+					string? recommendedLabel = rule.RecommendedOption?.Trim().ToLowerInvariant();
 					bool ruleApplicable = false;
 
 					if ((rule.Type?.Equals("Option", StringComparison.OrdinalIgnoreCase) ?? false) && setting.HasOptions)
@@ -259,7 +263,7 @@ public sealed partial class BiosSettingsPage : Page
 					if ((rule.Type?.Equals("Value", StringComparison.OrdinalIgnoreCase) ?? false) && setting.HasValueField)
 					{
 						ruleApplicable = true;
-						string currentValue = setting.Value?.Trim().ToLowerInvariant();
+						string? currentValue = setting.Value?.Trim().ToLowerInvariant();
 						setting.RecommendedValue = rule.RecommendedOption;
 
 						if (!string.IsNullOrEmpty(currentValue) && currentValue != recommendedLabel)
@@ -297,14 +301,14 @@ public sealed partial class BiosSettingsPage : Page
 
 	private void Undo_Click(object sender, RoutedEventArgs e)
 	{
-		ViewModel.Undo();
+		ViewModel.UndoCommand.Execute(null);
 		RefreshSearchFilter();
 		EnsureNodesExpanded();
 	}
 
 	private void Redo_Click(object sender, RoutedEventArgs e)
 	{
-		ViewModel.Redo();
+		ViewModel.RedoCommand.Execute(null);
 		RefreshSearchFilter();
 		EnsureNodesExpanded();
 	}
@@ -326,7 +330,7 @@ public sealed partial class BiosSettingsPage : Page
 
 	private void Merge_Click(object sender, RoutedEventArgs e)
 	{
-		ViewModel.ApplyRecommendations(ViewModel.MergeCount);
+		ViewModel.ApplyRecommendationsCommand.Execute(ViewModel.MergeCount);
 		RefreshSearchFilter();
 		EnsureNodesExpanded();
 	}
@@ -385,8 +389,8 @@ public sealed partial class BiosSettingsPage : Page
 			{
 				if (key != null)
 				{
-					manufacturer = key.GetValue("BaseBoardManufacturer")?.ToString().ToLowerInvariant() ?? "Unknown";
-					product = key.GetValue("BaseBoardProduct")?.ToString().ToUpperInvariant() ?? "Unknown";
+					manufacturer = key.GetValue("BaseBoardManufacturer")?.ToString()?.ToLowerInvariant() ?? "Unknown";
+					product = key.GetValue("BaseBoardProduct")?.ToString()?.ToUpperInvariant() ?? "Unknown";
 				}
 			}
 
@@ -399,7 +403,8 @@ public sealed partial class BiosSettingsPage : Page
 					 errorOutput.Contains("System configuration not modified.", StringComparison.OrdinalIgnoreCase))
 			{
 				await Export();
-				if (BiosTreeGrid.View != null) BiosTreeGrid.ExpandAllNodes();
+				if (BiosTreeGrid.View != null)
+					BiosTreeGrid.ExpandAllNodes();
 			}
 			else
 			{
@@ -447,8 +452,8 @@ public sealed partial class BiosSettingsPage : Page
 		{
 			if (key != null)
 			{
-				manufacturer = key.GetValue("BaseBoardManufacturer")?.ToString().ToLowerInvariant() ?? "Unknown";
-				product = key.GetValue("BaseBoardProduct")?.ToString().ToUpperInvariant() ?? "Unknown";
+				manufacturer = key.GetValue("BaseBoardManufacturer")?.ToString()?.ToLowerInvariant() ?? "Unknown";
+				product = key.GetValue("BaseBoardProduct")?.ToString()?.ToUpperInvariant() ?? "Unknown";
 			}
 		}
 
@@ -462,7 +467,8 @@ public sealed partial class BiosSettingsPage : Page
 		else
 		{
 			await Export();
-			if (BiosTreeGrid.View != null) BiosTreeGrid.ExpandAllNodes();
+			if (BiosTreeGrid.View != null)
+				BiosTreeGrid.ExpandAllNodes();
 		}
 	}
 
@@ -478,24 +484,35 @@ public sealed partial class BiosSettingsPage : Page
 
 	private void BiosTreeGrid_SizeChanged(object sender, SizeChangedEventArgs e)
 	{
-		if (e.NewSize.Width > 0)
+		if (e.NewSize.Width <= 0 || e.NewSize.Width == e.PreviousSize.Width)
 		{
-			foreach (TreeGridColumn? col in BiosTreeGrid.Columns)
-				col.Width = double.NaN;
-			BiosTreeGrid.InvalidateMeasure();
-			BiosTreeGrid.UpdateLayout();
+			return;
+
 		}
+
+		foreach (TreeGridColumn? col in BiosTreeGrid.Columns)
+		{
+			col.Width = double.NaN;
+		}
+
+		BiosTreeGrid.InvalidateMeasure();
+		BiosTreeGrid.UpdateLayout();
 	}
 
 	private void BiosDiffTreeGrid_SizeChanged(object sender, SizeChangedEventArgs e)
 	{
-		if (e.NewSize.Width > 0)
+		if (e.NewSize.Width <= 0 || e.NewSize.Width == e.PreviousSize.Width)
 		{
-			foreach (TreeGridColumn? col in BiosDiffTreeGrid.Columns)
-				col.Width = double.NaN;
-			BiosDiffTreeGrid.InvalidateMeasure();
-			BiosDiffTreeGrid.UpdateLayout();
+			return;
 		}
+
+		foreach (TreeGridColumn? col in BiosDiffTreeGrid.Columns)
+		{
+			col.Width = double.NaN;
+		}
+
+		BiosDiffTreeGrid.InvalidateMeasure();
+		BiosDiffTreeGrid.UpdateLayout();
 	}
 
 	private void BiosTreeGrid_NodeCollapsing(object sender, NodeCollapsingEventArgs e)
@@ -522,7 +539,7 @@ public sealed partial class BiosSettingsPage : Page
 			return;
 		}
 
-		string tooltipContent = e.Column?.MappingName switch
+		string? tooltipContent = e.Column?.MappingName switch
 		{
 			"DisplayName" => node.ToolTipText,
 			"DisplayCurrent" => node.DisplayCurrent,
@@ -550,7 +567,7 @@ public sealed partial class BiosSettingsPage : Page
 			return;
 		}
 
-		string tooltipContent = e.Column?.MappingName switch
+		string? tooltipContent = e.Column?.MappingName switch
 		{
 			"DisplayName" => node.ToolTipText,
 			"DisplayOriginal" => node.DisplayOriginal,
@@ -732,7 +749,8 @@ public sealed partial class BiosSettingsPage : Page
 
 			foreach (BiosTreeNode child in changesRoot.Children)
 			{
-				if (child.NodeKind != NodeKind.Group) continue;
+				if (child.NodeKind != NodeKind.Group)
+					continue;
 				int childCount = CountMatchingNodes(child, searchText, isSearchEmpty);
 				child.DisplayName = $"{child.DiffGroupKey} ({childCount})";
 			}
@@ -741,14 +759,16 @@ public sealed partial class BiosSettingsPage : Page
 
 	private int CountMatchingNodes(BiosTreeNode node, string searchText, bool isSearchEmpty)
 	{
-		if (node == null) return 0;
+		if (node == null)
+			return 0;
 
 		if (node.NodeKind == NodeKind.Leaf)
 		{
 			if (ViewChanges.IsChecked == true && node.Model?.IsModified != true)
 				return 0;
 
-			if (isSearchEmpty) return 1;
+			if (isSearchEmpty)
+				return 1;
 
 			bool matches = false;
 
@@ -776,39 +796,49 @@ public sealed partial class BiosSettingsPage : Page
 		return count;
 	}
 
-	private bool TextMatches(string text, string searchText)
+	private bool TextMatches(string? text, string searchText)
 	{
-		if (text == null) return false;
-		return ViewModel.FilterMode == BiosSettingViewModel.FilterModeType.ExactMatch ? text.Equals(searchText, StringComparison.OrdinalIgnoreCase) : text.Contains(searchText, StringComparison.OrdinalIgnoreCase);
+		if (text == null)
+			return false;
+		return ViewModel.FilterMode == BiosSettingsPageViewModel.FilterModeType.ExactMatch ? text.Equals(searchText, StringComparison.OrdinalIgnoreCase) : text.Contains(searchText, StringComparison.OrdinalIgnoreCase);
 	}
 
 	private bool FilterDiffNode(object obj)
 	{
-		if (obj is not BiosTreeNode node) return true;
+		if (obj is not BiosTreeNode node)
+			return true;
 
 		string searchText = Search.Text;
 		bool hasSearch = !string.IsNullOrWhiteSpace(searchText);
 
-		if (node.NodeKind == NodeKind.Root) return true;
+		if (node.NodeKind == NodeKind.Root)
+			return true;
 
-		if (!hasSearch) return true;
+		if (!hasSearch)
+			return true;
 
 		if (ViewModel.FilterSetting)
 		{
-			if (node.NodeKind == NodeKind.Leaf && TextMatches(node.DisplayName, searchText)) return true;
-			if (node.NodeKind == NodeKind.Group && node.Children.Any(child => TextMatches(child.DisplayName, searchText))) return true;
+			if (node.NodeKind == NodeKind.Leaf && TextMatches(node.DisplayName, searchText))
+				return true;
+			if (node.NodeKind == NodeKind.Group && node.Children.Any(child => TextMatches(child.DisplayName, searchText)))
+				return true;
 		}
 
 		if (ViewModel.FilterDescription)
 		{
-			if (node.NodeKind == NodeKind.Leaf && TextMatches(node.Model?.HelpString, searchText)) return true;
-			if (node.NodeKind == NodeKind.Group && node.Children.Any(child => TextMatches(child.Model?.HelpString, searchText))) return true;
+			if (node.NodeKind == NodeKind.Leaf && TextMatches(node.Model?.HelpString, searchText))
+				return true;
+			if (node.NodeKind == NodeKind.Group && node.Children.Any(child => TextMatches(child.Model?.HelpString, searchText)))
+				return true;
 		}
 
 		if (ViewModel.FilterCurrent)
 		{
-			if (node.NodeKind == NodeKind.Leaf && TextMatches(node.DisplayCurrent, searchText)) return true;
-			if (node.NodeKind == NodeKind.Group && node.Children.Any(child => TextMatches(child.DisplayCurrent, searchText))) return true;
+			if (node.NodeKind == NodeKind.Leaf && TextMatches(node.DisplayCurrent, searchText))
+				return true;
+			if (node.NodeKind == NodeKind.Group && node.Children.Any(child => TextMatches(child.DisplayCurrent, searchText)))
+				return true;
 		}
 
 		return false;
@@ -816,7 +846,8 @@ public sealed partial class BiosSettingsPage : Page
 
 	private bool FilterNode(object obj)
 	{
-		if (obj is not BiosTreeNode node) return true;
+		if (obj is not BiosTreeNode node)
+			return true;
 
 		string searchText = Search.Text;
 		bool hasSearch = !string.IsNullOrWhiteSpace(searchText);
@@ -824,34 +855,44 @@ public sealed partial class BiosSettingsPage : Page
 		if (node.NodeKind == NodeKind.Root)
 		{
 			bool isRecommended = node.DisplayName.StartsWith("Recommended");
-			if ((ViewChanges.IsChecked == true || hasSearch) && isRecommended) return false;
+			if ((ViewChanges.IsChecked == true || hasSearch) && isRecommended)
+				return false;
 			return true;
 		}
 
 		if (ViewChanges.IsChecked == true)
 		{
-			if (node.NodeKind == NodeKind.Group && !node.Children.Any(child => child.Model?.IsModified == true)) return false;
-			if (node.NodeKind == NodeKind.Leaf && node.Model?.IsModified != true) return false;
+			if (node.NodeKind == NodeKind.Group && !node.Children.Any(child => child.Model?.IsModified == true))
+				return false;
+			if (node.NodeKind == NodeKind.Leaf && node.Model?.IsModified != true)
+				return false;
 		}
 
-		if (!hasSearch) return true;
+		if (!hasSearch)
+			return true;
 
 		if (ViewModel.FilterSetting)
 		{
-			if (node.NodeKind == NodeKind.Leaf && TextMatches(node.DisplayName, searchText)) return true;
-			if (node.NodeKind == NodeKind.Group && node.Children.Any(child => TextMatches(child.DisplayName, searchText))) return true;
+			if (node.NodeKind == NodeKind.Leaf && TextMatches(node.DisplayName, searchText))
+				return true;
+			if (node.NodeKind == NodeKind.Group && node.Children.Any(child => TextMatches(child.DisplayName, searchText)))
+				return true;
 		}
 
 		if (ViewModel.FilterDescription)
 		{
-			if (node.NodeKind == NodeKind.Leaf && TextMatches(node.Model?.HelpString, searchText)) return true;
-			if (node.NodeKind == NodeKind.Group && node.Children.Any(child => TextMatches(child.Model?.HelpString, searchText))) return true;
+			if (node.NodeKind == NodeKind.Leaf && TextMatches(node.Model?.HelpString, searchText))
+				return true;
+			if (node.NodeKind == NodeKind.Group && node.Children.Any(child => TextMatches(child.Model?.HelpString, searchText)))
+				return true;
 		}
 
 		if (ViewModel.FilterCurrent)
 		{
-			if (node.NodeKind == NodeKind.Leaf && TextMatches(node.DisplayCurrent, searchText)) return true;
-			if (node.NodeKind == NodeKind.Group && node.Children.Any(child => TextMatches(child.DisplayCurrent, searchText))) return true;
+			if (node.NodeKind == NodeKind.Leaf && TextMatches(node.DisplayCurrent, searchText))
+				return true;
+			if (node.NodeKind == NodeKind.Group && node.Children.Any(child => TextMatches(child.DisplayCurrent, searchText)))
+				return true;
 		}
 
 		return false;

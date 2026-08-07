@@ -26,9 +26,6 @@ PROPVARIANT
 PWSTR
 PlaySound
 PostMessage
-PowerEnumerate
-PowerGetActiveScheme
-PowerImportPowerScheme
 PropVariantClear
 RegisterApplicationRestart
 SEND_MESSAGE_TIMEOUT_FLAGS

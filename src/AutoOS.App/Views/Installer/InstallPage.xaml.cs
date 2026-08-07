@@ -1,7 +1,7 @@
 using System.Diagnostics;
+using AutoOS.App.Views.Installer.Stages;
 using AutoOS.Core.Helpers.Logging;
 using AutoOS.Core.Helpers.OS;
-using AutoOS.App.Views.Installer.Stages;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using Windows.Storage;

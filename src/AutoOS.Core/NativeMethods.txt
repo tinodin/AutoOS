@@ -80,6 +80,8 @@ PostMessage
 PowerDeleteScheme
 PowerDuplicateScheme
 PowerEnumerate
+PowerGetActiveScheme
+PowerImportPowerScheme
 PowerReadACValueIndex
 PowerReadDCValueIndex
 PowerReadDescription
