@@ -71,6 +71,7 @@ public class ApplicationSelection
 	public bool LogitechGHub { get; set; }
 	public bool LogitechOnboardMemoryManager { get; set; }
 	public bool Wootility { get; set; }
+	public bool GMenu { get; set; }
 	public bool EndgameGear { get; set; }
 	public bool GloriousCORE { get; set; }
 	public bool MCHOSE { get; set; }
@@ -148,6 +149,7 @@ public class ApplicationSelection
 	public bool WizTree { get; set; }
 	public bool CrystalDiskInfo { get; set; }
 	public bool CrystalDiskMark { get; set; }
+	public bool ProtonVPN { get; set; }
 	public bool BulkCrapUninstaller { get; set; }
 	public bool BluetoothAudioReceiver { get; set; }
 	public bool AnyDesk { get; set; }
@@ -230,6 +232,7 @@ public static class AppsStage
 		bool LogitechGHub = selection?.LogitechGHub ?? PreparingStage.LogitechGHub;
 		bool LogitechOnboardMemoryManager = selection?.LogitechOnboardMemoryManager ?? PreparingStage.LogitechOnboardMemoryManager;
 		bool Wootility = selection?.Wootility ?? PreparingStage.Wootility;
+		bool GMenu = selection?.GMenu ?? PreparingStage.GMenu;
 		bool EndgameGear = selection?.EndgameGear ?? PreparingStage.EndgameGear;
 		bool GloriousCORE = selection?.GloriousCORE ?? PreparingStage.GloriousCORE;
 		bool MCHOSE = selection?.MCHOSE ?? PreparingStage.MCHOSE;
@@ -316,6 +319,7 @@ public static class AppsStage
 		bool WizTree = selection?.WizTree ?? PreparingStage.WizTree;
 		bool CrystalDiskInfo = selection?.CrystalDiskInfo ?? PreparingStage.CrystalDiskInfo;
 		bool CrystalDiskMark = selection?.CrystalDiskMark ?? PreparingStage.CrystalDiskMark;
+		bool ProtonVPN = selection?.ProtonVPN ?? PreparingStage.ProtonVPN;
 		bool BulkCrapUninstaller = selection?.BulkCrapUninstaller ?? PreparingStage.BulkCrapUninstaller;
 		bool BluetoothAudioReceiver = selection?.BluetoothAudioReceiver ?? PreparingStage.BluetoothAudioReceiver;
 		bool AnyDesk = selection?.AnyDesk ?? PreparingStage.AnyDesk;
@@ -1197,6 +1201,18 @@ public static class AppsStage
 			("Cleaning up Wootility files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "WootilitySetup.exe")), () => Wootility == true),
 			("Cleaning up Wootility files", async () => Directory.Delete(Path.Combine(Path.GetTempPath(), "WootilitySetup"), true), () => Wootility == true),
 
+			// download g-menu
+			("Downloading G-Menu", async () => await DownloadHelper.Download("https://gz-dlsw.tpv-tech.com/MNT/AOC/Software/G-menu/G-Menu.zip", Path.GetTempPath(), "G-Menu.zip", reporter: reporter), () => GMenu == true),
+
+			// install g-menu
+			("Installing G-Menu", async () => await ExtractHelper.Extract(Path.Combine(Path.GetTempPath(), "G-Menu.zip"), Path.Combine(Path.GetTempPath(), "G-Menu")), () => GMenu == true),
+			("Installing G-Menu", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "G-Menu", "G-Menu Setup 3.34.0.exe"), Arguments = "/S", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => GMenu == true),
+			("Cleaning up G-Menu files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "G-Menu.zip")), () => GMenu == true),
+			("Cleaning up G-Menu files", async () => Directory.Delete(Path.Combine(Path.GetTempPath(), "G-Menu"), true), () => GMenu == true),
+
+			// remove g-menu desktop shortcut
+			("Removing G-Menu desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "G-Menu.lnk")), () => GMenu == true),
+
 			// download endgame gear
 			("Downloading Endgame Gear", async () => await DownloadHelper.Download("https://img.endgamegear.com/downloads/Endgame_Gear_Setup_V1.0.19.06232.exe", Path.GetTempPath(), "Endgame_Gear_Setup.exe", reporter: reporter), () => EndgameGear == true),
 
@@ -1464,7 +1480,11 @@ public static class AppsStage
 
 			// install kiro
 			("Installing Kiro", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "kiro-ide-win32-x64.exe"), Arguments = "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Kiro == true),
+			("Installing Kiro", async () => { foreach (Process process in Process.GetProcessesByName("Kiro")) { process.Kill(); process.WaitForExit(); } }, () => Kiro == true),
 			("Cleaning up Kiro files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "kiro-ide-win32-x64.exe")), () => Kiro == true),
+
+			// pin kiro to the taskbar
+			("Pinning Kiro to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Kiro", "Kiro.lnk")), () => Kiro == true),
 
 			// download opencode
 			("Downloading OpenCode", async () => await DownloadHelper.Download("https://opencode.ai/download/stable/windows-x64-nsis", Path.GetTempPath(), "OpenCode Desktop Installer.exe", reporter: reporter), () => OpenCode == true),
@@ -1473,6 +1493,9 @@ public static class AppsStage
 			("Installing OpenCode", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "OpenCode Desktop Installer.exe"), Arguments = "/S", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => OpenCode == true),
 			("Cleaning up OpenCode files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "OpenCode Desktop Installer.exe")), () => OpenCode == true),
 			("Removing OpenCode desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "OpenCode.lnk")), () => OpenCode == true),
+
+			// pin opencode to the taskbar
+			("Pinning OpenCode to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "OpenCode.lnk")), () => OpenCode == true),
 
 			// download sublime text
 			("Downloading Sublime Text", async () => await DownloadHelper.Download("https://download.sublimetext.com/sublime_text_build_4200_x64_setup.exe", Path.GetTempPath(), "sublime_text_x64_setup.exe", reporter: reporter), () => SublimeText == true),
@@ -1537,11 +1560,14 @@ public static class AppsStage
 			("Cleaning up Rust files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "rustup-init.exe")), () => Rust == true),
 
 			// download java
-			("Downloading Java", async () => await DownloadHelper.Download("https://download.oracle.com/java/26/latest/jdk-26_windows-x64_bin.msi", Path.GetTempPath(), "jdk-26_windows-x64_bin.msi", reporter: reporter), () => Java == true),
+			("Downloading Java", async () => await DownloadHelper.Download("https://javadl.oracle.com/webapps/download/AutoDL?BundleId=253458_ba687cb3cbb24342adc8fdf890b993dc", Path.GetTempPath(), "jre-windows-x64.exe", reporter: reporter), () => Java == true),
 
 			// install java
-			("Installing Java", async () => await Process.Start(new ProcessStartInfo { FileName = "msiexec.exe", Arguments = $@"/i ""{Path.Combine(Path.GetTempPath(), "jdk-26_windows-x64_bin.msi")}"" /qn" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Java == true),
-			("Cleaning up Java files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "jdk-26_windows-x64_bin.msi")), () => Java == true),
+			("Installing Java", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "jre-windows-x64.exe"), Arguments = "/s REBOOT=0", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Java == true),
+			("Cleaning up Java files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "jre-windows-x64.exe")), () => Java == true),
+
+			// disable java update scheduler startup entry
+			("Disabling Java Update Scheduler startup entry", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32", "SunJavaUpdateSched", new byte[] { 0x03 }, RegistryValueKind.Binary), () => Java == true),
 
 			// download go
 			("Downloading Go", async () => await DownloadHelper.Download("https://go.dev/dl/go1.26.4.windows-amd64.msi", Path.GetTempPath(), "gowindows-amd64.msi", reporter: reporter), () => Go == true),
@@ -2190,6 +2216,18 @@ public static class AppsStage
 			// remove crystal disk mark desktop shortcut
 			("Removing CrystalDiskMark desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "CrystalDiskMark 9.lnk")), () => CrystalDiskMark == true),
 
+			// download proton vpn
+			("Downloading Proton VPN", async () => await DownloadHelper.Download("https://vpn.protondownload.com/download/ProtonVPN_v5.1.6_x64.exe", Path.GetTempPath(), "ProtonVPN_x64.exe", reporter: reporter), () => ProtonVPN == true),
+
+			// install proton vpn
+			("Installing Proton VPN", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "ProtonVPN_x64.exe"), Arguments = "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => ProtonVPN == true),
+			("Installing Proton VPN", async () => { foreach (Process process in Process.GetProcessesByName("ProtonVPN.Client")) { process.Kill(); process.WaitForExit(); } }, () => ProtonVPN == true),
+			("Installing Proton VPN", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", "Proton VPN", new byte[] { 0x03 }, RegistryValueKind.Binary), () => ProtonVPN == true),
+			("Cleaning up Proton VPN files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "ProtonVPN_x64.exe")), () => ProtonVPN == true),
+
+			// remove proton vpn desktop shortcut
+			("Removing Proton VPN desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Proton VPN.lnk")), () => ProtonVPN == true),
+
 			// download bulk crap uninstaller
 			("Downloading Bulk Crap Uninstaller", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/Klocman/Bulk-Crap-Uninstaller/releases/latest")).RootElement.GetProperty("assets").EnumerateArray().First(a => a.GetProperty("name").GetString().Contains("setup.exe")).GetProperty("browser_download_url").GetString(), Path.GetTempPath(), "BCUninstaller_setup.exe", reporter: reporter), () => BulkCrapUninstaller == true),
 			
@@ -2301,7 +2339,7 @@ public static class AppsStage
             // remove free download manager desktop shortcut
 			("Removing Free Download Manager desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Free Download Manager.lnk")), () => FreeDownloadManager == true),
 			("Disabling Free Download Manager startup entry", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", "Free Download Manager", new byte[] { 0x03 }, RegistryValueKind.Binary), () => FreeDownloadManager == true),
-        };
+        }; 
 
 		if (selection != null)
 		{

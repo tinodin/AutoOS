@@ -100,6 +100,7 @@ public static partial class PreparingStage
 	public static bool LogitechGHub;
 	public static bool LogitechOnboardMemoryManager;
 	public static bool Wootility;
+	public static bool GMenu;
 	public static bool EndgameGear;
 	public static bool GloriousCORE;
 	public static bool MCHOSE;
@@ -186,6 +187,7 @@ public static partial class PreparingStage
 	public static bool WizTree;
 	public static bool CrystalDiskInfo;
 	public static bool CrystalDiskMark;
+	public static bool ProtonVPN;
 	public static bool BulkCrapUninstaller;
 	public static bool BluetoothAudioReceiver;
 	public static bool AnyDesk;
@@ -515,6 +517,7 @@ public static partial class PreparingStage
 			LogitechGHub = (localSettings.Values["Peripherals"]?.ToString().Contains("Logitech G HUB") ?? false);
 			LogitechOnboardMemoryManager = (localSettings.Values["Peripherals"]?.ToString().Contains("Logitech Onboard Memory Manager") ?? false);
 			Wootility = (localSettings.Values["Peripherals"]?.ToString().Contains("Wootility") ?? false);
+			GMenu = (localSettings.Values["Peripherals"]?.ToString().Contains("G-Menu") ?? false);
 			EndgameGear = (localSettings.Values["Peripherals"]?.ToString().Contains("Endgame Gear") ?? false);
 			GloriousCORE = (localSettings.Values["Peripherals"]?.ToString().Contains("Glorious CORE") ?? false);
 			CorsairICue = (localSettings.Values["Peripherals"]?.ToString().Contains("Corsair iCUE") ?? false);
@@ -598,6 +601,7 @@ public static partial class PreparingStage
 			WizTree = (localSettings.Values["Miscellaneous"]?.ToString().Contains("WizTree") ?? false);
 			CrystalDiskInfo = (localSettings.Values["Miscellaneous"]?.ToString().Contains("CrystalDiskInfo") ?? false);
 			CrystalDiskMark = (localSettings.Values["Miscellaneous"]?.ToString().Contains("CrystalDiskMark") ?? false);
+			ProtonVPN = (localSettings.Values["Miscellaneous"]?.ToString().Contains("Proton VPN") ?? false);
 			BulkCrapUninstaller = (localSettings.Values["Miscellaneous"]?.ToString().Contains("Bulk Crap Uninstaller") ?? false);
 			BluetoothAudioReceiver = (localSettings.Values["Miscellaneous"]?.ToString().Contains("BluetoothAudioReceiver") ?? false);
 			AnyDesk = (localSettings.Values["Miscellaneous"]?.ToString().Contains("AnyDesk") ?? false);
