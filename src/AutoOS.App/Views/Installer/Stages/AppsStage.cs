@@ -1487,11 +1487,11 @@ public static class AppsStage
 			("Pinning Kiro to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Kiro", "Kiro.lnk")), () => Kiro == true),
 
 			// download opencode
-			("Downloading OpenCode", async () => await DownloadHelper.Download("https://opencode.ai/download/stable/windows-x64-nsis", Path.GetTempPath(), "OpenCode Desktop Installer.exe", reporter: reporter), () => OpenCode == true),
+			("Downloading OpenCode", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/anomalyco/opencode/releases")).RootElement.EnumerateArray().First(release => !release.GetProperty("prerelease").GetBoolean() && release.GetProperty("assets").EnumerateArray().Any(asset => asset.GetProperty("name").GetString().Contains("opencode-desktop-win-x64.exe"))).GetProperty("assets").EnumerateArray().First(asset => asset.GetProperty("name").GetString().Contains("opencode-desktop-win-x64.exe")).GetProperty("browser_download_url").GetString(), Path.GetTempPath(), "opencode-desktop-win-x64.exe", reporter: reporter), () => OpenCode == true),
 
 			// install opencode
-			("Installing OpenCode", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "OpenCode Desktop Installer.exe"), Arguments = "/S", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => OpenCode == true),
-			("Cleaning up OpenCode files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "OpenCode Desktop Installer.exe")), () => OpenCode == true),
+			("Installing OpenCode", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "opencode-desktop-win-x64.exe"), Arguments = "/S", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => OpenCode == true),
+			("Cleaning up OpenCode files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "opencode-desktop-win-x64.exe")), () => OpenCode == true),
 			("Removing OpenCode desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "OpenCode.lnk")), () => OpenCode == true),
 
 			// pin opencode to the taskbar
