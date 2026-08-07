@@ -1,4 +1,4 @@
-namespace AutoOS.Core.Helpers.Games;
+namespace AutoOS.Core.Helpers.Games.Models;
 
 public class GameModel
 {

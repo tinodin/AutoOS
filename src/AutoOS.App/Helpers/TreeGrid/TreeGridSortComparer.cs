@@ -1,7 +1,7 @@
 using System.Reflection;
 using AutoOS.App.Views.Settings.BIOS;
 
-namespace AutoOS.App.Common;
+namespace AutoOS.App.Helpers;
 
 public class TreeGridSortComparer : IComparer<object>
 {

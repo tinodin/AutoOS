@@ -4,14 +4,16 @@
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:chart="using:Syncfusion.UI.Xaml.Charts"
-	xmlns:common="using:AutoOS.App.Common"
 	xmlns:controls="using:CommunityToolkit.WinUI.Controls"
 	xmlns:converters="using:CommunityToolkit.WinUI.Converters"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:dev="using:DevWinUI"
+	xmlns:ext="using:AutoOS.App.Extensions"
+	xmlns:helpers="using:AutoOS.App.Helpers"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:sfdata="using:Syncfusion.UI.Xaml.DataGrid"
 	xmlns:sfgrid="using:Syncfusion.UI.Xaml.TreeGrid"
+	xmlns:templateselectors="using:AutoOS.App.Data.TemplateSelectors"
 	xmlns:uc="using:AutoOS.App.UserControls"
 	xmlns:viewmodel="using:AutoOS.App.ViewModels"
 	mc:Ignorable="d">
@@ -24,8 +26,8 @@
 			TrueValue="False" />
 
 		<!--  Cell style selector  -->
-		<viewmodel:ResultCellStyleSelector
-			x:Key="ResultCellStyleSelector"
+		<templateselectors:StatisticsCellStyleSelector
+			x:Key="StatisticsCellStyleSelector"
 			CriticalStyle="{StaticResource CriticalCellStyle}"
 			SuccessStyle="{StaticResource SuccessCellStyle}" />
 
@@ -44,9 +46,9 @@
 			<controls:TabbedCommandBar
 				x:Name="BenchmarksSelectorBar"
 				Margin="0,48,0,0"
-				common:CommandBarExtensions.ApplyOverflowIndent="True"
-				common:CommandBarExtensions.CommandAlignment="Left"
-				common:CommandBarExtensions.OverflowButtonAlignment="Right"
+				ext:CommandBarExtensions.ApplyOverflowIndent="True"
+				ext:CommandBarExtensions.CommandAlignment="Left"
+				ext:CommandBarExtensions.OverflowButtonAlignment="Right"
 				SelectedItem="{x:Bind RecordingsTab}"
 				SelectionChanged="BenchmarksSelectorBar_SelectionChanged">
 				<controls:TabbedCommandBar.MenuItems>
@@ -161,18 +163,15 @@
 							</AppBarElementContainer>
 
 							<!--  Record  -->
-							<AppBarElementContainer>
-								<ToggleButton
-									x:Name="Record"
-									Checked="Record_Checked"
-									IsEnabled="{x:Bind ViewModel.CanRecord, Mode=OneWay}"
-									Unchecked="Record_Unchecked">
-									<StackPanel Orientation="Horizontal" Spacing="8">
-										<FontIcon FontSize="12" Glyph="{x:Bind ViewModel.RecordIconGlyph, Mode=OneWay}" />
-										<TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="{x:Bind ViewModel.RecordLabel, Mode=OneWay}" />
-									</StackPanel>
-								</ToggleButton>
-							</AppBarElementContainer>
+							<AppBarToggleButton
+								Command="{x:Bind ViewModel.RecordCommand}"
+								IsChecked="{x:Bind ViewModel.IsRecording, Mode=OneWay}"
+								Label="{x:Bind ViewModel.RecordLabel, Mode=OneWay}"
+								ToolTipService.ToolTip="{x:Bind ViewModel.RecordLabel, Mode=OneWay}">
+								<AppBarToggleButton.Content>
+									<FontIcon FontSize="12" Glyph="{x:Bind ViewModel.RecordIconGlyph, Mode=OneWay}" />
+								</AppBarToggleButton.Content>
+							</AppBarToggleButton>
 
 						</controls:TabbedCommandBarItem.PrimaryCommands>
 					</controls:TabbedCommandBarItem>
@@ -367,7 +366,7 @@
 
 							<!--  Recording A Color Picker  -->
 							<AppBarElementContainer IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}" ToolTipService.ToolTip="{x:Bind ViewModel.RecordingAColorTooltip, Mode=OneWay}">
-								<common:DropdownColorPicker
+								<uc:DropdownColorPicker
 									VerticalAlignment="Bottom"
 									ColorSpectrumShape="Ring"
 									IsAlphaEnabled="True"
@@ -382,7 +381,7 @@
 								Margin="4,0,0,0"
 								ToolTipService.ToolTip="{x:Bind ViewModel.RecordingBColorTooltip, Mode=OneWay}"
 								Visibility="{x:Bind ViewModel.HasTwoRecordingsVisibility, Mode=OneWay}">
-								<common:DropdownColorPicker
+								<uc:DropdownColorPicker
 									VerticalAlignment="Bottom"
 									ColorSpectrumShape="Ring"
 									IsAlphaEnabled="True"
@@ -489,13 +488,13 @@
 							ShowToolTip="True"
 							SizeChanged="RecordingsTreeGrid_SizeChanged">
 							<sfgrid:SfTreeGrid.ColumnSizer>
-								<common:TreeGridStarColumnSizer />
+								<helpers:TreeGridStarColumnSizer />
 							</sfgrid:SfTreeGrid.ColumnSizer>
 							<sfgrid:SfTreeGrid.Columns>
 
 								<!--  Title  -->
 								<sfgrid:TreeGridTextColumn
-									common:StarRatio.ColumnRatio="2"
+									helpers:StarRatio.ColumnRatio="2"
 									HeaderText="Title"
 									MappingName="Title"
 									MinimumWidth="70"
@@ -505,7 +504,7 @@
 
 								<!--  Process  -->
 								<sfgrid:TreeGridTextColumn
-									common:StarRatio.ColumnRatio="2"
+									helpers:StarRatio.ColumnRatio="2"
 									AllowFocus="False"
 									HeaderText="Process"
 									IsReadOnly="True"
@@ -517,7 +516,7 @@
 
 								<!--  Presentation Mode  -->
 								<sfgrid:TreeGridTextColumn
-									common:StarRatio.ColumnRatio="2"
+									helpers:StarRatio.ColumnRatio="2"
 									AllowFocus="False"
 									HeaderText="Presentation Mode"
 									IsReadOnly="True"
@@ -529,7 +528,7 @@
 
 								<!--  Duration  -->
 								<sfgrid:TreeGridNumericColumn
-									common:StarRatio.ColumnRatio="1"
+									helpers:StarRatio.ColumnRatio="1"
 									AllowFocus="False"
 									DisplayNumberFormat="0.# s"
 									HeaderText="Duration"
@@ -543,7 +542,7 @@
 
 								<!--  Date / Time  -->
 								<sfgrid:TreeGridDateColumn
-									common:StarRatio.ColumnRatio="1"
+									helpers:StarRatio.ColumnRatio="1"
 									AllowFocus="False"
 									DisplayDateFormat="dd/MM/yy HH:mm"
 									HeaderText="Date / Time"
@@ -1187,13 +1186,13 @@
 							SelectionMode="None"
 							SizeChanged="StatisticsTreeGrid_SizeChanged">
 							<sfgrid:SfTreeGrid.ColumnSizer>
-								<common:TreeGridStarColumnSizer />
+								<helpers:TreeGridStarColumnSizer />
 							</sfgrid:SfTreeGrid.ColumnSizer>
 							<sfgrid:SfTreeGrid.Columns>
 
 								<!--  Statistic  -->
 								<sfgrid:TreeGridTemplateColumn
-									common:StarRatio.ColumnRatio="2"
+									helpers:StarRatio.ColumnRatio="2"
 									HeaderText="Statistic"
 									MappingName="Statistic">
 									<sfgrid:TreeGridTemplateColumn.CellTemplate>
@@ -1212,24 +1211,24 @@
 								<!--  Recording A  -->
 								<sfgrid:TreeGridTextColumn
 									x:Name="StatisticsRecordingAColumn"
-									common:StarRatio.ColumnRatio="1"
-									CellStyleSelector="{StaticResource ResultCellStyleSelector}"
+									helpers:StarRatio.ColumnRatio="1"
+									CellStyleSelector="{StaticResource StatisticsCellStyleSelector}"
 									HeaderText="{x:Bind ViewModel.RecordingAHeader, Mode=OneWay}"
 									MappingName="RecordingA" />
 
 								<!--  Recording B  -->
 								<sfgrid:TreeGridTextColumn
 									x:Name="StatisticsRecordingBColumn"
-									common:StarRatio.ColumnRatio="1"
-									CellStyleSelector="{StaticResource ResultCellStyleSelector}"
+									helpers:StarRatio.ColumnRatio="1"
+									CellStyleSelector="{StaticResource StatisticsCellStyleSelector}"
 									HeaderText="{x:Bind ViewModel.RecordingBHeader, Mode=OneWay}"
 									MappingName="RecordingB" />
 
 								<!--  Delta  -->
 								<sfgrid:TreeGridTextColumn
 									x:Name="StatisticsDeltaColumn"
-									common:StarRatio.ColumnRatio="1"
-									CellStyleSelector="{StaticResource ResultCellStyleSelector}"
+									helpers:StarRatio.ColumnRatio="1"
+									CellStyleSelector="{StaticResource StatisticsCellStyleSelector}"
 									HeaderText="{x:Bind ViewModel.DeltaHeader, Mode=OneWay}"
 									MappingName="Delta" />
 							</sfgrid:SfTreeGrid.Columns>

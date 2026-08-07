@@ -1,4 +1,4 @@
-namespace AutoOS.Helpers.Picker;
+namespace AutoOS.Core.Helpers.Picker;
 
 internal static partial class PickerHelper
 {

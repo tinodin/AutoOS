@@ -5,7 +5,6 @@
 	xmlns:controls="using:CommunityToolkit.WinUI.Controls"
 	xmlns:dev="using:DevWinUI"
 	xmlns:models="using:AutoOS.Core.Helpers.CPU.Models"
-	xmlns:uc="using:AutoOS.App.UserControls"
 	xmlns:vm="using:AutoOS.App.Views.Settings.Scheduling.ViewModels">
 	<Grid>
 		<Grid.RowDefinitions>
@@ -72,33 +71,35 @@
 								Grid.Column="0"
 								VerticalAlignment="Center"
 								Text="Device Priority:" />
-							<uc:ComboBoxEx
+							<ComboBox
 								Grid.Row="0"
 								Grid.Column="1"
+								HorizontalAlignment="Stretch"
 								ItemsSource="{x:Bind ViewModel.IrqPriorities, Mode=OneWay}"
 								SelectedIndex="{x:Bind ViewModel.DevicePriority, Mode=TwoWay}">
-								<uc:ComboBoxEx.ItemTemplate>
+								<ComboBox.ItemTemplate>
 									<DataTemplate x:DataType="vm:IrqPriorityItem">
 										<TextBlock Text="{x:Bind Name}" />
 									</DataTemplate>
-								</uc:ComboBoxEx.ItemTemplate>
-							</uc:ComboBoxEx>
+								</ComboBox.ItemTemplate>
+							</ComboBox>
 							<TextBlock
 								Grid.Row="1"
 								Grid.Column="0"
 								VerticalAlignment="Center"
 								Text="Device Policy:" />
-							<uc:ComboBoxEx
+							<ComboBox
 								Grid.Row="1"
 								Grid.Column="1"
+								HorizontalAlignment="Stretch"
 								ItemsSource="{x:Bind ViewModel.IrqPolicies, Mode=OneWay}"
 								SelectedIndex="{x:Bind ViewModel.DevicePolicy, Mode=TwoWay}">
-								<uc:ComboBoxEx.ItemTemplate>
+								<ComboBox.ItemTemplate>
 									<DataTemplate x:DataType="vm:IrqPolicyItem">
 										<TextBlock Text="{x:Bind Name}" />
 									</DataTemplate>
-								</uc:ComboBoxEx.ItemTemplate>
-							</uc:ComboBoxEx>
+								</ComboBox.ItemTemplate>
+							</ComboBox>
 						</Grid>
 					</dev:Card>
 				</Grid>

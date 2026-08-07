@@ -1,6 +1,6 @@
 using Syncfusion.UI.Xaml.TreeGrid;
 
-namespace AutoOS.App.Common;
+namespace AutoOS.App.Helpers;
 
 public static class StarRatio
 {

@@ -69,6 +69,7 @@
     <PackageReference Include="Microsoft.Windows.CsWinRT" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
     <PackageReference Include="Microsoft.WindowsAppSDK" />
+    <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" />
     <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="nucs.JsonSettings" />
     <PackageReference Include="nucs.JsonSettings.AutoSaveGenerator" />

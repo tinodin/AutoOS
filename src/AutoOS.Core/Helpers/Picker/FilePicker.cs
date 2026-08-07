@@ -1,7 +1,5 @@
 #nullable enable
 using System.Runtime.InteropServices;
-using AutoOS.Core.Helpers.Picker;
-using AutoOS.Helpers.Picker;
 using DevWinUI;
 using Microsoft.UI.Xaml;
 using Windows.Storage;

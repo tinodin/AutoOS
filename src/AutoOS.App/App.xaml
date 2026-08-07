@@ -22,6 +22,8 @@
 				<ResourceDictionary Source="ms-appx:///Views/Settings/Games/HeaderCarouselItem.xaml" />
 			</ResourceDictionary.MergedDictionaries>
 			<Style BasedOn="{StaticResource DefaultComboBoxStyle}" TargetType="uc:ComboBoxEx" />
+			<SolidColorBrush x:Key="CommandBarBackgroundOpen" Color="Transparent" />
+			<SolidColorBrush x:Key="CommandBarBorderBrushOpen" Color="Transparent" />
 			<ResourceDictionary.ThemeDictionaries>
 				<ResourceDictionary x:Key="Light">
 					<x:String x:Key="HeaderCover">/Assets/FluentIcons/Pages/Home/CoverLight.png</x:String>
@@ -33,7 +35,6 @@
 					<x:String x:Key="HeaderCover">/Assets/FluentIcons/Pages/Home/CoverDark.png</x:String>
 				</ResourceDictionary>
 			</ResourceDictionary.ThemeDictionaries>
-			<!--  Other app resources here  -->
 		</ResourceDictionary>
 	</Application.Resources>
 </Application>

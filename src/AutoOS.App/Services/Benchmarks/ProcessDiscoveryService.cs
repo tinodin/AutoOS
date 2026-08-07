@@ -4,9 +4,9 @@ using Microsoft.Diagnostics.Tracing;
 using Microsoft.Diagnostics.Tracing.Parsers;
 using Microsoft.Diagnostics.Tracing.Session;
 
-namespace AutoOS.Core.Helpers.Benchmark;
+namespace AutoOS.App.Services.Benchmarks;
 
-public sealed partial class PresentMonProcessDiscovery : IDisposable
+public sealed partial class ProcessDiscoveryService : IDisposable
 {
 	private static readonly Guid DxgKrnlProvider = new("802EC45A-1E99-4B83-9920-87C98277BA9D");
 	private static readonly Guid DxgiProvider = new("CA11C036-0102-4A2D-A6AD-F03CFED5D3C9");
@@ -89,59 +89,17 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 	private readonly HashSet<string> _snapshotCandidates = [with(StringComparer.OrdinalIgnoreCase)];
 	private readonly HashSet<string> _redirectedCompositionProcesses = [with(StringComparer.OrdinalIgnoreCase)];
 	private readonly HashSet<string> _confirmedPresentingProcesses = [with(StringComparer.OrdinalIgnoreCase)];
-	private TraceEventSession _session;
+
+	private TraceEventSession? _session;
 	private bool _started;
+	private bool _disposed;
 
-	public event EventHandler ProcessesChanged;
-
-	public void Start()
-	{
-		lock (_sync)
-		{
-			if (_started)
-				return;
-
-			_started = true;
-		}
-
-		try
-		{
-			_session = new TraceEventSession($"PresentDiscovery.{Environment.ProcessId}")
-			{
-				StopOnDispose = true
-			};
-
-			var parser = new RegisteredTraceEventParser(_session.Source);
-			parser.All += ProcessTraceEvent;
-			_session.EnableProvider(KernelProcessProvider, TraceEventLevel.Informational, ProcessKeyword);
-			_session.EnableProvider(DxgKrnlProvider, TraceEventLevel.Informational, PresentHistoryKeyword);
-			_session.EnableProvider(DxgiProvider, TraceEventLevel.Verbose, DxgiKeyword);
-			_session.EnableProvider(D3D9Provider, TraceEventLevel.Verbose, RuntimePresentKeyword);
-
-			TraceEventSession session = _session;
-			var traceThread = new Thread(() => ProcessEvents(session))
-			{
-				IsBackground = true,
-				Name = "PresentMon process discovery"
-			};
-			traceThread.Start();
-
-			_session.CaptureState(KernelProcessProvider, ProcessKeyword);
-			_session.CaptureState(DxgiProvider, DxgiKeyword);
-		}
-		catch
-		{
-			_session?.Dispose();
-			_session = null;
-			lock (_sync)
-			{
-				_started = false;
-			}
-		}
-	}
+	public event EventHandler? ProcessesChanged;
 
 	public List<string> GetRecordableProcesses(bool refreshRunningProcesses = false)
 	{
+		AssertNotDisposed();
+
 		if (refreshRunningProcesses)
 			RefreshRunningProcesses();
 
@@ -158,18 +116,51 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 		}
 	}
 
-	private static void ProcessEvents(TraceEventSession session)
+	public void Start()
 	{
-		DefaultTraceListener? defaultListener = Trace.Listeners.OfType<DefaultTraceListener>().FirstOrDefault();
-		if (defaultListener != null)
-			Trace.Listeners.Remove(defaultListener);
+		AssertNotDisposed();
+
+		lock (_sync)
+		{
+			if (_started)
+				return;
+
+			_started = true;
+		}
 
 		try
 		{
-			session.Source.Process();
+			TraceEventSession session = _session = new TraceEventSession($"PresentDiscovery.{Environment.ProcessId}")
+			{
+				StopOnDispose = true
+			};
+
+			var parser = new RegisteredTraceEventParser(session.Source);
+			parser.All += ProcessTraceEvent;
+			session.EnableProvider(KernelProcessProvider, TraceEventLevel.Informational, ProcessKeyword);
+			session.EnableProvider(DxgKrnlProvider, TraceEventLevel.Informational, PresentHistoryKeyword);
+			session.EnableProvider(DxgiProvider, TraceEventLevel.Verbose, DxgiKeyword);
+			session.EnableProvider(D3D9Provider, TraceEventLevel.Verbose, RuntimePresentKeyword);
+
+			var traceThread = new Thread(() => ProcessEvents(session))
+			{
+				IsBackground = true,
+				Name = "PresentMon process discovery"
+			};
+			traceThread.Start();
+
+			session.CaptureState(KernelProcessProvider, ProcessKeyword);
+			session.CaptureState(DxgiProvider, DxgiKeyword);
 		}
 		catch
-		{ }
+		{
+			_session?.Dispose();
+			_session = null;
+			lock (_sync)
+			{
+				_started = false;
+			}
+		}
 	}
 
 	private void ProcessTraceEvent(TraceEvent traceEvent)
@@ -205,7 +196,7 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 		int processId = (int)processIdValue;
 		if (eventId == ProcessStopEventId)
 		{
-			string stoppedProcessName = null;
+			string? stoppedProcessName = null;
 			lock (_sync)
 			{
 				if (_runningProcesses.TryGetValue(processId, out ProcessIdentity runningProcess))
@@ -266,7 +257,7 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 			return;
 
 		int nameIdx = Array.IndexOf(processEvent.PayloadNames, "ImageName");
-		string processName = nameIdx >= 0 ? processEvent.PayloadString(nameIdx) : null;
+		string? processName = nameIdx >= 0 ? processEvent.PayloadString(nameIdx) : null;
 		if (processName is not null)
 			RememberRunningProcess(processId, processName);
 		else
@@ -387,8 +378,11 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 				continue;
 			}
 
-			if (!processGroups.TryGetValue(name, out List<Process> processes))
-				processGroups[name] = processes = [];
+			if (!processGroups.TryGetValue(name, out List<Process>? processes))
+			{
+				processes = [];
+				processGroups[name] = processes;
+			}
 			processes.Add(process);
 		}
 
@@ -406,51 +400,6 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 				return;
 			_snapshotCandidates.Clear();
 			_snapshotCandidates.UnionWith(candidates);
-		}
-	}
-
-	private static bool IsSnapshotCandidate(List<Process> processes)
-	{
-		return processes.Any(HasVisibleMainWindow);
-	}
-
-	private static bool TryGetProcessName(Process process, out string name)
-	{
-		name = string.Empty;
-
-		try
-		{
-			string processName = process.ProcessName;
-			name = processName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? processName : $"{processName}.exe";
-			return true;
-		}
-		catch (InvalidOperationException)
-		{
-			return false;
-		}
-		catch (Win32Exception)
-		{
-			return false;
-		}
-		catch (ArgumentException)
-		{
-			return false;
-		}
-	}
-
-	private static bool HasVisibleMainWindow(Process process)
-	{
-		try
-		{
-			return process.MainWindowHandle != IntPtr.Zero;
-		}
-		catch (InvalidOperationException)
-		{
-			return false;
-		}
-		catch (ArgumentException)
-		{
-			return false;
 		}
 	}
 
@@ -513,7 +462,7 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 
 		try
 		{
-			using Process process = Process.GetProcessById(processId);
+			using var process = Process.GetProcessById(processId);
 			if (process.HasExited)
 				return false;
 
@@ -531,6 +480,65 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 			return false;
 		}
 		catch (Win32Exception)
+		{
+			return false;
+		}
+	}
+
+	private static void ProcessEvents(TraceEventSession session)
+	{
+		DefaultTraceListener? defaultListener = Trace.Listeners.OfType<DefaultTraceListener>().FirstOrDefault();
+		if (defaultListener != null)
+			Trace.Listeners.Remove(defaultListener);
+
+		try
+		{
+			session.Source.Process();
+		}
+		catch
+		{ }
+	}
+
+	private static bool IsSnapshotCandidate(List<Process> processes)
+	{
+		return processes.Any(HasVisibleMainWindow);
+	}
+
+	private static bool TryGetProcessName(Process process, out string name)
+	{
+		name = string.Empty;
+
+		try
+		{
+			string processName = process.ProcessName;
+			name = processName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? processName : $"{processName}.exe";
+			return true;
+		}
+		catch (InvalidOperationException)
+		{
+			return false;
+		}
+		catch (Win32Exception)
+		{
+			return false;
+		}
+		catch (ArgumentException)
+		{
+			return false;
+		}
+	}
+
+	private static bool HasVisibleMainWindow(Process process)
+	{
+		try
+		{
+			return process.MainWindowHandle != IntPtr.Zero;
+		}
+		catch (InvalidOperationException)
+		{
+			return false;
+		}
+		catch (ArgumentException)
 		{
 			return false;
 		}
@@ -563,14 +571,28 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 		}
 	}
 
+	private void AssertNotDisposed()
+	{
+		ObjectDisposedException.ThrowIf(_disposed, this);
+	}
+
 	public void Dispose()
 	{
+		Dispose(disposing: true);
+		GC.SuppressFinalize(this);
+	}
+
+	private void Dispose(bool disposing)
+	{
+		if (_disposed)
+			return;
+		_disposed = true;
+
+		if (!disposing)
+			return;
+
 		lock (_sync)
 		{
-			if (!_started)
-				return;
-
-			_started = false;
 			_runningProcesses.Clear();
 			_presentingProcesses.Clear();
 			_runtimePresents.Clear();
@@ -584,5 +606,6 @@ public sealed partial class PresentMonProcessDiscovery : IDisposable
 	}
 
 	private readonly record struct ProcessIdentity(string Name);
+
 	private readonly record struct RuntimePresent(Guid Provider, int ProcessId, int ThreadId);
 }

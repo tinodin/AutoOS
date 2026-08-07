@@ -5,6 +5,7 @@ using System.ServiceProcess;
 using System.Text;
 using System.Text.RegularExpressions;
 using AutoOS.Core.Helpers.Games;
+using AutoOS.Core.Helpers.Games.Models;
 using AutoOS.Core.Helpers.Processes;
 using AutoOS.Core.Helpers.Services;
 using Microsoft.UI.Xaml.Input;

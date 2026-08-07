@@ -1,4 +1,4 @@
-namespace AutoOS.App.Common;
+namespace AutoOS.App;
 
 public static partial class Constants
 {

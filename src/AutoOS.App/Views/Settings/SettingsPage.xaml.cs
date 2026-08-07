@@ -1,5 +1,4 @@
 using AutoOS.Core.Helpers.Picker;
-using AutoOS.Helpers.Picker;
 using Microsoft.UI.Xaml.Media;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
