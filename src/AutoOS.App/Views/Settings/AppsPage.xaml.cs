@@ -102,6 +102,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "Logitech G HUB", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/Logitech.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "LGHUB", "lghub.exe")) },
 			new() { Text = "Logitech Onboard Memory Manager", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/Logitech.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Logitech Onboard Memory Manager", "OnboardMemoryManager.exe")) },
 			new() { Text = "Wootility", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/Wootility.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "wootility", "Wootility.exe")) },
+			new() { Text = "G-Menu", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/G-Menu.png", IsInstalled = File.Exists(Path.Combine(@"C:\G-Menu", "G-Menu.exe")) },
 			new() { Text = "Endgame Gear", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/EndgameGear.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Endgame", "GamingUtility", "ENDGAME GEAR.exe")) },
 			new() { Text = "Glorious CORE", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/GloriousCORE.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Glorious CORE", "Glorious Core.exe")) },
 			new() { Text = "MCHOSE HUB", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/MCHOSE.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "MCHOSE HUB", "MCHOSE HUB.exe")) },
@@ -135,7 +136,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "Cursor", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Cursor.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "cursor", "Cursor.exe")) },
 			new() { Text = "Devin", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Devin.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Devin", "Devin.exe"))},
 			new() { Text = "Kiro", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Kiro.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Kiro", "Kiro.exe")) },
-			new() { Text = "OpenCode", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/OpenCode.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", @"@opencode-aidesktop", "OpenCode.exe")) },
+			new() { Text = "OpenCode", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/OpenCode.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "@opencode-aidesktop", "OpenCode.exe")) },
 			new() { Text = "Sublime Text", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/SublimeText.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Sublime Text", "sublime_text.exe")) },
 			new() { Text = "IntelliJ IDEA", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/IDEA.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "JetBrains", "IntelliJ IDEA 2026.1.3", "bin", "idea64.exe")) },
 			new() { Text = "WinMerge", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/WinMerge.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "WinMerge", "WinMergeU.exe"))},
@@ -144,7 +145,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "Python", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Python.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "py.exe")) },
 			new() { Text = "Node.js", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Nodejs.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "nodejs", "node.exe")) },
 			new() { Text = "Rust", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Rust.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".cargo", "bin", "rustup.exe")) },
-			new() { Text = "Java", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Java.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Java", "jdk-26.0.1", "bin", "java.exe")) },
+			new() { Text = "Java", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Java.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Java", "jre1.8.0_501", "bin", "java.exe")) },
 			new() { Text = "Go", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Go.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Go", "bin", "go.exe")) },
 			new() { Text = "Trello", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Trello.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "45273LiamForsyth.PawsforTrello_7pb5ddty8z1pa")) }
 		};
@@ -233,6 +234,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "WizTree", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/WizTree.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "WizTree", "WizTree64.exe")) },
 			new() { Text = "CrystalDiskInfo", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/CrystalDiskInfo.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "CrystalDiskInfo", "DiskInfo64.exe")) },
 			new() { Text = "CrystalDiskMark", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/CrystalDiskMark.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "CrystalDiskMark9", "DiskMark64.exe")) },
+			new() { Text = "Proton VPN", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/ProtonVPN.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Proton", "VPN", "ProtonVPN.Launcher.exe")) },
 			new() { Text = "Bulk Crap Uninstaller", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/BulkCrapUninstaller.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "BCUninstaller", "BCUninstaller.exe")) },
 			new() { Text = "Bluetooth Audio Receiver", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/BluetoothAudioReceiver.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "55746MarkSmirnov.BluetoothAudioReveicer_xwrbx6997tsfc")) },
 			new() { Text = "AnyDesk", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/AnyDesk.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "AnyDesk", "AnyDesk.exe")) },
@@ -317,6 +319,7 @@ public sealed partial class AppsPage : Page
 		selection.LogitechGHub = selectedPeripherals.Contains("Logitech G HUB");
 		selection.LogitechOnboardMemoryManager = selectedPeripherals.Contains("Logitech Onboard Memory Manager");
 		selection.Wootility = selectedPeripherals.Contains("Wootility");
+		selection.GMenu = selectedPeripherals.Contains("G-Menu");
 		selection.EndgameGear = selectedPeripherals.Contains("Endgame Gear");
 		selection.GloriousCORE = selectedPeripherals.Contains("Glorious CORE");
 		selection.MCHOSE = selectedPeripherals.Contains("MCHOSE HUB");
@@ -419,6 +422,7 @@ public sealed partial class AppsPage : Page
 		selection.WizTree = selectedMiscellaneous.Contains("WizTree");
 		selection.CrystalDiskInfo = selectedMiscellaneous.Contains("CrystalDiskInfo");
 		selection.CrystalDiskMark = selectedMiscellaneous.Contains("CrystalDiskMark");
+		selection.ProtonVPN = selectedMiscellaneous.Contains("Proton VPN");
 		selection.BulkCrapUninstaller = selectedMiscellaneous.Contains("Bulk Crap Uninstaller");
 		selection.BluetoothAudioReceiver = selectedMiscellaneous.Contains("Bluetooth Audio Receiver");
 		selection.AnyDesk = selectedMiscellaneous.Contains("AnyDesk");

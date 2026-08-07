@@ -99,6 +99,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "Logitech G HUB", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/Logitech.png" },
 			new() { Text = "Logitech Onboard Memory Manager", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/Logitech.png" },
 			new() { Text = "Wootility", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/Wootility.png" },
+			new() { Text = "G-Menu", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/G-Menu.png"},
 			new() { Text = "Endgame Gear", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/EndgameGear.png" },
 			new() { Text = "Glorious CORE", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/GloriousCORE.png" },
 			new() { Text = "MCHOSE HUB", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/MCHOSE.png" },

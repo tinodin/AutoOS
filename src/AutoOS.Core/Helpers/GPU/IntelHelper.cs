@@ -1,12 +1,13 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using AutoOS.Core.Common;
-using AutoOS.Core.Helpers.CPU;
 using AutoOS.Core.Helpers.Download;
 using AutoOS.Core.Helpers.Extract;
 using AutoOS.Core.Helpers.GPU.Models;
 using AutoOS.Core.Helpers.Logging;
+using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.Services;
+using Microsoft.Win32;
 using Windows.Win32.System.Services;
 
 namespace AutoOS.Core.Helpers.GPU;
@@ -193,6 +194,9 @@ public static partial class IntelHelper
 
 		var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
 		{
+			// disable intel® graphics software startup entry
+			("Disabling Intel® Graphics Software startup entry", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32", "Intel® Graphics Software", new byte[] { 0x03 }, RegistryValueKind.Binary), null),
+
 			// disable unnecessary services
 			("Disabling unnecessary services", async () => ServicesHelper.SetStartupType("cphs", SERVICE_START_TYPE.SERVICE_DISABLED), () => Intel_3rd == true || Intel_4th_5th == true || Intel_6th == true || Intel_7th_10th == true),
 			("Disabling unnecessary services", async () => ServicesHelper.StopService("cphs"), () => Intel_3rd == true || Intel_4th_5th == true || Intel_6th == true || Intel_7th_10th == true),
