@@ -22,7 +22,7 @@ AutoOS is a Native AOT WinUI 3 application that automates migrating to a new Win
 ## ✨ Introduction
 
 > [!NOTE]  
-> The following is a description of the AutoOS project, if you just want to install it, head to [Installation Guide](docs/INSTALL.md).
+> The following is a description of the AutoOS project, if you just want to install it, head to [Installation Guide](../docs/INSTALL.md).
 
 There are plenty of "Windows Debloat" scripts and apps out there, but most of them rely on basic CMD / PowerShell scripts / commands, apply non-researched tweaks, and end up breaking core Windows functionality or security.
 
@@ -95,4 +95,4 @@ On startup **AutoOS Startup** does the following:
 I have spent countless hours every day for 2 years building this project for myself and others. There is still some work to do and I am looking for contributors and suggestions to make this a big community project.
 
 ## 📜 License
-This project is licensed under the **GNU General Public License v3.0**. Detailed information about third-party components and credits can be found in **[License & Credits](docs/LICENSE_THIRD_PARTY.md)**.
+This project is licensed under the **GNU General Public License v3.0**. Detailed information about third-party components and credits can be found in **[License & Credits](../docs/LICENSE_THIRD_PARTY.md)**.
