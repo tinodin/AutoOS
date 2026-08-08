@@ -40,6 +40,7 @@ public class BrowserSelection
 	public bool YouTubeNoTranslation { get; set; }
 	public bool DarkReader { get; set; }
 	public bool Shazam { get; set; }
+	public bool ProtonPass { get; set; }
 	public bool WaybackMachine { get; set; }
 	public bool iCloud { get; set; }
 	public bool Bitwarden { get; set; }
@@ -79,6 +80,7 @@ public static class BrowsersStage
 		bool? YouTubeNoTranslation = selection?.YouTubeNoTranslation ?? PreparingStage.YouTubeNoTranslation;
 		bool? DarkReader = selection?.DarkReader ?? PreparingStage.DarkReader;
 		bool? Shazam = selection?.Shazam ?? PreparingStage.Shazam;
+		bool? ProtonPass = selection?.ProtonPass ?? PreparingStage.ProtonPass;
 		bool? WaybackMachine = selection?.WaybackMachine ?? PreparingStage.WaybackMachine;
 		bool? iCloud = selection?.iCloud ?? PreparingStage.iCloud;
 		bool? Bitwarden = selection?.Bitwarden ?? PreparingStage.Bitwarden;
@@ -187,6 +189,9 @@ public static class BrowsersStage
 			// install shazam extension
 			("Installing Shazam Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\ExtensionInstallForcelist", "mmioliijnhnoblpgimnlajmefafdfilb"), () => Chrome == true && Shazam == true),
 
+			// install proton pass extension
+			("Installing Proton Pass Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\ExtensionInstallForcelist", "ghmbeldphafepmbegfdlkpapadhbakde"), () => Chrome == true && ProtonPass == true),
+
 			// install wayback machine extension
 			("Installing Wayback Machine Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\ExtensionInstallForcelist", "fpnmgdkabkmnadcjpehmlllkndpkmiak"), () => Chrome == true && WaybackMachine == true),
 
@@ -275,6 +280,8 @@ public static class BrowsersStage
 			// install shazam extension
 			("Installing Shazam Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "mmioliijnhnoblpgimnlajmefafdfilb"), () => Thorium == true && Shazam == true),
 
+			("Installing Proton Pass Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "ghmbeldphafepmbegfdlkpapadhbakde"), () => Thorium == true && ProtonPass == true),
+
 			// install wayback machine extension
 			("Installing Wayback Machine Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "fpnmgdkabkmnadcjpehmlllkndpkmiak"), () => Thorium == true && WaybackMachine == true),
 
@@ -340,6 +347,8 @@ public static class BrowsersStage
 			
 			// install shazam extension
 			("Installing Shazam Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Helium\ExtensionInstallForcelist", "mmioliijnhnoblpgimnlajmefafdfilb"), () => Helium == true && Shazam == true),
+
+			("Installing Proton Pass Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Helium\ExtensionInstallForcelist", "ghmbeldphafepmbegfdlkpapadhbakde"), () => Helium == true && ProtonPass == true),
 
 			// install wayback machine extension
 			("Installing Wayback Machine Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Helium\ExtensionInstallForcelist", "fpnmgdkabkmnadcjpehmlllkndpkmiak"), () => Helium == true && WaybackMachine == true),
@@ -424,6 +433,8 @@ public static class BrowsersStage
 			// install shazam extension
 			("Installing Shazam Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\BraveSoftware\Brave\ExtensionInstallForcelist", "mmioliijnhnoblpgimnlajmefafdfilb"), () => Brave == true && Shazam == true),
 
+			("Installing Proton Pass Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\BraveSoftware\Brave\ExtensionInstallForcelist", "ghmbeldphafepmbegfdlkpapadhbakde"), () => Brave == true && ProtonPass == true),
+
 			// install wayback machine extension
 			("Installing Wayback Machine Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\BraveSoftware\Brave\ExtensionInstallForcelist", "fpnmgdkabkmnadcjpehmlllkndpkmiak"), () => Brave == true && WaybackMachine == true),
 
@@ -479,6 +490,8 @@ public static class BrowsersStage
 			
 			// install shazam extension
 			("Installing Shazam Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Vivaldi\ExtensionInstallForcelist", "mmioliijnhnoblpgimnlajmefafdfilb"), () => Vivaldi == true && Shazam == true),
+
+			("Installing Proton Pass Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Vivaldi\ExtensionInstallForcelist", "ghmbeldphafepmbegfdlkpapadhbakde"), () => Vivaldi == true && ProtonPass == true),
 
 			// install wayback machine extension
 			("Installing Wayback Machine Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Vivaldi\ExtensionInstallForcelist", "fpnmgdkabkmnadcjpehmlllkndpkmiak"), () => Vivaldi == true && WaybackMachine == true),
@@ -551,6 +564,8 @@ public static class BrowsersStage
 			// install shazam extension
 			("Installing Shazam Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "mmioliijnhnoblpgimnlajmefafdfilb"), () => Arc == true && Shazam == true),
 
+			("Installing Proton Pass Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "ghmbeldphafepmbegfdlkpapadhbakde"), () => Arc == true && ProtonPass == true),
+
 			// install wayback machine extension
 			("Installing Wayback Machine Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "fpnmgdkabkmnadcjpehmlllkndpkmiak"), () => Arc == true && WaybackMachine == true),
 
@@ -603,6 +618,8 @@ public static class BrowsersStage
 			
 			// install shazam extension
 			("Installing Shazam Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "mmioliijnhnoblpgimnlajmefafdfilb"), () => Comet == true && Shazam == true),
+
+			("Installing Proton Pass Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "ghmbeldphafepmbegfdlkpapadhbakde"), () => Comet == true && ProtonPass == true),
 
 			// install wayback machine extension
 			("Installing Wayback Machine Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "fpnmgdkabkmnadcjpehmlllkndpkmiak"), () => Comet == true && WaybackMachine == true),
@@ -685,6 +702,8 @@ public static class BrowsersStage
 			// install dark reader extension
 			("Installing Dark Reader Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Mozilla Firefox", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/darkreader"), () => Firefox == true && DarkReader == true),
 
+			("Installing Proton Pass Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Mozilla Firefox", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/proton-pass"), () => Firefox == true && ProtonPass == true),
+
 			// install wayback machine extension
 			("Installing Wayback Machine Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Mozilla Firefox", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/wayback-machine_new"), () => Firefox == true && WaybackMachine == true),
 
@@ -746,6 +765,8 @@ public static class BrowsersStage
 
 			// install dark reader extension
 			("Installing Dark Reader Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Zen Browser", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/darkreader"), () => Zen == true && DarkReader == true),
+
+			("Installing Proton Pass Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Zen Browser", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/proton-pass"), () => Zen == true && ProtonPass == true),
 
 			// install wayback machine extension
 			("Installing Wayback Machine Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Zen Browser", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/wayback-machine_new"), () => Zen == true && WaybackMachine == true),
@@ -809,6 +830,8 @@ public static class BrowsersStage
 			// install dark reader extension
 			("Installing Dark Reader Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Waterfox", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/darkreader"), () => Waterfox == true && DarkReader == true),
 
+			("Installing Proton Pass Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Waterfox", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/proton-pass"), () => Waterfox == true && ProtonPass == true),
+
 			// install wayback machine extension
 			("Installing Wayback Machine Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Waterfox", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/wayback-machine_new"), () => Waterfox == true && WaybackMachine == true),
 
@@ -863,6 +886,8 @@ public static class BrowsersStage
 
 			// install dark reader extension
 			("Installing Dark Reader Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "LibreWolf", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/darkreader"), () => LibreWolf == true && DarkReader == true),
+
+			("Installing Proton Pass Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "LibreWolf", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/proton-pass"), () => LibreWolf == true && ProtonPass == true),
 
 			// install wayback machine extension
 			("Installing Wayback Machine Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "LibreWolf", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/wayback-machine_new"), () => LibreWolf == true && WaybackMachine == true),
@@ -926,6 +951,8 @@ public static class BrowsersStage
 			// install dark reader extension
 			("Installing Dark Reader Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Ablaze Floorp", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/darkreader"), () => Floorp == true && DarkReader == true),
 
+			("Installing Proton Pass Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Ablaze Floorp", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/proton-pass"), () => Floorp == true && ProtonPass == true),
+
 			// install wayback machine extension
 			("Installing Wayback Machine Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Ablaze Floorp", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/wayback-machine_new"), () => Floorp == true && WaybackMachine == true),
 
@@ -983,6 +1010,8 @@ public static class BrowsersStage
 
 			// install dark reader extension
 			("Installing Dark Reader Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mullvad", "MullvadBrowser", "Release", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/darkreader"), () => Mullvad == true && DarkReader == true),
+
+			("Installing Proton Pass Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mullvad", "MullvadBrowser", "Release", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/proton-pass"), () => Mullvad == true && ProtonPass == true),
 
 			// install wayback machine extension
 			("Installing Wayback Machine Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mullvad", "MullvadBrowser", "Release", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/wayback-machine_new"), () => Mullvad == true && WaybackMachine == true),

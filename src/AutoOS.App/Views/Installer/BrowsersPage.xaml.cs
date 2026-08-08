@@ -56,6 +56,7 @@ public sealed partial class BrowsersPage : Page
 			new() { Text = "YouTube No Translation", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/YouTubeNoTranslation.png" },
 			new() { Text = "Dark Reader", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/Darkreader.png" },
 			new() { Text = "Shazam", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/Shazam.png" },
+			new() { Text = "Proton Pass", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/ProtonPass.png" },
 			new() { Text = "Wayback Machine", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/WaybackMachine.png" },
 			new() { Text = "iCloud Passwords", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/IcloudPasswords.png" },
 			new() { Text = "Bitwarden", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/Bitwarden.png" },
