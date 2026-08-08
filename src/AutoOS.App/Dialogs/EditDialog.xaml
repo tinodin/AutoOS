@@ -16,18 +16,20 @@
 		<Style BasedOn="{StaticResource DefaultContentDialogStyle}" TargetType="local:EditDialog" />
 	</ContentDialog.Resources>
 
+	<!--  Name  -->
 	<StackPanel Spacing="12">
 		<TextBox
 			x:Name="NameTextBox"
 			Header="Name:"
 			Text="{x:Bind ViewModel.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
+
+		<!--  Description  -->
 		<TextBox
 			x:Name="DescriptionTextBox"
 			MaxHeight="500"
 			AcceptsReturn="True"
 			Header="Description:"
-			PlaceholderText="Optional"
 			Text="{x:Bind ViewModel.Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 			TextWrapping="Wrap" />
 	</StackPanel>

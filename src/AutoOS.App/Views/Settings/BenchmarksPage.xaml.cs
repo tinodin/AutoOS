@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Runtime.InteropServices.WindowsRuntime;
 using AutoOS.App.ViewModels;
 using AutoOS.Core.Helpers.Picker;
+using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.WinUI.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
@@ -21,7 +22,7 @@ namespace AutoOS.App.Views.Settings;
 
 public sealed partial class BenchmarksPage : Page
 {
-	public BenchmarksPageViewModel ViewModel { get; } = new();
+	public BenchmarksPageViewModel ViewModel { get; } = Ioc.Default.GetRequiredService<BenchmarksPageViewModel>();
 
 	private GlobalKeyboardHook? _globalKeyboardHook;
 

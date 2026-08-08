@@ -33,6 +33,7 @@ public partial class App : Application
 		.AddSingleton<IDialogService, DialogService>()
 		.AddSingleton<IPowerPlanService, PowerPlanService>()
 		.AddTransient<PowerPageViewModel>()
+		.AddTransient<BenchmarksPageViewModel>()
 		.BuildServiceProvider();
 
 	public App()

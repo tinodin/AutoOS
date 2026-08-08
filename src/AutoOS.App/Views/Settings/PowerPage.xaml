@@ -21,6 +21,7 @@
 		<!--  AC ComboBox Template  -->
 		<DataTemplate x:Key="AcComboBoxEditTemplate" x:DataType="models:Node">
 			<ComboBox
+				DropDownClosed="EditComboBox_DropDownClosed"
 				ItemsSource="{x:Bind Options, Mode=OneTime}"
 				Loaded="EditControl_Loaded"
 				SelectedItem="{x:Bind State.EditAcOption, Mode=TwoWay}"
@@ -63,6 +64,7 @@
 		<!--  DC ComboBox Template  -->
 		<DataTemplate x:Key="DcComboBoxEditTemplate" x:DataType="models:Node">
 			<ComboBox
+				DropDownClosed="EditComboBox_DropDownClosed"
 				ItemsSource="{x:Bind Options, Mode=OneTime}"
 				Loaded="EditControl_Loaded"
 				SelectedItem="{x:Bind State.EditDcOption, Mode=TwoWay}"
@@ -338,7 +340,7 @@
 			</Border>
 		</StackPanel>
 
-		<dev:SwitchPresenter Grid.Row="1" Value="{x:Bind ViewModel.SwitchValue, Mode=OneWay}">
+		<dev:SwitchPresenter Grid.Row="1" Value="{x:Bind ViewModel.SwitchPresenterValue, Mode=OneWay}">
 
 			<!--  Loading  -->
 			<dev:Case Value="Loading">

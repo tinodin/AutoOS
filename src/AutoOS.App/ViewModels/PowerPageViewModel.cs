@@ -6,7 +6,6 @@ using AutoOS.App.Data.Models.Power;
 using AutoOS.App.Services;
 using AutoOS.App.Services.Power;
 using AutoOS.App.ViewModels.Dialogs.Power;
-using AutoOS.App.Views.Installer.Stages;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -39,7 +38,7 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 	private bool HasComparePlan => ComparePlan != null && ComparePlan.Guid != Guid.Empty;
 
 	[ObservableProperty]
-	public partial string SwitchValue { get; set; } = "Loading";
+	public partial string SwitchPresenterValue { get; set; } = "Loading";
 
 	[ObservableProperty]
 	[NotifyCanExecuteChangedFor(nameof(UndoCommand))]
@@ -51,9 +50,6 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 	public partial bool IsLoaded { get; set; }
 
 	[ObservableProperty]
-	[NotifyCanExecuteChangedFor(nameof(EditCommand))]
-	[NotifyCanExecuteChangedFor(nameof(DuplicateCommand))]
-	[NotifyCanExecuteChangedFor(nameof(ExportCommand))]
 	[NotifyPropertyChangedFor(nameof(ActivePlanToolTip))]
 	[NotifyPropertyChangedFor(nameof(ActivePlanAcHeader))]
 	[NotifyPropertyChangedFor(nameof(ActivePlanDcHeader))]
@@ -120,8 +116,6 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 
 	public bool CanRestore => IsLoaded;
 
-	public bool CanEditPlan => ActivePlan != null;
-
 	public bool CanToggleViewChanges => IsLoaded;
 
 	public string ViewChangesLabel => $"View Changes ({ModifiedCount})";
@@ -160,14 +154,14 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		_activePlanReloadCts?.Cancel();
 		_activePlanReloadCts?.Dispose();
 		_activePlanReloadCts = new CancellationTokenSource();
-		_ = ReloadActiveSchemeAsync(value.Guid, _activePlanReloadCts.Token);
+		_ = SwitchActivePowerPlanAsync(value.Guid, _activePlanReloadCts.Token);
 	}
 
-	private async Task ReloadActiveSchemeAsync(Guid planGuid, CancellationToken token)
+	private async Task SwitchActivePowerPlanAsync(Guid planGuid, CancellationToken token)
 	{
 		try
 		{
-			powerService.SetActiveScheme(planGuid);
+			powerService.SetActivePowerPlan(planGuid);
 			RefreshComparePlans();
 			await ReloadActiveValuesAsync(token);
 		}
@@ -188,15 +182,15 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 
 	public async Task LoadPlansAsync(Guid? preferredGuid = null)
 	{
-		SwitchValue = "Loading";
+		SwitchPresenterValue = "Loading";
 		IsLoaded = false;
 
-		IReadOnlyList<Plan> plans = await Task.Run(powerService.GetPlans);
-		Guid activeGuid = await Task.Run(powerService.GetActivePlanGuid);
+		IReadOnlyList<Plan> plans = await Task.Run(powerService.GetPowerPlans);
+		Guid activeGuid = await Task.Run(powerService.GetActivePowerPlan);
 		bool hasTarget = preferredGuid.HasValue || activeGuid != Guid.Empty;
 		SetPlans(plans, preferredGuid ?? activeGuid, hasTarget);
 
-		(Plan plan, IReadOnlyList<Subgroup> subgroups, IReadOnlyDictionary<Setting, Value> initialValues) = await Task.Run(() => powerService.ReadCompleteScheme(ActivePlan.Guid));
+		(Plan plan, IReadOnlyList<Subgroup> subgroups, IReadOnlyDictionary<Setting, Value> initialValues) = await Task.Run(() => powerService.ReadPowerPlan(ActivePlan.Guid));
 
 		ActivePlan = plan;
 		_subgroups = subgroups;
@@ -221,7 +215,7 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		RefreshState();
 		IsLoaded = true;
 
-		SwitchValue = "Loaded";
+		SwitchPresenterValue = "Loaded";
 	}
 
 	public void SetPlans(IEnumerable<Plan> plans, Guid activeGuid, bool selectFallback = true)
@@ -276,7 +270,7 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 
 		foreach (Setting setting in _settings)
 		{
-			Value? value = powerService.ReadValues(ComparePlan.Guid, setting.SubgroupGuid, setting.Guid);
+			Value? value = powerService.ReadValue(ComparePlan.Guid, setting.SubgroupGuid, setting.Guid);
 			if (value.HasValue)
 				_compareValues[setting] = value.Value;
 		}
@@ -300,9 +294,7 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		if (!CanUndo)
 			return;
 
-		_redoStates.Push(CaptureState());
-		RestoreState(_undoStates.Pop());
-		RefreshState();
+		MoveState(_undoStates, _redoStates);
 	}
 
 	[RelayCommand(CanExecute = nameof(CanRedo))]
@@ -311,12 +303,17 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		if (!CanRedo)
 			return;
 
-		_undoStates.Push(CaptureState());
-		RestoreState(_redoStates.Pop());
+		MoveState(_redoStates, _undoStates);
+	}
+
+	private void MoveState(Stack<Dictionary<Setting, Value>> from, Stack<Dictionary<Setting, Value>> to)
+	{
+		to.Push(CaptureState());
+		RestoreState(from.Pop());
 		RefreshState();
 	}
 
-	[RelayCommand(CanExecute = nameof(CanEditPlan))]
+	[RelayCommand]
 	private async Task EditAsync()
 	{
 		if (ActivePlan is not Plan plan)
@@ -326,7 +323,7 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		if (await dialogService.ShowDialogAsync(editDialogViewModel) != DialogResult.Primary)
 			return;
 
-		Plan updated = powerService.UpdatePlanMetadata(plan, editDialogViewModel.Name, editDialogViewModel.Description);
+		Plan updated = powerService.UpdatePowerPlanMetadata(plan, editDialogViewModel.Name, editDialogViewModel.Description);
 		int index = Plans.IndexOf(plan);
 		if (index < 0)
 			return;
@@ -335,7 +332,7 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		Plans[index] = updated;
 	}
 
-	[RelayCommand(CanExecute = nameof(CanEditPlan))]
+	[RelayCommand]
 	private async Task DuplicateAsync()
 	{
 		if (ActivePlan is not Plan plan)
@@ -353,11 +350,11 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		}
 		while (Plans.Any(item => item.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase)));
 
-		Guid guid = powerService.DuplicateScheme(plan.Guid, name, plan.Description);
-		SetPlans(await Task.Run(powerService.GetPlans), guid);
+		Guid guid = powerService.DuplicatePowerPlan(plan.Guid, name, plan.Description);
+		SetPlans(await Task.Run(powerService.GetPowerPlans), guid);
 	}
 
-	[RelayCommand(CanExecute = nameof(CanEditPlan))]
+	[RelayCommand]
 	private async Task ExportAsync()
 	{
 		if (ActivePlan is not Plan plan)
@@ -367,7 +364,7 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		if (filePath == null)
 			return;
 
-		await Task.Run(() => powerService.ExportScheme(plan.Guid, filePath));
+		await Task.Run(() => powerService.ExportPowerPlan(plan.Guid, filePath));
 	}
 
 	[RelayCommand(CanExecute = nameof(CanDelete))]
@@ -381,9 +378,9 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 
 		int index = Plans.IndexOf(planToDelete);
 		Plan nextPlan = index > 0 ? Plans[index - 1] : Plans[index + 1];
-		powerService.SetActiveScheme(nextPlan.Guid);
-		powerService.DeleteScheme(planToDelete.Guid);
-		SetPlans(await Task.Run(powerService.GetPlans), nextPlan.Guid);
+		powerService.SetActivePowerPlan(nextPlan.Guid);
+		powerService.DeletePowerPlan(planToDelete.Guid);
+		SetPlans(await Task.Run(powerService.GetPowerPlans), nextPlan.Guid);
 	}
 
 	[RelayCommand(CanExecute = nameof(CanRestore))]
@@ -393,11 +390,11 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		if (filePath == null)
 			return;
 
-		Guid importedGuid = await Task.Run(() => powerService.ImportScheme(filePath));
+		Guid importedGuid = await Task.Run(() => powerService.ImportPowerPlan(filePath));
 		if (importedGuid == Guid.Empty)
 			return;
 
-		SetPlans(await Task.Run(powerService.GetPlans), importedGuid);
+		SetPlans(await Task.Run(powerService.GetPowerPlans), importedGuid);
 	}
 
 	[RelayCommand(CanExecute = nameof(CanRestore))]
@@ -406,14 +403,10 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		if (await dialogService.ShowConfirmationDialogAsync("Restore default power plans", "Are you sure that you want to restore the default power plans and re-apply the AutoOS power plan?", "Yes", "No") != DialogResult.Primary)
 			return;
 
-		foreach ((_, Func<Task>? action, Func<bool>? condition) in PowerStage.GetActions())
-		{
-			if (condition == null || condition())
-				await action();
-		}
+		await powerService.RestoreDefaultPowerPlansAsync();
 
-		Guid activeGuid = await Task.Run(powerService.GetActivePlanGuid);
-		SetPlans(await Task.Run(powerService.GetPlans), activeGuid, activeGuid != Guid.Empty);
+		Guid activeGuid = await Task.Run(powerService.GetActivePowerPlan);
+		SetPlans(await Task.Run(powerService.GetPowerPlans), activeGuid, activeGuid != Guid.Empty);
 	}
 
 	[RelayCommand(CanExecute = nameof(CanToggleViewChanges))]
@@ -442,7 +435,7 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 			values.OriginalDcValue = values.DcValue;
 		}
 
-		powerService.CommitChanges(ActivePlan.Guid, changes);
+		powerService.SaveChanges(ActivePlan.Guid, changes);
 		ResetHistory();
 		RefreshState();
 	}
@@ -541,7 +534,7 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		if (item is not Node node)
 			return true;
 
-		string query = SearchText?.Trim() ?? string.Empty;
+		string query = SearchText;
 		if (query.Length == 0)
 			return true;
 
@@ -654,15 +647,13 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 			if (children.Count == 0)
 				continue;
 
-			var subgroupNode = new Node(NodeKind.Subgroup, mode, $"{subgroup.Name} ({CountVisibleSettings(children)})", subgroup.Description, subgroup.Guid, baseDisplayName: subgroup.Name);
+			var subgroupNode = new Node(NodeKind.Subgroup, mode, subgroup.Name, subgroup.Description, subgroup.Guid, baseDisplayName: subgroup.Name);
 			foreach (Node child in children)
 				subgroupNode.Children.Add(child);
 			rootChildren.Add(subgroupNode);
 		}
 
-		int totalCount = CountVisibleSettings(rootChildren);
-		string rootDisplayName = string.IsNullOrWhiteSpace(SearchText) ? $"{baseRootName} ({totalCount})" : $"Results ({totalCount})";
-		var root = new Node(NodeKind.Root, mode, rootDisplayName, string.Empty, Guid.Empty, baseDisplayName: baseRootName);
+		var root = new Node(NodeKind.Root, mode, baseRootName, string.Empty, Guid.Empty, baseDisplayName: baseRootName);
 		foreach (Node child in rootChildren)
 			root.Children.Add(child);
 
@@ -734,7 +725,7 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 
 	private int CountVisibleSettings(IEnumerable<Node> nodes)
 	{
-		string query = SearchText?.Trim() ?? string.Empty;
+		string query = SearchText;
 		int count = 0;
 		foreach (Node node in nodes)
 		{

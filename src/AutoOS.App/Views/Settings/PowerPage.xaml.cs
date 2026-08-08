@@ -2,6 +2,8 @@ using AutoOS.App.Data.Enums.Power;
 using AutoOS.App.Data.Models.Power;
 using AutoOS.App.ViewModels;
 using CommunityToolkit.Mvvm.DependencyInjection;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Syncfusion.UI.Xaml.Data;
 using Syncfusion.UI.Xaml.DataGrid;
@@ -118,6 +120,21 @@ public sealed partial class PowerPage : Page
 			control.Focus(FocusState.Programmatic);
 		if (sender is Microsoft.UI.Xaml.Controls.TextBox textBox)
 			textBox.SelectAll();
+	}
+
+	private void EditComboBox_DropDownClosed(object sender, object e)
+	{
+		foreach (SfTreeGrid treeGrid in new[] { TreeGrid, CompareTreeGrid, ChangesTreeGrid })
+		{
+			TreeGridCurrentCellManager manager = treeGrid.SelectionController.CurrentCellManager;
+			if (manager.CurrentCell?.IsEditing != true)
+				continue;
+
+			var index = manager.CurrentRowColumnIndex;
+			manager.EndEdit();
+			treeGrid.SelectionController.MoveCurrentCell(index);
+			break;
+		}
 	}
 
 	private void TreeGrid_TreeGridContextFlyoutOpening(object sender, TreeGridContextFlyoutEventArgs e)
