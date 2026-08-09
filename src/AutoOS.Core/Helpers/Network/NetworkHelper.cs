@@ -32,7 +32,7 @@ public static partial class NetworkHelper
 				_ => NetworkSettingType.Enum
 			};
 
-			string desc = paramKey.GetValue("ParamDesc")?.ToString();
+			string? desc = paramKey.GetValue("ParamDesc")?.ToString();
 			var setting = new NetworkAdvancedSetting
 			{
 				Key = paramKeyName,
@@ -271,8 +271,8 @@ public static partial class NetworkHelper
 
 		if (!string.Equals(currentVal, targetVal, StringComparison.OrdinalIgnoreCase))
 		{
-			SetAdvancedSetting(device, setting.Key, option.Value);
-			setting.CurrentValue = option.Value;
+			SetAdvancedSetting(device, setting.Key, option.Value ?? string.Empty);
+			setting.CurrentValue = option.Value ?? string.Empty;
 			return true;
 		}
 		return false;

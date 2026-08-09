@@ -42,7 +42,7 @@ public sealed partial class BrowsersPage : Page
 			new() { Text = "Floorp", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Floorp.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Ablaze Floorp", "floorp.exe")) },
 			new() { Text = "Mullvad Browser", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Mullvad.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mullvad", "MullvadBrowser", "Release", "mullvadbrowser.exe")) }
 		};
-		foreach (GridViewItem? item in browsers.Where(item => !item.IsInstalled))
+		foreach (GridViewItem item in browsers.Where(item => !item.IsInstalled))
 			browserItems.Add(item);
 
 		var extensions = new List<GridViewItem>
@@ -117,7 +117,7 @@ public sealed partial class BrowsersPage : Page
 
 		var updateDialog = new UpdateDialog();
 		var reporter = new UpdateDialogReporter(updateDialog);
-		List<(string Title, Func<Task> Action, Func<bool> Condition)> actions = BrowsersStage.GetActions(reporter, selection);
+		List<(string Title, Func<Task> Action, Func<bool>? Condition)> actions = BrowsersStage.GetActions(reporter, selection);
 
 		var dialog = new ContentDialog
 		{
@@ -140,11 +140,11 @@ public sealed partial class BrowsersPage : Page
 		await Task.Delay(1000);
 		dialog.Hide();
 
-		foreach (GridViewItem? item in selectedBrowsersItems)
+		foreach (GridViewItem item in selectedBrowsersItems)
 			browserItems.Remove(item);
 
 		Extensions.SelectedItems.Clear();
 
-		GridView_SelectionChanged(null, null);
+		GridView_SelectionChanged(null!, null!);
 	}
 }

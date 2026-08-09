@@ -105,7 +105,7 @@ public sealed partial class UpdatePage : Page
 	{
 		TargetVersion.Items.Add(new ComboBoxItem { Content = "Default" });
 
-		string current = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion")?.GetValue("DisplayVersion") as string;
+		string? current = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion")?.GetValue("DisplayVersion") as string;
 
 		if (!string.IsNullOrEmpty(current))
 		{
@@ -137,7 +137,7 @@ public sealed partial class UpdatePage : Page
 
 		if (TargetVersion.SelectedItem is ComboBoxItem selectedItem)
 		{
-			string version = selectedItem.Content.ToString();
+			string version = selectedItem.Content.ToString()!;
 
 			using RegistryKey? key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate", true);
 

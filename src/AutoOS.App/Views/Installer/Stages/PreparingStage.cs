@@ -284,8 +284,8 @@ public static partial class PreparingStage
 			{
 				try
 				{
-					JsonNode tokenNode = DatabaseHelper.Read(databasePath, "_https://discord.com", "token");
-					string token = tokenNode?.ToString();
+					JsonNode? tokenNode = DatabaseHelper.Read(databasePath, "_https://discord.com", "token");
+					string? token = tokenNode?.ToString();
 					return !string.IsNullOrEmpty(token);
 				}
 				catch
@@ -309,8 +309,8 @@ public static partial class PreparingStage
 			{
 				try
 				{
-					JsonNode keybindsNode = DatabaseHelper.Read(databasePath, "_https://discord.com", "keybinds");
-					string keybinds = keybindsNode?.ToString();
+					JsonNode? keybindsNode = DatabaseHelper.Read(databasePath, "_https://discord.com", "keybinds");
+					string? keybinds = keybindsNode?.ToString();
 					return !string.IsNullOrEmpty(keybinds);
 				}
 				catch
@@ -356,7 +356,7 @@ public static partial class PreparingStage
 		{
 			string jsonContent = await File.ReadAllTextAsync(epicLauncherFile.FullName);
 			var jsonObject = JsonNode.Parse(jsonContent);
-			JsonArray installationList = jsonObject?["InstallationList"] as JsonArray;
+			JsonArray? installationList = jsonObject?["InstallationList"] as JsonArray;
 			epicGamesGames = installationList != null && installationList.Count > 0;
 		}
 
@@ -439,184 +439,184 @@ public static partial class PreparingStage
 			INTELCPU = CpuArch.Vendor == CpuVendor.Intel;
 			AMDCPU = CpuArch.Vendor == CpuVendor.AMD;
 
-			ScheduleMode = localSettings.Values["ScheduleMode"]?.ToString();
-			LightTime = localSettings.Values["LightTime"]?.ToString();
-			DarkTime = localSettings.Values["DarkTime"]?.ToString();
+			ScheduleMode = localSettings.Values["ScheduleMode"]?.ToString() ?? string.Empty;
+			LightTime = localSettings.Values["LightTime"]?.ToString() ?? string.Empty;
+			DarkTime = localSettings.Values["DarkTime"]?.ToString() ?? string.Empty;
 
 			LegacyContextMenu = (localSettings.Values["LegacyContextMenu"]?.ToString() == "1");
 			AlwaysShowTrayIcons = (localSettings.Values["AlwaysShowTrayIcons"]?.ToString() == "1");
 			LeftTaskbarAlignment = (localSettings.Values["LeftTaskbarAlignment"]?.ToString() == "1");
 
-			Chrome = (localSettings.Values["Browsers"]?.ToString().Contains("Chrome") ?? false);
-			Thorium = (localSettings.Values["Browsers"]?.ToString().Contains("Thorium") ?? false);
-			Helium = (localSettings.Values["Browsers"]?.ToString().Contains("Helium") ?? false);
-			Brave = (localSettings.Values["Browsers"]?.ToString().Contains("Brave") ?? false);
-			Vivaldi = (localSettings.Values["Browsers"]?.ToString().Contains("Vivaldi") ?? false);
-			Arc = (localSettings.Values["Browsers"]?.ToString().Contains("Arc") ?? false);
-			Comet = (localSettings.Values["Browsers"]?.ToString().Contains("Comet") ?? false);
-			Firefox = (localSettings.Values["Browsers"]?.ToString().Contains("Firefox") ?? false);
-			Zen = (localSettings.Values["Browsers"]?.ToString().Contains("Zen") ?? false);
-			Waterfox = (localSettings.Values["Browsers"]?.ToString().Contains("Waterfox") ?? false);
-			LibreWolf = (localSettings.Values["Browsers"]?.ToString().Contains("LibreWolf") ?? false);
-			Floorp = (localSettings.Values["Browsers"]?.ToString().Contains("Floorp") ?? false);
-			Mullvad = (localSettings.Values["Browsers"]?.ToString().Contains("Mullvad Browser") ?? false);
+			Chrome = (localSettings.Values["Browsers"]?.ToString()?.Contains("Chrome") ?? false);
+			Thorium = (localSettings.Values["Browsers"]?.ToString()?.Contains("Thorium") ?? false);
+			Helium = (localSettings.Values["Browsers"]?.ToString()?.Contains("Helium") ?? false);
+			Brave = (localSettings.Values["Browsers"]?.ToString()?.Contains("Brave") ?? false);
+			Vivaldi = (localSettings.Values["Browsers"]?.ToString()?.Contains("Vivaldi") ?? false);
+			Arc = (localSettings.Values["Browsers"]?.ToString()?.Contains("Arc") ?? false);
+			Comet = (localSettings.Values["Browsers"]?.ToString()?.Contains("Comet") ?? false);
+			Firefox = (localSettings.Values["Browsers"]?.ToString()?.Contains("Firefox") ?? false);
+			Zen = (localSettings.Values["Browsers"]?.ToString()?.Contains("Zen") ?? false);
+			Waterfox = (localSettings.Values["Browsers"]?.ToString()?.Contains("Waterfox") ?? false);
+			LibreWolf = (localSettings.Values["Browsers"]?.ToString()?.Contains("LibreWolf") ?? false);
+			Floorp = (localSettings.Values["Browsers"]?.ToString()?.Contains("Floorp") ?? false);
+			Mullvad = (localSettings.Values["Browsers"]?.ToString()?.Contains("Mullvad Browser") ?? false);
 
-			uBlock = (localSettings.Values["Extensions"]?.ToString().Contains("uBlock Origin") ?? false);
-			PrivacyBadger = (localSettings.Values["Extensions"]?.ToString().Contains("Privacy Badger") ?? false);
-			Decentraleyes = (localSettings.Values["Extensions"]?.ToString().Contains("Decentraleyes") ?? false);
-			Cookies = (localSettings.Values["Extensions"]?.ToString().Contains("I still don't care about cookies") ?? false);
-			Violentmonkey = (localSettings.Values["Extensions"]?.ToString().Contains("Violentmonkey") ?? false);
-			Tampermonkey = (localSettings.Values["Extensions"]?.ToString().Contains("Tampermonkey") ?? false);
-			SponsorBlock = (localSettings.Values["Extensions"]?.ToString().Contains("SponsorBlock") ?? false);
-			ReturnYouTubeDislike = (localSettings.Values["Extensions"]?.ToString().Contains("Return YouTube Dislike") ?? false);
-			YouTubeNoTranslation = (localSettings.Values["Extensions"]?.ToString().Contains("YouTube No Translation") ?? false);
-			DarkReader = (localSettings.Values["Extensions"]?.ToString().Contains("Dark Reader") ?? false);
-			Shazam = (localSettings.Values["Extensions"]?.ToString().Contains("Shazam") ?? false);
+			uBlock = (localSettings.Values["Extensions"]?.ToString()?.Contains("uBlock Origin") ?? false);
+			PrivacyBadger = (localSettings.Values["Extensions"]?.ToString()?.Contains("Privacy Badger") ?? false);
+			Decentraleyes = (localSettings.Values["Extensions"]?.ToString()?.Contains("Decentraleyes") ?? false);
+			Cookies = (localSettings.Values["Extensions"]?.ToString()?.Contains("I still don't care about cookies") ?? false);
+			Violentmonkey = (localSettings.Values["Extensions"]?.ToString()?.Contains("Violentmonkey") ?? false);
+			Tampermonkey = (localSettings.Values["Extensions"]?.ToString()?.Contains("Tampermonkey") ?? false);
+			SponsorBlock = (localSettings.Values["Extensions"]?.ToString()?.Contains("SponsorBlock") ?? false);
+			ReturnYouTubeDislike = (localSettings.Values["Extensions"]?.ToString()?.Contains("Return YouTube Dislike") ?? false);
+			YouTubeNoTranslation = (localSettings.Values["Extensions"]?.ToString()?.Contains("YouTube No Translation") ?? false);
+			DarkReader = (localSettings.Values["Extensions"]?.ToString()?.Contains("Dark Reader") ?? false);
+			Shazam = (localSettings.Values["Extensions"]?.ToString()?.Contains("Shazam") ?? false);
 			ProtonPass = (localSettings.Values["Extensions"]?.ToString().Contains("Proton Pass") ?? false);
-			WaybackMachine = (localSettings.Values["Extensions"]?.ToString().Contains("Wayback Machine") ?? false);
-			iCloud = (localSettings.Values["Extensions"]?.ToString().Contains("iCloud Passwords") ?? false);
-			Bitwarden = (localSettings.Values["Extensions"]?.ToString().Contains("Bitwarden") ?? false);
-			OnePassword = (localSettings.Values["Extensions"]?.ToString().Contains("1Password") ?? false);
+      WaybackMachine = (localSettings.Values["Extensions"]?.ToString()?.Contains("Wayback Machine") ?? false);
+			iCloud = (localSettings.Values["Extensions"]?.ToString()?.Contains("iCloud Passwords") ?? false);
+			Bitwarden = (localSettings.Values["Extensions"]?.ToString()?.Contains("Bitwarden") ?? false);
+			OnePassword = (localSettings.Values["Extensions"]?.ToString()?.Contains("1Password") ?? false);
 
-			Discord = (localSettings.Values["Messaging"]?.ToString().Contains("Discord") ?? false);
-			WhatsApp = (localSettings.Values["Messaging"]?.ToString().Contains("WhatsApp") ?? false);
-			Telegram = (localSettings.Values["Messaging"]?.ToString().Contains("Telegram Desktop") ?? false);
-			Unigram = (localSettings.Values["Messaging"]?.ToString().Contains("Unigram") ?? false);
-			ZoomWorkplace = (localSettings.Values["Messaging"]?.ToString().Contains("Zoom Workplace") ?? false);
-			Thunderbird = (localSettings.Values["Messaging"]?.ToString().Contains("Thunderbird") ?? false);
-			Signal = (localSettings.Values["Messaging"]?.ToString().Contains("Signal") ?? false);
+			Discord = (localSettings.Values["Messaging"]?.ToString()?.Contains("Discord") ?? false);
+			WhatsApp = (localSettings.Values["Messaging"]?.ToString()?.Contains("WhatsApp") ?? false);
+			Telegram = (localSettings.Values["Messaging"]?.ToString()?.Contains("Telegram Desktop") ?? false);
+			Unigram = (localSettings.Values["Messaging"]?.ToString()?.Contains("Unigram") ?? false);
+			ZoomWorkplace = (localSettings.Values["Messaging"]?.ToString()?.Contains("Zoom Workplace") ?? false);
+			Thunderbird = (localSettings.Values["Messaging"]?.ToString()?.Contains("Thunderbird") ?? false);
+			Signal = (localSettings.Values["Messaging"]?.ToString()?.Contains("Signal") ?? false);
 
-			EpicGames = (localSettings.Values["Launchers"]?.ToString().Contains("Epic Games") ?? false);
-			Steam = (localSettings.Values["Launchers"]?.ToString().Contains("Steam") ?? false);
-			RiotClient = (localSettings.Values["Launchers"]?.ToString().Contains("Riot Client") ?? false);
-			UbisoftConnect = (localSettings.Values["Launchers"]?.ToString().Contains("Ubisoft Connect") ?? false);
-			EA = (localSettings.Values["Launchers"]?.ToString().Contains("EA") ?? false);
-			BattleNet = (localSettings.Values["Launchers"]?.ToString().Contains("Battle.Net") ?? false);
-			MinecraftLauncher = (localSettings.Values["Launchers"]?.ToString().Contains("Minecraft Launcher") ?? false);
-			CurseForge = (localSettings.Values["Launchers"]?.ToString().Contains("CurseForge") ?? false);
-			LunarClient = (localSettings.Values["Launchers"]?.ToString().Contains("Lunar Client") ?? false);
-			FeatherClient = (localSettings.Values["Launchers"]?.ToString().Contains("Feather Client") ?? false);
-			NoRiskClient = (localSettings.Values["Launchers"]?.ToString().Contains("NoRisk Client") ?? false);
-			PrismLauncher = (localSettings.Values["Launchers"]?.ToString().Contains("Prism Launcher") ?? false);
-			Bloxstrap = (localSettings.Values["Launchers"]?.ToString().Contains("Bloxstrap") ?? false);
-			Froststrap = (localSettings.Values["Launchers"]?.ToString().Contains("Froststrap") ?? false);
-			RockstarGamesLauncher = (localSettings.Values["Launchers"]?.ToString().Contains("Rockstar Games Launcher") ?? false);
-			FiveM = (localSettings.Values["Launchers"]?.ToString().Contains("FiveM") ?? false);
-			FACEIT = (localSettings.Values["Launchers"]?.ToString().Contains("FACEIT") ?? false);
-			FACEITAC = (localSettings.Values["Launchers"]?.ToString().Contains("FACEIT AC") ?? false);
-			Eden = (localSettings.Values["Launchers"]?.ToString().Contains("Eden") ?? false);
+			EpicGames = (localSettings.Values["Launchers"]?.ToString()?.Contains("Epic Games") ?? false);
+			Steam = (localSettings.Values["Launchers"]?.ToString()?.Contains("Steam") ?? false);
+			RiotClient = (localSettings.Values["Launchers"]?.ToString()?.Contains("Riot Client") ?? false);
+			UbisoftConnect = (localSettings.Values["Launchers"]?.ToString()?.Contains("Ubisoft Connect") ?? false);
+			EA = (localSettings.Values["Launchers"]?.ToString()?.Contains("EA") ?? false);
+			BattleNet = (localSettings.Values["Launchers"]?.ToString()?.Contains("Battle.Net") ?? false);
+			MinecraftLauncher = (localSettings.Values["Launchers"]?.ToString()?.Contains("Minecraft Launcher") ?? false);
+			CurseForge = (localSettings.Values["Launchers"]?.ToString()?.Contains("CurseForge") ?? false);
+			LunarClient = (localSettings.Values["Launchers"]?.ToString()?.Contains("Lunar Client") ?? false);
+			FeatherClient = (localSettings.Values["Launchers"]?.ToString()?.Contains("Feather Client") ?? false);
+			NoRiskClient = (localSettings.Values["Launchers"]?.ToString()?.Contains("NoRisk Client") ?? false);
+			PrismLauncher = (localSettings.Values["Launchers"]?.ToString()?.Contains("Prism Launcher") ?? false);
+			Bloxstrap = (localSettings.Values["Launchers"]?.ToString()?.Contains("Bloxstrap") ?? false);
+			Froststrap = (localSettings.Values["Launchers"]?.ToString()?.Contains("Froststrap") ?? false);
+			RockstarGamesLauncher = (localSettings.Values["Launchers"]?.ToString()?.Contains("Rockstar Games Launcher") ?? false);
+			FiveM = (localSettings.Values["Launchers"]?.ToString()?.Contains("FiveM") ?? false);
+			FACEIT = (localSettings.Values["Launchers"]?.ToString()?.Contains("FACEIT") ?? false);
+			FACEITAC = (localSettings.Values["Launchers"]?.ToString()?.Contains("FACEIT AC") ?? false);
+			Eden = (localSettings.Values["Launchers"]?.ToString()?.Contains("Eden") ?? false);
 
-			AppleMusic = (localSettings.Values["Music"]?.ToString().Contains("Apple Music") ?? false);
-			Tidal = (localSettings.Values["Music"]?.ToString().Contains("TIDAL") ?? false);
-			Qobuz = (localSettings.Values["Music"]?.ToString().Contains("Qobuz") ?? false);
-			AmazonMusic = (localSettings.Values["Music"]?.ToString().Contains("Amazon Music") ?? false);
-			DeezerMusic = (localSettings.Values["Music"]?.ToString().Contains("Deezer Music") ?? false);
-			Spotify = (localSettings.Values["Music"]?.ToString().Contains("Spotify") ?? false);
-			MusicBee = (localSettings.Values["Music"]?.ToString().Contains("MusicBee") ?? false);
+			AppleMusic = (localSettings.Values["Music"]?.ToString()?.Contains("Apple Music") ?? false);
+			Tidal = (localSettings.Values["Music"]?.ToString()?.Contains("TIDAL") ?? false);
+			Qobuz = (localSettings.Values["Music"]?.ToString()?.Contains("Qobuz") ?? false);
+			AmazonMusic = (localSettings.Values["Music"]?.ToString()?.Contains("Amazon Music") ?? false);
+			DeezerMusic = (localSettings.Values["Music"]?.ToString()?.Contains("Deezer Music") ?? false);
+			Spotify = (localSettings.Values["Music"]?.ToString()?.Contains("Spotify") ?? false);
+			MusicBee = (localSettings.Values["Music"]?.ToString()?.Contains("MusicBee") ?? false);
 
-			SteelSeriesGG = (localSettings.Values["Peripherals"]?.ToString().Contains("SteelSeries GG") ?? false);
-			RazerSynapse = (localSettings.Values["Peripherals"]?.ToString().Contains("Razer Synapse") ?? false);
-			LogitechGHub = (localSettings.Values["Peripherals"]?.ToString().Contains("Logitech G HUB") ?? false);
-			LogitechOnboardMemoryManager = (localSettings.Values["Peripherals"]?.ToString().Contains("Logitech Onboard Memory Manager") ?? false);
-			Wootility = (localSettings.Values["Peripherals"]?.ToString().Contains("Wootility") ?? false);
-			GMenu = (localSettings.Values["Peripherals"]?.ToString().Contains("G-Menu") ?? false);
-			EndgameGear = (localSettings.Values["Peripherals"]?.ToString().Contains("Endgame Gear") ?? false);
-			GloriousCORE = (localSettings.Values["Peripherals"]?.ToString().Contains("Glorious CORE") ?? false);
-			MCHOSE = (localSettings.Values["Peripherals"]?.ToString().Contains("MCHOSE") ?? false);
-			CorsairICue = (localSettings.Values["Peripherals"]?.ToString().Contains("Corsair iCUE") ?? false);
-			OpenRGB = (localSettings.Values["Peripherals"]?.ToString().Contains("OpenRGB") ?? false);
-			FanControl = (localSettings.Values["Peripherals"]?.ToString().Contains("FanControl") ?? false);
-			GHelper = (localSettings.Values["Peripherals"]?.ToString().Contains("GHelper") ?? false);
+			SteelSeriesGG = (localSettings.Values["Peripherals"]?.ToString()?.Contains("SteelSeries GG") ?? false);
+			RazerSynapse = (localSettings.Values["Peripherals"]?.ToString()?.Contains("Razer Synapse") ?? false);
+			LogitechGHub = (localSettings.Values["Peripherals"]?.ToString()?.Contains("Logitech G HUB") ?? false);
+			LogitechOnboardMemoryManager = (localSettings.Values["Peripherals"]?.ToString()?.Contains("Logitech Onboard Memory Manager") ?? false);
+			Wootility = (localSettings.Values["Peripherals"]?.ToString()?.Contains("Wootility") ?? false);
+			GMenu = (localSettings.Values["Peripherals"]?.ToString()?.Contains("G-Menu") ?? false);
+			EndgameGear = (localSettings.Values["Peripherals"]?.ToString()?.Contains("Endgame Gear") ?? false);
+			GloriousCORE = (localSettings.Values["Peripherals"]?.ToString()?.Contains("Glorious CORE") ?? false);
+			MCHOSE = (localSettings.Values["Peripherals"]?.ToString()?.Contains("MCHOSE") ?? false);
+			CorsairICue = (localSettings.Values["Peripherals"]?.ToString()?.Contains("Corsair iCUE") ?? false);
+			OpenRGB = (localSettings.Values["Peripherals"]?.ToString()?.Contains("OpenRGB") ?? false);
+			FanControl = (localSettings.Values["Peripherals"]?.ToString()?.Contains("FanControl") ?? false);
+			GHelper = (localSettings.Values["Peripherals"]?.ToString()?.Contains("GHelper") ?? false);
 
-			ViGEmBus = (localSettings.Values["Controllers"]?.ToString().Contains("ViGEmBus") ?? false) || (localSettings.Values["Miscellaneous"]?.ToString().Contains("Apollo") ?? false);
-			HidHide = (localSettings.Values["Controllers"]?.ToString().Contains("HidHide") ?? false);
-			DualSenseY = (localSettings.Values["Controllers"]?.ToString().Contains("DualSenseY") ?? false);
-			RaceElement = (localSettings.Values["Controllers"]?.ToString().Contains("RaceElement") ?? false);
-			PlaystationAccessories = (localSettings.Values["Controllers"]?.ToString().Contains("PlayStation® Accessories") ?? false);
-			XboxAccessories = (localSettings.Values["Controllers"]?.ToString().Contains("Xbox Accessories") ?? false);
+			ViGEmBus = (localSettings.Values["Controllers"]?.ToString()?.Contains("ViGEmBus") ?? false) || (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("Apollo") ?? false);
+			HidHide = (localSettings.Values["Controllers"]?.ToString()?.Contains("HidHide") ?? false);
+			DualSenseY = (localSettings.Values["Controllers"]?.ToString()?.Contains("DualSenseY") ?? false);
+			RaceElement = (localSettings.Values["Controllers"]?.ToString()?.Contains("RaceElement") ?? false);
+			PlaystationAccessories = (localSettings.Values["Controllers"]?.ToString()?.Contains("PlayStation® Accessories") ?? false);
+			XboxAccessories = (localSettings.Values["Controllers"]?.ToString()?.Contains("Xbox Accessories") ?? false);
 
-			VisualStudio = (localSettings.Values["Development"]?.ToString().Contains("Visual Studio") ?? false);
-			VisualStudioCode = (localSettings.Values["Development"]?.ToString().Contains("Visual Studio Code") ?? false);
-			Antigravity = (localSettings.Values["Development"]?.ToString().Contains("Antigravity IDE") ?? false);
-			Cursor = (localSettings.Values["Development"]?.ToString().Contains("Cursor") ?? false);
-			Devin = (localSettings.Values["Development"]?.ToString().Contains("Devin") ?? false);
-			Kiro = (localSettings.Values["Development"]?.ToString().Contains("Kiro") ?? false);
-			OpenCode = (localSettings.Values["Development"]?.ToString().Contains("OpenCode") ?? false);
-			SublimeText = (localSettings.Values["Development"]?.ToString().Contains("Sublime Text") ?? false);
-			IDEA = (localSettings.Values["Development"]?.ToString().Contains("IntelliJ IDEA") ?? false);
-			WinMerge = (localSettings.Values["Development"]?.ToString().Contains("WinMerge") ?? false);
-			Git = (localSettings.Values["Development"]?.ToString().Contains("Git") ?? false);
-			CMake = (localSettings.Values["Development"]?.ToString().Contains("CMake") ?? false);
-			Python = (localSettings.Values["Development"]?.ToString().Contains("Python") ?? false);
-			Nodejs = (localSettings.Values["Development"]?.ToString().Contains("Node.js") ?? false);
-			Rust = (localSettings.Values["Development"]?.ToString().Contains("Rust") ?? false);
-			Java = (localSettings.Values["Development"]?.ToString().Contains("Java") ?? false);
-			Go = (localSettings.Values["Development"]?.ToString().Contains("Go") ?? false);
-			Trello = (localSettings.Values["Development"]?.ToString().Contains("Trello") ?? false);
+			VisualStudio = (localSettings.Values["Development"]?.ToString()?.Contains("Visual Studio") ?? false);
+			VisualStudioCode = (localSettings.Values["Development"]?.ToString()?.Contains("Visual Studio Code") ?? false);
+			Antigravity = (localSettings.Values["Development"]?.ToString()?.Contains("Antigravity IDE") ?? false);
+			Cursor = (localSettings.Values["Development"]?.ToString()?.Contains("Cursor") ?? false);
+			Devin = (localSettings.Values["Development"]?.ToString()?.Contains("Devin") ?? false);
+			Kiro = (localSettings.Values["Development"]?.ToString()?.Contains("Kiro") ?? false);
+			OpenCode = (localSettings.Values["Development"]?.ToString()?.Contains("OpenCode") ?? false);
+			SublimeText = (localSettings.Values["Development"]?.ToString()?.Contains("Sublime Text") ?? false);
+			IDEA = (localSettings.Values["Development"]?.ToString()?.Contains("IntelliJ IDEA") ?? false);
+			WinMerge = (localSettings.Values["Development"]?.ToString()?.Contains("WinMerge") ?? false);
+			Git = (localSettings.Values["Development"]?.ToString()?.Contains("Git") ?? false);
+			CMake = (localSettings.Values["Development"]?.ToString()?.Contains("CMake") ?? false);
+			Python = (localSettings.Values["Development"]?.ToString()?.Contains("Python") ?? false);
+			Nodejs = (localSettings.Values["Development"]?.ToString()?.Contains("Node.js") ?? false);
+			Rust = (localSettings.Values["Development"]?.ToString()?.Contains("Rust") ?? false);
+			Java = (localSettings.Values["Development"]?.ToString()?.Contains("Java") ?? false);
+			Go = (localSettings.Values["Development"]?.ToString()?.Contains("Go") ?? false);
+			Trello = (localSettings.Values["Development"]?.ToString()?.Contains("Trello") ?? false);
 
-			Autoruns = (localSettings.Values["Sysinternals"]?.ToString().Contains("Autoruns") ?? false);
-			ProcessExplorer = (localSettings.Values["Sysinternals"]?.ToString().Contains("Process Explorer") ?? false);
-			ProcessMonitor = (localSettings.Values["Sysinternals"]?.ToString().Contains("Process Monitor") ?? false);
+			Autoruns = (localSettings.Values["Sysinternals"]?.ToString()?.Contains("Autoruns") ?? false);
+			ProcessExplorer = (localSettings.Values["Sysinternals"]?.ToString()?.Contains("Process Explorer") ?? false);
+			ProcessMonitor = (localSettings.Values["Sysinternals"]?.ToString()?.Contains("Process Monitor") ?? false);
 
-			HWInfo = (localSettings.Values["Overclocking"]?.ToString().Contains("HWiNFO® 64") ?? false);
-			TimingConfigurator = (localSettings.Values["Overclocking"]?.ToString().Contains("ASRock Timing Configurator") ?? false);
-			ZenTimings = (localSettings.Values["Overclocking"]?.ToString().Contains("ZenTimings") ?? false);
-			RamTestPro = (localSettings.Values["Overclocking"]?.ToString().Contains("RAM Test Pro") ?? false);
-			TestMem5 = (localSettings.Values["Overclocking"]?.ToString().Contains("TestMem5") ?? false);
-			Prime95 = (localSettings.Values["Overclocking"]?.ToString().Contains("Prime95") ?? false);
-			yCruncher = (localSettings.Values["Overclocking"]?.ToString().Contains("y-cruncher") ?? false);
-			OCCT = (localSettings.Values["Overclocking"]?.ToString().Contains("OCCT") ?? false);
-			AIDA64Extreme = (localSettings.Values["Overclocking"]?.ToString().Contains("AIDA64 Extreme") ?? false);
-			MemtestVulkan = (localSettings.Values["Overclocking"]?.ToString().Contains("Memtest Vulkan") ?? false);
+			HWInfo = (localSettings.Values["Overclocking"]?.ToString()?.Contains("HWiNFO® 64") ?? false);
+			TimingConfigurator = (localSettings.Values["Overclocking"]?.ToString()?.Contains("ASRock Timing Configurator") ?? false);
+			ZenTimings = (localSettings.Values["Overclocking"]?.ToString()?.Contains("ZenTimings") ?? false);
+			RamTestPro = (localSettings.Values["Overclocking"]?.ToString()?.Contains("RAM Test Pro") ?? false);
+			TestMem5 = (localSettings.Values["Overclocking"]?.ToString()?.Contains("TestMem5") ?? false);
+			Prime95 = (localSettings.Values["Overclocking"]?.ToString()?.Contains("Prime95") ?? false);
+			yCruncher = (localSettings.Values["Overclocking"]?.ToString()?.Contains("y-cruncher") ?? false);
+			OCCT = (localSettings.Values["Overclocking"]?.ToString()?.Contains("OCCT") ?? false);
+			AIDA64Extreme = (localSettings.Values["Overclocking"]?.ToString()?.Contains("AIDA64 Extreme") ?? false);
+			MemtestVulkan = (localSettings.Values["Overclocking"]?.ToString()?.Contains("Memtest Vulkan") ?? false);
 
-			Reaper = (localSettings.Values["Music Production"]?.ToString().Contains("Reaper") ?? false);
-			FLStudio = (localSettings.Values["Music Production"]?.ToString().Contains("FL Studio") ?? false);
-			Audacity = (localSettings.Values["Music Production"]?.ToString().Contains("Audacity") ?? false);
-			FlexASIO = (localSettings.Values["Music Production"]?.ToString().Contains("FlexASIO") ?? false);
-			ASIO4ALL = (localSettings.Values["Music Production"]?.ToString().Contains("ASIO4ALL") ?? false);
-			ArturiaMidiControlCenter = (localSettings.Values["Music Production"]?.ToString().Contains("Arturia MIDI Control Center") ?? false);
-			Voicemeeter = (localSettings.Values["Music Production"]?.ToString().Contains("Voicemeeter") ?? false);
+			Reaper = (localSettings.Values["Music Production"]?.ToString()?.Contains("Reaper") ?? false);
+			FLStudio = (localSettings.Values["Music Production"]?.ToString()?.Contains("FL Studio") ?? false);
+			Audacity = (localSettings.Values["Music Production"]?.ToString()?.Contains("Audacity") ?? false);
+			FlexASIO = (localSettings.Values["Music Production"]?.ToString()?.Contains("FlexASIO") ?? false);
+			ASIO4ALL = (localSettings.Values["Music Production"]?.ToString()?.Contains("ASIO4ALL") ?? false);
+			ArturiaMidiControlCenter = (localSettings.Values["Music Production"]?.ToString()?.Contains("Arturia MIDI Control Center") ?? false);
+			Voicemeeter = (localSettings.Values["Music Production"]?.ToString()?.Contains("Voicemeeter") ?? false);
 
-			DaVinciResolve = (localSettings.Values["Video Production"]?.ToString().Contains("DaVinci Resolve") ?? false);
-			Blender = (localSettings.Values["Video Production"]?.ToString().Contains("Blender") ?? false);
-			CapCut = (localSettings.Values["Video Production"]?.ToString().Contains("CapCut") ?? false);
-			LosslessCut = (localSettings.Values["Video Production"]?.ToString().Contains("LosslessCut") ?? false);
+			DaVinciResolve = (localSettings.Values["Video Production"]?.ToString()?.Contains("DaVinci Resolve") ?? false);
+			Blender = (localSettings.Values["Video Production"]?.ToString()?.Contains("Blender") ?? false);
+			CapCut = (localSettings.Values["Video Production"]?.ToString()?.Contains("CapCut") ?? false);
+			LosslessCut = (localSettings.Values["Video Production"]?.ToString()?.Contains("LosslessCut") ?? false);
 
-			Netflix = (localSettings.Values["Multimedia"]?.ToString().Contains("Netflix") ?? false);
-			DisneyPlus = (localSettings.Values["Multimedia"]?.ToString().Contains("Disney+") ?? false);
-			PrimeVideo = (localSettings.Values["Multimedia"]?.ToString().Contains("Prime Video") ?? false);
-			MpcQt = (localSettings.Values["Multimedia"]?.ToString().Contains("MPC-QT") ?? false);
-			MPV = (localSettings.Values["Multimedia"]?.ToString().Contains("mpv") ?? false);
-			VLC = (localSettings.Values["Multimedia"]?.ToString().Contains("VLC") ?? false);
-			MediaInfo = (localSettings.Values["Multimedia"]?.ToString().Contains("MediaInfo") ?? false);
+			Netflix = (localSettings.Values["Multimedia"]?.ToString()?.Contains("Netflix") ?? false);
+			DisneyPlus = (localSettings.Values["Multimedia"]?.ToString()?.Contains("Disney+") ?? false);
+			PrimeVideo = (localSettings.Values["Multimedia"]?.ToString()?.Contains("Prime Video") ?? false);
+			MpcQt = (localSettings.Values["Multimedia"]?.ToString()?.Contains("MPC-QT") ?? false);
+			MPV = (localSettings.Values["Multimedia"]?.ToString()?.Contains("mpv") ?? false);
+			VLC = (localSettings.Values["Multimedia"]?.ToString()?.Contains("VLC") ?? false);
+			MediaInfo = (localSettings.Values["Multimedia"]?.ToString()?.Contains("MediaInfo") ?? false);
 
-			Word = (localSettings.Values["Office"]?.ToString().Contains("Word") ?? false);
-			Excel = (localSettings.Values["Office"]?.ToString().Contains("Excel") ?? false);
-			PowerPoint = (localSettings.Values["Office"]?.ToString().Contains("PowerPoint") ?? false);
-			OneNote = (localSettings.Values["Office"]?.ToString().Contains("OneNote") ?? false);
-			Teams = (localSettings.Values["Office"]?.ToString().Contains("Teams") ?? false);
-			Outlook = (localSettings.Values["Office"]?.ToString().Contains("Outlook") ?? false);
-			OneDrive = (localSettings.Values["Office"]?.ToString().Contains("OneDrive") ?? false);
+			Word = (localSettings.Values["Office"]?.ToString()?.Contains("Word") ?? false);
+			Excel = (localSettings.Values["Office"]?.ToString()?.Contains("Excel") ?? false);
+			PowerPoint = (localSettings.Values["Office"]?.ToString()?.Contains("PowerPoint") ?? false);
+			OneNote = (localSettings.Values["Office"]?.ToString()?.Contains("OneNote") ?? false);
+			Teams = (localSettings.Values["Office"]?.ToString()?.Contains("Teams") ?? false);
+			Outlook = (localSettings.Values["Office"]?.ToString()?.Contains("Outlook") ?? false);
+			OneDrive = (localSettings.Values["Office"]?.ToString()?.Contains("OneDrive") ?? false);
 
-			CapFrameX = (localSettings.Values["Miscellaneous"]?.ToString().Contains("CapFrameX") ?? false);
-			MinitoolPartitionWizard = (localSettings.Values["Miscellaneous"]?.ToString().Contains("Minitool Partition Wizard") ?? false);
-			AomeiPartitionAssistant = (localSettings.Values["Miscellaneous"]?.ToString().Contains("AOMEI Partition Assistant") ?? false);
-			WizTree = (localSettings.Values["Miscellaneous"]?.ToString().Contains("WizTree") ?? false);
-			CrystalDiskInfo = (localSettings.Values["Miscellaneous"]?.ToString().Contains("CrystalDiskInfo") ?? false);
-			CrystalDiskMark = (localSettings.Values["Miscellaneous"]?.ToString().Contains("CrystalDiskMark") ?? false);
-			ProtonVPN = (localSettings.Values["Miscellaneous"]?.ToString().Contains("Proton VPN") ?? false);
-			BulkCrapUninstaller = (localSettings.Values["Miscellaneous"]?.ToString().Contains("Bulk Crap Uninstaller") ?? false);
-			BluetoothAudioReceiver = (localSettings.Values["Miscellaneous"]?.ToString().Contains("BluetoothAudioReceiver") ?? false);
-			AnyDesk = (localSettings.Values["Miscellaneous"]?.ToString().Contains("AnyDesk") ?? false);
-			RustDesk = (localSettings.Values["Miscellaneous"]?.ToString().Contains("RustDesk") ?? false);
-			Apollo = (localSettings.Values["Miscellaneous"]?.ToString().Contains("Apollo") ?? false);
-			Moonlight = (localSettings.Values["Miscellaneous"]?.ToString().Contains("Moonlight") ?? false);
-			AutoHotkey = (localSettings.Values["Miscellaneous"]?.ToString().Contains("AutoHotkey") ?? false);
-			EmEditor = (localSettings.Values["Miscellaneous"]?.ToString().Contains("EmEditor") ?? false);
-			WinDbg = (localSettings.Values["Miscellaneous"]?.ToString().Contains("WinDbg") ?? false);
-			QBittorrent = (localSettings.Values["Miscellaneous"]?.ToString().Contains("qBittorrent") ?? false);
-			Deluge = (localSettings.Values["Miscellaneous"]?.ToString().Contains("Deluge") ?? false);
-			FreeDownloadManager = (localSettings.Values["Miscellaneous"]?.ToString().Contains("Free Download Manager") ?? false);
+			CapFrameX = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("CapFrameX") ?? false);
+			MinitoolPartitionWizard = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("Minitool Partition Wizard") ?? false);
+			AomeiPartitionAssistant = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("AOMEI Partition Assistant") ?? false);
+			WizTree = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("WizTree") ?? false);
+			CrystalDiskInfo = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("CrystalDiskInfo") ?? false);
+			CrystalDiskMark = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("CrystalDiskMark") ?? false);
+			ProtonVPN = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("Proton VPN") ?? false);
+			BulkCrapUninstaller = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("Bulk Crap Uninstaller") ?? false);
+			BluetoothAudioReceiver = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("BluetoothAudioReceiver") ?? false);
+			AnyDesk = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("AnyDesk") ?? false);
+			RustDesk = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("RustDesk") ?? false);
+			Apollo = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("Apollo") ?? false);
+			Moonlight = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("Moonlight") ?? false);
+			AutoHotkey = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("AutoHotkey") ?? false);
+			EmEditor = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("EmEditor") ?? false);
+			WinDbg = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("WinDbg") ?? false);
+			QBittorrent = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("qBittorrent") ?? false);
+			Deluge = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("Deluge") ?? false);
+			FreeDownloadManager = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("Free Download Manager") ?? false);
 
 			JsonArray? gpuArray = JsonNode.Parse(localSettings.Values["GPUs"]?.ToString() ?? "[]")?.AsArray();
 			if (gpuArray != null)
@@ -628,21 +628,21 @@ public static partial class PreparingStage
 
 					GPUs.Add(new GpuInfo
 					{
-						DeviceName = obj["Name"]?.ToString(),
-						PnPDeviceId = obj["PnPDeviceId"]?.ToString(),
-						VendorId = obj["VendorId"]?.ToString(),
-						DeviceId = obj["DeviceId"]?.ToString(),
-						Codename = obj["Codename"]?.ToString(),
+						DeviceName = obj["Name"]?.ToString() ?? string.Empty,
+						PnPDeviceId = obj["PnPDeviceId"]?.ToString() ?? string.Empty,
+						VendorId = obj["VendorId"]?.ToString() ?? string.Empty,
+						DeviceId = obj["DeviceId"]?.ToString() ?? string.Empty,
+						Codename = obj["Codename"]?.ToString() ?? string.Empty,
 						Install = obj["Install"]?.GetValue<bool>() ?? false,
 						IsInstalled = obj["IsInstalled"]?.GetValue<bool>() ?? false,
-						RegistryPath = obj["RegistryPath"]?.ToString(),
-						Location = obj["Location"]?.ToString(),
+						RegistryPath = obj["RegistryPath"]?.ToString() ?? string.Empty,
+						Location = obj["Location"]?.ToString() ?? string.Empty,
 						PStates = obj["PStates"]?.GetValue<bool>() ?? false,
 						ECC = obj["ECC"]?.GetValue<bool>() ?? false,
 						GspFirmware = obj["GspFirmware"]?.GetValue<bool>() ?? false,
 						HDCP = obj["HDCP"]?.GetValue<bool>() ?? false,
 						HDMIDPAudio = obj["HDMIDPAudio"]?.GetValue<bool>() ?? false,
-						CurrentVersion = obj["CurrentVersion"]?.ToString()
+						CurrentVersion = obj["CurrentVersion"]?.ToString() ?? string.Empty
 					});
 				}
 			}
@@ -666,14 +666,14 @@ public static partial class PreparingStage
 
 			CpuSetsInfo cpuSetsInfo = CpuHelper.GetCpuSets();
 			(List<CpuCore>? pCores, List<CpuCore> _) = CpuHelper.GroupCpuSetsByEfficiencyClass(cpuSetsInfo);
-			PCores = pCores.Count;
+			PCores = pCores?.Count ?? 0;
 			HyperThreading = cpuSetsInfo.HyperThreading;
 
 			(DiscordAccount, DiscordKeybinds, EpicGamesAccount, EpicGamesGames, SteamGames, RiotClientAccount, RiotClientGames) = await CheckAccountsAndGames();
 
 			List<DeviceInfo> nics = DeviceHelper.GetDevices(DeviceType.NIC);
 			Wifi = nics.Any(device => device.NicType == NicDeviceType.WiFi);
-			TxIntDelay = nics.Any(device => Registry.LocalMachine.OpenSubKey(device.RegistryPath).GetValue("TxIntDelay") != null);
+			TxIntDelay = nics.Any(device => Registry.LocalMachine.OpenSubKey(device.RegistryPath)?.GetValue("TxIntDelay") != null);
 			NetAdapterCx = nics.Any(device => device.IsActive && device.DriverType == NicDriverType.NetAdapterCx);
 		});
 

@@ -19,23 +19,23 @@ public static partial class StoreHelper
 {
 	private class StoreInfo
 	{
-		public string Name { get; set; }
-		public string FileExtension { get; set; }
-		public string ResourceUri { get; set; }
-		public string Hash { get; set; }
-		public string UpdateIdentifier { get; set; }
-		public string Revision { get; set; }
+		public string Name { get; set; } = string.Empty;
+		public string FileExtension { get; set; } = string.Empty;
+		public string ResourceUri { get; set; } = string.Empty;
+		public string Hash { get; set; } = string.Empty;
+		public string UpdateIdentifier { get; set; } = string.Empty;
+		public string Revision { get; set; } = string.Empty;
 		public DateTime LastModified { get; set; }
-		public string Version { get; set; }
+		public string Version { get; set; } = string.Empty;
 	}
 
 	private static readonly HttpClient httpClient = new();
-	private static string sessionToken;
+	private static string? sessionToken;
 
 	[GeneratedRegex(@"^(.+?)_(\d+\.\d+\.\d+\.\d+)_([a-zA-Z0-9]+)_(.*?)_([a-hjkmnp-tv-z0-9]{13})$", RegexOptions.Compiled)]
 	private static partial Regex PackageIdentityRegex();
 
-	public static async Task Download(string identifier, int index = 0, IStatusReporter reporter = null)
+	public static async Task Download(string identifier, int index = 0, IStatusReporter? reporter = null)
 	{
 		string product = await GetProductID(identifier);
 		if (string.IsNullOrEmpty(product))
@@ -154,7 +154,7 @@ public static partial class StoreHelper
 		return [.. results];
 	}
 
-	public static async Task Update(string identifier, IStatusReporter reporter = null)
+	public static async Task Update(string identifier, IStatusReporter? reporter = null)
 	{
 		SynchronizationContext? uiContext = SynchronizationContext.Current;
 
@@ -231,7 +231,7 @@ public static partial class StoreHelper
 			if (!File.Exists(manifestPath)) return;
 
 			var doc = XDocument.Load(manifestPath);
-			XNamespace ns = doc.Root.Name.Namespace;
+			XNamespace ns = doc.Root!.Name.Namespace;
 			IEnumerable<XElement> applications = doc.Descendants(ns + "Application");
 
 			foreach (XElement app in applications)
@@ -265,7 +265,7 @@ public static partial class StoreHelper
 		if (dcatJson.RootElement.TryGetProperty("Products", out JsonElement prods) && prods.GetArrayLength() > 0)
 		{
 			if (prods[0].TryGetProperty("ProductId", out JsonElement pid))
-				return pid.GetString();
+				return pid.GetString() ?? string.Empty;
 		}
 
 		string searchBase = term.Split('_')[0];
@@ -280,15 +280,15 @@ public static partial class StoreHelper
 		{
 			string? title = item.TryGetProperty("title", out JsonElement t) ? t.GetString() : null;
 			if (title != null && title.Equals(searchBase, StringComparison.OrdinalIgnoreCase))
-				return item.GetProperty("productId").GetString();
+				return item.GetProperty("productId").GetString() ?? string.Empty;
 
 			if (item.TryGetProperty("packageFamilyNames", out JsonElement pfnList))
 			{
 				foreach (JsonElement pfn in pfnList.EnumerateArray())
 				{
-					if (pfn.GetString().Contains(term, StringComparison.OrdinalIgnoreCase) ||
-						pfn.GetString().Contains(searchBase, StringComparison.OrdinalIgnoreCase))
-						return item.GetProperty("productId").GetString();
+					if (pfn.GetString()?.Contains(term, StringComparison.OrdinalIgnoreCase) == true ||
+						pfn.GetString()?.Contains(searchBase, StringComparison.OrdinalIgnoreCase) == true)
+						return item.GetProperty("productId").GetString() ?? string.Empty;
 				}
 			}
 		}
@@ -309,7 +309,7 @@ public static partial class StoreHelper
 				JsonElement firstSku = skus[0];
 				if (firstSku.TryGetProperty("FulfillmentData", out JsonElement fulfillmentDataElement))
 				{
-					string fulfillmentData = fulfillmentDataElement.GetString();
+					string? fulfillmentData = fulfillmentDataElement.GetString();
 					if (!string.IsNullOrEmpty(fulfillmentData))
 					{
 						Match match = Regex.Match(fulfillmentData, "\"WuCategoryId\":\"([^\"]+)\"");
@@ -388,17 +388,17 @@ public static partial class StoreHelper
 					string? updateIdentifier = idNode.Attribute("UpdateID")?.Value;
 					string? revision = idNode.Attribute("RevisionNumber")?.Value;
 
-					string link = await ResolveUrl(updateIdentifier, revision, info.hash);
+					string link = await ResolveUrl(updateIdentifier ?? string.Empty, revision ?? string.Empty, info.hash);
 					var infoItem = new StoreInfo
 					{
 						Name = identity,
 						FileExtension = info.ext,
 						ResourceUri = link,
 						Hash = info.hash,
-						UpdateIdentifier = updateIdentifier,
-						Revision = revision,
+						UpdateIdentifier = updateIdentifier ?? string.Empty,
+						Revision = revision ?? string.Empty,
 						LastModified = info.modified,
-						Version = versionStr
+						Version = versionStr ?? string.Empty
 					};
 					results.Add(infoItem);
 					Debug.WriteLine($"[StoreHelper] Package found: {infoItem.Name}, Version: {infoItem.Version}, Modified: {infoItem.LastModified:yyyy-MM-dd HH:mm:ss}");
@@ -424,8 +424,8 @@ public static partial class StoreHelper
 		var doc = XDocument.Parse(res);
 		XElement? encrypted = doc.Descendants().FirstOrDefault(x => x.Name.LocalName == "EncryptedData");
 
-		sessionToken = encrypted.Value;
-		return sessionToken;
+		sessionToken = encrypted!.Value;
+		return sessionToken ?? string.Empty;
 	}
 
 	private static async Task<string> ResolveUrl(string uid, string rev, string hash)

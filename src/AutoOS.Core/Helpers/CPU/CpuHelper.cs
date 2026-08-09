@@ -156,9 +156,10 @@ public static partial class CpuHelper
 	{
 		var info = new CpuSetsInfo();
 
-		if (CpuSetInformationFake.FakeCpuSets != null && CpuSetInformationFake.FakeCpuSets.Count > 0)
+		List<CpuSet>? fakeCpuSets = CpuSetInformationFake.FakeCpuSets;
+		if (fakeCpuSets is { Count: > 0 })
 		{
-			info.CpuSets = [.. CpuSetInformationFake.FakeCpuSets.OrderBy(c => c.EfficiencyClass).ThenBy(c => c.CoreIndex).ThenBy(c => c.LogicalProcessorIndex)];
+			info.CpuSets = [.. fakeCpuSets.OrderBy(c => c.EfficiencyClass).ThenBy(c => c.CoreIndex).ThenBy(c => c.LogicalProcessorIndex)];
 			ProcessCpuSets(info.CpuSets, info);
 			return info;
 		}
@@ -359,9 +360,9 @@ public static partial class CpuHelper
 
 	public static class CpuSetInformationFake
 	{
-		private static List<CpuSet> _fakeCpuSets;
+		private static List<CpuSet>? _fakeCpuSets;
 
-		public static List<CpuSet> FakeCpuSets
+		public static List<CpuSet>? FakeCpuSets
 		{
 			get => _fakeCpuSets;
 			set => _fakeCpuSets = value;

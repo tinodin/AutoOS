@@ -18,7 +18,7 @@ public sealed partial class DisplaysPage : Page
 	private async void BrowseCru_Click(object sender, RoutedEventArgs e)
 	{
 		// disable the button to avoid double-clicking
-		var senderButton = sender as Button;
+		var senderButton = (Button)sender;
 		senderButton.IsEnabled = false;
 
 		// remove infobar
@@ -292,7 +292,7 @@ public sealed partial class DisplaysPage : Page
 		await Task.Delay(300);
 
 		// restart
-		await Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "CRU", "restart64.exe"))).WaitForExitAsync();
+		await Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "CRU", "restart64.exe")))!.WaitForExitAsync();
 
 		// apply profile
 		if (File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "MSI Afterburner", "MSIAfterburner.exe")) && Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "MSI Afterburner", "Profiles")) && Directory.GetFiles(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "MSI Afterburner", "Profiles")).Any(file => !file.EndsWith("MSIAfterburner.cfg", StringComparison.OrdinalIgnoreCase)))

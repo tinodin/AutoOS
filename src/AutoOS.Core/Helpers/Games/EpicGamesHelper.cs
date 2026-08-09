@@ -97,8 +97,8 @@ public static partial class EpicGamesHelper
 
 	public class EpicAccountInfo
 	{
-		public string DisplayName { get; set; }
-		public string AccountId { get; set; }
+		public string? DisplayName { get; set; }
+		public string? AccountId { get; set; }
 		public bool IsActive { get; set; }
 	}
 
@@ -221,18 +221,18 @@ public static partial class EpicGamesHelper
 			string decryptedRememberMe = Decrypt(iniHelper.ReadValue("Data", "RememberMe", 2048));
 
 			JsonElement rememberMeRoot = JsonDocument.Parse(decryptedRememberMe.TrimEnd('\0')).RootElement[0];
-			string displayName = rememberMeRoot.GetProperty("DisplayName").GetString();
-			string token = rememberMeRoot.GetProperty("Token").GetString();
+			string displayName = rememberMeRoot.GetProperty("DisplayName").GetString()!;
+			string token = rememberMeRoot.GetProperty("Token").GetString()!;
 			int tokenUseCount = rememberMeRoot.GetProperty("TokenUseCount").GetInt32();
 
 			JsonElement offlineArray = JsonDocument.Parse(decryptedOffline.TrimEnd('\0')).RootElement;
-			string accountId = null;
+			string accountId = null!;
 
 			foreach (JsonElement account in offlineArray.EnumerateArray())
 			{
 				if (account.TryGetProperty("Email", out JsonElement emailProp) && emailProp.GetString() == rememberMeRoot.GetProperty("Email").GetString())
 				{
-					accountId = account.GetProperty("UserID").GetString();
+					accountId = account.GetProperty("UserID").GetString()!;
 					break;
 				}
 			}
@@ -241,7 +241,7 @@ public static partial class EpicGamesHelper
 		}
 		catch
 		{
-			return (null, null, null, 0);
+			return (null!, null!, null!, 0);
 		}
 	}
 
@@ -252,7 +252,7 @@ public static partial class EpicGamesHelper
 			string AccessToken = await UpdateEpicGamesToken(ActiveEpicGamesAccountPath);
 
 			if (AccessToken == null)
-				return null;
+				return null!;
 
 			loginClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
 
@@ -272,7 +272,7 @@ public static partial class EpicGamesHelper
 				catch (Exception fallbackEx)
 				{
 					await LogHelper.LogError(fallbackEx, null, $"Failed to exchange Epic Games token from both {exchangeUrl} and {exchangeFallbackUrl}");
-					return null;
+					return null!;
 				}
 			}
 
@@ -285,24 +285,24 @@ public static partial class EpicGamesHelper
 				catch (Exception)
 				{
 					await LogHelper.LogError(new HttpRequestException($"Exchange request failed with status {response.StatusCode}"), null, $"Failed to exchange Epic Games token from both {exchangeUrl} and {exchangeFallbackUrl}");
-					return null;
+					return null!;
 				}
 
 				if (!response.IsSuccessStatusCode)
 				{
 					await LogHelper.LogError(new HttpRequestException($"Exchange request failed with status {response.StatusCode}"), null, $"Failed to exchange Epic Games token from both {exchangeUrl} and {exchangeFallbackUrl}");
-					return null;
+					return null!;
 				}
 			}
 
 			var responseJson = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 
-			return responseJson.RootElement.GetProperty("code").GetString();
+			return responseJson.RootElement.GetProperty("code").GetString()!;
 		}
 		catch (Exception ex)
 		{
 			await LogHelper.LogError(ex, null, "Failed to exchange Epic Games token");
-			return null;
+			return null!;
 		}
 	}
 
@@ -322,10 +322,10 @@ public static partial class EpicGamesHelper
 		string decryptedFull = Decrypt(rememberMeData);
 		string decryptedJson = decryptedFull.Contains('\0') ? decryptedFull[..decryptedFull.IndexOf('\0')] : decryptedFull;
 		string trailingData = decryptedFull.Contains('\0') ? decryptedFull[decryptedFull.IndexOf('\0')..] : "";
-		JsonArray jsonArray = JsonNode.Parse(decryptedJson).AsArray();
+		JsonArray jsonArray = JsonNode.Parse(decryptedJson)!.AsArray();
 
 		// get old refresh token
-		string oldRefreshToken = jsonArray[0]["Token"].GetValue<string>();
+		string oldRefreshToken = jsonArray[0]!["Token"]!.GetValue<string>();
 
 		// authenticate
 		httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{ClientId}:{ClientSecret}")));
@@ -353,7 +353,7 @@ public static partial class EpicGamesHelper
 			catch (Exception fallbackEx)
 			{
 				await LogHelper.LogError(fallbackEx, null, $"Failed to update Epic Games token from both {authUrl} and {authFallbackUrl}");
-				return null;
+				return null!;
 			}
 		}
 
@@ -366,25 +366,25 @@ public static partial class EpicGamesHelper
 			catch (Exception)
 			{
 				await LogHelper.LogError(new HttpRequestException($"Auth request failed with status {response.StatusCode}"), null, $"Failed to update Epic Games token from both {authUrl} and {authFallbackUrl}");
-				return null;
+				return null!;
 			}
 
 			if (!response.IsSuccessStatusCode)
 			{
 				await LogHelper.LogError(new HttpRequestException($"Auth request failed with status {response.StatusCode}"), null, $"Failed to update Epic Games token from both {authUrl} and {authFallbackUrl}");
-				return null;
+				return null!;
 			}
 		}
 
 		var responseJson = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 
-		string newDisplayName = responseJson.RootElement.GetProperty("displayName").GetString();
-		string newAccessToken = responseJson.RootElement.GetProperty("access_token").GetString();
-		string newRefreshToken = responseJson.RootElement.GetProperty("refresh_token").GetString();
+		string newDisplayName = responseJson.RootElement.GetProperty("displayName").GetString()!;
+		string newAccessToken = responseJson.RootElement.GetProperty("access_token").GetString()!;
+		string newRefreshToken = responseJson.RootElement.GetProperty("refresh_token").GetString()!;
 
 		// replace old display name and refresh token with new data
-		jsonArray[0]["DisplayName"] = newDisplayName;
-		jsonArray[0]["Token"] = newRefreshToken;
+		jsonArray[0]!["DisplayName"] = newDisplayName;
+		jsonArray[0]!["Token"] = newRefreshToken;
 
 		// write changes
 		var options = new JsonSerializerOptions
@@ -437,7 +437,7 @@ public static partial class EpicGamesHelper
 		iniHelper.AddValue("NotificationsEnabled_Adverts", "False", accountId + "_General");
 	}
 
-	public static void AddPlaytime(string artifactId, DateTime startTime, Action<string, string> onPlayTimeUpdated = null)
+	public static void AddPlaytime(string artifactId, DateTime startTime, Action<string, string>? onPlayTimeUpdated = null)
 	{
 		string url = $"https://library-service.live.use1a.on.epicgames.com/library/api/public/playtime/account/{GetAccountData(ActiveEpicGamesAccountPath).AccountId}";
 		DateTime endTime = DateTime.UtcNow;
@@ -498,7 +498,7 @@ public static partial class EpicGamesHelper
 		}
 	}
 
-	public static async Task ImportAccount(IStatusReporter reporter = null)
+	public static async Task ImportAccount(IStatusReporter? reporter = null)
 	{
 		// get all configs from other drives
 		string? systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));
@@ -520,7 +520,7 @@ public static partial class EpicGamesHelper
 			.Select(path => new FileInfo(path))
 			.ToList();
 
-		string newestFilePath = null;
+		string newestFilePath = null!;
 
 		// check if files are valid
 		foreach (FileInfo? file in foundFiles)
@@ -585,7 +585,7 @@ public static partial class EpicGamesHelper
 			return;
 
 		FileInfo newestFile = foundFiles.First();
-		string oldDrive = Path.GetPathRoot(newestFile.FullName);
+		string oldDrive = Path.GetPathRoot(newestFile.FullName)!;
 
 		string jsonContent = await File.ReadAllTextAsync(newestFile.FullName);
 
@@ -604,7 +604,7 @@ public static partial class EpicGamesHelper
 			if (game is JsonObject gameObj && gameObj.ContainsKey("InstallLocation"))
 			{
 				string originalPath = gameObj["InstallLocation"]!.ToString();
-				string relativePath = originalPath[Path.GetPathRoot(originalPath).Length..];
+				string relativePath = originalPath[Path.GetPathRoot(originalPath)!.Length..];
 
 				foreach (DriveInfo? drive in DriveInfo.GetDrives().Where(drive => drive.DriveType == DriveType.Fixed && drive.Name != systemDrive))
 				{
@@ -622,11 +622,11 @@ public static partial class EpicGamesHelper
 		await File.WriteAllTextAsync(EpicGamesInstalledGamesPath, jsonObject.ToJsonString(new JsonSerializerOptions { WriteIndented = true, IndentCharacter = '\t', IndentSize = 1, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
 
 		// copy manifests folder to new drive
-		string srcThirdParty = Path.Combine(oldDrive, EpicGamesThirdPartyManifestDir[Path.GetPathRoot(EpicGamesThirdPartyManifestDir).Length..]);
+		string srcThirdParty = Path.Combine(oldDrive, EpicGamesThirdPartyManifestDir[Path.GetPathRoot(EpicGamesThirdPartyManifestDir)!.Length..]);
 		if (Directory.Exists(srcThirdParty))
 			FileSystem.CopyDirectory(srcThirdParty, EpicGamesThirdPartyManifestDir, true);
 
-		string srcManifest = Path.Combine(oldDrive, EpicGamesManifestDir[Path.GetPathRoot(EpicGamesManifestDir).Length..]);
+		string srcManifest = Path.Combine(oldDrive, EpicGamesManifestDir[Path.GetPathRoot(EpicGamesManifestDir)!.Length..]);
 		if (Directory.Exists(srcManifest))
 		{
 			// set new game paths in manifests
@@ -680,7 +680,7 @@ public static partial class EpicGamesHelper
 		}
 
 		// copy install dir to new drive
-		string srcInstalled = Path.Combine(oldDrive, EpicGamesInstalledItemsDir[Path.GetPathRoot(EpicGamesInstalledItemsDir).Length..]);
+		string srcInstalled = Path.Combine(oldDrive, EpicGamesInstalledItemsDir[Path.GetPathRoot(EpicGamesInstalledItemsDir)!.Length..]);
 		if (Directory.Exists(srcInstalled))
 		{
 			// set new game paths in installed items manifests
@@ -721,7 +721,7 @@ public static partial class EpicGamesHelper
 		}
 	}
 
-	public static async Task EpicGamesLogin(IStatusReporter reporter = null)
+	public static async Task EpicGamesLogin(IStatusReporter? reporter = null)
 	{
 		// launch epic games launcher
 		Process.Start(EpicGamesPath);
@@ -761,7 +761,7 @@ public static partial class EpicGamesHelper
 		await Task.Delay(1000);
 	}
 
-	public static async Task UpdateInvalidEpicGamesToken(IStatusReporter reporter = null)
+	public static async Task UpdateInvalidEpicGamesToken(IStatusReporter? reporter = null)
 	{
 		reporter?.SetTitle("The refresh token is no longer valid. Please enter your password again...");
 
@@ -818,8 +818,8 @@ public static partial class EpicGamesHelper
 			loginClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
 
 			// get library data
-			var libraryData = new List<JsonNode>();
-			string nextCursor = null;
+			var libraryData = new List<JsonNode?>();
+			string? nextCursor = null;
 
 			do
 			{
@@ -827,7 +827,7 @@ public static partial class EpicGamesHelper
 				if (nextCursor != null)
 					url += $"&cursor={nextCursor}";
 
-				JsonNode json;
+				JsonNode? json;
 				try
 				{
 					json = JsonNode.Parse(await loginClient.GetStringAsync(url));
@@ -847,10 +847,10 @@ public static partial class EpicGamesHelper
 			} while (!string.IsNullOrEmpty(nextCursor));
 
 			// get build data
-			JsonArray buildData = null;
+			JsonArray? buildData = null;
 			string buildUrl = "https://launcher-public-service-prod.ol.epicgames.com/launcher/api/public/assets/Windows?label=Live";
 			string buildFallbackUrl = "https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/public/assets/Windows?label=Live";
-			HttpResponseMessage buildResponse;
+			HttpResponseMessage? buildResponse;
 			try
 			{
 				buildResponse = await loginClient.GetAsync(buildUrl);
@@ -885,9 +885,9 @@ public static partial class EpicGamesHelper
 				buildData = JsonNode.Parse(await buildResponse.Content.ReadAsStringAsync()) as JsonArray;
 
 			// get playtime data
-			Dictionary<string, int> playTimeData = null;
+			Dictionary<string, int>? playTimeData = null;
 			string playTimeUrl = $"https://library-service.live.use1a.on.epicgames.com/library/api/public/playtime/account/{GetAccountData(ActiveEpicGamesAccountPath).AccountId}/all";
-			HttpResponseMessage playTimeResponse;
+			HttpResponseMessage? playTimeResponse;
 			try
 			{
 				playTimeResponse = await loginClient.GetAsync(playTimeUrl);
@@ -901,8 +901,8 @@ public static partial class EpicGamesHelper
 			if (playTimeResponse != null && playTimeResponse.IsSuccessStatusCode)
 			{
 				playTimeData = (JsonNode.Parse(await playTimeResponse.Content.ReadAsStringAsync()) as JsonArray)?.ToDictionary(
-					playtime => playtime["artifactId"]?.GetValue<string>(),
-					playtime => playtime["totalTime"]?.GetValue<int>() ?? 0
+					playtime => playtime?["artifactId"]?.GetValue<string>()!,
+					playtime => playtime?["totalTime"]?.GetValue<int>() ?? 0
 				);
 			}
 
@@ -932,7 +932,7 @@ public static partial class EpicGamesHelper
 						continue;
 					}
 					var node = JsonNode.Parse(fileContent);
-					allManifests.Add(node);
+					allManifests.Add(node!);
 				}
 				catch
 				{
@@ -952,23 +952,23 @@ public static partial class EpicGamesHelper
 							File.Delete(file);
 							continue;
 						}
-						var json = JsonNode.Parse(fileContent);
+						var json = JsonNode.Parse(fileContent)!;
 
-						string installLocation = null;
+						string? installLocation = null;
 
-						using (RegistryKey? key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(json["RegistryPath"]?.GetValue<string>()))
+						using (RegistryKey? key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(json?["RegistryPath"]?.GetValue<string>() ?? ""))
 						{
-							if (key != null)
+if (key != null)
 							{
-								installLocation = key.GetValue(json["RegistryKey"]?.GetValue<string>())?.ToString()?.TrimEnd('\\', '/');
+								installLocation = key.GetValue(json!["RegistryKey"]?.GetValue<string>())?.ToString()?.TrimEnd('\\', '/');
 							}
 						}
 
 						if (Directory.Exists(installLocation))
 						{
-							string provider = json["Provider"]?.GetValue<string>();
+							string? provider = json!["Provider"]?.GetValue<string>();
 
-							string gameId = null;
+							string? gameId = null;
 							if (provider == "UbisoftConnect")
 							{
 								gameId = json["GameID"]?.GetValue<string>();
@@ -1010,18 +1010,19 @@ public static partial class EpicGamesHelper
 					if (itemJson?["bIsApplication"]?.GetValue<bool>() != true) return;
 					JsonArray? appCategories = itemJson?["AppCategories"]?.AsArray();
 					if (appCategories == null || !appCategories.Any(children => children?.GetValue<string>()?.Equals("games", StringComparison.OrdinalIgnoreCase) == true)) return;
-					string catalogItemId = itemJson["CatalogItemId"]?.GetValue<string>();
-					string catalogNamespace = itemJson["CatalogNamespace"]?.GetValue<string>();
-					string appName = itemJson["AppName"]?.GetValue<string>();
+JsonNode manifest = itemJson!;
+					string catalogItemId = manifest["CatalogItemId"]?.GetValue<string>()!;
+					string catalogNamespace = manifest["CatalogNamespace"]?.GetValue<string>()!;
+					string appName = manifest["AppName"]?.GetValue<string>()!;
 
 					if (catalogItemId == "1e8bda5cfbb641b9a9aea8bd62285f73")
-						appName = itemJson["MainGameAppName"]?.GetValue<string>();
+						appName = manifest["MainGameAppName"]?.GetValue<string>()!;
 
 					// return if not in library
 					if (!libraryData.Any(x => x?["catalogItemId"]?.ToString() == catalogItemId))
 						return;
 
-					string installLocation = itemJson["InstallLocation"]?.GetValue<string>()?.Replace("/", "\\");
+					string installLocation = manifest!["InstallLocation"]?.GetValue<string>()?.Replace("/", "\\") ?? "";
 					if (!Directory.Exists(installLocation))
 						return;
 
@@ -1042,12 +1043,12 @@ public static partial class EpicGamesHelper
 						new Dictionary<string, string> { { "Content-Type", "application/json" } });
 
 					// get offer id, product slug and product id
-					string offerId = null;
-					string productSlug = null;
-					string productId = null;
+					string? offerId = null;
+					string? productSlug = null;
+					string? productId = null;
 					if (offerResponse.IsSuccess)
 					{
-						JsonArray? elements = JsonNode.Parse(offerResponse.Body)?["data"]?["Catalog"]?["searchStore"]?["elements"]?.AsArray();
+						JsonArray? elements = JsonNode.Parse(offerResponse.Body ?? "")?["data"]?["Catalog"]?["searchStore"]?["elements"]?.AsArray();
 						JsonNode? searchElement = elements != null && elements.Count > 0 ? elements[0] : null;
 
 						offerId = searchElement?["id"]?.GetValue<string>();
@@ -1096,23 +1097,23 @@ public static partial class EpicGamesHelper
 					string offerFallbackUrl = $"https://catalog-public-service-prod06.ol.epicgames.com/catalog/api/shared/bulk/offers?id={offerId}&returnItemDetails=true&country=US&locale=en-US";
 					string productOfferUrl = $"https://egs-platform-service.store.epicgames.com/api/v1/egs/products/{productId}/offers/{offerId}?country={region}&locale=en-US&store=EGS";
 					string ageRatingUrl = $"https://egs-platform-service.store.epicgames.com/api/v1/egs/products/{productId}/offers/{offerId}/age-rating?country={region}&locale=en-US&store=EGS";
-					JsonNode manifestData = null;
-					JsonNode offerData = null;
-					JsonNode ratingData = null;
-					JsonNode productOfferData = null;
-					JsonNode ageRatingData = null;
+					JsonNode manifestData = null!;
+					JsonNode offerData = null!;
+					JsonNode ratingData = null!;
+					JsonNode productOfferData = null!;
+					JsonNode ageRatingData = null!;
 
 					Task manifestTask = new Func<Task>(async () =>
 					{
 						try
 						{
-							manifestData = JsonNode.Parse(await loginClient.GetStringAsync(manifestUrl, token).ConfigureAwait(false));
+							manifestData = JsonNode.Parse(await loginClient.GetStringAsync(manifestUrl, token).ConfigureAwait(false))!;
 						}
 						catch (Exception)
 						{
 							try
 							{
-								manifestData = JsonNode.Parse(await loginClient.GetStringAsync(manifestFallbackUrl, token).ConfigureAwait(false));
+								manifestData = JsonNode.Parse(await loginClient.GetStringAsync(manifestFallbackUrl, token).ConfigureAwait(false))!;
 							}
 							catch (Exception fallbackEx)
 							{
@@ -1125,13 +1126,13 @@ public static partial class EpicGamesHelper
 					{
 						try
 						{
-							offerData = JsonNode.Parse(await loginClient.GetStringAsync(offerUrl, token).ConfigureAwait(false));
+							offerData = JsonNode.Parse(await loginClient.GetStringAsync(offerUrl, token).ConfigureAwait(false))!;
 						}
 						catch (Exception)
 						{
 							try
 							{
-								offerData = JsonNode.Parse(await loginClient.GetStringAsync(offerFallbackUrl, token).ConfigureAwait(false));
+								offerData = JsonNode.Parse(await loginClient.GetStringAsync(offerFallbackUrl, token).ConfigureAwait(false))!;
 							}
 							catch (Exception fallbackEx)
 							{
@@ -1156,7 +1157,7 @@ public static partial class EpicGamesHelper
 									}
 								}.ToJsonString(),
 								new Dictionary<string, string> { { "Content-Type", "application/json" } });
-							ratingData = ratingResponse.IsSuccess ? JsonNode.Parse(ratingResponse.Body) : JsonNode.Parse("{}");
+							ratingData = ratingResponse.IsSuccess ? JsonNode.Parse(ratingResponse.Body ?? "")! : JsonNode.Parse("{}")!;
 						}
 						catch (Exception ex)
 						{
@@ -1169,7 +1170,7 @@ public static partial class EpicGamesHelper
 						try
 						{
 							TlsResponse productOfferResponse = await tlsClient.Value.GetAsync(productOfferUrl);
-							productOfferData = productOfferResponse.IsSuccess ? JsonNode.Parse(productOfferResponse.Body) : JsonNode.Parse("{}");
+							productOfferData = productOfferResponse.IsSuccess ? JsonNode.Parse(productOfferResponse.Body ?? "")! : JsonNode.Parse("{}")!;
 						}
 						catch (Exception ex)
 						{
@@ -1182,7 +1183,7 @@ public static partial class EpicGamesHelper
 						try
 						{
 							TlsResponse ageRatingResponse = await tlsClient.Value.GetAsync(ageRatingUrl);
-							ageRatingData = ageRatingResponse.IsSuccess ? JsonNode.Parse(ageRatingResponse.Body) : JsonNode.Parse("{}");
+							ageRatingData = ageRatingResponse.IsSuccess ? JsonNode.Parse(ageRatingResponse.Body ?? "")! : JsonNode.Parse("{}")!;
 						}
 						catch (Exception ex)
 						{
@@ -1193,7 +1194,7 @@ public static partial class EpicGamesHelper
 					await Task.WhenAll(manifestTask, offerTask, ratingTask, productOfferTask, ageRatingTask).ConfigureAwait(false);
 
 					// get description
-					string description = offerData[offerId]?["description"]?.GetValue<string>();
+					string? description = offerData[offerId]?["description"]?.GetValue<string>();
 
 					if (offerData[offerId]?["offerType"]?.GetValue<string>() != "BASE_GAME")
 					{
@@ -1205,7 +1206,7 @@ public static partial class EpicGamesHelper
 
 					// get artifactid
 					JsonArray? releaseInfo = manifestData[catalogItemId]?["releaseInfo"]?.AsArray();
-					string artifactId = releaseInfo != null && releaseInfo.Count > 0 ? releaseInfo[0]?["appId"]?.ToString() : null;
+					string artifactId = releaseInfo != null && releaseInfo.Count > 0 ? releaseInfo[0]?["appId"]?.ToString()! : null!;
 					if (string.IsNullOrEmpty(artifactId))
 						await LogHelper.LogError(new InvalidOperationException($"Failed to get artifactId for {catalogItemId}"), null, $"Failed to get artifactId for game {itemJson?["DisplayName"]?.ToString()}, {catalogItemId}");
 
@@ -1218,15 +1219,15 @@ public static partial class EpicGamesHelper
 						: $"{ts.Minutes}m";
 
 					// get latest version
-					string currentVersion = itemJson["AppVersionString"]?.GetValue<string>();
-					string latestVersion = buildData?.FirstOrDefault(x => x?["appName"]?.ToString() == itemJson["AppName"]?.GetValue<string>())?["buildVersion"]?.ToString();
+					string? currentVersion = itemJson?["AppVersionString"]?.GetValue<string>();
+					string? latestVersion = buildData?.FirstOrDefault(x => x?["appName"]?.ToString() == itemJson?["AppName"]?.GetValue<string>())?["buildVersion"]?.ToString();
 
 					if (string.IsNullOrEmpty(currentVersion))
 						currentVersion = latestVersion;
 
 					DateTimeOffset releaseDate = DateTimeOffset.Parse(offerData[offerId]!["releaseDate"]!.GetValue<string>()!);
 
-					long? sizeBytes = itemJson["InstallSize"]?.GetValue<long>();
+					long? sizeBytes = itemJson?["InstallSize"]?.GetValue<long>();
 
 					if (!sizeBytes.HasValue)
 						sizeBytes = new DirectoryInfo(installLocation).EnumerateFiles("*", System.IO.SearchOption.AllDirectories).Sum(fi => fi.Length);
@@ -1234,11 +1235,11 @@ public static partial class EpicGamesHelper
 					// get screenshots
 					JsonArray? keyImagesList = offerData[offerId]?["keyImages"]?.AsArray();
 					var screenshots = new List<string>();
-					foreach (JsonNode? image in keyImagesList)
+					foreach (JsonNode? image in keyImagesList ?? [])
 					{
 						if (image?["type"]?.GetValue<string>() == "featuredMedia")
 						{
-							string url = image["url"]?.GetValue<string>();
+							string? url = image?["url"]?.GetValue<string>();
 							if (!string.IsNullOrEmpty(url))
 							{
 								screenshots.Add(url);
@@ -1252,7 +1253,7 @@ public static partial class EpicGamesHelper
 						TlsResponse cmsResponse = await tlsClient.Value.GetAsync(cmsUrl).ConfigureAwait(false);
 						if (cmsResponse.IsSuccess)
 						{
-							var cmsJson = JsonNode.Parse(cmsResponse.Body);
+							var cmsJson = JsonNode.Parse(cmsResponse.Body ?? "");
 							JsonArray? pages = cmsJson?["pages"]?.AsArray();
 							if (pages != null)
 							{
@@ -1266,7 +1267,7 @@ public static partial class EpicGamesHelper
 										{
 											if (item == null) continue;
 
-											string src = item["image"]?["src"]?.GetValue<string>();
+											string? src = item["image"]?["src"]?.GetValue<string>();
 											if (!string.IsNullOrEmpty(src))
 											{
 												if (!screenshots.Contains(src))
@@ -1279,7 +1280,7 @@ public static partial class EpicGamesHelper
 											JsonNode? videoNode = item["video"];
 											if (videoNode != null)
 											{
-												string poster = videoNode["poster"]?.GetValue<string>();
+												string? poster = videoNode["poster"]?.GetValue<string>();
 												if (!string.IsNullOrEmpty(poster))
 												{
 													if (!screenshots.Contains(poster))
@@ -1289,7 +1290,7 @@ public static partial class EpicGamesHelper
 													continue;
 												}
 
-												string videoThumb = videoNode["thumbnail"]?.GetValue<string>();
+												string? videoThumb = videoNode["thumbnail"]?.GetValue<string>();
 												if (!string.IsNullOrEmpty(videoThumb))
 												{
 													if (!screenshots.Contains(videoThumb))
@@ -1299,13 +1300,13 @@ public static partial class EpicGamesHelper
 													continue;
 												}
 
-												string recipesStr = videoNode["recipes"]?.GetValue<string>();
+												string? recipesStr = videoNode["recipes"]?.GetValue<string>();
 												if (!string.IsNullOrEmpty(recipesStr))
 												{
 													var recipesJson = JsonNode.Parse(recipesStr);
 													if (recipesJson != null)
 													{
-														string thumbnail = recipesJson["thumbnail"]?.GetValue<string>();
+														string? thumbnail = recipesJson["thumbnail"]?.GetValue<string>();
 														if (!string.IsNullOrEmpty(thumbnail))
 														{
 															if (!screenshots.Contains(thumbnail))
@@ -1330,8 +1331,8 @@ public static partial class EpicGamesHelper
 																			{
 																				if (output?["key"]?.GetValue<string>() == "thumbnail")
 																				{
-																					string url = output["url"]?.GetValue<string>();
-																					if (!string.IsNullOrEmpty(url))
+string? url = output?["url"]?.GetValue<string>();
+													if (!string.IsNullOrEmpty(url))
 																					{
 																						if (!screenshots.Contains(url))
 																						{
@@ -1356,7 +1357,7 @@ public static partial class EpicGamesHelper
 									{
 										foreach (JsonNode? img in galleryImages)
 										{
-											string src = img?["src"]?.GetValue<string>();
+											string? src = img?["src"]?.GetValue<string>();
 											if (!string.IsNullOrEmpty(src))
 											{
 												if (!screenshots.Contains(src))
@@ -1376,35 +1377,41 @@ public static partial class EpicGamesHelper
 						}
 					}
 
+					JsonArray? ratingDescriptors = ageRatingData?["ageRating"]?["contentDescriptors"]?.AsArray();
+					string? ratingDescription = ratingDescriptors != null
+						? string.Join(", ", ratingDescriptors.Select(descriptor => descriptor?.ToString()).Where(descriptor => !string.IsNullOrWhiteSpace(descriptor)))
+						: null;
+
+					JsonArray? interactiveElms = ageRatingData?["ageRating"]?["interactiveElements"]?.AsArray();
+					string? interactiveElements = interactiveElms != null
+						? string.Join(", ", interactiveElms.Select(element => element?.ToString()).Where(element => !string.IsNullOrWhiteSpace(element)))
+						: null;
+
 					games.Add(new GameModel
 					{
-						Launcher = itemJson["Provider"]?.GetValue<string>() ?? "Epic Games",
+						Launcher = itemJson?["Provider"]?.GetValue<string>() ?? "Epic Games",
 						CatalogNamespace = catalogNamespace,
 						CatalogItemId = catalogItemId,
 						AppName = appName,
 						InstallLocation = installLocation,
-						LaunchCommand = itemJson["LaunchCommand"]?.GetValue<string>(),
-						LaunchExecutable = itemJson["LaunchExecutable"]?.GetValue<string>()?.Replace("/", "\\"),
-						GameID = itemJson["GameID"]?.GetValue<string>(),
-						ProcessNames = itemJson["ProcessNames"]?.AsArray().Select(p => p.GetValue<string>()).ToList(),
+						LaunchCommand = itemJson?["LaunchCommand"]?.GetValue<string>(),
+						LaunchExecutable = itemJson?["LaunchExecutable"]?.GetValue<string>()?.Replace("/", "\\"),
+						GameID = itemJson?["GameID"]?.GetValue<string>(),
+						ProcessNames = itemJson?["ProcessNames"]?.AsArray().Select(p => p!.GetValue<string>()).ToList() ?? [],
 						ArtifactId = artifactId,
 						UpdateIsAvailable = latestVersion != null && latestVersion != currentVersion,
 						ImageUrl = keyImages.FirstOrDefault(image => image?["type"]?.GetValue<string>() == "DieselGameBoxTall")?["url"]?.GetValue<string>(),
 						BackgroundImageUrl = keyImages.FirstOrDefault(image => image?["type"]?.GetValue<string>() == "DieselGameBox")?["url"]?.GetValue<string>(),
 						Title = offerData[offerId]?["title"]?.GetValue<string>(),
 						Developers = offerData[offerId]?["seller"]?["name"]?.GetValue<string>(),
-						Genres = productOfferData?["tags"]?["genres"]?.AsArray()?.Select(genre => genre?["name"]?.GetValue<string>()).Where(n => !string.IsNullOrWhiteSpace(n)).ToList() ?? [],
-						Features = productOfferData?["tags"]?["features"]?.AsArray()?.Select(feature => feature?["name"]?.GetValue<string>()).Where(f => !string.IsNullOrWhiteSpace(f)).ToList() ?? [],
+						Genres = productOfferData?["tags"]?["genres"]?.AsArray()?.Select(genre => genre?["name"]?.GetValue<string>()!).Where(n => !string.IsNullOrWhiteSpace(n)).ToList() ?? [],
+						Features = productOfferData?["tags"]?["features"]?.AsArray()?.Select(feature => feature?["name"]?.GetValue<string>()!).Where(f => !string.IsNullOrWhiteSpace(f)).ToList() ?? [],
 						Rating = ratingData?["data"]?["RatingsPolls"]?["getProductResult"]?["averageRating"]?.GetValue<double?>() ?? 0.0,
 						PlayTime = playTime,
 						AgeRatingUrl = ageRatingData?["ageRating"]?["ratingImage"]?.ToString(),
 						AgeRatingTitle = ageRatingData?["ageRating"]?["title"]?.ToString(),
-						AgeRatingDescription = ageRatingData?["ageRating"]?["contentDescriptors"]?.AsArray() != null
-							? string.Join(", ", ageRatingData["ageRating"]["contentDescriptors"].AsArray().Select(descriptor => descriptor?.ToString()).Where(descriptor => !string.IsNullOrWhiteSpace(descriptor)))
-							: null,
-						Elements = ageRatingData?["ageRating"]?["interactiveElements"]?.AsArray() != null
-							? string.Join(", ", ageRatingData["ageRating"]["interactiveElements"].AsArray().Select(element => element?.ToString()).Where(element => !string.IsNullOrWhiteSpace(element)))
-							: null,
+						AgeRatingDescription = ratingDescription,
+						Elements = interactiveElements,
 						Description = description,
 						Screenshots = screenshots,
 						ReleaseDate = releaseDate.ToString("d"),

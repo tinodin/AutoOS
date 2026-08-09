@@ -38,7 +38,7 @@ public static partial class NvidiaHelper
     public static async Task<(string newestVersion, string newestDownloadUrl)> CheckUpdate(GpuInfo gpu)
     {
         string deviceName = gpu.DeviceName;
-        string gpuId = string.Empty;
+        string? gpuId = string.Empty;
         string newestVersion = string.Empty;
         string newestDownloadUrl = string.Empty;
         bool isNotebook = GetIsNotebook();
@@ -59,7 +59,7 @@ public static partial class NvidiaHelper
         if (gpuDoc.RootElement.TryGetProperty(isNotebook ? "notebook" : "desktop", out JsonElement section))
         {
             string deviceNameLower = deviceName.ToLower();
-            string bestMatchKey = null;
+            string? bestMatchKey = null;
             double bestScore = -1;
 
             foreach (JsonProperty prop in section.EnumerateObject())
@@ -94,8 +94,8 @@ public static partial class NvidiaHelper
             if (int.TryParse(root.GetProperty("Success").GetString(), out int success) && success == 1)
             {
 				JsonElement info = root.GetProperty("IDS")[0].GetProperty("downloadInfo");
-                newestVersion = info.GetProperty("Version").GetString();
-                newestDownloadUrl = info.GetProperty("DownloadURL").GetString();
+                newestVersion = info.GetProperty("Version").GetString() ?? string.Empty;
+                newestDownloadUrl = info.GetProperty("DownloadURL").GetString() ?? string.Empty;
             }
             else
             {
@@ -107,8 +107,8 @@ public static partial class NvidiaHelper
                 if (int.TryParse(root2.GetProperty("Success").GetString(), out int success2) && success2 == 1)
                 {
 					JsonElement info = root2.GetProperty("IDS")[0].GetProperty("downloadInfo");
-                    newestVersion = info.GetProperty("Version").GetString();
-                    newestDownloadUrl = info.GetProperty("DownloadURL").GetString();
+                    newestVersion = info.GetProperty("Version").GetString() ?? string.Empty;
+                    newestDownloadUrl = info.GetProperty("DownloadURL").GetString() ?? string.Empty;
                 }
             }
         }
@@ -160,9 +160,9 @@ public static partial class NvidiaHelper
         }
     }
 
-    public static List<(string Title, Func<Task> Action, Func<bool> Condition)> InstallActions(GpuInfo gpu, string newestVersion, string newestDownloadUrl, IStatusReporter reporter = null)
+    public static List<(string Title, Func<Task> Action, Func<bool>? Condition)> InstallActions(GpuInfo gpu, string newestVersion, string newestDownloadUrl, IStatusReporter? reporter = null)
     {
-        var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
+        var actions = new List<(string Title, Func<Task> Action, Func<bool>? Condition)>
             {
 				// download nvidia driver
 				($@"Downloading NVIDIA driver {newestVersion}", async () => await DownloadHelper.Download(newestDownloadUrl, Path.Combine(Path.GetTempPath(), "NVIDIA"), "driver.exe", reporter), null),
@@ -184,9 +184,9 @@ public static partial class NvidiaHelper
         return actions;
     }
 
-    public static List<(string Title, Func<Task> Action, Func<bool> Condition)> TweakActions(GpuInfo gpu, string newestVersion)
+    public static List<(string Title, Func<Task> Action, Func<bool>? Condition)> TweakActions(GpuInfo gpu, string newestVersion)
     {
-        var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
+        var actions = new List<(string Title, Func<Task> Action, Func<bool>? Condition)>
             {
 				// download nvidia control panel
 				("Downloading NVIDIA Control Panel", async () => await StoreHelper.Download("NVIDIACorp.NVIDIAControlPanel_56jybvy8sckqj", 0), () => newestVersion.StartsWith("6")),
@@ -203,7 +203,7 @@ public static partial class NvidiaHelper
 				(@"Selecting ""Use the advanced 3D image settings""", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\SOFTWARE\NVIDIA Corporation\Global\NVTweak", "Gestalt", 515, RegistryValueKind.DWord), null),
 
 				// import optimized nvidia profile
-				("Importing optimized NVIDIA profile", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NvidiaProfileInspector", "nvidiaProfileInspector.exe"), Arguments = $@"-silentimport ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NvidiaProfileInspector", "BaseProfile.nip")}""", CreateNoWindow = true }).WaitForExitAsync(), null),
+				("Importing optimized NVIDIA profile", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NvidiaProfileInspector", "nvidiaProfileInspector.exe"), Arguments = $@"-silentimport ""{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "NvidiaProfileInspector", "BaseProfile.nip")}""", CreateNoWindow = true })!.WaitForExitAsync(), null),
 				
 				// configure physx to use gpu
 				("Configuring PhysX to use GPU", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\nvlddmkm\Global\NVTweak", "NvCplPhysxAuto", 0, RegistryValueKind.DWord), null),

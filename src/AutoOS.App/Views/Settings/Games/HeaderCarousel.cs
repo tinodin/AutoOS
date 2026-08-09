@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.ServiceProcess;
@@ -32,55 +32,60 @@ public partial class HeaderCarousel : ItemsControl
 	private const string PART_ScrollViewer = "PART_ScrollViewer";
 	private const string PART_BackDropImage = "PART_BackDropImage";
 	private const string PART_ItemsRepeater = "PART_ItemsRepeater";
-	private ScrollViewer scrollViewer;
-	private AnimatedImage backDropImage;
-	private ItemsRepeater itemsRepeater;
+	private ScrollViewer scrollViewer = null!;
+	private AnimatedImage backDropImage = null!;
+	private ItemsRepeater itemsRepeater = null!;
 
-	private TextBlock PageTitle;
-	private SwitchPresenter SwitchPresenter;
+	private TextBlock PageTitle = null!;
+	private SwitchPresenter SwitchPresenter = null!;
 	//private TextBlock SwitchPresenter_TextBlock;
 
-	private StackPanel NoGames_StackPanel;
+	private StackPanel NoGames_StackPanel = null!;
 
-	private Grid MetadataGrid;
-	private ScrollViewer Metadata_ScrollViewer;
+	private Grid MetadataGrid = null!;
+	private ScrollViewer Metadata_ScrollViewer = null!;
 
-	private Card Screenshots_Card;
+	private Card Screenshots_Card = null!;
 	//private GameGallery Screenshots_Gallery;
 	//private ScrollViewer Videos_ScrollViewer;
 
-	private Button Play;
-	private Button Update;
-	private Button StopProcesses;
-	private Button RestartProcesses;
+	private Button Play = null!;
+	private Button Update = null!;
+	private Button StopProcesses = null!;
+	private Button RestartProcesses = null!;
 
 	private bool isInitializingEpicGamesAccounts = true;
 	private bool isInitializingSteamAccounts = true;
-	private Button EpicGamesButton;
-	private ComboBox EpicGamesAccounts;
-	private Button AddEpicGamesAccount;
-	private Button RemoveEpicGamesAccount;
+	private Button EpicGamesButton = null!;
+	private ComboBox EpicGamesAccounts = null!;
+	private Button AddEpicGamesAccount = null!;
+	private Button RemoveEpicGamesAccount = null!;
 
-	private Button SteamButton;
-	private ComboBox SteamAccounts;
-	private Button AddSteamAccount;
-	private Button RemoveSteamAccount;
+	private Button SteamButton = null!;
+	private ComboBox SteamAccounts = null!;
+	private Button AddSteamAccount = null!;
+	private Button RemoveSteamAccount = null!;
 
-	private StackPanel EpicGrowl;
-	private StackPanel SteamGrowl;
+	private StackPanel EpicGrowl = null!;
+	private StackPanel SteamGrowl = null!;
 
 	private readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 
-	private TextBlock AgeRatingDescriptionText;
-	private TextBlock ElementsText;
+	private TextBlock AgeRatingDescriptionText = null!;
+	private TextBlock ElementsText = null!;
 
-	private AutoSuggestBox SearchBox;
-	private Button Sort;
+	private AutoSuggestBox SearchBox = null!;
+	private Button Sort = null!;
 	private string currentSortKey = "Title";
 	private bool ascending = true;
 
-	private RadioMenuFlyoutItem SortByName, SortByLauncher, SortByRating, SortByTimePlayed, SortByRecentlyPlayed;
-	private RadioMenuFlyoutItem SortAscending, SortDescending;
+	private RadioMenuFlyoutItem SortByName = null!;
+	private RadioMenuFlyoutItem SortByLauncher = null!;
+	private RadioMenuFlyoutItem SortByRating = null!;
+	private RadioMenuFlyoutItem SortByTimePlayed = null!;
+	private RadioMenuFlyoutItem SortByRecentlyPlayed = null!;
+	private RadioMenuFlyoutItem SortAscending = null!;
+	private RadioMenuFlyoutItem SortDescending = null!;
 
 	//public event EventHandler<HeaderCarouselEventArgs> ItemClick;
 
@@ -88,13 +93,13 @@ public partial class HeaderCarousel : ItemsControl
 	private readonly DispatcherTimer selectionTimer = new();
 	private readonly DispatcherTimer deselectionTimer = new();
 	private readonly List<int> numbers = [];
-	private HeaderCarouselItem selectedTile;
+	private HeaderCarouselItem? selectedTile;
 	private int currentIndex;
 
-	private BlurEffectManager _blurManager;
+	private BlurEffectManager? _blurManager;
 
-	private static InputInjector _inputInjector;
-	private static DispatcherTimer _gamepadPollingTimer;
+	private static InputInjector? _inputInjector;
+	private static DispatcherTimer? _gamepadPollingTimer;
 	private static GamepadButtons _lastButtons = GamepadButtons.None;
 	private static bool _lastHorizontalState = false;
 	private const double ThumbstickThreshold = 0.5;
@@ -106,7 +111,7 @@ public partial class HeaderCarousel : ItemsControl
 	private static readonly List<HeaderCarousel> _activeInstances = [];
 	private static bool _staticEventsSubscribed = false;
 	private static bool _windowIsActive = true;
-	private static DependencyObject _lastFocusedElement;
+	private static DependencyObject? _lastFocusedElement;
 	private static DateTimeOffset _bottomFocusTime;
 	private static GamepadButtons _scrollingButtons = GamepadButtons.None;
 	public ObservableCollection<InfoItem> InfoItems { get; } = [];
@@ -123,27 +128,27 @@ public partial class HeaderCarousel : ItemsControl
 		selectionTimer.Interval = SelectionDuration;
 		deselectionTimer.Interval = DeSelectionDuration;
 
-		scrollViewer = GetTemplateChild(PART_ScrollViewer) as ScrollViewer;
-		backDropImage = GetTemplateChild(PART_BackDropImage) as AnimatedImage;
-		itemsRepeater = GetTemplateChild("PART_ItemsRepeater") as ItemsRepeater;
+		scrollViewer = (ScrollViewer)GetTemplateChild(PART_ScrollViewer)!;
+		backDropImage = (AnimatedImage)GetTemplateChild(PART_BackDropImage)!;
+		itemsRepeater = (ItemsRepeater)GetTemplateChild("PART_ItemsRepeater")!;
 		itemsRepeater.ItemsSource = InfoItems;
 		itemsRepeater.ElementPrepared += ItemsRepeater_ElementPrepared;
 
-		PageTitle = GetTemplateChild("PageTitle") as TextBlock;
+		PageTitle = (TextBlock)GetTemplateChild("PageTitle")!;
 
-		SearchBox = GetTemplateChild("SearchBox") as AutoSuggestBox;
+		SearchBox = (AutoSuggestBox)GetTemplateChild("SearchBox")!;
 		SearchBox.TextChanged += SearchBox_TextChanged;
 		SearchBox.QuerySubmitted += SearchBox_QuerySubmitted;
 
-		Sort = GetTemplateChild("Sort") as Button;
+		Sort = (Button)GetTemplateChild("Sort")!;
 
-		SortByName = GetTemplateChild("SortByName") as RadioMenuFlyoutItem;
-		SortByLauncher = GetTemplateChild("SortByLauncher") as RadioMenuFlyoutItem;
-		SortByRating = GetTemplateChild("SortByRating") as RadioMenuFlyoutItem;
-		SortByTimePlayed = GetTemplateChild("SortByTimePlayed") as RadioMenuFlyoutItem;
-		SortByRecentlyPlayed = GetTemplateChild("SortByRecentlyPlayed") as RadioMenuFlyoutItem;
-		SortAscending = GetTemplateChild("SortAscending") as RadioMenuFlyoutItem;
-		SortDescending = GetTemplateChild("SortDescending") as RadioMenuFlyoutItem;
+		SortByName = (RadioMenuFlyoutItem)GetTemplateChild("SortByName")!;
+		SortByLauncher = (RadioMenuFlyoutItem)GetTemplateChild("SortByLauncher")!;
+		SortByRating = (RadioMenuFlyoutItem)GetTemplateChild("SortByRating")!;
+		SortByTimePlayed = (RadioMenuFlyoutItem)GetTemplateChild("SortByTimePlayed")!;
+		SortByRecentlyPlayed = (RadioMenuFlyoutItem)GetTemplateChild("SortByRecentlyPlayed")!;
+		SortAscending = (RadioMenuFlyoutItem)GetTemplateChild("SortAscending")!;
+		SortDescending = (RadioMenuFlyoutItem)GetTemplateChild("SortDescending")!;
 
 		SortByName.Click += SortKey_Click;
 		SortByLauncher.Click += SortKey_Click;
@@ -153,51 +158,51 @@ public partial class HeaderCarousel : ItemsControl
 		SortAscending.Click += SortOrder_Click;
 		SortDescending.Click += SortOrder_Click;
 
-		EpicGamesButton = GetTemplateChild("EpicGamesButton") as Button;
-		EpicGamesAccounts = GetTemplateChild("EpicGamesAccounts") as ComboBox;
+		EpicGamesButton = (Button)GetTemplateChild("EpicGamesButton")!;
+		EpicGamesAccounts = (ComboBox)GetTemplateChild("EpicGamesAccounts")!;
 		EpicGamesAccounts.SelectionChanged += EpicGamesAccounts_SelectionChanged;
-		AddEpicGamesAccount = GetTemplateChild("AddEpicGamesAccount") as Button;
+		AddEpicGamesAccount = (Button)GetTemplateChild("AddEpicGamesAccount")!;
 		AddEpicGamesAccount.Click += AddEpicGamesAccount_Click;
-		RemoveEpicGamesAccount = GetTemplateChild("RemoveEpicGamesAccount") as Button;
+		RemoveEpicGamesAccount = (Button)GetTemplateChild("RemoveEpicGamesAccount")!;
 		RemoveEpicGamesAccount.Click += RemoveEpicGamesAccount_Click;
-		EpicGrowl = GetTemplateChild("EpicGrowl") as StackPanel;
+		EpicGrowl = (StackPanel)GetTemplateChild("EpicGrowl")!;
 		Growl.Register("Epic", EpicGrowl);
 		LoadEpicGamesAccounts();
 
-		SteamButton = GetTemplateChild("SteamButton") as Button;
-		SteamAccounts = GetTemplateChild("SteamAccounts") as ComboBox;
+		SteamButton = (Button)GetTemplateChild("SteamButton")!;
+		SteamAccounts = (ComboBox)GetTemplateChild("SteamAccounts")!;
 		SteamAccounts.SelectionChanged += SteamAccounts_SelectionChanged;
-		AddSteamAccount = GetTemplateChild("AddSteamAccount") as Button;
+		AddSteamAccount = (Button)GetTemplateChild("AddSteamAccount")!;
 		AddSteamAccount.Click += AddSteamAccount_Click;
-		RemoveSteamAccount = GetTemplateChild("RemoveSteamAccount") as Button;
+		RemoveSteamAccount = (Button)GetTemplateChild("RemoveSteamAccount")!;
 		RemoveSteamAccount.Click += RemoveSteamAccount_Click;
-		SteamGrowl = GetTemplateChild("SteamGrowl") as StackPanel;
+		SteamGrowl = (StackPanel)GetTemplateChild("SteamGrowl")!;
 		Growl.Register("Steam", SteamGrowl);
 		LoadSteamAccounts();
 
-		SwitchPresenter = GetTemplateChild("SwitchPresenter") as SwitchPresenter;
+		SwitchPresenter = (SwitchPresenter)GetTemplateChild("SwitchPresenter")!;
 		//SwitchPresenter_TextBlock = GetTemplateChild("SwitchPresenter_TextBlock") as TextBlock;
-		NoGames_StackPanel = GetTemplateChild("NoGames_StackPanel") as StackPanel;
-		MetadataGrid = GetTemplateChild("MetadataGrid") as Grid;
-		Metadata_ScrollViewer = GetTemplateChild("Metadata_ScrollViewer") as ScrollViewer;
+		NoGames_StackPanel = (StackPanel)GetTemplateChild("NoGames_StackPanel")!;
+		MetadataGrid = (Grid)GetTemplateChild("MetadataGrid")!;
+		Metadata_ScrollViewer = (ScrollViewer)GetTemplateChild("Metadata_ScrollViewer")!;
 
-		Play = GetTemplateChild("Play") as Button;
+		Play = (Button)GetTemplateChild("Play")!;
 		Play.Click += Play_Click;
 		Play.KeyDown += BottomButtons_KeyDown;
-		Update = GetTemplateChild("Update") as Button;
+		Update = (Button)GetTemplateChild("Update")!;
 		Update.Click += Update_Click;
 		Update.KeyDown += BottomButtons_KeyDown;
-		StopProcesses = GetTemplateChild("StopProcesses") as Button;
+		StopProcesses = (Button)GetTemplateChild("StopProcesses")!;
 		StopProcesses.Click += StopProcesses_Click;
 		StopProcesses.KeyDown += BottomButtons_KeyDown;
-		RestartProcesses = GetTemplateChild("RestartProcesses") as Button;
+		RestartProcesses = (Button)GetTemplateChild("RestartProcesses")!;
 		RestartProcesses.Click += RestartProcesses_Click;
 		RestartProcesses.KeyDown += BottomButtons_KeyDown;
 
-		AgeRatingDescriptionText = GetTemplateChild("AgeRatingDescriptionText") as TextBlock;
-		ElementsText = GetTemplateChild("ElementsText") as TextBlock;
+		AgeRatingDescriptionText = (TextBlock)GetTemplateChild("AgeRatingDescriptionText")!;
+		ElementsText = (TextBlock)GetTemplateChild("ElementsText")!;
 
-		Screenshots_Card = GetTemplateChild("Screenshots_Card") as Card;
+		Screenshots_Card = (Card)GetTemplateChild("Screenshots_Card")!;
 		//Screenshots_Gallery = GetTemplateChild("Screenshots_Gallery") as GameGallery;
 		//Videos_ScrollViewer = GetTemplateChild("Videos_ScrollViewer") as ScrollViewer;
 
@@ -263,7 +268,7 @@ public partial class HeaderCarousel : ItemsControl
 		}
 	}
 
-	private static void GamepadPollingTimer_Tick(object sender, object e)
+	private static void GamepadPollingTimer_Tick(object? sender, object e)
 	{
 		HeaderCarousel? activeInstance = _activeInstances.FirstOrDefault();
 		if (activeInstance?.XamlRoot is not XamlRoot root) return;
@@ -499,7 +504,7 @@ public partial class HeaderCarousel : ItemsControl
 		_lastButtons = buttons;
 	}
 
-	private static bool IsElementDescendantOf(DependencyObject element, DependencyObject parent)
+	private static bool IsElementDescendantOf(DependencyObject? element, DependencyObject parent)
 	{
 		while (element != null)
 		{
@@ -604,7 +609,7 @@ public partial class HeaderCarousel : ItemsControl
 			tasks.Add(EpicGamesHelper.GetGames());
 		}
 
-		if ((SteamAccounts.SelectedItem is string && SteamAccounts.SelectedItem.ToString() != "Not logged in") && SteamButton.Visibility == Visibility.Visible)
+		if ((SteamAccounts.SelectedItem is string && SteamAccounts.SelectedItem?.ToString() != "Not logged in") && SteamButton.Visibility == Visibility.Visible)
 		{
 			tasks.Add(SteamHelper.GetGames());
 		}
@@ -612,15 +617,15 @@ public partial class HeaderCarousel : ItemsControl
 		switch (localSettings.Values["SwitchEmulator"] as string ?? "Eden")
 		{
 			case "Eden":
-				tasks.Add(EdenHelper.GetGames(localSettings.Values["EdenLocation"]?.ToString(), localSettings.Values["EdenDataLocation"]?.ToString()));
+				tasks.Add(EdenHelper.GetGames(localSettings.Values["EdenLocation"]?.ToString() ?? "", localSettings.Values["EdenDataLocation"]?.ToString() ?? ""));
 				break;
 
 			case "Citron":
-				tasks.Add(CitronHelper.GetGames(localSettings.Values["CitronLocation"]?.ToString(), localSettings.Values["CitronDataLocation"]?.ToString()));
+				tasks.Add(CitronHelper.GetGames(localSettings.Values["CitronLocation"]?.ToString() ?? "", localSettings.Values["CitronDataLocation"]?.ToString() ?? ""));
 				break;
 
 			case "Ryujinx":
-				tasks.Add(RyujinxHelper.GetGames(localSettings.Values["RyujinxLocation"]?.ToString(), localSettings.Values["RyujinxDataLocation"]?.ToString()));
+				tasks.Add(RyujinxHelper.GetGames(localSettings.Values["RyujinxLocation"]?.ToString() ?? "", localSettings.Values["RyujinxDataLocation"]?.ToString() ?? ""));
 				break;
 		}
 
@@ -689,37 +694,37 @@ public partial class HeaderCarousel : ItemsControl
 		{
 			Items.Add(new HeaderCarouselItem
 			{
-				Launcher = game.Launcher,
-				LauncherLocation = game.LauncherLocation,
-				DataLocation = game.DataLocation,
-				CatalogNamespace = game.CatalogNamespace,
-				CatalogItemId = game.CatalogItemId,
-				AppName = game.AppName,
-				InstallLocation = game.InstallLocation,
-				LaunchCommand = game.LaunchCommand,
-				LaunchExecutable = game.LaunchExecutable,
-				GameLocation = game.GameLocation,
-				GameID = game.GameID,
+				Launcher = game.Launcher ?? "",
+				LauncherLocation = game.LauncherLocation ?? "",
+				DataLocation = game.DataLocation ?? "",
+				CatalogNamespace = game.CatalogNamespace ?? "",
+				CatalogItemId = game.CatalogItemId ?? "",
+				AppName = game.AppName ?? "",
+				InstallLocation = game.InstallLocation ?? "",
+				LaunchCommand = game.LaunchCommand ?? "",
+				LaunchExecutable = game.LaunchExecutable ?? "",
+				GameLocation = game.GameLocation ?? "",
+				GameID = game.GameID ?? "",
 				ProcessNames = game.ProcessNames,
-				ArtifactId = game.ArtifactId,
+				ArtifactId = game.ArtifactId ?? "",
 				UpdateIsAvailable = game.UpdateIsAvailable,
-				ImageUrl = game.ImageUrl,
-				BackgroundImageUrl = game.BackgroundImageUrl,
-				Title = game.Title,
-				Developers = game.Developers,
-				Genres = game.Genres,
-				Features = game.Features,
+				ImageUrl = game.ImageUrl ?? "",
+				BackgroundImageUrl = game.BackgroundImageUrl ?? "",
+				Title = game.Title ?? "",
+				Developers = game.Developers ?? "",
+				Genres = game.Genres ?? [],
+				Features = game.Features ?? [],
 				Rating = game.Rating,
-				PlayTime = game.PlayTime,
-				AgeRatingUrl = game.AgeRatingUrl,
-				AgeRatingTitle = game.AgeRatingTitle,
-				AgeRatingDescription = game.AgeRatingDescription,
-				Elements = game.Elements,
-				Description = game.Description,
+				PlayTime = game.PlayTime ?? "",
+				AgeRatingUrl = game.AgeRatingUrl ?? "",
+				AgeRatingTitle = game.AgeRatingTitle ?? "",
+				AgeRatingDescription = game.AgeRatingDescription ?? "",
+				Elements = game.Elements ?? "",
+				Description = game.Description ?? "",
 				Screenshots = game.Screenshots,
-				ReleaseDate = game.ReleaseDate,
-				Size = game.Size,
-				Version = game.Version,
+				ReleaseDate = game.ReleaseDate ?? "",
+				Size = game.Size ?? "",
+				Version = game.Version ?? "",
 				Width = 240,
 				Height = 320
 			});
@@ -857,7 +862,7 @@ public partial class HeaderCarousel : ItemsControl
 		}
 	}
 
-	private void SelectionTimer_Tick(object sender, object e)
+	private void SelectionTimer_Tick(object? sender, object e)
 	{
 		SelectNextTile();
 	}
@@ -947,63 +952,63 @@ public partial class HeaderCarousel : ItemsControl
 
 			Metadata_ScrollViewer.ChangeView(null, 0, null);
 
-			Play?.XYFocusUp = selectedTile;
-			Update?.XYFocusUp = selectedTile;
-			StopProcesses?.XYFocusUp = selectedTile;
-			RestartProcesses?.XYFocusUp = selectedTile;
+			Play?.XYFocusUp = selectedTile!;
+			Update?.XYFocusUp = selectedTile!;
+			StopProcesses?.XYFocusUp = selectedTile!;
+			RestartProcesses?.XYFocusUp = selectedTile!;
 
 			if (selectedTile != null && SearchBox != null) selectedTile.XYFocusUp = SearchBox;
 
-			SearchBox?.XYFocusDown = selectedTile;
-			Sort?.XYFocusDown = selectedTile;
-			EpicGamesButton?.XYFocusDown = selectedTile;
-			SteamButton?.XYFocusDown = selectedTile;
+			SearchBox?.XYFocusDown = selectedTile!;
+			Sort?.XYFocusDown = selectedTile!;
+			EpicGamesButton?.XYFocusDown = selectedTile!;
+			SteamButton?.XYFocusDown = selectedTile!;
 
-			Title = selectedTile?.Title;
-			Developers = selectedTile?.Developers;
+			Title = selectedTile?.Title ?? "";
+			Developers = selectedTile?.Developers ?? "";
 
 			UpdateIsAvailable = selectedTile?.UpdateIsAvailable ?? false;
 
-			Rating = selectedTile?.Rating != 0.0 ? selectedTile.Rating : Rating;
+			Rating = selectedTile?.Rating is double r && r != 0.0 ? r : Rating;
 			RoundedRating = Math.Round((selectedTile?.Rating ?? 0.0), 1).ToString("0.0", CultureInfo.InvariantCulture);
-			PlayTime = selectedTile?.PlayTime;
-			AgeRatingUrl = selectedTile?.AgeRatingUrl;
-			AgeRatingTitle = selectedTile?.AgeRatingTitle;
-			AgeRatingDescription = selectedTile?.AgeRatingDescription;
+			PlayTime = selectedTile?.PlayTime ?? "";
+			AgeRatingUrl = selectedTile?.AgeRatingUrl ?? "";
+			AgeRatingTitle = selectedTile?.AgeRatingTitle ?? "";
+			AgeRatingDescription = selectedTile?.AgeRatingDescription ?? "";
 			AgeRatingDescriptionText.Visibility = string.IsNullOrEmpty(AgeRatingDescription)
 				? Visibility.Collapsed
 				: Visibility.Visible;
 
-			Elements = selectedTile?.Elements;
+			Elements = selectedTile?.Elements ?? "";
 			ElementsText.Visibility = string.IsNullOrEmpty(Elements)
 				? Visibility.Collapsed
 				: Visibility.Visible;
 
-			Genres = selectedTile?.Genres;
-			Features = selectedTile?.Features;
-			Description = selectedTile?.Description;
+			Genres = selectedTile?.Genres ?? [];
+			Features = selectedTile?.Features ?? [];
+			Description = selectedTile?.Description ?? "";
 
-			InstallLocation = selectedTile?.InstallLocation;
+			InstallLocation = selectedTile?.InstallLocation ?? "";
 
-			Launcher = selectedTile?.Launcher;
+			Launcher = selectedTile?.Launcher ?? "";
 
-			CatalogItemId = selectedTile?.CatalogItemId;
-			CatalogNamespace = selectedTile?.CatalogNamespace;
-			AppName = selectedTile?.AppName;
-			LaunchExecutable = selectedTile?.LaunchExecutable;
-			LaunchCommand = selectedTile?.LaunchCommand;
-			ProcessNames = selectedTile?.ProcessNames;
-			ArtifactId = selectedTile?.ArtifactId;
+			CatalogItemId = selectedTile?.CatalogItemId ?? "";
+			CatalogNamespace = selectedTile?.CatalogNamespace ?? "";
+			AppName = selectedTile?.AppName ?? "";
+			LaunchExecutable = selectedTile?.LaunchExecutable ?? "";
+			LaunchCommand = selectedTile?.LaunchCommand ?? "";
+			ProcessNames = selectedTile?.ProcessNames!;
+			ArtifactId = selectedTile?.ArtifactId ?? "";
 
-			GameID = selectedTile?.GameID;
+			GameID = selectedTile?.GameID ?? "";
 
-			LauncherLocation = selectedTile?.LauncherLocation;
-			DataLocation = selectedTile?.DataLocation;
-			GameLocation = selectedTile?.GameLocation;
+			LauncherLocation = selectedTile?.LauncherLocation ?? "";
+			DataLocation = selectedTile?.DataLocation ?? "";
+			GameLocation = selectedTile?.GameLocation ?? "";
 
-			ReleaseDate = selectedTile?.ReleaseDate;
-			Size = selectedTile?.Size;
-			Version = selectedTile?.Version;
+			ReleaseDate = selectedTile?.ReleaseDate ?? "";
+			Size = selectedTile?.Size ?? "";
+			Version = selectedTile?.Version ?? "";
 
 			InfoItems.Clear();
 
@@ -1054,7 +1059,7 @@ public partial class HeaderCarousel : ItemsControl
 			DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, async () =>
 			{
 				CheckGameRunning();
-				Screenshots = selectedTile?.Screenshots;
+				Screenshots = selectedTile?.Screenshots!;
 				Screenshots_Card.Visibility = (Screenshots?.Count > 0) ? Visibility.Visible : Visibility.Collapsed;
 				//Screenshots_Gallery.ResetScrollPosition();
 
@@ -1241,9 +1246,9 @@ public partial class HeaderCarousel : ItemsControl
 				: items.OrderByDescending(g => g.Rating)
 				.ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase),
 			"Time Played" => ascending
-				? items.OrderBy(g => ParseMinutes(g.PlayTime))
+				? items.OrderBy(g => ParseMinutes(g.PlayTime ?? ""))
 				.ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase)
-				: items.OrderByDescending(g => ParseMinutes(g.PlayTime))
+				: items.OrderByDescending(g => ParseMinutes(g.PlayTime ?? ""))
 				.ThenBy(g => g.Title ?? "", StringComparer.CurrentCultureIgnoreCase),
 			"Recently Played" => ascending
 				? items.OrderBy(g =>
@@ -1384,19 +1389,19 @@ public partial class HeaderCarousel : ItemsControl
 		{
 			(string? oldAccountId, string _, string _, int _) = EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath);
 
-			string accountDir = Path.Combine(EpicGamesHelper.EpicGamesAccountDir, oldAccountId);
+			string accountDir = Path.Combine(EpicGamesHelper.EpicGamesAccountDir, oldAccountId ?? "");
 			if (Directory.Exists(accountDir))
 				File.Copy(EpicGamesHelper.ActiveEpicGamesAccountPath, Path.Combine(accountDir, "GameUserSettings.ini"), true);
 		}
 
 		// get accountId
-		string accountId = (EpicGamesAccounts.SelectedItem as ComboBoxItem)?.Tag as string;
+		string? accountId = (EpicGamesAccounts.SelectedItem as ComboBoxItem)?.Tag as string;
 
 		// replace file
-		File.Copy(Path.Combine(EpicGamesHelper.EpicGamesAccountDir, accountId, "GameUserSettings.ini"), EpicGamesHelper.ActiveEpicGamesAccountPath, true);
+		File.Copy(Path.Combine(EpicGamesHelper.EpicGamesAccountDir, accountId ?? "", "GameUserSettings.ini"), EpicGamesHelper.ActiveEpicGamesAccountPath, true);
 
 		// replace accountid
-		Process.Start("regedit.exe", $@"/s ""{Path.Combine(EpicGamesHelper.EpicGamesAccountDir, accountId, "accountId.reg")}""");
+		Process.Start("regedit.exe", $@"/s ""{Path.Combine(EpicGamesHelper.EpicGamesAccountDir, accountId ?? "", "accountId.reg")}""");
 
 		// update refresh token
 		if (await EpicGamesHelper.UpdateEpicGamesToken(EpicGamesHelper.ActiveEpicGamesAccountPath) == null)
@@ -1597,7 +1602,7 @@ public partial class HeaderCarousel : ItemsControl
 		var contentDialog = new ContentDialog
 		{
 			Title = "Remove Epic Games Account",
-			Content = $"Are you sure that you want to remove {(EpicGamesAccounts.SelectedItem as ComboBoxItem).Content}?",
+			Content = $"Are you sure that you want to remove {(EpicGamesAccounts.SelectedItem as ComboBoxItem)?.Content}?",
 			PrimaryButtonText = "Yes",
 			CloseButtonText = "No",
 			DefaultButton = ContentDialogButton.Close,
@@ -1612,7 +1617,7 @@ public partial class HeaderCarousel : ItemsControl
 			EpicGamesHelper.CloseEpicGames();
 
 			// get accountId
-			string accountId = EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath).AccountId;
+			string accountId = EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath).AccountId ?? "";
 
 			// remove account
 			File.Delete(EpicGamesHelper.ActiveEpicGamesAccountPath);
@@ -1624,7 +1629,7 @@ public partial class HeaderCarousel : ItemsControl
 				ShowDateTime = false,
 				StaysOpen = false,
 				IsClosable = false,
-				Title = $"Successfully removed {(EpicGamesAccounts.SelectedItem as ComboBoxItem).Content}.",
+				Title = $"Successfully removed {(EpicGamesAccounts.SelectedItem as ComboBoxItem)?.Content}.",
 				Token = "Epic",
 			});
 
@@ -1715,7 +1720,7 @@ public partial class HeaderCarousel : ItemsControl
 		// make all accounts inactive
 		foreach (KeyValuePair<string, KVObject> user in kv.Root.Children)
 		{
-			if (user.Value["AccountName"]?.ToString() == SteamAccounts.SelectedItem.ToString())
+			if (user.Value["AccountName"]?.ToString() == SteamAccounts.SelectedItem?.ToString())
 			{
 				user.Value["MostRecent"] = "1";
 				user.Value["AllowAutoLogin"] = "1";
@@ -1735,7 +1740,7 @@ public partial class HeaderCarousel : ItemsControl
 		File.WriteAllText(SteamHelper.SteamLoginUsersPath, new StreamReader(msOut).ReadToEnd());
 
 		// update registry key
-		Registry.SetValue(@"HKEY_CURRENT_USER\Software\Valve\Steam", "AutoLoginUser", SteamAccounts.SelectedItem.ToString(), RegistryValueKind.String);
+		Registry.SetValue(@"HKEY_CURRENT_USER\Software\Valve\Steam", "AutoLoginUser", SteamAccounts.SelectedItem?.ToString() ?? "", RegistryValueKind.String);
 
 		// refresh combobox
 		isInitializingSteamAccounts = true;
@@ -1923,7 +1928,7 @@ public partial class HeaderCarousel : ItemsControl
 			}
 
 			// remove selected account
-			var newChildren = kv.Root.Children.Where(c => c.Key != kv.Root.Children.First(child => child.Value["AccountName"]?.ToString() == SteamAccounts.SelectedItem.ToString()).Key).ToList();
+			var newChildren = kv.Root.Children.Where(c => c.Key != kv.Root.Children.First(child => child.Value["AccountName"]?.ToString() == SteamAccounts.SelectedItem?.ToString()).Key).ToList();
 			var newRoot = new KVObject();
 			foreach (KeyValuePair<string, KVObject> child in newChildren)
 			{
@@ -1985,22 +1990,22 @@ public partial class HeaderCarousel : ItemsControl
 	{
 		selectionTimer?.Stop();
 
-		HeaderCarouselItem tile = selectedTile;
+		HeaderCarouselItem? tile = selectedTile;
 		if (tile == null)
 			return;
 
-		string launcher = tile.Launcher;
-		string installLocation = tile.InstallLocation;
-		string launchExecutable = tile.LaunchExecutable;
-		string launchCommand = tile.LaunchCommand;
-		string launcherLocation = tile.LauncherLocation;
-		string gameLocation = tile.GameLocation;
-		string dataLocation = tile.DataLocation;
-		string gameId = tile.GameID;
-		string appName = tile.AppName;
-		string catalogNamespace = tile.CatalogNamespace;
-		string catalogItemId = tile.CatalogItemId;
-		string artifactId = tile.ArtifactId;
+		string launcher = tile.Launcher ?? "";
+		string installLocation = tile.InstallLocation ?? "";
+		string launchExecutable = tile.LaunchExecutable ?? "";
+		string launchCommand = tile.LaunchCommand ?? "";
+		string launcherLocation = tile.LauncherLocation ?? "";
+		string gameLocation = tile.GameLocation ?? "";
+		string dataLocation = tile.DataLocation ?? "";
+		string gameId = tile.GameID ?? "";
+		string appName = tile.AppName ?? "";
+		string catalogNamespace = tile.CatalogNamespace ?? "";
+		string catalogItemId = tile.CatalogItemId ?? "";
+		string artifactId = tile.ArtifactId ?? "";
 
 		if (launcher == "Epic Games")
 		{
@@ -2044,7 +2049,7 @@ public partial class HeaderCarousel : ItemsControl
 			var startInfo = new ProcessStartInfo
 			{
 				FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Electronic Arts", "EA Desktop", "EA Desktop", "Link2EA.exe"),
-				Arguments = $@"""link2ea://launchgame/{appName}?AUTH_PASSWORD={exchangeCode}&AUTH_TYPE=exchangeCode&epicusername={Uri.EscapeDataString(displayName)}&epicuserid={accountId}&epiclocale=en&platform=epic"" """" """" """" """" """" """" """" """"",
+				Arguments = $@"""link2ea://launchgame/{appName}?AUTH_PASSWORD={exchangeCode}&AUTH_TYPE=exchangeCode&epicusername={Uri.EscapeDataString(displayName ?? "")}&epicuserid={accountId}&epiclocale=en&platform=epic"" """" """" """" """" """" """" """" """"",
 				WorkingDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Electronic Arts", "EA Desktop", "EA Desktop"),
 				UseShellExecute = false
 			};
@@ -2186,7 +2191,7 @@ public partial class HeaderCarousel : ItemsControl
 				"XboxPcAppFT"
 			};
 
-			foreach (string? name in processNames)
+			foreach (string name in processNames)
 			{
 				foreach (Process process in Process.GetProcessesByName(name))
 				{
@@ -2244,7 +2249,7 @@ public partial class HeaderCarousel : ItemsControl
 				"WpnUserService"
 			};
 
-			foreach (string? serviceName in serviceNames)
+			foreach (string serviceName in serviceNames)
 			{
 				try
 				{
@@ -2256,7 +2261,7 @@ public partial class HeaderCarousel : ItemsControl
 				}
 			}
 
-			foreach (string? serviceName in serviceNames)
+			foreach (string serviceName in serviceNames)
 			{
 				try
 				{
@@ -2341,7 +2346,7 @@ public partial class HeaderCarousel : ItemsControl
 			"WpnUserService"
 		};
 
-		foreach (string? serviceName in serviceNames)
+		foreach (string serviceName in serviceNames)
 		{
 			try
 			{
@@ -2370,7 +2375,7 @@ public partial class HeaderCarousel : ItemsControl
 		RestartProcesses.IsHitTestVisible = true;
 	}
 
-	private DispatcherTimer gameWatcherTimer;
+	private DispatcherTimer? gameWatcherTimer;
 	private bool? previousGameState = null;
 	private bool? previousExplorerState = null;
 	private bool servicesState = false;
@@ -2494,7 +2499,7 @@ public partial class HeaderCarousel : ItemsControl
 				Process[] running = Process.GetProcesses();
 				if (ProcessNames != null && ProcessNames.Count != 0)
 				{
-					if (ProcessNames.Any(name => running.Any(p => p.ProcessName.Contains(Path.GetFileNameWithoutExtension(name), StringComparison.OrdinalIgnoreCase))))
+					if (ProcessNames.Any(name => name != null && running.Any(p => p.ProcessName.Contains(Path.GetFileNameWithoutExtension(name), StringComparison.OrdinalIgnoreCase))))
 						return true;
 				}
 
@@ -2565,13 +2570,14 @@ public enum InfoIconType
 [GeneratedBindableCustomProperty]
 public partial class InfoItem
 {
-	public string Label { get; set; }
-	public string Value { get; set; }
-	public string Glyph { get; set; }
-	public Geometry PathData { get; set; }
+	public string? Label { get; set; }
+	public string? Value { get; set; }
+	public string? Glyph { get; set; }
+	public Geometry? PathData { get; set; }
 	public InfoIconType IconType { get; set; }
 	public bool IsFontIcon => IconType == InfoIconType.FontIcon;
 	public bool IsPathIcon => IconType == InfoIconType.PathIcon;
 	public bool IsHyperlink { get; set; } = false;
-	public string Hyperlink { get; set; }
+	public string? Hyperlink { get; set; }
 }
+

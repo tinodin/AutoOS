@@ -24,7 +24,7 @@ public static partial class RyujinxHelper
 			if (!File.Exists(filePath))
 			{
 				string content = await httpClient.GetStringAsync("https://raw.githubusercontent.com/blawar/titledb/refs/heads/master/US.en.json");
-				Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+				Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
 				await File.WriteAllTextAsync(filePath, content);
 			}
 
@@ -77,7 +77,7 @@ public static partial class RyujinxHelper
 					return;
 
 				// get name from database
-				string name = entry.TryGetProperty("name", out JsonElement nameElement) ? nameElement.GetString() : null;
+				string? name = entry.TryGetProperty("name", out JsonElement nameElement) ? nameElement.GetString() : null;
 
 				// clean name for searching
 				if (string.IsNullOrWhiteSpace(name)) return;
@@ -87,7 +87,7 @@ public static partial class RyujinxHelper
 				string simpleCleanName = SimpleCleanNameRegex().Replace(cleanName.ToLowerInvariant(), "");
 
 				// find install location
-				string bestInstallLocation = null;
+				string? bestInstallLocation = null;
 
 				foreach (string gameDir in candidatesPerDir.Keys)
 				{
@@ -105,7 +105,7 @@ public static partial class RyujinxHelper
 					return;
 
 				// search on igdb
-				Dictionary<string, string> result = await IgdbHelper.SearchCovers(cleanName);
+				Dictionary<string, string?>? result = await IgdbHelper.SearchCovers(cleanName);
 				if (result == null) return;
 
 				// get playtime
@@ -125,7 +125,7 @@ public static partial class RyujinxHelper
 				// get size
 				long sizeBytes = new FileInfo(bestInstallLocation).Length;
 
-				using var docData = JsonDocument.Parse(await httpClient.GetStringAsync(result["game_url"], _));
+				using var docData = JsonDocument.Parse(await httpClient.GetStringAsync(result["game_url"]!, _));
 				JsonElement data = docData.RootElement.Clone();
 
 				games.Add(new GameModel
@@ -139,8 +139,8 @@ public static partial class RyujinxHelper
 					ImageUrl = result["cover_url"],
 					BackgroundImageUrl = entry.GetProperty("bannerUrl").GetString(),
 					Developers = result["developers"],
-					Genres = [.. data.GetProperty("genres").EnumerateArray().Select(g => g.GetProperty("name").GetString())],
-					Features = [.. data.GetProperty("game_modes").EnumerateArray().Select(m => m.GetProperty("name").GetString())],
+					Genres = [.. data.GetProperty("genres").EnumerateArray().Select(g => g.GetProperty("name").GetString() ?? "")],
+					Features = [.. data.GetProperty("game_modes").EnumerateArray().Select(m => m.GetProperty("name").GetString() ?? "")],
 					Rating = Math.Round(data.GetProperty("aggregated_rating").GetDouble() / 20.0, 2),
 					PlayTime = playTime,
 					AgeRatingUrl = result["age_rating_url"],
@@ -149,7 +149,7 @@ public static partial class RyujinxHelper
 											? entry.GetProperty("ratingContent")[0].GetString()
 											: null,
 					Description = data.GetProperty("summary").GetString(),
-					Screenshots = [.. entry.GetProperty("screenshots").EnumerateArray().Select(x => x.GetString())],
+					Screenshots = [.. entry.GetProperty("screenshots").EnumerateArray().Select(x => x.GetString() ?? "")],
 					ReleaseDate = result["release_date"],
 					Size = sizeBytes >= 1024 * 1024 * 1024
 							? $"{sizeBytes / (1024d * 1024d * 1024d):F1} GB"

@@ -129,8 +129,10 @@ public static partial class TaskSchedulerHelper
 
 	private static unsafe ITaskService CreateTaskService()
 	{
+		Guid clsid = CLSID_TaskScheduler;
 		Guid iid = typeof(ITaskService).GUID;
-		Marshal.ThrowExceptionForHR((int)PInvoke.CoCreateInstance(in CLSID_TaskScheduler, null, Windows.Win32.System.Com.CLSCTX.CLSCTX_INPROC_SERVER, in iid, out void* ppv));
+		void* ppv;
+		Marshal.ThrowExceptionForHR((int)PInvoke.CoCreateInstance(&clsid, null, Windows.Win32.System.Com.CLSCTX.CLSCTX_INPROC_SERVER, &iid, &ppv));
 		var cw = new StrategyBasedComWrappers();
 		return (ITaskService)cw.GetOrCreateObjectForComInstance((nint)ppv, CreateObjectFlags.UniqueInstance);
 	}

@@ -29,7 +29,7 @@ public sealed partial class SettingsPage : Page
 
 	private void LoadSettings()
 	{
-		if (localSettings.Values.TryGetValue("TintColor", out object tintValue) && tintValue is string tintHex)
+		if (localSettings.Values.TryGetValue("TintColor", out object? tintValue) && tintValue is string tintHex)
 		{
 			Color tintColor = DevWinUI.ColorHelper.GetColorFromHex(tintHex);
 
@@ -50,7 +50,7 @@ public sealed partial class SettingsPage : Page
 			ColorPalette.SelectedColor = ColorPalette.Colors.FirstOrDefault(color => color.Color.A == 0)?.Color ?? default;
 		}
 
-		if (!localSettings.Values.TryGetValue("HideStartup", out object hideStartupValue))
+		if (!localSettings.Values.TryGetValue("HideStartup", out object? hideStartupValue))
 		{
 			localSettings.Values["HideStartup"] = 0;
 		}
@@ -62,11 +62,11 @@ public sealed partial class SettingsPage : Page
 			}
 			else
 			{
-				HideStartup.IsOn = (int)hideStartupValue == 1;
+				HideStartup.IsOn = (int)hideStartupValue! == 1;
 			}
 		}
 
-		if (!localSettings.Values.TryGetValue("RestoreWindowState", out object restoreWindowStateValue))
+		if (!localSettings.Values.TryGetValue("RestoreWindowState", out object? restoreWindowStateValue))
 		{
 			localSettings.Values["RestoreWindowState"] = false;
 			RestoreWindowState.IsOn = false;
@@ -327,6 +327,6 @@ public sealed partial class SettingsPage : Page
 [GeneratedBindableCustomProperty]
 public partial class SettingsGridViewItem
 {
-	public string Text { get; set; }
-	public string ImageSource { get; set; }
+	public string Text { get; set; } = null!;
+	public string ImageSource { get; set; } = null!;
 }

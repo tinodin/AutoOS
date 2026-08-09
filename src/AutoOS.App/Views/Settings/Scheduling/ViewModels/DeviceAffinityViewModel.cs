@@ -92,9 +92,9 @@ public partial class DeviceAffinityViewModel : INotifyPropertyChanged
 	public GridLength Group1Width => GetGroupWidth(1);
 	public GridLength Group2Width => GetGroupWidth(2);
 
-	public CpuCoreGroup Group0 => CpuGroups.Count > 0 ? CpuGroups[0] : null;
-	public CpuCoreGroup Group1 => CpuGroups.Count > 1 ? CpuGroups[1] : null;
-	public CpuCoreGroup Group2 => CpuGroups.Count > 2 ? CpuGroups[2] : null;
+	public CpuCoreGroup? Group0 => CpuGroups.Count > 0 ? CpuGroups[0] : null;
+	public CpuCoreGroup? Group1 => CpuGroups.Count > 1 ? CpuGroups[1] : null;
+	public CpuCoreGroup? Group2 => CpuGroups.Count > 2 ? CpuGroups[2] : null;
 
 	public int Group0Columns => CpuGroups.Count > 0 ? CpuGroups[0].RecommendedColumns : 1;
 	public int Group1Columns => CpuGroups.Count > 1 ? CpuGroups[1].RecommendedColumns : 1;
@@ -224,17 +224,17 @@ public partial class DeviceAffinityViewModel : INotifyPropertyChanged
 
 		SetCpuSelectionFromMask(ProcessMask);
 
-		foreach (CpuThread? thread in CpuGroups.SelectMany(g => g.Cores).SelectMany(c => c.Threads))
+		foreach (CpuThread thread in CpuGroups.SelectMany(g => g.Cores).SelectMany(c => c.Threads))
 			thread.PropertyChanged += Thread_PropertyChanged;
 	}
 
 	private void SetCpuSelectionFromMask(ulong mask)
 	{
-		foreach (CpuThread? thread in CpuGroups.SelectMany(g => g.Cores).SelectMany(c => c.Threads))
+		foreach (CpuThread thread in CpuGroups.SelectMany(g => g.Cores).SelectMany(c => c.Threads))
 			thread.IsSelected = (mask & thread.BitMask) != 0;
 	}
 
-	private void Thread_PropertyChanged(object sender, PropertyChangedEventArgs e)
+	private void Thread_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 	{
 		if (e.PropertyName == nameof(CpuThread.IsSelected) && sender is CpuThread thread)
 			ProcessMask = thread.IsSelected ? ProcessMask | thread.BitMask : ProcessMask & ~thread.BitMask;
@@ -245,7 +245,7 @@ public partial class DeviceAffinityViewModel : INotifyPropertyChanged
 		DeviceInfo? targetDevice = DeviceHelper.GetDevices(_selectedItem.DeviceType).FirstOrDefault(device => string.Equals(device.PnpDeviceId, _selectedItem.PnpDeviceId, StringComparison.OrdinalIgnoreCase));
 
 		ApplyResult result = DeviceHelper.ApplySettingsToDevices(
-			[targetDevice],
+			[targetDevice!],
 			MsiSupported,
 			(uint)MsiLimit,
 			(uint)DevicePolicy,
@@ -257,15 +257,15 @@ public partial class DeviceAffinityViewModel : INotifyPropertyChanged
 		OnSettingsApplied?.Invoke(result);
 	}
 
-	internal event Action<ApplyResult> OnSettingsApplied;
-	public event PropertyChangedEventHandler PropertyChanged;
+	internal event Action<ApplyResult>? OnSettingsApplied;
+	public event PropertyChangedEventHandler? PropertyChanged;
 
-	protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+	protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
 	{
 		PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 	}
 
-	protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
+	protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
 	{
 		if (Equals(field, value)) return false;
 		field = value;

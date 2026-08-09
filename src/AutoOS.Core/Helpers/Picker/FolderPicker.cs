@@ -104,8 +104,7 @@ public partial class FolderPicker
 
 			if (!string.IsNullOrEmpty(InitialDirectory))
 			{
-				PInvoke.SHCreateItemFromParsingName(InitialDirectory, null, typeof(IShellItem).GUID, out void* ppv);
-				IShellItem* psi = (IShellItem*)ppv;
+				PInvoke.SHCreateItemFromParsingName<IShellItem>(InitialDirectory, null, out IShellItem* psi);
 
 				dialog->SetFolder(psi);
 			}

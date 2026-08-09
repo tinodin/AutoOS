@@ -9,9 +9,9 @@ namespace AutoOS.App.Views.Startup;
 
 public sealed partial class StartupWindow : Window
 {
-	public string TitleBarName { get; set; }
-	public static TextBlock Status { get; private set; }
-	public static ProgressBar Progress { get; private set; }
+	public string TitleBarName { get; set; } = null!;
+	public static TextBlock Status { get; private set; } = null!;
+	public static ProgressBar Progress { get; private set; } = null!;
 
 	public StartupWindow()
 	{

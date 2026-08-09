@@ -2,10 +2,10 @@ namespace AutoOS.App.Themes;
 
 public partial class NavigationViewItemStyleSelector : StyleSelector
 {
-	public Style TopLevelTemplate { get; set; }
-	public Style SubLevelTemplate { get; set; }
+	public Style TopLevelTemplate { get; set; } = null!;
+	public Style SubLevelTemplate { get; set; } = null!;
 
-	protected override Style SelectStyleCore(object item, DependencyObject container)
+	protected override Style? SelectStyleCore(object item, DependencyObject container)
 	{
 		if (item == null) return TopLevelTemplate;
 

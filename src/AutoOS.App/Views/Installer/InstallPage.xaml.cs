@@ -11,12 +11,12 @@ namespace AutoOS.App.Views.Installer;
 
 public sealed partial class InstallPage : Page
 {
-	public static TextBlock Status { get; private set; }
-	public static ProgressBar Progress { get; private set; }
-	public static InfoBar Info { get; private set; }
-	public static Microsoft.UI.Xaml.Controls.ProgressRing ProgressRingControl { get; private set; }
-	public static string CurrentTitle { get; set; }
-	public static Button ResumeButton { get; private set; }
+	public static TextBlock Status { get; private set; } = new();
+	public static ProgressBar Progress { get; private set; } = new();
+	public static InfoBar Info { get; private set; } = new();
+	public static Microsoft.UI.Xaml.Controls.ProgressRing ProgressRingControl { get; private set; } = new();
+	public static string CurrentTitle { get; set; } = string.Empty;
+	public static Button ResumeButton { get; private set; } = new();
 	private static readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 	private static int currentStageCounter = 0;
 
@@ -129,7 +129,7 @@ public sealed partial class InstallPage : Page
 		Process.Start(processStartInfo);
 	}
 
-	public static async Task RunStage(string status, List<(string Title, Func<Task> Action, Func<bool> Condition)> actions, double stagePercentage)
+	public static async Task RunStage(string status, List<(string Title, Func<Task> Action, Func<bool>? Condition)> actions, double stagePercentage)
 	{
 		int stageIndex = currentStageCounter++;
 		int savedStage = localSettings.Values["actionStage"] as int? ?? -1;
@@ -160,7 +160,7 @@ public sealed partial class InstallPage : Page
 		List<Func<Task>> currentGroup = [];
 
 		int globalIndex = 0;
-		foreach ((string? title, Func<Task>? action, Func<bool> _) in filteredActions)
+		foreach ((string title, Func<Task> action, Func<bool>? _) in filteredActions)
 		{
 			if (previousTitle != string.Empty && (previousTitle != title || title.Contains("downloading", StringComparison.OrdinalIgnoreCase)) && currentGroup.Count > 0)
 			{

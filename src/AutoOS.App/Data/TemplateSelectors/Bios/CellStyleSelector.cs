@@ -6,19 +6,19 @@ namespace AutoOS.App.Data.TemplateSelectors.Bios;
 
 public sealed partial class CellStyleSelector : StyleSelector
 {
-	public Style CriticalStyle { get; set; }
-	public Style SuccessStyle { get; set; }
-	public Style CautionStyle { get; set; }
+	public Style CriticalStyle { get; set; } = null!;
+	public Style SuccessStyle { get; set; } = null!;
+	public Style CautionStyle { get; set; } = null!;
 	public bool IsDiff { get; set; }
 
-	protected override Style SelectStyleCore(object item, DependencyObject container)
+	protected override Style? SelectStyleCore(object item, DependencyObject container)
 	{
 		if (item is not BiosTreeNode node) return null;
 
 		if (container is TreeGridCell cell)
 		{
 			TreeGridColumn? column = cell.ColumnBase?.TreeGridColumn;
-			string mappingName = column.MappingName;
+			string mappingName = column!.MappingName;
 
 			if (node.HasErrors && mappingName == "DisplayCurrent")
 				return CautionStyle;

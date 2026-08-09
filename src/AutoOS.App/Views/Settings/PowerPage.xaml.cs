@@ -2,6 +2,8 @@ using AutoOS.App.Data.Enums.Power;
 using AutoOS.App.Data.Models.Power;
 using AutoOS.App.ViewModels;
 using CommunityToolkit.Mvvm.DependencyInjection;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Syncfusion.UI.Xaml.Data;
 using Syncfusion.UI.Xaml.DataGrid;
@@ -24,6 +26,7 @@ public sealed partial class PowerPage : Page
 	{
 		base.OnNavigatedTo(e);
 		ViewModel.RefreshFilterAction = RefreshSearchFilter;
+		ViewModel.RefreshFilterOnlyAction = RefreshFilterOnly;
 		_ = ViewModel.LoadPlansAsync();
 	}
 
@@ -51,6 +54,8 @@ public sealed partial class PowerPage : Page
 			column.Width = double.NaN;
 		treeGrid.InvalidateMeasure();
 		treeGrid.UpdateLayout();
+
+		RefreshFilterOnly();
 	}
 	
 	private void TreeGrid_CellToolTipOpening(object sender, TreeGridCellToolTipOpeningEventArgs e)
@@ -103,7 +108,9 @@ public sealed partial class PowerPage : Page
 			return;
 
 		Node? node = treeGrid.GetNodeAtRowIndex(e.RowColumnIndex.RowIndex)?.Item as Node ?? treeGrid.CurrentItem as Node;
-		if (ViewModel.CommitEdit(node))
+		int visibleIndex = treeGrid.ResolveToGridVisibleColumnIndex(e.RowColumnIndex.ColumnIndex);
+		string mappingName = treeGrid.Columns[visibleIndex].MappingName;
+		if (ViewModel.CommitEdit(node, mappingName))
 			DispatcherQueue.TryEnqueue(ViewModel.RefreshAfterEdit);
 	}
 
@@ -113,6 +120,21 @@ public sealed partial class PowerPage : Page
 			control.Focus(FocusState.Programmatic);
 		if (sender is Microsoft.UI.Xaml.Controls.TextBox textBox)
 			textBox.SelectAll();
+	}
+
+	private void EditComboBox_DropDownClosed(object sender, object e)
+	{
+		foreach (SfTreeGrid treeGrid in new[] { TreeGrid, CompareTreeGrid, ChangesTreeGrid })
+		{
+			TreeGridCurrentCellManager manager = treeGrid.SelectionController.CurrentCellManager;
+			if (manager.CurrentCell?.IsEditing != true)
+				continue;
+
+			var index = manager.CurrentRowColumnIndex;
+			manager.EndEdit();
+			treeGrid.SelectionController.MoveCurrentCell(index);
+			break;
+		}
 	}
 
 	private void TreeGrid_TreeGridContextFlyoutOpening(object sender, TreeGridContextFlyoutEventArgs e)
@@ -164,14 +186,29 @@ public sealed partial class PowerPage : Page
 		});
 	}
 
+	private void FilterMode_Contains_Click(object sender, RoutedEventArgs e) => ViewModel.FilterMode = Data.Enums.Power.FilterMode.Contains;
+
+	private void FilterMode_ExactMatch_Click(object sender, RoutedEventArgs e) => ViewModel.FilterMode = Data.Enums.Power.FilterMode.ExactMatch;
+
+	private void RefreshFilterOnly()
+	{
+		ApplyFilter(TreeGrid, ViewModel);
+		ApplyFilter(CompareTreeGrid, ViewModel);
+		ApplyFilter(ChangesTreeGrid, ViewModel);
+	}
+
 	private void RefreshSearchFilter()
 	{
-		TreeGrid.View?.Filter = ViewModel.MatchesFilter;
-		TreeGrid.View?.RefreshFilter();
-		CompareTreeGrid.View?.Filter = ViewModel.MatchesFilter;
-		CompareTreeGrid.View?.RefreshFilter();
-		ChangesTreeGrid.View?.Filter = ViewModel.MatchesFilter;
-		ChangesTreeGrid.View?.RefreshFilter();
 		ViewModel.UpdateNodeCounts();
+		RefreshFilterOnly();
+	}
+
+	private static void ApplyFilter(SfTreeGrid treeGrid, PowerPageViewModel viewModel)
+	{
+		TreeGridView? view = treeGrid.View;
+		if (view == null)
+			return;
+		view.Filter = viewModel.MatchesFilter;
+		view.RefreshFilter();
 	}
 }

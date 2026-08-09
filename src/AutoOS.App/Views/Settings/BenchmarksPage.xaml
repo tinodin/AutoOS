@@ -84,7 +84,6 @@
 							<!--  Delete  -->
 							<AppBarButton
 								Command="{x:Bind ViewModel.DeleteCommand}"
-								CommandParameter="{x:Bind XamlRoot}"
 								Label="Delete">
 								<AppBarButton.Content>
 									<dev:ThemedIcon Style="{StaticResource App.ThemedIcons.Delete}" />

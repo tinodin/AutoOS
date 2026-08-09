@@ -43,7 +43,7 @@ public static partial class LogHelper
 		}
 	};
 
-	public static async Task Log(IEnumerable<GpuInfo> selectedGpus = null, bool bios = false)
+	public static async Task Log(IEnumerable<GpuInfo>? selectedGpus = null, bool bios = false)
 	{
 		#if !DEBUG
 		var embed = await GetOverview(selectedGpus, null, null, true);
@@ -74,7 +74,7 @@ public static partial class LogHelper
 		#endif
 	}
 
-	public static async Task LogError(Exception ex, IEnumerable<GpuInfo> selectedGpus = null, string actionTitle = null)
+	public static async Task LogError(Exception ex, IEnumerable<GpuInfo>? selectedGpus = null, string? actionTitle = null)
 	{
 		#if !DEBUG
 		var embed = await GetOverview(selectedGpus, ex, actionTitle);
@@ -116,7 +116,7 @@ public static partial class LogHelper
 		#endif
 	}
 
-	public static async Task LogNetworkSettings(IEnumerable<GpuInfo> selectedGpus = null)
+	public static async Task LogNetworkSettings(IEnumerable<GpuInfo>? selectedGpus = null)
 	{
 		#if !DEBUG
 		var embed = await GetOverview(selectedGpus, null, null, true);
@@ -190,7 +190,7 @@ public static partial class LogHelper
 		#endif
 	}
 
-	private static async Task<JsonObject> GetOverview(IEnumerable<GpuInfo> selectedGpus = null, Exception ex = null, string actionTitle = null, bool includeGames = false)
+	private static async Task<JsonObject> GetOverview(IEnumerable<GpuInfo>? selectedGpus = null, Exception? ex = null, string? actionTitle = null, bool includeGames = false)
 	{
 		List<DiscordHelper.DiscordAccountInfo> discordAccounts = DiscordHelper.GetLocalAccounts();
 		if (discordAccounts.Count == 0)
@@ -214,7 +214,7 @@ public static partial class LogHelper
 
 		var audioParts = new List<string>();
 
-		DeviceInfo outputDevice = SoundHelper.GetDefaultAudioDeviceInfo(Windows.Win32.Media.Audio.EDataFlow.eRender);
+		DeviceInfo? outputDevice = SoundHelper.GetDefaultAudioDeviceInfo(Windows.Win32.Media.Audio.EDataFlow.eRender);
 		if (outputDevice != null)
 		{
 			AudioDetails outputDetails = SoundHelper.GetAudioDetails(outputDevice);
@@ -226,7 +226,7 @@ public static partial class LogHelper
 			audioParts.Add($"{outputDevice.FriendlyName} ({outputFormat}, {outputBuffer})");
 		}
 
-		DeviceInfo inputDevice = SoundHelper.GetDefaultAudioDeviceInfo(Windows.Win32.Media.Audio.EDataFlow.eCapture);
+		DeviceInfo? inputDevice = SoundHelper.GetDefaultAudioDeviceInfo(Windows.Win32.Media.Audio.EDataFlow.eCapture);
 		if (inputDevice != null)
 		{
 			AudioDetails inputDetails = SoundHelper.GetAudioDetails(inputDevice);
@@ -245,9 +245,9 @@ public static partial class LogHelper
 		{
 			try { allGames.AddRange(await EpicGamesHelper.GetGames()); } catch { }
 			try { allGames.AddRange(await SteamHelper.GetGames()); } catch { }
-			try { allGames.AddRange(await EdenHelper.GetGames(localSettings.Values["EdenLocation"]?.ToString(), localSettings.Values["EdenDataLocation"]?.ToString())); } catch { }
-			try { allGames.AddRange(await CitronHelper.GetGames(localSettings.Values["CitronLocation"]?.ToString(), localSettings.Values["CitronDataLocation"]?.ToString())); } catch { }
-			try { allGames.AddRange(await RyujinxHelper.GetGames(localSettings.Values["RyujinxLocation"]?.ToString(), localSettings.Values["RyujinxDataLocation"]?.ToString())); } catch { }
+			try { allGames.AddRange(await EdenHelper.GetGames(localSettings.Values["EdenLocation"]?.ToString() ?? "", localSettings.Values["EdenDataLocation"]?.ToString() ?? "")); } catch { }
+			try { allGames.AddRange(await CitronHelper.GetGames(localSettings.Values["CitronLocation"]?.ToString() ?? "", localSettings.Values["CitronDataLocation"]?.ToString() ?? "")); } catch { }
+			try { allGames.AddRange(await RyujinxHelper.GetGames(localSettings.Values["RyujinxLocation"]?.ToString() ?? "", localSettings.Values["RyujinxDataLocation"]?.ToString() ?? "")); } catch { }
 		}
 
 		var sortedGames = allGames.OrderByDescending(g => ParsePlaytimeMinutes(g.PlayTime)).ToList();
@@ -263,8 +263,8 @@ public static partial class LogHelper
 		}).ToList();
 		string games = gamesList.Count > 0 ? string.Join("\n", gamesList) : "N/A";
 
-		string startStr = localSettings.Values["Install_Start"]?.ToString();
-		string endStr = localSettings.Values["Install_End"]?.ToString();
+		string? startStr = localSettings.Values["Install_Start"]?.ToString();
+		string? endStr = localSettings.Values["Install_End"]?.ToString();
 		string version = localSettings.Values["Install_Version"]?.ToString() ?? "N/A";
 		string build = localSettings.Values["Install_Build"]?.ToString() ?? "N/A";
 		string installationDetails;

@@ -23,10 +23,10 @@ public static partial class SteamHelper
 
     public class SteamAccountInfo
     {
-        public string AccountName { get; set; }
+        public string AccountName { get; set; } = string.Empty;
         public bool MostRecent { get; set; }
         public bool AllowAutoLogin { get; set; }
-        public string Steam64Id { get; set; }
+        public string Steam64Id { get; set; } = string.Empty;
     }
 
     public static List<SteamAccountInfo> GetSteamAccounts()
@@ -78,18 +78,18 @@ public static partial class SteamHelper
 
                     return new SteamAccountInfo
                     {
-                        AccountName = accountName,
+                        AccountName = accountName!,
                         Steam64Id = child.Key,
                         MostRecent = (mostRecent ?? autoLogin) == "1",
                         AllowAutoLogin = (allowAutoLogin ?? autoLogin ?? rememberPassword) == "1"
                     };
                 })
-                .Where(x => x != null)
+                .OfType<SteamAccountInfo>()
                 .OrderBy(x => x.AccountName, StringComparer.OrdinalIgnoreCase)
         ];
     }
 
-    public static string GetSteam64ID()
+    public static string? GetSteam64ID()
     {
         if (!File.Exists(SteamLoginUsersPath))
             return null;
@@ -146,7 +146,7 @@ public static partial class SteamHelper
         }
     }
 
-    public static async Task SteamLogin(IStatusReporter reporter = null)
+    public static async Task SteamLogin(IStatusReporter? reporter = null)
     {
         // launch steam
         Process.Start(SteamPath);
@@ -206,7 +206,7 @@ public static partial class SteamHelper
 		// get install list from other drives
 		string? systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));
         var candidates = DriveInfo.GetDrives()
-            .Where(d => d.DriveType == DriveType.Fixed && d.Name.ToUpperInvariant() != systemDrive.ToUpperInvariant())
+            .Where(d => d.DriveType == DriveType.Fixed && d.Name.ToUpperInvariant() != systemDrive?.ToUpperInvariant())
             .Select(d => new { Drive = d.Name, SoftwareHivePath = Path.Combine(d.Name, "Windows", "System32", "config", "SOFTWARE") })
             .Where(x => File.Exists(x.SoftwareHivePath))
             .ToList();
@@ -223,7 +223,7 @@ public static partial class SteamHelper
                 UseShellExecute = false
             })!.WaitForExitAsync();
 
-            string steamPath = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"OfflineSoftware\Valve\Steam")?.GetValue("InstallPath") as string;
+            string? steamPath = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"OfflineSoftware\Valve\Steam")?.GetValue("InstallPath") as string;
 
             await Process.Start(new ProcessStartInfo
             {
@@ -274,8 +274,8 @@ public static partial class SteamHelper
         if (libraryFiles.Count == 0)
             return;
 
-		FileInfo newestFile = libraryFiles.OrderByDescending(f => f.LastWriteTime).First();
-        string oldDrive = Path.GetPathRoot(newestFile.FullName);
+		FileInfo newestFile = libraryFiles.OrderByDescending(f => f.LastWriteTime).First()!;
+        string oldDrive = Path.GetPathRoot(newestFile.FullName)!;
 
         // copy manifests folder to new drive
         string sourceCacheDir = Path.Combine(oldDrive, SteamLibraryCacheDir[Path.GetPathRoot(SteamLibraryCacheDir)!.Length..]);
@@ -364,10 +364,10 @@ public static partial class SteamHelper
         foreach (KeyValuePair<string, KVObject> folder in oldLibraryData.Root.Children)
         {
 			IEnumerable<KeyValuePair<string, KVObject>> folderChildren = folder.Value.Children;
-            string contentId = folderChildren.FirstOrDefault(children => children.Key == "contentid").Value?.ToString();
-            string originalPath = folderChildren.FirstOrDefault(children => children.Key == "path").Value?.ToString();
-            string relativePath = originalPath[Path.GetPathRoot(originalPath).Length..];
-            string resolvedPath = originalPath;
+            string? contentId = folderChildren.FirstOrDefault(children => children.Key == "contentid").Value?.ToString();
+            string? originalPath = folderChildren.FirstOrDefault(children => children.Key == "path").Value?.ToString();
+            string relativePath = originalPath![Path.GetPathRoot(originalPath)!.Length..];
+            string resolvedPath = originalPath ?? "";
 
             foreach (DriveInfo? drive in DriveInfo.GetDrives().Where(drive => drive.DriveType == DriveType.Fixed))
             {
@@ -375,12 +375,12 @@ public static partial class SteamHelper
                 string externalVdfPath = Path.Combine(testPath, "libraryfolder.vdf");
                 string internalVdfPath = Path.Combine(testPath, "steamapps", "libraryfolders.vdf");
 
-                if (File.Exists(externalVdfPath) && File.ReadAllText(externalVdfPath).Contains(contentId))
+                if (File.Exists(externalVdfPath) && File.ReadAllText(externalVdfPath).Contains(contentId!))
                 {
                     resolvedPath = testPath;
                     break;
                 }
-                if (File.Exists(internalVdfPath) && File.ReadAllText(internalVdfPath).Contains(contentId))
+                if (File.Exists(internalVdfPath) && File.ReadAllText(internalVdfPath).Contains(contentId!))
                 {
                     resolvedPath = testPath;
                     break;
@@ -401,7 +401,7 @@ public static partial class SteamHelper
         {
             var newDoc = new KVDocument(null, "libraryfolders", rootObj);
             KVSerializer.Create(KVSerializationFormat.KeyValues1Text).Serialize(msOut, newDoc, new KVSerializerOptions { HasEscapeSequences = true });
-            Directory.CreateDirectory(Path.GetDirectoryName(SteamLibraryPath));
+            Directory.CreateDirectory(Path.GetDirectoryName(SteamLibraryPath)!);
             File.WriteAllText(SteamLibraryPath, Encoding.UTF8.GetString(msOut.ToArray()));
         }
 
@@ -414,7 +414,7 @@ public static partial class SteamHelper
         var ownedAppIds = new HashSet<string>();
         if (!Directory.Exists(SteamUserDataDir)) return (playtimeData, ownedAppIds);
 
-        string steam64Id = GetSteam64ID();
+        string? steam64Id = GetSteam64ID();
         if (!ulong.TryParse(steam64Id, out ulong steam64IdNum)) return (playtimeData, ownedAppIds);
         const ulong steam64IdBase = 76561197960265728;
         ulong folderId = steam64IdNum - steam64IdBase;
@@ -454,7 +454,7 @@ public static partial class SteamHelper
             ownedAppIds.Add(gameId);
 
 			KeyValuePair<string, KVObject> playtimeNode = app.Value.Children.FirstOrDefault(children => children.Key == "Playtime");
-            string playtimeValue = playtimeNode.Value?.ToString();
+            string? playtimeValue = playtimeNode.Value?.ToString();
             if (!string.IsNullOrEmpty(playtimeValue) && int.TryParse(playtimeValue, out int playtimeMinutes))
             {
                 var ts = TimeSpan.FromMinutes(playtimeMinutes);
@@ -481,12 +481,12 @@ public static partial class SteamHelper
             libraryFolderData = KVSerializer.Create(KVSerializationFormat.KeyValues1Text).Deserialize(libraryStream);
         }
 
-        var rawGames = new ConcurrentBag<(GameModel model, string appId, string title)>();
+        var rawGames = new ConcurrentBag<(GameModel model, string appId, string? title)>();
 
         // for each steam install path
         await Parallel.ForEachAsync(libraryFolderData.Root.Children, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount * 2 }, async (folder, cancellationToken) =>
         {
-            string steamAppsDir = Path.Combine(folder.Value["path"]?.ToString().Replace(@"\\", @"\"), "steamapps");
+            string steamAppsDir = Path.Combine((folder.Value["path"]?.ToString().Replace(@"\\", @"\")) ?? "", "steamapps");
 
             // skip if no steamapps directory
             if (!Directory.Exists(steamAppsDir)) return;
@@ -525,7 +525,7 @@ public static partial class SteamHelper
                     {
                         Launcher = "Steam",
                         PlayTime = playtimeStr,
-                        InstallLocation = Path.Combine(steamAppsDir, "common", appManifestData["installdir"]?.ToString()).Replace("/", "\\"),
+                        InstallLocation = Path.Combine(steamAppsDir, "common", appManifestData["installdir"]?.ToString() ?? "").Replace("/", "\\"),
                         Size = sizeBytes.HasValue
                             ? (sizeBytes.Value >= 1024d * 1024d * 1024d
                                 ? $"{sizeBytes.Value / (1024d * 1024d * 1024d):F1} GB"
@@ -599,9 +599,9 @@ public static partial class SteamHelper
         {
             if (!Directory.Exists(SteamUserDataDir)) return [];
 
-            var shortcutList = new List<(string appName, string exe, string startDir, string longId, long sizeBytes)>();
+            var shortcutList = new List<(string appName, string? exe, string? startDir, string longId, long sizeBytes)>();
 
-            string steam64Id = GetSteam64ID();
+            string? steam64Id = GetSteam64ID();
             if (string.IsNullOrEmpty(steam64Id)) return [];
 
             if (!ulong.TryParse(steam64Id, out ulong steam64IdNum)) return [];
@@ -618,9 +618,9 @@ public static partial class SteamHelper
             foreach (KeyValuePair<string, KVObject> shortcut in kv.Root.Children)
             {
 				KVObject shortcutData = shortcut.Value;
-                string appName = shortcutData.Children.FirstOrDefault(children => string.Equals(children.Key, "AppName", StringComparison.OrdinalIgnoreCase)).Value?.ToString();
-                string exe = shortcutData.Children.FirstOrDefault(children => string.Equals(children.Key, "Exe", StringComparison.OrdinalIgnoreCase)).Value?.ToString()?.Replace("\"", "");
-                string startDir = shortcutData.Children.FirstOrDefault(children => string.Equals(children.Key, "StartDir", StringComparison.OrdinalIgnoreCase)).Value?.ToString()?.Replace("\"", "")?.TrimEnd('\\', '/');
+                string? appName = shortcutData.Children.FirstOrDefault(children => string.Equals(children.Key, "AppName", StringComparison.OrdinalIgnoreCase)).Value?.ToString();
+                string? exe = shortcutData.Children.FirstOrDefault(children => string.Equals(children.Key, "Exe", StringComparison.OrdinalIgnoreCase)).Value?.ToString()?.Replace("\"", "");
+                string? startDir = shortcutData.Children.FirstOrDefault(children => string.Equals(children.Key, "StartDir", StringComparison.OrdinalIgnoreCase)).Value?.ToString()?.Replace("\"", "")?.TrimEnd('\\', '/');
 				KVObject appidValue = shortcutData.Children.FirstOrDefault(children => string.Equals(children.Key, "appid", StringComparison.OrdinalIgnoreCase)).Value;
 
                 if (string.IsNullOrEmpty(appName)) continue;
@@ -633,7 +633,7 @@ public static partial class SteamHelper
 
                 ulong longIdValue = ((ulong)(uint)appid << 32) | 0x02000000;
                 string longId = longIdValue.ToString();
-                string gameDir = !string.IsNullOrEmpty(startDir) && Directory.Exists(startDir) ? startDir : (!string.IsNullOrEmpty(exe) ? Path.GetDirectoryName(exe) : null);
+                string? gameDir = !string.IsNullOrEmpty(startDir) && Directory.Exists(startDir) ? startDir : (!string.IsNullOrEmpty(exe) ? Path.GetDirectoryName(exe) : null);
 
                 long sizeBytes = 0;
 
@@ -651,7 +651,7 @@ public static partial class SteamHelper
 
                 string version = "";
 
-                string exePath = !string.IsNullOrEmpty(startDir) && !string.IsNullOrEmpty(exe) ? Path.Combine(startDir, exe) : exe;
+                string? exePath = !string.IsNullOrEmpty(startDir) && !string.IsNullOrEmpty(exe) ? Path.Combine(startDir, exe) : exe;
                 if (!string.IsNullOrEmpty(exePath) && File.Exists(exePath))
                 {
                     version = FileVersionInfo.GetVersionInfo(exePath).FileVersion ?? "";
@@ -680,7 +680,7 @@ public static partial class SteamHelper
                             Size = sizeBytes >= 1024d * 1024d * 1024d
                                 ? $"{sizeBytes / (1024d * 1024d * 1024d):F1} GB"
                                 : $"{sizeBytes / (1024d * 1024d):F2} MB",
-                            ProcessNames = [Path.GetFileNameWithoutExtension(exe)],
+ProcessNames = [Path.GetFileNameWithoutExtension(exe) ?? ""],
                             PlayTime = "0m",
                             Version = version
                         };
@@ -693,11 +693,11 @@ public static partial class SteamHelper
                     }
                 }
 
-				Dictionary<string, string> result = await IgdbHelper.SearchCovers(appName);
+				Dictionary<string, string?>? result = await IgdbHelper.SearchCovers(appName);
                 if (result != null)
                 {
-                    string gameUrl = result.GetValueOrDefault("game_url");
-                    string coverUrl = result.GetValueOrDefault("cover_url");
+                    string? gameUrl = result.GetValueOrDefault("game_url");
+                    string? coverUrl = result.GetValueOrDefault("cover_url");
 
                     string summary = "";
                     var genres = new List<string>();
@@ -710,16 +710,16 @@ public static partial class SteamHelper
                         using var docData = JsonDocument.Parse(docResponse);
 						JsonElement data = docData.RootElement;
 
-                        summary = data.TryGetProperty("summary", out JsonElement summaryProp) ? summaryProp.GetString() : "";
+                        summary = data.TryGetProperty("summary", out JsonElement summaryProp) ? summaryProp.GetString() ?? "" : "";
 
                         if (data.TryGetProperty("genres", out JsonElement genresProp) && genresProp.ValueKind == JsonValueKind.Array)
                         {
-                            genres = [.. genresProp.EnumerateArray().Select(g => g.GetProperty("name").GetString())];
+                            genres = [.. genresProp.EnumerateArray().Select(g => g.GetProperty("name").GetString() ?? "")];
                         }
 
                         if (data.TryGetProperty("game_modes", out JsonElement modesProp) && modesProp.ValueKind == JsonValueKind.Array)
                         {
-                            features = [.. modesProp.EnumerateArray().Select(m => m.GetProperty("name").GetString())];
+                            features = [.. modesProp.EnumerateArray().Select(m => m.GetProperty("name").GetString() ?? "")];
                         }
 
                         rating = data.TryGetProperty("aggregated_rating", out JsonElement ratingProp) ? Math.Round(ratingProp.GetDouble() / 20.0, 2) : 0;
@@ -745,7 +745,7 @@ public static partial class SteamHelper
                         Genres = genres,
                         Features = features,
                         Rating = rating,
-                        ProcessNames = [Path.GetFileNameWithoutExtension(exe)],
+                        ProcessNames = [Path.GetFileNameWithoutExtension(exe ?? "")],
                         PlayTime = "0m",
                         Version = version
                     };
@@ -833,7 +833,7 @@ public static partial class SteamHelper
         }
         else
         {
-			Dictionary<string, string> igdbResult = await IgdbHelper.SearchCovers(model.Title);
+			Dictionary<string, string?>? igdbResult = await IgdbHelper.SearchCovers(model.Title ?? "");
             if (igdbResult != null && igdbResult.TryGetValue("cover_url", out string? coverUrl) && !string.IsNullOrEmpty(coverUrl))
             {
                 model.ImageUrl = coverUrl;
@@ -857,8 +857,8 @@ public static partial class SteamHelper
                 : (data.TryGetProperty("background", out JsonElement bgElem) && bgElem.ValueKind == JsonValueKind.String ? bgElem.GetString() : null);
         }
 
-        string rating = null;
-        string descriptors = null;
+        string? rating = null;
+        string? descriptors = null;
 
         if (data.TryGetProperty("ratings", out JsonElement ratings) && ratings.ValueKind == JsonValueKind.Object && ratings.TryGetProperty(ratingKey.ToLowerInvariant(), out JsonElement ratingData))
         {
@@ -896,22 +896,22 @@ public static partial class SteamHelper
         model.Description = data.TryGetProperty("short_description", out JsonElement shortDescription) && shortDescription.ValueKind == JsonValueKind.String ? shortDescription.GetString() : "";
 
         model.Developers = data.TryGetProperty("developers", out JsonElement developers) && developers.ValueKind == JsonValueKind.Array
-            ? string.Join(", ", developers.EnumerateArray().Select(developers => developers.GetString()).Where(s => !string.IsNullOrWhiteSpace(s)))
+            ? string.Join(", ", developers.EnumerateArray().Select(developers => developers.GetString() ?? "").Where(s => !string.IsNullOrWhiteSpace(s)))
             : "Unknown";
 
         model.Genres = data.TryGetProperty("genres", out JsonElement genres) && genres.ValueKind == JsonValueKind.Array
-            ? [.. genres.EnumerateArray().Select(genres => genres.GetProperty("description").GetString()).Where(s => !string.IsNullOrWhiteSpace(s))]
+            ? [.. genres.EnumerateArray().Select(genres => genres.GetProperty("description").GetString() ?? "").Where(s => !string.IsNullOrWhiteSpace(s))]
             : [];
 
         model.Features = data.TryGetProperty("categories", out JsonElement category) && category.ValueKind == JsonValueKind.Array
-            ? [.. category.EnumerateArray().Select(category => category.GetProperty("description").GetString()).Where(s => !string.IsNullOrWhiteSpace(s))]
+            ? [.. category.EnumerateArray().Select(category => category.GetProperty("description").GetString() ?? "").Where(s => !string.IsNullOrWhiteSpace(s))]
             : [];
 
         model.Screenshots = data.TryGetProperty("screenshots", out JsonElement screenshots) && screenshots.ValueKind == JsonValueKind.Array
-            ? [.. screenshots.EnumerateArray().Select(s => s.GetProperty("path_thumbnail").GetString()).Where(s => !string.IsNullOrWhiteSpace(s))]
+            ? [.. screenshots.EnumerateArray().Select(s => s.GetProperty("path_thumbnail").GetString() ?? "").Where(s => !string.IsNullOrWhiteSpace(s))]
             : [];
 
-        string dateStr = data.TryGetProperty("release_date", out JsonElement releaseDate) && releaseDate.TryGetProperty("date", out JsonElement releaseDateDate) && releaseDateDate.ValueKind == JsonValueKind.String ? releaseDateDate.GetString() : null;
+        string? dateStr = data.TryGetProperty("release_date", out JsonElement releaseDate) && releaseDate.TryGetProperty("date", out JsonElement releaseDateDate) && releaseDateDate.ValueKind == JsonValueKind.String ? releaseDateDate.GetString() : null;
         model.ReleaseDate = dateStr ?? "Unknown";
 
         if (DateTimeOffset.TryParse(model.ReleaseDate, out DateTimeOffset parsedDate))

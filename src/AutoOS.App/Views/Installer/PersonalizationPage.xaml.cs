@@ -57,11 +57,11 @@ public sealed partial class PersonalizationPage : Page
 
 				void* pThemeManager;
 				HRESULT hr = PInvoke.CoCreateInstance(
-					in clsid,
+					&clsid,
 					null,
 					CLSCTX.CLSCTX_INPROC_SERVER,
-					in iid,
-					out pThemeManager);
+					&iid,
+					&pThemeManager);
 
 				if (hr.Failed || pThemeManager == null) return;
 
@@ -203,7 +203,7 @@ public sealed partial class PersonalizationPage : Page
 	{
 		if (isInitializingSchedule) return;
 
-		string selected = (ScheduleMode.SelectedItem as ComboBoxItem)?.Content as string;
+		string? selected = (ScheduleMode.SelectedItem as ComboBoxItem)?.Content as string;
 		localSettings.Values["ScheduleMode"] = selected;
 
 		UpdateTimeCardsVisibility();
@@ -245,7 +245,7 @@ public sealed partial class PersonalizationPage : Page
 
 	private void GetTrayIconsState()
 	{
-		if (!localSettings.Values.TryGetValue("AlwaysShowTrayIcons", out object value))
+		if (!localSettings.Values.TryGetValue("AlwaysShowTrayIcons", out object? value))
 		{
 			localSettings.Values["AlwaysShowTrayIcons"] = 1;
 			TrayIcons.IsChecked = true;
@@ -267,12 +267,12 @@ public sealed partial class PersonalizationPage : Page
 
 	private void GetTaskbarAlignmentState()
 	{
-		if (!localSettings.Values.TryGetValue("LeftTaskbarAlignment", out object value))
+		if (!localSettings.Values.TryGetValue("LeftTaskbarAlignment", out object? value))
 		{
 			localSettings.Values["LeftTaskbarAlignment"] = 0;
 		}
 
-		using RegistryKey key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced");
+		using RegistryKey? key = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced");
 		object? obj = key?.GetValue("TaskbarAl");
 		int alignment = obj is int i && (i == 0 || i == 1) ? i : 1;
 
@@ -299,6 +299,6 @@ public sealed partial class PersonalizationPage : Page
 [GeneratedBindableCustomProperty]
 public partial class ThemeItem
 {
-	public string LightTheme { get; set; }
-	public string DarkTheme { get; set; }
+	public string LightTheme { get; set; } = string.Empty;
+	public string DarkTheme { get; set; } = string.Empty;
 }

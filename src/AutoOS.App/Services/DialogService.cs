@@ -19,7 +19,7 @@ public sealed class DialogService : IDialogService
 		if (!_dialogFactories.TryGetValue(typeof(TViewModel), out var factory))
 			throw new InvalidOperationException($"No dialog registered for ViewModel type '{typeof(TViewModel).Name}'.");
 
-		var dialog = factory();
+		ContentDialog dialog = factory();
 
 		if (dialog is IDialog<TViewModel> typedDialog)
 			typedDialog.ViewModel = viewModel;
@@ -47,7 +47,7 @@ public sealed class DialogService : IDialogService
 			Content = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap },
 			PrimaryButtonText = primaryButtonText,
 			CloseButtonText = closeButtonText,
-			DefaultButton = ContentDialogButton.Primary,
+			DefaultButton = ContentDialogButton.Close,
 			XamlRoot = App.MainWindow.Content.XamlRoot
 		};
 

@@ -6,7 +6,7 @@ namespace AutoOS.App.Views.Settings;
 
 public sealed partial class GamesPage : Page
 {
-	public static GamesPage Instance { get; private set; }
+	public static GamesPage Instance { get; private set; } = null!;
 	public Games.HeaderCarousel Games => games;
 
 	public GamesPage()

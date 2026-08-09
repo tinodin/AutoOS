@@ -5,9 +5,9 @@ namespace AutoOS.App.Views.Settings.Scheduling;
 
 public sealed partial class SchedulingDialog : Page
 {
-	public DeviceAffinityViewModel ViewModel { get; }
+	public DeviceAffinityViewModel ViewModel { get; } = null!;
 
-	public string Location { get; }
+	public string Location { get; } = null!;
 
 	public SchedulingDialog()
 	{
@@ -25,7 +25,7 @@ public sealed partial class SchedulingDialog : Page
 	{
 		if (sender is not ItemsControl itemsControl) return;
 
-		CpuCoreGroup group = itemsControl.DataContext as CpuCoreGroup;
+		CpuCoreGroup? group = itemsControl.DataContext as CpuCoreGroup;
 		if (group == null) return;
 
 		if (itemsControl.ItemsPanelRoot is CommunityToolkit.WinUI.Controls.UniformGrid uniformGrid)

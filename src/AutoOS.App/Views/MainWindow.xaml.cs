@@ -11,8 +11,8 @@ namespace AutoOS.App.Views;
 
 public sealed partial class MainWindow : Window
 {
-	public string TitleBarName { get; set; }
-	internal static MainWindow Instance { get; set; }
+	public string TitleBarName { get; set; } = string.Empty;
+	internal static MainWindow Instance { get; set; } = null!;
 
 	public MainWindow()
 	{

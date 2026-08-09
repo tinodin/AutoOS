@@ -15,7 +15,7 @@ public static class ProcessActions
 
 	public static async Task RunPowerShell(string command)
 	{
-		await Process.Start(new ProcessStartInfo("powershell.exe", @$"-NoProfile -ExecutionPolicy Bypass -Command ""{command} """) { CreateNoWindow = true, UseShellExecute = false }).WaitForExitAsync();
+		await Process.Start(new ProcessStartInfo("powershell.exe", @$"-NoProfile -ExecutionPolicy Bypass -Command ""{command} """) { CreateNoWindow = true, UseShellExecute = false })!.WaitForExitAsync();
 	}
 
 	public static async Task RunConnectionCheck()
@@ -62,8 +62,8 @@ public static class ProcessActions
 		XmlNamespaceManager nsMgr = new(xmlDoc.NameTable);
 		nsMgr.AddNamespace("taskbar", "http://schemas.microsoft.com/Start/2014/TaskbarLayout");
 
-		XmlNode pinList = xmlDoc.SelectSingleNode("//taskbar:TaskbarPinList", nsMgr);
-		string nsUri = nsMgr.LookupNamespace("taskbar");
+		XmlNode pinList = xmlDoc.SelectSingleNode("//taskbar:TaskbarPinList", nsMgr)!;
+		string nsUri = nsMgr.LookupNamespace("taskbar")!;
 
 		XmlNode newNode;
 		if (type == "UWA")
@@ -94,7 +94,7 @@ public static class ProcessActions
 	{
 		Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon", "AutoRestartShell", 0, RegistryValueKind.DWord);
 
-		foreach (string? name in new[] { "explorer", "StartAllBackCfg" })
+		foreach (string name in new[] { "explorer", "StartAllBackCfg" })
 		{
 			foreach (Process process in Process.GetProcessesByName(name))
 			{

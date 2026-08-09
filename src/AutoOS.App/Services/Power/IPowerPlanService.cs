@@ -4,27 +4,29 @@ namespace AutoOS.App.Services.Power;
 
 public interface IPowerPlanService
 {
-	IReadOnlyList<Plan> GetPlans();
+	IReadOnlyList<Plan> GetPowerPlans();
 
-	Guid GetActivePlanGuid();
+	Guid GetActivePowerPlan();
 
-	(Plan Plan, IReadOnlyList<Subgroup> Subgroups, IReadOnlyDictionary<Setting, Value> Values) ReadCompleteScheme(Guid scheme);
+	(Plan Plan, IReadOnlyList<Subgroup> Subgroups, IReadOnlyDictionary<Setting, Value> Values) ReadPowerPlan(Guid scheme);
 
 	IReadOnlyDictionary<Setting, Value> ReadValues(Guid scheme, IReadOnlyList<Setting> settings);
 
-	Value? ReadValues(Guid scheme, Guid subgroupGuid, Guid settingGuid);
+	Value? ReadValue(Guid scheme, Guid subgroupGuid, Guid settingGuid);
 
-	void SetActiveScheme(Guid scheme);
+	void SetActivePowerPlan(Guid scheme);
 
-	void CommitChanges(Guid scheme, IEnumerable<(Setting Setting, Value Value)> changes);
+	Plan UpdatePowerPlanMetadata(Plan plan, string name, string description);
 
-	Plan UpdatePlanMetadata(Plan plan, string name, string description);
+	Guid DuplicatePowerPlan(Guid scheme, string name, string description);
 
-	Guid DuplicateScheme(Guid scheme, string name, string description);
+	void ExportPowerPlan(Guid scheme, string path);
 
-	void DeleteScheme(Guid scheme);
+	void DeletePowerPlan(Guid scheme);
 
-	Guid ImportScheme(string filePath);
+	Guid ImportPowerPlan(string filePath);
 
-	void ExportScheme(Guid scheme, string path);
+	Task RestoreDefaultPowerPlansAsync();
+
+	void SaveChanges(Guid scheme, IEnumerable<(Setting Setting, Value Value)> changes);
 }

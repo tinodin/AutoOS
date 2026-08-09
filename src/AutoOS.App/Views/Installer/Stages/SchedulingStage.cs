@@ -7,11 +7,11 @@ namespace AutoOS.App.Views.Installer.Stages;
 public static class SchedulingStage
 {
 	public static IntPtr WindowHandle { get; private set; }
-	public static List<(string Title, Func<Task> Action, Func<bool> Condition)> GetActions()
+	public static List<(string Title, Func<Task> Action, Func<bool>? Condition)> GetActions()
 	{
 		int PCores = PreparingStage.PCores;
 
-		var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
+		var actions = new List<(string Title, Func<Task> Action, Func<bool>? Condition)>
 		{
 			// optimize affinities
 			("Optimizing Affinities", async () => await Task.Delay(1000), () => PCores >= 4),

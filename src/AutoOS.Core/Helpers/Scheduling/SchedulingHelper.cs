@@ -7,7 +7,7 @@ namespace AutoOS.Core.Helpers.Scheduling;
 
 public static partial class SchedulingHelper
 {
-	public static async Task OptimizeAffinities(DeviceInfo device = null, Action<DeviceType, string, DeviceInfo> onDeviceUpdated = null)
+	public static async Task OptimizeAffinities(DeviceInfo? device = null, Action<DeviceType, string, DeviceInfo>? onDeviceUpdated = null)
 	{
 		CpuSetsInfo cpuSetsInfo = CpuHelper.GetCpuSets();
 		(List<CpuCore>? pCores, List<CpuCore>? eCores) = CpuHelper.GroupCpuSetsByEfficiencyClass(cpuSetsInfo);

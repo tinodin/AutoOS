@@ -2,7 +2,9 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
 using AutoOS.App.Data.Enums.Benchmarks;
+using AutoOS.App.Data.Enums;
 using AutoOS.App.Data.Models.Benchmarks;
+using AutoOS.App.Services;
 using AutoOS.App.Services.Benchmarks;
 using AutoOS.Core.Helpers.Picker;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -52,12 +54,14 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	private readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 	public List<RecordingAnalysis> CachedAnalysis { get; set; } = [];
 	private readonly HashSet<string> _recordableProcesses = [with(StringComparer.OrdinalIgnoreCase)];
+	private readonly IDialogService _dialogService;
 	private ProcessDiscoveryService? _processDiscovery;
 	private CancellationTokenSource? _recordingCts;
 	private Process? _activeProcess;
 
-	public BenchmarksPageViewModel()
+	public BenchmarksPageViewModel(IDialogService dialogService)
 	{
+		_dialogService = dialogService;
 		RecordingAColor = Colors.DodgerBlue;
 		RecordingBColor = Colors.Orange;
 	}
@@ -325,21 +329,13 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	public bool IsDeleteEnabled => SelectedRecordingCount > 0;
 
 	[RelayCommand(CanExecute = nameof(IsDeleteEnabled))]
-	private async Task DeleteAsync(XamlRoot xamlRoot)
+	private async Task DeleteAsync()
 	{
 		if (SelectedRecordings.Count == 0)
 			return;
 
-		var dialog = new ContentDialog
-		{
-			Title = "Delete recordings",
-			Content = $"Are you sure you want to delete {SelectedRecordings.Count} recording{(SelectedRecordings.Count == 1 ? "" : "s")}?",
-			PrimaryButtonText = "Delete",
-			CloseButtonText = "Cancel",
-			DefaultButton = ContentDialogButton.Close,
-			XamlRoot = xamlRoot
-		};
-		if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+		int count = SelectedRecordings.Count;
+		if (await _dialogService.ShowConfirmationDialogAsync("Delete recordings", $"Are you sure you want to delete {count} recording{(count == 1 ? "" : "s")}?", "Delete", "Cancel") != DialogResult.Primary)
 			return;
 
 		foreach (RecordingItem recording in SelectedRecordings)

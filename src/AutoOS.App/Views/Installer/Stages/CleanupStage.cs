@@ -7,9 +7,9 @@ namespace AutoOS.App.Views.Installer.Stages;
 
 public static class CleanupStage
 {
-	public static List<(string Title, Func<Task> Action, Func<bool> Condition)> GetActions()
+	public static List<(string Title, Func<Task> Action, Func<bool>? Condition)> GetActions()
 	{
-		var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
+		var actions = new List<(string Title, Func<Task> Action, Func<bool>? Condition)>
 		{
 			// clean temp directories
 			("Cleaning temp directories", async () => await Task.WhenAll(Process.GetProcessesByName("TiWorker").Select(async process => { process.Kill(); await process.WaitForExitAsync(); })), null),
@@ -23,7 +23,7 @@ public static class CleanupStage
 			("Cleaning temp directories", async () => await RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, async () => ProcessActions.CleanDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "SystemTemp"))), null),
 			("Cleaning temp directories", async () => await RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, async () => ProcessActions.CleanDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp"))), null),
 			("Cleaning temp directories", async () => ProcessActions.CleanDirectory(Path.GetTempPath()), null),
-			("Cleaning temp directories", async () => File.Delete(Path.Combine(Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System)), "DumpStack.log")), null),
+			("Cleaning temp directories", async () => File.Delete(Path.Combine(Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))!, "DumpStack.log")), null),
 
 			// run disk cleanup
 			("Running disk cleanup", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Active Setup Temp Folders", "StateFlags0000", 2, RegistryValueKind.DWord), null),
@@ -53,11 +53,11 @@ public static class CleanupStage
 			("Running disk cleanup", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Windows ESD installation files", "StateFlags0000", 2, RegistryValueKind.DWord), null),
 			("Running disk cleanup", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Windows Reset Log Files", "StateFlags0000", 2, RegistryValueKind.DWord), null),
 			("Running disk cleanup", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Windows Upgrade Log Files", "StateFlags0000", 2, RegistryValueKind.DWord), null),
-			("Running disk cleanup", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cleanmgr.exe"), Arguments = "/sagerun:0", UseShellExecute = false, CreateNoWindow = true })!.WaitForExitAsync(), null),
+			("Running disk cleanup", async () => await (Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cleanmgr.exe"), Arguments = "/sagerun:0", UseShellExecute = false, CreateNoWindow = true })?.WaitForExitAsync() ?? Task.CompletedTask), null),
 		
 			// enable system restore
 			("Enabling system restore", async () => await ProcessActions.RunPowerShell($"Enable-ComputerRestore -Drive '{Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))}'"), null),
-			("Enabling system restore", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "vssadmin.exe"), Arguments = $"resize shadowstorage /for={Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System)).TrimEnd('\\')} /on={Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System)).TrimEnd('\\')} /maxsize=10%", UseShellExecute = false, CreateNoWindow = true })!.WaitForExitAsync(), null),
+			("Enabling system restore", async () => await (Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "vssadmin.exe"), Arguments = $"resize shadowstorage /for={Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))!.TrimEnd('\\')} /on={Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))!.TrimEnd('\\')} /maxsize=10%", UseShellExecute = false, CreateNoWindow = true })?.WaitForExitAsync() ?? Task.CompletedTask), null),
 			("Enabling system restore", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore", "SystemRestorePointCreationFrequency", 0, RegistryValueKind.DWord), null),
 
 			// create a restore point

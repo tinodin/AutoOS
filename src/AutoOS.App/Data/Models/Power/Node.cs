@@ -6,11 +6,7 @@ namespace AutoOS.App.Data.Models.Power;
 
 public sealed class Node
 {
-	private const uint DEFAULT_VALUE = 0;
-
 	private readonly string _baseDisplayName;
-	private readonly SettingState? _state;
-	private readonly Value? _compareValues;
 
 	internal Node(
 		NodeKind nodeKind,
@@ -32,8 +28,8 @@ public sealed class Node
 		Description = description;
 		Guid = guid;
 		Setting = setting;
-		_state = state;
-		_compareValues = compareValues;
+		State = state;
+		CompareValues = compareValues;
 		IsAcDifferent = isAcDifferent;
 		IsDcDifferent = isDcDifferent;
 	}
@@ -60,17 +56,19 @@ public sealed class Node
 
 	public string BaseDisplayName => _baseDisplayName;
 
-	public SettingState? State => _state;
+	public SettingState? State { get; }
+
+	private Value? CompareValues { get; }
 
 	public bool HasValues => NodeKind == NodeKind.Setting;
 
-	public uint AcValue => _state?.AcValue ?? DEFAULT_VALUE;
+	public uint AcValue => State?.AcValue ?? 0;
 
-	public uint DcValue => _state?.DcValue ?? DEFAULT_VALUE;
+	public uint DcValue => State?.DcValue ?? 0;
 
-	public uint OriginalAcValue => _state?.OriginalAcValue ?? DEFAULT_VALUE;
+	public uint OriginalAcValue => State?.OriginalAcValue ?? 0;
 
-	public uint OriginalDcValue => _state?.OriginalDcValue ?? DEFAULT_VALUE;
+	public uint OriginalDcValue => State?.OriginalDcValue ?? 0;
 
 	public string DisplayAc => HasValues && Setting != null ? GetDisplayValue(Setting, AcValue) : string.Empty;
 
@@ -80,13 +78,13 @@ public sealed class Node
 
 	public string DcToolTip => HasValues && Setting != null ? GetValueToolTip(Setting, DcValue) : string.Empty;
 
-	public string DisplayCompareAc => HasValues && Setting != null && _compareValues is { } compare ? GetDisplayValue(Setting, compare.AcValue) : string.Empty;
+	public string DisplayCompareAc => HasValues && Setting != null && CompareValues is { } compare ? GetDisplayValue(Setting, compare.AcValue) : string.Empty;
 
-	public string DisplayCompareDc => HasValues && Setting != null && _compareValues is { } compare ? GetDisplayValue(Setting, compare.DcValue) : string.Empty;
+	public string DisplayCompareDc => HasValues && Setting != null && CompareValues is { } compare ? GetDisplayValue(Setting, compare.DcValue) : string.Empty;
 
-	public string CompareAcToolTip => HasValues && Setting != null && _compareValues is { } compare ? GetValueToolTip(Setting, compare.AcValue) : string.Empty;
+	public string CompareAcToolTip => HasValues && Setting != null && CompareValues is { } compare ? GetValueToolTip(Setting, compare.AcValue) : string.Empty;
 
-	public string CompareDcToolTip => HasValues && Setting != null && _compareValues is { } compare ? GetValueToolTip(Setting, compare.DcValue) : string.Empty;
+	public string CompareDcToolTip => HasValues && Setting != null && CompareValues is { } compare ? GetValueToolTip(Setting, compare.DcValue) : string.Empty;
 
 	public string DisplayOriginalAc => HasValues && Setting != null ? GetDisplayValue(Setting, OriginalAcValue) : string.Empty;
 
@@ -108,7 +106,7 @@ public sealed class Node
 
 	public static string GetDisplayValue(Setting setting, uint value)
 	{
-		if (setting.Type == SettingType.Numeric)
+		if (setting.Options is not { Count: > 0 })
 			return value.ToString(CultureInfo.InvariantCulture);
 
 		Option? option = setting.Options.FirstOrDefault(o => o.Index == value);
@@ -117,7 +115,7 @@ public sealed class Node
 
 	public static string GetValueToolTip(Setting setting, uint value)
 	{
-		if (setting.Type != SettingType.Numeric)
+		if (setting.Options is { Count: > 0 })
 			return setting.Options.FirstOrDefault(option => option.Index == value)?.Description ?? string.Empty;
 
 		if (!setting.Minimum.HasValue || !setting.Maximum.HasValue || !setting.Increment.HasValue)

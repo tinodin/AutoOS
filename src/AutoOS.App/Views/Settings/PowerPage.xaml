@@ -3,6 +3,7 @@
 	x:Class="AutoOS.App.Views.Settings.PowerPage"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:converters="using:AutoOS.App.Converters"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:dev="using:DevWinUI"
 	xmlns:ext="using:AutoOS.App.Extensions"
@@ -14,9 +15,13 @@
 	mc:Ignorable="d">
 	<Page.Resources>
 
+		<!--  Enum to Bool Converter  -->
+		<converters:EnumToBoolConverter x:Key="EnumToBoolConverter" />
+
 		<!--  AC ComboBox Template  -->
 		<DataTemplate x:Key="AcComboBoxEditTemplate" x:DataType="models:Node">
 			<ComboBox
+				DropDownClosed="EditComboBox_DropDownClosed"
 				ItemsSource="{x:Bind Options, Mode=OneTime}"
 				Loaded="EditControl_Loaded"
 				SelectedItem="{x:Bind State.EditAcOption, Mode=TwoWay}"
@@ -59,6 +64,7 @@
 		<!--  DC ComboBox Template  -->
 		<DataTemplate x:Key="DcComboBoxEditTemplate" x:DataType="models:Node">
 			<ComboBox
+				DropDownClosed="EditComboBox_DropDownClosed"
 				ItemsSource="{x:Bind Options, Mode=OneTime}"
 				Loaded="EditControl_Loaded"
 				SelectedItem="{x:Bind State.EditDcOption, Mode=TwoWay}"
@@ -178,12 +184,14 @@
 							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterGuid, Mode=TwoWay}" Text="GUID" />
 							<MenuFlyoutSeparator />
 							<RadioMenuFlyoutItem
+								Click="FilterMode_Contains_Click"
 								GroupName="PowerFilterMode"
-								IsChecked="{x:Bind ViewModel.FilterContains, Mode=TwoWay}"
+								IsChecked="{x:Bind ViewModel.FilterMode, Mode=OneWay, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Contains}"
 								Text="Contains" />
 							<RadioMenuFlyoutItem
+								Click="FilterMode_ExactMatch_Click"
 								GroupName="PowerFilterMode"
-								IsChecked="{x:Bind ViewModel.FilterExactMatch, Mode=TwoWay}"
+								IsChecked="{x:Bind ViewModel.FilterMode, Mode=OneWay, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=ExactMatch}"
 								Text="Exact Match" />
 						</MenuFlyout>
 					</DropDownButton.Flyout>
@@ -281,17 +289,6 @@
 
 					<AppBarSeparator Margin="4,0" />
 
-					<!--  Restore  -->
-					<AppBarButton
-						Command="{x:Bind ViewModel.RestoreCommand}"
-						Icon="{dev:FontIcon Glyph=&#xE777;}"
-						Label="Restore"
-						ToolTipService.ToolTip="Restore (Ctrl+R)">
-						<AppBarButton.KeyboardAccelerators>
-							<KeyboardAccelerator Key="R" Modifiers="Control" />
-						</AppBarButton.KeyboardAccelerators>
-					</AppBarButton>
-
 					<!--  Import  -->
 					<AppBarButton
 						Command="{x:Bind ViewModel.ImportCommand}"
@@ -300,6 +297,17 @@
 						ToolTipService.ToolTip="Import (Ctrl+I)">
 						<AppBarButton.KeyboardAccelerators>
 							<KeyboardAccelerator Key="I" Modifiers="Control" />
+						</AppBarButton.KeyboardAccelerators>
+					</AppBarButton>
+
+					<!--  Restore  -->
+					<AppBarButton
+						Command="{x:Bind ViewModel.RestoreCommand}"
+						Icon="{dev:FontIcon Glyph=&#xE777;}"
+						Label="Restore"
+						ToolTipService.ToolTip="Restore (Ctrl+R)">
+						<AppBarButton.KeyboardAccelerators>
+							<KeyboardAccelerator Key="R" Modifiers="Control" />
 						</AppBarButton.KeyboardAccelerators>
 					</AppBarButton>
 
@@ -332,7 +340,7 @@
 			</Border>
 		</StackPanel>
 
-		<dev:SwitchPresenter Grid.Row="1" Value="{x:Bind ViewModel.SwitchValue, Mode=OneWay}">
+		<dev:SwitchPresenter Grid.Row="1" Value="{x:Bind ViewModel.SwitchPresenterValue, Mode=OneWay}">
 
 			<!--  Loading  -->
 			<dev:Case Value="Loading">

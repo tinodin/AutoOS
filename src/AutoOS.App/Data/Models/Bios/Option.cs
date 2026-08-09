@@ -7,16 +7,16 @@ public partial class Option : INotifyPropertyChanged
 {
 	private bool _isSelected;
 
-	public event PropertyChangedEventHandler PropertyChanged;
+	public event PropertyChangedEventHandler? PropertyChanged;
 
-	protected void OnPropertyChanged([CallerMemberName] string propertyName = null) =>
+	protected void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>
 		PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
-	public string Index { get; set; }
+	public string Index { get; set; } = string.Empty;
 
-	public string Label { get; set; }
+	public string Label { get; set; } = string.Empty;
 
-	public BiosSettingsModel Parent { get; set; }
+	public BiosSettingsModel? Parent { get; set; }
 
 	public bool IsSelected
 	{

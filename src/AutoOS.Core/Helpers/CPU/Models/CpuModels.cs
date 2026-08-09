@@ -52,8 +52,8 @@ public sealed partial class CpuThread : INotifyPropertyChanged
 		}
 	}
 
-	public event PropertyChangedEventHandler PropertyChanged;
-	private void OnPropertyChanged([CallerMemberName] string name = null)
+public event PropertyChangedEventHandler? PropertyChanged;
+	private void OnPropertyChanged([CallerMemberName] string? name = null)
 	{
 		PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 	}
@@ -70,8 +70,8 @@ public sealed partial class CpuCore
 [GeneratedBindableCustomProperty]
 public sealed partial class CpuCoreGroup : INotifyPropertyChanged
 {
-	public event PropertyChangedEventHandler PropertyChanged;
-	private void OnPropertyChanged([CallerMemberName] string name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+	public event PropertyChangedEventHandler? PropertyChanged;
+	private void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 	public string Name { get; set; } = string.Empty;
 	public List<CpuCore> Cores { get; set; } = [];
 

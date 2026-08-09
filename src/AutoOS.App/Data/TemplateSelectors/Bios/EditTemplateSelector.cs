@@ -5,8 +5,8 @@ namespace AutoOS.App.Data.TemplateSelectors.Bios;
 
 public sealed partial class EditTemplateSelector : DataTemplateSelector
 {
-	public DataTemplate ComboBoxTemplate { get; set; }
-	public DataTemplate TextBoxTemplate { get; set; }
+	public DataTemplate ComboBoxTemplate { get; set; } = null!;
+	public DataTemplate TextBoxTemplate { get; set; } = null!;
 
 	protected override DataTemplate SelectTemplateCore(object item, DependencyObject container)
 	{

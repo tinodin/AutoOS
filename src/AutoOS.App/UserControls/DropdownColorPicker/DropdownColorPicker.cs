@@ -53,7 +53,7 @@ public partial class DropdownColorPicker : DevWinUI.DropdownColorPicker
 		}
 	}
 
-	private void Flyout_Opened(object sender, object e)
+	private void Flyout_Opened(object? sender, object? e)
 	{
 		if (GetTemplateChild("PART_ColorPicker") is ColorPicker colorPicker)
 		{

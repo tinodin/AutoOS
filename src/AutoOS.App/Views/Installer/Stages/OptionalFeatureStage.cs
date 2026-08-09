@@ -5,7 +5,7 @@ namespace AutoOS.App.Views.Installer.Stages;
 
 public static class OptionalFeatureStage
 {
-	public static List<(string Title, Func<Task> Action, Func<bool> Condition)> GetActions()
+	public static List<(string Title, Func<Task> Action, Func<bool>? Condition)> GetActions()
 	{
 		return
 		[

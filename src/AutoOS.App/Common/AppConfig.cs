@@ -1,4 +1,4 @@
-using Nucs.JsonSettings.Examples;
+using Nucs.JsonSettings;
 using Nucs.JsonSettings.Modulation;
 
 namespace AutoOS.App.Common;

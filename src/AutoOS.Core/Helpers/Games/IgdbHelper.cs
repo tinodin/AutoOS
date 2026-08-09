@@ -8,7 +8,7 @@ public static partial class IgdbHelper
 {
 	private static readonly HttpClient httpClient = new();
 
-	public static async Task<Dictionary<string, string>> SearchCovers(string name)
+	public static async Task<Dictionary<string, string?>?> SearchCovers(string name)
 	{
 		string Clean(string input) => Regex.Replace(input.ToLowerInvariant(), @"\s+", ".");
 		string GetSearchBucket(string input)
@@ -179,7 +179,7 @@ public static partial class IgdbHelper
 
 					if (ratingEntry is null || !ratingEntry.Value.TryGetProperty("rating_category", out JsonElement ratingCategory) || !ratingCategory.TryGetProperty("rating", out JsonElement ratingValue))
 					{
-						return new Dictionary<string, string>
+						return new Dictionary<string, string?>
 						{
 							{ "name", maxGame.Value.GetProperty("name").GetString() ?? "Unknown" },
 							{ "game_url", gameUrl },
@@ -191,7 +191,7 @@ public static partial class IgdbHelper
 						};
 					}
 
-					string ratingCode = ratingValue.GetString();
+					string ratingCode = ratingValue.GetString() ?? "";
 
 					string ratingKeyForUrl = ratingKey == "ESRB" &&
 												ratingCode.StartsWith("e10+", StringComparison.OrdinalIgnoreCase) ? "e10" : ratingCode;
@@ -214,7 +214,7 @@ public static partial class IgdbHelper
 						}
 					}
 
-					return new Dictionary<string, string>
+					return new Dictionary<string, string?>
 					{
 						{ "name", maxGame?.GetProperty("name").GetString() ?? "Unknown" },
 						{ "game_url", gameUrl },

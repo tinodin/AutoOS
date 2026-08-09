@@ -12,12 +12,12 @@ namespace AutoOS.App.Views.Installer.Stages;
 
 public static class InternetStage
 {
-	public static List<(string Title, Func<Task> Action, Func<bool> Condition)> GetActions()
+	public static List<(string Title, Func<Task> Action, Func<bool>? Condition)> GetActions()
 	{
 		bool Wifi = PreparingStage.Wifi;
 		bool TxIntDelay = PreparingStage.TxIntDelay;
 
-		var actions = new List<(string Title, Func<Task> Action, Func<bool> Condition)>
+		var actions = new List<(string Title, Func<Task> Action, Func<bool>? Condition)>
 		{
 			// disable protocols
 			("Disabling unnecessary protocols", async () => await ProcessActions.RunPowerShell(@"& { Get-NetAdapterBinding | Where-Object { $_.Enabled -eq $true -and $_.ComponentID -in 'ms_msclient','ms_server','ms_implat','ms_lldp','ms_lltdio','ms_rspndr' } | ForEach-Object { Disable-NetAdapterBinding -Name $_.InterfaceAlias -ComponentID $_.ComponentID } }"), null),
@@ -29,7 +29,7 @@ public static class InternetStage
 			(@"Disabling ""Enable LMHOSTS lookup""", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\NetBT\Parameters", "EnableLMHOSTS", 0, RegistryValueKind.DWord), null),
 
 			// set txintdelay to 0
-			("Setting TxIntDelay to 0", async () => DeviceHelper.GetDevices(DeviceType.NIC).Where(d => Registry.LocalMachine.OpenSubKey(d.RegistryPath).GetValue("TxIntDelay") != null).ToList().ForEach(d => Registry.LocalMachine.OpenSubKey(d.RegistryPath, true).SetValue("TxIntDelay", 0, RegistryValueKind.DWord)), () => TxIntDelay == true),
+			("Setting TxIntDelay to 0", async () => DeviceHelper.GetDevices(DeviceType.NIC).Where(d => Registry.LocalMachine.OpenSubKey(d.RegistryPath)?.GetValue("TxIntDelay") != null).ToList().ForEach(d => Registry.LocalMachine.OpenSubKey(d.RegistryPath, true)?.SetValue("TxIntDelay", 0, RegistryValueKind.DWord)), () => TxIntDelay == true),
 
 			// set "congestion control provider" to "bbr2"
 			(@"Setting ""Congestion Control Provider"" to ""BBR2""", async () => await Process.Start(new ProcessStartInfo { FileName = "netsh", Arguments = "int tcp set supplemental internet congestionprovider=bbr2", UseShellExecute = false, CreateNoWindow = true })!.WaitForExitAsync(), null),
@@ -45,7 +45,7 @@ public static class InternetStage
 			(@"Disabling ""Packet Coalescing Filter""", async () => await ProcessActions.RunPowerShell(@"Set-NetOffloadGlobalSetting -PacketCoalescingFilter Disabled"), null)
 		};
 
-		foreach (DeviceInfo? adapter in DeviceHelper.GetDevices(DeviceType.NIC).Where(d => d.NicType == NicDeviceType.WiFi || d.NicType == NicDeviceType.LAN).ToList())
+		foreach (DeviceInfo adapter in DeviceHelper.GetDevices(DeviceType.NIC).Where(d => d.NicType == NicDeviceType.WiFi || d.NicType == NicDeviceType.LAN).ToList())
 		{
 			actions.Add(($@"Optimizing advanced network adapter settings for {adapter.FriendlyName}", async () => await Task.Run(() => Core.Helpers.Network.NetworkHelper.OptimizeAdapter(adapter)), null));
 			actions.Add(($@"Optimizing advanced network adapter settings for {adapter.FriendlyName}", async () => await Task.Delay(500), null));
