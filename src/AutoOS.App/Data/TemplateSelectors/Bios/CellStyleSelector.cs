@@ -13,7 +13,7 @@ public sealed partial class CellStyleSelector : StyleSelector
 
 	protected override Style? SelectStyleCore(object item, DependencyObject container)
 	{
-		if (item is not BiosTreeNode node) return null;
+		if (item is not Node node) return null;
 
 		if (container is TreeGridCell cell)
 		{
@@ -27,24 +27,24 @@ public sealed partial class CellStyleSelector : StyleSelector
 			{
 				if (mappingName == "DisplayOriginal")
 				{
-					if (node.NodeKind == NodeKind.Leaf)
+					if (node.NodeKind == NodeKind.Setting)
 						return node.IsModified ? CriticalStyle : null;
-					
-					if (node.NodeKind == NodeKind.Group)
+
+					if (node.NodeKind == NodeKind.GroupedSetting)
 					{
-						IEnumerable<BiosTreeNode> leaves = node.GetLeaves();
+						IEnumerable<Node> leaves = node.GetLeaves();
 						return leaves.All(leaf => leaf.IsModified) ? CriticalStyle : null;
 					}
 				}
 
 				if (mappingName == "DisplayCurrent" && !node.HasErrors)
 				{
-					if (node.NodeKind == NodeKind.Leaf)
+					if (node.NodeKind == NodeKind.Setting)
 						return node.IsModified ? SuccessStyle : null;
-					
-					if (node.NodeKind == NodeKind.Group)
+
+					if (node.NodeKind == NodeKind.GroupedSetting)
 					{
-						IEnumerable<BiosTreeNode> leaves = node.GetLeaves();
+						IEnumerable<Node> leaves = node.GetLeaves();
 						if (leaves.All(leaf => leaf.IsModified))
 						{
 							return leaves.Any(leaf => leaf.HasErrors) ? CriticalStyle : SuccessStyle;

@@ -186,9 +186,9 @@ public sealed partial class PowerPage : Page
 		});
 	}
 
-	private void FilterMode_Contains_Click(object sender, RoutedEventArgs e) => ViewModel.FilterMode = Data.Enums.Power.FilterMode.Contains;
+	private void FilterMode_Contains_Click(object sender, RoutedEventArgs e) => ViewModel.FilterMode = Data.Enums.FilterMode.Contains;
 
-	private void FilterMode_ExactMatch_Click(object sender, RoutedEventArgs e) => ViewModel.FilterMode = Data.Enums.Power.FilterMode.ExactMatch;
+	private void FilterMode_ExactMatch_Click(object sender, RoutedEventArgs e) => ViewModel.FilterMode = Data.Enums.FilterMode.ExactMatch;
 
 	private void RefreshFilterOnly()
 	{

@@ -2,25 +2,26 @@
 	x:Class="AutoOS.App.Views.Settings.BiosSettingsPage"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:bios="using:AutoOS.App.Data.Models.Bios"
-	xmlns:converters="using:CommunityToolkit.WinUI.Converters"
+	xmlns:converters="using:AutoOS.App.Converters"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:data="using:Syncfusion.UI.Xaml.Data"
 	xmlns:dev="using:DevWinUI"
 	xmlns:ext="using:AutoOS.App.Extensions"
 	xmlns:grid="using:Syncfusion.UI.Xaml.Grids"
-	xmlns:helpers="using:AutoOS.App.Helpers"
+	xmlns:helpers="using:AutoOS.App.Helpers.TreeGrid"
 	xmlns:local="using:AutoOS.App.Data.Models.Bios"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:selectors="using:AutoOS.App.Data.TemplateSelectors.Bios"
 	xmlns:sfgrid="using:Syncfusion.UI.Xaml.TreeGrid"
+	xmlns:toolkitConverters="using:CommunityToolkit.WinUI.Converters"
 	xmlns:views="using:AutoOS.App.Views"
 	DataContext="{x:Bind ViewModel, Mode=OneWay}"
 	mc:Ignorable="d">
 	<Page.Resources>
 		<ResourceDictionary>
-			<converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
-			<converters:StringVisibilityConverter x:Key="StringVisibilityConverter" />
+			<toolkitConverters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+			<converters:EnumToBoolConverter x:Key="EnumToBoolConverter" />
+			<toolkitConverters:StringVisibilityConverter x:Key="StringVisibilityConverter" />
 
 			<!--  Caution  -->
 			<Style x:Key="CautionCellStyle" TargetType="sfgrid:TreeGridCell">
@@ -192,9 +193,10 @@
 				SuccessStyle="{StaticResource SuccessCellStyle}" />
 
 			<!--  ComboBox template  -->
-			<DataTemplate x:Key="ComboBoxEditTemplate" x:DataType="local:BiosTreeNode">
+			<DataTemplate x:Key="ComboBoxEditTemplate" x:DataType="local:Node">
 				<ComboBox
-					ItemsSource="{x:Bind Options}"
+					DropDownClosed="EditComboBox_DropDownClosed"
+					ItemsSource="{x:Bind Options, Mode=OneTime}"
 					Loaded="EditControl_Loaded"
 					SelectedItem="{x:Bind EditOption, Mode=TwoWay}"
 					Style="{StaticResource TreeGridComboBoxStyle}">
@@ -204,11 +206,11 @@
 						<Thickness x:Key="ComboBoxBackgroundBorderThicknessFocused">0</Thickness>
 					</ComboBox.Resources>
 					<ComboBox.ItemTemplate>
-						<DataTemplate x:DataType="bios:Option">
+						<DataTemplate x:DataType="local:Option">
 							<TextBlock
 								Padding="0,2,0,0"
 								FontFamily="Segoe UI Variable Static Text"
-								Text="{x:Bind Label}"
+								Text="{x:Bind Label, Mode=OneTime}"
 								TextTrimming="CharacterEllipsis"
 								TextWrapping="NoWrap" />
 						</DataTemplate>
@@ -217,7 +219,7 @@
 			</DataTemplate>
 
 			<!--  TextBox template  -->
-			<DataTemplate x:Key="TextBoxEditTemplate" x:DataType="local:BiosTreeNode">
+			<DataTemplate x:Key="TextBoxEditTemplate" x:DataType="local:Node">
 				<TextBox
 					Loaded="EditControl_Loaded"
 					Style="{StaticResource TreeGridTextBoxStyle}"
@@ -266,7 +268,7 @@
 					IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"
 					IsSpellCheckEnabled="False"
 					PlaceholderText="Search..."
-					TextChanged="Search_TextChanged"
+					Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 					ToolTipService.ToolTip="Search (Ctrl+F)">
 					<dev:TextBox.KeyboardAccelerators>
 						<KeyboardAccelerator
@@ -308,14 +310,16 @@
 
 							<!--  Contains  -->
 							<RadioMenuFlyoutItem
-								GroupName="FilterModeGroup"
-								IsChecked="{x:Bind ViewModel.FilterContains, Mode=TwoWay}"
+								Click="FilterMode_Contains_Click"
+								GroupName="BiosFilterMode"
+								IsChecked="{x:Bind ViewModel.FilterMode, Mode=OneWay, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Contains}"
 								Text="Contains" />
 
 							<!--  Exact Match  -->
 							<RadioMenuFlyoutItem
-								GroupName="FilterModeGroup"
-								IsChecked="{x:Bind ViewModel.FilterExactMatch, Mode=TwoWay}"
+								Click="FilterMode_ExactMatch_Click"
+								GroupName="BiosFilterMode"
+								IsChecked="{x:Bind ViewModel.FilterMode, Mode=OneWay, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=ExactMatch}"
 								Text="Exact Match" />
 						</MenuFlyout>
 					</DropDownButton.Flyout>
@@ -341,9 +345,8 @@
 
 					<!--  Undo  -->
 					<AppBarButton
-						Click="Undo_Click"
+						Command="{x:Bind ViewModel.UndoCommand}"
 						Icon="{dev:FontIcon Glyph=&#xE7A7;}"
-						IsEnabled="{x:Bind ViewModel.CanUndo, Mode=OneWay}"
 						Label="Undo">
 						<AppBarButton.KeyboardAccelerators>
 							<KeyboardAccelerator Key="Z" Modifiers="Control" />
@@ -352,9 +355,8 @@
 
 					<!--  Redo  -->
 					<AppBarButton
-						Click="Redo_Click"
+						Command="{x:Bind ViewModel.RedoCommand}"
 						Icon="{dev:FontIcon Glyph=&#xE7A6;}"
-						IsEnabled="{x:Bind ViewModel.CanRedo, Mode=OneWay}"
 						Label="Redo">
 						<AppBarButton.KeyboardAccelerators>
 							<KeyboardAccelerator Key="Y" Modifiers="Control" />
@@ -388,9 +390,9 @@
 
 					<!--  Merge  -->
 					<AppBarButton
-						Click="Merge_Click"
+						Command="{x:Bind ViewModel.ApplyRecommendationsCommand}"
+						CommandParameter="{x:Bind ViewModel.MergeCount, Mode=OneWay}"
 						Icon="{dev:FontIcon Glyph=&#xEA3C;}"
-						IsEnabled="{x:Bind ViewModel.CanApplyMerge, Mode=OneWay}"
 						Label="Merge">
 						<AppBarButton.KeyboardAccelerators>
 							<KeyboardAccelerator Key="M" Modifiers="Control" />
@@ -403,12 +405,11 @@
 					<!--  View Changes  -->
 					<AppBarToggleButton
 						x:Name="ViewChanges"
-						Checked="ViewChanges_Checked"
+						Command="{x:Bind ViewModel.ToggleViewChangesCommand}"
 						Icon="{dev:FontIcon Glyph=&#xF28B;}"
-						IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"
+						IsChecked="{x:Bind ViewModel.ViewChanges, Mode=TwoWay}"
 						Label="{x:Bind ViewModel.ViewChangesLabel, Mode=OneWay}"
-						ToolTipService.ToolTip="View Changes (Ctrl+D)"
-						Unchecked="ViewChanges_Unchecked">
+						ToolTipService.ToolTip="View Changes (Ctrl+D)">
 						<AppBarToggleButton.KeyboardAccelerators>
 							<KeyboardAccelerator Key="D" Modifiers="Control" />
 						</AppBarToggleButton.KeyboardAccelerators>
@@ -419,10 +420,8 @@
 
 					<!--  Restore  -->
 					<AppBarButton
-						x:Name="Restore"
-						Click="Restore_Click"
+						Command="{x:Bind ViewModel.RestoreCommand}"
 						Icon="{dev:FontIcon Glyph=&#xE81C;}"
-						IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"
 						Label="Restore">
 						<AppBarButton.KeyboardAccelerators>
 							<KeyboardAccelerator Key="R" Modifiers="Control" />
@@ -434,9 +433,8 @@
 
 					<!--  Import  -->
 					<AppBarButton
-						Click="Import_Click"
+						Command="{x:Bind ViewModel.ImportToNvramCommand}"
 						Icon="{dev:FontIcon Glyph=&#xE8B5;}"
-						IsEnabled="{x:Bind ViewModel.CanImport, Mode=OneWay}"
 						Label="Import to NVRAM">
 						<AppBarButton.KeyboardAccelerators>
 							<KeyboardAccelerator Key="I" Modifiers="Control" />
@@ -450,7 +448,7 @@
 		<dev:SwitchPresenter
 			x:Name="SwitchPresenter"
 			Grid.Row="1"
-			Value="Export">
+			Value="{x:Bind ViewModel.SwitchPresenterValue, Mode=OneWay}">
 
 			<!--  Export  -->
 			<dev:Case Value="Export">
@@ -494,25 +492,25 @@
 						AllowTriStateSorting="True"
 						AutoExpandMode="AllNodesExpanded"
 						AutoGenerateColumns="False"
-						CellToolTipOpening="BiosTreeGrid_CellToolTipOpening"
+						CellToolTipOpening="TreeGrid_CellToolTipOpening"
 						ChildPropertyName="Children"
 						ColumnWidthMode="Star"
-						CurrentCellBeginEdit="BiosTreeGrid_CurrentCellBeginEdit"
-						CurrentCellEndEdit="BiosTreeGrid_CurrentCellEndEdit"
+						CurrentCellBeginEdit="TreeGrid_CurrentCellBeginEdit"
+						CurrentCellEndEdit="TreeGrid_CurrentCellEndEdit"
 						DataValidationMode="InView"
 						EditTrigger="OnTap"
-						EditorSelectionBehavior="SelectAll"
+						ExpandStateMappingName="IsExpanded"
 						FilterLevel="All"
 						GridLinesVisibility="Both"
+						HeaderLinesVisibility="Both"
 						ItemsSource="{x:Bind ViewModel.TreeNodes}"
-						Loaded="BiosTreeGrid_Loaded"
 						NavigationMode="Cell"
-						NodeCollapsing="BiosTreeGrid_NodeCollapsing"
 						PasteOption="None"
 						SelectionMode="Single"
-						SizeChanged="BiosTreeGrid_SizeChanged"
-						TreeGridContextFlyoutOpening="BiosTreeGrid_TreeGridContextFlyoutOpening"
-						Visibility="{x:Bind ViewChanges.IsChecked, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=True}">
+						ShowToolTip="True"
+						SizeChanged="TreeGrid_SizeChanged"
+						TreeGridContextFlyoutOpening="TreeGrid_TreeGridContextFlyoutOpening"
+						Visibility="{x:Bind ViewModel.NormalVisibility, Mode=OneWay}">
 						<sfgrid:SfTreeGrid.HeaderContextFlyout>
 							<MenuFlyout />
 						</sfgrid:SfTreeGrid.HeaderContextFlyout>
@@ -548,7 +546,7 @@
 								MappingName="DisplayCurrent"
 								ShowToolTip="True">
 								<sfgrid:TreeGridTemplateColumn.CellTemplate>
-									<DataTemplate x:DataType="local:BiosTreeNode">
+									<DataTemplate x:DataType="local:Node">
 										<TextBlock
 											Margin="12,0"
 											VerticalAlignment="Center"
@@ -593,25 +591,25 @@
 						AllowTriStateSorting="True"
 						AutoExpandMode="AllNodesExpanded"
 						AutoGenerateColumns="False"
-						CellToolTipOpening="BiosDiffTreeGrid_CellToolTipOpening"
+						CellToolTipOpening="TreeGrid_CellToolTipOpening"
 						ChildPropertyName="Children"
 						ColumnWidthMode="Star"
-						CurrentCellBeginEdit="BiosDiffTreeGrid_CurrentCellBeginEdit"
-						CurrentCellEndEdit="BiosDiffTreeGrid_CurrentCellEndEdit"
+						CurrentCellBeginEdit="TreeGrid_CurrentCellBeginEdit"
+						CurrentCellEndEdit="TreeGrid_CurrentCellEndEdit"
 						DataValidationMode="InView"
 						EditTrigger="OnTap"
-						EditorSelectionBehavior="SelectAll"
+						ExpandStateMappingName="IsExpanded"
 						FilterLevel="All"
 						GridLinesVisibility="Both"
+						HeaderLinesVisibility="Both"
 						ItemsSource="{x:Bind ViewModel.DiffNodes}"
-						Loaded="BiosDiffTreeGrid_Loaded"
 						NavigationMode="Cell"
-						NodeCollapsing="BiosDiffTreeGrid_NodeCollapsing"
 						PasteOption="None"
 						SelectionMode="Single"
-						SizeChanged="BiosDiffTreeGrid_SizeChanged"
-						TreeGridContextFlyoutOpening="BiosDiffTreeGrid_TreeGridContextFlyoutOpening"
-						Visibility="{x:Bind ViewChanges.IsChecked, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+						ShowToolTip="True"
+						SizeChanged="TreeGrid_SizeChanged"
+						TreeGridContextFlyoutOpening="TreeGrid_TreeGridContextFlyoutOpening"
+						Visibility="{x:Bind ViewModel.ViewChangesVisibility, Mode=OneWay}">
 						<sfgrid:SfTreeGrid.HeaderContextFlyout>
 							<MenuFlyout />
 						</sfgrid:SfTreeGrid.HeaderContextFlyout>
@@ -662,7 +660,7 @@
 								MappingName="DisplayCurrent"
 								ShowToolTip="True">
 								<sfgrid:TreeGridTemplateColumn.CellTemplate>
-									<DataTemplate x:DataType="local:BiosTreeNode">
+									<DataTemplate x:DataType="local:Node">
 										<TextBlock
 											Margin="12,0"
 											VerticalAlignment="Center"

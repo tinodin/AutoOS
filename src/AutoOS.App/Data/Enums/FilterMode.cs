@@ -1,4 +1,4 @@
-namespace AutoOS.App.Data.Enums.Power;
+namespace AutoOS.App.Data.Enums;
 
 public enum FilterMode
 {

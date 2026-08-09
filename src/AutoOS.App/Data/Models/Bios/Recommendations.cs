@@ -8,7 +8,7 @@ public class Recommendation
 	public string SetupQuestion { get; set; } = string.Empty;
 	public string Type { get; set; } = string.Empty;
 	public string RecommendedOption { get; set; } = string.Empty;
-	public Func<IEnumerable<BiosSettingsModel>, bool> Condition { get; set; } = null!;
+	public Func<IEnumerable<Setting>, bool> Condition { get; set; } = null!;
 }
 
 public static class Recommendations

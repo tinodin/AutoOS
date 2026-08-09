@@ -7,7 +7,7 @@
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:dev="using:DevWinUI"
 	xmlns:ext="using:AutoOS.App.Extensions"
-	xmlns:helpers="using:AutoOS.App.Helpers"
+	xmlns:helpers="using:AutoOS.App.Helpers.TreeGrid"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:models="using:AutoOS.App.Data.Models.Power"
 	xmlns:sfgrid="using:Syncfusion.UI.Xaml.TreeGrid"

@@ -9,7 +9,7 @@
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:dev="using:DevWinUI"
 	xmlns:ext="using:AutoOS.App.Extensions"
-	xmlns:helpers="using:AutoOS.App.Helpers"
+	xmlns:helpers="using:AutoOS.App.Helpers.TreeGrid"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:sfdata="using:Syncfusion.UI.Xaml.DataGrid"
 	xmlns:sfgrid="using:Syncfusion.UI.Xaml.TreeGrid"
@@ -82,9 +82,7 @@
 							</AppBarButton>
 
 							<!--  Delete  -->
-							<AppBarButton
-								Command="{x:Bind ViewModel.DeleteCommand}"
-								Label="Delete">
+							<AppBarButton Command="{x:Bind ViewModel.DeleteCommand}" Label="Delete">
 								<AppBarButton.Content>
 									<dev:ThemedIcon Style="{StaticResource App.ThemedIcons.Delete}" />
 								</AppBarButton.Content>

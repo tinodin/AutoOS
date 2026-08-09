@@ -10,7 +10,7 @@ public sealed partial class EditTemplateSelector : DataTemplateSelector
 
 	protected override DataTemplate SelectTemplateCore(object item, DependencyObject container)
 	{
-		if (item is BiosTreeNode node && node.HasOptions)
+		if (item is Node node && node.HasOptions)
 			return ComboBoxTemplate;
 		return TextBoxTemplate;
 	}

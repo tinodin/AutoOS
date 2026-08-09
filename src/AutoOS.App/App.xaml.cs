@@ -2,6 +2,7 @@ using AutoOS.App.Views;
 using AutoOS.App.Views.Installer.Stages;
 using AutoOS.App.Views.Startup;
 using AutoOS.App.Services;
+using AutoOS.App.Services.Bios;
 using AutoOS.App.Services.Power;
 using AutoOS.App.ViewModels;
 using AutoOS.Core.Helpers.Logging;
@@ -32,7 +33,9 @@ public partial class App : Application
 		.AddSingleton<IFilePickerService, FilePickerService>()
 		.AddSingleton<IDialogService, DialogService>()
 		.AddSingleton<IPowerPlanService, PowerPlanService>()
+		.AddSingleton<IBiosSettingsService, BiosSettingsService>()
 		.AddTransient<PowerPageViewModel>()
+		.AddTransient<BiosSettingsPageViewModel>()
 		.AddTransient<BenchmarksPageViewModel>()
 		.BuildServiceProvider();
 

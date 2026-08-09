@@ -1,47 +1,88 @@
 using System.Collections.ObjectModel;
-using AutoOS.App.Data.Enums.Bios;
+using AutoOS.App.Data.Enums;
 using AutoOS.App.Data.Models.Bios;
+using AutoOS.App.Services;
 using AutoOS.App.Services.Bios;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using NodeKind = AutoOS.App.Data.Enums.Bios.NodeKind;
+using PageMode = AutoOS.App.Data.Enums.Bios.PageMode;
 
 namespace AutoOS.App.ViewModels;
 
-public partial class BiosSettingsPageViewModel : ObservableObject
+public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosService, IFilePickerService filePickerService) : ObservableObject
 {
-	public event EventHandler? RecommendedNodeRestored;
-	public event EventHandler? RecommendationStateChanged;
+	private readonly Stack<Dictionary<Setting, State>> _undoStates = [];
+	private readonly Stack<Dictionary<Setting, State>> _redoStates = [];
+	private readonly Dictionary<Setting, State> _settingStates = [];
+	private readonly List<Setting> _settings = [];
+	private int _lastRecommendedCount;
+
+	public Action? RefreshFilterAction { get; set; }
+
+	public Action? RefreshFilterOnlyAction { get; set; }
+
+	public ObservableCollection<Node> TreeNodes { get; } = [];
+
+	public ObservableCollection<Node> DiffNodes { get; } = [];
 
 	[ObservableProperty]
+	public partial string SwitchPresenterValue { get; set; } = "Export";
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(CanUndo))]
+	[NotifyPropertyChangedFor(nameof(CanRedo))]
+	[NotifyPropertyChangedFor(nameof(CanMerge))]
+	[NotifyPropertyChangedFor(nameof(CanApplyMerge))]
 	[NotifyPropertyChangedFor(nameof(CanImport))]
-	public partial bool IsAnyModified { get; set; }
+	[NotifyCanExecuteChangedFor(nameof(UndoCommand))]
+	[NotifyCanExecuteChangedFor(nameof(RedoCommand))]
+	[NotifyCanExecuteChangedFor(nameof(ApplyRecommendationsCommand))]
+	[NotifyCanExecuteChangedFor(nameof(ImportToNvramCommand))]
+	[NotifyCanExecuteChangedFor(nameof(RestoreCommand))]
+	[NotifyCanExecuteChangedFor(nameof(ToggleViewChangesCommand))]
+	public partial bool IsLoaded { get; set; }
+
+	[ObservableProperty]
+	public partial string SearchText { get; set; } = string.Empty;
+
+	[ObservableProperty]
+	public partial bool FilterSetting { get; set; } = true;
+
+	[ObservableProperty]
+	public partial bool FilterDescription { get; set; }
+
+	[ObservableProperty]
+	public partial bool FilterCurrent { get; set; }
+
+	[ObservableProperty]
+	public partial FilterMode FilterMode { get; set; } = FilterMode.Contains;
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(NormalVisibility))]
+	[NotifyPropertyChangedFor(nameof(ViewChangesVisibility))]
+	public partial bool ViewChanges { get; set; }
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(ViewChangesLabel))]
+	[NotifyPropertyChangedFor(nameof(CanImport))]
+	[NotifyCanExecuteChangedFor(nameof(ImportToNvramCommand))]
+	public partial int ModifiedCount { get; set; }
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(CanApplyMerge))]
+	[NotifyCanExecuteChangedFor(nameof(ApplyRecommendationsCommand))]
+	public partial int MergeCount { get; set; }
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(CanMerge))]
 	[NotifyPropertyChangedFor(nameof(CanApplyMerge))]
+	[NotifyCanExecuteChangedFor(nameof(ApplyRecommendationsCommand))]
 	public partial bool HasRecommendations { get; set; }
 
 	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(CanMerge))]
 	[NotifyPropertyChangedFor(nameof(CanApplyMerge))]
-	[NotifyPropertyChangedFor(nameof(CanImport))]
-	[NotifyPropertyChangedFor(nameof(CanUndo))]
-	[NotifyPropertyChangedFor(nameof(CanRedo))]
-	[NotifyCanExecuteChangedFor(nameof(UndoCommand))]
-	[NotifyCanExecuteChangedFor(nameof(RedoCommand))]
-	public partial bool IsLoaded { get; set; }
-
-	public bool CanMerge => IsLoaded && HasRecommendations;
-
-	public bool CanApplyMerge => CanMerge && MergeCount > 0;
-
-	public bool CanImport => IsLoaded && IsAnyModified;
-
-	private int _lastRecommendedCount;
-
-	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(CanApplyMerge))]
-	public partial int MergeCount { get; set; }
+	public partial int RecommendedCount { get; set; }
 
 	partial void OnMergeCountChanged(int value)
 	{
@@ -50,1016 +91,569 @@ public partial class BiosSettingsPageViewModel : ObservableObject
 			MergeCount = clamped;
 	}
 
-	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(ViewChangesLabel))]
-	public partial int ModifiedCount { get; set; }
+	partial void OnSearchTextChanged(string value) => RefreshFilter();
 
-	public string ViewChangesLabel => $"View Changes ({ModifiedCount})";
+	partial void OnFilterSettingChanged(bool value) => RefreshFilter();
 
-	public void SetIsLoaded(bool isLoaded) => IsLoaded = isLoaded;
+	partial void OnFilterDescriptionChanged(bool value) => RefreshFilter();
 
-	private readonly Stack<List<SettingState>> _undoStates = [];
-	private readonly Stack<List<SettingState>> _redoStates = [];
-	private List<SettingState> _currentState = [];
-	private List<SettingState>? _batchStartState;
-	private bool _isRestoringHistory;
-	private readonly Dictionary<BiosSettingsModel, BiosTreeNode> _modelToLeafMap = [];
+	partial void OnFilterCurrentChanged(bool value) => RefreshFilter();
+
+	partial void OnFilterModeChanged(FilterMode value) => RefreshFilter();
+
+	public Visibility NormalVisibility => ViewChanges ? Visibility.Collapsed : Visibility.Visible;
+
+	public Visibility ViewChangesVisibility => ViewChanges ? Visibility.Visible : Visibility.Collapsed;
 
 	public bool CanUndo => IsLoaded && _undoStates.Count > 0;
 
 	public bool CanRedo => IsLoaded && _redoStates.Count > 0;
 
+	public bool CanMerge => IsLoaded && HasRecommendations;
 
-	[ObservableProperty]
-	public partial string SearchText { get; set; } = string.Empty;
+	public bool CanApplyMerge => CanMerge && MergeCount > 0;
 
-	partial void OnSearchTextChanged(string value) => RefreshFilter();
+	public bool CanImport => IsLoaded && ModifiedCount > 0;
 
-	[ObservableProperty]
-	public partial bool ViewChanges { get; set; }
+	public bool CanRestore => IsLoaded;
 
-	partial void OnViewChangesChanged(bool value) => RefreshFilter();
+	public bool CanToggleViewChanges => IsLoaded;
 
-	public ObservableCollection<BiosTreeNode> TreeNodes { get; } = [];
+	public string ViewChangesLabel => $"View Changes ({ModifiedCount})";
 
-	public ObservableCollection<BiosTreeNode> DiffNodes { get; } = [];
-
-	private BiosTreeNode? _recommendedRoot;
-
-	private readonly List<BiosTreeNode> _allLeaves = [];
-
-	private List<string> _originalLines = [];
-
-	public Action? RefreshFilterAction { get; set; }
-	public Action? ExpandDiffNodesAction { get; set; }
-	public Action? ExpandAllNodesAction { get; set; }
-
-	[ObservableProperty]
-	public partial bool FilterSetting { get; set; } = true;
-
-	partial void OnFilterSettingChanged(bool value) => RefreshFilter();
-
-	[ObservableProperty]
-	public partial bool FilterDescription { get; set; }
-
-	partial void OnFilterDescriptionChanged(bool value) => RefreshFilter();
-
-	[ObservableProperty]
-	public partial bool FilterCurrent { get; set; }
-
-	partial void OnFilterCurrentChanged(bool value) => RefreshFilter();
-
-	public enum FilterModeType { Contains, ExactMatch }
-
-	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(FilterContains))]
-	[NotifyPropertyChangedFor(nameof(FilterExactMatch))]
-	public partial FilterModeType FilterMode { get; set; } = FilterModeType.Contains;
-
-	partial void OnFilterModeChanged(FilterModeType value) => RefreshFilter();
-
-	public bool FilterContains
+	public async Task LoadAsync()
 	{
-		get => FilterMode == FilterModeType.Contains;
-		set { if (value) FilterMode = FilterModeType.Contains; }
-	}
+		SwitchPresenterValue = ToPresenterValue(PageMode.Exporting);
+		IsLoaded = false;
+		ViewChanges = false;
 
-	public bool FilterExactMatch
-	{
-		get => FilterMode == FilterModeType.ExactMatch;
-		set { if (value) FilterMode = FilterModeType.ExactMatch; }
-	}
-
-	private void RefreshFilter() => RefreshFilterAction?.Invoke();
-
-	public void BuildTree(List<BiosSettingsModel> parsed)
-	{
-		TreeNodes.Clear();
-		_allLeaves.Clear();
-		_modelToLeafMap.Clear();
-		_recommendedRoot = null;
-		IsAnyModified = false;
-		ModifiedCount = 0;
-		MergeCount = 0;
-		HasRecommendations = false;
-
-		if (parsed == null || parsed.Count == 0) return;
-
-		_originalLines = parsed[0].OriginalLines!;
-
-		var groups = parsed.GroupBy(setting => setting.SetupQuestion?.Trim() ?? string.Empty, StringComparer.OrdinalIgnoreCase).ToList();
-
-		var ruleOrder = Recommendations.Rules
-			.Select((rule, i) => new { rule.SetupQuestion, rule.RecommendedOption, Index = i })
-			.GroupBy(item => (item.SetupQuestion?.ToLowerInvariant(), item.RecommendedOption?.ToLowerInvariant()))
-			.ToDictionary(group => group.Key, group => group.First().Index);
-
-		var allGroupNodes = new List<BiosTreeNode>();
-
-		foreach (IGrouping<string, BiosSettingsModel>? grp in groups)
+		(PageMode state, IReadOnlyList<Setting> settings) = await biosService.LoadAsync();
+		if (state != PageMode.Loaded)
 		{
-			var members = grp.ToList();
-
-			if (members.Count == 1)
-			{
-				BiosTreeNode leaf = MakeLeaf(members[0]);
-				allGroupNodes.Add(leaf);
-			}
-			else
-			{
-				var groupNode = new BiosTreeNode
-				{
-					NodeKind = NodeKind.Group,
-					DisplayName = $"{grp.Key} ({members.Count})"
-				};
-
-				foreach (BiosSettingsModel? m in members)
-				{
-					BiosTreeNode leaf = MakeLeaf(m);
-					groupNode.Children.Add(leaf);
-				}
-
-				groupNode.SubscribeToChildrenErrors();
-				allGroupNodes.Add(groupNode);
-			}
+			SwitchPresenterValue = ToPresenterValue(state);
+			return;
 		}
 
-		foreach (BiosTreeNode leaf in _allLeaves)
+		_settings.Clear();
+		_settings.AddRange(settings);
+		_settingStates.Clear();
+		foreach (Setting setting in _settings)
 		{
-			leaf.Model.ModifiedChanged += (_, _) => OnModelModified(leaf);
-			leaf.Model.ErrorsChanged += (_, _) => OnModelErrorsChanged(leaf);
+			_settingStates[setting] = new State
+			{
+				Value = setting.Value,
+				SelectedOption = setting.SelectedOption,
+				OriginalValue = setting.OriginalValue,
+				OriginalSelectedOption = setting.OriginalSelectedOption
+			};
 		}
 
-		var recommendedRoot = new BiosTreeNode
-		{
-			NodeKind = NodeKind.Root,
-			DisplayName = "Recommended"
-		};
-
-		foreach (BiosTreeNode node in allGroupNodes)
-		{
-			if (node.NodeKind == NodeKind.Leaf)
-			{
-				if (node.Model?.IsRecommended == true)
-				{
-					BiosTreeNode clone = CloneNode(node);
-					recommendedRoot.Children.Add(clone);
-				}
-			}
-			else
-			{
-				var recommendedChildren = node.Children.Where(child => child.Model?.IsRecommended == true).ToList();
-
-				if (recommendedChildren.Count == 1)
-				{
-					BiosTreeNode clone = CloneNode(recommendedChildren[0]);
-					recommendedRoot.Children.Add(clone);
-				}
-				else if (recommendedChildren.Count > 1)
-				{
-					var groupClone = new BiosTreeNode
-					{
-						NodeKind = NodeKind.Group,
-						DisplayName = node.DisplayName
-					};
-
-					foreach (BiosTreeNode? child in recommendedChildren)
-					{
-						BiosTreeNode childClone = CloneNode(child);
-						groupClone.Children.Add(childClone);
-					}
-
-					recommendedRoot.Children.Add(groupClone);
-				}
-			}
-		}
-
-		int recommendedCount = CountLeaves(recommendedRoot);
-		recommendedRoot.DisplayName = $"Recommended ({recommendedCount})";
-
-		var allRoot = new BiosTreeNode
-		{
-			NodeKind = NodeKind.Root,
-			DisplayName = "All Settings",
-			SortOrder = 1
-		};
-
-		foreach (BiosTreeNode node in allGroupNodes)
-			allRoot.Children.Add(node);
-
-		int allCount = CountLeaves(allRoot);
-		allRoot.DisplayName = $"All Settings ({allCount})";
-
-		_recommendedRoot = recommendedRoot;
-		TreeNodes.Add(allRoot);
-		if (recommendedCount > 0)
-			TreeNodes.Insert(0, recommendedRoot);
-
-		HasRecommendations = recommendedRoot.Children.Count > 0;
-		OnPropertyChanged(nameof(RecommendedCount));
-		ResetMergeCount();
-		UpdateDiffNodes();
+		SearchText = string.Empty;
 		ResetHistory();
+		RefreshState();
+		IsLoaded = true;
+
+		SwitchPresenterValue = ToPresenterValue(PageMode.Loaded);
 	}
 
-	private void UpdateDiffNodes()
+	[RelayCommand(CanExecute = nameof(CanUndo))]
+	public void Undo() => MoveState(_undoStates, _redoStates);
+
+	[RelayCommand(CanExecute = nameof(CanRedo))]
+	public void Redo() => MoveState(_redoStates, _undoStates);
+
+	private void MoveState(Stack<Dictionary<Setting, State>> from, Stack<Dictionary<Setting, State>> to)
 	{
-		DiffNodes.Clear();
-
-		var modifiedLeaves = _allLeaves.Where(leaf => leaf.Model?.IsModified == true).ToList();
-		ModifiedCount = modifiedLeaves.Count;
-
-		var changesRoot = new BiosTreeNode
-		{
-			NodeKind = NodeKind.Root,
-			DisplayName = $"Changes ({modifiedLeaves.Count})"
-		};
-
-		BiosTreeNode? allRoot = TreeNodes.LastOrDefault();
-		if (allRoot != null)
-		{
-			foreach (BiosTreeNode node in allRoot.Children)
-			{
-				if (node.NodeKind == NodeKind.Leaf)
-				{
-					if (node.Model?.IsModified == true)
-						changesRoot.Children.Add(node);
-					continue;
-				}
-
-				var changedChildren = node.Children.Where(child => child.Model?.IsModified == true).ToList();
-				if (changedChildren.Count == 0) continue;
-				if (changedChildren.Count == 1)
-				{
-					changesRoot.Children.Add(changedChildren[0]);
-					continue;
-				}
-
-				string baseName = GetGroupBaseName(node.DisplayName);
-				var group = new BiosTreeNode
-				{
-					NodeKind = NodeKind.Group,
-					DiffGroupKey = baseName,
-					DisplayName = $"{baseName} ({changedChildren.Count})"
-				};
-				foreach (BiosTreeNode? child in changedChildren)
-					group.Children.Add(child);
-				group.SubscribeToChildrenErrors();
-				changesRoot.Children.Add(group);
-			}
-
-			DiffNodes.Add(changesRoot);
-			ExpandDiffNodesAction?.Invoke();
-			RefreshFilterAction?.Invoke();
-		}
-	}
-
-	private void UpdateDiffNodeIncremental(BiosTreeNode leaf)
-	{
-		BiosTreeNode? changesRoot = DiffNodes.FirstOrDefault();
-		if (changesRoot == null)
-		{
-			UpdateDiffNodes();
-			return;
-		}
-
-		if (leaf.Model?.IsModified == true)
-			AddLeafToDiffTree(changesRoot, leaf);
-		else
-			RemoveLeafFromDiffTree(changesRoot, leaf);
-
-		int count = CountDiffTreeLeaves(changesRoot);
-		ModifiedCount = count;
-		changesRoot.DisplayName = $"Changes ({count})";
-		RefreshFilterAction?.Invoke();
-	}
-
-	private void UpdateDiffNodesBulk(HashSet<BiosSettingsModel> modifiedModels)
-	{
-		BiosTreeNode? changesRoot = DiffNodes.FirstOrDefault();
-		if (changesRoot == null)
-		{
-			UpdateDiffNodes();
-			return;
-		}
-
-		foreach (BiosSettingsModel model in modifiedModels)
-		{
-			if (_modelToLeafMap.TryGetValue(model, out BiosTreeNode? leaf))
-			{
-				if (leaf.Model?.IsModified == true)
-					AddLeafToDiffTree(changesRoot, leaf);
-				else
-					RemoveLeafFromDiffTree(changesRoot, leaf);
-			}
-		}
-
-		int count = CountDiffTreeLeaves(changesRoot);
-		ModifiedCount = count;
-		changesRoot.DisplayName = $"Changes ({count})";
-	}
-
-	private static int CountDiffTreeLeaves(BiosTreeNode root)
-	{
-		int count = 0;
-		foreach (BiosTreeNode child in root.Children)
-		{
-			if (child.NodeKind != NodeKind.Group)
-				count++;
-			else
-				count += child.Children.Count;
-		}
-		return count;
-	}
-
-	private static string GetGroupBaseName(string displayName)
-	{
-		int parenIndex = displayName.LastIndexOf(" (");
-		return parenIndex > 0 ? displayName.Substring(0, parenIndex) : displayName;
-	}
-
-	private void AddLeafToDiffTree(BiosTreeNode changesRoot, BiosTreeNode leaf)
-	{
-		BiosTreeNode? parentGroup = FindParentGroup(leaf);
-
-		if (parentGroup == null)
-		{
-			if (!changesRoot.Children.Contains(leaf))
-				changesRoot.Children.Add(leaf);
-			return;
-		}
-
-		var modifiedSiblings = parentGroup.Children
-			.Where(child => child.Model?.IsModified == true)
-			.ToList();
-
-		if (modifiedSiblings.Count < 2)
-		{
-			if (!changesRoot.Children.Contains(leaf))
-				changesRoot.Children.Add(leaf);
-			return;
-		}
-
-		string baseName = GetGroupBaseName(parentGroup.DisplayName);
-		BiosTreeNode? diffGroup = changesRoot.Children
-			.OfType<BiosTreeNode>()
-			.FirstOrDefault(group => group.NodeKind == NodeKind.Group && group.DiffGroupKey == baseName);
-
-		if (diffGroup != null)
-		{
-			if (!diffGroup.Children.Contains(leaf))
-			{
-				diffGroup.Children.Add(leaf);
-				diffGroup.DisplayName = $"{baseName} ({diffGroup.Children.Count})";
-			}
-		}
-		else
-		{
-			diffGroup = new BiosTreeNode
-			{
-				NodeKind = NodeKind.Group,
-				DiffGroupKey = baseName,
-				DisplayName = $"{baseName} ({modifiedSiblings.Count})"
-			};
-			foreach (BiosTreeNode? sibling in modifiedSiblings)
-			{
-				changesRoot.Children.Remove(sibling);
-				diffGroup.Children.Add(sibling);
-			}
-			diffGroup.SubscribeToChildrenErrors();
-			changesRoot.Children.Add(diffGroup);
-		}
-	}
-
-	private void RemoveLeafFromDiffTree(BiosTreeNode changesRoot, BiosTreeNode leaf)
-	{
-		if (changesRoot.Children.Remove(leaf))
-		{
-			return;
-		}
-
-		BiosTreeNode? diffGroup = changesRoot.Children
-			.OfType<BiosTreeNode>()
-			.FirstOrDefault(group => group.NodeKind == NodeKind.Group && group.Children.Contains(leaf));
-
-		if (diffGroup == null) return;
-
-		diffGroup.Children.Remove(leaf);
-
-		if (diffGroup.Children.Count == 0)
-		{
-			changesRoot.Children.Remove(diffGroup);
-		}
-		else if (diffGroup.Children.Count == 1)
-		{
-			BiosTreeNode remaining = diffGroup.Children[0];
-			diffGroup.Children.Clear();
-			changesRoot.Children.Remove(diffGroup);
-			changesRoot.Children.Add(remaining);
-		}
-		else
-		{
-			diffGroup.DisplayName = $"{diffGroup.DiffGroupKey} ({diffGroup.Children.Count})";
-		}
-	}
-
-	private void RebuildRecommendedTree()
-	{
-		BiosTreeNode? recommendedRoot = _recommendedRoot;
-		BiosTreeNode? allRoot = TreeNodes.LastOrDefault();
-		if (recommendedRoot == null || allRoot == null)
-			return;
-
-		recommendedRoot.Children.Clear();
-		foreach (BiosTreeNode node in allRoot.Children)
-		{
-			if (node.NodeKind == NodeKind.Leaf)
-			{
-				if (HasPendingRecommendation(node))
-					recommendedRoot.Children.Add(CloneNode(node));
-				continue;
-			}
-
-			var pendingChildren = node.Children.Where(HasPendingRecommendation).ToList();
-			if (pendingChildren.Count == 1)
-			{
-				recommendedRoot.Children.Add(CloneNode(pendingChildren[0]));
-			}
-			else if (pendingChildren.Count > 1)
-			{
-				var groupClone = new BiosTreeNode
-				{
-					NodeKind = NodeKind.Group,
-					DisplayName = node.DisplayName
-				};
-
-				foreach (BiosTreeNode? child in pendingChildren)
-					groupClone.Children.Add(CloneNode(child));
-
-				groupClone.SubscribeToChildrenErrors();
-				recommendedRoot.Children.Add(groupClone);
-			}
-		}
-
-		int count = CountLeaves(recommendedRoot);
-		recommendedRoot.DisplayName = $"Recommended ({count})";
-		HasRecommendations = count > 0;
-
-		if (count == 0)
-			TreeNodes.Remove(recommendedRoot);
-		else if (!TreeNodes.Contains(recommendedRoot))
-		{
-			TreeNodes.Insert(0, recommendedRoot);
-			RecommendedNodeRestored?.Invoke(this, EventArgs.Empty);
-		}
-
-		OnPropertyChanged(nameof(RecommendedCount));
-		SyncMergeCount();
-	}
-
-	private void UpdateRecommendedTreeIncremental(HashSet<BiosSettingsModel> modifiedModels)
-	{
-		BiosTreeNode? recommendedRoot = _recommendedRoot;
-		BiosTreeNode? allRoot = TreeNodes.LastOrDefault();
-		if (recommendedRoot == null || allRoot == null)
-			return;
-
-		var groupLookup = new Dictionary<string, BiosTreeNode>();
-		foreach (BiosTreeNode child in recommendedRoot.Children)
-		{
-			if (child.NodeKind == NodeKind.Group)
-				groupLookup[child.DisplayName] = child;
-		}
-
-		var nodesToRemove = new List<BiosTreeNode>();
-		var groupsToClean = new List<BiosTreeNode>();
-		
-		foreach (BiosTreeNode node in recommendedRoot.Children)
-		{
-			if (node.NodeKind == NodeKind.Leaf && node.Model != null && modifiedModels.Contains(node.Model))
-			{
-				if (!HasPendingRecommendation(node))
-					nodesToRemove.Add(node);
-			}
-			else if (node.NodeKind == NodeKind.Group)
-			{
-				int originalCount = node.Children.Count;
-				for (int i = node.Children.Count - 1; i >= 0; i--)
-				{
-					BiosTreeNode child = node.Children[i];
-					if (child.NodeKind == NodeKind.Leaf && 
-						child.Model != null && 
-						modifiedModels.Contains(child.Model) && 
-						!HasPendingRecommendation(child))
-					{
-						node.Children.RemoveAt(i);
-					}
-				}
-
-				if (node.Children.Count == 0)
-					nodesToRemove.Add(node);
-				else if (node.Children.Count == 1 && originalCount > 1)
-					groupsToClean.Add(node);
-			}
-		}
-
-		foreach (BiosTreeNode node in nodesToRemove)
-		{
-			recommendedRoot.Children.Remove(node);
-			if (node.NodeKind == NodeKind.Group)
-				groupLookup.Remove(node.DisplayName);
-		}
-
-		foreach (BiosTreeNode group in groupsToClean)
-		{
-			BiosTreeNode remaining = group.Children[0];
-			int index = recommendedRoot.Children.IndexOf(group);
-			recommendedRoot.Children.RemoveAt(index);
-			recommendedRoot.Children.Insert(index, CloneNode(remaining));
-			groupLookup.Remove(group.DisplayName);
-		}
-
-		foreach (BiosSettingsModel model in modifiedModels)
-		{
-			if (!_modelToLeafMap.TryGetValue(model, out BiosTreeNode? leaf))
-				continue;
-			
-			if (!HasPendingRecommendation(leaf))
-				continue;
-
-BiosTreeNode? parentGroup = FindParentGroup(leaf);
-			if (parentGroup == null)
-			{
-				bool exists = false;
-				foreach (BiosTreeNode child in recommendedRoot.Children)
-				{
-					if (child.NodeKind == NodeKind.Leaf && child.Model == model)
-					{
-						exists = true;
-						break;
-					}
-				}
-				if (!exists)
-					recommendedRoot.Children.Add(CloneNode(leaf));
-			}
-			else
-			{
-				if (!groupLookup.TryGetValue(parentGroup.DisplayName, out BiosTreeNode? groupNode))
-				{
-					var newGroup = new BiosTreeNode
-					{
-						NodeKind = NodeKind.Group,
-						DisplayName = parentGroup.DisplayName
-					};
-					newGroup.Children.Add(CloneNode(leaf));
-					newGroup.SubscribeToChildrenErrors();
-					recommendedRoot.Children.Add(newGroup);
-					groupLookup[parentGroup.DisplayName] = newGroup;
-				}
-				else
-				{
-					bool exists = false;
-					foreach (BiosTreeNode child in groupNode.Children)
-					{
-						if (child.NodeKind == NodeKind.Leaf && child.Model == model)
-						{
-							exists = true;
-							break;
-						}
-					}
-					if (!exists)
-						groupNode.Children.Add(CloneNode(leaf));
-				}
-			}
-		}
-
-		for (int i = recommendedRoot.Children.Count - 1; i >= 0; i--)
-		{
-			BiosTreeNode child = recommendedRoot.Children[i];
-			if (child.NodeKind == NodeKind.Group && child.Children.Count == 1)
-			{
-				BiosTreeNode remaining = child.Children[0];
-				recommendedRoot.Children.RemoveAt(i);
-				recommendedRoot.Children.Insert(i, CloneNode(remaining));
-				groupLookup.Remove(child.DisplayName);
-			}
-		}
-
-		int count = CountLeaves(recommendedRoot);
-		recommendedRoot.DisplayName = $"Recommended ({count})";
-		HasRecommendations = count > 0;
-
-		if (count == 0)
-			TreeNodes.Remove(recommendedRoot);
-		else if (!TreeNodes.Contains(recommendedRoot))
-		{
-			TreeNodes.Insert(0, recommendedRoot);
-			RecommendedNodeRestored?.Invoke(this, EventArgs.Empty);
-		}
-
-		OnPropertyChanged(nameof(RecommendedCount));
-		SyncMergeCount();
-	}
-
-	private void ResetMergeCount()
-	{
-		_lastRecommendedCount = RecommendedCount;
-		OnPropertyChanged(nameof(RecommendedCount));
-		MergeCount = RecommendedCount;
-	}
-
-	private void SyncMergeCount()
-	{
-		int newCount = RecommendedCount;
-		OnPropertyChanged(nameof(RecommendedCount));
-
-		if (MergeCount == _lastRecommendedCount)
-		{
-			MergeCount = newCount;
-		}
-		else if (MergeCount > newCount)
-		{
-			MergeCount = newCount;
-		}
-		else
-		{
-			OnPropertyChanged(nameof(CanApplyMerge));
-		}
-
-		_lastRecommendedCount = newCount;
-	}
-
-	private static bool HasPendingRecommendation(BiosTreeNode node)
-	{
-		BiosSettingsModel model = node.Model;
-		if (model == null)
-			return false;
-
-		if (model.RecommendedOption != null)
-			return !ReferenceEquals(model.SelectedOption, model.RecommendedOption);
-
-		return !string.IsNullOrEmpty(model.RecommendedValue) &&
-			!string.Equals(model.Value, model.RecommendedValue, StringComparison.Ordinal);
-	}
-
-	private static int CountLeaves(BiosTreeNode node)
-	{
-		if (node.NodeKind == NodeKind.Leaf)
-			return 1;
-
-		return node.Children.Sum(CountLeaves);
-	}
-
-	private BiosTreeNode MakeLeaf(BiosSettingsModel model)
-	{
-		var leaf = new BiosTreeNode
-		{
-			NodeKind = NodeKind.Leaf,
-			DisplayName = model.SetupQuestion ?? string.Empty,
-			Model = model
-		};
-		_allLeaves.Add(leaf);
-		_modelToLeafMap[model] = leaf;
-		return leaf;
-	}
-
-	private static BiosTreeNode CloneNode(BiosTreeNode source)
-	{
-		if (source.NodeKind == NodeKind.Leaf)
-		{
-			return new BiosTreeNode
-			{
-				NodeKind = NodeKind.Leaf,
-				DisplayName = source.DisplayName,
-				Model = source.Model
-			};
-		}
-
-		var clone = new BiosTreeNode
-		{
-			NodeKind = source.NodeKind,
-			DisplayName = source.DisplayName
-		};
-		foreach (BiosTreeNode child in source.Children)
-			clone.Children.Add(CloneNode(child));
-		return clone;
-	}
-
-	private BiosTreeNode? FindParentGroup(BiosTreeNode leaf)
-	{
-		BiosTreeNode? allRoot = TreeNodes.LastOrDefault();
-		if (allRoot == null) return null;
-
-		foreach (BiosTreeNode node in allRoot.Children)
-		{
-			if (node.NodeKind == NodeKind.Group && node.Children.Contains(leaf))
-				return node;
-		}
-		return null;
-	}
-
-	public void ApplyChangesToLines()
-	{
-		foreach (BiosTreeNode? leaf in _allLeaves.Where(leafItem => leafItem.Model?.IsModified == true))
-		{
-			if (leaf.Model.HasValueField)
-				BiosSettingsUpdater.UpdateValue(leaf.Model, _originalLines);
-			else if (leaf.Model.HasOptions)
-				BiosSettingsUpdater.UpdateOption(leaf.Model, _originalLines);
-		}
-	}
-
-	public void WriteToNvram(string nvramPath)
-	{
-		if (_originalLines != null)
-			File.WriteAllLines(nvramPath, _originalLines);
+		to.Push(CaptureState());
+		RestoreState(from.Pop());
+		RefreshState(false);
+		SyncTrees();
 	}
 
 	[RelayCommand(CanExecute = nameof(CanApplyMerge))]
 	private void ApplyRecommendations(int count)
 	{
-		BeginHistoryBatch();
+		Dictionary<Setting, State> previous = CaptureState();
 
-		BiosTreeNode? recommendedRoot = _recommendedRoot;
-		if (recommendedRoot == null)
-		{
-			EndHistoryBatch();
-			return;
-		}
-
-		var recommendedLeaves = recommendedRoot.Children
-			.SelectMany(node => node.NodeKind == NodeKind.Leaf ? [node] : node.Children)
-			.Where(node => node.NodeKind == NodeKind.Leaf && node.Model?.IsRecommended == true)
+		var targets = _settings
+			.Where(setting => HasPendingRecommendation(setting, _settingStates[setting]))
 			.Take(count)
 			.ToList();
 
-		BiosSettingsModel.IsBatchMode = true;
-
-		try
+		foreach (Setting setting in targets)
 		{
-			foreach (BiosTreeNode? leaf in recommendedLeaves)
-			{
-				BiosSettingsModel model = leaf.Model;
-				model.OriginalValue ??= model.Value;
-				model.OriginalSelectedOption ??= model.SelectedOption;
-
-				if (model.RecommendedOption != null)
-				{
-					model.SelectedOption = model.RecommendedOption;
-				}
-				else if (!string.IsNullOrEmpty(model.RecommendedValue))
-				{
-					model.Value = model.RecommendedValue;
-				}
-			}
-		}
-		finally
-		{
-			BiosSettingsModel.IsBatchMode = false;
+			State state = _settingStates[setting];
+			if (setting.RecommendedOption != null)
+				state.SelectedOption = setting.RecommendedOption;
+			else if (!string.IsNullOrEmpty(setting.RecommendedValue))
+				state.Value = setting.RecommendedValue;
 		}
 
-		var modifiedModels = recommendedLeaves.Select(leaf => leaf.Model).ToHashSet();
-		BulkRefreshNodes(modifiedModels);
-		UpdateDiffNodesBulk(modifiedModels);
-		UpdateRecommendedTreeIncremental(modifiedModels);
-		RefreshFilterAction?.Invoke();
-		EndHistoryBatch();
+		if (!StatesEqual(previous, CaptureState()))
+		{
+			_undoStates.Push(previous);
+			_redoStates.Clear();
+		}
+
+		RefreshState(false);
+		SyncTrees();
 	}
 
-	[RelayCommand(CanExecute = nameof(CanUndo))]
-	private void Undo()
+	[RelayCommand(CanExecute = nameof(CanImport))]
+	private async Task ImportToNvramAsync()
 	{
-		if (!CanUndo) return;
+		SearchText = string.Empty;
+		ViewChanges = false;
+		SwitchPresenterValue = ToPresenterValue(PageMode.Importing);
+		IsLoaded = false;
 
-		_redoStates.Push(_currentState);
-		RestoreState(_undoStates.Pop());
-		ResetMergeCount();
-		ExpandAllNodesAction?.Invoke();
-		UndoCommand.NotifyCanExecuteChanged();
-		RedoCommand.NotifyCanExecuteChanged();
-		OnPropertyChanged(nameof(CanUndo));
-		OnPropertyChanged(nameof(CanRedo));
+		PageMode result = await biosService.ImportToNvramAsync(_settingStates.Where(pair => pair.Value.IsModified));
+		if (result == PageMode.Loaded)
+		{
+			await LoadAsync();
+		}
+		else
+		{
+			SwitchPresenterValue = ToPresenterValue(result);
+			IsLoaded = true;
+		}
 	}
 
-	[RelayCommand(CanExecute = nameof(CanRedo))]
-	private void Redo()
+	[RelayCommand(CanExecute = nameof(CanRestore))]
+	private async Task RestoreAsync()
 	{
-		if (!CanRedo) return;
-
-		_undoStates.Push(_currentState);
-		RestoreState(_redoStates.Pop());
-		ResetMergeCount();
-		UndoCommand.NotifyCanExecuteChanged();
-		RedoCommand.NotifyCanExecuteChanged();
-		OnPropertyChanged(nameof(CanUndo));
-		OnPropertyChanged(nameof(CanRedo));
-	}
-
-	private void OnModelModified(BiosTreeNode leaf)
-	{
-		if (BiosSettingsModel.IsBatchMode)
+		string? filePath = await filePickerService.PickSingleFileAsync("NVRAM Backup", ["*.txt"], biosService.BackupDirectory);
+		if (filePath == null)
 			return;
 
-		IsAnyModified = _allLeaves.Any(leaf => leaf.Model?.IsModified == true);
+		ViewChanges = false;
+		SwitchPresenterValue = ToPresenterValue(PageMode.Importing);
+		IsLoaded = false;
 
-		BiosTreeNode? parent = FindParentGroup(leaf);
-		parent?.RaiseIsModifiedChanged();
-		parent?.RaiseDisplayCurrentChanged();
-		parent?.RaiseHasPendingRecommendationChanged();
-		leaf.RaiseIsModifiedChanged();
-		leaf.RaiseDisplayCurrentChanged();
-		leaf.RaiseHasPendingRecommendationChanged();
-		UpdateDiffNodeIncremental(leaf);
-
-		bool wasInRecommended = _recommendedRoot != null && GetAllNodes(_recommendedRoot).Any(node => node.NodeKind == NodeKind.Leaf && node.Model == leaf.Model);
-		bool isPending = HasPendingRecommendation(leaf);
-
-		if (wasInRecommended != isPending)
+		PageMode result = await biosService.RestoreFromBackupAsync(filePath);
+		if (result == PageMode.Loaded)
 		{
-			RebuildRecommendedTree();
+			await LoadAsync();
 		}
-
-		RecommendationStateChanged?.Invoke(this, EventArgs.Empty);
-
-		if (!_isRestoringHistory && _batchStartState == null)
-			RecordCurrentState();
+		else
+		{
+			SwitchPresenterValue = ToPresenterValue(result);
+			IsLoaded = true;
+		}
 	}
 
-	private void OnModelErrorsChanged(BiosTreeNode leaf)
+	[RelayCommand(CanExecute = nameof(CanToggleViewChanges))]
+	private void ToggleViewChanges()
 	{
-		BiosTreeNode? parent = FindParentGroup(leaf);
-		parent?.RaiseDisplayCurrentChanged();
-		parent?.RaiseHasErrorsChanged();
-		parent?.RaiseErrorsChanged(nameof(BiosTreeNode.DisplayCurrent));
-		leaf.RaiseDisplayCurrentChanged();
-		leaf.RaiseHasErrorsChanged();
-		leaf.RaiseErrorsChanged(nameof(BiosTreeNode.DisplayCurrent));
-
-		BiosTreeNode? treeRoot = TreeNodes.FirstOrDefault();
-		if (treeRoot != null)
-			foreach (BiosTreeNode node in GetAllNodes(treeRoot))
-				node.RaiseDisplayCurrentChanged();
-
+		if (ViewChanges)
+			RebuildDiffNodes();
 		RefreshFilter();
+	}
 
-		RecommendationStateChanged?.Invoke(this, EventArgs.Empty);
+	public void BeginEdit(Node? node)
+	{
+		if (node is not { NodeKind: NodeKind.Setting or NodeKind.GroupedSetting })
+			return;
+
+		node.BeginCellEdit();
+	}
+
+	public bool CommitEdit(Node? node)
+	{
+		if (node is not { NodeKind: NodeKind.Setting or NodeKind.GroupedSetting })
+			return false;
+
+		Dictionary<Setting, State> previous = CaptureState();
+		if (!node.CommitCellEdit())
+			return false;
+
+		_undoStates.Push(previous);
+		_redoStates.Clear();
+		RefreshState(false);
+		node.RaiseErrorsChanged();
+		return true;
+	}
+
+	public bool MatchesFilter(object item)
+	{
+		if (item is not Node node)
+			return true;
+
+		if (node.NodeKind == NodeKind.Root)
+		{
+			bool isRecommended = node.BaseDisplayName.StartsWith("Recommended");
+			if ((ViewChanges || !string.IsNullOrWhiteSpace(SearchText)) && isRecommended)
+				return false;
+			return true;
+		}
+
+		if (ViewChanges && node.NodeKind == NodeKind.Setting && !node.IsModified)
+			return false;
+
+		string query = SearchText;
+		if (query.Length == 0)
+			return true;
+
+		return NodeOrDescendantMatches(node, query);
+	}
+
+	private bool NodeOrDescendantMatches(Node node, string query)
+	{
+		if (NodeMatches(node, query))
+			return true;
+
+		return node.Children.Any(child => NodeOrDescendantMatches(child, query));
+	}
+
+	private bool NodeMatches(Node node, string query)
+	{
+		Setting? setting = node.Setting;
+		if (setting == null)
+			return false;
+
+		if (FilterSetting && TextMatches(setting.SetupQuestion, query))
+			return true;
+		if (FilterDescription && TextMatches(setting.HelpString, query))
+			return true;
+		if (FilterCurrent && TextMatches(node.DisplayCurrent, query))
+			return true;
+
+		return false;
+	}
+
+	private bool TextMatches(string? text, string query)
+	{
+		if (string.IsNullOrWhiteSpace(text))
+			return false;
+
+		return FilterMode == FilterMode.ExactMatch ? text.Equals(query, StringComparison.OrdinalIgnoreCase) : text.Contains(query, StringComparison.OrdinalIgnoreCase);
+	}
+
+	public void RefreshFilter() => RefreshFilterAction?.Invoke();
+
+	public void RefreshAfterEdit() => SyncTrees();
+
+	private void SyncTrees()
+	{
+		RefreshRecommendedRoot();
+		RebuildDiffNodes();
+		RefreshFilter();
+	}
+
+	public void UpdateNodeCounts()
+	{
+		RecountCollection(TreeNodes);
+		RecountCollection(DiffNodes);
+	}
+
+	private void RecountCollection(ObservableCollection<Node> collection)
+	{
+		foreach (Node node in collection)
+			RecountCounted(node);
+	}
+
+	private void RecountCounted(Node node)
+	{
+		if (node.NodeKind == NodeKind.Setting)
+			return;
+
+		foreach (Node child in node.Children)
+			RecountCounted(child);
+
+		int count = CountVisibleSettings(node.Children);
+		string displayName = node.NodeKind == NodeKind.Root && !string.IsNullOrWhiteSpace(SearchText) ? $"Results ({count})" : $"{node.BaseDisplayName} ({count})";
+		node.DisplayName = displayName;
+	}
+
+	private int CountVisibleSettings(IEnumerable<Node> nodes)
+	{
+		string query = SearchText;
+		int count = 0;
+		foreach (Node node in nodes)
+		{
+			if (node.NodeKind == NodeKind.Setting)
+			{
+				if (ViewChanges && !node.IsModified)
+					continue;
+				if (query.Length == 0 || NodeMatches(node, query))
+					count++;
+			}
+			else
+			{
+				count += CountVisibleSettings(node.Children);
+			}
+		}
+
+		return count;
+	}
+
+	private void RefreshTrees()
+	{
+		RebuildTrees();
+		RefreshFilter();
+	}
+
+	private void RebuildTrees()
+	{
+		TreeNodes.Clear();
+		DiffNodes.Clear();
+
+		var groups = _settings.GroupBy(setting => setting.SetupQuestion?.Trim() ?? string.Empty, StringComparer.OrdinalIgnoreCase).ToList();
+
+		var allGroupNodes = new List<Node>(groups.Count);
+		foreach (IGrouping<string, Setting>? grp in groups)
+		{
+			var members = grp.ToList();
+
+			if (members.Count == 1)
+			{
+				allGroupNodes.Add(CreateSettingNode(members[0]));
+			}
+			else
+			{
+				var groupNode = new Node(NodeKind.GroupedSetting, $"{grp.Key} ({members.Count})", members[0].HelpString, grp.Key);
+				foreach (Setting? member in members)
+				{
+					Node settingNode = CreateSettingNode(member);
+					settingNode.Parent = groupNode;
+					groupNode.Children.Add(settingNode);
+				}
+				allGroupNodes.Add(groupNode);
+			}
+		}
+
+		Node recommendedRoot = BuildRecommendedRoot(allGroupNodes);
+		if (CountLeaves(recommendedRoot) > 0)
+			TreeNodes.Add(recommendedRoot);
+
+		var allRoot = new Node(NodeKind.Root, "All Settings", baseDisplayName: "All Settings");
+		foreach (Node node in allGroupNodes)
+			node.Parent = allRoot;
+		foreach (Node node in allGroupNodes)
+			allRoot.Children.Add(node);
+		allRoot.DisplayName = $"All Settings ({CountLeaves(allRoot)})";
+		TreeNodes.Add(allRoot);
+
+		RebuildDiffNodes();
+	}
+
+	private void RebuildDiffNodes()
+	{
+		DiffNodes.Clear();
+		DiffNodes.Add(BuildDiffTree());
+	}
+
+	private Node BuildRecommendedRoot(List<Node> allGroupNodes)
+	{
+		var recommendedRoot = new Node(NodeKind.Root, "Recommended", baseDisplayName: "Recommended");
+
+		foreach (Node node in allGroupNodes)
+		{
+			if (node.NodeKind == NodeKind.Setting)
+			{
+				if (node.HasPendingRecommendation)
+				{
+					Node clone = CloneNode(node);
+					clone.Parent = recommendedRoot;
+					recommendedRoot.Children.Add(clone);
+				}
+				continue;
+			}
+
+			var pendingChildren = node.Children.Where(child => child.HasPendingRecommendation).ToList();
+			if (pendingChildren.Count == 1)
+			{
+				Node clone = CloneNode(pendingChildren[0]);
+				clone.Parent = recommendedRoot;
+				recommendedRoot.Children.Add(clone);
+			}
+			else if (pendingChildren.Count > 1)
+			{
+				var groupClone = new Node(NodeKind.GroupedSetting, $"{node.GroupKey} ({pendingChildren.Count})", node.Description, node.GroupKey);
+				foreach (Node child in pendingChildren)
+				{
+					Node clone = CloneNode(child);
+					clone.Parent = groupClone;
+					groupClone.Children.Add(clone);
+				}
+				groupClone.Parent = recommendedRoot;
+				recommendedRoot.Children.Add(groupClone);
+			}
+		}
+
+		recommendedRoot.DisplayName = $"Recommended ({CountLeaves(recommendedRoot)})";
+		return recommendedRoot;
+	}
+
+	private void RefreshRecommendedRoot()
+	{
+		if (TreeNodes.Count == 0)
+			return;
+
+		Node? oldRecommended = TreeNodes.FirstOrDefault(node => node.NodeKind == NodeKind.Root && node.BaseDisplayName == "Recommended");
+		Node allRoot = TreeNodes.Last();
+
+		Node newRecommended = BuildRecommendedRoot(allRoot.Children.ToList());
+		if (CountLeaves(newRecommended) == 0)
+		{
+			if (oldRecommended != null)
+				TreeNodes.Remove(oldRecommended);
+		}
+		else if (oldRecommended != null)
+		{
+			int index = TreeNodes.IndexOf(oldRecommended);
+			TreeNodes[index] = newRecommended;
+		}
+		else
+		{
+			TreeNodes.Insert(0, newRecommended);
+		}
+	}
+
+	private Node BuildDiffTree()
+	{
+		var changesRoot = new Node(NodeKind.Root, "Changes", baseDisplayName: "Changes");
+
+		var modifiedGroups = _settings
+			.Where(setting => _settingStates[setting].IsModified)
+			.GroupBy(setting => setting.SetupQuestion?.Trim() ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+
+		foreach (IGrouping<string, Setting>? grp in modifiedGroups)
+		{
+			var members = grp.ToList();
+
+			if (members.Count == 1)
+			{
+				Node node = CreateSettingNode(members[0]);
+				node.Parent = changesRoot;
+				changesRoot.Children.Add(node);
+			}
+			else
+			{
+				var groupNode = new Node(NodeKind.GroupedSetting, $"{grp.Key} ({members.Count})", members[0].HelpString, grp.Key);
+				foreach (Setting? member in members)
+				{
+					Node node = CreateSettingNode(member);
+					node.Parent = groupNode;
+					groupNode.Children.Add(node);
+				}
+				groupNode.Parent = changesRoot;
+				changesRoot.Children.Add(groupNode);
+			}
+		}
+
+		changesRoot.DisplayName = $"Changes ({CountLeaves(changesRoot)})";
+		return changesRoot;
+	}
+
+	private Node CreateSettingNode(Setting setting)
+	{
+		State state = _settingStates[setting];
+		return new Node(NodeKind.Setting, setting.SetupQuestion ?? string.Empty, setting.HelpString, setting: setting, state: state);
+	}
+
+	private static Node CloneNode(Node source)
+	{
+		if (source.NodeKind == NodeKind.Setting)
+		{
+			return new Node(NodeKind.Setting, source.BaseDisplayName, source.Description, setting: source.Setting, state: source.State)
+			{
+				DisplayName = source.DisplayName
+			};
+		}
+
+		var clone = new Node(source.NodeKind, source.BaseDisplayName, source.Description, source.GroupKey)
+		{
+			DisplayName = source.DisplayName,
+			IsExpanded = source.IsExpanded
+		};
+		foreach (Node child in source.Children)
+			clone.Children.Add(CloneNode(child));
+		return clone;
+	}
+
+	private static int CountLeaves(Node node)
+	{
+		if (node.NodeKind == NodeKind.Setting)
+			return 1;
+
+		return node.Children.Sum(CountLeaves);
+	}
+
+	private static bool HasPendingRecommendation(Setting setting, State state)
+	{
+		if (setting.RecommendedOption != null)
+			return state.SelectedOption != setting.RecommendedOption;
+
+		return !string.IsNullOrEmpty(setting.RecommendedValue) &&
+			!string.Equals(state.Value, setting.RecommendedValue, StringComparison.Ordinal);
+	}
+
+	private void RefreshState(bool rebuildTrees = true)
+	{
+		ModifiedCount = _settings.Count(setting => _settingStates[setting].IsModified);
+		RecommendedCount = _settings.Count(setting => HasPendingRecommendation(setting, _settingStates[setting]));
+		HasRecommendations = RecommendedCount > 0;
+		SyncMergeCount();
+		UndoCommand.NotifyCanExecuteChanged();
+		RedoCommand.NotifyCanExecuteChanged();
+		if (rebuildTrees)
+			RefreshTrees();
+	}
+
+	private void SyncMergeCount()
+	{
+		int newCount = RecommendedCount;
+		if (MergeCount == _lastRecommendedCount)
+			MergeCount = newCount;
+		else if (MergeCount > newCount)
+			MergeCount = newCount;
+		_lastRecommendedCount = newCount;
+	}
+
+	private Dictionary<Setting, State> CaptureState() => _settings.ToDictionary(setting => setting, setting =>
+	{
+		State values = _settingStates[setting];
+		return new State
+		{
+			Value = values.Value,
+			SelectedOption = values.SelectedOption
+		};
+	});
+
+	private void RestoreState(IEnumerable<KeyValuePair<Setting, State>> state)
+	{
+		foreach ((Setting setting, State captured) in state)
+		{
+			State values = _settingStates[setting];
+			values.Value = captured.Value;
+			values.SelectedOption = captured.SelectedOption;
+		}
 	}
 
 	private void ResetHistory()
 	{
 		_undoStates.Clear();
 		_redoStates.Clear();
-		_currentState = CaptureState();
 		UndoCommand.NotifyCanExecuteChanged();
 		RedoCommand.NotifyCanExecuteChanged();
-		OnPropertyChanged(nameof(CanUndo));
-		OnPropertyChanged(nameof(CanRedo));
 	}
 
-	private void BeginHistoryBatch() => _batchStartState ??= _currentState;
+	private static bool StatesEqual(Dictionary<Setting, State> left, Dictionary<Setting, State> right) =>
+		left.Count == right.Count && left.All(pair => pair.Value.SelectedOption == right[pair.Key].SelectedOption && pair.Value.Value == right[pair.Key].Value);
 
-	private void EndHistoryBatch()
+	private static string ToPresenterValue(PageMode state) => state switch
 	{
-		if (_batchStartState == null) return;
-
-		List<SettingState> nextState = CaptureState();
-		if (!StatesEqual(_batchStartState, nextState))
-		{
-			_undoStates.Push(_batchStartState);
-			_redoStates.Clear();
-			_currentState = nextState;
-			UndoCommand.NotifyCanExecuteChanged();
-			RedoCommand.NotifyCanExecuteChanged();
-			OnPropertyChanged(nameof(CanUndo));
-			OnPropertyChanged(nameof(CanRedo));
-		}
-
-		_batchStartState = null;
-	}
-
-	public void BatchEdit(Action editAction)
-	{
-		BeginHistoryBatch();
-		editAction();
-		EndHistoryBatch();
-	}
-
-	private void RecordCurrentState()
-	{
-		List<SettingState> nextState = CaptureState();
-		if (StatesEqual(_currentState, nextState)) return;
-
-		_undoStates.Push(_currentState);
-		_redoStates.Clear();
-		_currentState = nextState;
-		UndoCommand.NotifyCanExecuteChanged();
-		RedoCommand.NotifyCanExecuteChanged();
-		OnPropertyChanged(nameof(CanUndo));
-		OnPropertyChanged(nameof(CanRedo));
-	}
-
-	private List<SettingState> CaptureState() =>
-		[.. _allLeaves.Select(leaf => new SettingState(leaf.Model, leaf.Model.SelectedOption, leaf.Model.Value))];
-
-	private void RestoreState(List<SettingState> state)
-	{
-		_isRestoringHistory = true;
-		var modifiedModels = new HashSet<BiosSettingsModel>();
-		
-		BiosSettingsModel.IsBatchMode = true;
-		
-		try
-		{
-			foreach (SettingState setting in state)
-			{
-				if (setting.Model.HasOptions)
-				{
-					if (setting.Model.SelectedOption != setting.SelectedOption)
-					{
-						setting.Model.SelectedOption = setting.SelectedOption;
-						modifiedModels.Add(setting.Model);
-					}
-				}
-				else
-				{
-					if (setting.Model.Value != setting.Value)
-					{
-						setting.Model.Value = setting.Value;
-						modifiedModels.Add(setting.Model);
-					}
-				}
-			}
-		}
-		finally
-		{
-			BiosSettingsModel.IsBatchMode = false;
-			_isRestoringHistory = false;
-		}
-
-		if (modifiedModels.Count > 0)
-		{
-			BulkRefreshNodes(modifiedModels);
-		}
-
-		_currentState = CaptureState();
-		UpdateDiffNodesBulk(modifiedModels);
-		UpdateRecommendedTreeIncremental(modifiedModels);
-		ExpandDiffNodesAction?.Invoke();
-		RefreshFilterAction?.Invoke();
-	}
-
-	private void BulkRefreshNodes(HashSet<BiosSettingsModel> modifiedModels)
-	{
-		if (modifiedModels.Count == 0) return;
-
-		IsAnyModified = _allLeaves.Any(leaf => leaf.Model?.IsModified == true);
-
-		var refreshedParents = new HashSet<BiosTreeNode>();
-		
-		foreach (BiosSettingsModel model in modifiedModels)
-		{
-			if (_modelToLeafMap.TryGetValue(model, out BiosTreeNode? leaf))
-			{
-				leaf.RaiseDisplayCurrentChanged();
-				leaf.RaiseHasPendingRecommendationChanged();
-				leaf.RaiseIsModifiedChanged();
-
-				BiosTreeNode? parent = FindParentGroup(leaf);
-				if (parent != null && refreshedParents.Add(parent))
-				{
-					parent.RaiseIsModifiedChanged();
-					parent.RaiseDisplayCurrentChanged();
-					parent.RaiseHasPendingRecommendationChanged();
-				}
-			}
-		}
-
-		RecommendationStateChanged?.Invoke(this, EventArgs.Empty);
-	}
-
-	private static bool StatesEqual(IReadOnlyList<SettingState> left, IReadOnlyList<SettingState> right) => left.Count == right.Count && left.Zip(right).All(pair => ReferenceEquals(pair.First.SelectedOption, pair.Second.SelectedOption) && pair.First.Value == pair.Second.Value);
-
-	private sealed record SettingState(BiosSettingsModel Model, Option? SelectedOption, string? Value);
-
-	private static IEnumerable<BiosTreeNode> GetAllNodes(BiosTreeNode root)
-	{
-		yield return root;
-		foreach (BiosTreeNode child in root.Children)
-		{
-			foreach (BiosTreeNode descendant in GetAllNodes(child))
-			{
-				yield return descendant;
-			}
-		}
-	}
-
-	public int RecommendedCount
-	{
-		get
-		{
-BiosTreeNode? recommendedRoot = _recommendedRoot;
-			if (recommendedRoot == null) return 0;
-			return CountLeaves(recommendedRoot);
-		}
-	}
+		PageMode.Exporting => "Export",
+		PageMode.Importing => "Import",
+		PageMode.Loaded => "Loaded",
+		PageMode.Unsupported => "Unsupported",
+		PageMode.HiiResourcesRegular => "HII Resources (Regular)",
+		PageMode.HiiResourcesProtected => "HII Resources (Protected)",
+		PageMode.HiiResourcesOther => "HII Resources (Other)",
+		PageMode.WriteProtectedAsus => "Write Protected (ASUS)",
+		PageMode.WriteProtectedAsRock => "Write Protected (ASRock)",
+		PageMode.WriteProtectedOther => "Write Protected (Other)",
+		_ => "Export"
+	};
 }
