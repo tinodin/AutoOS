@@ -49,6 +49,7 @@ public static partial class PreparingStage
 	public static bool YouTubeNoTranslation;
 	public static bool DarkReader;
 	public static bool Shazam;
+	public static bool ProtonPass;
 	public static bool WaybackMachine;
 	public static bool iCloud;
 	public static bool Bitwarden;
@@ -471,7 +472,8 @@ public static partial class PreparingStage
 			YouTubeNoTranslation = (localSettings.Values["Extensions"]?.ToString()?.Contains("YouTube No Translation") ?? false);
 			DarkReader = (localSettings.Values["Extensions"]?.ToString()?.Contains("Dark Reader") ?? false);
 			Shazam = (localSettings.Values["Extensions"]?.ToString()?.Contains("Shazam") ?? false);
-			WaybackMachine = (localSettings.Values["Extensions"]?.ToString()?.Contains("Wayback Machine") ?? false);
+			ProtonPass = (localSettings.Values["Extensions"]?.ToString().Contains("Proton Pass") ?? false);
+      WaybackMachine = (localSettings.Values["Extensions"]?.ToString()?.Contains("Wayback Machine") ?? false);
 			iCloud = (localSettings.Values["Extensions"]?.ToString()?.Contains("iCloud Passwords") ?? false);
 			Bitwarden = (localSettings.Values["Extensions"]?.ToString()?.Contains("Bitwarden") ?? false);
 			OnePassword = (localSettings.Values["Extensions"]?.ToString()?.Contains("1Password") ?? false);
