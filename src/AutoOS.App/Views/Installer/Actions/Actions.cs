@@ -90,6 +90,37 @@ public static class ProcessActions
 			process.WaitForExit();
 		}
 	}
+	
+	public static async Task UpdateWindhawkMods()
+	{
+		string windhawkDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk");
+
+		using Process listProcess = Process.Start(new ProcessStartInfo
+		{
+			FileName = Path.Combine(windhawkDir, "windhawk-cli.exe"),
+			Arguments = "mod list --update-available --json",
+			WorkingDirectory = windhawkDir,
+			UseShellExecute = false,
+			CreateNoWindow = true,
+			RedirectStandardOutput = true
+		})!;
+
+		string json = await listProcess.StandardOutput.ReadToEndAsync();
+		await listProcess.WaitForExitAsync();
+
+		string[] modIds = [.. JsonDocument.Parse(json).RootElement.GetProperty("data").GetProperty("mods").EnumerateArray().Select(mod => mod.GetProperty("id").GetString() ?? string.Empty).Where(id => !string.IsNullOrEmpty(id))];
+
+		foreach (string modId in modIds)
+		{
+			await Process.Start(new ProcessStartInfo
+			{
+				FileName = Path.Combine(windhawkDir, "windhawk-cli.exe"),
+				Arguments = $"mod update {modId} --quiet",
+				WorkingDirectory = windhawkDir,
+				WindowStyle = ProcessWindowStyle.Hidden
+			})!.WaitForExitAsync();
+		}
+	}
 
 	public static async Task PatchStartAllBack()
 	{
@@ -165,37 +196,6 @@ public static class ProcessActions
 					File.Delete(old);
 			}
 			catch { }
-		}
-	}
-
-	public static async Task UpdateWindhawkMods()
-	{
-		string windhawkDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk");
-
-		using Process listProcess = Process.Start(new ProcessStartInfo
-		{
-			FileName = Path.Combine(windhawkDir, "windhawk-cli.exe"),
-			Arguments = "mod list --update-available --json",
-			WorkingDirectory = windhawkDir,
-			UseShellExecute = false,
-			CreateNoWindow = true,
-			RedirectStandardOutput = true
-		})!;
-
-		string json = await listProcess.StandardOutput.ReadToEndAsync();
-		await listProcess.WaitForExitAsync();
-
-		string[] modIds = [.. JsonDocument.Parse(json).RootElement.GetProperty("data").GetProperty("mods").EnumerateArray().Select(mod => mod.GetProperty("id").GetString() ?? string.Empty).Where(id => !string.IsNullOrEmpty(id))];
-
-		foreach (string modId in modIds)
-		{
-			await Process.Start(new ProcessStartInfo
-			{
-				FileName = Path.Combine(windhawkDir, "windhawk-cli.exe"),
-				Arguments = $"mod update {modId} --quiet",
-				WorkingDirectory = windhawkDir,
-				WindowStyle = ProcessWindowStyle.Hidden
-			})!.WaitForExitAsync();
 		}
 	}
 
