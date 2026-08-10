@@ -1,15 +1,11 @@
-using System.Diagnostics;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using AutoOS.App.Views.Installer.Stages;
 using AutoOS.App.Views.Updater;
 using AutoOS.App.Views.Updater.Stages;
 using AutoOS.Core.Helpers.Database;
 using AutoOS.Core.Helpers.Logging;
 using AutoOS.Core.Helpers.OS;
-using AutoOS.Core.Helpers.Registry;
 using CommunityToolkit.WinUI.Controls;
 using Microsoft.Win32;
 using Windows.Storage;
@@ -39,8 +35,8 @@ public sealed partial class HomePage : Page
 
 	private async void CheckForUpdates(object sender, RoutedEventArgs e)
 	{
-            if (!(Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList")?.GetSubKeyNames()?.Any(sid => new[] { "AutoOS", "user" }.Contains(Path.GetFileName(Registry.GetValue($@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\{sid}", "ProfileImagePath", null) as string), StringComparer.OrdinalIgnoreCase)) == true))
-            {
+		if (!(Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList")?.GetSubKeyNames()?.Any(sid => new[] { "AutoOS", "user" }.Contains(Path.GetFileName(Registry.GetValue($@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\{sid}", "ProfileImagePath", null) as string), StringComparer.OrdinalIgnoreCase)) == true))
+		{
 			var dialog = new ContentDialog
 			{
 				Title = "Unsupported System",
@@ -88,75 +84,6 @@ public sealed partial class HomePage : Page
 				if (await serverDialog.ShowAsync() == ContentDialogResult.Primary)
 					await Windows.System.Launcher.LaunchUriAsync(new Uri("https://discord.gg/bZU4dMMWpg"));
 			}
-		}
-
-		if (ubr >= 8521 && (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\windows-11-start-menu-styler\Settings", "controlStyles[0].target", null) as string) == "")
-		{
-			RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\windows-11-start-menu-styler\Settings", "theme", "SideBySide2", RegistryValueKind.String);
-			RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\windows-11-start-menu-styler\Settings", "disableNewStartMenuLayout", "", RegistryValueKind.String);
-			RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\windows-11-start-menu-styler\Settings", "controlStyles[1].target", "ScrollViewer > ScrollContentPresenter > Border > StartMenu.StartBlendedFlexFrame > Grid#FrameRoot > Grid#AnimationRoot > Grid#MainMenu > Grid#MainContent > Frame#StartFrame > ContentPresenter > StartMenu.StartHome > Grid#PageRoot > SemanticZoom#TopLevelRoot > Grid > ScrollViewer#ScrollViewer > ScrollContentPresenter#ScrollContentPresenter > Grid > ContentPresenter#ZoomedInPresenter > GridView#AllAppsGrid > Border > Grid#SideBySidePinnedWrapper > ScrollViewer#SideBySidePinnedScrollViewer > Border#Root > Grid > ScrollContentPresenter#ScrollContentPresenter > Grid#SideBySidePinnedContent > Grid#TopLevelSuggestionsRoot > Grid#TopLevelSuggestionsContainerParent > Grid#TopLevelSuggestionsContainer > StartMenu.RecommendedReactNativeViewControl > ContentPresenter > ExperienceExtensions.ReactNativeExperienceViewControl > Grid#RootViewContainer > Microsoft.ReactNative.ReactRootView > Microsoft.ReactNative.ViewPanel > Microsoft.ReactNative.ViewPanel > GridView#RecommendedList > Border > ScrollViewer#ScrollViewer > Border#Root > Grid > ScrollContentPresenter#ScrollContentPresenter > ItemsPresenter > ItemsWrapGrid > GridViewItem#RecommendedItemRoot0", RegistryValueKind.String);
-			RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\windows-11-start-menu-styler\Settings", "controlStyles[1].styles[0]", "MinWidth=220", RegistryValueKind.String);
-			RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\windows-11-start-menu-styler\Settings", "controlStyles[1].styles[1]", "MaxWidth=220", RegistryValueKind.String);
-			RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\windows-11-start-menu-styler\Settings", "controlStyles[0].target", "ScrollViewer > ScrollContentPresenter > Border > StartMenu.StartBlendedFlexFrame > Grid#FrameRoot > Grid#AnimationRoot > Grid#MainMenu > Grid#MainContent > Frame#StartFrame > ContentPresenter > StartMenu.StartHome > Grid#PageRoot > SemanticZoom#TopLevelRoot > Grid > ScrollViewer#ScrollViewer > ScrollContentPresenter#ScrollContentPresenter > Grid > ContentPresenter#ZoomedInPresenter > GridView#AllAppsGrid > Border > Grid#SideBySidePinnedWrapper > ScrollViewer#SideBySidePinnedScrollViewer > Border#Root > Grid > ScrollContentPresenter#ScrollContentPresenter > Grid#SideBySidePinnedContent > Grid#TopLevelSuggestionsRoot > Grid#TopLevelSuggestionsContainerParent > Grid#TopLevelSuggestionsContainer > StartMenu.RecommendedReactNativeViewControl > ContentPresenter > ExperienceExtensions.ReactNativeExperienceViewControl > Grid#RootViewContainer > Microsoft.ReactNative.ReactRootView > Microsoft.ReactNative.ViewPanel > Microsoft.ReactNative.ViewPanel > GridView#RecommendedList", RegistryValueKind.String);
-			RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\windows-11-start-menu-styler\Settings", "controlStyles[0].styles[0]", "Height=170", RegistryValueKind.String);
-			RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Start", "AllAppsViewMode", 2, RegistryValueKind.DWord);
-			RegistryHelper.DeleteKey(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\3036241548");
-
-			if (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\windows-11-start-menu-styler", "Version", null) as string != "1.6")
-			{
-				var restartDialog = new ContentDialog
-				{
-					Title = "Update Windhawk Start Menu Styler Mod",
-					Content = "Open Windhawk and update the Start Menu Styler Mod, then click restart.",
-					PrimaryButtonText = "Restart",
-					DefaultButton = ContentDialogButton.Primary,
-					XamlRoot = XamlRoot
-				};
-
-				if (await restartDialog.ShowAsync() == ContentDialogResult.Primary)
-				{
-					ProcessStartInfo processStartInfo = new()
-					{
-						FileName = "cmd.exe",
-						Arguments = $"/c shutdown /r /t 0",
-						UseShellExecute = false,
-						CreateNoWindow = true,
-					};
-					Process.Start(processStartInfo);
-				}
-				return;
-			}
-		}
-
-		// enable "low latency profile"
-		if (ubr >= 8524 && Convert.ToInt32(Registry.GetValue(@"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\FeatureManagement\Overrides\8\3650112648", "EnabledState", 0)) != 2)
-		{
-			RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\FeatureManagement\Overrides\8\3650112648", "EnabledState", 2, RegistryValueKind.DWord);
-			RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\FeatureManagement\Overrides\8\3650112648", "EnabledStateOptions", 0, RegistryValueKind.DWord);
-			RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\FeatureManagement\Overrides\8\3650112648", "Variant", 0, RegistryValueKind.DWord);
-			RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\FeatureManagement\Overrides\8\3650112648", "VariantPayload", 0, RegistryValueKind.DWord);
-			RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\FeatureManagement\Overrides\8\3650112648", "VariantPayloadKind", 0, RegistryValueKind.DWord);
-		}
-
-		if (ubr >= 8875 && Convert.ToInt32(Registry.GetValue(@"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\FeatureManagement\Overrides\8\4066113166", "EnabledState", 0)) != 2)
-		{
-			RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\FeatureManagement\Overrides\8\4066113166", "EnabledState", 2, RegistryValueKind.DWord);
-			RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\FeatureManagement\Overrides\8\4066113166", "EnabledStateOptions", 0, RegistryValueKind.DWord);
-			RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\FeatureManagement\Overrides\8\4066113166", "Variant", 0, RegistryValueKind.DWord);
-			RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\FeatureManagement\Overrides\8\4066113166", "VariantPayload", 0, RegistryValueKind.DWord);
-			RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\FeatureManagement\Overrides\8\4066113166", "VariantPayloadKind", 0, RegistryValueKind.DWord);
-		}
-
-		if (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\auto-theme-switcher", "Version", null) as string != "1.3.2" && Convert.ToInt32(Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\auto-theme-switcher", "Disabled", 0)) != 1)
-		{
-			var restartDialog = new ContentDialog
-			{
-				Title = "Update Windhawk Auto Theme Switcher Mod",
-				Content = "Open Windhawk and update the Auto Theme Switcher Mod.",
-				PrimaryButtonText = "Done",
-				DefaultButton = ContentDialogButton.Primary,
-				XamlRoot = XamlRoot
-			};
 		}
 
 		Version currentVersion = new(ProcessInfoHelper.Version);
@@ -239,7 +166,7 @@ public sealed partial class HomePage : Page
 			}
 		}
 
-		#if !DEBUG
+#if !DEBUG
 		try
 		{
 			var json = await httpClient.GetStringAsync("https://api.github.com/repos/tinodin/AutoOS/releases");
@@ -304,6 +231,6 @@ public sealed partial class HomePage : Page
 			await PackageStage.PackageActions(downloadUrl, msixDialog);
 		}
 		catch { }
-		#endif
+#endif
 	}
 }

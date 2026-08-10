@@ -1,10 +1,10 @@
-using AutoOS.App.Views;
-using AutoOS.App.Views.Installer.Stages;
-using AutoOS.App.Views.Startup;
 using AutoOS.App.Services;
 using AutoOS.App.Services.Bios;
 using AutoOS.App.Services.Power;
 using AutoOS.App.ViewModels;
+using AutoOS.App.Views;
+using AutoOS.App.Views.Installer.Stages;
+using AutoOS.App.Views.Startup;
 using AutoOS.Core.Helpers.Logging;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;

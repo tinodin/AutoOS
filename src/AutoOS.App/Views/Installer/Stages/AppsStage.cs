@@ -170,7 +170,7 @@ public static class AppsStage
 	public static bool Valorant;
 
 	public static List<(string Title, Func<Task> Action, Func<bool>? Condition)> GetActions(IStatusReporter reporter = null!, ApplicationSelection selection = null!)
- 	{
+	{
 		if (reporter == null && selection == null)
 		{
 			reporter = new InstallPageReporter();
@@ -492,19 +492,9 @@ public static class AppsStage
 
 			// install windhawk
 			("Installing Windhawk", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "windhawk_setup_offline.exe"), Arguments = "/S", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => selection == null),
-			("Installing Windhawk", async () => await DownloadHelper.Download("https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/Files/Windhawk/windhawk.reg", Path.GetTempPath(), "windhawk.reg", reporter: reporter), () => selection == null),
-
-			("Installing Windhawk", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk", "windhawk-cli.exe"), Arguments = "mod install auto-theme-switcher --quiet", WorkingDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk"), WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => selection == null),
-			("Installing Windhawk", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk", "windhawk-cli.exe"), Arguments = "mod install explorer-details-better-file-sizes --quiet", WorkingDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk"), WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => selection == null),
-			("Installing Windhawk", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk", "windhawk-cli.exe"), Arguments = "mod install extension-change-no-warning --quiet", WorkingDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk"), WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => selection == null),
-			("Installing Windhawk", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk", "windhawk-cli.exe"), Arguments = "mod install f1-blocker --quiet", WorkingDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk"), WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => selection == null),
-			("Installing Windhawk", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk", "windhawk-cli.exe"), Arguments = "mod install modernize-folder-picker-dialog --quiet", WorkingDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk"), WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => selection == null),
-			("Installing Windhawk", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk", "windhawk-cli.exe"), Arguments = "mod install slick-window-arrangement --quiet", WorkingDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk"), WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => selection == null),
-			("Installing Windhawk", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk", "windhawk-cli.exe"), Arguments = "mod install start-menu-open-location --quiet", WorkingDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk"), WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => selection == null),
-			("Installing Windhawk", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk", "windhawk-cli.exe"), Arguments = "mod install taskbar-fluent-media-player --quiet", WorkingDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk"), WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => selection == null),
-			("Installing Windhawk", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk", "windhawk-cli.exe"), Arguments = "mod install taskbar-notification-icons-show-all --quiet", WorkingDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk"), WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => selection == null),
-			("Installing Windhawk", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk", "windhawk-cli.exe"), Arguments = "mod install windows-11-start-menu-styler --quiet", WorkingDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk"), WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => selection == null),
-			("Installing Windhawk", async () => await Process.Start(new ProcessStartInfo { FileName = "reg.exe", Arguments = @$"import ""{Path.Combine(Path.GetTempPath(), "windhawk.reg")}""", CreateNoWindow = true })!.WaitForExitAsync(), () => selection == null),
+			("Installing Windhawk", async () => await DownloadHelper.Download("https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/Files/Windhawk/windhawk.json", Path.GetTempPath(), "windhawk.json", reporter: reporter), () => selection == null),
+			("Installing Windhawk", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk", "windhawk-cli.exe"), Arguments = @$"data import ""{Path.Combine(Path.GetTempPath(), "windhawk.json")}"" --yes", WorkingDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk"), WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => selection == null),
+			("Installing Windhawk", async () => await ProcessActions.UpdateWindhawkMods(), () => selection == null),
 			//("Installing Windhawk", async () => await RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\auto-theme-switcher\Settings", "LightThemePath", LightThemePath, RegistryValueKind.String), () => selection == null),
 			//("Installing Windhawk", async () => await RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\auto-theme-switcher\Settings", "DarkThemePath", DarkThemePath, RegistryValueKind.String), () => selection == null),
 			("Installing Windhawk", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\auto-theme-switcher", "Disabled", 1, RegistryValueKind.DWord), () => ScheduleMode == "Always Light" || ScheduleMode == "Always Dark"),
@@ -514,7 +504,7 @@ public static class AppsStage
 			("Installing Windhawk", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\taskbar-fluent-media-player\Settings", "MainSettings.PlayerSetting.position", "tray_left", RegistryValueKind.String), () => selection == null && LeftTaskbarAlignment == true),
 			("Installing Windhawk", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\taskbar-notification-icons-show-all", "Disabled", 1, RegistryValueKind.DWord), () => selection == null && AlwaysShowTrayIcons == false),
 			("Cleaning up Windhawk files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "windhawk_setup_offline.exe")), () => selection == null),
-			("Cleaning up Windhawk files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "windhawk.reg")), () => selection == null),
+			("Cleaning up Windhawk files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "windhawk.json")), () => selection == null),
 			
 			// remove windhawk desktop shortcut 
 			("Removing Windhawk desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Windhawk.lnk")), () => selection == null),
@@ -575,17 +565,11 @@ public static class AppsStage
 			("Importing Vencord settings", async () => File.Copy(Path.Combine(Path.GetTempPath(), "settings.json"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Vencord", "settings", "settings.json"), true), () => Discord == true),
 			("Importing Vencord settings", async () => await Task.Delay(500), () => Discord == true),
 
-			// import discord account
-			("Importing Discord Account", async () => { Process.Start(new ProcessStartInfo { FileName = Path.Combine(Directory.GetDirectories(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Discord"), "app-*").FirstOrDefault() ?? "", "Discord.exe"), WindowStyle = ProcessWindowStyle.Hidden }); while (Process.GetProcessesByName("OpenWith").Length == 0 && Process.GetProcessesByName("msedge").Length == 0) { await Task.Delay(500); } }, () => Discord == true && DiscordAccount == true),
-			("Importing Discord Account", async () => await Task.Delay(4000), () => Discord == true && DiscordAccount == true),
-			("Importing Discord Account", async () => { foreach (Process process in Process.GetProcessesByName("OpenWith")) { process.Kill(); process.WaitForExit(); } foreach (Process process in Process.GetProcessesByName("msedge")) { process.Kill(); process.WaitForExit(); } }, () => Discord == true && DiscordAccount == true),
-			("Importing Discord Account", async () => { foreach (Process process in Process.GetProcessesByName("Discord")) { if (process.MainWindowHandle != IntPtr.Zero) { PInvoke.PostMessage((HWND)process.MainWindowHandle, PInvoke.WM_CLOSE, default(WPARAM), default(LPARAM)); process.WaitForExit(); } } }, () => Discord == true && DiscordAccount == true),
-			("Importing Discord Account", async () => await DiscordHelper.ImportAccount(reporter), () => Discord == true && DiscordAccount == true),
-
-			// import discord keybinds
-			("Importing Discord Keybinds", async () => await DiscordHelper.ImportKeybinds(reporter), () => Discord == true && DiscordKeybinds == true),
-
 			// set appearance to system
+			("Setting appearance to system", async () => { Process.Start(new ProcessStartInfo { FileName = Path.Combine(Directory.GetDirectories(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Discord"), "app-*").FirstOrDefault() ?? "", "Discord.exe"), WindowStyle = ProcessWindowStyle.Hidden }); while (Process.GetProcessesByName("OpenWith").Length == 0 && Process.GetProcessesByName("msedge").Length == 0) { await Task.Delay(500); } }, () => Discord == true),
+			("Setting appearance to system", async () => await Task.Delay(4000), () => Discord == true),
+			("Setting appearance to system", async () => { foreach (Process process in Process.GetProcessesByName("OpenWith")) { process.Kill(); process.WaitForExit(); } foreach (Process process in Process.GetProcessesByName("msedge")) { process.Kill(); process.WaitForExit(); } }, () => Discord == true),
+			("Setting appearance to system", async () => { foreach (Process process in Process.GetProcessesByName("Discord")) { if (process.MainWindowHandle != IntPtr.Zero) { PInvoke.PostMessage((HWND)process.MainWindowHandle, PInvoke.WM_CLOSE, default(WPARAM), default(LPARAM)); process.WaitForExit(); } } }, () => Discord == true),
 			("Setting appearance to system", async () => await DiscordHelper.SetSystemAppearance(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "discord", "Local Storage", "leveldb")), () => Discord == true),
 
 			// disable game overlay
@@ -593,6 +577,12 @@ public static class AppsStage
 
 			// disable clips
 			("Disabling clips", async () => await DiscordHelper.DisableClips(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "discord", "Local Storage", "leveldb")), () => Discord == true),
+
+			// import discord account
+			("Importing Discord Account", async () => await DiscordHelper.ImportAccount(reporter), () => Discord == true && DiscordAccount == true),
+
+			// import discord keybinds
+			("Importing Discord Keybinds", async () => await DiscordHelper.ImportKeybinds(reporter), () => Discord == true && DiscordKeybinds == true),
 
 			// remove discord desktop shortcut 
 			("Removing Discord desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Discord.lnk")), () => Discord == true),
@@ -717,6 +707,7 @@ public static class AppsStage
 			// update steam
 			("Updating Steam", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Steam", "Steam.exe") , WindowStyle = ProcessWindowStyle.Hidden }) !.WaitForExitAsync(), () => Steam == true),
 			("Updating Steam", async () => { while (Process.GetProcessesByName("steamwebhelper").Length == 0) await Task.Delay(500); }, () => Steam == true),
+			("Updating Steam", async () => SteamHelper.CloseSteam(), () => Steam == true),
 
 			// import steam games
 			("Importing Steam Games", async () => await SteamHelper.ImportGames(), () => Steam == true && SteamGames == true),
@@ -2346,7 +2337,7 @@ public static class AppsStage
             // remove free download manager desktop shortcut
 			("Removing Free Download Manager desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Free Download Manager.lnk")), () => FreeDownloadManager == true),
 			("Disabling Free Download Manager startup entry", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", "Free Download Manager", new byte[] { 0x03 }, RegistryValueKind.Binary), () => FreeDownloadManager == true),
-        }; 
+		};
 
 		if (selection != null)
 		{

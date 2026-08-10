@@ -62,7 +62,8 @@ public sealed partial class ServicesPage : Page
 
 	private async void Services_Toggled(object sender, RoutedEventArgs e)
 	{
-		if (isInitializingServicesState) return;
+		if (isInitializingServicesState)
+			return;
 
 		// disable hittestvisible to avoid double-clicking
 		Services.IsHitTestVisible = false;
@@ -163,7 +164,8 @@ public sealed partial class ServicesPage : Page
 
 	private async void WIFI_Checked(object sender, RoutedEventArgs e)
 	{
-		if (isInitializingWIFIState) return;
+		if (isInitializingWIFIState)
+			return;
 
 		// disable hittestvisible to avoid double-clicking
 		Services.IsHitTestVisible = false;
@@ -229,7 +231,8 @@ public sealed partial class ServicesPage : Page
 				{
 					using (RegistryKey? key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}", writable: true))
 					{
-						if (key == null) continue;
+						if (key == null)
+							continue;
 
 						Registry.SetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\{service}", "Start", group.Item2);
 					}
@@ -318,7 +321,8 @@ public sealed partial class ServicesPage : Page
 
 	private async void Bluetooth_Checked(object sender, RoutedEventArgs e)
 	{
-		if (isInitializingBluetoothState) return;
+		if (isInitializingBluetoothState)
+			return;
 
 		// disable hittestvisible to avoid double-clicking
 		Services.IsHitTestVisible = false;
@@ -382,7 +386,8 @@ public sealed partial class ServicesPage : Page
 				{
 					using (RegistryKey? key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}", writable: true))
 					{
-						if (key == null) continue;
+						if (key == null)
+							continue;
 
 						Registry.SetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\{service}", "Start", group.Item2);
 					}

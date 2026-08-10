@@ -104,7 +104,9 @@ public static class SecurityStage
 
 							foreach (Process process in Process.GetProcessesByName("SecHealthUI"))
 							{
-								try { process.Kill(); } catch { }
+								try
+								{ process.Kill(); }
+								catch { }
 							}
 
 							break;

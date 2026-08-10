@@ -5,7 +5,6 @@ using AutoOS.Core.Helpers.CPU.Models;
 using AutoOS.Core.Helpers.Device;
 using AutoOS.Core.Helpers.Device.Models;
 using AutoOS.Core.Helpers.Scheduling;
-using DevWinUI;
 
 namespace AutoOS.App.Views.Settings;
 
@@ -26,19 +25,23 @@ public sealed partial class SchedulingPage : Page
 
 		var audioGroup = new SchedulingGroup { Name = "Audio Controllers", IsExpanded = true };
 		LoadDeviceGroup(DeviceType.AudioController, audioGroup);
-		if (audioGroup.SubItems.Count > 0) Nodes.Add(audioGroup);
+		if (audioGroup.SubItems.Count > 0)
+			Nodes.Add(audioGroup);
 
 		var gpuGroup = new SchedulingGroup { Name = "Graphics Cards", IsExpanded = true };
 		LoadDeviceGroup(DeviceType.GPU, gpuGroup);
-		if (gpuGroup.SubItems.Count > 0) Nodes.Add(gpuGroup);
+		if (gpuGroup.SubItems.Count > 0)
+			Nodes.Add(gpuGroup);
 
 		var xhciGroup = new SchedulingGroup { Name = "XHCI Controllers", IsExpanded = true };
 		LoadDeviceGroup(DeviceType.XHCI, xhciGroup);
-		if (xhciGroup.SubItems.Count > 0) Nodes.Add(xhciGroup);
+		if (xhciGroup.SubItems.Count > 0)
+			Nodes.Add(xhciGroup);
 
 		var nicGroup = new SchedulingGroup { Name = "Network Interface Controllers", IsExpanded = true };
 		LoadDeviceGroup(DeviceType.NIC, nicGroup);
-		if (nicGroup.SubItems.Count > 0) Nodes.Add(nicGroup);
+		if (nicGroup.SubItems.Count > 0)
+			Nodes.Add(nicGroup);
 	}
 	private static void LoadDeviceGroup(DeviceType type, SchedulingGroup group)
 	{
@@ -73,10 +76,12 @@ public sealed partial class SchedulingPage : Page
 	public void UpdateDevice(DeviceType deviceType, string pnpDeviceId, DeviceInfo? targetDevice = null)
 	{
 		SchedulingItem? item = Nodes.SelectMany(g => g.SubItems).FirstOrDefault(d => string.Equals(d.PnpDeviceId, pnpDeviceId, StringComparison.OrdinalIgnoreCase));
-		if (item == null) return;
+		if (item == null)
+			return;
 
 		targetDevice ??= DeviceHelper.GetDevices(item.DeviceType).FirstOrDefault(d => string.Equals(d.PnpDeviceId, pnpDeviceId, StringComparison.OrdinalIgnoreCase));
-		if (targetDevice == null) return;
+		if (targetDevice == null)
+			return;
 
 		item.MsiSupported = targetDevice.MsiSupported;
 		item.MsiLimit = targetDevice.MsiLimit;

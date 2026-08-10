@@ -1,5 +1,4 @@
 using AutoOS.App.Data.Models.Bios;
-using Syncfusion.UI.Xaml.TreeGrid;
 
 namespace AutoOS.App.Data.TemplateSelectors.Bios;
 

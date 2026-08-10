@@ -1,4 +1,3 @@
-using AutoOS.App.Common;
 using AutoOS.Core.Helpers.TaskScheduler;
 
 namespace AutoOS.App.Views.Installer.Stages;

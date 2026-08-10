@@ -7,8 +7,10 @@ public sealed partial class SchedulingItemTemplateSelector : DataTemplateSelecto
 
 	protected override DataTemplate SelectTemplateCore(object item)
 	{
-		if (item is SchedulingGroup) return GroupTemplate;
-		if (item is SchedulingItem) return ItemTemplate;
+		if (item is SchedulingGroup)
+			return GroupTemplate;
+		if (item is SchedulingItem)
+			return ItemTemplate;
 		return base.SelectTemplateCore(item);
 	}
 }

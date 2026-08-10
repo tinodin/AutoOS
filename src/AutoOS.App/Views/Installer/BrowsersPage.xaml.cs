@@ -79,7 +79,8 @@ public sealed partial class BrowsersPage : Page
 
 	private void Browsers_Changed(object sender, SelectionChangedEventArgs e)
 	{
-		if (isInitializingBrowsersState) return;
+		if (isInitializingBrowsersState)
+			return;
 
 		string[] selectedBrowsers = Browsers.SelectedItems
 			.Cast<GridViewItem>()
@@ -104,7 +105,8 @@ public sealed partial class BrowsersPage : Page
 
 	private void Extensions_Changed(object sender, SelectionChangedEventArgs e)
 	{
-		if (isInitializingExtensionsState) return;
+		if (isInitializingExtensionsState)
+			return;
 
 		string[] selectedExtensions = Extensions.SelectedItems
 			.Cast<GridViewItem>()

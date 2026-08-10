@@ -7,10 +7,12 @@ public partial class NavigationViewItemStyleSelector : StyleSelector
 
 	protected override Style? SelectStyleCore(object item, DependencyObject container)
 	{
-		if (item == null) return TopLevelTemplate;
+		if (item == null)
+			return TopLevelTemplate;
 
 		var navItem = item as NavigationViewItem;
-		if (navItem == null) return null;
+		if (navItem == null)
+			return null;
 
 		NavigationViewItem subItem = VisualHelper.FindParentOfType<NavigationViewItem>(navItem);
 

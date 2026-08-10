@@ -13,7 +13,8 @@ public sealed partial class CellStyleSelector : StyleSelector
 
 	protected override Style? SelectStyleCore(object item, DependencyObject container)
 	{
-		if (item is not Node node) return null;
+		if (item is not Node node)
+			return null;
 
 		if (container is TreeGridCell cell)
 		{

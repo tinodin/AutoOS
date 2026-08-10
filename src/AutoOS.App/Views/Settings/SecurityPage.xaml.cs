@@ -53,7 +53,8 @@ public sealed partial class SecurityPage : Page
 			foreach (string service in group.Item1)
 			{
 				using RegistryKey? key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}");
-				if (key == null) continue;
+				if (key == null)
+					continue;
 
 				object? startValue = key.GetValue("Start");
 				if (startValue == null || (int)startValue != group.Item2)
@@ -105,7 +106,8 @@ public sealed partial class SecurityPage : Page
 
 	private async void WindowsDefender_Toggled(object sender, RoutedEventArgs e)
 	{
-		if (isInitializingWindowsDefenderState) return;
+		if (isInitializingWindowsDefenderState)
+			return;
 
 		// disable hittestvisible to avoid double-clicking
 		WindowsDefender.IsHitTestVisible = false;
@@ -274,10 +276,12 @@ public sealed partial class SecurityPage : Page
 			RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender", "DisableAntiSpyware", 1, RegistryValueKind.DWord);
 			RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender", "DisableAntiVirus", 1, RegistryValueKind.DWord);
 			await RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, new ProcessStartInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windows Defender", "MpCmdRun.exe"), "-DisableService -HighPriority") { CreateNoWindow = true });
-			while (new ServiceController("WdFilter").Status != ServiceControllerStatus.Stopped) await Task.Delay(100);
+			while (new ServiceController("WdFilter").Status != ServiceControllerStatus.Stopped)
+				await Task.Delay(100);
 			foreach (Process process in Process.GetProcessesByName("SecurityHealthSystray"))
 			{
-				process.Kill(); process.WaitForExit();
+				process.Kill();
+				process.WaitForExit();
 			}
 			RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => ServicesHelper.KillServiceProcess("SecurityHealthService"));
 			RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => ServicesHelper.StopService("webthreatdefsvc"));
@@ -355,7 +359,8 @@ public sealed partial class SecurityPage : Page
 
 	private async void UAC_Toggled(object sender, RoutedEventArgs e)
 	{
-		if (isInitializingUACState) return;
+		if (isInitializingUACState)
+			return;
 
 		// disable hittestvisible to avoid double-clicking
 		UAC.IsHitTestVisible = false;
@@ -491,7 +496,8 @@ public sealed partial class SecurityPage : Page
 
 	private async void DEP_Toggled(object sender, RoutedEventArgs e)
 	{
-		if (isInitializingDEPState) return;
+		if (isInitializingDEPState)
+			return;
 
 		// disable hittestvisible to avoid double-clicking
 		DEP.IsHitTestVisible = false;
@@ -605,7 +611,8 @@ public sealed partial class SecurityPage : Page
 
 	private async void MemoryIntegrity_Toggled(object sender, RoutedEventArgs e)
 	{
-		if (isInitializingMemoryIntegrityState) return;
+		if (isInitializingMemoryIntegrityState)
+			return;
 
 		// disable hittestvisible to avoid double-clicking
 		MemoryIntegrity.IsHitTestVisible = false;
@@ -682,7 +689,8 @@ public sealed partial class SecurityPage : Page
 
 	private async void VirtualizationBasedSecurity_Toggled(object sender, RoutedEventArgs e)
 	{
-		if (isInitializingVBSState) return;
+		if (isInitializingVBSState)
+			return;
 
 		// disable hittestvisible to avoid double-clicking
 		VirtualizationBasedSecurity.IsHitTestVisible = false;
@@ -811,7 +819,8 @@ public sealed partial class SecurityPage : Page
 
 	private async void SpectreMeltdown_Toggled(object sender, RoutedEventArgs e)
 	{
-		if (isInitializingSpectreMeltdownState) return;
+		if (isInitializingSpectreMeltdownState)
+			return;
 
 		// disable hittestvisible to avoid double-clicking
 		SpectreMeltdown.IsHitTestVisible = false;
@@ -911,7 +920,8 @@ public sealed partial class SecurityPage : Page
 
 	private async void ProcessMitigations_Toggled(object sender, RoutedEventArgs e)
 	{
-		if (isInitializingProcessMitigationsState) return;
+		if (isInitializingProcessMitigationsState)
+			return;
 
 		// disable hittestvisible to avoid double-clicking
 		ProcessMitigations.IsHitTestVisible = false;

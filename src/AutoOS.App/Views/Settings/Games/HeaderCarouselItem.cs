@@ -113,7 +113,8 @@ public partial class HeaderCarouselItem : Button
 
 	private void PlaySelectAnimation()
 	{
-		if (!this.IsLoaded || visual == null || _dropShadow == null || compositor == null) return;
+		if (!this.IsLoaded || visual == null || _dropShadow == null || compositor == null)
+			return;
 
 		visual.StopAnimation("Scale");
 		_dropShadow.StopAnimation(nameof(_dropShadow.Opacity));
@@ -137,7 +138,8 @@ public partial class HeaderCarouselItem : Button
 
 	private void PlayDeselectAnimation()
 	{
-		if (!this.IsLoaded || visual == null || _dropShadow == null || compositor == null) return;
+		if (!this.IsLoaded || visual == null || _dropShadow == null || compositor == null)
+			return;
 
 		visual.StopAnimation("Scale");
 		_dropShadow.StopAnimation(nameof(_dropShadow.Opacity));

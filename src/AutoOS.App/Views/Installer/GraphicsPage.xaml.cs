@@ -71,7 +71,8 @@ public sealed partial class GraphicsPage : Page
 					foreach (JsonNode? node in array)
 					{
 						JsonObject? obj = node?.AsObject();
-						if (obj == null) continue;
+						if (obj == null)
+							continue;
 
 						savedGpus.Add(new GpuInfo
 						{
@@ -234,7 +235,8 @@ public sealed partial class GraphicsPage : Page
 
 	private void OBS_Toggled(object sender, RoutedEventArgs e)
 	{
-		if (isInitializingOBSState) return;
+		if (isInitializingOBSState)
+			return;
 		localSettings.Values["OBS"] = OBS.IsOn ? 1 : 0;
 	}
 }

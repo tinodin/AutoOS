@@ -34,7 +34,8 @@ public static partial class GpuHelper
 		Guid guid = new("4d36e968-e325-11ce-bfc1-08002be10318");
 		HDEVINFO hDevInfo = PInvoke.SetupDiGetClassDevs(&guid, null, HWND.Null, SETUP_DI_GET_CLASS_DEVS_FLAGS.DIGCF_PRESENT);
 
-		if (hDevInfo.Value == (nint)(-1)) return gpus;
+		if (hDevInfo.Value == (nint)(-1))
+			return gpus;
 
 		Span<char> idBuffer = stackalloc char[512];
 		Span<char> audioBuffer = stackalloc char[512];
@@ -45,7 +46,8 @@ public static partial class GpuHelper
 			while (true)
 			{
 				SP_DEVINFO_DATA devInfo = new() { cbSize = (uint)sizeof(SP_DEVINFO_DATA) };
-				if (!PInvoke.SetupDiEnumDeviceInfo(hDevInfo, index++, &devInfo)) break;
+				if (!PInvoke.SetupDiEnumDeviceInfo(hDevInfo, index++, &devInfo))
+					break;
 
 				string pnpDeviceId = string.Empty;
 				fixed (char* pIdBuffer = idBuffer)
@@ -102,9 +104,9 @@ public static partial class GpuHelper
 
 						if (pciDb.TryGetValue(vendorId, out (string Vendor, Dictionary<string, string> Devices) vendor) && vendor.Devices.TryGetValue(deviceId, out string? name))
 						{
-string[] versionParts = currentVersion.Split('.');
-						if (versionParts.Length >= 4)
-							currentVersion = versionParts[2] + "." + versionParts[3];
+							string[] versionParts = currentVersion.Split('.');
+							if (versionParts.Length >= 4)
+								currentVersion = versionParts[2] + "." + versionParts[3];
 							codename = name.Split('[')[0].Trim();
 						}
 					}
@@ -123,7 +125,8 @@ string[] versionParts = currentVersion.Split('.');
 								int audioFuncIdx = audioLoc.IndexOf(", function");
 								string audioBusDev = audioFuncIdx > -1 ? audioLoc[..audioFuncIdx] : audioLoc;
 
-								if (string.IsNullOrEmpty(gpuBusDev) || gpuBusDev != audioBusDev) continue;
+								if (string.IsNullOrEmpty(gpuBusDev) || gpuBusDev != audioBusDev)
+									continue;
 
 								fixed (char* pAudioBuffer = audioBuffer)
 								{
@@ -162,7 +165,8 @@ string[] versionParts = currentVersion.Split('.');
 						currentVersion = "N/A";
 					}
 				}
-				else continue;
+				else
+					continue;
 
 				gpus.Add(new GpuInfo
 				{
@@ -188,6 +192,77 @@ string[] versionParts = currentVersion.Split('.');
 			PInvoke.SetupDiDestroyDeviceInfoList(hDevInfo);
 		}
 
+		Guid unknownGuid = new("4d36e97e-e325-11ce-bfc1-08002be10318");
+		HDEVINFO hUnknownInfo = PInvoke.SetupDiGetClassDevs(&unknownGuid, null, HWND.Null, SETUP_DI_GET_CLASS_DEVS_FLAGS.DIGCF_PRESENT);
+
+		if (hUnknownInfo.Value != (nint)(-1))
+		{
+			try
+			{
+				Span<char> unknownIdBuffer = stackalloc char[512];
+				uint index = 0;
+
+				while (true)
+				{
+					SP_DEVINFO_DATA devInfo = new() { cbSize = (uint)sizeof(SP_DEVINFO_DATA) };
+					if (!PInvoke.SetupDiEnumDeviceInfo(hUnknownInfo, index++, &devInfo))
+						break;
+
+					string pnpDeviceId;
+					fixed (char* pIdBuffer = unknownIdBuffer)
+					{
+						uint requiredSize;
+						if (!PInvoke.SetupDiGetDeviceInstanceId(hUnknownInfo, &devInfo, pIdBuffer, (uint)idBuffer.Length, &requiredSize))
+							continue;
+
+						pnpDeviceId = new string(pIdBuffer);
+					}
+
+					if (gpus.Any(x => x.PnPDeviceId == pnpDeviceId))
+						continue;
+					if (!pnpDeviceId.Contains("VEN_") || !pnpDeviceId.Contains("DEV_"))
+						continue;
+
+					string vendorId = pnpDeviceId.Substring(pnpDeviceId.IndexOf("VEN_") + 4, 4).ToLowerInvariant();
+					string deviceId = pnpDeviceId.Substring(pnpDeviceId.IndexOf("DEV_") + 4, 4).ToLowerInvariant();
+
+					if (vendorId is not ("10de" or "1002" or "8086"))
+						continue;
+					if (!string.IsNullOrEmpty(GetDriverVersion(hUnknownInfo, devInfo)))
+						continue;
+
+					pciDb ??= LoadPciDatabase();
+
+					if (!pciDb.TryGetValue(vendorId, out (string Vendor, Dictionary<string, string> Devices) vendor) || !vendor.Devices.TryGetValue(deviceId, out string? name))
+						continue;
+
+					string deviceName = name.Split('[', ']') is { Length: > 1 } parts ? parts[1] : name;
+					deviceName = vendorId switch { "10de" => "NVIDIA " + deviceName, "1002" => "AMD " + deviceName, _ => "Intel " + deviceName };
+
+					string gpuLocation = GetLocationInfo(hUnknownInfo, devInfo);
+					int gpuFuncIdx = gpuLocation.IndexOf(", function");
+					string gpuBusDev = gpuFuncIdx > -1 ? gpuLocation[..gpuFuncIdx] : gpuLocation;
+
+					gpus.Add(new GpuInfo
+					{
+						PnPDeviceId = pnpDeviceId,
+						DeviceName = deviceName,
+						VendorId = vendorId,
+						DeviceId = deviceId,
+						Codename = vendorId == "8086" ? name.Split('[')[0].Trim() : string.Empty,
+						CurrentVersion = "N/A",
+						IsInstalled = false,
+						RegistryPath = string.Empty,
+						Location = gpuBusDev
+					});
+				}
+			}
+			finally
+			{
+				PInvoke.SetupDiDestroyDeviceInfoList(hUnknownInfo);
+			}
+		}
+
 		return gpus;
 	}
 
@@ -205,18 +280,21 @@ string[] versionParts = currentVersion.Split('.');
 
 		foreach (string line in File.ReadLines(pciPath))
 		{
-			if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#")) continue;
+			if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#"))
+				continue;
 			if (!char.IsWhiteSpace(line[0]))
 			{
 				string[] parts = line.Split(' ', 2);
-				if (parts.Length < 2) continue;
+				if (parts.Length < 2)
+					continue;
 				currentVendor = parts[0].ToLowerInvariant();
 				db[currentVendor] = (parts[1].Trim(), new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase));
 			}
 			else if (line.StartsWith("\t") && currentVendor != null)
 			{
 				string[] parts = line.Trim().Split(' ', 2);
-				if (parts.Length < 2) continue;
+				if (parts.Length < 2)
+					continue;
 				db[currentVendor].Devices[parts[0].ToLowerInvariant()] = parts[1].Trim();
 			}
 		}
@@ -304,7 +382,8 @@ string[] versionParts = currentVersion.Split('.');
 		uint propertyType;
 		uint requiredSize;
 		PInvoke.SetupDiGetDeviceRegistryProperty(hDevInfo, &devInfo, SETUP_DI_REGISTRY_PROPERTY.SPDRP_LOCATION_INFORMATION, &propertyType, null, 0, &requiredSize);
-		if (requiredSize == 0) return string.Empty;
+		if (requiredSize == 0)
+			return string.Empty;
 
 		byte[] buffer = new byte[requiredSize];
 		fixed (byte* pBuffer = buffer)
@@ -345,7 +424,8 @@ string[] versionParts = currentVersion.Split('.');
 		Guid hdaudioGuid = new("4d36e97d-e325-11ce-bfc1-08002be10318");
 		HDEVINFO hAudioInfo = PInvoke.SetupDiGetClassDevs(&hdaudioGuid, null, HWND.Null, SETUP_DI_GET_CLASS_DEVS_FLAGS.DIGCF_PRESENT);
 
-		if (hAudioInfo.Value == (-1)) return;
+		if (hAudioInfo.Value == (-1))
+			return;
 
 		try
 		{
@@ -358,7 +438,8 @@ string[] versionParts = currentVersion.Split('.');
 				int audioFuncIdx = audioLoc.IndexOf(", function");
 				string audioBusDev = audioFuncIdx > -1 ? audioLoc[..audioFuncIdx] : audioLoc;
 
-				if (gpu.Location != audioBusDev) continue;
+				if (gpu.Location != audioBusDev)
+					continue;
 
 				var propChangeParams = new SP_PROPCHANGE_PARAMS
 				{

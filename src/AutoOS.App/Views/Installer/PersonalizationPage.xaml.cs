@@ -63,7 +63,8 @@ public sealed partial class PersonalizationPage : Page
 					&iid,
 					&pThemeManager);
 
-				if (hr.Failed || pThemeManager == null) return;
+				if (hr.Failed || pThemeManager == null)
+					return;
 
 				IntPtr handle = (IntPtr)pThemeManager;
 				IntPtr vtable = Marshal.ReadIntPtr(handle);
@@ -117,7 +118,8 @@ public sealed partial class PersonalizationPage : Page
 
 	private void Theme_Changed(object sender, RoutedEventArgs e)
 	{
-		if (isInitializingThemeState) return;
+		if (isInitializingThemeState)
+			return;
 	}
 
 	private async Task UpdateTheme()
@@ -201,7 +203,8 @@ public sealed partial class PersonalizationPage : Page
 
 	private async void ScheduleMode_SelectionChanged(object sender, SelectionChangedEventArgs e)
 	{
-		if (isInitializingSchedule) return;
+		if (isInitializingSchedule)
+			return;
 
 		string? selected = (ScheduleMode.SelectedItem as ComboBoxItem)?.Content as string;
 		localSettings.Values["ScheduleMode"] = selected;
@@ -218,7 +221,8 @@ public sealed partial class PersonalizationPage : Page
 
 	private async void LightMode_TimeChanged(object sender, TimePickerValueChangedEventArgs e)
 	{
-		if (isInitializingSchedule) return;
+		if (isInitializingSchedule)
+			return;
 
 		localSettings.Values["LightTime"] = e.NewTime.ToString(@"hh\:mm");
 		TimeLine.StartTime = e.NewTime;
@@ -227,7 +231,8 @@ public sealed partial class PersonalizationPage : Page
 
 	private async void DarkMode_TimeChanged(object sender, TimePickerValueChangedEventArgs e)
 	{
-		if (isInitializingSchedule) return;
+		if (isInitializingSchedule)
+			return;
 
 		localSettings.Values["DarkTime"] = e.NewTime.ToString(@"hh\:mm");
 		TimeLine.EndTime = e.NewTime;
@@ -260,7 +265,8 @@ public sealed partial class PersonalizationPage : Page
 
 	private void TrayIcons_Click(object sender, RoutedEventArgs e)
 	{
-		if (isInitializingTrayIconsState) return;
+		if (isInitializingTrayIconsState)
+			return;
 
 		localSettings.Values["AlwaysShowTrayIcons"] = (TrayIcons.IsChecked ?? false) ? 1 : 0;
 	}
@@ -284,7 +290,8 @@ public sealed partial class PersonalizationPage : Page
 
 	private async void TaskbarAlignment_SelectionChanged(object sender, SelectionChangedEventArgs e)
 	{
-		if (isInitializingTaskbarAlignmentState) return;
+		if (isInitializingTaskbarAlignmentState)
+			return;
 
 		string value = TaskbarAlignment.SelectedIndex == 0 ? "0" : "1";
 		Symbol icon = TaskbarAlignment.SelectedIndex == 0 ? Symbol.AlignLeft : Symbol.AlignCenter;

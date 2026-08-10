@@ -1,5 +1,3 @@
-using System.Text;
-using System.Text.Json.Nodes;
 using AutoOS.App.Views.Installer.Stages;
 using AutoOS.Core.Common;
 using AutoOS.Core.Helpers.Download;

@@ -1,8 +1,8 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
-using AutoOS.App.Data.Enums.Benchmarks;
 using AutoOS.App.Data.Enums;
+using AutoOS.App.Data.Enums.Benchmarks;
 using AutoOS.App.Data.Models.Benchmarks;
 using AutoOS.App.Services;
 using AutoOS.App.Services.Benchmarks;

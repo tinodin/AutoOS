@@ -166,7 +166,7 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 			await ReloadActiveValuesAsync(token);
 		}
 		catch (OperationCanceledException)
-		{	}
+		{ }
 	}
 
 	partial void OnComparePlanChanged(Plan value)

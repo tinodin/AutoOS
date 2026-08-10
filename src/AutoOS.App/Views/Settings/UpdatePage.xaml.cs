@@ -26,7 +26,8 @@ public sealed partial class UpdatePage : Page
 
 	private async void Update_Toggled(object sender, RoutedEventArgs e)
 	{
-		if (isInitializingWindowsUpdateState) return;
+		if (isInitializingWindowsUpdateState)
+			return;
 
 		// disable hittestvisible to avoid double-clicking
 		WindowsUpdate.IsHitTestVisible = false;
@@ -133,7 +134,8 @@ public sealed partial class UpdatePage : Page
 
 	private void TargetVersion_SelectionChanged(object sender, SelectionChangedEventArgs e)
 	{
-		if (isInitializingTargetVersion) return;
+		if (isInitializingTargetVersion)
+			return;
 
 		if (TargetVersion.SelectedItem is ComboBoxItem selectedItem)
 		{

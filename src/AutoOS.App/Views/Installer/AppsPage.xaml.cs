@@ -400,7 +400,8 @@ public sealed partial class AppsPage : Page
 
 	private void Messaging_Changed(object sender, SelectionChangedEventArgs e)
 	{
-		if (isInitializingMessagingState) return;
+		if (isInitializingMessagingState)
+			return;
 
 		string[] selectedMessaging = Messaging.SelectedItems
 			.Cast<GridViewItem>()
@@ -412,7 +413,8 @@ public sealed partial class AppsPage : Page
 
 	private void Launchers_Changed(object sender, SelectionChangedEventArgs e)
 	{
-		if (isInitializingLaunchersState) return;
+		if (isInitializingLaunchersState)
+			return;
 
 		string[] selectedLaunchers = Launchers.SelectedItems
 			.Cast<GridViewItem>()
@@ -424,7 +426,8 @@ public sealed partial class AppsPage : Page
 
 	private void Music_Changed(object sender, SelectionChangedEventArgs e)
 	{
-		if (isInitializingMusicState) return;
+		if (isInitializingMusicState)
+			return;
 
 		string[] selectedMusic = Music.SelectedItems
 			.Cast<GridViewItem>()
@@ -436,7 +439,8 @@ public sealed partial class AppsPage : Page
 
 	private void Peripherals_Changed(object sender, SelectionChangedEventArgs e)
 	{
-		if (isInitializingPeripheralsState) return;
+		if (isInitializingPeripheralsState)
+			return;
 
 		string[] selectedPeripherals = Peripherals.SelectedItems
 			.Cast<GridViewItem>()
@@ -448,7 +452,8 @@ public sealed partial class AppsPage : Page
 
 	private void Controllers_Changed(object sender, SelectionChangedEventArgs e)
 	{
-		if (isInitializingControllersState) return;
+		if (isInitializingControllersState)
+			return;
 
 		string[] selectedControllers = Controllers.SelectedItems
 			.Cast<GridViewItem>()
@@ -460,7 +465,8 @@ public sealed partial class AppsPage : Page
 
 	private void Development_Changed(object sender, SelectionChangedEventArgs e)
 	{
-		if (isInitializingDevelopmentState) return;
+		if (isInitializingDevelopmentState)
+			return;
 
 		string[] selectedDevelopment = Development.SelectedItems
 			.Cast<GridViewItem>()
@@ -472,7 +478,8 @@ public sealed partial class AppsPage : Page
 
 	private void Sysinternals_Changed(object sender, SelectionChangedEventArgs e)
 	{
-		if (isInitializingSysinternalsState) return;
+		if (isInitializingSysinternalsState)
+			return;
 
 		string[] selectedSysinternals = Sysinternals.SelectedItems
 			.Cast<GridViewItem>()
@@ -484,7 +491,8 @@ public sealed partial class AppsPage : Page
 
 	private void Overclocking_Changed(object sender, SelectionChangedEventArgs e)
 	{
-		if (isInitializingOverclockingState) return;
+		if (isInitializingOverclockingState)
+			return;
 
 		string[] selectedOverclocking = Overclocking.SelectedItems
 			.Cast<GridViewItem>()
@@ -496,7 +504,8 @@ public sealed partial class AppsPage : Page
 
 	private void MusicProduction_Changed(object sender, SelectionChangedEventArgs e)
 	{
-		if (isInitializingMusicProductionState) return;
+		if (isInitializingMusicProductionState)
+			return;
 
 		string[] selectedMusicProduction = MusicProduction.SelectedItems
 			.Cast<GridViewItem>()
@@ -508,7 +517,8 @@ public sealed partial class AppsPage : Page
 
 	private void VideoProduction_Changed(object sender, SelectionChangedEventArgs e)
 	{
-		if (isInitializingVideoProductionState) return;
+		if (isInitializingVideoProductionState)
+			return;
 
 		string[] selectedVideoProduction = VideoProduction.SelectedItems
 			.Cast<GridViewItem>()
@@ -520,7 +530,8 @@ public sealed partial class AppsPage : Page
 
 	private void Multimedia_Changed(object sender, SelectionChangedEventArgs e)
 	{
-		if (isInitializingMultimediaState) return;
+		if (isInitializingMultimediaState)
+			return;
 
 		string[] selectedMultimedia = Multimedia.SelectedItems
 			.Cast<GridViewItem>()
@@ -532,7 +543,8 @@ public sealed partial class AppsPage : Page
 
 	private void Office_Changed(object sender, SelectionChangedEventArgs e)
 	{
-		if (isInitializingOfficeState) return;
+		if (isInitializingOfficeState)
+			return;
 
 		string[] selectedOffice = Office.SelectedItems
 			.Cast<GridViewItem>()
@@ -544,7 +556,8 @@ public sealed partial class AppsPage : Page
 
 	private void Miscellaneous_Changed(object sender, SelectionChangedEventArgs e)
 	{
-		if (isInitializingMiscellaneousState) return;
+		if (isInitializingMiscellaneousState)
+			return;
 
 		string[] selectedMiscellaneous = Miscellaneous.SelectedItems
 			.Cast<GridViewItem>()

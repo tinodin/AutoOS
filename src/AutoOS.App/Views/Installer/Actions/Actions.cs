@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Net.Http.Headers;
+using System.Text.Json;
 using System.Xml;
 using AutoOS.Core.Helpers.Registry;
 using Microsoft.UI.Xaml.Media;
@@ -119,7 +120,15 @@ public static class ProcessActions
 
 			if (File.Exists(bak))
 			{
-				try { if (File.Exists(old)) File.Delete(old); File.Move(path, old); } catch { }
+				try
+				{
+					if (File.Exists(old))
+					{
+						File.Delete(old);
+						File.Move(path, old);
+					}
+				}
+				catch { }
 				File.Copy(bak, path, true);
 			}
 			else
@@ -141,7 +150,8 @@ public static class ProcessActions
 						}
 						catch (IOException)
 						{
-							if (File.Exists(old)) File.Delete(old);
+							if (File.Exists(old))
+								File.Delete(old);
 							File.Move(path, old);
 							File.WriteAllBytes(path, b);
 						}
@@ -155,6 +165,37 @@ public static class ProcessActions
 					File.Delete(old);
 			}
 			catch { }
+		}
+	}
+
+	public static async Task UpdateWindhawkMods()
+	{
+		string windhawkDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk");
+
+		using Process listProcess = Process.Start(new ProcessStartInfo
+		{
+			FileName = Path.Combine(windhawkDir, "windhawk-cli.exe"),
+			Arguments = "mod list --update-available --json",
+			WorkingDirectory = windhawkDir,
+			UseShellExecute = false,
+			CreateNoWindow = true,
+			RedirectStandardOutput = true
+		})!;
+
+		string json = await listProcess.StandardOutput.ReadToEndAsync();
+		await listProcess.WaitForExitAsync();
+
+		string[] modIds = [.. JsonDocument.Parse(json).RootElement.GetProperty("data").GetProperty("mods").EnumerateArray().Select(mod => mod.GetProperty("id").GetString() ?? string.Empty).Where(id => !string.IsNullOrEmpty(id))];
+
+		foreach (string modId in modIds)
+		{
+			await Process.Start(new ProcessStartInfo
+			{
+				FileName = Path.Combine(windhawkDir, "windhawk-cli.exe"),
+				Arguments = $"mod update {modId} --quiet",
+				WorkingDirectory = windhawkDir,
+				WindowStyle = ProcessWindowStyle.Hidden
+			})!.WaitForExitAsync();
 		}
 	}
 

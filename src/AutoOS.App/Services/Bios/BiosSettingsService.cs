@@ -4,7 +4,6 @@ using AutoOS.App.Data.Enums.Bios;
 using AutoOS.App.Data.Models.Bios;
 using AutoOS.App.Views.Installer.Stages;
 using AutoOS.Core.Helpers.Logging;
-using DevWinUI;
 using Microsoft.VisualBasic.FileIO;
 using Microsoft.Win32;
 
@@ -360,13 +359,15 @@ public class BiosSettingsService : IBiosSettingsService
 		if (cIdx >= 0)
 		{
 			int startComment = cIdx;
-			while (startComment > 0 && char.IsWhiteSpace(optLine[startComment - 1])) startComment--;
+			while (startComment > 0 && char.IsWhiteSpace(optLine[startComment - 1]))
+				startComment--;
 			comment = optLine[startComment..];
 			optionsPart = optLine[..startComment];
 		}
 
 		int eq = optionsPart.IndexOf('=');
-		if (eq < 0) return;
+		if (eq < 0)
+			return;
 		string prefix = optionsPart[..(eq + 1)];
 		string optionsText = optionsPart[(eq + 1)..];
 

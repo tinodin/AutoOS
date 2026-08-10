@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.ServiceProcess;
@@ -225,7 +225,8 @@ public partial class HeaderCarousel : ItemsControl
 
 	private void InitializeGamepadSupport()
 	{
-		if (_staticEventsSubscribed) return;
+		if (_staticEventsSubscribed)
+			return;
 		_staticEventsSubscribed = true;
 
 		_inputInjector = InputInjector.TryCreate();
@@ -271,18 +272,24 @@ public partial class HeaderCarousel : ItemsControl
 	private static void GamepadPollingTimer_Tick(object? sender, object e)
 	{
 		HeaderCarousel? activeInstance = _activeInstances.FirstOrDefault();
-		if (activeInstance?.XamlRoot is not XamlRoot root) return;
+		if (activeInstance?.XamlRoot is not XamlRoot root)
+			return;
 
 		IReadOnlyList<Gamepad> gamepads = Gamepad.Gamepads;
-		if (gamepads.Count == 0) return;
+		if (gamepads.Count == 0)
+			return;
 
 		GamepadReading reading = gamepads[0].GetCurrentReading();
 		GamepadButtons buttons = reading.Buttons;
 
-		if (reading.LeftThumbstickX < -ThumbstickThreshold) buttons |= GamepadButtons.DPadLeft;
-		if (reading.LeftThumbstickX > ThumbstickThreshold) buttons |= GamepadButtons.DPadRight;
-		if (reading.LeftThumbstickY < -ThumbstickThreshold) buttons |= GamepadButtons.DPadDown;
-		if (reading.LeftThumbstickY > ThumbstickThreshold) buttons |= GamepadButtons.DPadUp;
+		if (reading.LeftThumbstickX < -ThumbstickThreshold)
+			buttons |= GamepadButtons.DPadLeft;
+		if (reading.LeftThumbstickX > ThumbstickThreshold)
+			buttons |= GamepadButtons.DPadRight;
+		if (reading.LeftThumbstickY < -ThumbstickThreshold)
+			buttons |= GamepadButtons.DPadDown;
+		if (reading.LeftThumbstickY > ThumbstickThreshold)
+			buttons |= GamepadButtons.DPadUp;
 
 		var currentFocused = FocusManager.GetFocusedElement(root) as DependencyObject;
 
@@ -365,7 +372,8 @@ public partial class HeaderCarousel : ItemsControl
 					{
 						double currentY = currentUI.TransformToVisual(root.Content).TransformPoint(new Point(0, 0)).Y;
 						double nextY = next.TransformToVisual(root.Content).TransformPoint(new Point(0, 0)).Y;
-						if (Math.Abs(currentY - nextY) > 50) next = null;
+						if (Math.Abs(currentY - nextY) > 50)
+							next = null;
 					}
 					catch { }
 				}
@@ -508,7 +516,8 @@ public partial class HeaderCarousel : ItemsControl
 	{
 		while (element != null)
 		{
-			if (element == parent) return true;
+			if (element == parent)
+				return true;
 			element = VisualTreeHelper.GetParent(element);
 		}
 		return false;
@@ -523,7 +532,8 @@ public partial class HeaderCarousel : ItemsControl
 			{
 				_buttonPressStartTimes[target] = now;
 				_lastButtonRepeatTimes[target] = now;
-				if (!suppressInjection) InjectKey(key);
+				if (!suppressInjection)
+					InjectKey(key);
 			}
 			else
 			{
@@ -535,7 +545,8 @@ public partial class HeaderCarousel : ItemsControl
 						if (_lastButtonRepeatTimes.TryGetValue(target, out DateTimeOffset lastRepeat) && (now - lastRepeat) >= _subsequentRepeatDelay)
 						{
 							_lastButtonRepeatTimes[target] = now;
-							if (!suppressInjection) InjectKey(key);
+							if (!suppressInjection)
+								InjectKey(key);
 						}
 					}
 				}
@@ -550,7 +561,8 @@ public partial class HeaderCarousel : ItemsControl
 
 	private static void InjectKey(VirtualKey key)
 	{
-		if (_inputInjector == null) return;
+		if (_inputInjector == null)
+			return;
 
 		var info = new InjectedInputKeyboardInfo
 		{
@@ -765,7 +777,8 @@ public partial class HeaderCarousel : ItemsControl
 
 	private async void HeaderCarousel_Loaded(object sender, RoutedEventArgs e)
 	{
-		if (!_activeInstances.Contains(this)) _activeInstances.Add(this);
+		if (!_activeInstances.Contains(this))
+			_activeInstances.Add(this);
 
 		if (IsAutoScrollEnabled)
 			selectionTimer.Tick += SelectionTimer_Tick;
@@ -942,7 +955,8 @@ public partial class HeaderCarousel : ItemsControl
 		if (selectedTile != null)
 		{
 			selectedTile.IsSelected = true;
-			if (playSound) ElementSoundPlayer.Play(ElementSoundKind.Focus);
+			if (playSound)
+				ElementSoundPlayer.Play(ElementSoundKind.Focus);
 
 			if (selectedTile.BackgroundImageUrl != null && backDropImage.ImageUrl?.ToString() != selectedTile.BackgroundImageUrl)
 				backDropImage.ImageUrl = new Uri(selectedTile.BackgroundImageUrl);
@@ -957,7 +971,8 @@ public partial class HeaderCarousel : ItemsControl
 			StopProcesses?.XYFocusUp = selectedTile!;
 			RestartProcesses?.XYFocusUp = selectedTile!;
 
-			if (selectedTile != null && SearchBox != null) selectedTile.XYFocusUp = SearchBox;
+			if (selectedTile != null && SearchBox != null)
+				selectedTile.XYFocusUp = SearchBox;
 
 			SearchBox?.XYFocusDown = selectedTile!;
 			Sort?.XYFocusDown = selectedTile!;
@@ -1072,7 +1087,8 @@ public partial class HeaderCarousel : ItemsControl
 	private void Tile_PointerEntered(object sender, PointerRoutedEventArgs e)
 	{
 		var tile = (HeaderCarouselItem)sender;
-		if (!tile.IsLoaded) return;
+		if (!tile.IsLoaded)
+			return;
 
 		if (tile != selectedTile)
 		{
@@ -1106,9 +1122,11 @@ public partial class HeaderCarousel : ItemsControl
 	private void Tile_GotFocus(object sender, RoutedEventArgs e)
 	{
 		var tile = (HeaderCarouselItem)sender;
-		if (!tile.IsLoaded) return;
+		if (!tile.IsLoaded)
+			return;
 
-		if (selectedTile == tile && tile.IsSelected) return;
+		if (selectedTile == tile && tile.IsSelected)
+			return;
 
 		selectedTile = tile;
 		SelectTile(tile.FocusState != FocusState.Pointer);
@@ -1228,7 +1246,8 @@ public partial class HeaderCarousel : ItemsControl
 	private async void ApplySort()
 	{
 		var items = Items.OfType<HeaderCarouselItem>().ToList();
-		if (items.Count == 0) return;
+		if (items.Count == 0)
+			return;
 
 		IEnumerable<HeaderCarouselItem> result = currentSortKey switch
 		{
@@ -1379,7 +1398,8 @@ public partial class HeaderCarousel : ItemsControl
 
 	private async void EpicGamesAccounts_SelectionChanged(object sender, SelectionChangedEventArgs e)
 	{
-		if (isInitializingEpicGamesAccounts) return;
+		if (isInitializingEpicGamesAccounts)
+			return;
 
 		// close epic games launcher
 		EpicGamesHelper.CloseEpicGames();
@@ -1700,7 +1720,8 @@ public partial class HeaderCarousel : ItemsControl
 
 	private async void SteamAccounts_SelectionChanged(object sender, SelectionChangedEventArgs e)
 	{
-		if (isInitializingSteamAccounts) return;
+		if (isInitializingSteamAccounts)
+			return;
 
 		// close steam
 		SteamHelper.CloseSteam();
@@ -2474,7 +2495,8 @@ public partial class HeaderCarousel : ItemsControl
 				"Fall Guys" => "FallGuys_client_game",
 				_ => string.Empty
 			};
-			if (Title == "Fall Guys") offlineExecutable = "FallGuys_client";
+			if (Title == "Fall Guys")
+				offlineExecutable = "FallGuys_client";
 
 			StartGameWatcher(() =>
 			{

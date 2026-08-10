@@ -28,8 +28,10 @@ public sealed partial class DiskCleanupPage : Page
 
 	private static string FormatSize(double sizeGiB)
 	{
-		if (sizeGiB < 1) return $"{sizeGiB * 1024:N2} MiB";
-		if (sizeGiB >= 1024) return $"{sizeGiB / 1024:N2} TiB";
+		if (sizeGiB < 1)
+			return $"{sizeGiB * 1024:N2} MiB";
+		if (sizeGiB >= 1024)
+			return $"{sizeGiB / 1024:N2} TiB";
 		return $"{sizeGiB:N2} GiB";
 	}
 
@@ -75,7 +77,8 @@ public sealed partial class DiskCleanupPage : Page
 		foreach (DriveInfo drive in DriveInfo.GetDrives().Where(d => d.IsReady))
 		{
 			DriveModel? model = drives.FirstOrDefault(d => d.Name == drive.Name.TrimEnd('\\'));
-			if (model == null) continue;
+			if (model == null)
+				continue;
 
 			double totalGiB = drive.TotalSize / 1073741824d;
 			double freeGiB = drive.TotalFreeSpace / 1073741824d;

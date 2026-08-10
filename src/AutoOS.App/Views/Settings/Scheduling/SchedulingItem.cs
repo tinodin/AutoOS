@@ -105,7 +105,8 @@ public partial class SchedulingItem : INotifyPropertyChanged
 
 	private static string FormatProcessMask(ulong mask)
 	{
-		if (mask == 0) return string.Empty;
+		if (mask == 0)
+			return string.Empty;
 
 		var processors = new List<string>();
 		for (int index = 0; mask != 0; index++, mask >>= 1)

@@ -109,7 +109,8 @@ public partial class DeviceAffinityViewModel : INotifyPropertyChanged
 
 	private GridLength GetGroupWidth(int index)
 	{
-		if (CpuGroups.Count <= index) return new GridLength(0);
+		if (CpuGroups.Count <= index)
+			return new GridLength(0);
 		return new GridLength(CpuGroups[index].RecommendedColumns, GridUnitType.Star);
 	}
 
@@ -267,7 +268,8 @@ public partial class DeviceAffinityViewModel : INotifyPropertyChanged
 
 	protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
 	{
-		if (Equals(field, value)) return false;
+		if (Equals(field, value))
+			return false;
 		field = value;
 		OnPropertyChanged(propertyName);
 		return true;

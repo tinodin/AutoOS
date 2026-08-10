@@ -151,7 +151,7 @@ public static class BrowsersStage
 			("Installing Google Chrome", async () => chromeVersion = FileVersionInfo.GetVersionInfo(Path.Combine(Path.GetTempPath(), "ChromeSetup.exe")).ProductVersion ?? "", () => Chrome == true),
 			("Installing Google Chrome", async () => chromeVersion2 = FileVersionInfo.GetVersionInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Google", "Chrome", "Application", "chrome.exe")).ProductVersion ?? "", () => Chrome == true),
 			("Installing Google Chrome", async () => { using var process = Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Google", "Chrome", "Application", "chrome.exe"), WindowStyle = ProcessWindowStyle.Maximized }); while (!File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Google", "Chrome", "Application", "PlatformExperienceHelper", "platform_experience_helper.exe"))) await Task.Delay(100); process?.Kill(); }, () => Chrome == true),
-            ("Cleaning up Google Chrome files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "ChromeSetup.exe")), () => Chrome == true),
+			("Cleaning up Google Chrome files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "ChromeSetup.exe")), () => Chrome == true),
 
 			// pin google chrome to the taskbar
 			("Pinning Google Chrome to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Google Chrome.lnk")), () => Chrome == true),

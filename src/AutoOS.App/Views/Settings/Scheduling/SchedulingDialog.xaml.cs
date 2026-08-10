@@ -23,10 +23,12 @@ public sealed partial class SchedulingDialog : Page
 
 	private void GroupItemsControl_Loaded(object sender, RoutedEventArgs e)
 	{
-		if (sender is not ItemsControl itemsControl) return;
+		if (sender is not ItemsControl itemsControl)
+			return;
 
 		CpuCoreGroup? group = itemsControl.DataContext as CpuCoreGroup;
-		if (group == null) return;
+		if (group == null)
+			return;
 
 		if (itemsControl.ItemsPanelRoot is CommunityToolkit.WinUI.Controls.UniformGrid uniformGrid)
 		{

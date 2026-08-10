@@ -64,7 +64,8 @@ public static class StatisticsCalculator
 		int validPairs = 0;
 		for (int i = 1; i < n; i++)
 		{
-			if (values[i - 1] == 0) continue;
+			if (values[i - 1] == 0)
+				continue;
 			double rel = (values[i] - values[i - 1]) / values[i - 1];
 			sumRelSq += rel * rel;
 			validPairs++;

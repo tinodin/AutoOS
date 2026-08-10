@@ -2,8 +2,6 @@ using AutoOS.App.Data.Enums.Power;
 using AutoOS.App.Data.Models.Power;
 using AutoOS.App.ViewModels;
 using CommunityToolkit.Mvvm.DependencyInjection;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Syncfusion.UI.Xaml.Data;
 using Syncfusion.UI.Xaml.DataGrid;
@@ -57,7 +55,7 @@ public sealed partial class PowerPage : Page
 
 		RefreshFilterOnly();
 	}
-	
+
 	private void TreeGrid_CellToolTipOpening(object sender, TreeGridCellToolTipOpeningEventArgs e)
 	{
 		if (e.Record is not Node node)

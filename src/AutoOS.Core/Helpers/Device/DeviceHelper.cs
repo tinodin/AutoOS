@@ -229,7 +229,7 @@ public static partial class DeviceHelper
 				CurrentVersion = driverVersion ?? string.Empty
 			};
 
-			if (device.State == DeviceState.Enabled)
+			if (device.State != DeviceState.Disabled)
 				devices.Add(device);
 		}
 

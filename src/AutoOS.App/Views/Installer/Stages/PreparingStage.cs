@@ -240,7 +240,8 @@ public static partial class PreparingStage
 			.SelectMany(drive =>
 			{
 				string usersPath = Path.Combine(drive.Name, "Users");
-				if (!Directory.Exists(usersPath)) return [];
+				if (!Directory.Exists(usersPath))
+					return [];
 
 				return Directory.GetDirectories(usersPath);
 			})
@@ -299,7 +300,8 @@ public static partial class PreparingStage
 			.SelectMany(drive =>
 			{
 				string usersPath = Path.Combine(drive.Name, "Users");
-				if (!Directory.Exists(usersPath)) return [];
+				if (!Directory.Exists(usersPath))
+					return [];
 
 				return Directory.GetDirectories(usersPath)
 					.Select(userDir => Path.Combine(userDir, "AppData", "Roaming", "discord", "Local Storage", "leveldb"))
@@ -324,7 +326,8 @@ public static partial class PreparingStage
 			.SelectMany(d =>
 			{
 				string usersPath = Path.Combine(d.Name, "Users");
-				if (!Directory.Exists(usersPath)) return [];
+				if (!Directory.Exists(usersPath))
+					return [];
 
 				return Directory.GetDirectories(usersPath)
 					.Select(userDir =>
@@ -379,7 +382,8 @@ public static partial class PreparingStage
 			.SelectMany(d =>
 			{
 				string usersPath = Path.Combine(d.Name, "Users");
-				if (!Directory.Exists(usersPath)) return [];
+				if (!Directory.Exists(usersPath))
+					return [];
 
 				return Directory.GetDirectories(usersPath)
 					.Select(userDir => Path.Combine(userDir, "AppData", "Local", "Riot Games", "Riot Client", "Data", "RiotGamesPrivateSettings.yaml"))
@@ -398,7 +402,8 @@ public static partial class PreparingStage
 			.SelectMany(d =>
 			{
 				string metadataPath = Path.Combine(d.Name, "ProgramData", "Riot Games", "Metadata");
-				if (!Directory.Exists(metadataPath)) return [];
+				if (!Directory.Exists(metadataPath))
+					return [];
 
 				return Directory.GetDirectories(metadataPath)
 					.Select(subFolder =>
@@ -473,7 +478,7 @@ public static partial class PreparingStage
 			DarkReader = (localSettings.Values["Extensions"]?.ToString()?.Contains("Dark Reader") ?? false);
 			Shazam = (localSettings.Values["Extensions"]?.ToString()?.Contains("Shazam") ?? false);
 			ProtonPass = (localSettings.Values["Extensions"]?.ToString().Contains("Proton Pass") ?? false);
-      WaybackMachine = (localSettings.Values["Extensions"]?.ToString()?.Contains("Wayback Machine") ?? false);
+			WaybackMachine = (localSettings.Values["Extensions"]?.ToString()?.Contains("Wayback Machine") ?? false);
 			iCloud = (localSettings.Values["Extensions"]?.ToString()?.Contains("iCloud Passwords") ?? false);
 			Bitwarden = (localSettings.Values["Extensions"]?.ToString()?.Contains("Bitwarden") ?? false);
 			OnePassword = (localSettings.Values["Extensions"]?.ToString()?.Contains("1Password") ?? false);
@@ -624,7 +629,8 @@ public static partial class PreparingStage
 				foreach (JsonNode? node in gpuArray)
 				{
 					JsonObject? obj = node?.AsObject();
-					if (obj == null) continue;
+					if (obj == null)
+						continue;
 
 					GPUs.Add(new GpuInfo
 					{

@@ -43,7 +43,8 @@ public sealed partial class DevicesPage : Page
 			foreach (string service in group.Item1)
 			{
 				using RegistryKey? key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}");
-				if (key == null) continue;
+				if (key == null)
+					continue;
 
 				object? startValue = key.GetValue("Start");
 				if (startValue == null || (int)startValue != group.Item2)
@@ -61,7 +62,8 @@ public sealed partial class DevicesPage : Page
 
 	private async void Bluetooth_Toggled(object sender, RoutedEventArgs e)
 	{
-		if (isInitializingBluetoothState) return;
+		if (isInitializingBluetoothState)
+			return;
 
 		// disable hittestvisible to avoid double-clicking
 		Bluetooth.IsHitTestVisible = false;
@@ -91,7 +93,8 @@ public sealed partial class DevicesPage : Page
 			foreach (string service in group.Item1)
 			{
 				using RegistryKey? key = Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Services\{service}", writable: true);
-				if (key == null) continue;
+				if (key == null)
+					continue;
 
 				Registry.SetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\{service}", "Start", Bluetooth.IsOn ? group.Item2 : 4);
 			}
@@ -153,7 +156,8 @@ public sealed partial class DevicesPage : Page
 
 	private async void IMOD_Toggled(object sender, RoutedEventArgs e)
 	{
-		if (isInitializingIMODState) return;
+		if (isInitializingIMODState)
+			return;
 
 		ToggleSwitch toggleSwitch = (ToggleSwitch)sender;
 		DeviceInfo device = (DeviceInfo)toggleSwitch.DataContext;

@@ -293,10 +293,12 @@ public sealed partial class GraphicsPage : Page
 
 	public static async Task RunActions(ProgressButton progressButton, List<(string Title, Func<Task> Action, Func<bool>? Condition)> actions)
 	{
-		if (actions == null || actions.Count == 0) return;
+		if (actions == null || actions.Count == 0)
+			return;
 
 		var filteredActions = actions.Where(a => a.Condition == null || a.Condition()).ToList();
-		if (filteredActions.Count == 0) return;
+		if (filteredActions.Count == 0)
+			return;
 
 		List<Func<Task>> currentGroup = [];
 		string previousTitle = string.Empty;
@@ -388,12 +390,14 @@ public sealed partial class GraphicsPage : Page
 	private async void PStates_Toggled(object sender, RoutedEventArgs e)
 	{
 		// return if still initializing
-		if (isInitializingPStatesState) return;
+		if (isInitializingPStatesState)
+			return;
 
 		ToggleSwitch toggleSwitch = (ToggleSwitch)sender;
 		GpuInfo gpu = (GpuInfo)toggleSwitch.DataContext;
 		var GpuInfo = FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") as StackPanel;
-		if (GpuInfo is null) return;
+		if (GpuInfo is null)
+			return;
 		if (!gpu.IsInstalled)
 		{
 			localSettings.Values[$"PStates_{gpu.PnPDeviceId}"] = toggleSwitch.IsOn;
@@ -488,12 +492,14 @@ public sealed partial class GraphicsPage : Page
 	private async void ECC_Toggled(object sender, RoutedEventArgs e)
 	{
 		// return if still initializing
-		if (isInitializingECCState) return;
+		if (isInitializingECCState)
+			return;
 
 		ToggleSwitch toggleSwitch = (ToggleSwitch)sender;
 		GpuInfo gpu = (GpuInfo)toggleSwitch.DataContext;
 		var GpuInfo = FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") as StackPanel;
-		if (GpuInfo is null) return;
+		if (GpuInfo is null)
+			return;
 		if (!gpu.IsInstalled)
 		{
 			localSettings.Values[$"ECC_{gpu.PnPDeviceId}"] = toggleSwitch.IsOn;
@@ -594,12 +600,14 @@ public sealed partial class GraphicsPage : Page
 	private async void GspFirmware_Toggled(object sender, RoutedEventArgs e)
 	{
 		// return if still initializing
-		if (isInitializingGspFirmwareState) return;
+		if (isInitializingGspFirmwareState)
+			return;
 
 		ToggleSwitch toggleSwitch = (ToggleSwitch)sender;
 		GpuInfo gpu = (GpuInfo)toggleSwitch.DataContext;
 		var GpuInfo = FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") as StackPanel;
-		if (GpuInfo is null) return;
+		if (GpuInfo is null)
+			return;
 		if (!gpu.IsInstalled)
 		{
 			localSettings.Values[$"GspFirmware_{gpu.PnPDeviceId}"] = toggleSwitch.IsOn;
@@ -694,12 +702,14 @@ public sealed partial class GraphicsPage : Page
 	private async void HDCP_Toggled(object sender, RoutedEventArgs e)
 	{
 		// return if still initializing
-		if (isInitializingHDCPState) return;
+		if (isInitializingHDCPState)
+			return;
 
 		ToggleSwitch toggleSwitch = (ToggleSwitch)sender;
 		GpuInfo gpu = (GpuInfo)toggleSwitch.DataContext;
 		var GpuInfo = FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") as StackPanel;
-		if (GpuInfo is null) return;
+		if (GpuInfo is null)
+			return;
 		if (!gpu.IsInstalled)
 		{
 			localSettings.Values[$"HDCP_{gpu.PnPDeviceId}"] = toggleSwitch.IsOn;
@@ -794,12 +804,14 @@ public sealed partial class GraphicsPage : Page
 	private async void HDMIDPAudio_Toggled(object sender, RoutedEventArgs e)
 	{
 		// return if still initializing
-		if (isInitializingHDMIDPAudioState) return;
+		if (isInitializingHDMIDPAudioState)
+			return;
 
 		ToggleSwitch toggleSwitch = (ToggleSwitch)sender;
 		GpuInfo gpu = (GpuInfo)toggleSwitch.DataContext;
 		var GpuInfo = FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") as StackPanel;
-		if (GpuInfo is null) return;
+		if (GpuInfo is null)
+			return;
 		if (!gpu.IsInstalled)
 		{
 			localSettings.Values[$"HDMIDPAudio_{gpu.PnPDeviceId}"] = toggleSwitch.IsOn;
@@ -855,8 +867,8 @@ public sealed partial class GraphicsPage : Page
 	private async void BrowseMsi_Click(object sender, RoutedEventArgs e)
 	{
 		// disable the button to avoid double-clicking
-var senderButton = (Button)sender;
-	senderButton.IsEnabled = false;
+		var senderButton = (Button)sender;
+		senderButton.IsEnabled = false;
 
 		// remove infobar
 		MsiAfterburnerInfo.Children.Clear();
@@ -1057,7 +1069,8 @@ var senderButton = (Button)sender;
 
 	private async void OBS_Toggled(object sender, RoutedEventArgs e)
 	{
-		if (isInitializingOBSState) return;
+		if (isInitializingOBSState)
+			return;
 
 		// disable hittestvisible to avoid double-clicking
 		OBS.IsHitTestVisible = false;

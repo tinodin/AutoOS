@@ -168,7 +168,8 @@ public sealed partial class InstallPage : Page
 				bool executed = false;
 				foreach (Func<Task> groupedAction in currentGroup)
 				{
-					if (stageIndex == savedStage && groupIndex <= savedAction) { groupIndex++; continue; }
+					if (stageIndex == savedStage && groupIndex <= savedAction)
+					{ groupIndex++; continue; }
 
 					executed = true;
 					try
@@ -241,7 +242,8 @@ public sealed partial class InstallPage : Page
 			bool executed = false;
 			foreach (Func<Task> groupedAction in currentGroup)
 			{
-				if (stageIndex == savedStage && groupIndex <= savedAction) { groupIndex++; continue; }
+				if (stageIndex == savedStage && groupIndex <= savedAction)
+				{ groupIndex++; continue; }
 
 				executed = true;
 				try

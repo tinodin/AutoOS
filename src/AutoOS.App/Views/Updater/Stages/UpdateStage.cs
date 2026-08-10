@@ -7,7 +7,7 @@ public static class UpdateStage
 		var actions = new List<(string Title, Func<Task> Action, Func<bool>? Condition)>()
 		{
 		};
-		
+
 		return actions;
 	}
 }

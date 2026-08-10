@@ -8,8 +8,10 @@ public partial class FormFactorToImageIconConverter : IValueConverter
 	public object Convert(object value, Type targetType, object parameter, string language)
 	{
 		uint formFactor = 0;
-		if (value is uint u) formFactor = u;
-		else if (value is int i) formFactor = (uint)i;
+		if (value is uint u)
+			formFactor = u;
+		else if (value is int i)
+			formFactor = (uint)i;
 
 		string icon = formFactor switch
 		{

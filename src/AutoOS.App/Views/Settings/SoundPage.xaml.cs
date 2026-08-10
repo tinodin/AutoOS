@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using AutoOS.Core.Helpers.Device;
 using AutoOS.Core.Helpers.Device.Models;
 using AutoOS.Core.Helpers.Sound;
 using AutoOS.Core.Helpers.Sound.Models;
@@ -100,8 +99,10 @@ public sealed partial class SoundPage : Page, INotifyPropertyChanged
 		{
 			if (currentField != null)
 			{
-				if (propertyName == nameof(CurrentOutput)) CurrentOutput = null;
-				else CurrentInput = null;
+				if (propertyName == nameof(CurrentOutput))
+					CurrentOutput = null;
+				else
+					CurrentInput = null;
 			}
 			return;
 		}
@@ -126,7 +127,9 @@ public sealed partial class SoundPage : Page, INotifyPropertyChanged
 	private unsafe DeviceInfo? ProcessEndpoint(IMMDeviceEnumerator* enumerator, EDataFlow flow)
 	{
 		IMMDevice* endpoint = null;
-		try { enumerator->GetDefaultAudioEndpoint(flow, ERole.eConsole, &endpoint); } catch { }
+		try
+		{ enumerator->GetDefaultAudioEndpoint(flow, ERole.eConsole, &endpoint); }
+		catch { }
 		if (endpoint == null)
 			return null;
 
@@ -215,7 +218,8 @@ public sealed partial class SoundPage : Page, INotifyPropertyChanged
 
 	private void AudioEndpointBufferSize_SelectionChanged(object sender, SelectionChangedEventArgs e)
 	{
-		if (isInitializingAudioState) return;
+		if (isInitializingAudioState)
+			return;
 
 		if (sender is ComboBox comboBox && comboBox.DataContext is DeviceInfo device && comboBox.SelectedItem is BufferSizeOption option)
 		{
@@ -225,7 +229,8 @@ public sealed partial class SoundPage : Page, INotifyPropertyChanged
 
 	private void Volume_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
 	{
-		if (isInitializingAudioState) return;
+		if (isInitializingAudioState)
+			return;
 
 		if (sender is Slider slider && slider.DataContext is DeviceInfo device)
 		{
@@ -261,7 +266,8 @@ public sealed partial class SoundPage : Page, INotifyPropertyChanged
 
 	private void LeftVolume_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
 	{
-		if (isInitializingAudioState) return;
+		if (isInitializingAudioState)
+			return;
 		if (sender is Slider slider && slider.DataContext is DeviceInfo device)
 		{
 			float vol = (float)e.NewValue / 100f;
@@ -271,7 +277,8 @@ public sealed partial class SoundPage : Page, INotifyPropertyChanged
 
 	private void RightVolume_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
 	{
-		if (isInitializingAudioState) return;
+		if (isInitializingAudioState)
+			return;
 		if (sender is Slider slider && slider.DataContext is DeviceInfo device)
 		{
 			float vol = (float)e.NewValue / 100f;
@@ -281,7 +288,8 @@ public sealed partial class SoundPage : Page, INotifyPropertyChanged
 
 	private void Format_SelectionChanged(object sender, SelectionChangedEventArgs e)
 	{
-		if (isInitializingAudioState) return;
+		if (isInitializingAudioState)
+			return;
 		if (sender is ComboBox comboBox && comboBox.DataContext is DeviceInfo device && comboBox.SelectedItem is AudioFormatOption format)
 		{
 			SoundHelper.SetAudioFormat(device, format);

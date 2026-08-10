@@ -1,4 +1,3 @@
-using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media.Imaging;
 
@@ -17,7 +16,8 @@ public partial class VendorIdToImageIconConverter : IValueConverter
 			_ => null
 		};
 
-		if (string.IsNullOrEmpty(icon)) return null;
+		if (string.IsNullOrEmpty(icon))
+			return null;
 
 		return new ImageIcon
 		{

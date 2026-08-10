@@ -41,8 +41,10 @@ public sealed partial class InternetPage : Page
 
 	private void SettingsGroup_Loaded(object sender, RoutedEventArgs e)
 	{
-		if (sender is not SettingsGroup settingsGroup) return;
-		if (settingsGroup.DataContext is not DeviceInfo device) return;
+		if (sender is not SettingsGroup settingsGroup)
+			return;
+		if (settingsGroup.DataContext is not DeviceInfo device)
+			return;
 		List<NetworkAdvancedSetting> settings = device.AdvancedSettings;
 		settingsGroup.Description = $"Current version: {device.DriverType} {device.CurrentVersion}";
 
@@ -73,7 +75,8 @@ public sealed partial class InternetPage : Page
 		int selectedIndex = sortedOptions.FindIndex(opt => string.Equals(opt.Value, setting.CurrentValue, StringComparison.OrdinalIgnoreCase));
 		if (selectedIndex < 0)
 			selectedIndex = sortedOptions.FindIndex(opt => string.Equals(opt.Value, setting.DefaultValue, StringComparison.OrdinalIgnoreCase));
-		if (selectedIndex < 0) selectedIndex = 0;
+		if (selectedIndex < 0)
+			selectedIndex = 0;
 
 		var comboBox = new ComboBox
 		{
@@ -137,19 +140,23 @@ public sealed partial class InternetPage : Page
 
 	private void AdvancedSetting_SelectionChanged(object sender, SelectionChangedEventArgs e)
 	{
-		if (isInitializingAdvancedNetworkSettings) return;
+		if (isInitializingAdvancedNetworkSettings)
+			return;
 
 		var comboBox = (ComboBox)sender;
-		if (comboBox.SelectedItem is not NetworkSettingOption selectedOption || comboBox.Tag is not NetworkAdvancedSetting setting) return;
+		if (comboBox.SelectedItem is not NetworkSettingOption selectedOption || comboBox.Tag is not NetworkAdvancedSetting setting)
+			return;
 
 		ChangeSetting(comboBox, setting, selectedOption.Value, selectedOption.Name);
 	}
 
 	private void AdvancedSetting_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
 	{
-		if (isInitializingAdvancedNetworkSettings) return;
+		if (isInitializingAdvancedNetworkSettings)
+			return;
 
-		if (sender.Tag is not NetworkAdvancedSetting setting) return;
+		if (sender.Tag is not NetworkAdvancedSetting setting)
+			return;
 
 		string value = setting.Base == 16 ? $"0x{((int)sender.Value):X}" : ((int)sender.Value).ToString();
 		ChangeSetting(sender, setting, value, value);
@@ -157,10 +164,12 @@ public sealed partial class InternetPage : Page
 
 	private void AdvancedSetting_TextChanged(object sender, RoutedEventArgs e)
 	{
-		if (isInitializingAdvancedNetworkSettings) return;
+		if (isInitializingAdvancedNetworkSettings)
+			return;
 
 		var textBox = (Microsoft.UI.Xaml.Controls.TextBox)sender;
-		if (textBox.Tag is not NetworkAdvancedSetting setting) return;
+		if (textBox.Tag is not NetworkAdvancedSetting setting)
+			return;
 
 		string value = textBox.Text;
 		ChangeSetting(textBox, setting, value, value);
@@ -169,7 +178,8 @@ public sealed partial class InternetPage : Page
 	private void ChangeSetting(FrameworkElement control, NetworkAdvancedSetting setting, string value, string displayValue)
 	{
 		SettingsGroup? settingsGroup = FindParent<SettingsGroup>(control);
-		if (settingsGroup?.DataContext is not DeviceInfo device) return;
+		if (settingsGroup?.DataContext is not DeviceInfo device)
+			return;
 
 		if (!_pendingChanges.ContainsKey(device))
 			_pendingChanges[device] = [];
@@ -182,9 +192,11 @@ public sealed partial class InternetPage : Page
 			deviceChanges[setting.Key] = (value, displayValue);
 
 		StackPanel? repeaterItem = FindParent<StackPanel>(settingsGroup);
-		if (repeaterItem == null) return;
+		if (repeaterItem == null)
+			return;
 		var infoBarContainer = (StackPanel)repeaterItem.FindName("AdapterInfo")!;
-		if (infoBarContainer == null) return;
+		if (infoBarContainer == null)
+			return;
 
 		if (!_pendingChanges.TryGetValue(device, out Dictionary<string, (string Value, string DisplayValue)>? changes) || changes == null || changes.Count == 0)
 		{
@@ -261,7 +273,8 @@ public sealed partial class InternetPage : Page
 		var button = (ProgressButton)sender;
 		SettingsGroup? settingsGroup = FindParent<SettingsGroup>(button);
 
-		if (settingsGroup?.DataContext is not DeviceInfo device) return;
+		if (settingsGroup?.DataContext is not DeviceInfo device)
+			return;
 
 		_pendingChanges.Remove(device);
 		UpdateSettings(settingsGroup, device);
@@ -297,8 +310,10 @@ public sealed partial class InternetPage : Page
 
 		foreach (object? item in settingsGroup.Items)
 		{
-			if (item is not SettingsCard card || card.Content is not FrameworkElement control) continue;
-			if (control.Tag is not NetworkAdvancedSetting setting) continue;
+			if (item is not SettingsCard card || card.Content is not FrameworkElement control)
+				continue;
+			if (control.Tag is not NetworkAdvancedSetting setting)
+				continue;
 
 			string newValue = deviceKey?.GetValue(setting.Key)?.ToString() ?? string.Empty;
 			setting.CurrentValue = newValue;
@@ -310,12 +325,14 @@ public sealed partial class InternetPage : Page
 					int idx = options.FindIndex(opt => string.Equals(opt.Value, newValue, StringComparison.OrdinalIgnoreCase));
 					if (idx < 0)
 						idx = options.FindIndex(opt => string.Equals(opt.Value, setting.DefaultValue, StringComparison.OrdinalIgnoreCase));
-					if (idx < 0) idx = 0;
+					if (idx < 0)
+						idx = 0;
 					combobox.SelectedIndex = idx;
 					break;
 
 				case NumberBox numberbox:
-					if (setting.Base == 16 && newValue.StartsWith("0x")) newValue = newValue[2..];
+					if (setting.Base == 16 && newValue.StartsWith("0x"))
+						newValue = newValue[2..];
 					if (int.TryParse(newValue, setting.Base == 16 ? System.Globalization.NumberStyles.HexNumber : System.Globalization.NumberStyles.Integer, null, out int val))
 						numberbox.Value = val;
 					break;
@@ -331,30 +348,38 @@ public sealed partial class InternetPage : Page
 
 	private static int NaturalSort(string x, string y)
 	{
-		if (x == y) return 0;
-		if (x == null) return -1;
-		if (y == null) return 1;
+		if (x == y)
+			return 0;
+		if (x == null)
+			return -1;
+		if (y == null)
+			return 1;
 
 		bool xIsUsec = x.Contains("usec", StringComparison.OrdinalIgnoreCase);
 		bool yIsUsec = y.Contains("usec", StringComparison.OrdinalIgnoreCase);
 		bool xIsMsec = x.Contains("msec", StringComparison.OrdinalIgnoreCase);
 		bool yIsMsec = y.Contains("msec", StringComparison.OrdinalIgnoreCase);
 
-		if (xIsUsec && yIsMsec) return -1;
-		if (yIsUsec && xIsMsec) return 1;
+		if (xIsUsec && yIsMsec)
+			return -1;
+		if (yIsUsec && xIsMsec)
+			return 1;
 
 		bool xIsMbps = x.Contains("Mbps", StringComparison.OrdinalIgnoreCase);
 		bool yIsMbps = y.Contains("Mbps", StringComparison.OrdinalIgnoreCase);
 		bool xIsGbps = x.Contains("Gbps", StringComparison.OrdinalIgnoreCase);
 		bool yIsGbps = y.Contains("Gbps", StringComparison.OrdinalIgnoreCase);
 
-		if (xIsMbps && yIsGbps) return -1;
-		if (yIsMbps && xIsGbps) return 1;
+		if (xIsMbps && yIsGbps)
+			return -1;
+		if (yIsMbps && xIsGbps)
+			return 1;
 
 		string[] rates = ["Disabled", "Off", "Minimal", "Low", "Medium", "Middle", "High", "Extreme", "Adaptive"];
 		int xInt = Array.FindIndex(rates, i => x.Equals(i, StringComparison.OrdinalIgnoreCase));
 		int yInt = Array.FindIndex(rates, i => y.Equals(i, StringComparison.OrdinalIgnoreCase));
-		if (xInt != -1 && yInt != -1) return xInt.CompareTo(yInt);
+		if (xInt != -1 && yInt != -1)
+			return xInt.CompareTo(yInt);
 
 		return PInvoke.StrCmpLogical(x, y);
 	}

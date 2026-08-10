@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using AutoOS.Core.Helpers.OS;
 using AutoOS.Core.Helpers.Registry;
 using Microsoft.Win32;
 //using Microsoft.Windows.ApplicationModel.WindowsAppRuntime;
@@ -18,7 +17,7 @@ public sealed partial class HomePage : Page
 
 	private async void HomePage_Loaded(object sender, RoutedEventArgs e)
 	{
-		#if !DEBUG
+#if !DEBUG
 		using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion");
 
 		if (key.GetValue("InstallDate") is int unixSeconds)
@@ -54,7 +53,7 @@ public sealed partial class HomePage : Page
 			Application.Current.Exit();
 		}
 			
-		#endif
+#endif
 
 		if (!(Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList")?.GetSubKeyNames()?.Any(sid => string.Equals(Path.GetFileName(Registry.GetValue($@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\{sid}", "ProfileImagePath", null) as string), "AutoOS", StringComparison.OrdinalIgnoreCase)) == true))
 		{

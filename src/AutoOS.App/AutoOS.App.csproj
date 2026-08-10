@@ -16,7 +16,7 @@
 
     <Nullable>Enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <TrimMode>partial</TrimMode>
+    <TrimMode>full</TrimMode>
     <CsWinRTAotWarningLevel>2</CsWinRTAotWarningLevel>
 
     <PublishAot>False</PublishAot>
@@ -24,6 +24,7 @@
     <PublishProfile>Properties\PublishProfiles\win-$(Platform).pubxml</PublishProfile>
     <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
     <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
+    <PublishReadyToRunComposite Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRunComposite>
     <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
     <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
     <SelfContained Condition="'$(Configuration)' != 'Debug'">True</SelfContained>

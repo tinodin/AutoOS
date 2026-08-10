@@ -81,7 +81,8 @@ public sealed partial class BrowsersPage : Page
 		var selectedExtensionsItems = Extensions.SelectedItems.Cast<GridViewItem>().ToList();
 		var selectedExtensions = selectedExtensionsItems.Select(item => item.Text).ToList();
 
-		if (selectedBrowsers.Count == 0 && selectedExtensions.Count == 0) return;
+		if (selectedBrowsers.Count == 0 && selectedExtensions.Count == 0)
+			return;
 
 		var selection = new BrowserSelection
 		{

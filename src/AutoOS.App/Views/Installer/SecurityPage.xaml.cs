@@ -53,7 +53,8 @@ public sealed partial class SecurityPage : Page
 
 	private void WindowsDefender_Toggled(object sender, RoutedEventArgs e)
 	{
-		if (isInitializingWindowsDefenderState) return;
+		if (isInitializingWindowsDefenderState)
+			return;
 
 		localSettings.Values["WindowsDefender"] = WindowsDefender.IsOn ? 1 : 0;
 	}
@@ -77,7 +78,8 @@ public sealed partial class SecurityPage : Page
 
 	private void UAC_Toggled(object sender, RoutedEventArgs e)
 	{
-		if (isInitializingUACState) return;
+		if (isInitializingUACState)
+			return;
 
 		localSettings.Values["UserAccountControl"] = UAC.IsOn ? 1 : 0;
 	}
@@ -111,7 +113,8 @@ public sealed partial class SecurityPage : Page
 
 	private void DEP_Toggled(object sender, RoutedEventArgs e)
 	{
-		if (isInitializingDEPState) return;
+		if (isInitializingDEPState)
+			return;
 
 		localSettings.Values["DataExecutionPrevention"] = DEP.IsOn ? 1 : 0;
 	}
@@ -133,7 +136,8 @@ public sealed partial class SecurityPage : Page
 
 	private void MemoryIntegrity_Toggled(object sender, RoutedEventArgs e)
 	{
-		if (isInitializingMemoryIntegrityState) return;
+		if (isInitializingMemoryIntegrityState)
+			return;
 
 		localSettings.Values["MemoryIntegrity"] = MemoryIntegrity.IsOn ? 1 : 0;
 	}
@@ -155,7 +159,8 @@ public sealed partial class SecurityPage : Page
 
 	private void VirtualizationBasedSecurity_Toggled(object sender, RoutedEventArgs e)
 	{
-		if (isInitializingVBSState) return;
+		if (isInitializingVBSState)
+			return;
 
 		localSettings.Values["VirtualizationBasedSecurity"] = VirtualizationBasedSecurity.IsOn ? 1 : 0;
 	}
@@ -187,7 +192,8 @@ public sealed partial class SecurityPage : Page
 
 	private void SpectreMeltdown_Toggled(object sender, RoutedEventArgs e)
 	{
-		if (isInitializingSpectreMeltdownState) return;
+		if (isInitializingSpectreMeltdownState)
+			return;
 
 		localSettings.Values["SpectreMeltdownMitigations"] = SpectreMeltdown.IsOn ? 1 : 0;
 	}
@@ -209,7 +215,8 @@ public sealed partial class SecurityPage : Page
 
 	private void ProcessMitigations_Toggled(object sender, RoutedEventArgs e)
 	{
-		if (isInitializingProcessMitigationsState) return;
+		if (isInitializingProcessMitigationsState)
+			return;
 
 		localSettings.Values["ProcessMitigations"] = ProcessMitigations.IsOn ? 1 : 0;
 	}
