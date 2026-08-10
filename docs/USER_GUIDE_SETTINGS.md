@@ -182,12 +182,11 @@ Manually adjust or automatically optimize advanced network adapter settings:
 Adjust, Edit, Duplicate, Delete, Restore, Export, Import Power plans and compare them:
 - Keep using the AutoOS Power Plan.
 - If you have issues with the AutoOS Power Plan, leave a message on the [Discord Server](https://discord.gg/bZU4dMMWpg).
-- Select another power plan in the 2nd combobox to **compare** it to the active power plan.
+- Select another power plan in the 2nd combobox to **compare** it against the active power plan.
 - Right click on the active power plan combobox to `Edit, Duplicate, Delete or Export` it.
 
 ![Energy & Power](https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/AutoOS%20Settings/Energy%20&%20Power.png)
 ![Energy & Power2](https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/AutoOS%20Settings/Energy%20&%20Power2.png)
-![Energy & Power3](https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/AutoOS%20Settings/Energy%20&%20Power3.png)
 
 ### Services & Drivers
 Toggle Services & Drivers states with configured functionality:
@@ -260,6 +259,28 @@ Post-install your Applications:
 ![Applications3](https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/AutoOS%20Settings/Applications3.png)
 ![Applications4](https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/AutoOS%20Settings/Applications4.png)
 
+### Benchmarks
+Analyze your Benchmarks:
+- Add existing Benchmarks by clicking `Add`.
+- Select a process, adjust delay, duration and hotkey. Then click `Record`.
+- Go to `Analysis` tab to view charts.
+  - Choose between **Bar, Column, Line, Scatter** and **Pie** charts.
+  - Toggle **Statistics** and switch **Metrics**. 
+  - Adjust **Low Fps** and **Stuttering factor**.
+  - Adjust **Colors**
+  - Toggle visibility by clicking on the **Legend items**.
+- Click `Statistics` tab to view stats.
+  - Change to **Baseline mode**.
+  - Switch between **absolute** and **relative delta**.
+  - Adjust **Low Fps** and **Stuttering factor**.
+
+![Benchmarks](https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/AutoOS%20Settings/Benchmarks.png)
+![Benchmarks2](https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/AutoOS%20Settings/Benchmarks2.png)
+![Benchmarks3](https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/AutoOS%20Settings/Benchmarks3.png)
+![Benchmarks4](https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/AutoOS%20Settings/Benchmarks4.png)
+![Benchmarks5](https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/AutoOS%20Settings/Benchmarks5.png)
+![Benchmarks6](https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/AutoOS%20Settings/Benchmarks6.png)
+
 ### Games
 View your Game Library (Supports Epic Games, Riot Games, EA, Ubisoft Connect, Steam, Eden, Citron and Ryujinx):
 - Switch between Epic Games and Steam Accounts on the top right.
@@ -284,7 +305,7 @@ View your Game Library (Supports Epic Games, Riot Games, EA, Ubisoft Connect, St
 ### Settings
 Configure AutoOS window and theme preferences:
 - Enable `Hide AutoOS Startup` if you don't want to see the `AutoOS Startup`.
-- Change `Material` to customize the window appearance.
+- Adjust `App theme`, `Material` and `Tint color` to your liking.
 - Select paths for **Switch Emulator** data to make them show up in the `Games` tab.
 
 ![Settings](https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/AutoOS%20Settings/Settings.png)
