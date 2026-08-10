@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using AutoOS.Core.Helpers.OS;
 using AutoOS.Core.Helpers.Registry;
 using Microsoft.Win32;
 //using Microsoft.Windows.ApplicationModel.WindowsAppRuntime;
@@ -18,11 +19,11 @@ public sealed partial class HomePage : Page
 	private async void HomePage_Loaded(object sender, RoutedEventArgs e)
 	{
 #if !DEBUG
-		using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion");
+		using RegistryKey? key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion");
 
-		if (key.GetValue("InstallDate") is int unixSeconds)
+		if (key?.GetValue("InstallDate") is int unixSeconds)
 		{
-			var installDate = DateTimeOffset.FromUnixTimeSeconds(unixSeconds).LocalDateTime;
+			DateTime installDate = DateTimeOffset.FromUnixTimeSeconds(unixSeconds).LocalDateTime;
 			if ((DateTime.Now - installDate).TotalDays > 2)
 			{
 				var dialog = new ContentDialog
@@ -38,7 +39,7 @@ public sealed partial class HomePage : Page
 			}
 		}
 
-		var (major, minor, build, ubr) = OSHelper.GetWindowsVersion();
+		(ushort major, ushort minor, ushort build, ushort ubr) = OSHelper.GetWindowsVersion();
 		if (build < 26200 || (build == 26200 && ubr < 8737))
 		{
 			var dialog = new ContentDialog

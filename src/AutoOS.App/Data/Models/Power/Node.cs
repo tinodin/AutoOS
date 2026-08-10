@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using AutoOS.App.Data.Enums.Power;
 
@@ -6,8 +7,7 @@ namespace AutoOS.App.Data.Models.Power;
 
 public sealed class Node
 {
-	private readonly string _baseDisplayName;
-
+	[DynamicDependency(nameof(DisplayName), typeof(Node))]
 	internal Node(
 		NodeKind nodeKind,
 		PageMode mode,
@@ -24,7 +24,7 @@ public sealed class Node
 		NodeKind = nodeKind;
 		Mode = mode;
 		DisplayName = displayName;
-		_baseDisplayName = baseDisplayName ?? displayName;
+		BaseDisplayName = baseDisplayName ?? displayName;
 		Description = description;
 		Guid = guid;
 		Setting = setting;
@@ -54,7 +54,7 @@ public sealed class Node
 
 	public string DisplayName { get; }
 
-	public string BaseDisplayName => _baseDisplayName;
+	public string BaseDisplayName { get; }
 
 	public SettingState? State { get; }
 

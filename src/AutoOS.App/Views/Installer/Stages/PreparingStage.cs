@@ -477,7 +477,7 @@ public static partial class PreparingStage
 			YouTubeNoTranslation = (localSettings.Values["Extensions"]?.ToString()?.Contains("YouTube No Translation") ?? false);
 			DarkReader = (localSettings.Values["Extensions"]?.ToString()?.Contains("Dark Reader") ?? false);
 			Shazam = (localSettings.Values["Extensions"]?.ToString()?.Contains("Shazam") ?? false);
-			ProtonPass = (localSettings.Values["Extensions"]?.ToString().Contains("Proton Pass") ?? false);
+			ProtonPass = (localSettings.Values["Extensions"]?.ToString()?.Contains("Proton Pass") ?? false);
 			WaybackMachine = (localSettings.Values["Extensions"]?.ToString()?.Contains("Wayback Machine") ?? false);
 			iCloud = (localSettings.Values["Extensions"]?.ToString()?.Contains("iCloud Passwords") ?? false);
 			Bitwarden = (localSettings.Values["Extensions"]?.ToString()?.Contains("Bitwarden") ?? false);
