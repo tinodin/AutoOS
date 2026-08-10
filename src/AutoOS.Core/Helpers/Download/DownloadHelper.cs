@@ -296,7 +296,7 @@ public static partial class DownloadHelper
 						else
 							errorDetails.AppendLine("Fallback download not attempted (non-success HTTP status or unknown)");
 
-						await LogHelper.LogError(new FileNotFoundException(errorDetails.ToString(), singleFileName!, downloaderError));
+						throw new FileNotFoundException(errorDetails.ToString(), singleFileName!, downloaderError);
 					}
 				}
 

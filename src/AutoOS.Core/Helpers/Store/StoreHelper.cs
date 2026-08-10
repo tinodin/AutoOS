@@ -11,7 +11,6 @@ using Windows.ApplicationModel;
 using Windows.ApplicationModel.Store.Preview.InstallControl;
 using Windows.Foundation;
 using Windows.Management.Deployment;
-using Windows.Storage;
 
 namespace AutoOS.Core.Helpers.Store;
 
@@ -35,43 +34,54 @@ public static partial class StoreHelper
 	[GeneratedRegex(@"^(.+?)_(\d+\.\d+\.\d+\.\d+)_([a-zA-Z0-9]+)_(.*?)_([a-hjkmnp-tv-z0-9]{13})$", RegexOptions.Compiled)]
 	private static partial Regex PackageIdentityRegex();
 
-	public static async Task Download(string identifier, int index = 0, IStatusReporter? reporter = null)
-	{
-		string product = await GetProductID(identifier);
-		if (string.IsNullOrEmpty(product))
+		public static async Task Download(string identifier, int index = 0, IStatusReporter? reporter = null)
 		{
-			await LogHelper.LogError(new Exception($"[StoreHelper] ProductID not found for {identifier}."));
-			return;
-		}
-
-		string category = await GetCategoryID(product);
-		if (string.IsNullOrEmpty(category))
-		{
-			await LogHelper.LogError(new Exception($"[StoreHelper] CategoryID not found for {identifier} (Product: {product})."));
-			return;
-		}
-
-		string folderPath = Path.Combine(Path.Combine(Path.GetTempPath(), "StoreHelper"), identifier);
-		Directory.CreateDirectory(folderPath);
-
-		try
-		{
-			List<StoreInfo> files = await GetFiles(identifier, category, index);
-			if (files.Count == 0)
+			string product = await GetProductID(identifier);
+			if (string.IsNullOrEmpty(product))
 			{
-				await LogHelper.LogError(new Exception($"[StoreHelper] No files found for {identifier}"), actionTitle: $"[StoreHelper] Download failed for {identifier}");
+				await LogHelper.LogError(new Exception($"[StoreHelper] ProductID not found for {identifier}."));
 				return;
 			}
-			StoreInfo main = files.First();
-			Debug.WriteLine($"[StoreHelper] Selected Package: {main.Name}");
 
-			await DownloadHelper.Download(main.ResourceUri, folderPath, reporter: reporter);
+			string category = await GetCategoryID(product);
+			if (string.IsNullOrEmpty(category))
+			{
+				await LogHelper.LogError(new Exception($"[StoreHelper] CategoryID not found for {identifier} (Product: {product})."));
+				return;
+			}
+
+			string folderPath = Path.Combine(Path.Combine(Path.GetTempPath(), "StoreHelper"), identifier);
+			Directory.CreateDirectory(folderPath);
+
+			const int maxAttempts = 3;
+			for (int attempt = 1; attempt <= maxAttempts; attempt++)
+			{
+				try
+				{
+					List<StoreInfo> files = await GetFiles(identifier, category, index);
+					if (files.Count == 0)
+					{
+						await LogHelper.LogError(new Exception($"[StoreHelper] No files found for {identifier}"), actionTitle: $"[StoreHelper] Download failed for {identifier}");
+						return;
+					}
+					StoreInfo main = files.First();
+					if (string.IsNullOrEmpty(main.ResourceUri))
+					{
+						await LogHelper.LogError(new Exception($"[StoreHelper] No download URL resolved for {identifier}"), actionTitle: $"[StoreHelper] Download failed for {identifier}");
+						return;
+					}
+					Debug.WriteLine($"[StoreHelper] Selected Package: {main.Name}");
+
+					await DownloadHelper.Download(main.ResourceUri, folderPath, reporter: reporter);
+					return;
+				}
+				catch (Exception ex)
+				{
+					if (attempt == maxAttempts)
+						await LogHelper.LogError(ex, actionTitle: $"[StoreHelper] Download failed for {identifier}");
+				}
+			}
 		}
-		catch (Exception ex)
-		{
-			await LogHelper.LogError(ex, actionTitle: $"[StoreHelper] Download failed for {identifier}");
-		}
-	}
 
 	public static async Task Install(string identifier)
 	{
@@ -115,10 +125,8 @@ public static partial class StoreHelper
 		}
 		catch (UnauthorizedAccessException)
 		{
-			ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
-			int actionIndex = localSettings.Values["actionIndex"] as int? ?? 0;
-			localSettings.Values["actionIndex"] = actionIndex - 1;
 			Process.Start(new ProcessStartInfo { FileName = "shutdown", Arguments = "/r /t 0", CreateNoWindow = true, UseShellExecute = false });
+			await Task.Delay(Timeout.InfiniteTimeSpan);
 		}
 	}
 
@@ -130,10 +138,8 @@ public static partial class StoreHelper
 		}
 		catch (UnauthorizedAccessException)
 		{
-			ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
-			int actionIndex = localSettings.Values["actionIndex"] as int? ?? 0;
-			localSettings.Values["actionIndex"] = actionIndex - 1;
 			Process.Start(new ProcessStartInfo { FileName = "shutdown", Arguments = "/r /t 0", CreateNoWindow = true, UseShellExecute = false });
+			await Task.Delay(Timeout.InfiniteTimeSpan);
 		}
 	}
 
@@ -184,23 +190,34 @@ public static partial class StoreHelper
 
 		installManager.ItemStatusChanged += OnItemStatusChanged;
 
-		AppInstallItem updateItem = await installManager.UpdateAppByPackageFamilyNameAsync(identifier);
+		try
+		{
+			AppInstallItem updateItem = await installManager.UpdateAppByPackageFamilyNameAsync(identifier);
 
-		if (updateItem == null)
+			if (updateItem == null)
+			{
+				installManager.ItemStatusChanged -= OnItemStatusChanged;
+				return;
+			}
+
+			AppInstallStatus initialStatus = updateItem.GetCurrentStatus();
+			if (initialStatus.InstallState == AppInstallState.Completed || initialStatus.InstallState == AppInstallState.Canceled || initialStatus.InstallState == AppInstallState.Error)
+			{
+				installManager.ItemStatusChanged -= OnItemStatusChanged;
+				return;
+			}
+
+			await tcs.Task;
+		}
+		catch (Exception ex) when (ex is ArgumentException or UnauthorizedAccessException)
+		{
+			Process.Start(new ProcessStartInfo { FileName = "shutdown", Arguments = "/r /t 0", CreateNoWindow = true, UseShellExecute = false });
+			await Task.Delay(Timeout.InfiniteTimeSpan);
+		}
+		finally
 		{
 			installManager.ItemStatusChanged -= OnItemStatusChanged;
-			return;
 		}
-
-		AppInstallStatus initialStatus = updateItem.GetCurrentStatus();
-		if (initialStatus.InstallState == AppInstallState.Completed || initialStatus.InstallState == AppInstallState.Canceled || initialStatus.InstallState == AppInstallState.Error)
-		{
-			installManager.ItemStatusChanged -= OnItemStatusChanged;
-			return;
-		}
-
-		await tcs.Task;
-		installManager.ItemStatusChanged -= OnItemStatusChanged;
 
 		uiContext?.Post(_ =>
 		{

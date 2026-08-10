@@ -130,8 +130,8 @@ public sealed partial class SecurityPage : Page
 			RegistryHelper.DeleteValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Defender", "PassiveMode");
 			RegistryHelper.DeleteValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender", "DisableAntiSpyware");
 			RegistryHelper.DeleteValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender", "DisableAntiVirus");
-			if (File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "SecurityHealthService.exee")))
-				RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Move(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "SecurityHealthService.exee"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "SecurityHealthService.exe")));
+			if (File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windows Defender", "MsMpEng.exee")))
+				RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Move(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windows Defender", "MsMpEng.exee"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windows Defender", "MsMpEng.exe")));
 
 			if (Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\MsSecCore", false)?.GetValue("Start") as int? != 0)
 				RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\MsSecCore", "Start", 0, RegistryValueKind.DWord);
@@ -283,8 +283,8 @@ public sealed partial class SecurityPage : Page
 			RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => ServicesHelper.StopService("webthreatdefsvc"));
 			RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => ServicesHelper.StopService("webthreatdefusersvc"));
 			RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => ServicesHelper.StopService("wscsvc"));
-			if (File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "SecurityHealthService.exe")))
-				RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Move(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "SecurityHealthService.exe"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "SecurityHealthService.exee")));
+			if (File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windows Defender", "MsMpEng.exe")))
+				RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Move(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windows Defender", "MsMpEng.exe"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windows Defender", "MsMpEng.exee")));
 			RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\MsSecCore", "Start", 4, RegistryValueKind.DWord);
 			RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SecurityHealthService", "Start", 4, RegistryValueKind.DWord);
 			RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Sense", "Start", 4, RegistryValueKind.DWord);

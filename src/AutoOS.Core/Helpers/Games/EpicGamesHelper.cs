@@ -838,11 +838,11 @@ public static partial class EpicGamesHelper
 					break;
 				}
 
-				JsonArray? records = json?["records"]?.AsArray();
+				JsonArray? records = (json as JsonObject)?["records"] as JsonArray;
 				if (records != null)
 					libraryData.AddRange(records);
 
-				nextCursor = json?["responseMetadata"]?["nextCursor"]?.GetValue<string>();
+				nextCursor = ((json as JsonObject)?["responseMetadata"] as JsonObject)?["nextCursor"]?.GetValue<string>();
 
 			} while (!string.IsNullOrEmpty(nextCursor));
 
@@ -900,10 +900,11 @@ public static partial class EpicGamesHelper
 
 			if (playTimeResponse != null && playTimeResponse.IsSuccessStatusCode)
 			{
-				playTimeData = (JsonNode.Parse(await playTimeResponse.Content.ReadAsStringAsync()) as JsonArray)?.ToDictionary(
-					playtime => playtime?["artifactId"]?.GetValue<string>()!,
-					playtime => playtime?["totalTime"]?.GetValue<int>() ?? 0
-				);
+				playTimeData = (JsonNode.Parse(await playTimeResponse.Content.ReadAsStringAsync()) as JsonArray)?.Where(playtime => (playtime as JsonObject)?["artifactId"] is not null)
+					.ToDictionary(
+						playtime => (playtime as JsonObject)?["artifactId"]!.GetValue<string>()!,
+						playtime => (playtime as JsonObject)?["totalTime"]?.GetValue<int>() ?? 0
+					);
 			}
 
 			string region = new RegionInfo(CultureInfo.CurrentCulture.Name).TwoLetterISORegionName.ToUpper();
@@ -956,22 +957,22 @@ public static partial class EpicGamesHelper
 
 						string? installLocation = null;
 
-						using (RegistryKey? key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(json?["RegistryPath"]?.GetValue<string>() ?? ""))
+						using (RegistryKey? key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey((json as JsonObject)?["RegistryPath"]?.GetValue<string>() ?? ""))
 						{
-if (key != null)
+							if (key != null)
 							{
-								installLocation = key.GetValue(json!["RegistryKey"]?.GetValue<string>())?.ToString()?.TrimEnd('\\', '/');
+								installLocation = key.GetValue((json as JsonObject)?["RegistryKey"]?.GetValue<string>())?.ToString()?.TrimEnd('\\', '/');
 							}
 						}
 
 						if (Directory.Exists(installLocation))
 						{
-							string? provider = json!["Provider"]?.GetValue<string>();
+							string? provider = (json as JsonObject)?["Provider"]?.GetValue<string>();
 
 							string? gameId = null;
 							if (provider == "UbisoftConnect")
 							{
-								gameId = json["GameID"]?.GetValue<string>();
+								gameId = (json as JsonObject)?["GameID"]?.GetValue<string>();
 								provider = "Ubisoft Connect";
 							}
 
@@ -980,14 +981,14 @@ if (key != null)
 								["Provider"] = provider,
 								["bIsApplication"] = true,
 								["AppCategories"] = new JsonArray(JsonValue.Create("games")),
-								["CatalogItemId"] = json["CatalogID"]?.GetValue<string>(),
-								["CatalogNamespace"] = json["Namespace"]?.GetValue<string>(),
-								["AppName"] = json["AppName"]?.GetValue<string>(),
-								["DisplayName"] = json["Title"]?.GetValue<string>(),
+								["CatalogItemId"] = (json as JsonObject)?["CatalogID"]?.GetValue<string>(),
+								["CatalogNamespace"] = (json as JsonObject)?["Namespace"]?.GetValue<string>(),
+								["AppName"] = (json as JsonObject)?["AppName"]?.GetValue<string>(),
+								["DisplayName"] = (json as JsonObject)?["Title"]?.GetValue<string>(),
 								["InstallLocation"] = installLocation,
 								["GameID"] = gameId,
-								["LaunchExecutable"] = json["MainWindowProcessName"]?.GetValue<string>(),
-								["ProcessNames"] = json["ProcessNames"]?.AsArray().DeepClone()
+								["LaunchExecutable"] = (json as JsonObject)?["MainWindowProcessName"]?.GetValue<string>(),
+								["ProcessNames"] = (json as JsonObject)?["ProcessNames"]?.AsArray().DeepClone()
 							});
 						}
 					}
@@ -1007,22 +1008,22 @@ if (key != null)
 					CancellationToken token = cts.Token;
 
 					// return if not a game
-					if (itemJson?["bIsApplication"]?.GetValue<bool>() != true) return;
-					JsonArray? appCategories = itemJson?["AppCategories"]?.AsArray();
+					if (itemJson is not JsonObject manifest) return;
+					if (manifest?["bIsApplication"]?.GetValue<bool>() != true) return;
+					JsonArray? appCategories = manifest?["AppCategories"] as JsonArray;
 					if (appCategories == null || !appCategories.Any(children => children?.GetValue<string>()?.Equals("games", StringComparison.OrdinalIgnoreCase) == true)) return;
-JsonNode manifest = itemJson!;
-					string catalogItemId = manifest["CatalogItemId"]?.GetValue<string>()!;
-					string catalogNamespace = manifest["CatalogNamespace"]?.GetValue<string>()!;
-					string appName = manifest["AppName"]?.GetValue<string>()!;
+					string catalogItemId = manifest?["CatalogItemId"]?.GetValue<string>() ?? "";
+					string catalogNamespace = manifest?["CatalogNamespace"]?.GetValue<string>() ?? "";
+					string appName = manifest?["AppName"]?.GetValue<string>() ?? "";
 
 					if (catalogItemId == "1e8bda5cfbb641b9a9aea8bd62285f73")
-						appName = manifest["MainGameAppName"]?.GetValue<string>()!;
+						appName = manifest?["MainGameAppName"]?.GetValue<string>() ?? appName;
 
 					// return if not in library
-					if (!libraryData.Any(x => x?["catalogItemId"]?.ToString() == catalogItemId))
+					if (!libraryData.Any(x => (x as JsonObject)?["catalogItemId"]?.ToString() == catalogItemId))
 						return;
 
-					string installLocation = manifest!["InstallLocation"]?.GetValue<string>()?.Replace("/", "\\") ?? "";
+					string installLocation = manifest?["InstallLocation"]?.GetValue<string>()?.Replace("/", "\\") ?? "";
 					if (!Directory.Exists(installLocation))
 						return;
 
@@ -1048,45 +1049,46 @@ JsonNode manifest = itemJson!;
 					string? productId = null;
 					if (offerResponse.IsSuccess)
 					{
-						JsonArray? elements = JsonNode.Parse(offerResponse.Body ?? "")?["data"]?["Catalog"]?["searchStore"]?["elements"]?.AsArray();
+						JsonArray? elements = ((((JsonNode.Parse(offerResponse.Body ?? "") as JsonObject)?["data"] as JsonObject)?["Catalog"] as JsonObject)?["searchStore"] as JsonObject)?["elements"] as JsonArray;
 						JsonNode? searchElement = elements != null && elements.Count > 0 ? elements[0] : null;
 
-						offerId = searchElement?["id"]?.GetValue<string>();
+						offerId = (searchElement as JsonObject)?["id"]?.GetValue<string>();
 
-						JsonArray? mappings = searchElement?["catalogNs"]?["mappings"]?.AsArray();
+						JsonArray? mappings = ((searchElement as JsonObject)?["catalogNs"] as JsonObject)?["mappings"] as JsonArray;
 						if (mappings != null)
 						{
-							JsonNode? homeMapping = mappings.FirstOrDefault(mapping => mapping?["pageType"]?.GetValue<string>() == "productHome");
+							JsonNode? homeMapping = mappings.FirstOrDefault(mapping => (mapping as JsonObject)?["pageType"]?.GetValue<string>() == "productHome");
 							if (homeMapping != null)
 							{
-								productSlug = homeMapping["pageSlug"]?.GetValue<string>();
-								productId = homeMapping["productId"]?.GetValue<string>();
+								productSlug = (homeMapping as JsonObject)?["pageSlug"]?.GetValue<string>();
+								productId = (homeMapping as JsonObject)?["productId"]?.GetValue<string>();
 							}
 							else
 							{
-								JsonNode? offerMapping = mappings.FirstOrDefault(m => m?["pageType"]?.GetValue<string>() == "offer");
+								JsonNode? offerMapping = mappings.FirstOrDefault(m => (m as JsonObject)?["pageType"]?.GetValue<string>() == "offer");
 								if (offerMapping != null)
 								{
-									productSlug = offerMapping["pageSlug"]?.GetValue<string>();
-									productId = offerMapping["productId"]?.GetValue<string>();
+									productSlug = (offerMapping as JsonObject)?["pageSlug"]?.GetValue<string>();
+									productId = (offerMapping as JsonObject)?["productId"]?.GetValue<string>();
 								}
 								else if (mappings.Count > 0)
 								{
-									productSlug = mappings[0]?["pageSlug"]?.GetValue<string>();
-									productId = mappings[0]?["productId"]?.GetValue<string>();
+									productSlug = (mappings[0] as JsonObject)?["pageSlug"]?.GetValue<string>();
+									productId = (mappings[0] as JsonObject)?["productId"]?.GetValue<string>();
 								}
 							}
 						}
 
 						if (string.IsNullOrEmpty(productSlug) && searchElement != null)
 						{
-							productSlug = searchElement["productSlug"]?.GetValue<string>() ?? searchElement["urlSlug"]?.GetValue<string>();
+							productSlug = (searchElement as JsonObject)?["productSlug"]?.GetValue<string>() ?? (searchElement as JsonObject)?["urlSlug"]?.GetValue<string>();
 						}
 					}
 
 					if (string.IsNullOrEmpty(offerId))
 					{
-						await LogHelper.LogError(new InvalidOperationException($"Failed to get offerId for {catalogItemId}"), null, $"Failed to get offerId for game {itemJson?["DisplayName"]?.ToString()}, {catalogItemId}");
+						if (catalogItemId != "6e563a2c0f5f46e3b4e88b5f4ed50cca")
+							await LogHelper.LogError(new InvalidOperationException($"Failed to get offerId for {catalogItemId}"), null, $"Failed to get offerId for game {(itemJson as JsonObject)?["DisplayName"]?.ToString()}, {catalogItemId}");
 						return;
 					}
 
@@ -1117,7 +1119,8 @@ JsonNode manifest = itemJson!;
 							}
 							catch (Exception fallbackEx)
 							{
-								await LogHelper.LogError(fallbackEx, null, $"Failed to load manifest data for game {itemJson?["DisplayName"]?.ToString()}, {catalogItemId}, both {manifestUrl} and {manifestFallbackUrl}");
+								if (fallbackEx is not OperationCanceledException oce || oce.CancellationToken != token)
+									await LogHelper.LogError(fallbackEx, null, $"Failed to load manifest data for game {(itemJson as JsonObject)?["DisplayName"]?.ToString()}, {catalogItemId}, both {manifestUrl} and {manifestFallbackUrl}");
 							}
 						}
 					})();
@@ -1136,7 +1139,8 @@ JsonNode manifest = itemJson!;
 							}
 							catch (Exception fallbackEx)
 							{
-								await LogHelper.LogError(fallbackEx, null, $"Failed to load offer data for game {itemJson?["DisplayName"]?.ToString()}, {offerId}, both {offerUrl} and {offerFallbackUrl}");
+								if (fallbackEx is not OperationCanceledException oce || oce.CancellationToken != token)
+									await LogHelper.LogError(fallbackEx, null, $"Failed to load offer data for game {(itemJson as JsonObject)?["DisplayName"]?.ToString()}, {offerId}, both {offerUrl} and {offerFallbackUrl}");
 							}
 						}
 					})();
@@ -1161,7 +1165,7 @@ JsonNode manifest = itemJson!;
 						}
 						catch (Exception ex)
 						{
-							await LogHelper.LogError(ex, null, $"Failed to load rating data for game {itemJson?["DisplayName"]?.ToString()}, {catalogNamespace}");
+							await LogHelper.LogError(ex, null, $"Failed to load rating data for game {(itemJson as JsonObject)?["DisplayName"]?.ToString()}, {catalogNamespace}");
 						}
 					})();
 
@@ -1174,7 +1178,7 @@ JsonNode manifest = itemJson!;
 						}
 						catch (Exception ex)
 						{
-							await LogHelper.LogError(ex, null, $"Failed to load product offer data for game {itemJson?["DisplayName"]?.ToString()}, {productId}, {offerId}, {productOfferUrl}");
+							await LogHelper.LogError(ex, null, $"Failed to load product offer data for game {(itemJson as JsonObject)?["DisplayName"]?.ToString()}, {productId}, {offerId}, {productOfferUrl}");
 						}
 					})();
 
@@ -1187,28 +1191,31 @@ JsonNode manifest = itemJson!;
 						}
 						catch (Exception ex)
 						{
-							await LogHelper.LogError(ex, null, $"Failed to load age rating data for game {itemJson?["DisplayName"]?.ToString()}, {offerId}, {ageRatingUrl}");
+							await LogHelper.LogError(ex, null, $"Failed to load age rating data for game {(itemJson as JsonObject)?["DisplayName"]?.ToString()}, {offerId}, {ageRatingUrl}");
 						}
 					})();
 
 					await Task.WhenAll(manifestTask, offerTask, ratingTask, productOfferTask, ageRatingTask).ConfigureAwait(false);
 
 					// get description
-					string? description = offerData[offerId]?["description"]?.GetValue<string>();
+					JsonNode? offerEntry = (offerData as JsonObject)?[offerId];
+					JsonNode? manifestEntry = (manifestData as JsonObject)?[catalogItemId];
+					string? description = (offerEntry as JsonObject)?["description"]?.GetValue<string>();
 
-					if (offerData[offerId]?["offerType"]?.GetValue<string>() != "BASE_GAME")
+					if ((offerEntry as JsonObject)?["offerType"]?.GetValue<string>() != "BASE_GAME")
 					{
-						description = manifestData[catalogItemId]?["description"]?.GetValue<string>();
+						description = (manifestEntry as JsonObject)?["description"]?.GetValue<string>();
 					}
 
 					// get key images
-					JsonArray keyImages = manifestData[catalogItemId]?["keyImages"]?.AsArray() ?? [];
+					JsonArray? keyImages = (manifestEntry as JsonObject)?["keyImages"] as JsonArray;
+					if (keyImages == null) keyImages = [];
 
 					// get artifactid
-					JsonArray? releaseInfo = manifestData[catalogItemId]?["releaseInfo"]?.AsArray();
-					string artifactId = releaseInfo != null && releaseInfo.Count > 0 ? releaseInfo[0]?["appId"]?.ToString()! : null!;
+					JsonArray? releaseInfo = (manifestEntry as JsonObject)?["releaseInfo"] as JsonArray;
+					string artifactId = releaseInfo != null && releaseInfo.Count > 0 ? (releaseInfo[0] as JsonObject)?["appId"]?.ToString() ?? "" : "";
 					if (string.IsNullOrEmpty(artifactId))
-						await LogHelper.LogError(new InvalidOperationException($"Failed to get artifactId for {catalogItemId}"), null, $"Failed to get artifactId for game {itemJson?["DisplayName"]?.ToString()}, {catalogItemId}");
+						await LogHelper.LogError(new InvalidOperationException($"Failed to get artifactId for {catalogItemId}"), null, $"Failed to get artifactId for game {(itemJson as JsonObject)?["DisplayName"]?.ToString()}, {catalogItemId}");
 
 					// read playtime json data
 					int totalSeconds = playTimeData?.GetValueOrDefault(artifactId) ?? 0;
@@ -1219,27 +1226,28 @@ JsonNode manifest = itemJson!;
 						: $"{ts.Minutes}m";
 
 					// get latest version
-					string? currentVersion = itemJson?["AppVersionString"]?.GetValue<string>();
-					string? latestVersion = buildData?.FirstOrDefault(x => x?["appName"]?.ToString() == itemJson?["AppName"]?.GetValue<string>())?["buildVersion"]?.ToString();
+					string? currentVersion = (itemJson as JsonObject)?["AppVersionString"]?.GetValue<string>();
+					string? latestVersion = buildData?.FirstOrDefault(x => (x as JsonObject)?["appName"]?.ToString() == (itemJson as JsonObject)?["AppName"]?.GetValue<string>()) is JsonNode buildEntry ? (buildEntry as JsonObject)?["buildVersion"]?.ToString() : null;
 
 					if (string.IsNullOrEmpty(currentVersion))
 						currentVersion = latestVersion;
 
-					DateTimeOffset releaseDate = DateTimeOffset.Parse(offerData[offerId]!["releaseDate"]!.GetValue<string>()!);
+					string? releaseDateStr = (offerEntry as JsonObject)?["releaseDate"]?.GetValue<string>();
+					DateTimeOffset releaseDate = DateTimeOffset.TryParse(releaseDateStr, out DateTimeOffset parsedRelease) ? parsedRelease : DateTimeOffset.MinValue;
 
-					long? sizeBytes = itemJson?["InstallSize"]?.GetValue<long>();
+					long? sizeBytes = (itemJson as JsonObject)?["InstallSize"]?.GetValue<long>();
 
 					if (!sizeBytes.HasValue)
 						sizeBytes = new DirectoryInfo(installLocation).EnumerateFiles("*", System.IO.SearchOption.AllDirectories).Sum(fi => fi.Length);
 
 					// get screenshots
-					JsonArray? keyImagesList = offerData[offerId]?["keyImages"]?.AsArray();
+					JsonArray? keyImagesList = (offerEntry as JsonObject)?["keyImages"] as JsonArray;
 					var screenshots = new List<string>();
 					foreach (JsonNode? image in keyImagesList ?? [])
 					{
-						if (image?["type"]?.GetValue<string>() == "featuredMedia")
+						if ((image as JsonObject)?["type"]?.GetValue<string>() == "featuredMedia")
 						{
-							string? url = image?["url"]?.GetValue<string>();
+							string? url = (image as JsonObject)?["url"]?.GetValue<string>();
 							if (!string.IsNullOrEmpty(url))
 							{
 								screenshots.Add(url);
@@ -1254,20 +1262,20 @@ JsonNode manifest = itemJson!;
 						if (cmsResponse.IsSuccess)
 						{
 							var cmsJson = JsonNode.Parse(cmsResponse.Body ?? "");
-							JsonArray? pages = cmsJson?["pages"]?.AsArray();
+							JsonArray? pages = (cmsJson as JsonObject)?["pages"] as JsonArray;
 							if (pages != null)
 							{
-								var sortedPages = pages.OrderByDescending(page => page?["type"]?.GetValue<string>() == "productHome").ToList();
+								var sortedPages = pages.OrderByDescending(page => (page as JsonObject)?["type"]?.GetValue<string>() == "productHome").ToList();
 								foreach (JsonNode? page in sortedPages)
 								{
-									JsonArray? carouselItems = page?["data"]?["carousel"]?["items"]?.AsArray();
+									JsonArray? carouselItems = (((page as JsonObject)?["data"] as JsonObject)?["carousel"] as JsonObject)?["items"] as JsonArray;
 									if (carouselItems != null)
 									{
 										foreach (JsonNode? item in carouselItems)
 										{
 											if (item == null) continue;
 
-											string? src = item["image"]?["src"]?.GetValue<string>();
+											string? src = ((item as JsonObject)?["image"] as JsonObject)?["src"]?.GetValue<string>();
 											if (!string.IsNullOrEmpty(src))
 											{
 												if (!screenshots.Contains(src))
@@ -1277,10 +1285,10 @@ JsonNode manifest = itemJson!;
 												continue;
 											}
 
-											JsonNode? videoNode = item["video"];
+											JsonNode? videoNode = (item as JsonObject)?["video"];
 											if (videoNode != null)
 											{
-												string? poster = videoNode["poster"]?.GetValue<string>();
+												string? poster = (videoNode as JsonObject)?["poster"]?.GetValue<string>();
 												if (!string.IsNullOrEmpty(poster))
 												{
 													if (!screenshots.Contains(poster))
@@ -1290,7 +1298,7 @@ JsonNode manifest = itemJson!;
 													continue;
 												}
 
-												string? videoThumb = videoNode["thumbnail"]?.GetValue<string>();
+												string? videoThumb = (videoNode as JsonObject)?["thumbnail"]?.GetValue<string>();
 												if (!string.IsNullOrEmpty(videoThumb))
 												{
 													if (!screenshots.Contains(videoThumb))
@@ -1300,13 +1308,13 @@ JsonNode manifest = itemJson!;
 													continue;
 												}
 
-												string? recipesStr = videoNode["recipes"]?.GetValue<string>();
+												string? recipesStr = (videoNode as JsonObject)?["recipes"]?.GetValue<string>();
 												if (!string.IsNullOrEmpty(recipesStr))
 												{
 													var recipesJson = JsonNode.Parse(recipesStr);
 													if (recipesJson != null)
 													{
-														string? thumbnail = recipesJson["thumbnail"]?.GetValue<string>();
+														string? thumbnail = (recipesJson as JsonObject)?["thumbnail"]?.GetValue<string>();
 														if (!string.IsNullOrEmpty(thumbnail))
 														{
 															if (!screenshots.Contains(thumbnail))
@@ -1324,15 +1332,15 @@ JsonNode manifest = itemJson!;
 																{
 																	foreach (JsonNode? recipe in recipeArray)
 																	{
-																		JsonArray? outputs = recipe?["outputs"]?.AsArray();
+																		JsonArray? outputs = (recipe as JsonObject)?["outputs"] as JsonArray;
 																		if (outputs != null)
 																		{
 																			foreach (JsonNode? output in outputs)
 																			{
-																				if (output?["key"]?.GetValue<string>() == "thumbnail")
+																				if ((output as JsonObject)?["key"]?.GetValue<string>() == "thumbnail")
 																				{
-string? url = output?["url"]?.GetValue<string>();
-													if (!string.IsNullOrEmpty(url))
+																					string? url = (output as JsonObject)?["url"]?.GetValue<string>();
+																					if (!string.IsNullOrEmpty(url))
 																					{
 																						if (!screenshots.Contains(url))
 																						{
@@ -1352,12 +1360,12 @@ string? url = output?["url"]?.GetValue<string>();
 										}
 									}
 
-									JsonArray? galleryImages = page?["data"]?["gallery"]?["galleryImages"]?.AsArray();
+									JsonArray? galleryImages = (((page as JsonObject)?["data"] as JsonObject)?["gallery"] as JsonObject)?["galleryImages"] as JsonArray;
 									if (galleryImages != null)
 									{
 										foreach (JsonNode? img in galleryImages)
 										{
-											string? src = img?["src"]?.GetValue<string>();
+											string? src = (img as JsonObject)?["src"]?.GetValue<string>();
 											if (!string.IsNullOrEmpty(src))
 											{
 												if (!screenshots.Contains(src))
@@ -1377,39 +1385,39 @@ string? url = output?["url"]?.GetValue<string>();
 						}
 					}
 
-					JsonArray? ratingDescriptors = ageRatingData?["ageRating"]?["contentDescriptors"]?.AsArray();
+					JsonArray? ratingDescriptors = ((ageRatingData as JsonObject)?["ageRating"] as JsonObject)?["contentDescriptors"] as JsonArray;
 					string? ratingDescription = ratingDescriptors != null
 						? string.Join(", ", ratingDescriptors.Select(descriptor => descriptor?.ToString()).Where(descriptor => !string.IsNullOrWhiteSpace(descriptor)))
 						: null;
 
-					JsonArray? interactiveElms = ageRatingData?["ageRating"]?["interactiveElements"]?.AsArray();
+					JsonArray? interactiveElms = ((ageRatingData as JsonObject)?["ageRating"] as JsonObject)?["interactiveElements"] as JsonArray;
 					string? interactiveElements = interactiveElms != null
 						? string.Join(", ", interactiveElms.Select(element => element?.ToString()).Where(element => !string.IsNullOrWhiteSpace(element)))
 						: null;
 
 					games.Add(new GameModel
 					{
-						Launcher = itemJson?["Provider"]?.GetValue<string>() ?? "Epic Games",
+						Launcher = (itemJson as JsonObject)?["Provider"]?.GetValue<string>() ?? "Epic Games",
 						CatalogNamespace = catalogNamespace,
 						CatalogItemId = catalogItemId,
 						AppName = appName,
 						InstallLocation = installLocation,
-						LaunchCommand = itemJson?["LaunchCommand"]?.GetValue<string>(),
-						LaunchExecutable = itemJson?["LaunchExecutable"]?.GetValue<string>()?.Replace("/", "\\"),
-						GameID = itemJson?["GameID"]?.GetValue<string>(),
-						ProcessNames = itemJson?["ProcessNames"]?.AsArray().Select(p => p!.GetValue<string>()).ToList() ?? [],
+						LaunchCommand = (itemJson as JsonObject)?["LaunchCommand"]?.GetValue<string>(),
+						LaunchExecutable = (itemJson as JsonObject)?["LaunchExecutable"]?.GetValue<string>()?.Replace("/", "\\"),
+						GameID = (itemJson as JsonObject)?["GameID"]?.GetValue<string>(),
+						ProcessNames = ((itemJson as JsonObject)?["ProcessNames"] as JsonArray)?.Select(p => p!.GetValue<string>()).ToList() ?? [],
 						ArtifactId = artifactId,
 						UpdateIsAvailable = latestVersion != null && latestVersion != currentVersion,
-						ImageUrl = keyImages.FirstOrDefault(image => image?["type"]?.GetValue<string>() == "DieselGameBoxTall")?["url"]?.GetValue<string>(),
-						BackgroundImageUrl = keyImages.FirstOrDefault(image => image?["type"]?.GetValue<string>() == "DieselGameBox")?["url"]?.GetValue<string>(),
-						Title = offerData[offerId]?["title"]?.GetValue<string>(),
-						Developers = offerData[offerId]?["seller"]?["name"]?.GetValue<string>(),
-						Genres = productOfferData?["tags"]?["genres"]?.AsArray()?.Select(genre => genre?["name"]?.GetValue<string>()!).Where(n => !string.IsNullOrWhiteSpace(n)).ToList() ?? [],
-						Features = productOfferData?["tags"]?["features"]?.AsArray()?.Select(feature => feature?["name"]?.GetValue<string>()!).Where(f => !string.IsNullOrWhiteSpace(f)).ToList() ?? [],
-						Rating = ratingData?["data"]?["RatingsPolls"]?["getProductResult"]?["averageRating"]?.GetValue<double?>() ?? 0.0,
+						ImageUrl = keyImages.FirstOrDefault(image => (image as JsonObject)?["type"]?.GetValue<string>() == "DieselGameBoxTall") is JsonNode tallBox ? (tallBox as JsonObject)?["url"]?.GetValue<string>() : null,
+						BackgroundImageUrl = keyImages.FirstOrDefault(image => (image as JsonObject)?["type"]?.GetValue<string>() == "DieselGameBox") is JsonNode box ? (box as JsonObject)?["url"]?.GetValue<string>() : null,
+						Title = (offerEntry as JsonObject)?["title"]?.GetValue<string>(),
+						Developers = ((offerEntry as JsonObject)?["seller"] as JsonObject)?["name"]?.GetValue<string>(),
+						Genres = ((((productOfferData as JsonObject)?["tags"] as JsonObject)?["genres"] as JsonArray) ?? []).Select(genre => (genre as JsonObject)?["name"]?.GetValue<string>()!).Where(n => !string.IsNullOrWhiteSpace(n)).ToList(),
+						Features = ((((productOfferData as JsonObject)?["tags"] as JsonObject)?["features"] as JsonArray) ?? []).Select(feature => (feature as JsonObject)?["name"]?.GetValue<string>()!).Where(f => !string.IsNullOrWhiteSpace(f)).ToList(),
+						Rating = ((((ratingData as JsonObject)?["data"] as JsonObject)?["RatingsPolls"] as JsonObject)?["getProductResult"] as JsonObject)?["averageRating"]?.GetValue<double?>() ?? 0.0,
 						PlayTime = playTime,
-						AgeRatingUrl = ageRatingData?["ageRating"]?["ratingImage"]?.ToString(),
-						AgeRatingTitle = ageRatingData?["ageRating"]?["title"]?.ToString(),
+						AgeRatingUrl = ((ageRatingData as JsonObject)?["ageRating"] as JsonObject)?["ratingImage"]?.ToString(),
+						AgeRatingTitle = ((ageRatingData as JsonObject)?["ageRating"] as JsonObject)?["title"]?.ToString(),
 						AgeRatingDescription = ratingDescription,
 						Elements = interactiveElements,
 						Description = description,
