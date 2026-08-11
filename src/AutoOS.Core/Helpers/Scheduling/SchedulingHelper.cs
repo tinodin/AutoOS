@@ -40,10 +40,10 @@ public static partial class SchedulingHelper
 
 		if (device != null)
 		{
-			audioDevices = [.. audioDevices.Where(d => d.PnpDeviceId == device.PnpDeviceId)];
-			gpuDevices = [.. gpuDevices.Where(d => d.PnpDeviceId == device.PnpDeviceId)];
-			xhciDevices = [.. xhciDevices.Where(d => d.PnpDeviceId == device.PnpDeviceId)];
-			nicDevices = [.. nicDevices.Where(d => d.PnpDeviceId == device.PnpDeviceId)];
+			audioDevices = [.. audioDevices.Where(device => device.PnpDeviceId == device.PnpDeviceId)];
+			gpuDevices = [.. gpuDevices.Where(device => device.PnpDeviceId == device.PnpDeviceId)];
+			xhciDevices = [.. xhciDevices.Where(device => device.PnpDeviceId == device.PnpDeviceId)];
+			nicDevices = [.. nicDevices.Where(device => device.PnpDeviceId == device.PnpDeviceId)];
 		}
 
 		var allChangedDevices = new List<(DeviceInfo device, DeviceType deviceType)>();
