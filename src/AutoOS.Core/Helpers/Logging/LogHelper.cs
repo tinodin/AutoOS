@@ -47,7 +47,7 @@ public static partial class LogHelper
 	public static async Task Log(IEnumerable<GpuInfo>? selectedGpus = null, bool bios = false)
 	{
 #if !DEBUG
-		var embed = await GetOverview(selectedGpus, null, null, true);
+		JsonObject embed = await GetOverview(selectedGpus, null, null, true);
 		var webhookPayload = new JsonObject
 		{
 			["embeds"] = new JsonArray { (JsonNode)embed }
@@ -127,7 +127,7 @@ public static partial class LogHelper
 	public static async Task LogNetworkSettings(IEnumerable<GpuInfo>? selectedGpus = null)
 	{
 #if !DEBUG
-		var embed = await GetOverview(selectedGpus, null, null, true);
+		JsonObject embed = await GetOverview(selectedGpus, null, null, true);
 		var webhookPayload = new JsonObject
 		{
 			["embeds"] = new JsonArray { (JsonNode)embed }
@@ -138,7 +138,7 @@ public static partial class LogHelper
 			{ new StringContent(webhookPayload.ToJsonString()), "payload_json" }
 		};
 
-		var devices = DeviceHelper.GetDevices(DeviceType.NIC);
+		List<DeviceInfo> devices = DeviceHelper.GetDevices(DeviceType.NIC);
 		var sb = new StringBuilder();
 
 		foreach (DeviceInfo device in devices)
@@ -151,8 +151,8 @@ public static partial class LogHelper
 			sb.AppendLine($"- **RegistryPath**: `{device.RegistryPath}`");
 			sb.AppendLine($"- **Driver**: `{device.DriverType} {device.CurrentVersion}`");
 
-			var settings = Network.NetworkHelper.GetAdvancedSettings(device);
-			foreach (var setting in settings.OrderBy(s => s.Name))
+			List<NetworkAdvancedSetting> settings = Network.NetworkHelper.GetAdvancedSettings(device);
+			foreach (NetworkAdvancedSetting? setting in settings.OrderBy(s => s.Name))
 			{
 				sb.AppendLine();
 				sb.AppendLine($"## {setting.Name}");
@@ -171,7 +171,7 @@ public static partial class LogHelper
 				}
 
 				sb.AppendLine("- **Parameters**:");
-				foreach (var meta in setting.RawMetadata.OrderBy(m => m.Key))
+				foreach (KeyValuePair<string, string> meta in setting.RawMetadata.OrderBy(m => m.Key))
 				{
 					sb.AppendLine($"  - **{meta.Key}**: `{meta.Value}`");
 				}
@@ -179,7 +179,7 @@ public static partial class LogHelper
 				if (setting.Type == Network.Models.NetworkSettingType.Enum && setting.Options.Count > 0)
 				{
 					sb.AppendLine("- **Options**:");
-					foreach (var opt in setting.Options)
+					foreach (NetworkSettingOption opt in setting.Options)
 					{
 						sb.AppendLine($"  - `{opt.Value}`: {opt.Name}");
 					}
@@ -348,7 +348,7 @@ public static partial class LogHelper
 
 				string fieldName = name;
 				if (fieldName.Length > 256)
-					fieldName = fieldName.Substring(0, 256);
+					fieldName = fieldName[..256];
 
 				fieldsArray.Add((JsonNode)new JsonObject { ["name"] = fieldName, ["value"] = chunk, ["inline"] = inline });
 

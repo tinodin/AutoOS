@@ -98,7 +98,7 @@ public static partial class StoreHelper
 
 			if (allFiles.Count == 0)
 			{
-				await LogHelper.LogError(new Exception($"[StoreHelper] No package files found for {identifier}"), actionTitle: $"[StoreHelper] Installation failed for {identifier}");
+				LogHelper.LogError(new Exception($"[StoreHelper] No package files found for {identifier}"), actionTitle: $"[StoreHelper] Installation failed for {identifier}");
 				return;
 			}
 
@@ -328,7 +328,7 @@ public static partial class StoreHelper
 		if (response.IsSuccessStatusCode)
 		{
 			string jsonResponse = await response.Content.ReadAsStringAsync();
-			using JsonDocument document = JsonDocument.Parse(jsonResponse);
+			using var document = JsonDocument.Parse(jsonResponse);
 
 			if (document.RootElement.TryGetProperty("Payload", out JsonElement payload) && payload.TryGetProperty("Skus", out JsonElement skus) && skus.ValueKind == JsonValueKind.Array && skus.GetArrayLength() > 0)
 			{

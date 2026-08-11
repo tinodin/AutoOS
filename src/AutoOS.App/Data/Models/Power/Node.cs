@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using AutoOS.App.Data.Enums.Power;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -6,6 +7,15 @@ namespace AutoOS.App.Data.Models.Power;
 
 public sealed partial class Node : ObservableObject
 {
+	[DynamicDependency(nameof(IsExpanded), typeof(Node))]
+	[DynamicDependency(nameof(Children), typeof(Node))]
+	[DynamicDependency(nameof(DisplayName), typeof(Node))]
+	[DynamicDependency(nameof(DisplayAc), typeof(Node))]
+	[DynamicDependency(nameof(DisplayDc), typeof(Node))]
+	[DynamicDependency(nameof(DisplayCompareAc), typeof(Node))]
+	[DynamicDependency(nameof(DisplayCompareDc), typeof(Node))]
+	[DynamicDependency(nameof(DisplayOriginalAc), typeof(Node))]
+	[DynamicDependency(nameof(DisplayOriginalDc), typeof(Node))]
 	internal Node(
 		NodeKind nodeKind,
 		PageMode mode,

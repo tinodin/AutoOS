@@ -169,7 +169,7 @@ public sealed partial class HomePage : Page
 #if !DEBUG
 		try
 		{
-			var json = await httpClient.GetStringAsync("https://api.github.com/repos/tinodin/AutoOS/releases");
+			string json = await httpClient.GetStringAsync("https://api.github.com/repos/tinodin/AutoOS/releases");
 			using var releasesDoc = JsonDocument.Parse(json);
 
 			var releases = releasesDoc.RootElement.EnumerateArray()
@@ -190,7 +190,7 @@ public sealed partial class HomePage : Page
 				return;
 
 			var nextRelease = releases.First();
-			var assets = nextRelease.Json.GetProperty("assets");
+			JsonElement assets = nextRelease.Json.GetProperty("assets");
 			string downloadUrl = assets.EnumerateArray()
 				.First(a => a.GetProperty("name").GetString() == "AutoOS.msix")
 					.GetProperty("browser_download_url")
