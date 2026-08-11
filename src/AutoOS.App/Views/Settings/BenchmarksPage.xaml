@@ -560,17 +560,22 @@
 						<StackPanel
 							HorizontalAlignment="Center"
 							VerticalAlignment="Center"
-							Spacing="12">
+							Spacing="8">
 							<FontIcon
 								HorizontalAlignment="Center"
-								FontSize="48"
-								Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-								Glyph="&#xE9F9;" />
+								FontSize="36"
+								Foreground="{ThemeResource SystemFillColorCritical}"
+								Glyph="&#xE783;" />
+							<TextBlock
+								HorizontalAlignment="Center"
+								Style="{StaticResource TitleTextBlockStyle}"
+								Text="No recordings found" />
 							<TextBlock
 								HorizontalAlignment="Center"
 								Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-								Text="No recordings found"
-								TextAlignment="Center" />
+								Style="{StaticResource BodyTextBlockStyle}"
+								Text="Select a process and press Record or use the Add button to import an existing recording."
+								TextWrapping="Wrap" />
 						</StackPanel>
 					</dev:Case>
 
@@ -1090,23 +1095,22 @@
 						<StackPanel
 							HorizontalAlignment="Center"
 							VerticalAlignment="Center"
-							Spacing="12">
+							Spacing="8">
 							<FontIcon
 								HorizontalAlignment="Center"
-								FontSize="48"
+								FontSize="36"
 								Foreground="{ThemeResource SystemFillColorCritical}"
 								Glyph="&#xE783;" />
 							<TextBlock
 								HorizontalAlignment="Center"
-								Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-								Text="No recordings selected"
-								TextAlignment="Center" />
+								Style="{StaticResource TitleTextBlockStyle}"
+								Text="No recordings selected" />
 							<TextBlock
 								HorizontalAlignment="Center"
-								FontSize="12"
-								Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-								Text="Select up to two recordings to view analysis"
-								TextAlignment="Center" />
+								Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+								Style="{StaticResource BodyTextBlockStyle}"
+								Text="Select a maximum of 2 recordings."
+								TextWrapping="Wrap" />
 						</StackPanel>
 					</dev:Case>
 
@@ -1115,23 +1119,22 @@
 						<StackPanel
 							HorizontalAlignment="Center"
 							VerticalAlignment="Center"
-							Spacing="12">
+							Spacing="8">
 							<FontIcon
 								HorizontalAlignment="Center"
-								FontSize="48"
+								FontSize="36"
 								Foreground="{ThemeResource SystemFillColorCritical}"
 								Glyph="&#xE783;" />
 							<TextBlock
 								HorizontalAlignment="Center"
-								Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-								Text="Too many recordings selected"
-								TextAlignment="Center" />
+								Style="{StaticResource TitleTextBlockStyle}"
+								Text="Too many recordings selected" />
 							<TextBlock
 								HorizontalAlignment="Center"
-								FontSize="12"
-								Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-								Text="Maximum of 2 recordings supported for analysis"
-								TextAlignment="Center" />
+								Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+								Style="{StaticResource BodyTextBlockStyle}"
+								Text="Select a maximum of 2 recordings."
+								TextWrapping="Wrap" />
 						</StackPanel>
 					</dev:Case>
 
@@ -1140,23 +1143,22 @@
 						<StackPanel
 							HorizontalAlignment="Center"
 							VerticalAlignment="Center"
-							Spacing="12">
+							Spacing="8">
 							<FontIcon
 								HorizontalAlignment="Center"
-								FontSize="48"
+								FontSize="36"
 								Foreground="{ThemeResource SystemFillColorCritical}"
 								Glyph="&#xE783;" />
 							<TextBlock
 								HorizontalAlignment="Center"
-								Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-								Text="Recordings use different processes"
-								TextAlignment="Center" />
+								Style="{StaticResource TitleTextBlockStyle}"
+								Text="Recordings use different processes" />
 							<TextBlock
 								HorizontalAlignment="Center"
-								FontSize="12"
-								Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-								Text="Select recordings from the same process to compare them"
-								TextAlignment="Center" />
+								Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+								Style="{StaticResource BodyTextBlockStyle}"
+								Text="Selected recordings must use the same process."
+								TextWrapping="Wrap" />
 						</StackPanel>
 					</dev:Case>
 				</dev:SwitchPresenter>
@@ -1237,24 +1239,22 @@
 						<StackPanel
 							HorizontalAlignment="Center"
 							VerticalAlignment="Center"
-							Spacing="12">
+							Spacing="8">
 							<FontIcon
 								HorizontalAlignment="Center"
-								FontSize="48"
+								FontSize="36"
 								Foreground="{ThemeResource SystemFillColorCritical}"
 								Glyph="&#xE783;" />
 							<TextBlock
 								HorizontalAlignment="Center"
-								Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-								Text="No recordings selected"
-								TextAlignment="Center" />
+								Style="{StaticResource TitleTextBlockStyle}"
+								Text="No recordings selected" />
 							<TextBlock
 								HorizontalAlignment="Center"
-								FontSize="12"
-								Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-								Text="Select up to two recordings to view statistics"
-								TextAlignment="Center" />
-
+								Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+								Style="{StaticResource BodyTextBlockStyle}"
+								Text="Select a maximum of 2 recordings."
+								TextWrapping="Wrap" />
 						</StackPanel>
 					</dev:Case>
 
@@ -1263,23 +1263,22 @@
 						<StackPanel
 							HorizontalAlignment="Center"
 							VerticalAlignment="Center"
-							Spacing="12">
+							Spacing="8">
 							<FontIcon
 								HorizontalAlignment="Center"
-								FontSize="48"
+								FontSize="36"
 								Foreground="{ThemeResource SystemFillColorCritical}"
 								Glyph="&#xE783;" />
 							<TextBlock
 								HorizontalAlignment="Center"
-								Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-								Text="Too many recordings selected"
-								TextAlignment="Center" />
+								Style="{StaticResource TitleTextBlockStyle}"
+								Text="Too many recordings selected" />
 							<TextBlock
 								HorizontalAlignment="Center"
-								FontSize="12"
-								Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-								Text="Maximum of 2 recordings supported for statistics"
-								TextAlignment="Center" />
+								Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+								Style="{StaticResource BodyTextBlockStyle}"
+								Text="Select a maximum of 2 recordings."
+								TextWrapping="Wrap" />
 						</StackPanel>
 					</dev:Case>
 
@@ -1288,23 +1287,22 @@
 						<StackPanel
 							HorizontalAlignment="Center"
 							VerticalAlignment="Center"
-							Spacing="12">
+							Spacing="8">
 							<FontIcon
 								HorizontalAlignment="Center"
-								FontSize="48"
+								FontSize="36"
 								Foreground="{ThemeResource SystemFillColorCritical}"
 								Glyph="&#xE783;" />
 							<TextBlock
 								HorizontalAlignment="Center"
-								Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-								Text="Recordings use different processes"
-								TextAlignment="Center" />
+								Style="{StaticResource TitleTextBlockStyle}"
+								Text="Recordings use different processes" />
 							<TextBlock
 								HorizontalAlignment="Center"
-								FontSize="12"
-								Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-								Text="Select recordings from the same process to compare them"
-								TextAlignment="Center" />
+								Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+								Style="{StaticResource BodyTextBlockStyle}"
+								Text="Selected recordings must use the same process."
+								TextWrapping="Wrap" />
 						</StackPanel>
 					</dev:Case>
 				</dev:SwitchPresenter>

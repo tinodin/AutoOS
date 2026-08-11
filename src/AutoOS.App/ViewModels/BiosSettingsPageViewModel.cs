@@ -15,8 +15,11 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 	private readonly Stack<Dictionary<Setting, State>> _undoStates = [];
 	private readonly Stack<Dictionary<Setting, State>> _redoStates = [];
 	private readonly Dictionary<Setting, State> _settingStates = [];
+	private readonly Dictionary<Node, List<GroupValueState>> _mixedEdits = [];
 	private readonly List<Setting> _settings = [];
 	private int _lastRecommendedCount;
+
+	private sealed record GroupValueState(Node Leaf, Option? SelectedOption, string? Value);
 
 	public Action? RefreshFilterAction { get; set; }
 
@@ -139,7 +142,7 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		_settingStates.Clear();
 		foreach (Setting setting in _settings)
 		{
-			_settingStates[setting] = new State
+			_settingStates[setting] = new State(setting)
 			{
 				Value = setting.Value,
 				SelectedOption = setting.SelectedOption,
@@ -150,7 +153,9 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 
 		SearchText = string.Empty;
 		ResetHistory();
+		BuildTrees();
 		RefreshState();
+		RefreshFilter();
 		IsLoaded = true;
 
 		SwitchPresenterValue = ToPresenterValue(PageMode.Loaded);
@@ -166,8 +171,8 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 	{
 		to.Push(CaptureState());
 		RestoreState(from.Pop());
-		RefreshState(false);
-		SyncTrees();
+		RefreshState();
+		RefreshAfterEdit();
 	}
 
 	[RelayCommand(CanExecute = nameof(CanApplyMerge))]
@@ -195,8 +200,8 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 			_redoStates.Clear();
 		}
 
-		RefreshState(false);
-		SyncTrees();
+		RefreshState();
+		RefreshAfterEdit();
 	}
 
 	[RelayCommand(CanExecute = nameof(CanImport))]
@@ -243,19 +248,23 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 	}
 
 	[RelayCommand(CanExecute = nameof(CanToggleViewChanges))]
-	private void ToggleViewChanges()
-	{
-		if (ViewChanges)
-			RebuildDiffNodes();
-		RefreshFilter();
-	}
+	private void ToggleViewChanges() => RefreshFilter();
 
 	public void BeginEdit(Node? node)
 	{
 		if (node is not { NodeKind: NodeKind.Setting or NodeKind.GroupedSetting })
 			return;
 
-		node.BeginCellEdit();
+		if (node.HasOptions)
+		{
+			if (node.NodeKind == NodeKind.GroupedSetting && node.DisplayCurrent == "Mixed")
+				RememberMixedValues(node);
+			node.EditOption = node.SelectedOption;
+		}
+		else
+		{
+			node.EditValue = node.DisplayCurrent == "Mixed" ? string.Empty : node.DisplayCurrent;
+		}
 	}
 
 	public bool CommitEdit(Node? node)
@@ -264,15 +273,97 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 			return false;
 
 		Dictionary<Setting, State> previous = CaptureState();
-		if (!node.CommitCellEdit())
+		if (!ApplyEditedValue(node))
 			return false;
 
 		_undoStates.Push(previous);
 		_redoStates.Clear();
-		RefreshState(false);
-		node.RaiseErrorsChanged();
+		RefreshState();
+		RefreshAfterEdit();
 		return true;
 	}
+
+	private bool ApplyEditedValue(Node node)
+	{
+		if (node.NodeKind == NodeKind.Setting)
+		{
+			State? state = node.State;
+			Setting? setting = node.Setting;
+			if (state == null || setting == null)
+				return false;
+
+			if (setting.HasOptions)
+			{
+				if (state.SelectedOption == node.EditOption)
+					return false;
+				state.SelectedOption = node.EditOption;
+				return true;
+			}
+
+			if (string.Equals(state.Value, node.EditValue, StringComparison.Ordinal))
+				return false;
+			state.Value = node.EditValue;
+			return true;
+		}
+
+		if (node.NodeKind == NodeKind.GroupedSetting)
+		{
+			if (!node.CanEditCurrent)
+				return false;
+
+			if (ReferenceEquals(node.EditOption, node.MixedOption))
+			{
+				if (!_mixedEdits.Remove(node, out List<GroupValueState>? saved))
+					return false;
+
+				bool changed = false;
+				foreach (GroupValueState savedState in saved)
+				{
+					State? leafState = savedState.Leaf.State;
+					if (leafState == null)
+						continue;
+
+					Option? previousOption = leafState.SelectedOption;
+					string? previousValue = leafState.Value;
+					if (savedState.Leaf.Setting?.HasOptions == true)
+						leafState.SelectedOption = savedState.SelectedOption;
+					else
+						leafState.Value = savedState.Value;
+
+					if (previousOption != leafState.SelectedOption || previousValue != leafState.Value)
+						changed = true;
+				}
+
+				return changed;
+			}
+
+			bool groupChanged = false;
+			foreach (Node leaf in node.GetLeaves())
+			{
+				if (leaf.State == null || leaf.Setting == null)
+					continue;
+
+				Option? previousOption = leaf.State.SelectedOption;
+				string? previousValue = leaf.State.Value;
+				if (leaf.Setting.HasOptions && node.EditOption != null)
+					leaf.State.SelectedOption = node.EditOption;
+				else if (!leaf.Setting.HasOptions)
+					leaf.State.Value = node.EditValue;
+
+				if (previousOption != leaf.State.SelectedOption || previousValue != leaf.State.Value)
+					groupChanged = true;
+			}
+
+			return groupChanged;
+		}
+
+		return false;
+	}
+
+	private void RememberMixedValues(Node node) =>
+		_mixedEdits[node] = [.. node.GetLeaves()
+			.Where(leaf => leaf.State != null)
+			.Select(leaf => new GroupValueState(leaf, leaf.State!.SelectedOption, leaf.State.Value))];
 
 	public bool MatchesFilter(object item)
 	{
@@ -281,28 +372,22 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 
 		if (node.NodeKind == NodeKind.Root)
 		{
-			bool isRecommended = node.BaseDisplayName.StartsWith("Recommended");
-			if ((ViewChanges || !string.IsNullOrWhiteSpace(SearchText)) && isRecommended)
+			if (node.BaseDisplayName.StartsWith("Recommended") && (ViewChanges || !string.IsNullOrWhiteSpace(SearchText)))
 				return false;
-			return true;
+			return node.Children.Any(MatchesFilter);
 		}
 
-		if (ViewChanges && node.NodeKind == NodeKind.Setting && !node.IsModified)
+		if (node.NodeKind != NodeKind.Setting)
+			return node.Children.Any(MatchesFilter);
+
+		if (ViewChanges && !node.IsModified)
 			return false;
 
 		string query = SearchText;
 		if (query.Length == 0)
 			return true;
 
-		return NodeOrDescendantMatches(node, query);
-	}
-
-	private bool NodeOrDescendantMatches(Node node, string query)
-	{
-		if (NodeMatches(node, query))
-			return true;
-
-		return node.Children.Any(child => NodeOrDescendantMatches(child, query));
+		return NodeMatches(node, query);
 	}
 
 	private bool NodeMatches(Node node, string query)
@@ -331,12 +416,9 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 
 	public void RefreshFilter() => RefreshFilterAction?.Invoke();
 
-	public void RefreshAfterEdit() => SyncTrees();
-
-	private void SyncTrees()
+	public void RefreshAfterEdit()
 	{
 		RefreshRecommendedRoot();
-		RebuildDiffNodes();
 		RefreshFilter();
 	}
 
@@ -387,13 +469,7 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		return count;
 	}
 
-	private void RefreshTrees()
-	{
-		RebuildTrees();
-		RefreshFilter();
-	}
-
-	private void RebuildTrees()
+	private void BuildTrees()
 	{
 		TreeNodes.Clear();
 		DiffNodes.Clear();
@@ -434,12 +510,6 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		allRoot.DisplayName = $"All Settings ({CountLeaves(allRoot)})";
 		TreeNodes.Add(allRoot);
 
-		RebuildDiffNodes();
-	}
-
-	private void RebuildDiffNodes()
-	{
-		DiffNodes.Clear();
 		DiffNodes.Add(BuildDiffTree());
 	}
 
@@ -514,11 +584,9 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 	{
 		var changesRoot = new Node(NodeKind.Root, "Changes", baseDisplayName: "Changes");
 
-		var modifiedGroups = _settings
-			.Where(setting => _settingStates[setting].IsModified)
-			.GroupBy(setting => setting.SetupQuestion?.Trim() ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+		var groups = _settings.GroupBy(setting => setting.SetupQuestion?.Trim() ?? string.Empty, StringComparer.OrdinalIgnoreCase);
 
-		foreach (IGrouping<string, Setting>? grp in modifiedGroups)
+		foreach (IGrouping<string, Setting>? grp in groups)
 		{
 			var members = grp.ToList();
 
@@ -589,7 +657,7 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 			!string.Equals(state.Value, setting.RecommendedValue, StringComparison.Ordinal);
 	}
 
-	private void RefreshState(bool rebuildTrees = true)
+	private void RefreshState()
 	{
 		ModifiedCount = _settings.Count(setting => _settingStates[setting].IsModified);
 		RecommendedCount = _settings.Count(setting => HasPendingRecommendation(setting, _settingStates[setting]));
@@ -597,8 +665,6 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		SyncMergeCount();
 		UndoCommand.NotifyCanExecuteChanged();
 		RedoCommand.NotifyCanExecuteChanged();
-		if (rebuildTrees)
-			RefreshTrees();
 	}
 
 	private void SyncMergeCount()
@@ -614,7 +680,7 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 	private Dictionary<Setting, State> CaptureState() => _settings.ToDictionary(setting => setting, setting =>
 	{
 		State values = _settingStates[setting];
-		return new State
+		return new State(setting)
 		{
 			Value = values.Value,
 			SelectedOption = values.SelectedOption

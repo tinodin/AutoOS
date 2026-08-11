@@ -1,13 +1,11 @@
 using System.Collections.ObjectModel;
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using AutoOS.App.Data.Enums.Power;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace AutoOS.App.Data.Models.Power;
 
-public sealed class Node
+public sealed partial class Node : ObservableObject
 {
-	[DynamicDependency(nameof(DisplayName), typeof(Node))]
 	internal Node(
 		NodeKind nodeKind,
 		PageMode mode,
@@ -16,9 +14,6 @@ public sealed class Node
 		Guid guid,
 		Setting? setting = null,
 		SettingState? state = null,
-		Value? compareValues = null,
-		bool isAcDifferent = false,
-		bool isDcDifferent = false,
 		string? baseDisplayName = null)
 	{
 		NodeKind = nodeKind;
@@ -29,9 +24,6 @@ public sealed class Node
 		Guid = guid;
 		Setting = setting;
 		State = state;
-		CompareValues = compareValues;
-		IsAcDifferent = isAcDifferent;
-		IsDcDifferent = isDcDifferent;
 	}
 
 	public NodeKind NodeKind { get; }
@@ -44,21 +36,16 @@ public sealed class Node
 
 	public string Description { get; }
 
-	public bool IsAcDifferent { get; }
-
-	public bool IsDcDifferent { get; }
-
 	public bool IsExpanded { get; set; } = true;
 
 	public ObservableCollection<Node> Children { get; } = [];
 
-	public string DisplayName { get; }
+	[ObservableProperty]
+	public partial string DisplayName { get; set; }
 
 	public string BaseDisplayName { get; }
 
 	public SettingState? State { get; }
-
-	private Value? CompareValues { get; }
 
 	public bool HasValues => NodeKind == NodeKind.Setting;
 
@@ -70,64 +57,53 @@ public sealed class Node
 
 	public uint OriginalDcValue => State?.OriginalDcValue ?? 0;
 
-	public string DisplayAc => HasValues && Setting != null ? GetDisplayValue(Setting, AcValue) : string.Empty;
+	public bool IsModified => State?.IsModified ?? false;
 
-	public string DisplayDc => HasValues && Setting != null ? GetDisplayValue(Setting, DcValue) : string.Empty;
+	public bool IsAcDifferent => Mode switch
+	{
+		PageMode.Comparison => State?.IsAcDifferent ?? false,
+		PageMode.ViewChanges => AcValue != OriginalAcValue,
+		_ => false
+	};
 
-	public string AcToolTip => HasValues && Setting != null ? GetValueToolTip(Setting, AcValue) : string.Empty;
+	public bool IsDcDifferent => Mode switch
+	{
+		PageMode.Comparison => State?.IsDcDifferent ?? false,
+		PageMode.ViewChanges => DcValue != OriginalDcValue,
+		_ => false
+	};
 
-	public string DcToolTip => HasValues && Setting != null ? GetValueToolTip(Setting, DcValue) : string.Empty;
+	public string DisplayAc => State?.DisplayAc ?? string.Empty;
 
-	public string DisplayCompareAc => HasValues && Setting != null && CompareValues is { } compare ? GetDisplayValue(Setting, compare.AcValue) : string.Empty;
+	public string DisplayDc => State?.DisplayDc ?? string.Empty;
 
-	public string DisplayCompareDc => HasValues && Setting != null && CompareValues is { } compare ? GetDisplayValue(Setting, compare.DcValue) : string.Empty;
+	public string AcToolTip => State?.AcToolTip ?? string.Empty;
 
-	public string CompareAcToolTip => HasValues && Setting != null && CompareValues is { } compare ? GetValueToolTip(Setting, compare.AcValue) : string.Empty;
+	public string DcToolTip => State?.DcToolTip ?? string.Empty;
 
-	public string CompareDcToolTip => HasValues && Setting != null && CompareValues is { } compare ? GetValueToolTip(Setting, compare.DcValue) : string.Empty;
+	public string DisplayCompareAc => State?.DisplayCompareAc ?? string.Empty;
 
-	public string DisplayOriginalAc => HasValues && Setting != null ? GetDisplayValue(Setting, OriginalAcValue) : string.Empty;
+	public string DisplayCompareDc => State?.DisplayCompareDc ?? string.Empty;
 
-	public string DisplayOriginalDc => HasValues && Setting != null ? GetDisplayValue(Setting, OriginalDcValue) : string.Empty;
+	public string CompareAcToolTip => State?.CompareAcToolTip ?? string.Empty;
 
-	public string OriginalAcToolTip => HasValues && Setting != null ? GetValueToolTip(Setting, OriginalAcValue) : string.Empty;
+	public string CompareDcToolTip => State?.CompareDcToolTip ?? string.Empty;
 
-	public string OriginalDcToolTip => HasValues && Setting != null ? GetValueToolTip(Setting, OriginalDcValue) : string.Empty;
+	public string DisplayOriginalAc => State?.DisplayOriginalAc ?? string.Empty;
+
+	public string DisplayOriginalDc => State?.DisplayOriginalDc ?? string.Empty;
+
+	public string OriginalAcToolTip => State?.OriginalAcToolTip ?? string.Empty;
+
+	public string OriginalDcToolTip => State?.OriginalDcToolTip ?? string.Empty;
+
+	public string EditAcToolTip => State?.EditAcToolTip ?? string.Empty;
+
+	public string EditDcToolTip => State?.EditDcToolTip ?? string.Empty;
 
 	public IReadOnlyList<Option>? Options => Setting?.Options;
 
 	public bool HasOptions => Setting is { Options.Count: > 0 };
 
 	public bool IsAdjustable => HasOptions || (Setting != null && Setting.Minimum.HasValue && Setting.Maximum.HasValue && Setting.Increment.HasValue);
-
-	public string EditAcToolTip => HasOptions ? State?.EditAcOption?.Description ?? string.Empty : Setting != null ? GetValueToolTip(Setting, AcValue) : string.Empty;
-
-	public string EditDcToolTip => HasOptions ? State?.EditDcOption?.Description ?? string.Empty : Setting != null ? GetValueToolTip(Setting, DcValue) : string.Empty;
-
-	public static string GetDisplayValue(Setting setting, uint value)
-	{
-		if (setting.Options is not { Count: > 0 })
-			return value.ToString(CultureInfo.InvariantCulture);
-
-		Option? option = setting.Options.FirstOrDefault(o => o.Index == value);
-		return option != null && !string.IsNullOrWhiteSpace(option.FriendlyName) ? option.FriendlyName : value.ToString(CultureInfo.InvariantCulture);
-	}
-
-	public static string GetValueToolTip(Setting setting, uint value)
-	{
-		if (setting.Options is { Count: > 0 })
-			return setting.Options.FirstOrDefault(option => option.Index == value)?.Description ?? string.Empty;
-
-		if (!setting.Minimum.HasValue || !setting.Maximum.HasValue || !setting.Increment.HasValue)
-			return "Unadjustable";
-
-		var lines = new List<string>
-		{
-			$"Range: {setting.Minimum.Value} - {setting.Maximum.Value}",
-			$"Increment: {setting.Increment.Value}",
-			$"Unit: {char.ToUpperInvariant(setting.Unit[0])}{setting.Unit[1..]}"
-		};
-
-		return string.Join(Environment.NewLine, lines);
-	}
 }

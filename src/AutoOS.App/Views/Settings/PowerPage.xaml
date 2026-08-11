@@ -425,7 +425,7 @@
 										<TextBlock
 											Margin="12,0"
 											VerticalAlignment="Center"
-											Text="{x:Bind DisplayAc, Mode=OneTime}"
+											Text="{x:Bind State.DisplayAc, Mode=OneWay, FallbackValue=''}"
 											TextTrimming="CharacterEllipsis"
 											TextWrapping="NoWrap" />
 									</DataTemplate>
@@ -447,7 +447,7 @@
 										<TextBlock
 											Margin="12,0"
 											VerticalAlignment="Center"
-											Text="{x:Bind DisplayDc, Mode=OneTime}"
+											Text="{x:Bind State.DisplayDc, Mode=OneWay, FallbackValue=''}"
 											TextTrimming="CharacterEllipsis"
 											TextWrapping="NoWrap" />
 									</DataTemplate>
@@ -520,7 +520,7 @@
 										<TextBlock
 											Margin="12,0"
 											VerticalAlignment="Center"
-											Text="{x:Bind DisplayAc, Mode=OneTime}"
+											Text="{x:Bind State.DisplayAc, Mode=OneWay, FallbackValue=''}"
 											TextTrimming="CharacterEllipsis"
 											TextWrapping="NoWrap" />
 									</DataTemplate>
@@ -542,7 +542,7 @@
 										<TextBlock
 											Margin="12,0"
 											VerticalAlignment="Center"
-											Text="{x:Bind DisplayDc, Mode=OneTime}"
+											Text="{x:Bind State.DisplayDc, Mode=OneWay, FallbackValue=''}"
 											TextTrimming="CharacterEllipsis"
 											TextWrapping="NoWrap" />
 									</DataTemplate>
@@ -664,7 +664,7 @@
 										<TextBlock
 											Margin="12,0"
 											VerticalAlignment="Center"
-											Text="{x:Bind DisplayAc, Mode=OneTime}"
+											Text="{x:Bind State.DisplayAc, Mode=OneWay, FallbackValue=''}"
 											TextTrimming="CharacterEllipsis"
 											TextWrapping="NoWrap" />
 									</DataTemplate>
@@ -686,7 +686,7 @@
 										<TextBlock
 											Margin="12,0"
 											VerticalAlignment="Center"
-											Text="{x:Bind DisplayDc, Mode=OneTime}"
+											Text="{x:Bind State.DisplayDc, Mode=OneWay, FallbackValue=''}"
 											TextTrimming="CharacterEllipsis"
 											TextWrapping="NoWrap" />
 									</DataTemplate>

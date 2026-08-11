@@ -68,7 +68,7 @@ public static partial class IntelHelper
 		else if (isArc)
 			driverPageUrl = "https://www.intel.com/content/www/us/en/download/785597/intel-arc-graphics-windows.html";
 		else
-			await LogHelper.LogError(new Exception($"Unsupported Codename: {codename}"), null, null);
+			LogHelper.LogError(new Exception($"Unsupported Codename: {codename}"), null, null);
 
 		var startInfo = new ProcessStartInfo
 		{

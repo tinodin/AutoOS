@@ -119,7 +119,7 @@ public sealed partial class HomePage : Page
 					};
 
 					contentDialog.Resources["ContentDialogMaxWidth"] = 1000;
-					contentDialog.Resources["ContentDialogMaxHeight"] = 1000;
+					contentDialog.Resources["ContentDialogMaxHeight"] = 850;
 
 					await contentDialog.ShowAsync();
 				}

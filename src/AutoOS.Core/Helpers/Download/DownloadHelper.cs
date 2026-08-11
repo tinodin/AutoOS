@@ -285,7 +285,7 @@ public static partial class DownloadHelper
 						TimeSpan httpClientTime = httpClientEndTime - httpClientStartTime;
 						errorDetails.AppendLine($"Downloader took: {(downloaderTime.TotalMinutes >= 1 ? $"{(int)downloaderTime.TotalMinutes}min {downloaderTime.Seconds}sec" : $"{downloaderTime.Seconds}sec")}");
 						errorDetails.AppendLine($"HttpClient took: {(httpClientTime.TotalMinutes >= 1 ? $"{(int)httpClientTime.TotalMinutes}min {httpClientTime.Seconds}sec" : $"{httpClientTime.Seconds}sec")}");
-						await LogHelper.LogError(new Exception(errorDetails.ToString(), downloaderError));
+						LogHelper.LogError(new Exception(errorDetails.ToString(), downloaderError));
 					}
 					else
 					{

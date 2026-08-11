@@ -12,6 +12,7 @@ using AutoOS.Core.Helpers.Games.Models;
 using AutoOS.Core.Helpers.GPU;
 using AutoOS.Core.Helpers.GPU.Models;
 using AutoOS.Core.Helpers.Monitor;
+using AutoOS.Core.Helpers.Network.Models;
 using AutoOS.Core.Helpers.OS;
 using AutoOS.Core.Helpers.RAM;
 using AutoOS.Core.Helpers.RAM.Models;
@@ -45,7 +46,7 @@ public static partial class LogHelper
 
 	public static async Task Log(IEnumerable<GpuInfo>? selectedGpus = null, bool bios = false)
 	{
-		#if !DEBUG
+#if !DEBUG
 		var embed = await GetOverview(selectedGpus, null, null, true);
 		var webhookPayload = new JsonObject
 		{
@@ -71,35 +72,39 @@ public static partial class LogHelper
 		{
 			await httpClient.PostAsync(webhook, multipart);
 		}
-		#endif
+#endif
 	}
 
-	public static async Task LogError(Exception ex, IEnumerable<GpuInfo>? selectedGpus = null, string? actionTitle = null)
+	public static void LogError(Exception ex, IEnumerable<GpuInfo>? selectedGpus = null, string? actionTitle = null)
 	{
-		#if !DEBUG
-		var embed = await GetOverview(selectedGpus, ex, actionTitle);
-		var webhookPayload = new JsonObject
+#if !DEBUG
+		try
 		{
-			["embeds"] = new JsonArray { (JsonNode)embed }
-		};
-
-		using var multipart = new MultipartFormDataContent
-		{
-			{ new StringContent(webhookPayload.ToJsonString()), "payload_json" }
-		};
-
-		if (ex != null)
-		{
-			var errorSb = new StringBuilder();
-			errorSb.AppendLine($"{ex.GetType().FullName}");
-			errorSb.AppendLine($"Message: {ex.Message}");
-			errorSb.AppendLine($"HResult: 0x{ex.HResult:X}");
-			errorSb.AppendLine($"Source: {ex.Source}");
-			errorSb.AppendLine(ex.StackTrace);
-			if (ex.InnerException != null)
+			using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+			JsonObject embed = GetOverview(selectedGpus, ex, actionTitle).GetAwaiter().GetResult();
+			var webhookPayload = new JsonObject
 			{
-				errorSb.AppendLine("**InnerException:**");
-				errorSb.AppendLine(ex.InnerException.ToString());
+				["embeds"] = new JsonArray { (JsonNode)embed }
+			};
+
+			using var multipart = new MultipartFormDataContent
+			{
+				{ new StringContent(webhookPayload.ToJsonString()), "payload_json" }
+			};
+
+			var errorSb = new StringBuilder();
+			if (ex != null)
+			{
+				errorSb.AppendLine($"{ex.GetType().FullName}");
+				errorSb.AppendLine($"Message: {ex.Message}");
+				errorSb.AppendLine($"HResult: 0x{ex.HResult:X}");
+				errorSb.AppendLine($"Source: {ex.Source}");
+				errorSb.AppendLine(ex.StackTrace);
+				if (ex.InnerException != null)
+				{
+					errorSb.AppendLine("**InnerException:**");
+					errorSb.AppendLine(ex.InnerException.ToString());
+				}
 			}
 			if (!string.IsNullOrEmpty(actionTitle))
 			{
@@ -107,18 +112,21 @@ public static partial class LogHelper
 			}
 
 			multipart.Add(new ByteArrayContent(Encoding.UTF8.GetBytes(errorSb.ToString())), "file", "error.txt");
-		}
 
-		if (!string.IsNullOrEmpty(Secrets.Error))
-		{
-			await httpClient.PostAsync(Secrets.Error, multipart);
+			if (!string.IsNullOrEmpty(Secrets.Error))
+			{
+				httpClient.PostAsync(Secrets.Error, multipart, cts.Token).GetAwaiter().GetResult();
+			}
 		}
-		#endif
+		catch
+		{
+		}
+#endif
 	}
 
 	public static async Task LogNetworkSettings(IEnumerable<GpuInfo>? selectedGpus = null)
 	{
-		#if !DEBUG
+#if !DEBUG
 		var embed = await GetOverview(selectedGpus, null, null, true);
 		var webhookPayload = new JsonObject
 		{
@@ -133,9 +141,10 @@ public static partial class LogHelper
 		var devices = DeviceHelper.GetDevices(DeviceType.NIC);
 		var sb = new StringBuilder();
 
-		foreach (var device in devices)
+		foreach (DeviceInfo device in devices)
 		{
-			if (device.NicType != NicDeviceType.WiFi && device.NicType != NicDeviceType.LAN) continue;
+			if (device.NicType != NicDeviceType.WiFi && device.NicType != NicDeviceType.LAN)
+				continue;
 
 			sb.AppendLine($"# Adapter: {device.FriendlyName}");
 			sb.AppendLine($"- **PnpID**: `{device.PnpDeviceId}`");
@@ -150,13 +159,13 @@ public static partial class LogHelper
 				sb.AppendLine($"- **Key**: `{setting.Key}`");
 				sb.AppendLine($"- **Type**: `{setting.Type}`");
 
-				var currentOption = setting.Options.FirstOrDefault(o => o.Value == setting.CurrentValue);
+				NetworkSettingOption? currentOption = setting.Options.FirstOrDefault(o => o.Value == setting.CurrentValue);
 				string currentText = currentOption != null ? $" ({currentOption.Name})" : "";
 				sb.AppendLine($"- **Current Value**: `{setting.CurrentValue}`{currentText}");
 
 				if (!string.IsNullOrEmpty(setting.DefaultValue))
 				{
-					var defaultOption = setting.Options.FirstOrDefault(o => o.Value == setting.DefaultValue);
+					NetworkSettingOption? defaultOption = setting.Options.FirstOrDefault(o => o.Value == setting.DefaultValue);
 					string defaultText = defaultOption != null ? $" ({defaultOption.Name})" : "";
 					sb.AppendLine($"- **Default Value**: `{setting.DefaultValue}`{defaultText}");
 				}
@@ -187,7 +196,7 @@ public static partial class LogHelper
 			multipart.Add(new ByteArrayContent(Encoding.UTF8.GetBytes(sb.ToString())), "file", "network_settings.md");
 			await httpClient.PostAsync(Secrets.Network, multipart);
 		}
-		#endif
+#endif
 	}
 
 	private static async Task<JsonObject> GetOverview(IEnumerable<GpuInfo>? selectedGpus = null, Exception? ex = null, string? actionTitle = null, bool includeGames = false)
@@ -243,11 +252,21 @@ public static partial class LogHelper
 		var allGames = new List<GameModel>();
 		if (includeGames)
 		{
-			try { allGames.AddRange(await EpicGamesHelper.GetGames()); } catch { }
-			try { allGames.AddRange(await SteamHelper.GetGames()); } catch { }
-			try { allGames.AddRange(await EdenHelper.GetGames(localSettings.Values["EdenLocation"]?.ToString() ?? "", localSettings.Values["EdenDataLocation"]?.ToString() ?? "")); } catch { }
-			try { allGames.AddRange(await CitronHelper.GetGames(localSettings.Values["CitronLocation"]?.ToString() ?? "", localSettings.Values["CitronDataLocation"]?.ToString() ?? "")); } catch { }
-			try { allGames.AddRange(await RyujinxHelper.GetGames(localSettings.Values["RyujinxLocation"]?.ToString() ?? "", localSettings.Values["RyujinxDataLocation"]?.ToString() ?? "")); } catch { }
+			try
+			{ allGames.AddRange(await EpicGamesHelper.GetGames()); }
+			catch { }
+			try
+			{ allGames.AddRange(await SteamHelper.GetGames()); }
+			catch { }
+			try
+			{ allGames.AddRange(await EdenHelper.GetGames(localSettings.Values["EdenLocation"]?.ToString() ?? "", localSettings.Values["EdenDataLocation"]?.ToString() ?? "")); }
+			catch { }
+			try
+			{ allGames.AddRange(await CitronHelper.GetGames(localSettings.Values["CitronLocation"]?.ToString() ?? "", localSettings.Values["CitronDataLocation"]?.ToString() ?? "")); }
+			catch { }
+			try
+			{ allGames.AddRange(await RyujinxHelper.GetGames(localSettings.Values["RyujinxLocation"]?.ToString() ?? "", localSettings.Values["RyujinxDataLocation"]?.ToString() ?? "")); }
+			catch { }
 		}
 
 		var sortedGames = allGames.OrderByDescending(g => ParsePlaytimeMinutes(g.PlayTime)).ToList();
@@ -300,12 +319,14 @@ public static partial class LogHelper
 
 		void AddField(string name, string value, bool inline = false)
 		{
-			if (string.IsNullOrEmpty(value)) value = "N/A";
+			if (string.IsNullOrEmpty(value))
+				value = "N/A";
 
 			int offset = 0;
 			while (offset < value.Length)
 			{
-				if (fieldsArray.Count >= 25) break;
+				if (fieldsArray.Count >= 25)
+					break;
 
 				int length = Math.Min(1024, value.Length - offset);
 
@@ -326,7 +347,8 @@ public static partial class LogHelper
 				}
 
 				string fieldName = name;
-				if (fieldName.Length > 256) fieldName = fieldName.Substring(0, 256);
+				if (fieldName.Length > 256)
+					fieldName = fieldName.Substring(0, 256);
 
 				fieldsArray.Add((JsonNode)new JsonObject { ["name"] = fieldName, ["value"] = chunk, ["inline"] = inline });
 
@@ -371,7 +393,7 @@ public static partial class LogHelper
 
 	public static async Task LogFallbackError(Exception ex)
 	{
-		#if !DEBUG
+#if !DEBUG
 		try
 		{
 			string webhook = Secrets.Error;
@@ -404,7 +426,7 @@ public static partial class LogHelper
 			await client.PostAsync(webhook, multipart);
 		}
 		catch { }
-		#endif
+#endif
 	}
 
 	[GeneratedRegex(@"(?:(\d+)h)?\s*(\d+)m", RegexOptions.Compiled)]

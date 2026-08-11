@@ -24,7 +24,6 @@ public sealed partial class PowerPage : Page
 	{
 		base.OnNavigatedTo(e);
 		ViewModel.RefreshFilterAction = RefreshSearchFilter;
-		ViewModel.RefreshFilterOnlyAction = RefreshFilterOnly;
 		_ = ViewModel.LoadPlansAsync();
 	}
 
@@ -190,9 +189,9 @@ public sealed partial class PowerPage : Page
 
 	private void RefreshFilterOnly()
 	{
-		ApplyFilter(TreeGrid, ViewModel);
-		ApplyFilter(CompareTreeGrid, ViewModel);
-		ApplyFilter(ChangesTreeGrid, ViewModel);
+		ApplyFilter(TreeGrid, ViewModel, PageMode.Normal);
+		ApplyFilter(CompareTreeGrid, ViewModel, PageMode.Comparison);
+		ApplyFilter(ChangesTreeGrid, ViewModel, PageMode.ViewChanges);
 	}
 
 	private void RefreshSearchFilter()
@@ -201,12 +200,12 @@ public sealed partial class PowerPage : Page
 		RefreshFilterOnly();
 	}
 
-	private static void ApplyFilter(SfTreeGrid treeGrid, PowerPageViewModel viewModel)
+	private static void ApplyFilter(SfTreeGrid treeGrid, PowerPageViewModel viewModel, PageMode mode)
 	{
 		TreeGridView? view = treeGrid.View;
 		if (view == null)
 			return;
-		view.Filter = viewModel.MatchesFilter;
+		view.Filter = item => viewModel.MatchesFilter(item, mode);
 		view.RefreshFilter();
 	}
 }

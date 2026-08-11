@@ -694,7 +694,7 @@
 					Spacing="8">
 					<FontIcon
 						HorizontalAlignment="Center"
-						FontSize="32"
+						FontSize="36"
 						Foreground="{ThemeResource SystemFillColorCritical}"
 						Glyph="&#xE783;" />
 					<TextBlock
@@ -718,7 +718,7 @@
 					Spacing="8">
 					<FontIcon
 						HorizontalAlignment="Center"
-						FontSize="32"
+						FontSize="36"
 						Foreground="{ThemeResource SystemFillColorCritical}"
 						Glyph="&#xE783;" />
 					<TextBlock
@@ -761,7 +761,7 @@
 					Spacing="8">
 					<FontIcon
 						HorizontalAlignment="Center"
-						FontSize="32"
+						FontSize="36"
 						Foreground="{ThemeResource SystemFillColorCritical}"
 						Glyph="&#xE783;" />
 					<TextBlock
@@ -821,7 +821,7 @@
 					Spacing="8">
 					<FontIcon
 						HorizontalAlignment="Center"
-						FontSize="32"
+						FontSize="36"
 						Foreground="{ThemeResource SystemFillColorCritical}"
 						Glyph="&#xE783;" />
 					<TextBlock
@@ -851,7 +851,7 @@
 					Spacing="8">
 					<FontIcon
 						HorizontalAlignment="Center"
-						FontSize="32"
+						FontSize="36"
 						Foreground="{ThemeResource SystemFillColorCritical}"
 						Glyph="&#xE783;" />
 					<TextBlock
@@ -894,7 +894,7 @@
 					Spacing="8">
 					<FontIcon
 						HorizontalAlignment="Center"
-						FontSize="32"
+						FontSize="36"
 						Foreground="{ThemeResource SystemFillColorCritical}"
 						Glyph="&#xE783;" />
 					<TextBlock
@@ -952,7 +952,7 @@
 					Spacing="8">
 					<FontIcon
 						HorizontalAlignment="Center"
-						FontSize="32"
+						FontSize="36"
 						Foreground="{ThemeResource SystemFillColorCritical}"
 						Glyph="&#xE783;" />
 					<TextBlock

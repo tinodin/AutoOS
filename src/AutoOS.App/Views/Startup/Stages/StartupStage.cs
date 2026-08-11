@@ -97,7 +97,7 @@ public static class StartupStage
 					{
 						try
 						{
-							await LogHelper.LogError(ex, null, previousTitle);
+							LogHelper.LogError(ex, null, previousTitle);
 						}
 						catch { }
 						StartupWindow.Status.Text = ex.Message;
@@ -128,7 +128,7 @@ public static class StartupStage
 				{
 					try
 					{
-						await LogHelper.LogError(ex, null, previousTitle);
+						LogHelper.LogError(ex, null, previousTitle);
 					}
 					catch { }
 					StartupWindow.Status.Text = ex.Message;

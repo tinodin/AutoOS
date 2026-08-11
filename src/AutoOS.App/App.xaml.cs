@@ -197,7 +197,7 @@ public partial class App : Application
 
 		try
 		{
-			await LogHelper.LogError(ex, PreparingStage.GPUs);
+			LogHelper.LogError(ex, PreparingStage.GPUs);
 		}
 		catch (Exception exception)
 		{

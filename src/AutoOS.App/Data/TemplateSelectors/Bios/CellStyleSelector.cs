@@ -32,25 +32,16 @@ public sealed partial class CellStyleSelector : StyleSelector
 						return node.IsModified ? CriticalStyle : null;
 
 					if (node.NodeKind == NodeKind.GroupedSetting)
-					{
-						IEnumerable<Node> leaves = node.GetLeaves();
-						return leaves.All(leaf => leaf.IsModified) ? CriticalStyle : null;
-					}
+						return node.GetLeaves().All(leaf => leaf.IsModified) ? CriticalStyle : null;
 				}
 
-				if (mappingName == "DisplayCurrent" && !node.HasErrors)
+				if (mappingName == "DisplayCurrent")
 				{
 					if (node.NodeKind == NodeKind.Setting)
 						return node.IsModified ? SuccessStyle : null;
 
-					if (node.NodeKind == NodeKind.GroupedSetting)
-					{
-						IEnumerable<Node> leaves = node.GetLeaves();
-						if (leaves.All(leaf => leaf.IsModified))
-						{
-							return leaves.Any(leaf => leaf.HasErrors) ? CriticalStyle : SuccessStyle;
-						}
-					}
+					if (node.NodeKind == NodeKind.GroupedSetting && node.GetLeaves().All(leaf => leaf.IsModified))
+						return SuccessStyle;
 				}
 			}
 			else

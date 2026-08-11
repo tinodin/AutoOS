@@ -271,7 +271,7 @@ public static partial class EpicGamesHelper
 				}
 				catch (Exception fallbackEx)
 				{
-					await LogHelper.LogError(fallbackEx, null, $"Failed to exchange Epic Games token from both {exchangeUrl} and {exchangeFallbackUrl}");
+					LogHelper.LogError(fallbackEx, null, $"Failed to exchange Epic Games token from both {exchangeUrl} and {exchangeFallbackUrl}");
 					return null!;
 				}
 			}
@@ -284,13 +284,13 @@ public static partial class EpicGamesHelper
 				}
 				catch (Exception)
 				{
-					await LogHelper.LogError(new HttpRequestException($"Exchange request failed with status {response.StatusCode}"), null, $"Failed to exchange Epic Games token from both {exchangeUrl} and {exchangeFallbackUrl}");
+					LogHelper.LogError(new HttpRequestException($"Exchange request failed with status {response.StatusCode}"), null, $"Failed to exchange Epic Games token from both {exchangeUrl} and {exchangeFallbackUrl}");
 					return null!;
 				}
 
 				if (!response.IsSuccessStatusCode)
 				{
-					await LogHelper.LogError(new HttpRequestException($"Exchange request failed with status {response.StatusCode}"), null, $"Failed to exchange Epic Games token from both {exchangeUrl} and {exchangeFallbackUrl}");
+					LogHelper.LogError(new HttpRequestException($"Exchange request failed with status {response.StatusCode}"), null, $"Failed to exchange Epic Games token from both {exchangeUrl} and {exchangeFallbackUrl}");
 					return null!;
 				}
 			}
@@ -301,7 +301,7 @@ public static partial class EpicGamesHelper
 		}
 		catch (Exception ex)
 		{
-			await LogHelper.LogError(ex, null, "Failed to exchange Epic Games token");
+			LogHelper.LogError(ex, null, "Failed to exchange Epic Games token");
 			return null!;
 		}
 	}
@@ -352,7 +352,7 @@ public static partial class EpicGamesHelper
 			}
 			catch (Exception fallbackEx)
 			{
-				await LogHelper.LogError(fallbackEx, null, $"Failed to update Epic Games token from both {authUrl} and {authFallbackUrl}");
+				LogHelper.LogError(fallbackEx, null, $"Failed to update Epic Games token from both {authUrl} and {authFallbackUrl}");
 				return null!;
 			}
 		}
@@ -365,13 +365,13 @@ public static partial class EpicGamesHelper
 			}
 			catch (Exception)
 			{
-				await LogHelper.LogError(new HttpRequestException($"Auth request failed with status {response.StatusCode}"), null, $"Failed to update Epic Games token from both {authUrl} and {authFallbackUrl}");
+				LogHelper.LogError(new HttpRequestException($"Auth request failed with status {response.StatusCode}"), null, $"Failed to update Epic Games token from both {authUrl} and {authFallbackUrl}");
 				return null!;
 			}
 
 			if (!response.IsSuccessStatusCode)
 			{
-				await LogHelper.LogError(new HttpRequestException($"Auth request failed with status {response.StatusCode}"), null, $"Failed to update Epic Games token from both {authUrl} and {authFallbackUrl}");
+				LogHelper.LogError(new HttpRequestException($"Auth request failed with status {response.StatusCode}"), null, $"Failed to update Epic Games token from both {authUrl} and {authFallbackUrl}");
 				return null!;
 			}
 		}
@@ -465,7 +465,7 @@ public static partial class EpicGamesHelper
 		}
 		catch (Exception ex)
 		{
-			LogHelper.LogError(ex, null, $"Failed to submit playtime to {url}").GetAwaiter().GetResult();
+			LogHelper.LogError(ex, null, $"Failed to submit playtime to {url}");
 			return;
 		}
 
@@ -481,7 +481,7 @@ public static partial class EpicGamesHelper
 			}
 			catch (Exception ex)
 			{
-				LogHelper.LogError(ex, null, $"Failed to get playtime from {playTimeUrl}").GetAwaiter().GetResult();
+				LogHelper.LogError(ex, null, $"Failed to get playtime from {playTimeUrl}");
 				return;
 			}
 
@@ -811,7 +811,7 @@ public static partial class EpicGamesHelper
 
 			if (AccessToken == null)
 			{
-				await LogHelper.LogError(new UnauthorizedAccessException("Failed to retrieve the Epic Games access token."));
+				LogHelper.LogError(new UnauthorizedAccessException("Failed to retrieve the Epic Games access token."));
 				return [.. games];
 			}
 
@@ -834,7 +834,7 @@ public static partial class EpicGamesHelper
 				}
 				catch (Exception ex)
 				{
-					await LogHelper.LogError(ex, null, $"Failed to load library data from {url}");
+					LogHelper.LogError(ex, null, $"Failed to load library data from {url}");
 					break;
 				}
 
@@ -863,7 +863,7 @@ public static partial class EpicGamesHelper
 				}
 				catch (Exception fallbackEx)
 				{
-					await LogHelper.LogError(fallbackEx, null, $"Failed to load build data from both {buildUrl} and {buildFallbackUrl}");
+					LogHelper.LogError(fallbackEx, null, $"Failed to load build data from both {buildUrl} and {buildFallbackUrl}");
 					buildResponse = null;
 				}
 			}
@@ -876,7 +876,7 @@ public static partial class EpicGamesHelper
 				}
 				catch (Exception fallbackEx)
 				{
-					await LogHelper.LogError(fallbackEx, null, $"Failed to load build data from both {buildUrl} and {buildFallbackUrl}");
+					LogHelper.LogError(fallbackEx, null, $"Failed to load build data from both {buildUrl} and {buildFallbackUrl}");
 					buildResponse = null;
 				}
 			}
@@ -894,7 +894,7 @@ public static partial class EpicGamesHelper
 			}
 			catch (Exception ex)
 			{
-				await LogHelper.LogError(ex, null, $"Failed to load playtime data from {playTimeUrl}");
+				LogHelper.LogError(ex, null, $"Failed to load playtime data from {playTimeUrl}");
 				playTimeResponse = null;
 			}
 
@@ -1088,7 +1088,7 @@ public static partial class EpicGamesHelper
 					if (string.IsNullOrEmpty(offerId))
 					{
 						if (catalogItemId != "6e563a2c0f5f46e3b4e88b5f4ed50cca")
-							await LogHelper.LogError(new InvalidOperationException($"Failed to get offerId for {catalogItemId}"), null, $"Failed to get offerId for game {(itemJson as JsonObject)?["DisplayName"]?.ToString()}, {catalogItemId}");
+							LogHelper.LogError(new InvalidOperationException($"Failed to get offerId for {catalogItemId}"), null, $"Failed to get offerId for game {(itemJson as JsonObject)?["DisplayName"]?.ToString()}, {catalogItemId}");
 						return;
 					}
 
@@ -1120,7 +1120,7 @@ public static partial class EpicGamesHelper
 							catch (Exception fallbackEx)
 							{
 								if (fallbackEx is not OperationCanceledException oce || oce.CancellationToken != token)
-									await LogHelper.LogError(fallbackEx, null, $"Failed to load manifest data for game {(itemJson as JsonObject)?["DisplayName"]?.ToString()}, {catalogItemId}, both {manifestUrl} and {manifestFallbackUrl}");
+									LogHelper.LogError(fallbackEx, null, $"Failed to load manifest data for game {(itemJson as JsonObject)?["DisplayName"]?.ToString()}, {catalogItemId}, both {manifestUrl} and {manifestFallbackUrl}");
 							}
 						}
 					})();
@@ -1140,7 +1140,7 @@ public static partial class EpicGamesHelper
 							catch (Exception fallbackEx)
 							{
 								if (fallbackEx is not OperationCanceledException oce || oce.CancellationToken != token)
-									await LogHelper.LogError(fallbackEx, null, $"Failed to load offer data for game {(itemJson as JsonObject)?["DisplayName"]?.ToString()}, {offerId}, both {offerUrl} and {offerFallbackUrl}");
+									LogHelper.LogError(fallbackEx, null, $"Failed to load offer data for game {(itemJson as JsonObject)?["DisplayName"]?.ToString()}, {offerId}, both {offerUrl} and {offerFallbackUrl}");
 							}
 						}
 					})();
@@ -1165,7 +1165,7 @@ public static partial class EpicGamesHelper
 						}
 						catch (Exception ex)
 						{
-							await LogHelper.LogError(ex, null, $"Failed to load rating data for game {(itemJson as JsonObject)?["DisplayName"]?.ToString()}, {catalogNamespace}");
+							LogHelper.LogError(ex, null, $"Failed to load rating data for game {(itemJson as JsonObject)?["DisplayName"]?.ToString()}, {catalogNamespace}");
 						}
 					})();
 
@@ -1178,7 +1178,7 @@ public static partial class EpicGamesHelper
 						}
 						catch (Exception ex)
 						{
-							await LogHelper.LogError(ex, null, $"Failed to load product offer data for game {(itemJson as JsonObject)?["DisplayName"]?.ToString()}, {productId}, {offerId}, {productOfferUrl}");
+							LogHelper.LogError(ex, null, $"Failed to load product offer data for game {(itemJson as JsonObject)?["DisplayName"]?.ToString()}, {productId}, {offerId}, {productOfferUrl}");
 						}
 					})();
 
@@ -1191,7 +1191,7 @@ public static partial class EpicGamesHelper
 						}
 						catch (Exception ex)
 						{
-							await LogHelper.LogError(ex, null, $"Failed to load age rating data for game {(itemJson as JsonObject)?["DisplayName"]?.ToString()}, {offerId}, {ageRatingUrl}");
+							LogHelper.LogError(ex, null, $"Failed to load age rating data for game {(itemJson as JsonObject)?["DisplayName"]?.ToString()}, {offerId}, {ageRatingUrl}");
 						}
 					})();
 
@@ -1215,7 +1215,7 @@ public static partial class EpicGamesHelper
 					JsonArray? releaseInfo = (manifestEntry as JsonObject)?["releaseInfo"] as JsonArray;
 					string artifactId = releaseInfo != null && releaseInfo.Count > 0 ? (releaseInfo[0] as JsonObject)?["appId"]?.ToString() ?? "" : "";
 					if (string.IsNullOrEmpty(artifactId))
-						await LogHelper.LogError(new InvalidOperationException($"Failed to get artifactId for {catalogItemId}"), null, $"Failed to get artifactId for game {(itemJson as JsonObject)?["DisplayName"]?.ToString()}, {catalogItemId}");
+						LogHelper.LogError(new InvalidOperationException($"Failed to get artifactId for {catalogItemId}"), null, $"Failed to get artifactId for game {(itemJson as JsonObject)?["DisplayName"]?.ToString()}, {catalogItemId}");
 
 					// read playtime json data
 					int totalSeconds = playTimeData?.GetValueOrDefault(artifactId) ?? 0;
@@ -1429,7 +1429,7 @@ public static partial class EpicGamesHelper
 				}
 				catch (Exception ex)
 				{
-					await LogHelper.LogError(ex, null);
+					LogHelper.LogError(ex, null);
 				}
 			});
 		}

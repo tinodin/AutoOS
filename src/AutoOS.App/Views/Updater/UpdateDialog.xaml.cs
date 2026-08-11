@@ -90,7 +90,7 @@ public sealed partial class UpdateDialog : UserControl
 					{
 						try
 						{
-							await LogHelper.LogError(ex, PreparingStage.GPUs, previousTitle);
+							LogHelper.LogError(ex, PreparingStage.GPUs, previousTitle);
 						}
 						catch (Exception exception)
 						{

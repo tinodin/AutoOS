@@ -1,111 +1,60 @@
-using System.Collections;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using AutoOS.App.Data.Enums.Bios;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace AutoOS.App.Data.Models.Bios;
 
-public sealed partial class Node(
-	NodeKind nodeKind,
-	string displayName,
-	string? description = null,
-	string? groupKey = null,
-	Setting? setting = null,
-	State? state = null,
-	string? baseDisplayName = null) : INotifyDataErrorInfo, INotifyPropertyChanged
+public sealed partial class Node : ObservableObject
 {
 	private readonly Option _mixedOption = new() { Label = "Mixed", Index = "Mixed" };
-	private List<GroupValueState>? _mixedValues;
-	private string _displayName = displayName;
-	private State? _state;
 
-	public NodeKind NodeKind { get; } = nodeKind;
+	public Node(
+		NodeKind nodeKind,
+		string nodeDisplayName,
+		string? description = null,
+		string? groupKey = null,
+		Setting? setting = null,
+		State? state = null,
+		string? baseDisplayName = null)
+	{
+		NodeKind = nodeKind;
+		DisplayName = nodeDisplayName;
+		BaseDisplayName = baseDisplayName ?? nodeDisplayName;
+		Description = description ?? string.Empty;
+		GroupKey = groupKey ?? string.Empty;
+		Setting = setting;
+		State = state;
+
+		Children.CollectionChanged += OnChildrenChanged;
+		SubscribeTo(State);
+	}
+
+	[ObservableProperty]
+	public partial string DisplayName { get; set; }
+
+	public NodeKind NodeKind { get; }
 
 	public Node? Parent { get; set; }
 
-	public IEnumerable<Node> Ancestors
-	{
-		get
-		{
-			Node? current = Parent;
-			while (current != null)
-			{
-				yield return current;
-				current = current.Parent;
-			}
-		}
-	}
-
 	public bool IsRoot => NodeKind == NodeKind.Root;
 
-	public string GroupKey { get; } = groupKey ?? string.Empty;
+	public string GroupKey { get; }
 
-	public string DisplayName
-	{
-		get => _displayName;
-		set
-		{
-			if (_displayName != value)
-			{
-				_displayName = value;
-				OnPropertyChanged();
-			}
-		}
-	}
+	public string BaseDisplayName { get; }
 
-	public event PropertyChangedEventHandler? PropertyChanged;
+	public string Description { get; }
 
-	private void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>
-		PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+	public Setting? Setting { get; }
 
-	public string BaseDisplayName { get; } = baseDisplayName ?? displayName;
-
-	public string Description { get; } = description ?? string.Empty;
-
-	public Setting? Setting { get; } = setting;
-
-	public State? State
-	{
-		get
-		{
-			if (_state != null)
-				return _state;
-			if (state == null)
-				return null;
-
-			_state = state;
-			_state.PropertyChanged += OnStatePropertyChanged;
-			return _state;
-		}
-	}
-
-	private void OnStatePropertyChanged(object? sender, PropertyChangedEventArgs e)
-	{
-		if (NodeKind != NodeKind.Setting)
-			return;
-
-		OnPropertyChanged(nameof(DisplayCurrent));
-		OnPropertyChanged(nameof(DisplayOriginal));
-		OnPropertyChanged(nameof(HasPendingRecommendation));
-		OnPropertyChanged(nameof(IsModified));
-		OnPropertyChanged(nameof(SelectedOption));
-
-		foreach (Node ancestor in Ancestors)
-		{
-			if (ancestor.NodeKind == NodeKind.GroupedSetting)
-			{
-				ancestor.OnPropertyChanged(nameof(DisplayCurrent));
-				ancestor.OnPropertyChanged(nameof(DisplayOriginal));
-				ancestor.OnPropertyChanged(nameof(HasPendingRecommendation));
-				ancestor.OnPropertyChanged(nameof(IsModified));
-			}
-		}
-	}
+	public State? State { get; }
 
 	public bool IsExpanded { get; set; } = true;
 
 	public ObservableCollection<Node> Children { get; } = [];
+
+	public Option MixedOption => _mixedOption;
 
 	public string ToolTipText
 	{
@@ -147,7 +96,7 @@ public sealed partial class Node(
 		get
 		{
 			if (NodeKind == NodeKind.Setting)
-				return State?.SelectedOption?.Label ?? State?.Value ?? string.Empty;
+				return State?.DisplayCurrent ?? string.Empty;
 
 			if (NodeKind == NodeKind.Root || Children.Count == 0)
 				return string.Empty;
@@ -183,7 +132,7 @@ public sealed partial class Node(
 		get
 		{
 			if (NodeKind == NodeKind.Setting)
-				return State?.OriginalSelectedOption?.Label ?? State?.OriginalValue ?? string.Empty;
+				return State?.DisplayOriginal ?? string.Empty;
 
 			if (NodeKind == NodeKind.Root || Children.Count == 0)
 				return string.Empty;
@@ -232,6 +181,23 @@ public sealed partial class Node(
 		}
 	}
 
+	public bool HasErrors
+	{
+		get
+		{
+			if (NodeKind == NodeKind.Setting)
+				return State?.HasErrors == true;
+
+			if (NodeKind == NodeKind.GroupedSetting)
+			{
+				var leaves = GetLeaves().ToList();
+				return leaves.Count > 0 && leaves.All(leaf => leaf.HasErrors);
+			}
+
+			return false;
+		}
+	}
+
 	public bool HasOptions => NodeKind == NodeKind.Setting
 		? Setting?.HasOptions == true
 		: NodeKind == NodeKind.GroupedSetting && GroupUsesOptions;
@@ -258,7 +224,7 @@ public sealed partial class Node(
 					.Select(group => group.First())
 					.ToList();
 
-				if (DisplayCurrent == "Mixed" || _mixedValues != null)
+				if (DisplayCurrent == "Mixed")
 					allOptions.Insert(0, _mixedOption);
 
 				return allOptions;
@@ -299,138 +265,45 @@ public sealed partial class Node(
 				yield return leaf;
 	}
 
-	public void BeginCellEdit()
+	private void OnChildrenChanged(object? sender, NotifyCollectionChangedEventArgs e)
 	{
-		if (HasOptions)
-		{
-			if (NodeKind == NodeKind.GroupedSetting && DisplayCurrent == "Mixed")
-				RememberMixedValues();
-			EditOption = SelectedOption;
-		}
-		else
-		{
-			EditValue = DisplayCurrent == "Mixed" ? string.Empty : DisplayCurrent;
-		}
+		if (e.NewItems != null)
+			foreach (Node child in e.NewItems.Cast<Node>())
+				SubscribeTo(child.State);
+
+		if (e.OldItems != null)
+			foreach (Node child in e.OldItems.Cast<Node>())
+				UnsubscribeFrom(child.State);
 	}
 
-	public bool CommitCellEdit()
+	private void SubscribeTo(State? state)
 	{
-		if (NodeKind == NodeKind.Setting)
-		{
-			if (State == null || Setting == null)
-				return false;
-
-			if (Setting.HasOptions)
-			{
-				if (State.SelectedOption == EditOption)
-					return false;
-				State.SelectedOption = EditOption;
-				return true;
-			}
-
-			if (string.Equals(State.Value, EditValue, StringComparison.Ordinal))
-				return false;
-			State.Value = EditValue;
-			return true;
-		}
-
-		if (NodeKind == NodeKind.GroupedSetting)
-		{
-			if (!CanEditCurrent)
-				return false;
-
-			if (EditOption == _mixedOption)
-			{
-				if (_mixedValues == null)
-					return false;
-
-				bool changed = false;
-				foreach (GroupValueState saved in _mixedValues)
-				{
-					if (saved.Leaf.State == null)
-						continue;
-
-					Option? previousOption = saved.Leaf.State.SelectedOption;
-					string? previousValue = saved.Leaf.State.Value;
-					if (saved.Leaf.Setting?.HasOptions == true)
-						saved.Leaf.State.SelectedOption = saved.SelectedOption;
-					else
-						saved.Leaf.State.Value = saved.Value;
-
-					if (previousOption != saved.Leaf.State.SelectedOption || previousValue != saved.Leaf.State.Value)
-						changed = true;
-				}
-
-				_mixedValues = null;
-				return changed;
-			}
-
-			bool groupChanged = false;
-			foreach (Node leaf in GetLeaves())
-			{
-				if (leaf.State == null || leaf.Setting == null)
-					continue;
-
-				Option? previousOption = leaf.State.SelectedOption;
-				string? previousValue = leaf.State.Value;
-				if (leaf.Setting.HasOptions && EditOption != null)
-					leaf.State.SelectedOption = EditOption;
-				else if (!leaf.Setting.HasOptions)
-					leaf.State.Value = EditValue;
-
-				if (previousOption != leaf.State.SelectedOption || previousValue != leaf.State.Value)
-					groupChanged = true;
-			}
-
-			return groupChanged;
-		}
-
-		return false;
+		if (state != null)
+			state.PropertyChanged += OnStatePropertyChanged;
 	}
 
-	private void RememberMixedValues() =>
-		_mixedValues = [.. GetLeaves()
-			.Where(leaf => leaf.State != null)
-			.Select(leaf => new GroupValueState(leaf, leaf.State!.SelectedOption, leaf.State.Value))];
+	private void UnsubscribeFrom(State? state)
+	{
+		if (state != null)
+			state.PropertyChanged -= OnStatePropertyChanged;
+	}
 
-	private sealed record GroupValueState(Node Leaf, Option? SelectedOption, string? Value);
+	private void OnStatePropertyChanged(object? sender, PropertyChangedEventArgs e)
+	{
+		if (e.PropertyName is nameof(State.Value) or nameof(State.SelectedOption) or nameof(State.OriginalValue) or nameof(State.OriginalSelectedOption))
+			RaiseDisplayChanges();
+	}
+
+	private void RaiseDisplayChanges()
+	{
+		OnPropertyChanged(nameof(DisplayCurrent));
+		OnPropertyChanged(nameof(DisplayOriginal));
+		OnPropertyChanged(nameof(IsModified));
+		OnPropertyChanged(nameof(HasErrors));
+		OnPropertyChanged(nameof(HasPendingRecommendation));
+	}
 
 	private static bool LabelsEqual(string left, string right) => string.Equals(NormalizeLabel(left), NormalizeLabel(right), StringComparison.OrdinalIgnoreCase);
 
 	private static string NormalizeLabel(string? label) => label?.Trim() ?? string.Empty;
-
-	public bool HasErrors => Errors.Length > 0;
-
-	public event EventHandler<DataErrorsChangedEventArgs>? ErrorsChanged;
-
-	public IEnumerable GetErrors(string? propertyName)
-	{
-		if (propertyName != null && propertyName != nameof(DisplayCurrent))
-			return Array.Empty<string>();
-
-		return Errors;
-	}
-
-	public void RaiseErrorsChanged() =>
-		ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(nameof(DisplayCurrent)));
-
-	private string[] Errors
-	{
-		get
-		{
-			if (NodeKind == NodeKind.Setting)
-				return State == null || Setting == null ? [] : Validation.GetErrors(State, Setting.HasOptions);
-
-			if (NodeKind == NodeKind.GroupedSetting)
-			{
-				var leaves = GetLeaves().ToList();
-				if (leaves.Count == 0 || !leaves.All(leaf => leaf.HasErrors))
-					return [];
-
-				return [.. leaves.SelectMany(leaf => leaf.Errors).Distinct()];
-			}
-
-			return [];
-		}
-	}
 }

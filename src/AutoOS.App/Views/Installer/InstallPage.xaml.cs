@@ -184,7 +184,7 @@ public sealed partial class InstallPage : Page
 					{
 						try
 						{
-							await LogHelper.LogError(ex, PreparingStage.GPUs, previousTitle);
+							LogHelper.LogError(ex, PreparingStage.GPUs, previousTitle);
 						}
 						catch (Exception exception)
 						{
@@ -258,7 +258,7 @@ public sealed partial class InstallPage : Page
 				{
 					try
 					{
-						await LogHelper.LogError(ex, PreparingStage.GPUs, previousTitle);
+						LogHelper.LogError(ex, PreparingStage.GPUs, previousTitle);
 					}
 					catch { }
 

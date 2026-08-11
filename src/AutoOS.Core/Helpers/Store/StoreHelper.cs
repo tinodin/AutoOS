@@ -39,14 +39,14 @@ public static partial class StoreHelper
 			string product = await GetProductID(identifier);
 			if (string.IsNullOrEmpty(product))
 			{
-				await LogHelper.LogError(new Exception($"[StoreHelper] ProductID not found for {identifier}."));
+				LogHelper.LogError(new Exception($"[StoreHelper] ProductID not found for {identifier}."));
 				return;
 			}
 
 			string category = await GetCategoryID(product);
 			if (string.IsNullOrEmpty(category))
 			{
-				await LogHelper.LogError(new Exception($"[StoreHelper] CategoryID not found for {identifier} (Product: {product})."));
+				LogHelper.LogError(new Exception($"[StoreHelper] CategoryID not found for {identifier} (Product: {product})."));
 				return;
 			}
 
@@ -61,13 +61,13 @@ public static partial class StoreHelper
 					List<StoreInfo> files = await GetFiles(identifier, category, index);
 					if (files.Count == 0)
 					{
-						await LogHelper.LogError(new Exception($"[StoreHelper] No files found for {identifier}"), actionTitle: $"[StoreHelper] Download failed for {identifier}");
+						LogHelper.LogError(new Exception($"[StoreHelper] No files found for {identifier}"), actionTitle: $"[StoreHelper] Download failed for {identifier}");
 						return;
 					}
 					StoreInfo main = files.First();
 					if (string.IsNullOrEmpty(main.ResourceUri))
 					{
-						await LogHelper.LogError(new Exception($"[StoreHelper] No download URL resolved for {identifier}"), actionTitle: $"[StoreHelper] Download failed for {identifier}");
+						LogHelper.LogError(new Exception($"[StoreHelper] No download URL resolved for {identifier}"), actionTitle: $"[StoreHelper] Download failed for {identifier}");
 						return;
 					}
 					Debug.WriteLine($"[StoreHelper] Selected Package: {main.Name}");
@@ -78,7 +78,7 @@ public static partial class StoreHelper
 				catch (Exception ex)
 				{
 					if (attempt == maxAttempts)
-						await LogHelper.LogError(ex, actionTitle: $"[StoreHelper] Download failed for {identifier}");
+						LogHelper.LogError(ex, actionTitle: $"[StoreHelper] Download failed for {identifier}");
 				}
 			}
 		}
@@ -104,7 +104,7 @@ public static partial class StoreHelper
 		}
 		catch (Exception ex)
 		{
-			await LogHelper.LogError(ex, actionTitle: $"[StoreHelper] Installation failed for {identifier}");
+			LogHelper.LogError(ex, actionTitle: $"[StoreHelper] Installation failed for {identifier}");
 		}
 		finally
 		{
