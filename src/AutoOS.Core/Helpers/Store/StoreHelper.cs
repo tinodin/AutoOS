@@ -96,7 +96,13 @@ public static partial class StoreHelper
 							f.EndsWith(".msixbundle", StringComparison.OrdinalIgnoreCase))
 				.ToList();
 
-			string mainPath = allFiles.FirstOrDefault(f => Path.GetFileName(f).StartsWith(identifier.Split('_')[0], StringComparison.OrdinalIgnoreCase)) ?? allFiles.First();
+			if (allFiles.Count == 0)
+			{
+				await LogHelper.LogError(new Exception($"[StoreHelper] No package files found for {identifier}"), actionTitle: $"[StoreHelper] Installation failed for {identifier}");
+				return;
+			}
+
+			string mainPath = allFiles.FirstOrDefault(f => Path.GetFileName(f).StartsWith(identifier.Split('_')[0], StringComparison.OrdinalIgnoreCase)) ?? allFiles[0];
 
 			await new PackageManager().StagePackageAsync(new Uri(mainPath), null);
 			await new PackageManager().ProvisionPackageForAllUsersAsync(identifier);
@@ -108,7 +114,10 @@ public static partial class StoreHelper
 		}
 		finally
 		{
-			Directory.Delete(folderPath, true);
+			if (Directory.Exists(folderPath))
+			{
+				Directory.Delete(folderPath, true);
+			}
 		}
 	}
 

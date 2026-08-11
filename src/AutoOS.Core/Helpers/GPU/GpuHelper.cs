@@ -59,6 +59,9 @@ public static partial class GpuHelper
 					}
 				}
 
+				if (!pnpDeviceId.Contains("VEN_") || !pnpDeviceId.Contains("DEV_"))
+					continue;
+
 				string registryPath = GetRegistryPath(hDevInfo, devInfo);
 				string vendorId = pnpDeviceId.Substring(pnpDeviceId.IndexOf("VEN_") + 4, 4).ToLowerInvariant();
 				string deviceId = pnpDeviceId.Substring(pnpDeviceId.IndexOf("DEV_") + 4, 4).ToLowerInvariant();
