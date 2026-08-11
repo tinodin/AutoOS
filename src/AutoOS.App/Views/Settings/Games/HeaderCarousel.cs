@@ -1950,12 +1950,15 @@ public partial class HeaderCarousel : ItemsControl
 
 			// remove selected account
 			KeyValuePair<string, KVObject> selectedChild = kv.Root.Children.FirstOrDefault(child => child.Value["AccountName"]?.ToString() == SteamAccounts.SelectedItem?.ToString());
+
 			if (selectedChild.Key is null)
 				return;
 
-			var newChildren = kv.Root.Children.Where(c => c.Key != selectedChild.Key).ToList();
+			var newChildren = kv.Root.Children.Where(children => children.Key != selectedChild.Key).ToList();
+
 			var newRoot = new KVObject();
-			foreach (KeyValuePair<string, KVObject> child in newChildren)
+
+			foreach (var child in newChildren)
 			{
 				newRoot[child.Key] = child.Value;
 			}
