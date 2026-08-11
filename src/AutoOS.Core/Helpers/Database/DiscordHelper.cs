@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Text.Json.Nodes;
 using AutoOS.Core.Common;
 using Windows.Win32;
@@ -146,7 +146,8 @@ public static partial class DiscordHelper
 			.SelectMany(drive =>
 			{
 				string usersPath = Path.Combine(drive.Name, "Users");
-				if (!Directory.Exists(usersPath)) return [];
+				if (!Directory.Exists(usersPath))
+					return [];
 
 				return Directory.GetDirectories(usersPath).SelectMany(GetBrowserDatabases);
 			})
@@ -161,8 +162,8 @@ public static partial class DiscordHelper
 		{
 			try
 			{
-JsonNode? tokenNode = DatabaseHelper.Read(databasePath.Path, "_https://discord.com", "token");
-			string? token = tokenNode?.ToString();
+				JsonNode? tokenNode = DatabaseHelper.Read(databasePath.Path, "_https://discord.com", "token");
+				string? token = tokenNode?.ToString();
 
 				if (!string.IsNullOrEmpty(token))
 				{
@@ -188,7 +189,7 @@ JsonNode? tokenNode = DatabaseHelper.Read(databasePath.Path, "_https://discord.c
 				var accountNames = accounts.Select(account => account.Username).ToList();
 				string accountsString = accountNames.Count switch
 				{
-1 => accountNames[0] ?? "",
+					1 => accountNames[0] ?? "",
 					2 => $"{accountNames[0]} and {accountNames[1]}",
 					_ => $"{string.Join(", ", accountNames.Take(accountNames.Count - 1))}, and {accountNames.Last()}"
 				};
@@ -207,7 +208,8 @@ JsonNode? tokenNode = DatabaseHelper.Read(databasePath.Path, "_https://discord.c
 			.SelectMany(drive =>
 			{
 				string usersPath = Path.Combine(drive.Name, "Users");
-				if (!Directory.Exists(usersPath)) return [];
+				if (!Directory.Exists(usersPath))
+					return [];
 
 				return Directory.GetDirectories(usersPath)
 					.Select(userDir => Path.Combine(userDir, "AppData", "Roaming", "discord", "Local Storage", "leveldb"))
@@ -224,8 +226,8 @@ JsonNode? tokenNode = DatabaseHelper.Read(databasePath.Path, "_https://discord.c
 		{
 			try
 			{
-JsonNode? keybindsNode = DatabaseHelper.Read(folder.FullName, "_https://discord.com", "keybinds");
-			string? keybinds = keybindsNode?.ToString();
+				JsonNode? keybindsNode = DatabaseHelper.Read(folder.FullName, "_https://discord.com", "keybinds");
+				string? keybinds = keybindsNode?.ToString();
 
 				if (!string.IsNullOrEmpty(keybinds))
 				{
@@ -256,7 +258,11 @@ JsonNode? keybindsNode = DatabaseHelper.Read(folder.FullName, "_https://discord.
 			{
 				PInvoke.PostMessage((HWND)process.MainWindowHandle, PInvoke.WM_CLOSE, default(WPARAM), default(LPARAM));
 				process.WaitForExit(500);
-				try { process.Kill(); } catch { }
+				try
+				{
+					process.Kill();
+				}
+				catch { }
 
 			}
 		}
@@ -413,7 +419,7 @@ JsonNode? keybindsNode = DatabaseHelper.Read(folder.FullName, "_https://discord.
 	public static async Task DisableClips(string databasePath)
 	{
 		await KillDiscord();
-		JsonNode? ClipsStore = DatabaseHelper.Read(databasePath, "_https://discord.com", "ClipsStore");
+		JsonNode? ClipsStore = DatabaseHelper.Read(databasePath, "_https://discordapp.com", "ClipsStore");
 
 		if (ClipsStore != null)
 		{
