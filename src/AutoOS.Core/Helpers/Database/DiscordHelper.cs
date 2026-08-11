@@ -413,12 +413,12 @@ JsonNode? keybindsNode = DatabaseHelper.Read(folder.FullName, "_https://discord.
 	public static async Task DisableClips(string databasePath)
 	{
 		await KillDiscord();
-		JsonNode? ClipsStore = DatabaseHelper.Read(databasePath, "https://discordapp.com", "ClipsStore");
+		JsonNode? ClipsStore = DatabaseHelper.Read(databasePath, "_https://discord.com", "ClipsStore");
 
 		if (ClipsStore != null)
 		{
 			ClipsStore["_state"]?["clipsSettings"]?["clipsEnabled"] = false;
-			DatabaseHelper.Write(databasePath, "https://discord.com", "ClipsStore", ClipsStore);
+			DatabaseHelper.Write(databasePath, "_https://discord.com", "ClipsStore", ClipsStore);
 		}
 	}
 }
