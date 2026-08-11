@@ -100,11 +100,7 @@ public sealed partial class HomePage : Page
 				if (doc.RootElement.TryGetProperty("body", out JsonElement body))
 				{
 					string rawChangelog = body.GetString()!;
-					string cleanedChangelog = rawChangelog.Replace("`", "");
-					int changelogStart = cleanedChangelog.IndexOf("- ");
-					if (changelogStart > 0 && cleanedChangelog[changelogStart - 1] != '\n')
-						changelogStart = -1;
-					string changelog = changelogStart >= 0 ? cleanedChangelog[changelogStart..] : cleanedChangelog;
+					string changelog = rawChangelog.Replace("`", "")[rawChangelog.IndexOf("- ")..];
 
 					var contentDialog = new ContentDialog
 					{
