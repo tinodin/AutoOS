@@ -12,6 +12,7 @@
 	xmlns:models="using:AutoOS.App.Data.Models.Power"
 	xmlns:sfgrid="using:Syncfusion.UI.Xaml.TreeGrid"
 	xmlns:templateselectors="using:AutoOS.App.Data.TemplateSelectors.Power"
+	xmlns:uc="using:AutoOS.App.UserControls"
 	mc:Ignorable="d">
 	<Page.Resources>
 
@@ -120,13 +121,9 @@
 			ComboBoxTemplate="{StaticResource DcComboBoxEditTemplate}"
 			TextBoxTemplate="{StaticResource DcTextBoxEditTemplate}" />
 
-		<!--  Power Plan  -->
+		<!--  Power Plan Item  -->
 		<DataTemplate x:Key="PowerPlanTemplate" x:DataType="models:Plan">
-			<TextBlock
-				Text="{x:Bind Name, Mode=OneTime}"
-				TextTrimming="CharacterEllipsis"
-				TextWrapping="NoWrap"
-				ToolTipService.ToolTip="{x:Bind Description, Mode=OneTime}" />
+			<TextBlock Text="{x:Bind Name, Mode=OneTime}" ToolTipService.ToolTip="{x:Bind Description, Mode=OneTime}" />
 		</DataTemplate>
 	</Page.Resources>
 
@@ -153,7 +150,7 @@
 					IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"
 					IsSpellCheckEnabled="False"
 					PlaceholderText="Search..."
-					TextChanged="Search_TextChanged"
+					Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 					ToolTipService.ToolTip="Search (Ctrl+F)">
 					<dev:TextBox.KeyboardAccelerators>
 						<KeyboardAccelerator
@@ -177,19 +174,37 @@
 					</DropDownButton.Content>
 					<DropDownButton.Flyout>
 						<MenuFlyout Placement="Bottom">
+
+							<!--  Setting  -->
 							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterSetting, Mode=TwoWay}" Text="Setting" />
+
+							<!--  Description  -->
 							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterDescription, Mode=TwoWay}" Text="Description" />
+
+							<!--  AC  -->
 							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterAc, Mode=TwoWay}" Text="AC" />
+
+							<!--  DC  -->
 							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterDc, Mode=TwoWay}" Text="DC" />
+
+							<!--  GUID  -->
 							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterGuid, Mode=TwoWay}" Text="GUID" />
+
+							<!--  Separator  -->
 							<MenuFlyoutSeparator />
+
+							<!--  Contains  -->
 							<RadioMenuFlyoutItem
-								Click="FilterMode_Contains_Click"
+								Command="{x:Bind ViewModel.SetFilterModeCommand}"
+								CommandParameter="Contains"
 								GroupName="PowerFilterMode"
 								IsChecked="{x:Bind ViewModel.FilterMode, Mode=OneWay, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Contains}"
 								Text="Contains" />
+
+							<!--  Exact Match  -->
 							<RadioMenuFlyoutItem
-								Click="FilterMode_ExactMatch_Click"
+								Command="{x:Bind ViewModel.SetFilterModeCommand}"
+								CommandParameter="ExactMatch"
 								GroupName="PowerFilterMode"
 								IsChecked="{x:Bind ViewModel.FilterMode, Mode=OneWay, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=ExactMatch}"
 								Text="Exact Match" />
@@ -241,14 +256,14 @@
 
 					<!--  Active CombobBox  -->
 					<AppBarElementContainer VerticalContentAlignment="Center">
-						<ComboBox
+						<uc:ComboBoxEx
 							x:Name="ActivePowerPlanComboBox"
-							Width="220"
+							MinWidth="180"
 							IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"
 							ItemTemplate="{StaticResource PowerPlanTemplate}"
 							ItemsSource="{x:Bind ViewModel.Plans, Mode=OneWay}"
 							SelectedItem="{x:Bind ViewModel.ActivePlan, Mode=TwoWay}">
-							<ComboBox.ContextFlyout>
+							<uc:ComboBoxEx.ContextFlyout>
 								<MenuFlyout>
 									<MenuFlyoutItem Command="{x:Bind ViewModel.EditCommand}" Text="Edit">
 										<MenuFlyoutItem.Icon>
@@ -271,15 +286,15 @@
 										</MenuFlyoutItem.Icon>
 									</MenuFlyoutItem>
 								</MenuFlyout>
-							</ComboBox.ContextFlyout>
-						</ComboBox>
+							</uc:ComboBoxEx.ContextFlyout>
+						</uc:ComboBoxEx>
 					</AppBarElementContainer>
 
 					<!--  Compare ComboBox  -->
 					<AppBarElementContainer VerticalContentAlignment="Center">
-						<ComboBox
+						<uc:ComboBoxEx
 							x:Name="ComparePowerPlanComboBox"
-							Width="220"
+							MinWidth="180"
 							Margin="4,0,0,0"
 							IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"
 							ItemTemplate="{StaticResource PowerPlanTemplate}"

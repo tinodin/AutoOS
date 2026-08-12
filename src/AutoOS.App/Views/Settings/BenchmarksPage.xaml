@@ -574,7 +574,7 @@
 								HorizontalAlignment="Center"
 								Foreground="{ThemeResource TextFillColorSecondaryBrush}"
 								Style="{StaticResource BodyTextBlockStyle}"
-								Text="Select a process and press Record or use the Add button to import an existing recording."
+								Text="Select a process and press Record or use the Add button to import existing recordings."
 								TextWrapping="Wrap" />
 						</StackPanel>
 					</dev:Case>

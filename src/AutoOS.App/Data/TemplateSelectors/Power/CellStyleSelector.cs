@@ -30,11 +30,6 @@ public sealed partial class CellStyleSelector : StyleSelector
 		if (mappingName is nameof(Node.DisplayOriginalAc) or nameof(Node.DisplayOriginalDc))
 			return CriticalStyle;
 
-		return node.Mode switch
-		{
-			PageMode.Comparison => CriticalStyle,
-			PageMode.ViewChanges => SuccessStyle,
-			_ => null
-		};
+		return null;
 	}
 }

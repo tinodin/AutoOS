@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml.Input;
 using Syncfusion.UI.Xaml.Data;
 using Syncfusion.UI.Xaml.DataGrid;
 using Syncfusion.UI.Xaml.Grids;
+using Syncfusion.UI.Xaml.Grids.ScrollAxis;
 using Syncfusion.UI.Xaml.TreeGrid;
 using Windows.System;
 
@@ -31,12 +32,6 @@ public sealed partial class PowerPage : Page
 	{
 		Search.Focus(FocusState.Programmatic);
 		args.Handled = true;
-	}
-
-	private void Search_TextChanged(object sender, TextChangedEventArgs e)
-	{
-		ViewModel.SearchText = Search.Text;
-		Search.Focus(FocusState.Programmatic);
 	}
 
 	private void TreeGrid_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -127,7 +122,7 @@ public sealed partial class PowerPage : Page
 			if (manager.CurrentCell?.IsEditing != true)
 				continue;
 
-			var index = manager.CurrentRowColumnIndex;
+			RowColumnIndex index = manager.CurrentRowColumnIndex;
 			manager.EndEdit();
 			treeGrid.SelectionController.MoveCurrentCell(index);
 			break;
@@ -183,15 +178,11 @@ public sealed partial class PowerPage : Page
 		});
 	}
 
-	private void FilterMode_Contains_Click(object sender, RoutedEventArgs e) => ViewModel.FilterMode = Data.Enums.FilterMode.Contains;
-
-	private void FilterMode_ExactMatch_Click(object sender, RoutedEventArgs e) => ViewModel.FilterMode = Data.Enums.FilterMode.ExactMatch;
-
 	private void RefreshFilterOnly()
 	{
-		ApplyFilter(TreeGrid, ViewModel, PageMode.Normal);
-		ApplyFilter(CompareTreeGrid, ViewModel, PageMode.Comparison);
-		ApplyFilter(ChangesTreeGrid, ViewModel, PageMode.ViewChanges);
+		ApplyFilter(TreeGrid, ViewModel);
+		ApplyFilter(CompareTreeGrid, ViewModel);
+		ApplyFilter(ChangesTreeGrid, ViewModel);
 	}
 
 	private void RefreshSearchFilter()
@@ -200,12 +191,12 @@ public sealed partial class PowerPage : Page
 		RefreshFilterOnly();
 	}
 
-	private static void ApplyFilter(SfTreeGrid treeGrid, PowerPageViewModel viewModel, PageMode mode)
+	private static void ApplyFilter(SfTreeGrid treeGrid, PowerPageViewModel viewModel)
 	{
 		TreeGridView? view = treeGrid.View;
 		if (view == null)
 			return;
-		view.Filter = item => viewModel.MatchesFilter(item, mode);
+		view.Filter = item => viewModel.MatchesFilter(item);
 		view.RefreshFilter();
 	}
 }

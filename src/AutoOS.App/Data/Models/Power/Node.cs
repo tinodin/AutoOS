@@ -18,7 +18,6 @@ public sealed partial class Node : ObservableObject
 	[DynamicDependency(nameof(DisplayOriginalDc), typeof(Node))]
 	internal Node(
 		NodeKind nodeKind,
-		PageMode mode,
 		string displayName,
 		string description,
 		Guid guid,
@@ -27,7 +26,6 @@ public sealed partial class Node : ObservableObject
 		string? baseDisplayName = null)
 	{
 		NodeKind = nodeKind;
-		Mode = mode;
 		DisplayName = displayName;
 		BaseDisplayName = baseDisplayName ?? displayName;
 		Description = description;
@@ -37,8 +35,6 @@ public sealed partial class Node : ObservableObject
 	}
 
 	public NodeKind NodeKind { get; }
-
-	public PageMode Mode { get; }
 
 	public Setting? Setting { get; }
 
@@ -69,19 +65,9 @@ public sealed partial class Node : ObservableObject
 
 	public bool IsModified => State?.IsModified ?? false;
 
-	public bool IsAcDifferent => Mode switch
-	{
-		PageMode.Comparison => State?.IsAcDifferent ?? false,
-		PageMode.ViewChanges => AcValue != OriginalAcValue,
-		_ => false
-	};
+	public bool IsAcDifferent => State?.IsAcDifferent ?? false;
 
-	public bool IsDcDifferent => Mode switch
-	{
-		PageMode.Comparison => State?.IsDcDifferent ?? false,
-		PageMode.ViewChanges => DcValue != OriginalDcValue,
-		_ => false
-	};
+	public bool IsDcDifferent => State?.IsDcDifferent ?? false;
 
 	public string DisplayAc => State?.DisplayAc ?? string.Empty;
 

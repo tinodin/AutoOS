@@ -73,7 +73,7 @@ Pressing **Install AutoOS** in the **AutoOS Installer** does the following:
 - Installs selected Browsers with selected Browser Extensions
 - Installs additional Image / Video Extensions
 - Installs NanaZip, Everything, StartAllBack and Windhawk with Mods for Start Menu, Taskbar, File Explorer etc.
-- Installs selected Apps for Messaging, Launchers, Music, Peripherals, Controllers, Development, Sysinternals, Overclocking, Music Production, Video Production, Office and Miscellaneous
+- Installs selected Apps for Messaging, Launchers, Music, Peripherals, Controllers, Development, Sysinternals, Overclocking, Music Production, Video Production, Multimedia, Office and Miscellaneous
 - Imports Discord account and keybinds from old Installation, applies system theme and disables game overlay and clips
 - Imports the Epic Games and Riot Games Account from the old Windows installation
 - Imports / Links Epic Games, Riot Games and Steam titles from the old Windows installation
