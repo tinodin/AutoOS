@@ -105,9 +105,15 @@
 			</TextBox>
 		</DataTemplate>
 
-		<!--  Cell Style Selector  -->
-		<templateselectors:CellStyleSelector
-			x:Key="CellStyleSelector"
+		<!--  Compare Cell Style Selector  -->
+		<templateselectors:CompareCellStyleSelector
+			x:Key="CompareCellStyleSelector"
+			CriticalStyle="{StaticResource CriticalCellStyle}"
+			SuccessStyle="{StaticResource SuccessCellStyle}" />
+
+		<!--  Changes Cell Style Selector  -->
+		<templateselectors:ChangesCellStyleSelector
+			x:Key="ChangesCellStyleSelector"
 			CriticalStyle="{StaticResource CriticalCellStyle}"
 			SuccessStyle="{StaticResource SuccessCellStyle}" />
 
@@ -257,7 +263,6 @@
 					<!--  Active CombobBox  -->
 					<AppBarElementContainer VerticalContentAlignment="Center">
 						<uc:ComboBoxEx
-							x:Name="ActivePowerPlanComboBox"
 							MinWidth="180"
 							IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"
 							ItemTemplate="{StaticResource PowerPlanTemplate}"
@@ -293,7 +298,6 @@
 					<!--  Compare ComboBox  -->
 					<AppBarElementContainer VerticalContentAlignment="Center">
 						<uc:ComboBoxEx
-							x:Name="ComparePowerPlanComboBox"
 							MinWidth="180"
 							Margin="4,0,0,0"
 							IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"
@@ -330,10 +334,8 @@
 
 					<!--  View Changes  -->
 					<AppBarToggleButton
-						x:Name="ViewChanges"
-						Command="{x:Bind ViewModel.ToggleViewChangesCommand}"
 						Icon="{dev:FontIcon Glyph=&#xF28B;}"
-						IsChecked="{x:Bind ViewModel.ViewChanges, Mode=TwoWay}"
+						IsChecked="{x:Bind ViewModel.ViewChangesActive, Mode=TwoWay}"
 						Label="{x:Bind ViewModel.ViewChangesLabel, Mode=OneWay}"
 						ToolTipService.ToolTip="View Changes (Ctrl+D)">
 						<AppBarToggleButton.KeyboardAccelerators>
@@ -430,7 +432,7 @@
 								helpers:StarRatio.ColumnRatio="1"
 								AllowEditing="True"
 								AllowSorting="True"
-								CellStyleSelector="{StaticResource CellStyleSelector}"
+								CellStyleSelector="{StaticResource CompareCellStyleSelector}"
 								EditTemplateSelector="{StaticResource AcEditTemplateSelector}"
 								HeaderText="Plugged in (AC)"
 								MappingName="DisplayAc"
@@ -452,7 +454,7 @@
 								helpers:StarRatio.ColumnRatio="1"
 								AllowEditing="True"
 								AllowSorting="True"
-								CellStyleSelector="{StaticResource CellStyleSelector}"
+								CellStyleSelector="{StaticResource CompareCellStyleSelector}"
 								EditTemplateSelector="{StaticResource DcEditTemplateSelector}"
 								HeaderText="On battery (DC)"
 								MappingName="DisplayDc"
@@ -525,7 +527,7 @@
 								helpers:StarRatio.ColumnRatio="1"
 								AllowEditing="True"
 								AllowSorting="True"
-								CellStyleSelector="{StaticResource CellStyleSelector}"
+								CellStyleSelector="{StaticResource CompareCellStyleSelector}"
 								EditTemplateSelector="{StaticResource AcEditTemplateSelector}"
 								HeaderText="{x:Bind ViewModel.ActivePlanAcHeader, Mode=OneWay}"
 								MappingName="DisplayAc"
@@ -547,7 +549,7 @@
 								helpers:StarRatio.ColumnRatio="1"
 								AllowEditing="True"
 								AllowSorting="True"
-								CellStyleSelector="{StaticResource CellStyleSelector}"
+								CellStyleSelector="{StaticResource CompareCellStyleSelector}"
 								EditTemplateSelector="{StaticResource DcEditTemplateSelector}"
 								HeaderText="{x:Bind ViewModel.ActivePlanDcHeader, Mode=OneWay}"
 								MappingName="DisplayDc"
@@ -569,7 +571,7 @@
 								helpers:StarRatio.ColumnRatio="1"
 								AllowEditing="False"
 								AllowFocus="False"
-								CellStyleSelector="{StaticResource CellStyleSelector}"
+								CellStyleSelector="{StaticResource CompareCellStyleSelector}"
 								HeaderText="{x:Bind ViewModel.ComparePlanAcHeader, Mode=OneWay}"
 								MappingName="DisplayCompareAc"
 								ShowToolTip="True"
@@ -581,7 +583,7 @@
 								helpers:StarRatio.ColumnRatio="1"
 								AllowEditing="False"
 								AllowFocus="False"
-								CellStyleSelector="{StaticResource CellStyleSelector}"
+								CellStyleSelector="{StaticResource CompareCellStyleSelector}"
 								HeaderText="{x:Bind ViewModel.ComparePlanDcHeader, Mode=OneWay}"
 								MappingName="DisplayCompareDc"
 								ShowToolTip="True"
@@ -611,7 +613,7 @@
 						FilterLevel="All"
 						GridLinesVisibility="Both"
 						HeaderLinesVisibility="Both"
-						ItemsSource="{x:Bind ViewModel.ChangeNodes}"
+						ItemsSource="{x:Bind ViewModel.ChangesNodes}"
 						NavigationMode="Cell"
 						PasteOption="None"
 						SelectionMode="Single"
@@ -645,7 +647,7 @@
 								helpers:StarRatio.ColumnRatio="1"
 								AllowEditing="False"
 								AllowFocus="False"
-								CellStyleSelector="{StaticResource CellStyleSelector}"
+								CellStyleSelector="{StaticResource ChangesCellStyleSelector}"
 								HeaderText="Original (AC)"
 								MappingName="DisplayOriginalAc"
 								ShowToolTip="True"
@@ -657,7 +659,7 @@
 								helpers:StarRatio.ColumnRatio="1"
 								AllowEditing="False"
 								AllowFocus="False"
-								CellStyleSelector="{StaticResource CellStyleSelector}"
+								CellStyleSelector="{StaticResource ChangesCellStyleSelector}"
 								HeaderText="Original (DC)"
 								MappingName="DisplayOriginalDc"
 								ShowToolTip="True"
@@ -669,7 +671,7 @@
 								helpers:StarRatio.ColumnRatio="1"
 								AllowEditing="True"
 								AllowSorting="True"
-								CellStyleSelector="{StaticResource CellStyleSelector}"
+								CellStyleSelector="{StaticResource ChangesCellStyleSelector}"
 								EditTemplateSelector="{StaticResource AcEditTemplateSelector}"
 								HeaderText="New (AC)"
 								MappingName="DisplayAc"
@@ -691,7 +693,7 @@
 								helpers:StarRatio.ColumnRatio="1"
 								AllowEditing="True"
 								AllowSorting="True"
-								CellStyleSelector="{StaticResource CellStyleSelector}"
+								CellStyleSelector="{StaticResource ChangesCellStyleSelector}"
 								EditTemplateSelector="{StaticResource DcEditTemplateSelector}"
 								HeaderText="New (DC)"
 								MappingName="DisplayDc"

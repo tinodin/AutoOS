@@ -16,7 +16,7 @@ using Windows.System;
 
 namespace AutoOS.App.ViewModels;
 
-public sealed partial class BenchmarksPageViewModel : ObservableObject
+public sealed partial class BenchmarksPageViewModel(IDialogService dialogService) : ObservableObject
 {
 	[ObservableProperty]
 	public partial string ActiveTab { get; set; } = "Recordings";
@@ -54,17 +54,9 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	private readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 	public List<RecordingAnalysis> CachedAnalysis { get; set; } = [];
 	private readonly HashSet<string> _recordableProcesses = [with(StringComparer.OrdinalIgnoreCase)];
-	private readonly IDialogService _dialogService;
 	private ProcessDiscoveryService? _processDiscovery;
 	private CancellationTokenSource? _recordingCts;
 	private Process? _activeProcess;
-
-	public BenchmarksPageViewModel(IDialogService dialogService)
-	{
-		_dialogService = dialogService;
-		RecordingAColor = Colors.DodgerBlue;
-		RecordingBColor = Colors.Orange;
-	}
 
 	public void LoadSettings()
 	{
@@ -335,7 +327,7 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 			return;
 
 		int count = SelectedRecordings.Count;
-		if (await _dialogService.ShowConfirmationDialogAsync("Delete recordings", $"Are you sure you want to delete {count} recording{(count == 1 ? "" : "s")}?", "Delete", "Cancel") != DialogResult.Primary)
+		if (await dialogService.ShowConfirmationDialogAsync("Delete recordings", $"Are you sure you want to delete {count} recording{(count == 1 ? "" : "s")}?", "Delete", "Cancel") != DialogResult.Primary)
 			return;
 
 		foreach (RecordingItem recording in SelectedRecordings)
@@ -1236,12 +1228,12 @@ public sealed partial class BenchmarksPageViewModel : ObservableObject
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(RecordingAColorBrush))]
 	[NotifyPropertyChangedFor(nameof(RecordingASecondaryColor))]
-	public partial Windows.UI.Color RecordingAColor { get; set; }
+	public partial Windows.UI.Color RecordingAColor { get; set; } = Colors.DodgerBlue;
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(RecordingBColorBrush))]
 	[NotifyPropertyChangedFor(nameof(RecordingBSecondaryColor))]
-	public partial Windows.UI.Color RecordingBColor { get; set; }
+	public partial Windows.UI.Color RecordingBColor { get; set; } = Colors.Orange;
 
 	[ObservableProperty]
 	public partial Windows.UI.Color RecordingASecondaryColor { get; set; }

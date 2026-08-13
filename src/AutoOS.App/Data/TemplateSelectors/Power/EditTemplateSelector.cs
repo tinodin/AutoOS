@@ -1,4 +1,3 @@
-using AutoOS.App.Data.Enums.Power;
 using AutoOS.App.Data.Models.Power;
 
 namespace AutoOS.App.Data.TemplateSelectors.Power;
@@ -11,8 +10,8 @@ public sealed partial class EditTemplateSelector : DataTemplateSelector
 
 	protected override DataTemplate? SelectTemplateCore(object item, DependencyObject container)
 	{
-		if (item is not Node { NodeKind: NodeKind.Setting, HasValues: true } node)
-			return null;
-		return node.HasOptions ? ComboBoxTemplate : TextBoxTemplate;
+		if (item is Node node && node.HasOptions)
+			return ComboBoxTemplate;
+		return TextBoxTemplate;
 	}
 }

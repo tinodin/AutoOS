@@ -19,8 +19,12 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 	private readonly List<Setting> _settings = [];
 	private IReadOnlyList<Subgroup> _subgroups = [];
 	private CancellationTokenSource? _activePlanReloadCts;
+	private TreeState? _compareTree;
+	private TreeState? _changesTree;
 
 	public Action? RefreshFilterAction { get; set; }
+
+	public Action? RefreshFilterOnlyAction { get; set; }
 
 	public ObservableCollection<Plan> Plans { get; } = [];
 
@@ -30,12 +34,16 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 
 	public ObservableCollection<Node> CompareNodes { get; } = [];
 
-	public ObservableCollection<Node> ChangeNodes { get; } = [];
-
-	private bool HasComparePlan => ComparePlan != null && ComparePlan.Guid != Guid.Empty;
+	public ObservableCollection<Node> ChangesNodes { get; } = [];
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(SwitchPresenterValue))]
+	[NotifyPropertyChangedFor(nameof(IsLoaded))]
+	[NotifyCanExecuteChangedFor(nameof(UndoCommand))]
+	[NotifyCanExecuteChangedFor(nameof(RedoCommand))]
+	[NotifyCanExecuteChangedFor(nameof(SaveChangesCommand))]
+	[NotifyCanExecuteChangedFor(nameof(RestoreCommand))]
+	[NotifyCanExecuteChangedFor(nameof(ImportCommand))]
 	public partial PageMode PageState { get; set; } = PageMode.Loading;
 
 	public string SwitchPresenterValue => PageState switch
@@ -45,20 +53,19 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		_ => "Loaded"
 	};
 
-	[ObservableProperty]
-	[NotifyCanExecuteChangedFor(nameof(UndoCommand))]
-	[NotifyCanExecuteChangedFor(nameof(RedoCommand))]
-	[NotifyCanExecuteChangedFor(nameof(SaveChangesCommand))]
-	[NotifyCanExecuteChangedFor(nameof(ToggleViewChangesCommand))]
-	[NotifyCanExecuteChangedFor(nameof(RestoreCommand))]
-	[NotifyCanExecuteChangedFor(nameof(ImportCommand))]
-	public partial bool IsLoaded { get; set; }
+	public bool IsLoaded => PageState == PageMode.Loaded;
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(ActivePlanToolTip))]
 	[NotifyPropertyChangedFor(nameof(ActivePlanAcHeader))]
 	[NotifyPropertyChangedFor(nameof(ActivePlanDcHeader))]
 	public partial Plan ActivePlan { get; set; } = null!;
+
+	public string ActivePlanAcHeader => $"{ActivePlan?.Name} (AC)";
+
+	public string ActivePlanDcHeader => $"{ActivePlan?.Name} (DC)";
+
+	public string ActivePlanToolTip => ActivePlan is { Description.Length: > 0 } plan ? plan.Description : ActivePlan?.Name ?? string.Empty;
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(ComparePlanToolTip))]
@@ -68,6 +75,33 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 	[NotifyPropertyChangedFor(nameof(ComparisonVisibility))]
 	[NotifyPropertyChangedFor(nameof(ViewChangesVisibility))]
 	public partial Plan ComparePlan { get; set; } = null!;
+
+	public string ComparePlanAcHeader => $"{ComparePlan?.Name} (AC)";
+
+	public string ComparePlanDcHeader => $"{ComparePlan?.Name} (DC)";
+
+	public string ComparePlanToolTip => ComparePlan is { Description.Length: > 0 } plan ? plan.Description : ComparePlan?.Name ?? string.Empty;
+
+	private bool HasComparePlan => ComparePlan != null && ComparePlan.Guid != Guid.Empty;
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(NormalVisibility))]
+	[NotifyPropertyChangedFor(nameof(ComparisonVisibility))]
+	[NotifyPropertyChangedFor(nameof(ViewChangesVisibility))]
+	public partial bool ViewChangesActive { get; set; }
+
+	public Visibility NormalVisibility => !ViewChangesActive && !HasComparePlan ? Visibility.Visible : Visibility.Collapsed;
+
+	public Visibility ComparisonVisibility => HasComparePlan && !ViewChangesActive ? Visibility.Visible : Visibility.Collapsed;
+
+	public Visibility ViewChangesVisibility => ViewChangesActive ? Visibility.Visible : Visibility.Collapsed;
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(ViewChangesLabel))]
+	[NotifyCanExecuteChangedFor(nameof(SaveChangesCommand))]
+	public partial int ModifiedCount { get; set; }
+
+	public string ViewChangesLabel => $"View Changes ({ModifiedCount})";
 
 	[ObservableProperty]
 	public partial string SearchText { get; set; } = string.Empty;
@@ -90,23 +124,6 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 	[ObservableProperty]
 	public partial FilterMode FilterMode { get; set; } = FilterMode.Contains;
 
-	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(NormalVisibility))]
-	[NotifyPropertyChangedFor(nameof(ComparisonVisibility))]
-	[NotifyPropertyChangedFor(nameof(ViewChangesVisibility))]
-	public partial bool ViewChanges { get; set; }
-
-	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(ViewChangesLabel))]
-	[NotifyCanExecuteChangedFor(nameof(SaveChangesCommand))]
-	public partial int ModifiedCount { get; set; }
-
-	public Visibility NormalVisibility => !ViewChanges && !HasComparePlan ? Visibility.Visible : Visibility.Collapsed;
-
-	public Visibility ComparisonVisibility => HasComparePlan && !ViewChanges ? Visibility.Visible : Visibility.Collapsed;
-
-	public Visibility ViewChangesVisibility => ViewChanges ? Visibility.Visible : Visibility.Collapsed;
-
 	public bool CanUndo => IsLoaded && _undoStates.Count > 0;
 
 	public bool CanRedo => IsLoaded && _redoStates.Count > 0;
@@ -117,192 +134,8 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 
 	public bool CanRestore => IsLoaded;
 
-	public bool CanToggleViewChanges => IsLoaded;
-
-	public string ViewChangesLabel => $"View Changes ({ModifiedCount})";
-
-	public string ActivePlanAcHeader => $"{ActivePlan?.Name ?? "Power Plan 1"} (AC)";
-
-	public string ActivePlanDcHeader => $"{ActivePlan?.Name ?? "Power Plan 1"} (DC)";
-
-	public string ComparePlanAcHeader => $"{(HasComparePlan ? ComparePlan.Name : "Power Plan 2")} (AC)";
-
-	public string ComparePlanDcHeader => $"{(HasComparePlan ? ComparePlan.Name : "Power Plan 2")} (DC)";
-
-	public string ActivePlanToolTip => ActivePlan is { Description.Length: > 0 } plan ? plan.Description : ActivePlan?.Name ?? string.Empty;
-
-	public string ComparePlanToolTip => ComparePlan is { Description.Length: > 0 } plan ? plan.Description : ComparePlan?.Name ?? string.Empty;
-
-	partial void OnSearchTextChanged(string value) => RefreshFilter();
-
-	partial void OnFilterSettingChanged(bool value) => RefreshFilter();
-
-	partial void OnFilterDescriptionChanged(bool value) => RefreshFilter();
-
-	partial void OnFilterAcChanged(bool value) => RefreshFilter();
-
-	partial void OnFilterDcChanged(bool value) => RefreshFilter();
-
-	partial void OnFilterGuidChanged(bool value) => RefreshFilter();
-
-	partial void OnFilterModeChanged(FilterMode value) => RefreshFilter();
-
-	[RelayCommand]
-	private void SetFilterMode(string value) => FilterMode = Enum.Parse<FilterMode>(value);
-
-	partial void OnActivePlanChanged(Plan value)
-	{
-		if (value == null || !IsLoaded)
-			return;
-
-		_activePlanReloadCts?.Cancel();
-		_activePlanReloadCts?.Dispose();
-		_activePlanReloadCts = new CancellationTokenSource();
-		_ = SwitchActivePowerPlanAsync(value.Guid, _activePlanReloadCts.Token);
-	}
-
-	private async Task SwitchActivePowerPlanAsync(Guid planGuid, CancellationToken token)
-	{
-		try
-		{
-			powerService.SetActivePowerPlan(planGuid);
-			RefreshComparePlans();
-			await ReloadActiveValuesAsync(token);
-		}
-		catch (OperationCanceledException)
-		{ }
-	}
-
-	partial void OnComparePlanChanged(Plan value)
-	{
-		if (value == null)
-			return;
-		if (HasComparePlan)
-			ViewChanges = false;
-		RefreshComparisonValues();
-		UpdateTrees();
-		RefreshFilter();
-	}
-
-	public async Task LoadPlansAsync(Guid? preferredGuid = null)
-	{
-		PageState = PageMode.Loading;
-		IsLoaded = false;
-
-		IReadOnlyList<Plan> plans = await Task.Run(powerService.GetPowerPlans);
-		Guid activeGuid = await Task.Run(powerService.GetActivePowerPlan);
-		bool hasTarget = preferredGuid.HasValue || activeGuid != Guid.Empty;
-		SetPlans(plans, preferredGuid ?? activeGuid, hasTarget);
-
-		(Plan plan, IReadOnlyList<Subgroup> subgroups, IReadOnlyDictionary<Setting, Value> initialValues) = await Task.Run(() => powerService.ReadPowerPlan(ActivePlan.Guid));
-
-		ActivePlan = plan;
-		_subgroups = subgroups;
-		_settings.Clear();
-		_settings.AddRange(subgroups.SelectMany(subgroup => subgroup.Settings));
-		_settingStates.Clear();
-		foreach ((Setting setting, Value value) in initialValues)
-		{
-			_settingStates[setting] = new SettingState(setting)
-			{
-				AcValue = value.AcValue,
-				DcValue = value.DcValue,
-				OriginalAcValue = value.AcValue,
-				OriginalDcValue = value.DcValue
-			};
-		}
-
-		RefreshComparisonValues();
-		BuildTrees();
-		ViewChanges = false;
-		ResetHistory();
-		RefreshState();
-		RefreshFilter();
-		IsLoaded = true;
-
-		PageState = PageMode.Loaded;
-	}
-
-	public void SetPlans(IEnumerable<Plan> plans, Guid activeGuid, bool selectFallback = true)
-	{
-		Plans.Clear();
-
-		foreach (Plan plan in plans.OrderBy(plan => plan.Name, StringComparer.CurrentCultureIgnoreCase))
-			Plans.Add(plan);
-
-		ActivePlan = Plans.FirstOrDefault(plan => plan.Guid == activeGuid)!;
-		if (ActivePlan == null && selectFallback)
-			ActivePlan = Plans.FirstOrDefault()!;
-		RefreshComparePlans();
-		if (ActivePlan == null)
-		{
-			_subgroups = [];
-			_settings.Clear();
-			TreeNodes.Clear();
-			CompareNodes.Clear();
-			ChangeNodes.Clear();
-			ModifiedCount = 0;
-			ResetHistory();
-		}
-		OnPropertyChanged(nameof(CanDelete));
-	}
-
-	private async Task ReloadActiveValuesAsync(CancellationToken token = default)
-	{
-		IReadOnlyDictionary<Setting, Value> values = await Task.Run(() => powerService.ReadValues(ActivePlan.Guid, _settings), token);
-		token.ThrowIfCancellationRequested();
-		foreach ((Setting setting, Value value) in values)
-		{
-			if (_settingStates.TryGetValue(setting, out SettingState? current) && current is not null)
-			{
-				current.AcValue = value.AcValue;
-				current.DcValue = value.DcValue;
-				current.OriginalAcValue = value.AcValue;
-				current.OriginalDcValue = value.DcValue;
-			}
-		}
-
-		ModifiedCount = 0;
-		ResetHistory();
-		ViewChanges = false;
-		UpdateTrees();
-		RefreshFilter();
-	}
-
-	private void RefreshComparisonValues()
-	{
-		foreach (Setting setting in _settings)
-		{
-			if (!_settingStates.TryGetValue(setting, out SettingState? state) || state is null)
-				continue;
-
-			if (!HasComparePlan)
-			{
-				state.CompareAcValue = null;
-				state.CompareDcValue = null;
-				continue;
-			}
-
-			Value? value = powerService.ReadValue(ComparePlan.Guid, setting.SubgroupGuid, setting.Guid);
-			state.CompareAcValue = value?.AcValue;
-			state.CompareDcValue = value?.DcValue;
-		}
-	}
-
-	public void RefreshComparePlans()
-	{
-		var emptyPlan = new Plan(Guid.Empty, "None", "Select another Power Plan to compare.");
-		Plan? previouslySelected = HasComparePlan ? ComparePlan : null;
-		ComparePlans.Clear();
-		ComparePlans.Add(emptyPlan);
-		foreach (Plan plan in Plans.Where(plan => plan.Guid != ActivePlan?.Guid).OrderBy(plan => plan.Name, StringComparer.CurrentCultureIgnoreCase))
-			ComparePlans.Add(plan);
-
-		ComparePlan = previouslySelected != null && ComparePlans.Any(plan => plan.Guid == previouslySelected.Guid) ? previouslySelected : emptyPlan;
-	}
-
 	[RelayCommand(CanExecute = nameof(CanUndo))]
-	public void Undo()
+	private void Undo()
 	{
 		if (!CanUndo)
 			return;
@@ -311,21 +144,12 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 	}
 
 	[RelayCommand(CanExecute = nameof(CanRedo))]
-	public void Redo()
+	private void Redo()
 	{
 		if (!CanRedo)
 			return;
 
 		MoveState(_redoStates, _undoStates);
-	}
-
-	private void MoveState(Stack<Dictionary<Setting, Value>> from, Stack<Dictionary<Setting, Value>> to)
-	{
-		to.Push(CaptureState());
-		RestoreState(from.Pop());
-		RefreshState();
-		UpdateTrees();
-		RefreshFilter();
 	}
 
 	[RelayCommand]
@@ -421,15 +245,8 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		await powerService.RestoreDefaultPowerPlansAsync();
 
 		Guid activeGuid = await Task.Run(powerService.GetActivePowerPlan);
-		SetPlans(await Task.Run(powerService.GetPowerPlans), activeGuid, activeGuid != Guid.Empty);
+		SetPlans(await Task.Run(powerService.GetPowerPlans), activeGuid);
 		await ReloadActiveValuesAsync();
-	}
-
-	[RelayCommand(CanExecute = nameof(CanToggleViewChanges))]
-	private void ToggleViewChanges()
-	{
-		if (ViewChanges)
-			ComparePlan = ComparePlans.First(item => item.Guid == Guid.Empty)!;
 	}
 
 	[RelayCommand(CanExecute = nameof(CanSave))]
@@ -450,8 +267,169 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		powerService.SaveChanges(ActivePlan.Guid, changes);
 		ResetHistory();
 		RefreshState();
-		UpdateTrees();
+		SyncCompareAndChanges();
+		UpdateNodeCounts();
+		RefreshFilterOnlyAction?.Invoke();
+	}
+
+	[RelayCommand]
+	private void SetFilterMode(string value) => FilterMode = Enum.Parse<FilterMode>(value);
+
+	public async Task LoadPlansAsync()
+	{
+		PageState = PageMode.Loading;
+
+		IReadOnlyList<Plan> plans = await Task.Run(powerService.GetPowerPlans);
+		Guid activeGuid = await Task.Run(powerService.GetActivePowerPlan);
+		SetPlans(plans, activeGuid);
+
+		(Plan plan, IReadOnlyList<Subgroup> subgroups, IReadOnlyDictionary<Setting, Value> initialValues) = await Task.Run(() => powerService.ReadPowerPlan(ActivePlan.Guid));
+
+		ActivePlan = plan;
+		_subgroups = subgroups;
+		_settings.Clear();
+		_settings.AddRange(subgroups.SelectMany(subgroup => subgroup.Settings));
+		_settingStates.Clear();
+		foreach ((Setting setting, Value value) in initialValues)
+		{
+			_settingStates[setting] = new SettingState(setting)
+			{
+				AcValue = value.AcValue,
+				DcValue = value.DcValue,
+				OriginalAcValue = value.AcValue,
+				OriginalDcValue = value.DcValue
+			};
+		}
+
+		RefreshComparisonValues();
+		TreeNodes.Clear();
+		CompareNodes.Clear();
+		ChangesNodes.Clear();
+		TreeNodes.Add(BuildTree("All Settings", static node => true).Root);
+		_compareTree = BuildTree("Differences", static node => node.IsAcDifferent || node.IsDcDifferent);
+		_changesTree = BuildTree("Changes", static node => node.IsAcModified || node.IsDcModified);
+		CompareNodes.Add(_compareTree.Root);
+		ChangesNodes.Add(_changesTree.Root);
+		ViewChangesActive = false;
+		ResetHistory();
+		RefreshState();
 		RefreshFilter();
+
+		PageState = PageMode.Loaded;
+	}
+
+	private void SetPlans(IEnumerable<Plan> plans, Guid activeGuid)
+	{
+		Plans.Clear();
+
+		foreach (Plan plan in plans.OrderBy(plan => plan.Name, StringComparer.CurrentCultureIgnoreCase))
+			Plans.Add(plan);
+
+		ActivePlan = activeGuid == Guid.Empty ? null! : (Plans.FirstOrDefault(plan => plan.Guid == activeGuid) ?? Plans.FirstOrDefault())!;
+		RefreshComparePlans();
+		if (ActivePlan == null)
+		{
+			_subgroups = [];
+			_settings.Clear();
+			TreeNodes.Clear();
+			CompareNodes.Clear();
+			ChangesNodes.Clear();
+			_compareTree = null;
+			_changesTree = null;
+			RefreshState();
+			ResetHistory();
+		}
+		OnPropertyChanged(nameof(CanDelete));
+	}
+
+	public void RefreshComparePlans()
+	{
+		var emptyPlan = new Plan(Guid.Empty, "None", "Select another Power Plan to compare.");
+		Plan? previouslySelected = HasComparePlan ? ComparePlan : null;
+		ComparePlans.Clear();
+		ComparePlans.Add(emptyPlan);
+		foreach (Plan plan in Plans.Where(plan => plan.Guid != ActivePlan?.Guid).OrderBy(plan => plan.Name, StringComparer.CurrentCultureIgnoreCase))
+			ComparePlans.Add(plan);
+
+		ComparePlan = previouslySelected != null && ComparePlans.Any(plan => plan.Guid == previouslySelected.Guid) ? previouslySelected : emptyPlan;
+	}
+
+	partial void OnActivePlanChanged(Plan value)
+	{
+		if (value == null || !IsLoaded)
+			return;
+
+		_activePlanReloadCts?.Cancel();
+		_activePlanReloadCts?.Dispose();
+		_activePlanReloadCts = new CancellationTokenSource();
+		_ = SwitchActivePowerPlanAsync(value.Guid, _activePlanReloadCts.Token);
+	}
+
+	partial void OnComparePlanChanged(Plan value)
+	{
+		if (value == null)
+			return;
+		if (HasComparePlan)
+			ViewChangesActive = false;
+		RefreshComparisonValues();
+		SyncCompare();
+		UpdateNodeCounts();
+		RefreshFilterOnlyAction?.Invoke();
+	}
+
+	private async Task SwitchActivePowerPlanAsync(Guid planGuid, CancellationToken token)
+	{
+		try
+		{
+			powerService.SetActivePowerPlan(planGuid);
+			RefreshComparePlans();
+			await ReloadActiveValuesAsync(token);
+		}
+		catch (OperationCanceledException)
+		{ }
+	}
+
+	private async Task ReloadActiveValuesAsync(CancellationToken token = default)
+	{
+		IReadOnlyDictionary<Setting, Value> values = await Task.Run(() => powerService.ReadValues(ActivePlan.Guid, _settings), token);
+		token.ThrowIfCancellationRequested();
+		foreach ((Setting setting, Value value) in values)
+		{
+			if (_settingStates.TryGetValue(setting, out SettingState? current) && current is not null)
+			{
+				current.AcValue = value.AcValue;
+				current.DcValue = value.DcValue;
+				current.OriginalAcValue = value.AcValue;
+				current.OriginalDcValue = value.DcValue;
+			}
+		}
+
+		RefreshState();
+		ResetHistory();
+		ViewChangesActive = false;
+		SyncCompareAndChanges();
+		UpdateNodeCounts();
+		RefreshFilterOnlyAction?.Invoke();
+	}
+
+	private void RefreshComparisonValues()
+	{
+		foreach (Setting setting in _settings)
+		{
+			if (!_settingStates.TryGetValue(setting, out SettingState? state) || state is null)
+				continue;
+
+			if (!HasComparePlan)
+			{
+				state.CompareAcValue = null;
+				state.CompareDcValue = null;
+				continue;
+			}
+
+			Value? value = powerService.ReadValue(ComparePlan.Guid, setting.SubgroupGuid, setting.Guid);
+			state.CompareAcValue = value?.AcValue;
+			state.CompareDcValue = value?.DcValue;
+		}
 	}
 
 	public void BeginEdit(Node? node, string mappingName)
@@ -543,18 +521,39 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		return true;
 	}
 
+	public void RefreshAfterEdit()
+	{
+		SyncCompareAndChanges();
+		UpdateNodeCounts();
+		RefreshFilterOnlyAction?.Invoke();
+	}
+
+	partial void OnSearchTextChanged(string value) => RefreshFilter();
+
+	partial void OnFilterSettingChanged(bool value) => RefreshFilter();
+
+	partial void OnFilterDescriptionChanged(bool value) => RefreshFilter();
+
+	partial void OnFilterAcChanged(bool value) => RefreshFilter();
+
+	partial void OnFilterDcChanged(bool value) => RefreshFilter();
+
+	partial void OnFilterGuidChanged(bool value) => RefreshFilter();
+
+	partial void OnFilterModeChanged(FilterMode value) => RefreshFilter();
+
+	public void RefreshFilter()
+	{
+		RefreshFilterAction?.Invoke();
+	}
+
 	public bool MatchesFilter(object item)
 	{
 		if (item is not Node node)
 			return true;
 
 		if (node.NodeKind != NodeKind.Setting)
-			return node.Children.Any(child => MatchesFilter(child));
-
-		if (HasComparePlan && !ViewChanges && !node.IsAcDifferent && !node.IsDcDifferent)
-			return false;
-		if (ViewChanges && !node.IsModified)
-			return false;
+			return node.Children.Any(MatchesFilter);
 
 		string query = SearchText;
 		return query.Length == 0 || NodeMatches(node, query);
@@ -572,34 +571,40 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 			return true;
 		if (FilterGuid && (TextMatches(setting.Guid.ToString(), query) || TextMatches(setting.SubgroupGuid.ToString(), query)))
 			return true;
-		if (FilterAc && ValuesMatch(node, query, true))
-			return true;
-		if (FilterDc && ValuesMatch(node, query, false))
+		if ((FilterAc || FilterDc) && ValuesMatch(node, query))
 			return true;
 
 		return false;
 	}
 
-	private bool ValuesMatch(Node node, string query, bool isAc)
+	private bool ValuesMatch(Node node, string query)
 	{
 		Setting setting = node.Setting!;
 		SettingState values = _settingStates[setting];
-		uint[] candidates;
-		if (HasComparePlan && !ViewChanges)
+		uint[] acCandidates;
+		uint[] dcCandidates;
+
+		if (HasComparePlan && !ViewChangesActive)
 		{
-			candidates = isAc ? [values.AcValue, values.CompareAcValue!.Value] : [values.DcValue, values.CompareDcValue!.Value];
+			acCandidates = [values.AcValue, values.CompareAcValue!.Value];
+			dcCandidates = [values.DcValue, values.CompareDcValue!.Value];
 		}
-		else if (ViewChanges)
+		else if (ViewChangesActive)
 		{
-			candidates = isAc ? [values.OriginalAcValue, values.AcValue] : [values.OriginalDcValue, values.DcValue];
+			acCandidates = [values.OriginalAcValue, values.AcValue];
+			dcCandidates = [values.OriginalDcValue, values.DcValue];
 		}
 		else
 		{
-			candidates = isAc ? [values.AcValue] : [values.DcValue];
+			acCandidates = [values.AcValue];
+			dcCandidates = [values.DcValue];
 		}
 
-		return candidates.Any(value => TextMatches(SettingState.GetDisplayValue(setting, value), query) || TextMatches(value.ToString(CultureInfo.InvariantCulture), query));
+		return (FilterAc && CandidatesMatch(acCandidates, setting, query)) || (FilterDc && CandidatesMatch(dcCandidates, setting, query));
 	}
+
+	private bool CandidatesMatch(uint[] candidates, Setting setting, string query) =>
+		candidates.Any(value => TextMatches(SettingState.GetDisplayValue(setting, value), query) || TextMatches(value.ToString(CultureInfo.InvariantCulture), query));
 
 	private bool TextMatches(string text, string query)
 	{
@@ -609,127 +614,93 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		return FilterMode == FilterMode.ExactMatch ? text.Equals(query, StringComparison.OrdinalIgnoreCase) : text.Contains(query, StringComparison.OrdinalIgnoreCase);
 	}
 
-	public void RefreshFilter()
+	private TreeState BuildTree(string baseName, Func<Node, bool> include)
 	{
-		RefreshFilterAction?.Invoke();
-	}
-
-	public void RefreshAfterEdit()
-	{
-		UpdateTrees();
-		RefreshFilter();
-	}
-
-	private void BuildTrees()
-	{
-		TreeNodes.Clear();
-		CompareNodes.Clear();
-		ChangeNodes.Clear();
-
-		TreeNodes.Add(BuildTree());
-		CompareNodes.Add(BuildTree());
-		ChangeNodes.Add(BuildTree());
-	}
-
-	private Node BuildTree()
-	{
-		var root = new Node(NodeKind.Root, "All Settings", string.Empty, Guid.Empty, baseDisplayName: "All Settings");
+		var root = new Node(NodeKind.Root, baseName, string.Empty, Guid.Empty, baseDisplayName: baseName);
+		var subgroups = new Dictionary<Guid, Node>();
+		var settingNodes = new Dictionary<Setting, Node>();
 		foreach (Subgroup subgroup in _subgroups)
 		{
 			var subgroupNode = new Node(NodeKind.Subgroup, subgroup.Name, subgroup.Description, subgroup.Guid, baseDisplayName: subgroup.Name);
 			foreach (Setting setting in subgroup.Settings)
 			{
-				if (_settingStates.TryGetValue(setting, out SettingState? values) &&
-					values is not null)
-				{
-					subgroupNode.Children.Add(new Node(NodeKind.Setting, setting.Name, setting.Description, setting.Guid, setting, values));
-				}
+				if (!_settingStates.TryGetValue(setting, out SettingState? values) || values is null)
+					continue;
+
+				var node = new Node(NodeKind.Setting, setting.Name, setting.Description, setting.Guid, setting, values);
+				settingNodes[setting] = node;
+				if (include(node))
+					subgroupNode.Children.Add(node);
 			}
 
-			if (subgroupNode.Children.Count == 0)
-				continue;
+			if (subgroupNode.Children.Count > 0)
+				root.Children.Add(subgroupNode);
 
-			root.Children.Add(subgroupNode);
+			subgroups[subgroup.Guid] = subgroupNode;
 		}
 
-		return root;
+		return new TreeState(root, subgroups, settingNodes);
 	}
 
-	private void UpdateComparison()
+	private void SyncCompareAndChanges()
 	{
-		if (CompareNodes.Count == 0)
+		SyncTree(CompareNodes, _compareTree, static node => node.IsAcDifferent || node.IsDcDifferent);
+		SyncTree(ChangesNodes, _changesTree, static node => node.IsAcModified || node.IsDcModified);
+	}
+
+	private void SyncCompare()
+	{
+		SyncTree(CompareNodes, _compareTree, static node => node.IsAcDifferent || node.IsDcDifferent);
+	}
+
+	private void SyncTree(ObservableCollection<Node> collection, TreeState? tree, Func<Node, bool> include)
+	{
+		if (collection.Count == 0 || tree == null)
 			return;
 
-		CompareNodes[0] = BuildTree();
-	}
+		Node root = tree.Root;
+		foreach (Subgroup subgroup in _subgroups)
+		{
+			Node subgroupNode = tree.Subgroups[subgroup.Guid];
+			foreach (Setting setting in subgroup.Settings)
+			{
+				if (!tree.SettingNodes.TryGetValue(setting, out Node? node))
+					continue;
 
-	private void UpdateChanges()
-	{
-		if (ChangeNodes.Count == 0)
-			return;
+				bool included = include(node);
+				bool present = subgroupNode.Children.Contains(node);
+				if (included && !present)
+					subgroupNode.Children.Add(node);
+				else if (!included && present)
+					subgroupNode.Children.Remove(node);
+			}
 
-		ChangeNodes[0] = BuildTree();
-	}
-
-	private void UpdateTrees()
-	{
-		UpdateComparison();
-		UpdateChanges();
+			if (subgroupNode.Children.Count > 0 && !root.Children.Contains(subgroupNode))
+				root.Children.Add(subgroupNode);
+			else if (subgroupNode.Children.Count == 0)
+				root.Children.Remove(subgroupNode);
+		}
 	}
 
 	public void UpdateNodeCounts()
 	{
-		RecountCollection(TreeNodes);
-		RecountCollection(CompareNodes);
-		RecountCollection(ChangeNodes);
+		if (TreeNodes.Count > 0)
+			Recount(TreeNodes[0], static _ => 1);
+		if (CompareNodes.Count > 0)
+			Recount(CompareNodes[0], static node => (node.IsAcDifferent ? 1 : 0) + (node.IsDcDifferent ? 1 : 0));
+		if (ChangesNodes.Count > 0)
+			Recount(ChangesNodes[0], static node => (node.IsAcModified ? 1 : 0) + (node.IsDcModified ? 1 : 0));
 	}
 
-	private void RecountCollection(ObservableCollection<Node> collection)
+	private int Recount(Node node, Func<Node, int> leafWeight)
 	{
-		foreach (Node node in collection)
-			RecountCounted(node);
-	}
-
-	private void RecountCounted(Node node)
-	{
-		if (node.NodeKind == NodeKind.Setting)
-			return;
-
-		foreach (Node child in node.Children)
-			RecountCounted(child);
-
-		int count = CountVisibleSettings(node.Children);
-		string displayName = node.NodeKind == NodeKind.Root && !string.IsNullOrWhiteSpace(SearchText) ? $"Results ({count})" : $"{node.BaseDisplayName} ({count})";
-		node.DisplayName = displayName;
-	}
-
-	private int CountVisibleSettings(IEnumerable<Node> nodes)
-	{
-		string query = SearchText;
 		int count = 0;
-		foreach (Node node in nodes)
+		foreach (Node child in node.Children)
 		{
-			if (node.NodeKind == NodeKind.Setting)
-			{
-				if (query.Length == 0 || NodeMatches(node, query))
-				{
-					if (!HasComparePlan && !ViewChanges)
-						count++;
-					else
-					{
-						if (node.IsAcDifferent)
-							count++;
-						if (node.IsDcDifferent)
-							count++;
-					}
-				}
-			}
-			else
-			{
-				count += CountVisibleSettings(node.Children);
-			}
+			count += child.NodeKind == NodeKind.Setting ? (SearchText.Length > 0 && !NodeMatches(child, SearchText) ? 0 : leafWeight(child)) : Recount(child, leafWeight);
 		}
 
+		node.DisplayName = node.NodeKind == NodeKind.Root && SearchText.Length > 0 ? $"Results ({count})" : $"{node.BaseDisplayName} ({count})";
 		return count;
 	}
 
@@ -748,6 +719,16 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		ModifiedCount = count;
 		UndoCommand.NotifyCanExecuteChanged();
 		RedoCommand.NotifyCanExecuteChanged();
+	}
+
+	private void MoveState(Stack<Dictionary<Setting, Value>> from, Stack<Dictionary<Setting, Value>> to)
+	{
+		to.Push(CaptureState());
+		RestoreState(from.Pop());
+		RefreshState();
+		SyncCompareAndChanges();
+		UpdateNodeCounts();
+		RefreshFilterOnlyAction?.Invoke();
 	}
 
 	private Dictionary<Setting, Value> CaptureState() => _settings.ToDictionary(setting => setting, setting =>

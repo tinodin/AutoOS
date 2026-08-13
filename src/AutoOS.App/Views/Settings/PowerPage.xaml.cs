@@ -25,6 +25,7 @@ public sealed partial class PowerPage : Page
 	{
 		base.OnNavigatedTo(e);
 		ViewModel.RefreshFilterAction = RefreshSearchFilter;
+		ViewModel.RefreshFilterOnlyAction = RefreshFilterOnly;
 		_ = ViewModel.LoadPlansAsync();
 	}
 
@@ -85,7 +86,7 @@ public sealed partial class PowerPage : Page
 			return;
 
 		Node? node = treeGrid.GetNodeAtRowIndex(e.RowColumnIndex.RowIndex)?.Item as Node ?? treeGrid.CurrentItem as Node;
-		if (node is not { NodeKind: NodeKind.Setting, HasValues: true } || !node.IsAdjustable)
+		if (node is not { NodeKind: NodeKind.Setting } || !node.IsAdjustable)
 		{
 			e.Cancel = true;
 			return;

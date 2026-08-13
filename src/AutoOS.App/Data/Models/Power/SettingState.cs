@@ -9,6 +9,7 @@ public sealed partial class SettingState(Setting setting) : ObservableObject
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(IsModified))]
+	[NotifyPropertyChangedFor(nameof(IsAcModified))]
 	[NotifyPropertyChangedFor(nameof(DisplayAc))]
 	[NotifyPropertyChangedFor(nameof(EditAcToolTip))]
 	[NotifyPropertyChangedFor(nameof(IsAcDifferent))]
@@ -16,6 +17,7 @@ public sealed partial class SettingState(Setting setting) : ObservableObject
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(IsModified))]
+	[NotifyPropertyChangedFor(nameof(IsDcModified))]
 	[NotifyPropertyChangedFor(nameof(DisplayDc))]
 	[NotifyPropertyChangedFor(nameof(EditDcToolTip))]
 	[NotifyPropertyChangedFor(nameof(IsDcDifferent))]
@@ -23,11 +25,13 @@ public sealed partial class SettingState(Setting setting) : ObservableObject
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(IsModified))]
+	[NotifyPropertyChangedFor(nameof(IsAcModified))]
 	[NotifyPropertyChangedFor(nameof(DisplayOriginalAc))]
 	public partial uint OriginalAcValue { get; set; }
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(IsModified))]
+	[NotifyPropertyChangedFor(nameof(IsDcModified))]
 	[NotifyPropertyChangedFor(nameof(DisplayOriginalDc))]
 	public partial uint OriginalDcValue { get; set; }
 
@@ -56,6 +60,10 @@ public sealed partial class SettingState(Setting setting) : ObservableObject
 	public partial uint? CompareDcValue { get; set; }
 
 	public bool IsModified => AcValue != OriginalAcValue || DcValue != OriginalDcValue;
+
+	public bool IsAcModified => AcValue != OriginalAcValue;
+
+	public bool IsDcModified => DcValue != OriginalDcValue;
 
 	public bool IsAcDifferent => CompareAcValue is { } compare && !string.Equals(GetDisplayValue(Setting, AcValue), GetDisplayValue(Setting, compare), StringComparison.Ordinal);
 

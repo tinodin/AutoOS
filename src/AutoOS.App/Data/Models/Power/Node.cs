@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using AutoOS.App.Data.Enums.Power;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -51,19 +52,30 @@ public sealed partial class Node : ObservableObject
 
 	public string BaseDisplayName { get; }
 
-	public SettingState? State { get; }
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(DisplayAc))]
+	[NotifyPropertyChangedFor(nameof(DisplayDc))]
+	[NotifyPropertyChangedFor(nameof(DisplayOriginalAc))]
+	[NotifyPropertyChangedFor(nameof(DisplayOriginalDc))]
+	[NotifyPropertyChangedFor(nameof(DisplayCompareAc))]
+	[NotifyPropertyChangedFor(nameof(DisplayCompareDc))]
+	[NotifyPropertyChangedFor(nameof(IsAcModified))]
+	[NotifyPropertyChangedFor(nameof(IsDcModified))]
+	[NotifyPropertyChangedFor(nameof(IsAcDifferent))]
+	[NotifyPropertyChangedFor(nameof(IsDcDifferent))]
+	[NotifyPropertyChangedFor(nameof(AcToolTip))]
+	[NotifyPropertyChangedFor(nameof(DcToolTip))]
+	[NotifyPropertyChangedFor(nameof(OriginalAcToolTip))]
+	[NotifyPropertyChangedFor(nameof(OriginalDcToolTip))]
+	[NotifyPropertyChangedFor(nameof(CompareAcToolTip))]
+	[NotifyPropertyChangedFor(nameof(CompareDcToolTip))]
+	[NotifyPropertyChangedFor(nameof(EditAcToolTip))]
+	[NotifyPropertyChangedFor(nameof(EditDcToolTip))]
+	public partial SettingState? State { get; set; }
 
-	public bool HasValues => NodeKind == NodeKind.Setting;
+	public bool IsAcModified => State?.IsAcModified ?? false;
 
-	public uint AcValue => State?.AcValue ?? 0;
-
-	public uint DcValue => State?.DcValue ?? 0;
-
-	public uint OriginalAcValue => State?.OriginalAcValue ?? 0;
-
-	public uint OriginalDcValue => State?.OriginalDcValue ?? 0;
-
-	public bool IsModified => State?.IsModified ?? false;
+	public bool IsDcModified => State?.IsDcModified ?? false;
 
 	public bool IsAcDifferent => State?.IsAcDifferent ?? false;
 
@@ -102,4 +114,15 @@ public sealed partial class Node : ObservableObject
 	public bool HasOptions => Setting is { Options.Count: > 0 };
 
 	public bool IsAdjustable => HasOptions || (Setting != null && Setting.Minimum.HasValue && Setting.Maximum.HasValue && Setting.Increment.HasValue);
+
+	partial void OnStateChanged(SettingState? value)
+	{
+		if (value != null)
+			value.PropertyChanged += OnStatePropertyChanged;
+	}
+
+	private void OnStatePropertyChanged(object? sender, PropertyChangedEventArgs e)
+	{
+		OnPropertyChanged(e.PropertyName ?? string.Empty);
+	}
 }
