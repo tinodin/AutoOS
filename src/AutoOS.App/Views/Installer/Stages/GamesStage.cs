@@ -3,7 +3,6 @@ using System.Text.Json;
 using AutoOS.Core.Helpers.Download;
 using AutoOS.Core.Helpers.Games;
 using AutoOS.Core.Helpers.Monitor;
-using AutoOS.Core.Helpers.Monitor.Models;
 
 namespace AutoOS.App.Views.Installer.Stages;
 
