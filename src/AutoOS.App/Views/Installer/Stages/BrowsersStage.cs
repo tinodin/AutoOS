@@ -5,6 +5,7 @@ using AutoOS.App.Common;
 using AutoOS.App.Views.Installer.Actions;
 using AutoOS.Core.Common;
 using AutoOS.Core.Helpers.Download;
+using AutoOS.Core.Helpers.Processes;
 using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.Services;
 using AutoOS.Core.Helpers.Store;
@@ -151,7 +152,7 @@ public static class BrowsersStage
 			("Installing Google Chrome", async () => chromeVersion = FileVersionInfo.GetVersionInfo(Path.Combine(Path.GetTempPath(), "ChromeSetup.exe")).ProductVersion ?? "", () => Chrome == true),
 			("Installing Google Chrome", async () => chromeVersion2 = FileVersionInfo.GetVersionInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Google", "Chrome", "Application", "chrome.exe")).ProductVersion ?? "", () => Chrome == true),
 			("Installing Google Chrome", async () => { using var process = Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Google", "Chrome", "Application", "chrome.exe"), WindowStyle = ProcessWindowStyle.Maximized }); while (!File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Google", "Chrome", "Application", "PlatformExperienceHelper", "platform_experience_helper.exe"))) await Task.Delay(100); process?.Kill(); }, () => Chrome == true),
-			("Cleaning up Google Chrome files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "ChromeSetup.exe")), () => Chrome == true),
+			("Cleaning up Google Chrome files", async () => { string path = Path.Combine(Path.GetTempPath(), "ChromeSetup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Chrome == true),
 
 			// pin google chrome to the taskbar
 			("Pinning Google Chrome to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Google Chrome.lnk")), () => Chrome == true),
@@ -237,7 +238,7 @@ public static class BrowsersStage
 			// install thorium
 			("Installing Thorium", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "ThoriumSetup.exe"), Arguments = "--silent --install --system-level --do-not-launch-chrome", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Thorium == true),
 			("Installing Thorium", async () => thoriumVersion = FileVersionInfo.GetVersionInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Thorium", "Application", "thorium.exe")).ProductVersion ?? "", () => Thorium == true),
-			("Cleaning up Thorium files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "ThoriumSetup.exe")), () => Thorium == true),
+			("Cleaning up Thorium files", async () => { string path = Path.Combine(Path.GetTempPath(), "ThoriumSetup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Thorium == true),
 
 			// disable thorium services
 			("Disabling Thorium services", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\AutorunsDisabled\{7D2B3E1D-D096-4594-9D8F-A6667F12E0AC}", "", "Thorium", RegistryValueKind.String), () => Thorium == true),
@@ -303,7 +304,7 @@ public static class BrowsersStage
 			// install helium
 			("Installing Helium", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "helium_x64-installer.exe"), Arguments = "/S /SYSTEM", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Helium == true),
 			("Installing Helium", async () => heliumVersion = FileVersionInfo.GetVersionInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "imput", "Helium", "Application", "chrome.exe")).ProductVersion ?? "", () => Helium == true),
-			("Cleaning up Helium files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "helium_x64-installer.exe")), () => Helium == true),
+			("Cleaning up Helium files", async () => { string path = Path.Combine(Path.GetTempPath(), "helium_x64-installer.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Helium == true),
 
 			// disable helium services
 			("Disabling Helium services", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\HeliumElevationService", "Start", 4, RegistryValueKind.DWord), () => Helium == true),
@@ -371,7 +372,7 @@ public static class BrowsersStage
 			// install brave
 			("Installing Brave", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "BraveBrowserStandaloneSetup.exe"), Arguments = "/silent /install", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Brave == true),
 			("Installing Brave", async () => braveVersion = FileVersionInfo.GetVersionInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "BraveSoftware", "Brave-Browser", "Application", "brave.exe")).ProductVersion ?? "", () => Brave == true),
-			("Cleaning up Brave files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "BraveBrowserStandaloneSetup.exe")), () => Brave == true),
+			("Cleaning up Brave files", async () => { string path = Path.Combine(Path.GetTempPath(), "BraveBrowserStandaloneSetup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Brave == true),
 
 			// pin brave to the taskbar
 			("Pinning Brave to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Brave.lnk")), () => Brave == true),
@@ -453,7 +454,7 @@ public static class BrowsersStage
 			// install vivaldi
 			("Installing Vivaldi", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "Vivaldi.x64.exe"), Arguments = "--vivaldi-silent --do-not-launch-chrome --system-level", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Vivaldi == true),
 			("Installing Vivaldi", async () => vivaldiVersion = FileVersionInfo.GetVersionInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Vivaldi", "Application", "vivaldi.exe")).ProductVersion ?? "", () => Vivaldi == true),
-			("Cleaning up Vivaldi files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Vivaldi.x64.exe")), () => Vivaldi == true),
+			("Cleaning up Vivaldi files", async () => { string path = Path.Combine(Path.GetTempPath(), "Vivaldi.x64.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Vivaldi == true),
 
 			// pin vivaldi to the taskbar
 			("Pinning Vivaldi to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Vivaldi.lnk")), () => Vivaldi == true),
@@ -521,7 +522,7 @@ public static class BrowsersStage
 
 			// install arc dependency
 			("Installing Arc Dependency", async () => await Process.Start(new ProcessStartInfo { FileName = "powershell", Arguments = @$"-Command ""Add-AppxPackage -Path {Path.Combine(Path.GetTempPath(), "Microsoft.VCLibs.x64.14.00.Desktop.14.0.33728.0.appx")}""", UseShellExecute = false, CreateNoWindow = true })!.WaitForExitAsync(), () => Arc == true),
-			("Cleaning up Arc Dependency files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Microsoft.VCLibs.x64.14.00.Desktop.14.0.33728.0.appx")), () => Arc == true),
+			("Cleaning up Arc Dependency files", async () => { string path = Path.Combine(Path.GetTempPath(), "Microsoft.VCLibs.x64.14.00.Desktop.14.0.33728.0.appx"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Arc == true),
 
 			// download arc
 			("Downloading Arc", async () => await DownloadHelper.Download("https://releases.arc.net/windows/prod/1.72.0.296/Arc.x64.msix", Path.GetTempPath(), "Arc.x64.msix", reporter ?? new InstallPageReporter()), () => Arc == true),
@@ -529,7 +530,7 @@ public static class BrowsersStage
 			// install arc
 			("Installing Arc", async () => await new PackageManager().AddPackageAsync(new Uri(Path.Combine(Path.GetTempPath(), "Arc.x64.msix")), null, DeploymentOptions.None), () => Arc == true),
 			("Installing Arc", async () => arcVersion = StoreHelper.GetVersion("TheBrowserCompany.Arc_ttt1ap7aakyb4") ?? "", () => Arc == true),
-			("Cleaning up Arc files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Arc.x64.msix")), () => Arc == true),
+			("Cleaning up Arc files", async () => { string path = Path.Combine(Path.GetTempPath(), "Arc.x64.msix"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Arc == true),
 
 			// pin arc to the taskbar
 			("Pinning Arc to the taskbar", async () => await ProcessActions.PinToTaskbar("UWA", "TheBrowserCompany.Arc_ttt1ap7aakyb4!Arc"), () => Arc == true),
@@ -584,7 +585,7 @@ public static class BrowsersStage
 			// install comet
 			("Installing Comet", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "Comet.exe"), Arguments = "-silent --do-not-launch-chrome --system-level", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Comet == true),
 			("Installing Comet", async () => cometVersion = FileVersionInfo.GetVersionInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Perplexity", "Comet", "Application", "comet.exe")).ProductVersion ?? "", () => Comet == true),
-			("Cleaning up Comet files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Comet.exe")), () => Comet == true),
+			("Cleaning up Comet files", async () => { string path = Path.Combine(Path.GetTempPath(), "Comet.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Comet == true),
 
 			// pin comet to the taskbar
 			("Pinning Comet to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Comet.lnk")), () => Comet == true),
@@ -657,7 +658,7 @@ public static class BrowsersStage
 
 			// install firefox
 			("Installing Firefox", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "FirefoxSetup.exe"), Arguments = "/S /MaintenanceService=false /DesktopShortcut=false /StartMenuShortcut=true", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Firefox == true),
-			("Cleaning up Firefox files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "FirefoxSetup.exe")), () => Firefox == true),
+			("Cleaning up Firefox files", async () => { string path = Path.Combine(Path.GetTempPath(), "FirefoxSetup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Firefox == true),
 
 			// pin firefox to the taskbar
 			("Pinning Firefox to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Firefox.lnk")), () => Firefox == true),
@@ -721,7 +722,7 @@ public static class BrowsersStage
 
 			// install zen
 			("Installing Zen", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "zen.installer.exe"), Arguments = "/S /MaintenanceService=false /DesktopShortcut=false /StartMenuShortcut=true", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Zen == true),
-			("Cleaning up Zen files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "zen.installer.exe")), () => Zen == true),
+			("Cleaning up Zen files", async () => { string path = Path.Combine(Path.GetTempPath(), "zen.installer.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Zen == true),
 
 			// pin zen to the taskbar
 			("Pinning Zen to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Zen.lnk")), () => Zen == true),
@@ -785,7 +786,7 @@ public static class BrowsersStage
 
 			// install waterfox
 			("Installing Waterfox", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "WaterfoxSetup.exe"), Arguments = "/S /MaintenanceService=false /DesktopShortcut=false /StartMenuShortcut=true", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Waterfox == true),
-			("Cleaning up Waterfox files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "WaterfoxSetup.exe")), () => Waterfox == true),
+			("Cleaning up Waterfox files", async () => { string path = Path.Combine(Path.GetTempPath(), "WaterfoxSetup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Waterfox == true),
 
 			// pin waterfox to the taskbar
 			("Pinning Waterfox to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Waterfox.lnk")), () => Waterfox == true),
@@ -849,7 +850,7 @@ public static class BrowsersStage
 			
 			// install librewolf
 			("Installing LibreWolf", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "librewolf-windows-x86_64-setup.exe"), Arguments = "/S /MaintenanceService=false /DesktopShortcut=false /StartMenuShortcut=true", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => LibreWolf == true),
-			("Cleaning up LibreWolf files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "librewolf-windows-x86_64-setup.exe")), () => LibreWolf == true),
+			("Cleaning up LibreWolf files", async () => { string path = Path.Combine(Path.GetTempPath(), "librewolf-windows-x86_64-setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => LibreWolf == true),
 
 			// optimize librewolf settings
 			("Optimizing LibreWolf settings", async () => Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "LibreWolf", "distribution")), () => LibreWolf == true),
@@ -906,7 +907,7 @@ public static class BrowsersStage
 
 			// install floorp
 			("Installing Floorp", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "FloorpSetup.exe"), Arguments = "/S /MaintenanceService=false /DesktopShortcut=false /StartMenuShortcut=true", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Floorp == true),
-			("Cleaning up Floorp files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "FloorpSetup.exe")), () => Floorp == true),
+			("Cleaning up Floorp files", async () => { string path = Path.Combine(Path.GetTempPath(), "FloorpSetup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Floorp == true),
 
 			// pin floorp to the taskbar
 			("Pinning Floorp to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Floorp.lnk")), () => Floorp == true),
@@ -970,7 +971,7 @@ public static class BrowsersStage
 
 			// install mullvad
 			("Installing Mullvad Browser", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "mullvad-browser-windows-x86_64.exe"), Arguments = "/S /MaintenanceService=false /DesktopShortcut=false /StartMenuShortcut=true", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Mullvad == true),
-			("Cleaning up Mullvad Browser files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "mullvad-browser-windows-x86_64.exe")), () => Mullvad == true),
+			("Cleaning up Mullvad Browser files", async () => { string path = Path.Combine(Path.GetTempPath(), "mullvad-browser-windows-x86_64.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Mullvad == true),
 
 			// optimize mullvad settings
 			("Optimizing Mullvad Browser settings", async () => Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mullvad", "MullvadBrowser", "Release", "distribution")), () => Mullvad == true),

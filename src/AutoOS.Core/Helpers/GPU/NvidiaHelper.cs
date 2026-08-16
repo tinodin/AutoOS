@@ -7,6 +7,7 @@ using AutoOS.Core.Common;
 using AutoOS.Core.Helpers.Download;
 using AutoOS.Core.Helpers.Extract;
 using AutoOS.Core.Data.Models.GPU;
+using AutoOS.Core.Helpers.Processes;
 using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.Store;
 using DevWinUI;
@@ -178,7 +179,7 @@ public static partial class NvidiaHelper
                 (gpu.IsInstalled ? $"Updating to NVIDIA driver {newestVersion}" : $"Installing NVIDIA driver {newestVersion}", async () => await Task.Delay(3000), null),
                 (gpu.IsInstalled ? $"Updating to NVIDIA driver {newestVersion}" : $"Installing NVIDIA driver {newestVersion}", async () => GpuHelper.RefreshGpu(gpu), null),
                 (gpu.IsInstalled ? $"Updating to NVIDIA driver {newestVersion}" : $"Installing NVIDIA driver {newestVersion}", async () => await Task.Delay(3000), null),
-                ("Cleaning up NVIDIA files", async () => { try { Directory.Delete(Path.Combine(Path.GetTempPath(), "NVIDIA"), true); } catch {} }, null)
+                ("Cleaning up NVIDIA files", async () => { string path = Path.Combine(Path.GetTempPath(), "NVIDIA"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => Directory.Delete(path, true)); }, null)
             };
 
         return actions;

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using AutoOS.App.Views.Installer.Actions;
+using AutoOS.Core.Helpers.Processes;
 using AutoOS.Core.Helpers.Registry;
 using Microsoft.Win32;
 
@@ -23,7 +24,7 @@ public static class CleanupStage
 			("Cleaning temp directories", async () => await RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, async () => ProcessActions.CleanDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "SystemTemp"))), null),
 			("Cleaning temp directories", async () => await RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, async () => ProcessActions.CleanDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp"))), null),
 			("Cleaning temp directories", async () => ProcessActions.CleanDirectory(Path.GetTempPath()), null),
-			("Cleaning temp directories", async () => File.Delete(Path.Combine(Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))!, "DumpStack.log")), null),
+			("Cleaning temp directories", async () => { string path = Path.Combine(Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))!, "DumpStack.log"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, null),
 
 			// run disk cleanup
 			("Running disk cleanup", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\Active Setup Temp Folders", "StateFlags0000", 2, RegistryValueKind.DWord), null),

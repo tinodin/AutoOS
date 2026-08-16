@@ -482,7 +482,7 @@ public static class AppsStage
 			("Installing Everything", async () => File.Move(Path.Combine(Path.GetTempPath(), "Everything-1.5a.ini"), Path.Combine(Path.GetPathRoot(Environment.SystemDirectory)!, "Users", "Default", "AppData", "Roaming", "Everything", "Everything-1.5a.ini"), true), () => selection == null),
 			("Installing Everything", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Everything 1.5a", "Everything.exe"), WindowStyle = ProcessWindowStyle.Hidden, Arguments = "-install-run-on-system-startup"})!.WaitForExitAsync(), () => selection == null),
 			("Installing Everything", async () => Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Everything 1.5a", "Everything.exe"), WindowStyle = ProcessWindowStyle.Hidden, Arguments = "-startup" }), () => selection == null),
-			("Cleaning up Everything files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Everything.exe")), () => selection == null),
+			("Cleaning up Everything files", async () => { string path = Path.Combine(Path.GetTempPath(), "Everything.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => selection == null),
 
 			// remove everything desktop shortcut 
 			("Removing Everything desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Everything 1.5a.lnk")), () => selection == null),
@@ -503,8 +503,8 @@ public static class AppsStage
 			("Installing Windhawk", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\auto-theme-switcher\Settings", "CustomDark", DarkTime, RegistryValueKind.String), () => selection == null),
 			("Installing Windhawk", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\taskbar-fluent-media-player\Settings", "MainSettings.PlayerSetting.position", "tray_left", RegistryValueKind.String), () => selection == null && LeftTaskbarAlignment == true),
 			("Installing Windhawk", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Windhawk\Engine\Mods\taskbar-notification-icons-show-all", "Disabled", 1, RegistryValueKind.DWord), () => selection == null && AlwaysShowTrayIcons == false),
-			("Cleaning up Windhawk files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "windhawk_setup_offline.exe")), () => selection == null),
-			("Cleaning up Windhawk files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "windhawk.json")), () => selection == null),
+			("Cleaning up Windhawk files", async () => { string path = Path.Combine(Path.GetTempPath(), "windhawk_setup_offline.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => selection == null),
+			("Cleaning up Windhawk files", async () => { string path = Path.Combine(Path.GetTempPath(), "windhawk.json"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => selection == null),
 			
 			// remove windhawk desktop shortcut 
 			("Removing Windhawk desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Windhawk.lnk")), () => selection == null),
@@ -525,7 +525,7 @@ public static class AppsStage
 			("Installing StartAllBack", async () => await Process.Start(new ProcessStartInfo { FileName = "reg.exe", Arguments = @"unload HKU\DefaultUser", CreateNoWindow = true })!.WaitForExitAsync(), () => selection == null),
 			("Installing StartAllBack", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "StartAllBackSetup.exe"), Arguments = "/silent /allusers" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => selection == null),
 			("Installing StartAllBack", async () => TaskSchedulerHelper.Toggle(@"StartAllBack Update", false), () => selection == null),
-			("Cleaning up StartAllBack files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "StartAllBackSetup.exe")), () => selection == null),
+			("Cleaning up StartAllBack files", async () => { string path = Path.Combine(Path.GetTempPath(), "StartAllBackSetup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => selection == null),
 
 			// activate startallback
 			("Activating StartAllBack", async () => await ProcessActions.PatchStartAllBack(), () => selection == null),
@@ -537,7 +537,7 @@ public static class AppsStage
 			// install discord
 			("Installing Discord", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "DiscordSetup.exe"), Arguments = "/silent" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Discord == true),
 			("Installing Discord", async () => File.Copy(Path.Combine(Directory.GetDirectories(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Discord"), "app-*").FirstOrDefault() ?? "", "installer.db"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Discord", "installer.db"), true), () => Discord == true),
-			("Cleaning up Discord files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "DiscordSetup.exe")), () => Discord == true),
+			("Cleaning up Discord files", async () => { string path = Path.Combine(Path.GetTempPath(), "DiscordSetup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Discord == true),
 
 			// pin discord to the taskbar
 			("Pinning Discord to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Discord Inc", "Discord.lnk")), () => Discord == true),
@@ -557,7 +557,7 @@ public static class AppsStage
 			// install vencord
 			("Installing Vencord", async () => await Process.Start(new ProcessStartInfo { FileName = "cmd.exe", Arguments = $@"/c """"{Path.Combine(Path.GetTempPath(), "VencordInstallerCli.exe")}"" -install -install-openasar -branch auto""" , CreateNoWindow = true })!.WaitForExitAsync(), () => Discord == true),
 			("Installing OpenAsar", async () => await Process.Start(new ProcessStartInfo { FileName = "cmd.exe", Arguments = $@"/c """"{Path.Combine(Path.GetTempPath(), "VencordInstallerCli.exe")}"" -install-openasar -branch auto""" , CreateNoWindow = true })!.WaitForExitAsync(), () => Discord == true),
-			("Cleaning up Vencord files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "VencordInstallerCli.exe")), () => Discord == true),
+			("Cleaning up Vencord files", async () => { string path = Path.Combine(Path.GetTempPath(), "VencordInstallerCli.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Discord == true),
 
 			// import vencord settings
 			("Importing Vencord settings", async () => Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Vencord", "settings")), () => Discord == true),
@@ -628,7 +628,7 @@ public static class AppsStage
 
 			// install zoom workplace
 			("Installing Zoom Workplace", async () => await Process.Start(new ProcessStartInfo { FileName = "msiexec.exe", Arguments = $@"/i ""{Path.Combine(Path.GetTempPath(), "ZoomInstallerFull.msi")}"" /qn" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => ZoomWorkplace ==  true),
-			("Cleaning up Zoom Workplace files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "ZoomInstallerFull.msi")), () => ZoomWorkplace ==  true),
+			("Cleaning up Zoom Workplace files", async () => { string path = Path.Combine(Path.GetTempPath(), "ZoomInstallerFull.msi"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => ZoomWorkplace ==  true),
 
 			// pin zoom to taskbar
 			("Pinning Zoom Workplace to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Zoom", "Zoom Workplace.lnk")), () => ZoomWorkplace == true),
@@ -645,7 +645,7 @@ public static class AppsStage
 
 			// install thunderbird
 			("Installing Thunderbird", async () => await Process.Start(new ProcessStartInfo { FileName = "msiexec.exe", Arguments = $@"/i ""{Path.Combine(Path.GetTempPath(), "Thunderbird Setup.msi")}"" /qn" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Thunderbird ==  true),
-			("Cleaning up Thunderbird files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Thunderbird Setup.msi")), () => Thunderbird ==  true),
+			("Cleaning up Thunderbird files", async () => { string path = Path.Combine(Path.GetTempPath(), "Thunderbird Setup.msi"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Thunderbird ==  true),
 
 			// pin thunderbird to taskbar
 			("Pinning Thunderbird to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Thunderbird.lnk")), () => Thunderbird == true),
@@ -662,7 +662,7 @@ public static class AppsStage
 
 			// install signal
 			("Installing Signal", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "SignalSetup.exe"), Arguments = "/S" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Signal == true),
-			("Cleaning up Signal files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "SignalSetup.exe")), () => Signal == true),
+			("Cleaning up Signal files", async () => { string path = Path.Combine(Path.GetTempPath(), "SignalSetup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Signal == true),
 
 			// remove signal desktop shortcut
 			("Removing Signal desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Signal.lnk")), () => Signal == true),
@@ -672,7 +672,7 @@ public static class AppsStage
 
 			// install epic games launcher
 			("Installing Epic Games Launcher", async () => await Process.Start(new ProcessStartInfo { FileName = "msiexec.exe", Arguments = $@"/i ""{Path.Combine(Path.GetTempPath(), "EpicGamesLauncherInstaller.msi")}"" /qn" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => EpicGames == true),
-			("Cleaning up Epic Games Launcher files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "EpicGamesLauncherInstaller.msi")), () => EpicGames == true),
+			("Cleaning up Epic Games Launcher files", async () => { string path = Path.Combine(Path.GetTempPath(), "EpicGamesLauncherInstaller.msi"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => EpicGames == true),
 
 			// remove epic games launcher desktop shortcut
 			("Removing Epic Games Launcher desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Epic Games Launcher.lnk")), () => EpicGames == true),
@@ -702,7 +702,7 @@ public static class AppsStage
 
 			// install steam
 			("Installing Steam", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "SteamSetup.exe"), Arguments = "/S" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Steam == true),
-			("Cleaning up Steam files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "SteamSetup.exe")), () => Steam == true),
+			("Cleaning up Steam files", async () => { string path = Path.Combine(Path.GetTempPath(), "SteamSetup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Steam == true),
 
 			// update steam
 			("Updating Steam", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Steam", "Steam.exe") , WindowStyle = ProcessWindowStyle.Hidden }) !.WaitForExitAsync(), () => Steam == true),
@@ -725,7 +725,7 @@ public static class AppsStage
 			("Installing Riot Client", async () => await ExtractHelper.Extract(Path.Combine(Path.GetTempPath(), "Riot Games.zip"), Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))!), () => RiotClient == true),
 			("Installing Riot Client", async () => { Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))!, "Riot Games", "Riot Client", "RiotClientServices.exe"), WindowStyle = ProcessWindowStyle.Maximized }); while (Process.GetProcessesByName("RiotClientCrashHandler").Length == 0 || Process.GetProcessesByName("Riot Client").Length == 0 || Process.GetProcessesByName("Riot Client").Length != 7) await Task.Delay(500); }, () => RiotClient == true),
 			("Installing Riot Client", async () => { foreach (Process process in new[] { "Riot Client", "RiotClientServices", "RiotClientCrashHandler" }.SelectMany(Process.GetProcessesByName)) { process.Kill(); process.WaitForExit(); }}, () => RiotClient == true),
-			("Cleaning up Riot Client files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Riot Games.zip")), () => RiotClient == true),
+			("Cleaning up Riot Client files", async () => { string path = Path.Combine(Path.GetTempPath(), "Riot Games.zip"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => RiotClient == true),
 
 			// import riot client account
 			("Importing Riot Client Account", async () => await RiotHelper.ImportAccount(), () => RiotClient == true && RiotClientAccount == true),
@@ -750,14 +750,14 @@ public static class AppsStage
 			("Installing Vanguard", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "setup.exe"), WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => RiotClient == true),
 			("Installing Vanguard", async () => { Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Riot Games", "Riot Vanguard")); await File.WriteAllTextAsync(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Riot Games", "Riot Vanguard", "vgtray-settings.json"), "{\"theme\":0,\"language\":0,\"precheck_option\":1,\"precheck_completed_after_settings_changes\":1,\"precheck_completed_once\":1}"); }, () => RiotClient == true),
 			("Installing Vanguard", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", "Riot Vanguard", new byte[] { 0x03 }, RegistryValueKind.Binary), () => RiotClient == true),
-			("Cleaning up Vanguard files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "setup.exe")), () => RiotClient == true),
+			("Cleaning up Vanguard files", async () => { string path = Path.Combine(Path.GetTempPath(), "setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => RiotClient == true),
 
 			// download ubisoft connect
 			("Downloading Ubisoft Connect", async () => await DownloadHelper.Download("https://static3.cdn.ubi.com/orbit/launcher_installer/UbisoftConnectInstaller.exe", Path.GetTempPath(), "UbisoftConnectInstaller.exe", reporter: reporter), () => UbisoftConnect == true),
 
 			// install ubisoft connect
 			("Installing Ubisoft Connect", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "UbisoftConnectInstaller.exe"), Arguments = "/S" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => UbisoftConnect == true),
-			("Cleaning up Ubisoft Connect files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "UbisoftConnectInstaller.exe")), () => UbisoftConnect == true),
+			("Cleaning up Ubisoft Connect files", async () => { string path = Path.Combine(Path.GetTempPath(), "UbisoftConnectInstaller.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => UbisoftConnect == true),
 
 			// remove ubisoft connect desktop shortcut 
 			("Removing Ubisoft Connect desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Ubisoft Connect.lnk")), () => UbisoftConnect == true),
@@ -772,7 +772,7 @@ public static class AppsStage
 
 			// install ea
 			("Installing EA", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "EAappInstaller.exe"), Arguments = "/s", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => EA == true),
-			("Cleaning up EA files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "EAappInstaller.exe")), () => EA == true),
+			("Cleaning up EA files", async () => { string path = Path.Combine(Path.GetTempPath(), "EAappInstaller.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => EA == true),
 
 			// disable ea startup entry
 			("Disabling EA startup entry", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", "EADM", new byte[] { 0x01 }, RegistryValueKind.Binary), () => EA == true),
@@ -785,7 +785,7 @@ public static class AppsStage
 
 			// install battle.net
 			("Installing Battle.Net", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "Battle.net-Setup.exe"), Arguments = $@"--lang=enUS --installpath=""{Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)}\Battle.net""" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => BattleNet == true),
-			("Cleaning up Battle.Net files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Battle.net-Setup.exe")), () => BattleNet == true),
+			("Cleaning up Battle.Net files", async () => { string path = Path.Combine(Path.GetTempPath(), "Battle.net-Setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => BattleNet == true),
 
 			// disable battle.net startup entries
 			("Disabling Battle.Net startup entries", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\battlenet_helpersvc", "Start", 4, RegistryValueKind.DWord), () => BattleNet == true),
@@ -800,7 +800,7 @@ public static class AppsStage
 
 			// install minecraft launcher
 			("Installing Minecraft Launcher", async () => await Process.Start(new ProcessStartInfo { FileName = "msiexec.exe", Arguments = $@"/i ""{Path.Combine(Path.GetTempPath(), "MinecraftInstaller.msi")}"" /qn" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => MinecraftLauncher == true),
-			("Cleaning up Minecraft Launcher files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "MinecraftInstaller.msi")), () => MinecraftLauncher == true),
+			("Cleaning up Minecraft Launcher files", async () => { string path = Path.Combine(Path.GetTempPath(), "MinecraftInstaller.msi"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => MinecraftLauncher == true),
 
 			// update minecraft launcher
 			("Updating Minecraft Launcher", async () => { Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Minecraft Launcher", "MinecraftLauncher.exe") , WindowStyle = ProcessWindowStyle.Hidden }); while (Process.GetProcessesByName("MinecraftLauncher").Length == 1) await Task.Delay(500); while (Process.GetProcessesByName("MinecraftLauncher").Length == 0) await Task.Delay(500); while (Process.GetProcessesByName("MinecraftLauncher").Length == 1) await Task.Delay(100); }, () => MinecraftLauncher == true),
@@ -813,7 +813,7 @@ public static class AppsStage
 
 			// install curseforge
 			("Installing CurseForge", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "CurseForge-Setup.exe"), Arguments = "/S" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => CurseForge == true),
-			("Cleaning up CurseForge files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "CurseForge-Setup.exe")), () => CurseForge == true),
+			("Cleaning up CurseForge files", async () => { string path = Path.Combine(Path.GetTempPath(), "CurseForge-Setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => CurseForge == true),
 
 			// remove curseforge desktop shortcut
 			("Removing CurseForge desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "CurseForge.lnk")), () => CurseForge == true),
@@ -823,7 +823,7 @@ public static class AppsStage
 
 			// install lunar client
 			("Installing Lunar Client", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "Lunar Client.exe"), Arguments = "/S" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => LunarClient == true),
-			("Cleaning up Lunar Client files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Lunar Client.exe")), () => LunarClient == true),
+			("Cleaning up Lunar Client files", async () => { string path = Path.Combine(Path.GetTempPath(), "Lunar Client.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => LunarClient == true),
 
 			// remove lunar client desktop shortcut
 			("Removing Lunar Client desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Lunar Client.lnk")), () => LunarClient == true),
@@ -833,7 +833,7 @@ public static class AppsStage
 
 			// install feather client
 			("Installing Feather Client", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "Feather Launcher Setup.exe"), Arguments = "/S" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => FeatherClient == true),
-			("Cleaning up Feather Client files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Feather Launcher Setup.exe")), () => FeatherClient == true),
+			("Cleaning up Feather Client files", async () => { string path = Path.Combine(Path.GetTempPath(), "Feather Launcher Setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => FeatherClient == true),
 
 			// remove feather client desktop shortcut
 			("Removing Feather Client desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Feather Launcher.lnk")), () => FeatherClient == true),
@@ -843,7 +843,7 @@ public static class AppsStage
 
 			// install norisk client
 			("Installing NoRisk Client", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "NoRiskClient-Windows-setup.exe"), Arguments = "/S" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => NoRiskClient == true),
-			("Cleaning up NoRisk Client files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "NoRiskClient-Windows-setup.exe")), () => NoRiskClient == true),
+			("Cleaning up NoRisk Client files", async () => { string path = Path.Combine(Path.GetTempPath(), "NoRiskClient-Windows-setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => NoRiskClient == true),
 
 			// remove norisk client desktop shortcut 
 			("Removing NoRisk Client desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "NoRisk Launcher.lnk")), () => NoRiskClient == true),
@@ -853,14 +853,14 @@ public static class AppsStage
 
 			// install prism launcher
 			("Installing Prism Launcher", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "PrismLauncher-Windows-MSVC-Setup.exe"), Arguments = "/S" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => PrismLauncher == true),
-			("Cleaning up Prism Launcher files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "PrismLauncher-Windows-MSVC-Setup.exe")), () => PrismLauncher == true),
+			("Cleaning up Prism Launcher files", async () => { string path = Path.Combine(Path.GetTempPath(), "PrismLauncher-Windows-MSVC-Setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => PrismLauncher == true),
 
 			// download bloxstrap
 			("Downloading Bloxstrap", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/bloxstraplabs/bloxstrap/releases")).RootElement.EnumerateArray().First(release => !release.GetProperty("prerelease").GetBoolean() && release.GetProperty("assets").EnumerateArray().Any(asset => (asset.GetProperty("name").GetString() ?? "").StartsWith("Bloxstrap-v") && (asset.GetProperty("name").GetString() ?? "").EndsWith(".exe"))).GetProperty("assets").EnumerateArray().First(asset => (asset.GetProperty("name").GetString() ?? "").StartsWith("Bloxstrap-v") && (asset.GetProperty("name").GetString() ?? "").EndsWith(".exe")).GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "Bloxstrap.exe", reporter: reporter), () => Bloxstrap == true),
 
 			// install bloxstrap
 			("Installing Bloxstrap", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "Bloxstrap.exe"), Arguments = "-quiet -nolaunch" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Bloxstrap == true),
-			("Cleaning up Bloxstrap files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Bloxstrap.exe")), () => Bloxstrap == true),
+			("Cleaning up Bloxstrap files", async () => { string path = Path.Combine(Path.GetTempPath(), "Bloxstrap.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Bloxstrap == true),
 
 			// remove bloxstrap desktop shortcut
 			("Removing Bloxstrap desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Bloxstrap.lnk")), () => Bloxstrap == true),
@@ -872,7 +872,7 @@ public static class AppsStage
 			("Installing Froststrap", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "Froststrap.exe"), Arguments = "/S" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Froststrap == true),
 			("Installing Froststrap", async () => Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Froststrap")), () => Froststrap == true),
 			("Installing Froststrap", async () => ShortcutHelper.Create(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Froststrap", "Froststrap.lnk"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Froststrap", "Froststrap.exe")), () => Froststrap == true),
-			("Cleaning up Froststrap files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Froststrap.exe")), () => Froststrap == true),
+			("Cleaning up Froststrap files", async () => { string path = Path.Combine(Path.GetTempPath(), "Froststrap.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Froststrap == true),
 
 			// remove froststrap desktop shortcut
 			("Removing Froststrap desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Froststrap.lnk")), () => Froststrap == true),
@@ -977,8 +977,8 @@ public static class AppsStage
 			("Installing Rockstar Games Launcher", async () => ShortcutHelper.Create(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Rockstar Games", "Rockstar Games Launcher.lnk"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Rockstar Games", "Launcher", "LauncherPatcher.exe")), () => RockstarGamesLauncher == true),
 			("Installing Rockstar Games Launcher", async () => Directory.CreateDirectory(Path.Combine(Path.GetPathRoot(Environment.SystemDirectory)!, "Users", "Default", "AppData", "Roaming", "Microsoft", "Windows", "Start Menu", "Programs", "Rockstar Games")), () => RockstarGamesLauncher == true),
 			("Installing Rockstar Games Launcher", async () => ShortcutHelper.Create(Path.Combine(Path.GetPathRoot(Environment.SystemDirectory)!, "Users", "Default", "AppData", "Roaming", "Microsoft", "Windows", "Start Menu", "Programs", "Rockstar Games", "Rockstar Games Launcher.lnk"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Rockstar Games", "Launcher", "LauncherPatcher.exe")), () => RockstarGamesLauncher == true),
-			("Cleaning up Rockstar Games Launcher files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Rockstar-Games-Launcher.exe")), () => RockstarGamesLauncher == true),
-			("Cleaning up Rockstar Games Launcher files", async () => Directory.Delete(Path.Combine(Path.GetTempPath(), "Rockstar-Games-Launcher"), true), () => RockstarGamesLauncher == true),
+			("Cleaning up Rockstar Games Launcher files", async () => { string path = Path.Combine(Path.GetTempPath(), "Rockstar-Games-Launcher.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => RockstarGamesLauncher == true),
+			("Cleaning up Rockstar Games Launcher files", async () => { string path = Path.Combine(Path.GetTempPath(), "Rockstar-Games-Launcher"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => Directory.Delete(path, true)); }, () => RockstarGamesLauncher == true),
 
 			// update rock star games launcher
 			("Updating Rockstar Games Launcher", async () => { await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Rockstar Games", "Launcher", "LauncherPatcher.exe") , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(); while (Process.GetProcessesByName("dxdiag").Length > 1) await Task.Delay(500); while (Process.GetProcessesByName("SocialClubHelper").Length == 0) await Task.Delay(500); }, () => RockstarGamesLauncher == true),
@@ -999,14 +999,14 @@ public static class AppsStage
 			("Installing FiveM", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Uninstall\CitizenFX_FiveM", "NoRepair", 1, RegistryValueKind.DWord), () => FiveM == true),
 			("Installing FiveM", async () => ShortcutHelper.Create(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "FiveM.lnk"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FiveM", "FiveM.exe")), () => FiveM == true),
 			("Installing FiveM", async () => ShortcutHelper.Create(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "FiveM - Cfx.re Development Kit (FxDK).lnk"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FiveM", "FiveM - Cfx.re Development Kit (FxDK).lnk")), () => FiveM == true),
-			("Cleaning up FiveM files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "FiveM.zip")), () => FiveM == true),
+			("Cleaning up FiveM files", async () => { string path = Path.Combine(Path.GetTempPath(), "FiveM.zip"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => FiveM == true),
 		
 			// download faceit
 			("Downloading FACEIT", async () => await DownloadHelper.Download("https://faceit-client.faceit-cdn.net/release/FACEIT-setup-latest.exe", Path.GetTempPath(), "FACEIT-setup-latest.exe", new InstallPageReporter()), () => FACEIT == true),
 
 			// install faceit
 			("Installing FACEIT", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "FACEIT-setup-latest.exe"), Arguments = "/S", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => FACEIT == true),
-			("Cleaning up FACEIT files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "FACEIT-setup-latest.exe")), () => FACEIT == true),
+			("Cleaning up FACEIT files", async () => { string path = Path.Combine(Path.GetTempPath(), "FACEIT-setup-latest.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => FACEIT == true),
 
 			// remove faceit desktop shortcut 
 			("Removing FACEIT desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "FACEIT.lnk")), () => FACEIT == true),
@@ -1019,7 +1019,7 @@ public static class AppsStage
 
 			// install faceit ac
 			("Installing FACEIT AC", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "FACEITInstaller_64.exe"), Arguments = @"/VERYSILENT /TASKS=""""", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => FACEITAC == true),
-			("Cleaning up FACEIT AC files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "FACEITInstaller_64.exe")), () => FACEITAC == true),
+			("Cleaning up FACEIT AC files", async () => { string path = Path.Combine(Path.GetTempPath(), "FACEITInstaller_64.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => FACEITAC == true),
 
 			// download Eden
 			("Downloading Eden", async () => await DownloadHelper.Download("https://stable.eden-emu.dev/v0.2.1/Eden-Windows-v0.2.1-amd64-clang-pgo.zip", Path.GetTempPath(), "Eden-Windows-amd64-clang-pgo.zip"), () => Eden == true),
@@ -1032,7 +1032,7 @@ public static class AppsStage
 			("Installing Eden", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Eden", "UninstallString", $@"cmd /c rd /s /q ""{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Eden")}"" & del ""{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Eden.lnk")}"" & reg delete ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Eden"" /f", RegistryValueKind.String), () => Eden == true),
 			("Installing Eden", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Eden", "DisplayIcon", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Eden", "eden.exe"), RegistryValueKind.String), () => Eden == true),
 			("Installing Eden", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Eden", "Publisher", "Eden Emulator Project", RegistryValueKind.String), () => Eden == true),
-			("Cleaning up Eden files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Eden-Windows-amd64-clang-pgo.zip")), () => Eden == true),
+			("Cleaning up Eden files", async () => { string path = Path.Combine(Path.GetTempPath(), "Eden-Windows-amd64-clang-pgo.zip"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Eden == true),
 
 			// download dolby access
 			("Downloading Dolby Access", async () => await StoreHelper.Download("DolbyLaboratories.DolbyAccess_rz1tebttyb220", 1, reporter: reporter), () => AppleMusic == true),
@@ -1069,7 +1069,7 @@ public static class AppsStage
 
 			// install qobuz
 			("Installing Qobuz", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "Qobuz_Installer.exe"), Arguments = "-s" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Qobuz == true),
-			("Cleaning up Qobuz files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Qobuz_Installer.exe")), () => Qobuz == true),
+			("Cleaning up Qobuz files", async () => { string path = Path.Combine(Path.GetTempPath(), "Qobuz_Installer.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Qobuz == true),
 
 			// pin qobuz to the taskbar
 			("Pinning Qobuz to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Qobuz", "Qobuz.lnk")), () => Qobuz == true),
@@ -1111,7 +1111,7 @@ public static class AppsStage
 			("Installing Spotify", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Spotify", "URLInfoAbout", "https://www.spotify.com", RegistryValueKind.String), () => Spotify == true),
 			("Installing Spotify", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Spotify", "Version", spotifyVersion, RegistryValueKind.String), () => Spotify == true),
 			("Installing Spotify", async () => ShortcutHelper.Create(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Spotify.lnk"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Spotify", "Spotify.exe")), () => Spotify == true),
-			("Cleaning up Spotify files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "SpotifyFullSetupX64.exe")), () => Spotify == true),
+			("Cleaning up Spotify files", async () => { string path = Path.Combine(Path.GetTempPath(), "SpotifyFullSetupX64.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Spotify == true),
 
 			// pin spotify to the taskbar
 			("Pinning Spotify to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Spotify.lnk")), () => Spotify == true),
@@ -1143,7 +1143,7 @@ public static class AppsStage
 			// install logitech g hub
 			("Installing Logitech G HUB", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "lghub_installer.exe"), Arguments = "--silent" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => LogitechGHub == true),
 			("Installing Logitech G HUB", async () => { foreach (Process process in new[] { "lghub", "lghub_system_tray", "lghub_agent" }.SelectMany(Process.GetProcessesByName)) { process.Kill(); process.WaitForExit(); }}, () => LogitechGHub == true),
-			("Cleaning up Logitech G HUB files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "lghub_installer.exe")), () => LogitechGHub == true),
+			("Cleaning up Logitech G HUB files", async () => { string path = Path.Combine(Path.GetTempPath(), "lghub_installer.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => LogitechGHub == true),
 
 			// disable logitech g hub services
 			("Disabling Logitech G HUB services", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\LGHUBUpdaterService", "Start", 3, RegistryValueKind.DWord), () => LogitechGHub == true),
@@ -1196,8 +1196,8 @@ public static class AppsStage
 			("Installing Wootility", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\e016c86c-37b5-5b46-9e05-2c20cb392812", "NoRepair", 1, RegistryValueKind.DWord), () => Wootility == true),
 			("Installing Wootility", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\e016c86c-37b5-5b46-9e05-2c20cb392812", "EstimatedSize", 0x000613d0, RegistryValueKind.DWord), () => Wootility == true),
 			("Installing Wootility", async () => ShortcutHelper.Create(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Wootility.lnk"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "wootility", "Wootility.exe")), () => Wootility == true),
-			("Cleaning up Wootility files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "WootilitySetup.exe")), () => Wootility == true),
-			("Cleaning up Wootility files", async () => Directory.Delete(Path.Combine(Path.GetTempPath(), "WootilitySetup"), true), () => Wootility == true),
+			("Cleaning up Wootility files", async () => { string path = Path.Combine(Path.GetTempPath(), "WootilitySetup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Wootility == true),
+			("Cleaning up Wootility files", async () => { string path = Path.Combine(Path.GetTempPath(), "WootilitySetup"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => Directory.Delete(path, true)); }, () => Wootility == true),
 
 			// download g-menu
 			("Downloading G-Menu", async () => await DownloadHelper.Download("https://gz-dlsw.tpv-tech.com/MNT/AOC/Software/G-menu/G-Menu.zip", Path.GetTempPath(), "G-Menu.zip", reporter: reporter), () => GMenu == true),
@@ -1205,8 +1205,8 @@ public static class AppsStage
 			// install g-menu
 			("Installing G-Menu", async () => await ExtractHelper.Extract(Path.Combine(Path.GetTempPath(), "G-Menu.zip"), Path.Combine(Path.GetTempPath(), "G-Menu")), () => GMenu == true),
 			("Installing G-Menu", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "G-Menu", "G-Menu Setup 3.34.0.exe"), Arguments = "/S", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => GMenu == true),
-			("Cleaning up G-Menu files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "G-Menu.zip")), () => GMenu == true),
-			("Cleaning up G-Menu files", async () => Directory.Delete(Path.Combine(Path.GetTempPath(), "G-Menu"), true), () => GMenu == true),
+			("Cleaning up G-Menu files", async () => { string path = Path.Combine(Path.GetTempPath(), "G-Menu.zip"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => GMenu == true),
+			("Cleaning up G-Menu files", async () => { string path = Path.Combine(Path.GetTempPath(), "G-Menu"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => Directory.Delete(path, true)); }, () => GMenu == true),
 
 			// remove g-menu desktop shortcut
 			("Removing G-Menu desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "G-Menu.lnk")), () => GMenu == true),
@@ -1216,7 +1216,7 @@ public static class AppsStage
 
 			// install endgame gear
 			("Installing Endgame Gear", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "Endgame_Gear_Setup.exe"), Arguments = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => EndgameGear == true),
-			("Cleaning up Endgame Gear files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Endgame_Gear_Setup.exe")), () => EndgameGear == true),
+			("Cleaning up Endgame Gear files", async () => { string path = Path.Combine(Path.GetTempPath(), "Endgame_Gear_Setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => EndgameGear == true),
 
 			// disabling endgame gear startup entries
 			("Disabling Endgame Gear startup entries", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", "Endgame Gear Utility Startup", new byte[] { 0x03 }, RegistryValueKind.Binary), () => EndgameGear == true),
@@ -1230,8 +1230,8 @@ public static class AppsStage
 			// install glorious core
 			("Installing Glorious CORE", async () => await ExtractHelper.Extract(Path.Combine(Path.GetTempPath(), "GloriousCORE_Setup.zip"), Path.Combine(Path.GetTempPath(), "GloriousCORE_Setup")), () => GloriousCORE == true),
 			("Installing Glorious CORE", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "GloriousCORE_Setup", "GloriousCORE_2.1.15_Setup.exe"), Arguments = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => GloriousCORE == true),
-			("Cleaning up Glorious CORE files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "GloriousCORE_Setup.zip")), () => GloriousCORE == true),
-			("Cleaning up Glorious CORE files", async () => Directory.Delete(Path.Combine(Path.GetTempPath(), "GloriousCORE_Setup"), true), () => GloriousCORE == true),
+			("Cleaning up Glorious CORE files", async () => { string path = Path.Combine(Path.GetTempPath(), "GloriousCORE_Setup.zip"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => GloriousCORE == true),
+			("Cleaning up Glorious CORE files", async () => { string path = Path.Combine(Path.GetTempPath(), "GloriousCORE_Setup"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => Directory.Delete(path, true)); }, () => GloriousCORE == true),
 
 			// remove glorious core desktop shortcut
 			("Removing Glorious CORE desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Glorious CORE.lnk")), () => GloriousCORE == true),
@@ -1241,7 +1241,7 @@ public static class AppsStage
 
 			// install mchose hub
 			("Installing MCHOSE HUB", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "MCHOSE.HUB.installer.exe"), Arguments = "/S" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => MCHOSE == true),
-			("Cleaning up MCHOSE HUB files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "MCHOSE.HUB.installer.exe")), () => MCHOSE == true),
+			("Cleaning up MCHOSE HUB files", async () => { string path = Path.Combine(Path.GetTempPath(), "MCHOSE.HUB.installer.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => MCHOSE == true),
 
 			// remove mchose hub desktop shortcut
 			("Removing MCHOSE HUB desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "MCHOSE HUB.lnk")), () => MCHOSE == true),
@@ -1251,7 +1251,7 @@ public static class AppsStage
 
 			// install steelseries gg
 			("Installing SteelSeries GG", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "SteelSeriesGGSetup.exe"), Arguments = "/S" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => SteelSeriesGG == true),
-			("Cleaning up SteelSeries GG files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "SteelSeriesGGSetup.exe")), () => SteelSeriesGG == true),
+			("Cleaning up SteelSeries GG files", async () => { string path = Path.Combine(Path.GetTempPath(), "SteelSeriesGGSetup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => SteelSeriesGG == true),
 
 			// disable steelseries gg service
 			("Disabling SteelSeries GG service", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\SteelSeriesGGUpdateServiceProxy", "Start", 4, RegistryValueKind.DWord), () => SteelSeriesGG == true),
@@ -1274,10 +1274,10 @@ public static class AppsStage
 			("Installing Razer Synapse", async () => { while (Process.GetProcessesByName("GameManagerService3").Length == 0) await Task.Delay(500); }, () => RazerSynapse == true),
 			("Installing Razer Synapse", async () => { foreach (Process process in Process.GetProcessesByName("RazerAppEngine")) { process.Kill(); process.WaitForExit(); }}, () => RazerSynapse == true),
 			("Installing Razer Synapse", async () => await ExtractHelper.Extract(Path.Combine(Path.GetTempPath(), "leveldb.zip"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Razer\RazerAppEngine\User Data\Default\Local Storage")), () => RazerSynapse == true),
-			("Cleaning up Razer Synapse files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "RazerAppEngineSetup.exe")), () => RazerSynapse == true),
-			("Cleaning up Razer Synapse files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "RazerSynapse4-Web.exe")), () => RazerSynapse == true),
-			("Cleaning up Razer Synapse files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Razer.zip")), () => RazerSynapse == true),
-			("Cleaning up Razer Synapse files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "leveldb.zip")), () => RazerSynapse == true),
+			("Cleaning up Razer Synapse files", async () => { string path = Path.Combine(Path.GetTempPath(), "RazerAppEngineSetup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => RazerSynapse == true),
+			("Cleaning up Razer Synapse files", async () => { string path = Path.Combine(Path.GetTempPath(), "RazerSynapse4-Web.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => RazerSynapse == true),
+			("Cleaning up Razer Synapse files", async () => { string path = Path.Combine(Path.GetTempPath(), "Razer.zip"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => RazerSynapse == true),
+			("Cleaning up Razer Synapse files", async () => { string path = Path.Combine(Path.GetTempPath(), "leveldb.zip"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => RazerSynapse == true),
 
 			// disable razer synapse services
 			("Disabling Razer Synapse services", async () => File.Move(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Razer\Razer Services\GMS3\GameManagerService3.exe"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Razer\Razer Services\GMS3\GameManagerService3.exe.bak")), () => RazerSynapse == true),
@@ -1296,7 +1296,7 @@ public static class AppsStage
 			// install corsair icue
 			("Installing Corsair iCUE", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "Install iCUE.exe"), Arguments = "--quiet" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => CorsairICue == true),
 			("Installing Corsair iCUE", async () => { while (Process.GetProcessesByName("icue-installer").Length >= 1) await Task.Delay(500); }, () => CorsairICue == true),
-			("Cleaning up Corsair iCUE files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Install iCUE.exe")), () => CorsairICue == true),
+			("Cleaning up Corsair iCUE files", async () => { string path = Path.Combine(Path.GetTempPath(), "Install iCUE.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => CorsairICue == true),
 
 			// disable corsair icue services
 			("Disabling Corsair iCUE services", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\CorsairService", "Start", 3, RegistryValueKind.DWord), () => CorsairICue == true),
@@ -1313,14 +1313,14 @@ public static class AppsStage
 
 			// install openrgb
 			("Installing OpenRGB", async () => await Process.Start(new ProcessStartInfo { FileName = "msiexec.exe", Arguments = $@"/i ""{Path.Combine(Path.GetTempPath(), "OpenRGB_Windows_64.msi")}"" /qn" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => OpenRGB ==  true),
-			("Cleaning up OpenRGB files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "OpenRGB_Windows_64.msi")), () => OpenRGB ==  true),
+			("Cleaning up OpenRGB files", async () => { string path = Path.Combine(Path.GetTempPath(), "OpenRGB_Windows_64.msi"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => OpenRGB ==  true),
 
 			// download fancontrol
 			("Downloading FanControl", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/Rem0o/FanControl.Releases/releases")).RootElement.EnumerateArray().First(release => !release.GetProperty("prerelease").GetBoolean() && release.GetProperty("assets").EnumerateArray().Any(asset => (asset.GetProperty("name").GetString() ?? "").Contains("Installer.exe"))).GetProperty("assets").EnumerateArray().First(asset => (asset.GetProperty("name").GetString() ?? "").Contains("Installer.exe")).GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "FanControl.exe", reporter: reporter), () => FanControl == true),
 
 			// install fancontrol
 			("Installing FanControl", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "FanControl.exe"), Arguments = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => FanControl == true),
-			("Cleaning up FanControl files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "FanControl.exe")), () => FanControl == true),
+			("Cleaning up FanControl files", async () => { string path = Path.Combine(Path.GetTempPath(), "FanControl.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => FanControl == true),
 
 			// download ghelper
 			("Downloading GHelper", async () => await DownloadHelper.Download("https://github.com/seerge/g-helper/releases/latest/download/GHelper.exe", Path.GetTempPath(), "GHelper.exe"), () => GHelper == true),
@@ -1340,14 +1340,14 @@ public static class AppsStage
 
 			// install vigembus
 			("Installing ViGEmBus", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "ViGEmBusx64_x86_arm64.exe"), Arguments = "/qn /NORESTART" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => ViGEmBus == true),
-			("Cleaning up ViGEmBus files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "ViGEmBusx64_x86_arm64.exe")), () => ViGEmBus == true),
+			("Cleaning up ViGEmBus files", async () => { string path = Path.Combine(Path.GetTempPath(), "ViGEmBusx64_x86_arm64.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => ViGEmBus == true),
 
 			//download hidhide
 			("Downloading HidHide", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/nefarius/HidHide/releases/latest")).RootElement.GetProperty("assets").EnumerateArray().First(a => (a.GetProperty("name").GetString() ?? "").Contains("x64.exe")).GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "HidHide_x64.exe", reporter: reporter), () => HidHide == true),
 
 			// install hidhide
 			("Installing HidHide", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "HidHide_x64.exe"), Arguments = "/qn /NORESTART" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => HidHide == true),
-			("Cleaning up HidHide files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "HidHide_x64.exe")), () => HidHide == true),
+			("Cleaning up HidHide files", async () => { string path = Path.Combine(Path.GetTempPath(), "HidHide_x64.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => HidHide == true),
 
 			// disable hidhide service
 			("Disabling HidHide service", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\HidHideWatchdog.exe", "Start", 4, RegistryValueKind.DWord), () => HidHide == true),
@@ -1368,7 +1368,7 @@ public static class AppsStage
 			("Installing DualSenseY", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\DualSenseY", "DisplayIcon", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), @"DualSenseY\DualSenseY.exe"), RegistryValueKind.String), () => DualSenseY == true),
 			("Installing DualSenseY", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\DualSenseY", "Publisher", "WujekFoliarz", RegistryValueKind.String), () => DualSenseY == true),
 			("Installing DualSenseY", async () => await Task.Delay(500), () => DualSenseY == true),
-			("Cleaning up DualSenseY files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "x64-release.zip")), () => DualSenseY == true),
+			("Cleaning up DualSenseY files", async () => { string path = Path.Combine(Path.GetTempPath(), "x64-release.zip"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => DualSenseY == true),
 
 			// download raceelement
 			("Downloading RaceElement", async () => await DownloadHelper.Download("https://github.com/RiddleTime/Race-Element/releases/latest/download/RaceElement.exe", Path.GetTempPath(), "RaceElement.exe"), () => RaceElement == true),
@@ -1388,7 +1388,7 @@ public static class AppsStage
 
 			// install playstation accessories
 			("Installing PlayStation® Accessories", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "PlayStationAccessoriesInstaller.exe"), Arguments = "/S /v/qn" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => PlaystationAccessories == true),
-			("Cleaning up PlayStation® Accessories files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "PlayStationAccessoriesInstaller.exe")), () => PlaystationAccessories == true),
+			("Cleaning up PlayStation® Accessories files", async () => { string path = Path.Combine(Path.GetTempPath(), "PlayStationAccessoriesInstaller.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => PlaystationAccessories == true),
 
 			// set playstation accessories data collection to limited
 			("Setting PlayStation® Accessories data collection to limited", async () => await File.WriteAllTextAsync(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Sony Corporation", "PlayStationAccessories", "AppSettings.json"), new JsonObject { ["IsAgreedFullDataCollection"] = false, ["IsAnsweredDataCollection"] = true, ["IsCheckedDisabledButtonMessage"] = false, ["IsCheckedUpdateInfo2_0_0_0"] = true, ["IsCompletedEdgeWelcomeFlow"] = false }.ToString()), () => PlaystationAccessories == true),
@@ -1407,7 +1407,7 @@ public static class AppsStage
 
 			// install visual studio
 			("Installing Visual Studio", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "vs_Community.exe"), Arguments = "--quiet --wait" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => VisualStudio == true),
-			("Cleaning up Visual Studio files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "vs_Community.exe")), () => VisualStudio == true),
+			("Cleaning up Visual Studio files", async () => { string path = Path.Combine(Path.GetTempPath(), "vs_Community.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => VisualStudio == true),
 
 			// optimize visual studio
 			("Optimizing Visual Studio", async () => { while (Process.GetProcessesByName("VSNgenRunner").Length == 1) await Task.Delay(500); }, () => VisualStudio == true),
@@ -1424,31 +1424,31 @@ public static class AppsStage
 
 			// install mica visual studio
 			("Installing Mica Visual Studio", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Microsoft Visual Studio", "Installer", "resources", "app", "ServiceHub", "Services", "Microsoft.VisualStudio.Setup.Service", "VSIXInstaller.exe"), Arguments = $"/quiet /admin {Path.Combine(Path.GetTempPath(), "MicaVisualStudio.vsix")}" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => VisualStudio == true),
-			("Cleaning up Mica Visual Studio files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "MicaVisualStudio.vsix")), () => VisualStudio == true),
+			("Cleaning up Mica Visual Studio files", async () => { string path = Path.Combine(Path.GetTempPath(), "MicaVisualStudio.vsix"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => VisualStudio == true),
 
 			// download xaml styler
 			("Downloading XAML Styler", async () => await DownloadHelper.Download("https://marketplace.visualstudio.com/_apis/public/gallery/publishers/TeamXavalon/vsextensions/XAMLStyler2022/3.2501.8/vspackage", Path.GetTempPath(), "XamlStyler.Extension.Windows.VS2022.vsix", reporter: reporter), () => VisualStudio == true),
 
 			// install xaml styler
 			("Installing XAML Styler", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Microsoft Visual Studio", "Installer", "resources", "app", "ServiceHub", "Services", "Microsoft.VisualStudio.Setup.Service", "VSIXInstaller.exe"), Arguments = $"/quiet /admin {Path.Combine(Path.GetTempPath(), "XamlStyler.Extension.Windows.VS2022.vsix")}" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => VisualStudio == true),
-			("Cleaning up XAML Styler files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "XamlStyler.Extension.Windows.VS2022.vsix")), () => VisualStudio == true),
+			("Cleaning up XAML Styler files", async () => { string path = Path.Combine(Path.GetTempPath(), "XamlStyler.Extension.Windows.VS2022.vsix"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => VisualStudio == true),
 
 			// download visual studio code
 			("Downloading Visual Studio Code", async () => await DownloadHelper.Download("https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-user", Path.GetTempPath(), "VSCodeUserSetup-x64.exe", reporter: reporter), () => VisualStudioCode == true),
 
 			// install visual studio code
 			("Installing Visual Studio Code", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "VSCodeUserSetup-x64.exe"), Arguments = "/VERYSILENT /NORESTART /MERGETASKS=!runcode" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => VisualStudioCode == true),
-			("Cleaning up Visual Studio Code files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "VSCodeUserSetup-x64.exe")), () => VisualStudioCode ==  true),
+			("Cleaning up Visual Studio Code files", async () => { string path = Path.Combine(Path.GetTempPath(), "VSCodeUserSetup-x64.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => VisualStudioCode ==  true),
 
 			// pin visual studio code to the taskbar
 			("Pinning Visual Studio Code to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Visual Studio Code", "Visual Studio Code.lnk")), () => VisualStudioCode == true),
 
 			// download antigravity ide
-			("Downloading Antigravity IDE", async () => await DownloadHelper.Download("https://edgedl.me.gvt1.com/edgedl/release2/j0qc3/antigravity/stable/2.1.1-6123990880747520/windows-x64/Antigravity%20IDE.exe", Path.GetTempPath(), "Antigravity.exe", reporter: reporter), () => Antigravity == true),
+			("Downloading Antigravity IDE", async () => await DownloadHelper.Download("https://edgedl.me.gvt1.com/edgedl/release2/j0qc3/antigravity/stable/2.5.5-4923483625488384/windows-x64/Antigravity%20IDE.exe", Path.GetTempPath(), "Antigravity IDE.exe", reporter: reporter), () => Antigravity == true),
 
 			// install antigravity ide
-			("Installing Antigravity IDE", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "Antigravity.exe"), Arguments = "/VERYSILENT /NORESTART /MERGETASKS=!runcode" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Antigravity == true),
-			("Cleaning up Antigravity IDE files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Antigravity.exe")), () => Antigravity == true),
+			("Installing Antigravity IDE", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "Antigravity IDE.exe"), Arguments = "/VERYSILENT /NORESTART /MERGETASKS=!runcode" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Antigravity == true),
+			("Cleaning up Antigravity IDE files", async () => { string path = Path.Combine(Path.GetTempPath(), "Antigravity IDE.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Antigravity == true),
 
 			// pin antigravity ide to the taskbar
 			("Pinning Antigravity IDE to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Antigravity IDE", "Antigravity IDE.lnk")), () => Antigravity == true),
@@ -1458,7 +1458,7 @@ public static class AppsStage
 
 			// install cursor
 			("Installing Cursor", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "CursorSetup-x64.exe"), Arguments = "/VERYSILENT /NORESTART /MERGETASKS=!runcode" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Cursor == true),
-			("Cleaning up Cursor files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "CursorSetup-x64.exe")), () => Cursor == true),
+			("Cleaning up Cursor files", async () => { string path = Path.Combine(Path.GetTempPath(), "CursorSetup-x64.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Cursor == true),
 
 			// pin cursor to the taskbar
 			("Pinning Cursor to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Cursor", "Cursor.lnk")), () => Cursor == true),
@@ -1468,7 +1468,7 @@ public static class AppsStage
 
 			// install devin
 			("Installing Devin", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "DevinUserSetup-x64.exe"), Arguments = "/VERYSILENT /NORESTART /MERGETASKS=!runcode" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Devin == true),
-			("Cleaning up Devin files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "DevinUserSetup-x64.exe")), () => Devin == true),
+			("Cleaning up Devin files", async () => { string path = Path.Combine(Path.GetTempPath(), "DevinUserSetup-x64.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Devin == true),
 
 			// pin devin to the taskbar
 			("Pinning Devin to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Devin", "Devin.lnk")), () => Devin == true),
@@ -1479,7 +1479,7 @@ public static class AppsStage
 			// install kiro
 			("Installing Kiro", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "kiro-ide-win32-x64.exe"), Arguments = "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Kiro == true),
 			("Installing Kiro", async () => { foreach (Process process in Process.GetProcessesByName("Kiro")) { process.Kill(); process.WaitForExit(); } }, () => Kiro == true),
-			("Cleaning up Kiro files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "kiro-ide-win32-x64.exe")), () => Kiro == true),
+			("Cleaning up Kiro files", async () => { string path = Path.Combine(Path.GetTempPath(), "kiro-ide-win32-x64.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Kiro == true),
 
 			// pin kiro to the taskbar
 			("Pinning Kiro to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Kiro", "Kiro.lnk")), () => Kiro == true),
@@ -1489,7 +1489,7 @@ public static class AppsStage
 
 			// install opencode
 			("Installing OpenCode", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "opencode-desktop-win-x64.exe"), Arguments = "/S", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => OpenCode == true),
-			("Cleaning up OpenCode files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "opencode-desktop-win-x64.exe")), () => OpenCode == true),
+			("Cleaning up OpenCode files", async () => { string path = Path.Combine(Path.GetTempPath(), "opencode-desktop-win-x64.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => OpenCode == true),
 			("Removing OpenCode desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "OpenCode.lnk")), () => OpenCode == true),
 
 			// pin opencode to the taskbar
@@ -1500,14 +1500,14 @@ public static class AppsStage
 
 			// install sublime text
 			("Installing Sublime Text", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "sublime_text_x64_setup.exe"), Arguments = "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => SublimeText == true),
-			("Cleaning up Sublime Text files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "sublime_text_x64_setup.exe")), () => SublimeText == true),
+			("Cleaning up Sublime Text files", async () => { string path = Path.Combine(Path.GetTempPath(), "sublime_text_x64_setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => SublimeText == true),
 
 			// download intellij idea
 			("Downloading IntelliJ IDEA", async () => await DownloadHelper.Download("https://download.jetbrains.com/idea/idea-2026.1.3.exe", Path.GetTempPath(), "idea.exe", reporter: reporter), () => IDEA == true),
 			
 			// install intellij idea
 			("Installing IntelliJ IDEA", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "idea.exe"), Arguments = "/S /NCRC", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => IDEA == true),
-			("Cleaning up IntelliJ IDEA files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "idea.exe")), () => IDEA == true),
+			("Cleaning up IntelliJ IDEA files", async () => { string path = Path.Combine(Path.GetTempPath(), "idea.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => IDEA == true),
 
 			// pin intellij idea to taskbar
 			("Pinning IntelliJ IDEA to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", @"C:\ProgramData\Microsoft\Windows\Start Menu\Programs\JetBrains\IntelliJ IDEA 2026.1.3.lnk"), () => IDEA == true),
@@ -1517,7 +1517,7 @@ public static class AppsStage
 
 			// install winmerge
 			("Installing WinMerge", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "WinMerge-x64-Setup.exe"), Arguments = "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => WinMerge == true),
-			("Cleaning up WinMerge files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "WinMerge-x64-Setup.exe")), () => WinMerge == true),
+			("Cleaning up WinMerge files", async () => { string path = Path.Combine(Path.GetTempPath(), "WinMerge-x64-Setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => WinMerge == true),
 
 			//// set winmerge color mode to follow system
 			//(@"Setting WinMerge ""Color mode"" to ""Follow system""", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\Software\Thingamahoochie\WinMerge\Settings", "ColorMode", 2, RegistryValueKind.DWord), () => WinMerge == true),
@@ -1527,42 +1527,42 @@ public static class AppsStage
 
 			// install git
 			("Installing Git", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "Git64-bit.exe"), Arguments = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /NOICONS /COMPONENTS=GitLFS,GitGUI,GitCore" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Git ==  true),
-			("Cleaning up Git files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Git64-bit.exe")), () => Git ==  true),
+			("Cleaning up Git files", async () => { string path = Path.Combine(Path.GetTempPath(), "Git64-bit.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Git ==  true),
 
 			// download cmake
 			("Downloading CMake", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/Kitware/CMake/releases")).RootElement.EnumerateArray().First(release => release.GetProperty("assets").EnumerateArray().Any(asset => (asset.GetProperty("name").GetString() ?? "").Contains("windows-x86_64.msi"))).GetProperty("assets").EnumerateArray().First(asset => (asset.GetProperty("name").GetString() ?? "").Contains("windows-x86_64.msi")).GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "cmake-windows-x86_64.msi", reporter: reporter), () => CMake == true),
 
 			// install cmake
 			("Installing CMake", async () => await Process.Start(new ProcessStartInfo { FileName = "msiexec.exe", Arguments = $@"/i ""{Path.Combine(Path.GetTempPath(), "cmake-windows-x86_64.msi")}"" /qn" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => CMake ==  true),
-			("Cleaning up CMake files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "cmake-windows-x86_64.msi")), () => CMake ==  true),
+			("Cleaning up CMake files", async () => { string path = Path.Combine(Path.GetTempPath(), "cmake-windows-x86_64.msi"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => CMake ==  true),
 
 			// download python
 			("Downloading Python", async () => await DownloadHelper.Download("https://www.python.org/ftp/python/3.14.5/python-3.14.5-amd64.exe", Path.GetTempPath(), "python-amd64.exe", reporter: reporter), () => Python == true),
 
 			// install python
 			("Installing Python", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "python-amd64.exe"), Arguments = "/quiet InstallAllUsers=1 PrependPath=1" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Python == true),
-			("Cleaning up Python files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "python-amd64.exe")), () => Python == true),
+			("Cleaning up Python files", async () => { string path = Path.Combine(Path.GetTempPath(), "python-amd64.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Python == true),
 
 			// download nodejs
 			("Downloading Node.js", async () => await DownloadHelper.Download("https://nodejs.org/dist/v24.12.0/node-v24.12.0-x64.msi", Path.GetTempPath(), "node-v24.12.0-x64.msi", reporter: reporter), () => Nodejs == true),
 
 			// install nodejs
 			("Installing Node.js", async () => await Process.Start(new ProcessStartInfo { FileName = "msiexec.exe", Arguments = $@"/i ""{Path.Combine(Path.GetTempPath(), "node-v24.12.0-x64.msi")}"" /qn" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Nodejs ==  true),
-			("Cleaning up Node.js files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "node-v24.12.0-x64.msi")), () => Nodejs ==  true),
+			("Cleaning up Node.js files", async () => { string path = Path.Combine(Path.GetTempPath(), "node-v24.12.0-x64.msi"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Nodejs ==  true),
 
 			// download rust
 			("Downloading Rust", async () => await DownloadHelper.Download("https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-msvc/rustup-init.exe", Path.GetTempPath(), "rustup-init.exe", reporter: reporter), () => Rust == true),
 
 			// install rust
 			("Installing Rust", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "rustup-init.exe"), Arguments = "-y --default-toolchain stable", WindowStyle = ProcessWindowStyle.Hidden, UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true })!.WaitForExitAsync(), () => Rust == true),
-			("Cleaning up Rust files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "rustup-init.exe")), () => Rust == true),
+			("Cleaning up Rust files", async () => { string path = Path.Combine(Path.GetTempPath(), "rustup-init.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Rust == true),
 
 			// download java
 			("Downloading Java", async () => await DownloadHelper.Download("https://javadl.oracle.com/webapps/download/AutoDL?BundleId=253458_ba687cb3cbb24342adc8fdf890b993dc", Path.GetTempPath(), "jre-windows-x64.exe", reporter: reporter), () => Java == true),
 
 			// install java
 			("Installing Java", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "jre-windows-x64.exe"), Arguments = "/s REBOOT=0", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Java == true),
-			("Cleaning up Java files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "jre-windows-x64.exe")), () => Java == true),
+			("Cleaning up Java files", async () => { string path = Path.Combine(Path.GetTempPath(), "jre-windows-x64.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Java == true),
 
 			// disable java startup entry
 			("Disabling Java startup entry", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32", "SunJavaUpdateSched", new byte[] { 0x03 }, RegistryValueKind.Binary), () => Java == true),
@@ -1572,7 +1572,7 @@ public static class AppsStage
 
 			// install go
 			("Installing Go", async () => await Process.Start(new ProcessStartInfo { FileName = "msiexec.exe", Arguments = $@"/i ""{Path.Combine(Path.GetTempPath(), "gowindows-amd64.msi")}"" /qn" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Go == true),
-			("Cleaning up Go files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "gowindows-amd64.msi")), () => Go == true),
+			("Cleaning up Go files", async () => { string path = Path.Combine(Path.GetTempPath(), "gowindows-amd64.msi"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Go == true),
 
 			// download trello
 			("Downloading Trello", async () => await StoreHelper.Download("45273LiamForsyth.PawsforTrello_7pb5ddty8z1pa", reporter: reporter), () => Trello == true),
@@ -1668,7 +1668,7 @@ public static class AppsStage
 			("Installing Process Explorer", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\Software\Sysinternals\Process Explorer\ProcessColumns", "11", 100, RegistryValueKind.DWord, true), () => ProcessExplorer == true),
 			("Installing Process Explorer", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\Software\Sysinternals\Process Explorer\ProcessColumns", "12", 100, RegistryValueKind.DWord, true), () => ProcessExplorer == true),
 			("Installing Process Explorer", async () => await Process.Start(new ProcessStartInfo { FileName = "reg.exe", Arguments = @"unload HKU\DefaultUser", CreateNoWindow = true })!.WaitForExitAsync(), () => ProcessExplorer == true),
-			("Cleaning up Process Explorer files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "procexp64.exe")), () => ProcessExplorer == true),
+			("Cleaning up Process Explorer files", async () => { string path = Path.Combine(Path.GetTempPath(), "procexp64.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => ProcessExplorer == true),
 
 			// download process monitor
 			("Downloading Process Monitor", async () => await DownloadHelper.Download("https://download.sysinternals.com/files/ProcessMonitor.zip", Path.GetTempPath(), "ProcessMonitor.zip", reporter: reporter), () => ProcessMonitor == true),
@@ -1690,7 +1690,7 @@ public static class AppsStage
 			("Installing Process Monitor", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\Software\Sysinternals\Process Monitor", "Columns", new byte[] { 0x63, 0x00, 0x8e, 0x00, 0x28, 0x00, 0x64, 0x00, 0x6a, 0x04, 0x64, 0x00, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, RegistryValueKind.Binary, true), () => ProcessMonitor == true),
 			("Installing Process Monitor", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\Software\Sysinternals\Process Monitor", "ColumnMap", new byte[] { 0x8e, 0x9c, 0x00, 0x00, 0x75, 0x9c, 0x00, 0x00, 0x76, 0x9c, 0x00, 0x00, 0x77, 0x9c, 0x00, 0x00, 0x87, 0x9c, 0x00, 0x00, 0x78, 0x9c, 0x00, 0x00, 0x79, 0x9c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, RegistryValueKind.Binary, true), () => ProcessMonitor == true),
 			("Installing Process Monitor", async () => await Process.Start(new ProcessStartInfo { FileName = "reg.exe", Arguments = @"unload HKU\DefaultUser", CreateNoWindow = true })!.WaitForExitAsync(), () => ProcessMonitor == true),
-			("Cleaning up Process Monitor files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "ProcessMonitor.zip")), () => ProcessMonitor == true),
+			("Cleaning up Process Monitor files", async () => { string path = Path.Combine(Path.GetTempPath(), "ProcessMonitor.zip"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => ProcessMonitor == true),
 			
 			// download hwinfo
 			("Downloading HWiNFO® 64", async () => await DownloadHelper.Download("https://www.sac.sk/download/utildiag/hwi_850x.exe", Path.GetTempPath(), "hwi64.exe", reporter: reporter), () => HWInfo == true),
@@ -1698,7 +1698,7 @@ public static class AppsStage
 			// install hwinfo
 			("Installing HWiNFO® 64", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "hwi64.exe"), Arguments = "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => HWInfo == true),
 			("Installing HWiNFO® 64", async () => { while (Process.GetProcessesByName("HWiNFO64").Length == 0) await Task.Delay(100); foreach (Process process in Process.GetProcessesByName("HWiNFO64")) { process.Kill(); process.WaitForExit(); } }, () => HWInfo == true),
-			("Cleaning up HWiNFO® 64", async () => File.Delete(Path.Combine(Path.GetTempPath(), "hwi64.exe")), () => HWInfo == true),
+			("Cleaning up HWiNFO® 64", async () => { string path = Path.Combine(Path.GetTempPath(), "hwi64.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => HWInfo == true),
 
 			// download timing configurator
 			("Downloading ASRock Timing Configurator", async () => await DownloadHelper.Download("https://download.asrock.com/Utility/Formula/TimingConfigurator(v4.1.7).zip", Path.GetTempPath(), "TimingConfigurator.zip"), () => TimingConfigurator == true),
@@ -1706,8 +1706,8 @@ public static class AppsStage
 			// install timing configurator
 			("Installing ASRock Timing Configurator", async () => await ExtractHelper.Extract(Path.Combine(Path.GetTempPath(), "TimingConfigurator.zip"), Path.Combine(Path.GetTempPath(), "TimingConfigurator")), () => TimingConfigurator == true),
 			("Installing ASRock Timing Configurator", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "TimingConfigurator", "TimingConfigurator(v4.1.7)", "AsrTCSetup(v4.1.7).exe"), Arguments = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /NOCLOSEAPPLICATIONS" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => TimingConfigurator == true),
-			("Cleaning up ASRock Timing Configurator files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "TimingConfigurator.zip")), () => TimingConfigurator == true),
-			("Cleaning up ASRock Timing Configurator files", async () => Directory.Delete(Path.Combine(Path.GetTempPath(), "TimingConfigurator"), true), () => TimingConfigurator == true),
+			("Cleaning up ASRock Timing Configurator files", async () => { string path = Path.Combine(Path.GetTempPath(), "TimingConfigurator.zip"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => TimingConfigurator == true),
+			("Cleaning up ASRock Timing Configurator files", async () => { string path = Path.Combine(Path.GetTempPath(), "TimingConfigurator"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => Directory.Delete(path, true)); }, () => TimingConfigurator == true),
 
 			// remove asrock timing configurator desktop shortcut
 			("Removing ASRock Timing Configurator desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "ASRock Timing Configurator.lnk")), () => TimingConfigurator == true),
@@ -1723,8 +1723,8 @@ public static class AppsStage
 			("Installing ZenTimings", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\ZenTimings", "UninstallString", $@"cmd /c rd /s /q ""{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "ZenTimings")}"" & del ""{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), @"Microsoft\Windows\Start Menu\Programs\ZenTimings.lnk")}"" & reg delete ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\ZenTimings"" /f", RegistryValueKind.String), () => ZenTimings == true),
 			("Installing ZenTimings", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\ZenTimings", "DisplayIcon", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), @"ZenTimings\ZenTimings.exe"), RegistryValueKind.String), () => ZenTimings == true),
 			("Installing ZenTimings", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\ZenTimings", "Publisher", "Irusanov", RegistryValueKind.String), () => ZenTimings == true),
-			("Cleaning up ZenTimings files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "ZenTimings.zip")), () => ZenTimings == true),
-			("Cleaning up ZenTimings files", async () => Directory.Delete(Path.Combine(Path.GetTempPath(), "ZenTimings")), () => ZenTimings == true),
+			("Cleaning up ZenTimings files", async () => { string path = Path.Combine(Path.GetTempPath(), "ZenTimings.zip"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => ZenTimings == true),
+			("Cleaning up ZenTimings files", async () => { string path = Path.Combine(Path.GetTempPath(), "ZenTimings"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => Directory.Delete(path, true)); }, () => ZenTimings == true),
 
 			//download ram test pro
 			("Downloading RAM Test Pro", async () => await DownloadHelper.Download("https://media.pcstonks.com/ram-test-pro/1.5.0/ram_test_pro_1.5.0.zip", Path.GetTempPath(), "ram_test_pro.zip", reporter: reporter), () => RamTestPro == true),
@@ -1739,7 +1739,7 @@ public static class AppsStage
 			("Installing RAM Test Pro", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\RAM Test Pro", "Publisher", "PCStonks", RegistryValueKind.String), () => RamTestPro == true),
 
 			// cleanup ram test pro
-			("Cleaning up RAM Test Pro files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "ram_test_pro.zip")), () => RamTestPro == true),
+			("Cleaning up RAM Test Pro files", async () => { string path = Path.Combine(Path.GetTempPath(), "ram_test_pro.zip"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => RamTestPro == true),
 
 			// download testmem5
 			("Downloading TestMem5", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/CoolCmd/TestMem5/releases")).RootElement.EnumerateArray().First(release => !release.GetProperty("prerelease").GetBoolean() && release.GetProperty("assets").EnumerateArray().Any(asset => (asset.GetProperty("name").GetString() ?? "").EndsWith(".7z"))).GetProperty("assets").EnumerateArray().First(asset => (asset.GetProperty("name").GetString() ?? "").EndsWith(".7z")).GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "TestMem5.7z"), () => TestMem5 == true),
@@ -1751,7 +1751,7 @@ public static class AppsStage
 			("Installing TestMem5", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\TestMem5", "UninstallString", $@"cmd /c rd /s /q ""{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "TestMem5")}"" & del ""{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), @"Microsoft\Windows\Start Menu\Programs\TestMem5.lnk")}"" & reg delete ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\TestMem5"" /f", RegistryValueKind.String), () => TestMem5 == true),
 			("Installing TestMem5", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\TestMem5", "DisplayIcon", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), @"TestMem5\TM5.exe"), RegistryValueKind.String), () => TestMem5 == true),
 			("Installing TestMem5", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\TestMem5", "Publisher", "CoolCmd", RegistryValueKind.String), () => TestMem5 == true),
-			("Cleaning up TestMem5 files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "TestMem5.7z")), () => TestMem5 == true),
+			("Cleaning up TestMem5 files", async () => { string path = Path.Combine(Path.GetTempPath(), "TestMem5.7z"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => TestMem5 == true),
 
 			// download prime95
 			("Downloading Prime95", async () => await DownloadHelper.Download("https://download.mersenne.ca/gimps/v30/30.19/p95v3019b20.win64.zip", Path.GetTempPath(), "Prime95.zip"), () => Prime95 == true),
@@ -1763,7 +1763,7 @@ public static class AppsStage
 			("Installing Prime95", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Prime95", "UninstallString", $@"cmd /c rd /s /q ""{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Prime95")}"" & del ""{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), @"Microsoft\Windows\Start Menu\Programs\Prime95.lnk")}"" & reg delete ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Prime95"" /f", RegistryValueKind.String), () => Prime95 == true),
 			("Installing Prime95", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Prime95", "DisplayIcon", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), @"Prime95\prime95.exe"), RegistryValueKind.String), () => Prime95 == true),
 			("Installing Prime95", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Prime95", "Publisher", "Mersenne Research, Inc.", RegistryValueKind.String), () => Prime95 == true),
-			("Cleaning up Prime95 files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Prime95.zip")), () => Prime95 == true),
+			("Cleaning up Prime95 files", async () => { string path = Path.Combine(Path.GetTempPath(), "Prime95.zip"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Prime95 == true),
 
 			// download y-cruncher
 			("Downloading y-cruncher", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/Mysticial/y-cruncher/releases/latest")).RootElement.GetProperty("assets").EnumerateArray().First(a => (a.GetProperty("name").GetString() ?? "").Contains(".zip")).GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "y-cruncher.zip", reporter: reporter), () => yCruncher == true),
@@ -1776,7 +1776,7 @@ public static class AppsStage
 			("Installing y-cruncher", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\y-cruncher", "UninstallString", $@"cmd /c rd /s /q ""{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "y-cruncher")}"" & del ""{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), @"Microsoft\Windows\Start Menu\Programs\y-cruncher.lnk")}"" & reg delete ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\y-cruncher"" /f", RegistryValueKind.String), () => yCruncher == true),
 			("Installing y-cruncher", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\y-cruncher", "DisplayIcon", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "y-cruncher", "y-cruncher.exe"), RegistryValueKind.String), () => yCruncher == true),
 			("Installing y-cruncher", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\y-cruncher", "Publisher", "Mysticial", RegistryValueKind.String), () => yCruncher == true),
-			("Cleaning up y-cruncher files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "y-cruncher.zip")), () => yCruncher == true),
+			("Cleaning up y-cruncher files", async () => { string path = Path.Combine(Path.GetTempPath(), "y-cruncher.zip"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => yCruncher == true),
 
 			// download occt
 			("Downloading OCCT", async () => await DownloadHelper.Download("https://www.ocbase.com/download/edition:Personal/os:Windows", Path.GetTempPath(), "OCCT.exe"), () => OCCT == true),
@@ -1795,7 +1795,7 @@ public static class AppsStage
 
 			// install aida64 extreme
 			("Installing AIDA64 Extreme", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "aida64extreme.exe"), Arguments = "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => AIDA64Extreme == true),
-			("Cleaning up AIDA64 Extreme files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "aida64extreme.exe")), () => AIDA64Extreme == true),
+			("Cleaning up AIDA64 Extreme files", async () => { string path = Path.Combine(Path.GetTempPath(), "aida64extreme.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => AIDA64Extreme == true),
 
 			// remove aida64 extreme desktop shortcut
 			("Removing AIDA64 Extreme desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "AIDA64 Extreme.lnk")), () => AIDA64Extreme == true),
@@ -1811,14 +1811,14 @@ public static class AppsStage
 			("Installing Memtest Vulkan", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Memtest Vulkan", "UninstallString", $@"cmd /c rd /s /q ""{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Memtest Vulkan")}"" & del ""{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), @"Microsoft\Windows\Start Menu\Programs\Memtest Vulkan.lnk")}"" & reg delete ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Memtest Vulkan"" /f", RegistryValueKind.String), () => MemtestVulkan == true),
 			("Installing Memtest Vulkan", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Memtest Vulkan", "DisplayIcon", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Memtest Vulkan", "memtest_vulkan.exe"), RegistryValueKind.String), () => MemtestVulkan == true),
 			("Installing Memtest Vulkan", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Memtest Vulkan", "Publisher", "GpuZelenograd", RegistryValueKind.String), () => MemtestVulkan == true),
-			("Cleaning up Memtest Vulkan files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "memtest_vulkan.exe")), () => MemtestVulkan == true),
+			("Cleaning up Memtest Vulkan files", async () => { string path = Path.Combine(Path.GetTempPath(), "memtest_vulkan.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => MemtestVulkan == true),
 
 			// download reaper
 			("Downloading Reaper", async () => await DownloadHelper.Download("https://www.reaper.fm/files/7.x/reaper774_x64-install.exe", Path.GetTempPath(), "reaper_x64-install.exe", reporter: reporter), () => Reaper == true),
 
 			// install reaper
 			("Installing Reaper", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "reaper_x64-install.exe"), Arguments = "/S" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Reaper == true),
-			("Cleaning up Reaper files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "reaper_x64-install.exe")), () => Reaper == true),
+			("Cleaning up Reaper files", async () => { string path = Path.Combine(Path.GetTempPath(), "reaper_x64-install.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Reaper == true),
 
 			// remove reaper desktop shortcut
 			("Removing Reaper desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "REAPER (x64).lnk")), () => Reaper == true),
@@ -1831,7 +1831,7 @@ public static class AppsStage
 
 			// install fl studio
 			("Installing FL Studio", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "flstudio_win64.exe"), Arguments = "/S /ALLUSERS=1" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => FLStudio == true),
-			("Cleaning up FL Studio files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "flstudio_win64.exe")), () => FLStudio == true),
+			("Cleaning up FL Studio files", async () => { string path = Path.Combine(Path.GetTempPath(), "flstudio_win64.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => FLStudio == true),
 
 			// remove fl studio desktop shortcut
 			("Removing FL Studio desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "FL Studio 2025.lnk")), () => FLStudio == true),
@@ -1844,7 +1844,7 @@ public static class AppsStage
 									
 			// install audacity
 			("Installing Audacity", async () => await Process.Start(new ProcessStartInfo { FileName = "msiexec.exe", Arguments = $@"/i ""{Path.Combine(Path.GetTempPath(), "audacity_setup.msi")}"" /qn", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Audacity == true),
-			("Cleaning up Audacity files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "audacity_setup.msi")), () => Audacity == true),
+			("Cleaning up Audacity files", async () => { string path = Path.Combine(Path.GetTempPath(), "audacity_setup.msi"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Audacity == true),
 
 			// pin audacity to the taskbar
 			("Pinning Audacity to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Directory.GetFiles(Directory.GetDirectories(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "Audacity*").FirstOrDefault() ?? "", "Audacity*.lnk").FirstOrDefault() ?? ""), () => Audacity == true),
@@ -1857,21 +1857,21 @@ public static class AppsStage
 
 			// install flexasio
 			("Installing FlexASIO", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "FlexASIO.exe"), Arguments = "/VERYSILENT /NORESTART", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => FlexASIO == true),
-			("Cleaning up FlexASIO files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "FlexASIO.exe")), () => FlexASIO == true),
+			("Cleaning up FlexASIO files", async () => { string path = Path.Combine(Path.GetTempPath(), "FlexASIO.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => FlexASIO == true),
 
 			// download flexasio gui
 			("Downloading FlexASIO GUI", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/flipswitchingmonkey/FlexASIO_GUI/releases")).RootElement.EnumerateArray().First(release => !release.GetProperty("prerelease").GetBoolean() && release.GetProperty("assets").EnumerateArray().Any(asset => (asset.GetProperty("name").GetString() ?? "").EndsWith(".exe"))).GetProperty("assets").EnumerateArray().First(asset => (asset.GetProperty("name").GetString() ?? "").EndsWith(".exe")).GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "FlexASIO.GUIInstaller.exe", reporter: reporter), () => FlexASIO == true),
 
 			// install flexasio gui
 			("Installing FlexASIO GUI", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "FlexASIO.GUIInstaller.exe"), Arguments = "/VERYSILENT /NORESTART", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => FlexASIO == true),
-			("Cleaning up FlexASIO GUI files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "FlexASIO.GUIInstaller.exe")), () => FlexASIO == true),
+			("Cleaning up FlexASIO GUI files", async () => { string path = Path.Combine(Path.GetTempPath(), "FlexASIO.GUIInstaller.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => FlexASIO == true),
 
 			// download asio4all
 			("Downloading ASIO4ALL", async () => await DownloadHelper.Download("https://asio4all.org/downloads/ASIO4ALL_2_21.exe", Path.GetTempPath(), "ASIO4ALL.exe", reporter: reporter), () => ASIO4ALL == true),
 
 			// install asio4all
 			("Installing ASIO4ALL", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "ASIO4ALL.exe"), Arguments = "/S", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => ASIO4ALL == true),
-			("Cleaning up ASIO4ALL files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "ASIO4ALL.exe")), () => ASIO4ALL == true),
+			("Cleaning up ASIO4ALL files", async () => { string path = Path.Combine(Path.GetTempPath(), "ASIO4ALL.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => ASIO4ALL == true),
 
 			// remove asio4all desktop shortcut
 			("Removing ASIO4ALL desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "ASIO4ALL Web Site.lnk")), () => ASIO4ALL == true),
@@ -1882,15 +1882,15 @@ public static class AppsStage
 			// install arturia midi driver
 			("Installing Arturia MIDI Driver", async () => await ExtractHelper.Extract(Path.Combine(Path.GetTempPath(), "Arturia_USBMidi.exe"), Path.Combine(Path.GetTempPath(), "Arturia_USBMidi")), () => ArturiaMidiControlCenter == true),
 			("Installing Arturia MIDI Driver", async () => await Process.Start(new ProcessStartInfo { FileName = "msiexec.exe", Arguments = $@"/i ""{Path.Combine(Path.GetTempPath(), "Arturia_USBMidi", "x64", "Arturia_USBMidi_v1.7.0_2025-08-20.msi")}"" /qn", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => ArturiaMidiControlCenter == true),
-			("Cleaning up Arturia MIDI Driver files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Arturia_USBMidi.exe")), () => ArturiaMidiControlCenter == true),
-			("Cleaning up Arturia MIDI Driver files", async () => Directory.Delete(Path.Combine(Path.GetTempPath(), "Arturia_USBMidi"), true), () => ArturiaMidiControlCenter == true),
+			("Cleaning up Arturia MIDI Driver files", async () => { string path = Path.Combine(Path.GetTempPath(), "Arturia_USBMidi.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => ArturiaMidiControlCenter == true),
+			("Cleaning up Arturia MIDI Driver files", async () => { string path = Path.Combine(Path.GetTempPath(), "Arturia_USBMidi"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => Directory.Delete(path, true)); }, () => ArturiaMidiControlCenter == true),
 
 			// download midi control center
 			("Downloading Arturia MIDI Control Center", async () => await DownloadHelper.Download("https://dl.arturia.net/products/mccu/soft/MIDI_Control_Center__1_23_0_134.exe", Path.GetTempPath(), "MIDI_Control_Center.exe", reporter: reporter), () => ArturiaMidiControlCenter == true),
 
 			// install midi control center
 			("Installing Arturia MIDI Control Center", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "MIDI_Control_Center.exe"), Arguments = @"/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /COMPONENTS=""mcc""", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => ArturiaMidiControlCenter == true),
-			("Cleaning up Arturia MIDI Control Center files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "MIDI_Control_Center.exe")), () => ArturiaMidiControlCenter == true),
+			("Cleaning up Arturia MIDI Control Center files", async () => { string path = Path.Combine(Path.GetTempPath(), "MIDI_Control_Center.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => ArturiaMidiControlCenter == true),
 
 			// remove midi control center desktop shortcut
 			("Removing Arturia MIDI Control Center desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "MIDI Control Center.lnk")), () => ArturiaMidiControlCenter == true),
@@ -1901,8 +1901,8 @@ public static class AppsStage
 			// install voicemeeter
 			("Installing Voicemeeter", async () => await ExtractHelper.Extract(Path.Combine(Path.GetTempPath(), "VoicemeeterSetup.zip"), Path.Combine(Path.GetTempPath(), "VoicemeeterSetup")), () => Voicemeeter == true),
 			("Installing Voicemeeter", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "VoicemeeterSetup", "voicemeetersetup.exe"), Arguments = "-i -h", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Voicemeeter == true),
-			("Cleaning up Voicemeeter files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "VoicemeeterSetup.zip")), () => Voicemeeter == true),
-			("Cleaning up Voicemeeter files", async () => Directory.Delete(Path.Combine(Path.GetTempPath(), "VoicemeeterSetup"), true), () => Voicemeeter == true),
+			("Cleaning up Voicemeeter files", async () => { string path = Path.Combine(Path.GetTempPath(), "VoicemeeterSetup.zip"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Voicemeeter == true),
+			("Cleaning up Voicemeeter files", async () => { string path = Path.Combine(Path.GetTempPath(), "VoicemeeterSetup"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => Directory.Delete(path, true)); }, () => Voicemeeter == true),
 
 			// download davinci resolve
 			("Downloading DaVinci Resolve", async () => await DownloadHelper.Download(new[] { "https://github.com/tinodin/AutoOS-Resources/releases/download/v1.0.0.0/DaVinci_Resolve_21.0_Windows.part1.rar", "https://github.com/tinodin/AutoOS-Resources/releases/download/v1.0.0.0/DaVinci_Resolve_21.0_Windows.part2.rar" }, Path.GetTempPath(), new[] { "DaVinci_Resolve.part1.rar", "DaVinci_Resolve.part2.rar" }, reporter: reporter), () => DaVinciResolve == true),
@@ -1911,16 +1911,16 @@ public static class AppsStage
 			("Installing DaVinci Resolve", async () => await ExtractHelper.Extract(Path.Combine(Path.GetTempPath(), "DaVinci_Resolve.part1.rar"), Path.Combine(Path.GetTempPath(), "DaVinci_Resolve")), () => DaVinciResolve == true),
 			("Installing DaVinci Resolve", async () => await ExtractHelper.Extract(Path.Combine(Path.GetTempPath(), "DaVinci_Resolve", "DaVinci_Resolve_21.0_Windows.exe"), Path.Combine(Path.GetTempPath(), "DaVinci_Resolve", "DaVinci_Resolve_21.0_Windows")), () => DaVinciResolve == true),
 			("Installing DaVinci Resolve", async () => await Process.Start(new ProcessStartInfo { FileName = "msiexec.exe", Arguments = $@"/i ""{Path.Combine(Path.GetTempPath(), "DaVinci_Resolve", "DaVinci_Resolve_21.0_Windows", "ResolveInstaller.msi")}"" /qn", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => DaVinciResolve == true),
-			("Cleaning up DaVinci Resolve files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "DaVinci_Resolve.part1.rar")), () => DaVinciResolve == true),
-			("Cleaning up DaVinci Resolve files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "DaVinci_Resolve.part2.rar")), () => DaVinciResolve == true),
-			("Cleaning up DaVinci Resolve files", async () => Directory.Delete(Path.Combine(Path.GetTempPath(), "DaVinci_Resolve"), true), () => DaVinciResolve == true),
+			("Cleaning up DaVinci Resolve files", async () => { string path = Path.Combine(Path.GetTempPath(), "DaVinci_Resolve.part1.rar"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => DaVinciResolve == true),
+			("Cleaning up DaVinci Resolve files", async () => { string path = Path.Combine(Path.GetTempPath(), "DaVinci_Resolve.part2.rar"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => DaVinciResolve == true),
+			("Cleaning up DaVinci Resolve files", async () => { string path = Path.Combine(Path.GetTempPath(), "DaVinci_Resolve"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => Directory.Delete(path, true)); }, () => DaVinciResolve == true),
 
 			// download blender
 			("Downloading Blender", async () => await DownloadHelper.Download("https://download.blender.org/release/Blender5.1/blender-5.1.2-windows-x64.msi", Path.GetTempPath(), "blender-windows-x64.msi", reporter: reporter), () => Blender == true),
 
 			// install blender
 			("Installing Blender", async () => await Process.Start(new ProcessStartInfo { FileName = "msiexec.exe", Arguments = $@"/i ""{Path.Combine(Path.GetTempPath(), "blender-windows-x64.msi")}"" /qn", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Blender == true),
-			("Cleaning up Blender files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "blender-windows-x64.msi")), () => Blender == true),
+			("Cleaning up Blender files", async () => { string path = Path.Combine(Path.GetTempPath(), "blender-windows-x64.msi"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Blender == true),
 
 			// remove blender desktop shortcut
 			("Removing Blender desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Blender 5.1.lnk")), () => Blender == true),
@@ -1930,7 +1930,7 @@ public static class AppsStage
 
 			// install capcut
 			("Installing CapCut", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "CapCut.exe"), Arguments = "/silent_install=1", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => CapCut == true),
-			("Cleaning up CapCut files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "CapCut.exe")), () => CapCut == true),
+			("Cleaning up CapCut files", async () => { string path = Path.Combine(Path.GetTempPath(), "CapCut.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => CapCut == true),
 
 			// remove capcut desktop shortcut
 			("Removing CapCut desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "CapCut.lnk")), () => CapCut == true),
@@ -1948,7 +1948,7 @@ public static class AppsStage
 			("Installing LosslessCut", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\LosslessCut", "Version", FileVersionInfo.GetVersionInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "LosslessCut", "LosslessCut.exe")).ProductVersion ?? "", RegistryValueKind.String), () => LosslessCut == true),
 			("Installing LosslessCut", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\LosslessCut", "Publisher", "Mikael Finstad", RegistryValueKind.String), () => LosslessCut == true),
 			("Installing LosslessCut", async () => await Task.Delay(500), () => LosslessCut == true),
-			("Cleaning up LosslessCut files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "LosslessCut-win-x64.7z")), () => LosslessCut == true),
+			("Cleaning up LosslessCut files", async () => { string path = Path.Combine(Path.GetTempPath(), "LosslessCut-win-x64.7z"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => LosslessCut == true),
 
 			// download netflix
 			("Downloading Netflix", async () => await StoreHelper.Download("4DF9E0F8.Netflix_mcm4njqhnhss8", reporter: reporter), () => Netflix == true),
@@ -1973,7 +1973,7 @@ public static class AppsStage
 
 			// install mpc-qt
 			("Installing MPC-QT", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "mpc-qt-win-x64-installer.exe"), Arguments = "/S", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => MpcQt == true),
-			("Cleaning up MPC-QT files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "mpc-qt-win-x64-installer.exe")), () => MpcQt == true),
+			("Cleaning up MPC-QT files", async () => { string path = Path.Combine(Path.GetTempPath(), "mpc-qt-win-x64-installer.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => MpcQt == true),
 
 			// download mpv
 			("Downloading mpv", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/zhongfly/mpv-winbuild/releases")).RootElement.EnumerateArray().First(release => !release.GetProperty("prerelease").GetBoolean() && release.GetProperty("assets").EnumerateArray().Any(asset => (asset.GetProperty("name").GetString() ?? "").StartsWith("mpv-x86_64-v3-") && (asset.GetProperty("name").GetString() ?? "").EndsWith(".7z"))).GetProperty("assets").EnumerateArray().First(asset => (asset.GetProperty("name").GetString() ?? "").StartsWith("mpv-x86_64-v3-") && (asset.GetProperty("name").GetString() ?? "").EndsWith(".7z")).GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "mpv-x86_64-v3.7z"), () => MPV == true),
@@ -1982,14 +1982,14 @@ public static class AppsStage
 			("Installing mpv", async () => await ExtractHelper.Extract(Path.Combine(Path.GetTempPath(), "mpv-x86_64-v3.7z"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "mpv")), () => MPV == true),
 			("Installing mpv", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "mpv", "mpv.exe"), Arguments = "--register", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => MPV == true),
 			("Installing mpv", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\mpv", "UninstallString", $@"cmd.exe /c """"{Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}\mpv\mpv.exe"" --no-config --unregister && rmdir /s /q ""{Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}\mpv""""", RegistryValueKind.String), () => MPV == true),
-			("Cleaning up mpv files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "mpv-x86_64-v3.7z")), () => MPV == true),
+			("Cleaning up mpv files", async () => { string path = Path.Combine(Path.GetTempPath(), "mpv-x86_64-v3.7z"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => MPV == true),
 
 			// download vlc
 			("Downloading VLC", async () => await DownloadHelper.Download("https://mirror.solnet.ch/videolan/vlc/3.0.23/win64/vlc-3.0.23-win64.exe", Path.GetTempPath(), "vlc-win64.exe", reporter: reporter), () => VLC == true),
 
 			// install vlc
 			("Installing VLC", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "vlc-win64.exe"), Arguments = "/L=1033 /S", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => VLC == true),
-			("Cleaning up VLC files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "vlc-win64.exe")), () => VLC == true),
+			("Cleaning up VLC files", async () => { string path = Path.Combine(Path.GetTempPath(), "vlc-win64.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => VLC == true),
 
 			// remove vlc desktop shortcut
 			("Removing VLC desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "VLC media player.lnk")), () => VLC == true),
@@ -2013,8 +2013,8 @@ public static class AppsStage
 			("Installing Office", async () => { var doc = XDocument.Load(Path.Combine(Path.GetTempPath(), "configuration.xml")); doc.Root!.Descendants("ExcludeApp").Where(x => (string)x.Attribute("ID")! == "OutlookForWindows").Remove(); doc.Save(Path.Combine(Path.GetTempPath(), "configuration.xml")); }, () => Outlook == true),
 			("Installing Office", async () => { var doc = XDocument.Load(Path.Combine(Path.GetTempPath(), "configuration.xml")); doc.Root!.Descendants("ExcludeApp").Where(x => (string)x.Attribute("ID")! == "OneDrive").Remove(); doc.Save(Path.Combine(Path.GetTempPath(), "configuration.xml")); }, () => OneDrive == true),
 			("Installing Office", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "setup.exe"), Arguments = $@"/configure ""{Path.Combine(Path.GetTempPath(), "configuration.xml")}""" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Word == true || Excel == true || PowerPoint == true || OneNote == true || Teams == true || Outlook == true || OneDrive == true),
-			("Cleaning up Office files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "setup.exe")), () => Word == true || Excel == true || PowerPoint == true || OneNote == true || Teams == true || Outlook == true || OneDrive == true),
-			("Cleaning up Office files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "configuration.xml")), () => Word == true || Excel == true || PowerPoint == true || OneNote == true || Teams == true || Outlook == true || OneDrive == true),
+			("Cleaning up Office files", async () => { string path = Path.Combine(Path.GetTempPath(), "setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Word == true || Excel == true || PowerPoint == true || OneNote == true || Teams == true || Outlook == true || OneDrive == true),
+			("Cleaning up Office files", async () => { string path = Path.Combine(Path.GetTempPath(), "configuration.xml"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Word == true || Excel == true || PowerPoint == true || OneNote == true || Teams == true || Outlook == true || OneDrive == true),
 			
 			// disable office startup entries
 			("Disabling Office startup entries", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_CLASSES_ROOT\PROTOCOLS\Filter\AutorunsDisabled\text/xml\CLSID", "", "{807583E5-5146-11D5-A672-00B0D022E945}", RegistryValueKind.String), () => Word == true || Excel == true || PowerPoint == true || OneNote == true || Teams == true || Outlook == true || OneDrive == true),
@@ -2151,8 +2151,8 @@ public static class AppsStage
 			// install capframex
 			("Installing CapFrameX", async () => await ExtractHelper.Extract(Path.Combine(Path.GetTempPath(), "release_installer.zip"), Path.Combine(Path.GetTempPath(), "CapFrameX")), () => CapFrameX == true),
 			("Installing CapFrameX", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "CapFrameX", "CapFrameXBootstrapper.exe"), Arguments = "/quiet /norestart" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => CapFrameX == true),
-			("Cleaning up CapFrameX files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "release_installer.zip")), () => CapFrameX == true),
-			("Cleaning up CapFrameX files", async () => Directory.Delete(Path.Combine(Path.GetTempPath(), "CapFrameX"), true), () => CapFrameX == true),
+			("Cleaning up CapFrameX files", async () => { string path = Path.Combine(Path.GetTempPath(), "release_installer.zip"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => CapFrameX == true),
+			("Cleaning up CapFrameX files", async () => { string path = Path.Combine(Path.GetTempPath(), "CapFrameX"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => Directory.Delete(path, true)); }, () => CapFrameX == true),
 
 			// remove capframex desktop shortcut
 			("Removing CapFrameX desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "CapFrameX.lnk")), () => CapFrameX == true),
@@ -2163,7 +2163,7 @@ public static class AppsStage
 			// install minitool partition wizard
 			("Installing MiniTool Partition Wizard", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "pw-free-offline.exe"), Arguments = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => MinitoolPartitionWizard == true),
 			("Installing MiniTool Partition Wizard", async () => { while (new[] { "partitionwizard", "OpenWith", "msedge" }.All(name => Process.GetProcessesByName(name).Length == 0)) await Task.Delay(500); foreach (Process process in new[] { "partitionwizard", "OpenWith", "msedge" }.SelectMany(Process.GetProcessesByName)) { process.Kill(); process.WaitForExit(); } }, () => MinitoolPartitionWizard == true),
-			("Cleaning up MiniTool Partition Wizard files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "pw-free-offline.exe")), () => MinitoolPartitionWizard == true),
+			("Cleaning up MiniTool Partition Wizard files", async () => { string path = Path.Combine(Path.GetTempPath(), "pw-free-offline.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => MinitoolPartitionWizard == true),
 
 			// remove minitool partition wizard desktop shortcut
 			("Removing MiniTool Partition Wizard desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "MiniTool Partition Wizard.lnk")), () => MinitoolPartitionWizard == true),
@@ -2182,7 +2182,7 @@ public static class AppsStage
 
 			// install aomei partition assistant
 			("Installing AOMEI Partition Assistant", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "PAssist_ProDemo.exe"), Arguments = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => AomeiPartitionAssistant == true),
-			("Cleaning up AOMEI Partition Assistant files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "PAssist_ProDemo.exe")), () => AomeiPartitionAssistant == true),
+			("Cleaning up AOMEI Partition Assistant files", async () => { string path = Path.Combine(Path.GetTempPath(), "PAssist_ProDemo.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => AomeiPartitionAssistant == true),
 
 			// activate aomei partition assistant
 			("Activating AOMEI Partition Assistant", async () => { var iniHelper = new InIHelper(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "AOMEI Partition Assistant", "cfg.ini")); iniHelper.AddValue("KEY", "AOPR-CM948-83ZJZ-4NQW1", "CONFIG"); }, () => AomeiPartitionAssistant == true),
@@ -2195,21 +2195,21 @@ public static class AppsStage
 
 			// install wiztree
 			("Installing WizTree", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "wiztree_setup.exe"), Arguments = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP- /MERGETASKS=!desktopicon" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => WizTree == true),
-			("Cleaning up WizTree files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "wiztree_setup.exe")), () => WizTree == true),
+			("Cleaning up WizTree files", async () => { string path = Path.Combine(Path.GetTempPath(), "wiztree_setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => WizTree == true),
 
 			// download crystal disk info
-			("Downloading CrystalDiskInfo", async () => await DownloadHelper.Download("https://deac-ams.dl.sourceforge.net/project/crystaldiskinfo/9.9.1/CrystalDiskInfo9_9_1.exe?viasf=1&fid=8679e6d10c13a1ea", Path.GetTempPath(), "CrystalDiskInfo.exe", reporter: reporter), () => CrystalDiskInfo == true),
+			("Downloading CrystalDiskInfo", async () => await DownloadHelper.Download("https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/Files/CrystalDiskInfo/CrystalDiskInfo9_9_2.exe", Path.GetTempPath(), "CrystalDiskInfo.exe", reporter: reporter), () => CrystalDiskInfo == true),
 
 			// install crystal disk info
 			("Installing CrystalDiskInfo", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "CrystalDiskInfo.exe"), Arguments = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP- /MERGETASKS=!desktopicon" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => CrystalDiskInfo == true),
-			("Cleaning up CrystalDiskInfo files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "CrystalDiskInfo.exe")), () => CrystalDiskInfo == true),
+			("Cleaning up CrystalDiskInfo files", async () => { string path = Path.Combine(Path.GetTempPath(), "CrystalDiskInfo.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => CrystalDiskInfo == true),
 
 			// download crystal disk mark
-			("Downloading CrystalDiskMark", async () => await DownloadHelper.Download("https://sf-eu-introserv-3.dl.sourceforge.net/project/crystaldiskmark/9.0.3/CrystalDiskMark9_0_3.exe?viasf=1&fid=3146e97b3c195781", Path.GetTempPath(), "CrystalDiskMark.exe", reporter: reporter), () => CrystalDiskMark == true),
+			("Downloading CrystalDiskMark", async () => await DownloadHelper.Download("https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/Files/CrystalDiskMark/CrystalDiskMark9_0_3.exe", Path.GetTempPath(), "CrystalDiskMark.exe", reporter: reporter), () => CrystalDiskMark == true),
 
 			// install crystal disk mark
 			("Installing CrystalDiskMark", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "CrystalDiskMark.exe"), Arguments = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP- /MERGETASKS=!desktopicon" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => CrystalDiskMark == true),
-			("Cleaning up CrystalDiskMark files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "CrystalDiskMark.exe")), () => CrystalDiskMark == true),
+			("Cleaning up CrystalDiskMark files", async () => { string path = Path.Combine(Path.GetTempPath(), "CrystalDiskMark.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => CrystalDiskMark == true),
 
 			// remove crystal disk mark desktop shortcut
 			("Removing CrystalDiskMark desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "CrystalDiskMark 9.lnk")), () => CrystalDiskMark == true),
@@ -2221,7 +2221,7 @@ public static class AppsStage
 			("Installing Proton VPN", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "ProtonVPN_x64.exe"), Arguments = "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => ProtonVPN == true),
 			("Installing Proton VPN", async () => { foreach (Process process in Process.GetProcessesByName("ProtonVPN.Client")) { process.Kill(); process.WaitForExit(); } }, () => ProtonVPN == true),
 			("Installing Proton VPN", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", "Proton VPN", new byte[] { 0x03 }, RegistryValueKind.Binary), () => ProtonVPN == true),
-			("Cleaning up Proton VPN files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "ProtonVPN_x64.exe")), () => ProtonVPN == true),
+			("Cleaning up Proton VPN files", async () => { string path = Path.Combine(Path.GetTempPath(), "ProtonVPN_x64.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => ProtonVPN == true),
 
 			// remove proton vpn desktop shortcut
 			("Removing Proton VPN desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Proton VPN.lnk")), () => ProtonVPN == true),
@@ -2231,7 +2231,7 @@ public static class AppsStage
 			
 			// install bulk crap uninstaller
 			("Installing Bulk Crap Uninstaller", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "BCUninstaller_setup.exe"), Arguments = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => BulkCrapUninstaller == true),
-			("Cleaning up Bulk Crap Uninstaller files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "BCUninstaller_setup.exe")), () => BulkCrapUninstaller == true),
+			("Cleaning up Bulk Crap Uninstaller files", async () => { string path = Path.Combine(Path.GetTempPath(), "BCUninstaller_setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => BulkCrapUninstaller == true),
 
 			// remove bulk crap uninstaller desktop shortcut
 			("Removing Bulk Crap Uninstaller desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "BCUninstaller.lnk")), () => BulkCrapUninstaller == true),
@@ -2248,7 +2248,7 @@ public static class AppsStage
 			// install anydesk
 			("Installing AnyDesk", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "AnyDesk.exe"), Arguments = @"--install ""C:\Program Files (x86)\AnyDesk"" --start-with-win --silent --create-shortcuts --create-desktop-icon" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => AnyDesk == true),
 			("Installing AnyDesk", async () => { foreach (Process process in Process.GetProcessesByName("AnyDesk")) { process.Kill(); process.WaitForExit(); } }, () => AnyDesk == true),
-			("Cleaning up AnyDesk files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "AnyDesk.exe")), () => AnyDesk == true),
+			("Cleaning up AnyDesk files", async () => { string path = Path.Combine(Path.GetTempPath(), "AnyDesk.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => AnyDesk == true),
 		
 			// disable anydesk startup entries 
 			("Disabling AnyDesk startup entries", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\AnyDesk", "Start", 3, RegistryValueKind.DWord), () => AnyDesk == true),
@@ -2264,7 +2264,7 @@ public static class AppsStage
 			// install rustdesk
 			("Installing RustDesk", async () => await Process.Start(new ProcessStartInfo { FileName = "msiexec.exe", Arguments = $@"/i ""{Path.Combine(Path.GetTempPath(), "rustdesk-x86_64.msi")}"" /qn" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => RustDesk == true),
 			("Installing RustDesk", async () => { foreach (Process process in Process.GetProcessesByName("RustDesk")) { process.Kill(); process.WaitForExit(); } }, () => RustDesk == true),
-			("Cleaning up RustDesk files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "rustdesk-x86_64.msi")), () => RustDesk == true),
+			("Cleaning up RustDesk files", async () => { string path = Path.Combine(Path.GetTempPath(), "rustdesk-x86_64.msi"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => RustDesk == true),
 
 			// disable rustdesk startup entry
 			("Disabling RustDesk startup entry", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\RustDesk", "Start", 4, RegistryValueKind.DWord), () => RustDesk == true),
@@ -2279,14 +2279,14 @@ public static class AppsStage
 			
 			// install apollo
 			("Installing Apollo", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "Apollo.exe"), Arguments = "/S", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Apollo == true),
-			("Cleaning up Apollo files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Apollo.exe")), () => Apollo == true),
+			("Cleaning up Apollo files", async () => { string path = Path.Combine(Path.GetTempPath(), "Apollo.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Apollo == true),
 
 			// download moonlight
 			("Downloading Moonlight", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/moonlight-stream/moonlight-qt/releases")).RootElement.EnumerateArray().First(release => !release.GetProperty("prerelease").GetBoolean() && release.GetProperty("assets").EnumerateArray().Any(asset => (asset.GetProperty("name").GetString() ?? "").EndsWith(".exe"))).GetProperty("assets").EnumerateArray().First(asset => (asset.GetProperty("name").GetString() ?? "").EndsWith(".exe")).GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "MoonlightSetup.exe", reporter: reporter), () => Moonlight == true),
 			
 			// install moonlight
 			("Installing Moonlight", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "MoonlightSetup.exe"), Arguments = "/quiet /norestart", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Moonlight == true),
-			("Cleaning up Moonlight files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "MoonlightSetup.exe")), () => Moonlight == true),
+			("Cleaning up Moonlight files", async () => { string path = Path.Combine(Path.GetTempPath(), "MoonlightSetup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Moonlight == true),
 
 			// remove moonlight desktop shortcut
 			("Removing Moonlight desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Moonlight.lnk")), () => Moonlight == true),
@@ -2296,7 +2296,7 @@ public static class AppsStage
 			
 			// install autohotkey
 			("Installing AutoHotkey", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "AutoHotkey_setup.exe"), Arguments = "/silent", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => AutoHotkey == true),
-			("Cleaning up AutoHotkey files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "AutoHotkey_setup.exe")), () => AutoHotkey == true),
+			("Cleaning up AutoHotkey files", async () => { string path = Path.Combine(Path.GetTempPath(), "AutoHotkey_setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => AutoHotkey == true),
 
 			// download emeditor
 			("Downloading EmEditor", async () => await StoreHelper.Download("Emurasoft.EmEditor64UWP_ws7rg9hnwrpxm", reporter: reporter), () => EmEditor == true),
@@ -2318,21 +2318,21 @@ public static class AppsStage
 
 			// install qbittorrent
 			("Installing qBittorrent", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "qbittorrent_x64_setup.exe"), Arguments = "/S", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => QBittorrent == true),
-			("Cleaning up qBittorrent files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "qbittorrent_x64_setup.exe")), () => QBittorrent == true),
+			("Cleaning up qBittorrent files", async () => { string path = Path.Combine(Path.GetTempPath(), "qbittorrent_x64_setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => QBittorrent == true),
 
 			// download deluge
 			("Downloading Deluge", async () => await DownloadHelper.Download("http://download.deluge-torrent.org/windows/deluge-2.2.0-win64-setup.exe", Path.GetTempPath(), "deluge-win64-setup.exe", reporter: reporter), () => Deluge == true),
 
 			// install deluge
 			("Installing Deluge", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "deluge-win64-setup.exe"), Arguments = "/S", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Deluge == true),
-			("Cleaning up Deluge files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "deluge-win64-setup.exe")), () => Deluge == true),
+			("Cleaning up Deluge files", async () => { string path = Path.Combine(Path.GetTempPath(), "deluge-win64-setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Deluge == true),
 
 			// download free download manager
 			("Downloading Free Download Manager", async () => await DownloadHelper.Download("https://files2.freedownloadmanager.org/6/latest/fdm_x64_setup.exe", Path.GetTempPath(), "fdm_x64_setup.exe", reporter: reporter), () => FreeDownloadManager == true),
 
 			// install free download manager
 			("Installing Free Download Manager", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "fdm_x64_setup.exe"), Arguments = "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => FreeDownloadManager == true),
-			("Cleaning up Free Download Manager files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "fdm_x64_setup.exe")), () => FreeDownloadManager == true),
+			("Cleaning up Free Download Manager files", async () => { string path = Path.Combine(Path.GetTempPath(), "fdm_x64_setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => FreeDownloadManager == true),
 
             // remove free download manager desktop shortcut
 			("Removing Free Download Manager desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Free Download Manager.lnk")), () => FreeDownloadManager == true),

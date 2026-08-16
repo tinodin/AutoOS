@@ -38,7 +38,11 @@ public sealed partial class TreeGridSelectionController : TreeGridRowSelectionCo
 		_treeGrid = treeGrid;
 		treeGrid.LostFocus += (_, _) =>
 		{
-			var focused = FocusManager.GetFocusedElement(_treeGrid.XamlRoot) as DependencyObject;
+			XamlRoot xamlRoot = _treeGrid.XamlRoot;
+			if (xamlRoot == null)
+				return;
+
+			var focused = FocusManager.GetFocusedElement(xamlRoot) as DependencyObject;
 
 			if (focused == null)
 			{

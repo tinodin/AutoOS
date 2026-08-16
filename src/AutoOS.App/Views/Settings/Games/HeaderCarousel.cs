@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using AutoOS.Core.Helpers.Games;
 using AutoOS.Core.Data.Models.Games;
+using AutoOS.Core.Helpers.Logging;
 using AutoOS.Core.Helpers.Processes;
 using AutoOS.Core.Helpers.Services;
 using Microsoft.UI.Xaml.Input;
@@ -704,6 +705,9 @@ public partial class HeaderCarousel : ItemsControl
 	{
 		foreach (GameModel game in games)
 		{
+			if (string.IsNullOrEmpty(game.BackgroundImageUrl))
+				LogHelper.LogError(new UriFormatException($"No background image found for game: {game.Title ?? "Unknown"} ({game.Launcher ?? "Unknown Launcher"})"));
+
 			Items.Add(new HeaderCarouselItem
 			{
 				Launcher = game.Launcher ?? "",
@@ -958,7 +962,7 @@ public partial class HeaderCarousel : ItemsControl
 			if (playSound)
 				ElementSoundPlayer.Play(ElementSoundKind.Focus);
 
-			if (selectedTile.BackgroundImageUrl != null && backDropImage.ImageUrl?.ToString() != selectedTile.BackgroundImageUrl)
+			if (!string.IsNullOrEmpty(selectedTile.BackgroundImageUrl) && backDropImage.ImageUrl?.ToString() != selectedTile.BackgroundImageUrl)
 				backDropImage.ImageUrl = new Uri(selectedTile.BackgroundImageUrl);
 
 			if (MetadataGrid.Visibility == Visibility.Collapsed)

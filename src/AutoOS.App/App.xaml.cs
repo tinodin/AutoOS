@@ -193,12 +193,24 @@ public partial class App : Application
 
 	internal static async Task ShowErrorMessage(Exception ex)
 	{
-		if (MainWindow?.DispatcherQueue != null)
+		if (MainWindow?.Content is not null && MainWindow.DispatcherQueue is not null)
 		{
-			MainWindow.DispatcherQueue.TryEnqueue(async () =>
+			try
 			{
-				await MessageBox.ShowErrorAsync(MainWindow, ex.Message, "Unexpected Error");
-			});
+				MainWindow.DispatcherQueue.TryEnqueue(async () =>
+				{
+					try
+					{
+						await MessageBox.ShowErrorAsync(MainWindow, ex.Message, "Unexpected Error");
+					}
+					catch
+					{
+					}
+				});
+			}
+			catch
+			{
+			}
 		}
 
 		try

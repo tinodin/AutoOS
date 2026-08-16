@@ -6,6 +6,7 @@ using AutoOS.Core.Helpers.Extract;
 using AutoOS.Core.Helpers.GPU;
 using AutoOS.Core.Data.Models.GPU;
 using AutoOS.Core.Helpers.Monitor;
+using AutoOS.Core.Helpers.Processes;
 using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.Shortcut;
 using Microsoft.VisualBasic.FileIO;
@@ -77,7 +78,7 @@ public static class GraphicsStage
 			("Installing MSI Afterburner", async () => ShortcutHelper.Create(Path.Combine(Path.GetPathRoot(Environment.SystemDirectory)!, "Users", "Default", "AppData", "Roaming", "Microsoft", "Windows", "Start Menu", "Programs", "MSI Afterburner", "SDK", "MSI Afterburner localization reference.lnk"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "MSI Afterburner", "SDK", "Doc", "Localization reference.pdf")), null),
 			("Installing MSI Afterburner", async () => ShortcutHelper.Create(Path.Combine(Path.GetPathRoot(Environment.SystemDirectory)!, "Users", "Default", "AppData", "Roaming", "Microsoft", "Windows", "Start Menu", "Programs", "MSI Afterburner", "SDK", "MSI Afterburner skin format reference.lnk"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "MSI Afterburner", "SDK", "Doc", "USF skin format reference.pdf")), null),
 			("Installing MSI Afterburner", async () => ShortcutHelper.Create(Path.Combine(Path.GetPathRoot(Environment.SystemDirectory)!, "Users", "Default", "AppData", "Roaming", "Microsoft", "Windows", "Start Menu", "Programs", "MSI Afterburner", "SDK", "Samples.lnk"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "MSI Afterburner", "SDK", "Samples")), null),
-			("Cleaning up MSI Afterburner files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "MSI Afterburner.zip")), null),
+			("Cleaning up MSI Afterburner files", async () => { string path = Path.Combine(Path.GetTempPath(), "MSI Afterburner.zip"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, null),
 
 			// import msi afterburner profile
 			("Importing MSI Afterburner profile", async () => File.Copy(localSettings.Values["MsiProfile"]?.ToString() ?? "", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "MSI Afterburner", "Profiles", Path.GetFileName(localSettings.Values["MsiProfile"]?.ToString() ?? ""))), () => MSI == true),
@@ -112,9 +113,9 @@ public static class GraphicsStage
 			("Installing OBS Studio", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\OBS Studio", "UninstallString", @$"""{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "obs-studio", "uninstall.exe")}""", RegistryValueKind.String), null),
 			("Installing OBS Studio", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\OBS Studio", "QuietUninstallString", @$"""{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "obs-studio", "uninstall.exe")}"" /S", RegistryValueKind.String), null),
 			("Installing OBS Studio", async () => ShortcutHelper.Create(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "OBS Studio.lnk"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "obs-studio", "bin", "64bit", "obs64.exe"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "obs-studio", "bin", "64bit")), null),
-			("Cleaning up OBS Studio files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "OBS-Studio-Windows-x64-Installer.exe")), null),
-			("Cleaning up OBS Studio files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "obs-studio.zip")), null),
-			("Cleaning up OBS Studio files", async () => Directory.Delete(Path.Combine(Path.GetTempPath(), "obs-studio"), true), null)
+			("Cleaning up OBS Studio files", async () => { string path = Path.Combine(Path.GetTempPath(), "OBS-Studio-Windows-x64-Installer.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, null),
+			("Cleaning up OBS Studio files", async () => { string path = Path.Combine(Path.GetTempPath(), "obs-studio.zip"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, null),
+			("Cleaning up OBS Studio files", async () => { string path = Path.Combine(Path.GetTempPath(), "obs-studio"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => Directory.Delete(path, true)); }, null)
 		};
 
 		var gpus = PreparingStage.GPUs.Where(gpu => gpu.Install).ToList();

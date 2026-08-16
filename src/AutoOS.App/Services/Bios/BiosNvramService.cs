@@ -24,13 +24,14 @@ public sealed class BiosNvramService : IBiosNvramService
 
 		HiiHelper.ApplySuppression(settings, blobs, qidMap);
 
+		settings.RemoveAll(setting =>
+			!blobs.TryGetValue((setting.VariableName, setting.VariableGuid), out byte[]? blob)
+			|| setting.Width < 1
+			|| setting.Offset + setting.Width > blob.Length);
+
 		foreach (Setting setting in settings)
 		{
-			if (!blobs.TryGetValue((setting.VariableName, setting.VariableGuid), out byte[]? blob))
-				continue;
-
-			if (setting.Width < 1 || setting.Offset + setting.Width > blob.Length)
-				continue;
+			byte[] blob = blobs[(setting.VariableName, setting.VariableGuid)];
 
 			if (HiiHelper.TryDecodeStringValue(setting, blob, out Option? stringMatched))
 			{

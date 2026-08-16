@@ -5,6 +5,7 @@ using AutoOS.Core.Helpers.Download;
 using AutoOS.Core.Helpers.Extract;
 using AutoOS.Core.Data.Models.GPU;
 using AutoOS.Core.Helpers.Logging;
+using AutoOS.Core.Helpers.Processes;
 using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.Services;
 using Microsoft.Win32;
@@ -155,7 +156,7 @@ public static partial class IntelHelper
 			(gpu.IsInstalled ?  $"Updating to INTEL driver {newestVersion}" : $"Installing INTEL driver {newestVersion}", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "INTEL", "driver", "Installer.exe"), Arguments = "/silent", UseShellExecute = false, CreateNoWindow = true })!.WaitForExitAsync(), () => Intel_3rd == false && Intel_4th_5th == false),
 			(gpu.IsInstalled ?  $"Updating to INTEL driver {newestVersion}" : $"Installing INTEL driver {newestVersion}", async () => await Task.Delay(3000), null),
 			(gpu.IsInstalled ? $"Updating to INTEL driver {newestVersion}" : $"Installing INTEL driver {newestVersion}", async () => GpuHelper.RefreshGpu(gpu), null),
-			("Cleaning up INTEL files", async () => Directory.Delete(Path.Combine(Path.GetTempPath(), "INTEL"), true), null)
+			("Cleaning up INTEL files", async () => { string path = Path.Combine(Path.GetTempPath(), "INTEL"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => Directory.Delete(path, true)); }, null)
 		};
 
 		return actions;

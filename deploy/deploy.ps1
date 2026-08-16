@@ -236,7 +236,7 @@ $services = @(
 foreach ($service in $services) {
 	$serviceName = Split-Path $service.Path -Leaf
 	if (-not (Test-Path $service.Path)) {
-		Write-Host "Your OS has the $serviceName removed. Either use an existing dual boot or install a default Windows and run the script there." -ForegroundColor Red
+		Write-Host "Try using an existing dual boot or install a default Windows and run the script there." -ForegroundColor Red
 		return
 	}
 	$current = (Get-ItemProperty -Path $service.Path -Name $service.Name -ErrorAction SilentlyContinue).$($service.Name)
@@ -300,7 +300,12 @@ if ((Get-ChildItem -Path $DriversDir -Filter "*.inf" -Recurse -File).Count -eq 0
 	return
 }
 
-$physicalDisks = Get-PhysicalDisk | Where-Object { $_.BusType -ne 'USB' -and $_.MediaType -ne 'Removable' }
+$physicalDisks = try {
+	Get-PhysicalDisk | Where-Object { $_.BusType -ne 'USB' -and $_.MediaType -ne 'Removable' }
+} catch {
+	Write-Host "Your OS has the storage service removed. Try using an existing dual boot or install a default Windows and run the script there." -ForegroundColor Red
+	return
+}
 if ($physicalDisks.Count -gt 1) {
 	Write-Host "Getting disk information and measuring speed..."
 	$diskList = $physicalDisks | ForEach-Object {

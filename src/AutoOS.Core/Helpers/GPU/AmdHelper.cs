@@ -4,6 +4,7 @@ using AutoOS.Core.Common;
 using AutoOS.Core.Helpers.Download;
 using AutoOS.Core.Helpers.Extract;
 using AutoOS.Core.Data.Models.GPU;
+using AutoOS.Core.Helpers.Processes;
 using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.TaskScheduler;
 using Microsoft.Win32;
@@ -101,7 +102,7 @@ public static partial class AmdHelper
             (gpu.IsInstalled ? $"Updating to AMD driver {newestVersion}" : $"Installing AMD driver {newestVersion}", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "AMD", "driver", "Setup.exe"), Arguments = "-install", UseShellExecute = false, CreateNoWindow = true })!.WaitForExitAsync(), null),
 			(gpu.IsInstalled ? $"Updating to AMD driver {newestVersion}" : $"Installing AMD driver {newestVersion}", async () => await Task.Delay(3000), null),
 			(gpu.IsInstalled ? $"Updating to AMD driver {newestVersion}" : $"Installing AMD driver {newestVersion}", async () => GpuHelper.RefreshGpu(gpu), null),
-			("Cleaning up AMD files", async () => { try { Directory.Delete(Path.Combine(Path.GetTempPath(), "AMD"), true); } catch {} }, null)
+			("Cleaning up AMD files", async () => { string path = Path.Combine(Path.GetTempPath(), "AMD"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => Directory.Delete(path, true)); }, null)
 		};
 
 		return actions;
