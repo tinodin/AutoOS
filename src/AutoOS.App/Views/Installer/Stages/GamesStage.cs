@@ -3,6 +3,7 @@ using System.Text.Json;
 using AutoOS.Core.Helpers.Download;
 using AutoOS.Core.Helpers.Games;
 using AutoOS.Core.Helpers.Monitor;
+using AutoOS.Core.Helpers.Monitor.Models;
 
 namespace AutoOS.App.Views.Installer.Stages;
 
@@ -18,7 +19,8 @@ public static partial class GamesStage
 		string fortniteIniPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FortniteGame", "Saved", "Config", "WindowsClient");
 		string valorantIniPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "VALORANT", "Saved", "Config", "WindowsClient");
 
-		int maxRefreshRate = (int)MonitorHelper.GetMonitors().Max(max => max.RefreshRate);
+		var monitors = MonitorHelper.GetMonitors();
+        int maxRefreshRate = monitors?.Count > 0 ? (int)monitors.Max(m => m.RefreshRate) : 60;
 
 		var actions = new List<(string Title, Func<Task> Action, Func<bool>? Condition)>
 		{
