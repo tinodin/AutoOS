@@ -7,9 +7,7 @@ public static partial class Secrets
 		Key = [];
 	}
 
-	private static partial byte[] GetEncryptedBios() => [];
 	private static partial byte[] GetEncryptedLog() => [];
 	private static partial byte[] GetEncryptedError() => [];
-	private static partial byte[] GetEncryptedNetwork() => [];
 	private static partial byte[] GetEncryptedSyncfusion() => [];
 }
