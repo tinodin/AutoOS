@@ -271,7 +271,7 @@ public static class Recommendations
 		new Recommendation { Name = "IA TDC Enable", Type = RecommendationType.Option, Recommended = "Disabled" },
 		new Recommendation { Name = "IGD VTD Enable", Type = RecommendationType.Option, Recommended = "Enabled" }, // required for faceit
 		new Recommendation { Name = "INT3400 Device", Type = RecommendationType.Option, Recommended = "Disabled" },
-		new Recommendation { Name = "IOAPIC 24-119 Entries", Type = RecommendationType.Option, Recommended = "Disabled" },
+		new Recommendation { Name = "IOAPIC 24-119 Entries", Type = RecommendationType.Option, Recommended = "Enabled" },
 		new Recommendation { Name = "IOP VTD Enable", Type = RecommendationType.Option, Recommended = "Enabled" }, // required for faceit
 		new Recommendation { Name = "IOTG PLL SSCEN (CPU Side SSC)", Type = RecommendationType.Option, Recommended = "Disabled" },
 		new Recommendation { Name = "IOTG Spread Spectrum", Type = RecommendationType.Option, Recommended = "Disabled" }, // already disabled by default

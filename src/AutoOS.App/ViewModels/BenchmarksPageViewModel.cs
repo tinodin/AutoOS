@@ -19,6 +19,20 @@ namespace AutoOS.App.ViewModels;
 public sealed partial class BenchmarksPageViewModel(IDialogService dialogService) : ObservableObject
 {
 	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(SwitchPresenterValue))]
+	[NotifyPropertyChangedFor(nameof(IsLoaded))]
+	public partial PageMode PageState { get; set; } = PageMode.Loading;
+
+	public string SwitchPresenterValue => PageState switch
+	{
+		PageMode.Loading => "Loading",
+		PageMode.Loaded => "Loaded",
+		_ => throw new UnreachableException()
+	};
+
+	public bool IsLoaded => PageState == PageMode.Loaded;
+
+	[ObservableProperty]
 	public partial string ActiveTab { get; set; } = "Recordings";
 
 	[ObservableProperty]
@@ -79,6 +93,8 @@ public sealed partial class BenchmarksPageViewModel(IDialogService dialogService
 
 	public async Task LoadRecordingsAsync()
 	{
+		PageState = PageMode.Loading;
+
 		List<RecordingItem> finalRecordings = await Task.Run(() =>
 		{
 			if (!Directory.Exists(RecordingAnalysisService.RecordingsDirectory))
@@ -238,6 +254,7 @@ public sealed partial class BenchmarksPageViewModel(IDialogService dialogService
 		});
 
 		SetRecordings(finalRecordings);
+		PageState = PageMode.Loaded;
 	}
 
 	public void SetRecordings(IReadOnlyList<RecordingItem> recordings)
