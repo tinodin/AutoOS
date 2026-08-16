@@ -4,7 +4,7 @@
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:controls="using:CommunityToolkit.WinUI.Controls"
 	xmlns:dev="using:DevWinUI"
-	xmlns:models="using:AutoOS.Core.Helpers.CPU.Models"
+	xmlns:models="using:AutoOS.Core.Data.Models.CPU"
 	xmlns:vm="using:AutoOS.App.Views.Settings.Scheduling.ViewModels">
 	<Grid>
 		<Grid.RowDefinitions>

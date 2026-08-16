@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text;
-using AutoOS.Core.Helpers.Monitor.Models;
+using AutoOS.Core.Data.Models.Monitor;
 using Microsoft.Win32;
 using Windows.Win32;
 using Windows.Win32.Foundation;

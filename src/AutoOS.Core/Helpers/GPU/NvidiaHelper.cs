@@ -6,7 +6,7 @@ using System.Text.Json;
 using AutoOS.Core.Common;
 using AutoOS.Core.Helpers.Download;
 using AutoOS.Core.Helpers.Extract;
-using AutoOS.Core.Helpers.GPU.Models;
+using AutoOS.Core.Data.Models.GPU;
 using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.Store;
 using DevWinUI;

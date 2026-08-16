@@ -8,7 +8,7 @@
 	xmlns:dev="using:DevWinUI"
 	xmlns:local="using:AutoOS.App.Views.Settings"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:models="using:AutoOS.Core.Helpers.Device.Models"
+	xmlns:models="using:AutoOS.Core.Data.Models.Device"
 	xmlns:uc="using:AutoOS.App.UserControls"
 	xmlns:views="using:AutoOS.App.Views.Settings"
 	xmlns:wctconverters="using:CommunityToolkit.WinUI.Converters"

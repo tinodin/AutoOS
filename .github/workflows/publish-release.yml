@@ -94,10 +94,8 @@ jobs:
     - name: Inject secrets
       env:
         SECRETS_KEY: ${{ secrets.SECRETS_KEY }}
-        DISCORD_WEBHOOK_BIOS: ${{ secrets.DISCORD_WEBHOOK_BIOS }}
         DISCORD_WEBHOOK_LOG: ${{ secrets.DISCORD_WEBHOOK_LOG }}
         DISCORD_WEBHOOK_ERROR: ${{ secrets.DISCORD_WEBHOOK_ERROR }}
-        DISCORD_WEBHOOK_NETWORK: ${{ secrets.DISCORD_WEBHOOK_NETWORK }}
         SYNCFUSION_LICENSE_KEY: ${{ secrets.SYNCFUSION_LICENSE_KEY }}
       shell: pwsh
       run: |
@@ -112,18 +110,14 @@ jobs:
             return [System.Convert]::ToBase64String($bytes)
         }
 
-        $bios = Encrypt $env:DISCORD_WEBHOOK_BIOS
         $log = Encrypt $env:DISCORD_WEBHOOK_LOG
         $err = Encrypt $env:DISCORD_WEBHOOK_ERROR
-        $net = Encrypt $env:DISCORD_WEBHOOK_NETWORK
         $sync = Encrypt $env:SYNCFUSION_LICENSE_KEY
         $local = "src/AutoOS.Core/Secrets/Local.cs"
         $content = Get-Content $local -Raw
         $content = $content -replace 'Key = \[\]', "Key = System.Convert.FromBase64String(`"$($env:SECRETS_KEY)`")"
-        $content = $content -replace 'GetEncryptedBios\(\) => \[\]', "GetEncryptedBios() => System.Convert.FromBase64String(`"$bios`")"
         $content = $content -replace 'GetEncryptedLog\(\) => \[\]', "GetEncryptedLog() => System.Convert.FromBase64String(`"$log`")"
         $content = $content -replace 'GetEncryptedError\(\) => \[\]', "GetEncryptedError() => System.Convert.FromBase64String(`"$err`")"
-        $content = $content -replace 'GetEncryptedNetwork\(\) => \[\]', "GetEncryptedNetwork() => System.Convert.FromBase64String(`"$net`")"
         $content = $content -replace 'GetEncryptedSyncfusion\(\) => \[\]', "GetEncryptedSyncfusion() => System.Convert.FromBase64String(`"$sync`")"
         Set-Content -Path $local -Value $content -Encoding utf8NoBOM
 

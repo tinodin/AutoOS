@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using AutoOS.App.Data.Contracts;
 using AutoOS.App.Data.Models.Power;
 using AutoOS.App.Views.Installer.Stages;
 using AutoOS.Core.Helpers.Power;

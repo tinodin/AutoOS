@@ -1,60 +1,69 @@
 using AutoOS.App.Data.Enums.Bios;
 using AutoOS.App.Data.Models.Bios;
+using AutoOS.Core.Data.Enums.Bios;
+using AutoOS.Core.Data.Models.Bios;
 using Syncfusion.UI.Xaml.TreeGrid;
 
 namespace AutoOS.App.Data.TemplateSelectors.Bios;
 
 public sealed partial class CellStyleSelector : StyleSelector
 {
-	public Style CriticalStyle { get; set; } = null!;
-	public Style SuccessStyle { get; set; } = null!;
-	public Style CautionStyle { get; set; } = null!;
-	public bool IsDiff { get; set; }
+	public Style? CriticalStyle { get; set; }
+	public Style? SuccessStyle { get; set; }
+	public Style? CautionStyle { get; set; }
 
 	protected override Style? SelectStyleCore(object item, DependencyObject container)
 	{
-		if (item is not Node node)
+		if (item is not Node node || node.NodeKind is NodeKind.Root or NodeKind.Path)
 			return null;
 
-		if (container is TreeGridCell cell)
-		{
-			TreeGridColumn? column = cell.ColumnBase?.TreeGridColumn;
-			string mappingName = column!.MappingName;
+		if (container is not TreeGridCell cell)
+			return null;
 
-			if (node.HasErrors && mappingName == "DisplayCurrent")
-				return CautionStyle;
+		string mappingName = cell.ColumnBase?.TreeGridColumn?.MappingName ?? string.Empty;
 
-			if (IsDiff)
-			{
-				if (mappingName == "DisplayOriginal")
-				{
-					if (node.NodeKind == NodeKind.Setting)
-						return node.IsModified ? CriticalStyle : null;
+		if (node.HasErrors && mappingName == nameof(Node.DisplayCurrent))
+			return CautionStyle;
 
-					if (node.NodeKind == NodeKind.GroupedSetting)
-						return node.GetLeaves().All(leaf => leaf.IsModified) ? CriticalStyle : null;
-				}
+		if (!node.HasPendingRecommendation)
+			return null;
 
-				if (mappingName == "DisplayCurrent")
-				{
-					if (node.NodeKind == NodeKind.Setting)
-						return node.IsModified ? SuccessStyle : null;
+		if (mappingName == nameof(Node.DisplayCurrent))
+			return CriticalStyle;
+		if (mappingName == nameof(Node.DisplayRecommended))
+			return SuccessStyle;
 
-					if (node.NodeKind == NodeKind.GroupedSetting && node.GetLeaves().All(leaf => leaf.IsModified))
-						return SuccessStyle;
-				}
-			}
-			else
-			{
-				if (!node.HasPendingRecommendation)
-					return null;
+		return null;
+	}
+}
 
-				if (mappingName == "DisplayCurrent")
-					return CriticalStyle;
-				if (mappingName == "DisplayRecommended")
-					return SuccessStyle;
-			}
-		}
+public sealed partial class ChangesCellStyleSelector : StyleSelector
+{
+	public Style? CriticalStyle { get; set; }
+	public Style? CautionStyle { get; set; }
+	public Style? SuccessStyle { get; set; }
+
+	protected override Style? SelectStyleCore(object item, DependencyObject container)
+	{
+		if (item is not Node node || node.NodeKind is NodeKind.Root or NodeKind.Path)
+			return null;
+
+		if (container is not TreeGridCell cell)
+			return null;
+
+		string mappingName = cell.ColumnBase?.TreeGridColumn?.MappingName ?? string.Empty;
+
+		if (node.HasErrors && mappingName == nameof(Node.DisplayCurrent))
+			return CautionStyle;
+
+		if (!node.IsModified)
+			return null;
+
+		if (mappingName == nameof(Node.DisplayOriginal))
+			return CriticalStyle;
+
+		if (mappingName == nameof(Node.DisplayCurrent))
+			return SuccessStyle;
 
 		return null;
 	}

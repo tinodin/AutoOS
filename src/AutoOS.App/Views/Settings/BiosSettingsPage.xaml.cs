@@ -1,11 +1,14 @@
 using AutoOS.App.Data.Enums.Bios;
 using AutoOS.App.Data.Models.Bios;
+using AutoOS.App.Helpers.TreeGrid;
+using AutoOS.App.Services.Bios;
 using AutoOS.App.ViewModels;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Microsoft.UI.Xaml.Input;
 using Syncfusion.UI.Xaml.Data;
 using Syncfusion.UI.Xaml.DataGrid;
 using Syncfusion.UI.Xaml.Grids;
+using Syncfusion.UI.Xaml.Grids.ScrollAxis;
 using Syncfusion.UI.Xaml.TreeGrid;
 using Windows.System;
 
@@ -25,7 +28,7 @@ public sealed partial class BiosSettingsPage : Page
 		base.OnNavigatedTo(e);
 		ViewModel.RefreshFilterAction = RefreshSearchFilter;
 		ViewModel.RefreshFilterOnlyAction = RefreshFilterOnly;
-		_ = ViewModel.LoadAsync();
+		_ = ViewModel.ReadFromNvramAsync();
 	}
 
 	private void Search_AcceleratorInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
@@ -98,7 +101,7 @@ public sealed partial class BiosSettingsPage : Page
 			return;
 
 		Node? node = treeGrid.GetNodeAtRowIndex(e.RowColumnIndex.RowIndex)?.Item as Node ?? treeGrid.CurrentItem as Node;
-		if (node is not { NodeKind: NodeKind.Setting or NodeKind.GroupedSetting, CanEditCurrent: true })
+		if (node is not { NodeKind: NodeKind.Setting })
 		{
 			e.Cancel = true;
 			return;
@@ -127,17 +130,8 @@ public sealed partial class BiosSettingsPage : Page
 
 	private void EditComboBox_DropDownClosed(object sender, object e)
 	{
-		foreach (SfTreeGrid treeGrid in new[] { BiosTreeGrid, BiosDiffTreeGrid })
-		{
-			TreeGridCurrentCellManager manager = treeGrid.SelectionController.CurrentCellManager;
-			if (manager.CurrentCell?.IsEditing != true)
-				continue;
-
-			var index = manager.CurrentRowColumnIndex;
-			manager.EndEdit();
-			treeGrid.SelectionController.MoveCurrentCell(index);
-			break;
-		}
+		if (!TreeGridEditingHelper.EndEditingIfActive(TreeGrid))
+			TreeGridEditingHelper.EndEditingIfActive(ChangesTreeGrid);
 	}
 
 	private void TreeGrid_TreeGridContextFlyoutOpening(object sender, TreeGridContextFlyoutEventArgs e)
@@ -188,20 +182,16 @@ public sealed partial class BiosSettingsPage : Page
 		});
 	}
 
-	private void FilterMode_Contains_Click(object sender, RoutedEventArgs e) => ViewModel.FilterMode = Data.Enums.FilterMode.Contains;
-
-	private void FilterMode_ExactMatch_Click(object sender, RoutedEventArgs e) => ViewModel.FilterMode = Data.Enums.FilterMode.ExactMatch;
+	private void RefreshFilterOnly()
+	{
+		ApplyFilter(TreeGrid, ViewModel);
+		ApplyFilter(ChangesTreeGrid, ViewModel);
+	}
 
 	private void RefreshSearchFilter()
 	{
 		ViewModel.UpdateNodeCounts();
 		RefreshFilterOnly();
-	}
-
-	private void RefreshFilterOnly()
-	{
-		ApplyFilter(BiosTreeGrid, ViewModel);
-		ApplyFilter(BiosDiffTreeGrid, ViewModel);
 	}
 
 	private static void ApplyFilter(SfTreeGrid treeGrid, BiosSettingsPageViewModel viewModel)

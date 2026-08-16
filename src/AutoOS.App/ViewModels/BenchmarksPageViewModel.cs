@@ -224,7 +224,7 @@ public sealed partial class BenchmarksPageViewModel(IDialogService dialogService
 				{
 					foreach (string sourceFileName in sourceFileNames.Distinct(StringComparer.OrdinalIgnoreCase))
 					{
-						if (recordingsByFileName.TryGetValue(sourceFileName, out RecordingItem? source) && !ReferenceEquals(source, aggregate))
+						if (recordingsByFileName.TryGetValue(sourceFileName, out RecordingItem? source) && source != aggregate)
 						{
 							aggregate.Children.Add(source);
 							childRecordings.Add(source);
@@ -886,9 +886,9 @@ public sealed partial class BenchmarksPageViewModel(IDialogService dialogService
 		double threshold = lowFpsThreshold ?? LowFpsThreshold;
 
 		PieChartLabel1 = results[0].Recording.FileName;
-		PieChartLabel2 = HasTwoRecordings ? results[1].Recording.FileName : string.Empty;
+		PieChartLabel2 = results.Count > 1 ? results[1].Recording.FileName : string.Empty;
 		PieChartData1 = [.. BuildPiePoints(results[0], factor, threshold)];
-		PieChartData2 = HasTwoRecordings ? [.. BuildPiePoints(results[1], factor, threshold)] : [];
+		PieChartData2 = results.Count > 1 ? [.. BuildPiePoints(results[1], factor, threshold)] : [];
 	}
 
 	private static List<PiePoint> BuildPiePoints(RecordingAnalysis result, double stutterFactor, double lowFpsThreshold)
@@ -1236,34 +1236,50 @@ public sealed partial class BenchmarksPageViewModel(IDialogService dialogService
 	public partial Windows.UI.Color RecordingBColor { get; set; } = Colors.Orange;
 
 	[ObservableProperty]
-	public partial Windows.UI.Color RecordingASecondaryColor { get; set; }
+	public partial Windows.UI.Color RecordingASecondaryColor { get; set; } = GetLightenedColor(Colors.DodgerBlue);
 
 	[ObservableProperty]
-	public partial Windows.UI.Color RecordingBSecondaryColor { get; set; }
+	public partial Windows.UI.Color RecordingBSecondaryColor { get; set; } = GetLightenedColor(Colors.Orange);
 
 	[ObservableProperty]
-	public partial Windows.UI.Color RecordingATertiaryColor { get; set; }
+	public partial Windows.UI.Color RecordingATertiaryColor { get; set; } = GetLightenedColor(GetLightenedColor(Colors.DodgerBlue));
 
 	[ObservableProperty]
-	public partial Windows.UI.Color RecordingBTertiaryColor { get; set; }
+	public partial Windows.UI.Color RecordingBTertiaryColor { get; set; } = GetLightenedColor(GetLightenedColor(Colors.Orange));
 
 	[ObservableProperty]
-	public partial BrushCollection PieChart1Palette { get; set; } = new BrushCollection();
+	public partial BrushCollection PieChart1Palette { get; set; } = new BrushCollection
+	{
+		new SolidColorBrush(Colors.DodgerBlue),
+		new SolidColorBrush(GetLightenedColor(Colors.DodgerBlue)),
+		new SolidColorBrush(GetLightenedColor(GetLightenedColor(Colors.DodgerBlue)))
+	};
 
 	[ObservableProperty]
-	public partial BrushCollection PieChart2Palette { get; set; } = new BrushCollection();
+	public partial BrushCollection PieChart2Palette { get; set; } = new BrushCollection
+	{
+		new SolidColorBrush(Colors.Orange),
+		new SolidColorBrush(GetLightenedColor(Colors.Orange)),
+		new SolidColorBrush(GetLightenedColor(GetLightenedColor(Colors.Orange)))
+	};
 
 	[ObservableProperty]
-	public partial SolidColorBrush RecordingAColorBrush { get; set; } = new SolidColorBrush();
+	public partial SolidColorBrush RecordingAColorBrush { get; set; } = new SolidColorBrush(Colors.DodgerBlue);
 
 	[ObservableProperty]
-	public partial SolidColorBrush RecordingBColorBrush { get; set; } = new SolidColorBrush();
+	public partial SolidColorBrush RecordingBColorBrush { get; set; } = new SolidColorBrush(Colors.Orange);
+
+	private static Windows.UI.Color GetLightenedColor(Windows.UI.Color color)
+	{
+		Windows.UI.Color lightened = DevWinUI.ColorHelper.GetInterpolatedColor(0.35, color, Colors.White);
+		return Windows.UI.Color.FromArgb(color.A, lightened.R, lightened.G, lightened.B);
+	}
 
 	partial void OnRecordingAColorChanged(Windows.UI.Color value)
 	{
 		RecordingAColorBrush = new SolidColorBrush(value);
-		RecordingASecondaryColor = DevWinUI.ColorHelper.GetInterpolatedColor(0.35, value, Colors.White);
-		RecordingATertiaryColor = DevWinUI.ColorHelper.GetInterpolatedColor(0.35, RecordingASecondaryColor, Colors.White);
+		RecordingASecondaryColor = GetLightenedColor(value);
+		RecordingATertiaryColor = GetLightenedColor(GetLightenedColor(value));
 		PieChart1Palette = new BrushCollection
 		{
 			new SolidColorBrush(value),
@@ -1275,8 +1291,8 @@ public sealed partial class BenchmarksPageViewModel(IDialogService dialogService
 	partial void OnRecordingBColorChanged(Windows.UI.Color value)
 	{
 		RecordingBColorBrush = new SolidColorBrush(value);
-		RecordingBSecondaryColor = DevWinUI.ColorHelper.GetInterpolatedColor(0.35, value, Colors.White);
-		RecordingBTertiaryColor = DevWinUI.ColorHelper.GetInterpolatedColor(0.35, RecordingBSecondaryColor, Colors.White);
+		RecordingBSecondaryColor = GetLightenedColor(value);
+		RecordingBTertiaryColor = GetLightenedColor(GetLightenedColor(value));
 		PieChart2Palette = new BrushCollection
 		{
 			new SolidColorBrush(value),

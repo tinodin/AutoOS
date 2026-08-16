@@ -1,6 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using AutoOS.Core.Helpers.Device.Models;
+using AutoOS.Core.Data.Models.Device;
 using WinRT;
 
 namespace AutoOS.App.Views.Settings.Scheduling;

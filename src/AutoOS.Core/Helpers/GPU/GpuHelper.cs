@@ -1,5 +1,5 @@
 using System.Net.Security;
-using AutoOS.Core.Helpers.GPU.Models;
+using AutoOS.Core.Data.Models.GPU;
 using DevWinUI;
 using Windows.Win32;
 using Windows.Win32.Devices.DeviceAndDriverInstallation;

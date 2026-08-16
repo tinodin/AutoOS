@@ -1,3 +1,5 @@
+using AutoOS.App.Data.Contexts;
+using AutoOS.App.Data.Contracts;
 using AutoOS.App.Services;
 using AutoOS.App.Services.Bios;
 using AutoOS.App.Services.Power;
@@ -29,11 +31,15 @@ public partial class App : Application
 	internal static double Scaling { get; set; }
 	private readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 
-	private static IServiceProvider BuildServiceProvider() => new ServiceCollection()
+	private static IServiceProvider BuildServiceProvider => new ServiceCollection()
 		.AddSingleton<IFilePickerService, FilePickerService>()
 		.AddSingleton<IDialogService, DialogService>()
-		.AddSingleton<IPowerPlanService, PowerPlanService>()
-		.AddSingleton<IBiosSettingsService, BiosSettingsService>()
+		.AddSingleton<IBiosSettingsContext, BiosSettingsContext>()
+		.AddSingleton<IBiosNvramService, BiosNvramService>()
+		.AddSingleton<IBiosBackupService, BiosBackupService>()
+		.AddSingleton<IBiosInfoService, BiosInfoService>()
+		.AddTransient<IBiosSettingsService, BiosSettingsService>()
+		.AddTransient<IPowerPlanService, PowerPlanService>()
 		.AddTransient<PowerPageViewModel>()
 		.AddTransient<BiosSettingsPageViewModel>()
 		.AddTransient<BenchmarksPageViewModel>()
@@ -42,7 +48,7 @@ public partial class App : Application
 	public App()
 	{
 		InitializeComponent();
-		Ioc.Default.ConfigureServices(BuildServiceProvider());
+		Ioc.Default.ConfigureServices(BuildServiceProvider);
 		NavService = new JsonNavigationService();
 		IsInstalled = (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\AutoOS", "IsInstalled", 0) as int? ?? 0) == 1 || Registry.CurrentUser.OpenSubKey(@"SOFTWARE\AutoOS")?.GetValue("Stage") as string == "Installed";
 		Application.Current.UnhandledException += Current_UnhandledException;

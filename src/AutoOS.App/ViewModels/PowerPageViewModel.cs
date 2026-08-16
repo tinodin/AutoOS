@@ -1,10 +1,11 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Globalization;
+using AutoOS.App.Data.Contracts;
 using AutoOS.App.Data.Enums;
 using AutoOS.App.Data.Enums.Power;
 using AutoOS.App.Data.Models.Power;
 using AutoOS.App.Services;
-using AutoOS.App.Services.Power;
 using AutoOS.App.ViewModels.Dialogs.Power;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -50,7 +51,7 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 	{
 		PageMode.Loading => "Loading",
 		PageMode.Loaded => "Loaded",
-		_ => "Loaded"
+		_ => throw new UnreachableException()
 	};
 
 	public bool IsLoaded => PageState == PageMode.Loaded;
@@ -441,14 +442,14 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 
 		if (mappingName == nameof(Node.DisplayAc))
 		{
-			if (node.HasOptions)
+			if (setting.Options.Count > 0)
 				values.EditAcOption = setting.Options.FirstOrDefault(option => option.Index == values.AcValue);
 			else
 				values.EditAcValue = values.AcValue.ToString(CultureInfo.InvariantCulture);
 		}
 		else if (mappingName == nameof(Node.DisplayDc))
 		{
-			if (node.HasOptions)
+			if (setting.Options.Count > 0)
 				values.EditDcOption = setting.Options.FirstOrDefault(option => option.Index == values.DcValue);
 			else
 				values.EditDcValue = values.DcValue.ToString(CultureInfo.InvariantCulture);

@@ -111,9 +111,7 @@ public sealed partial class Node : ObservableObject
 
 	public IReadOnlyList<Option>? Options => Setting?.Options;
 
-	public bool HasOptions => Setting is { Options.Count: > 0 };
-
-	public bool IsAdjustable => HasOptions || (Setting != null && Setting.Minimum.HasValue && Setting.Maximum.HasValue && Setting.Increment.HasValue);
+	public bool IsAdjustable => Setting is { Options.Count: > 0 } || (Setting != null && Setting.Minimum.HasValue && Setting.Maximum.HasValue && Setting.Increment.HasValue);
 
 	partial void OnStateChanged(SettingState? value)
 	{

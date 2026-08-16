@@ -7,7 +7,7 @@
 	xmlns:converters="using:AutoOS.App.Converters"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:dev="using:DevWinUI"
-	xmlns:gpuModels="using:AutoOS.Core.Helpers.GPU.Models"
+	xmlns:gpuModels="using:AutoOS.Core.Data.Models.GPU"
 	xmlns:local="using:AutoOS"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:views="using:AutoOS.App.Views"

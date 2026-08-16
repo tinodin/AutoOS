@@ -2,9 +2,9 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using AutoOS.Core.Helpers.CPU;
-using AutoOS.Core.Helpers.CPU.Models;
+using AutoOS.Core.Data.Models.CPU;
 using AutoOS.Core.Helpers.Device;
-using AutoOS.Core.Helpers.Device.Models;
+using AutoOS.Core.Data.Models.Device;
 using WinRT;
 
 namespace AutoOS.App.Views.Settings.Scheduling.ViewModels;

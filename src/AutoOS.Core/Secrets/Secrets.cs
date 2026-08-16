@@ -13,16 +13,12 @@ public static partial class Secrets
 		Initialize();
 	}
 
-	public static string Bios => Decrypt(GetEncryptedBios());
 	public static string Log => Decrypt(GetEncryptedLog());
 	public static string Error => Decrypt(GetEncryptedError());
-	public static string Network => Decrypt(GetEncryptedNetwork());
 	public static string Syncfusion => Decrypt(GetEncryptedSyncfusion());
 
-	private static partial byte[] GetEncryptedBios();
 	private static partial byte[] GetEncryptedLog();
 	private static partial byte[] GetEncryptedError();
-	private static partial byte[] GetEncryptedNetwork();
 	private static partial byte[] GetEncryptedSyncfusion();
 
 	private static string Decrypt(byte[] data)

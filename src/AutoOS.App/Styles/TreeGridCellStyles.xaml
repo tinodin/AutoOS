@@ -12,7 +12,155 @@
 	<!--  Caution  -->
 	<Style x:Key="CautionCellStyle" TargetType="sfgrid:TreeGridCell">
 		<Setter Property="Background" Value="{ThemeResource SystemFillColorCautionBackgroundBrush}" />
+		<Setter Property="BorderThickness" Value="0,0,1,1" />
+		<Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+		<Setter Property="Padding" Value="0" />
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="sfgrid:TreeGridCell">
+					<Grid
+						x:Name="Root"
+						Background="{TemplateBinding Background}"
+						BorderBrush="{TemplateBinding BorderBrush}"
+						BorderThickness="{TemplateBinding BorderThickness}">
+						<ContentPresenter />
+						<Border
+							x:Name="PART_CurrentCellBorder"
+							Background="Transparent"
+							BorderBrush="{TemplateBinding CurrentCellBorderBrush}"
+							BorderThickness="{TemplateBinding CurrentCellBorderThickness}"
+							IsHitTestVisible="False"
+							Visibility="Collapsed" />
+						<Border
+							x:Name="PART_InValidCellBorder"
+							Width="10"
+							Height="10"
+							HorizontalAlignment="Right"
+							VerticalAlignment="Top"
+							Visibility="Collapsed">
+							<ToolTipService.ToolTip>
+								<ToolTip
+									Background="{ThemeResource SystemFillColorCaution}"
+									Placement="Right"
+									Tag="{TemplateBinding ErrorMessage}"
+									Template="{StaticResource TreeGridCellCautionToolTipTemplate}" />
+							</ToolTipService.ToolTip>
+							<Path
+								Data="M0.5,0.5 L12.652698,0.5 12.652698,12.068006 z"
+								Fill="{ThemeResource SystemFillColorCautionBrush}"
+								Stretch="Fill" />
+						</Border>
+						<VisualStateManager.VisualStateGroups>
+							<VisualStateGroup x:Name="IndicationStates">
+								<VisualState x:Name="NoError" />
+								<VisualState x:Name="HasError">
+									<VisualState.Setters>
+										<Setter Target="PART_InValidCellBorder.Visibility" Value="Visible" />
+									</VisualState.Setters>
+								</VisualState>
+							</VisualStateGroup>
+							<VisualStateGroup x:Name="CurrentStates">
+								<VisualState x:Name="Regular" />
+								<VisualState x:Name="Current">
+									<VisualState.Setters>
+										<Setter Target="PART_CurrentCellBorder.Visibility" Value="Visible" />
+									</VisualState.Setters>
+								</VisualState>
+							</VisualStateGroup>
+						</VisualStateManager.VisualStateGroups>
+					</Grid>
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
 	</Style>
+
+	<!--  Caution Badge  -->
+	<ControlTemplate x:Key="TreeGridCellCautionToolTipTemplate">
+		<Grid
+			x:Name="PART_ToolTipPresenter"
+			Margin="5,0"
+			Opacity="0"
+			RenderTransformOrigin="0,0">
+			<Grid.RenderTransform>
+				<TranslateTransform x:Name="Transform" X="-25" />
+			</Grid.RenderTransform>
+			<Border
+				Margin="4,4,-4,-4"
+				Background="Transparent"
+				CornerRadius="5" />
+			<Border
+				Margin="3,3,-3,-3"
+				Background="Transparent"
+				CornerRadius="4" />
+			<Border
+				Margin="2,2,-2,-2"
+				Background="Transparent"
+				CornerRadius="3" />
+			<Border
+				Margin="1,1,-1,-1"
+				Background="Transparent"
+				CornerRadius="2" />
+			<Border Background="{ThemeResource SystemFillColorCaution}" CornerRadius="2" />
+			<Border BorderBrush="{ThemeResource SystemFillColorCaution}" CornerRadius="2">
+				<TextBlock
+					MaxWidth="250"
+					Margin="8,4,8,4"
+					FontSize="14"
+					Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+					HighContrastAdjustment="None"
+					Text="{TemplateBinding Tag}"
+					UseLayoutRounding="false" />
+			</Border>
+			<VisualStateManager.VisualStateGroups>
+				<VisualStateGroup x:Name="OpenStates">
+					<VisualStateGroup.Transitions>
+						<VisualTransition GeneratedDuration="0" />
+						<VisualTransition GeneratedDuration="0:0:0.2" To="Opened">
+							<Storyboard>
+								<DoubleAnimation
+									Storyboard.TargetName="Transform"
+									Storyboard.TargetProperty="X"
+									To="0"
+									Duration="0:0:0.2">
+									<DoubleAnimation.EasingFunction>
+										<BackEase Amplitude=".3" EasingMode="EaseOut" />
+									</DoubleAnimation.EasingFunction>
+								</DoubleAnimation>
+								<DoubleAnimation
+									Storyboard.TargetName="PART_ToolTipPresenter"
+									Storyboard.TargetProperty="Opacity"
+									To="1"
+									Duration="0:0:0.2" />
+							</Storyboard>
+						</VisualTransition>
+					</VisualStateGroup.Transitions>
+					<VisualState x:Name="Closed">
+						<Storyboard>
+							<DoubleAnimation
+								Storyboard.TargetName="PART_ToolTipPresenter"
+								Storyboard.TargetProperty="Opacity"
+								To="0"
+								Duration="0" />
+						</Storyboard>
+					</VisualState>
+					<VisualState x:Name="Opened">
+						<Storyboard>
+							<DoubleAnimation
+								Storyboard.TargetName="Transform"
+								Storyboard.TargetProperty="X"
+								To="0"
+								Duration="0" />
+							<DoubleAnimation
+								Storyboard.TargetName="PART_ToolTipPresenter"
+								Storyboard.TargetProperty="Opacity"
+								To="1"
+								Duration="0" />
+						</Storyboard>
+					</VisualState>
+				</VisualStateGroup>
+			</VisualStateManager.VisualStateGroups>
+		</Grid>
+	</ControlTemplate>
 
 	<!--  Success  -->
 	<Style x:Key="SuccessCellStyle" TargetType="sfgrid:TreeGridCell">

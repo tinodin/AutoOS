@@ -214,6 +214,7 @@
 								GroupName="PowerFilterMode"
 								IsChecked="{x:Bind ViewModel.FilterMode, Mode=OneWay, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=ExactMatch}"
 								Text="Exact Match" />
+
 						</MenuFlyout>
 					</DropDownButton.Flyout>
 					<DropDownButton.KeyboardAccelerators>
@@ -336,6 +337,7 @@
 					<AppBarToggleButton
 						Icon="{dev:FontIcon Glyph=&#xF28B;}"
 						IsChecked="{x:Bind ViewModel.ViewChangesActive, Mode=TwoWay}"
+						IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"
 						Label="{x:Bind ViewModel.ViewChangesLabel, Mode=OneWay}"
 						ToolTipService.ToolTip="View Changes (Ctrl+D)">
 						<AppBarToggleButton.KeyboardAccelerators>

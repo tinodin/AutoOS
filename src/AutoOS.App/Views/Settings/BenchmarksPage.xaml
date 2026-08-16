@@ -469,7 +469,7 @@
 							AllowTriStateSorting="True"
 							AutoExpandMode="AllNodesExpanded"
 							AutoGenerateColumns="False"
-							CheckBoxSelectionMode="SelectOnCheck"
+							CheckBoxSelectionMode="SynchronizeSelection"
 							ChildPropertyName="Children"
 							ColumnWidthMode="Star"
 							CurrentCellEndEdit="RecordingsTreeGrid_CurrentCellEndEdit"

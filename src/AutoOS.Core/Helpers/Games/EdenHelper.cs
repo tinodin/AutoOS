@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using AutoOS.Core.Helpers.Games.Models;
+using AutoOS.Core.Data.Models.Games;
 using DevWinUI;
 
 namespace AutoOS.Core.Helpers.Games;

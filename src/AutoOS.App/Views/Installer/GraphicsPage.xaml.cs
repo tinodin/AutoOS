@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Text.Json.Nodes;
 using AutoOS.Core.Helpers.GPU;
-using AutoOS.Core.Helpers.GPU.Models;
+using AutoOS.Core.Data.Models.GPU;
 using AutoOS.Core.Helpers.Picker;
 using Windows.Storage;
 

@@ -4,20 +4,21 @@ using System.Security.Authentication;
 using System.Text;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using AutoOS.Core.Data.Models.Bios;
+using AutoOS.Core.Helpers.Bios;
 using AutoOS.Core.Helpers.Database;
 using AutoOS.Core.Helpers.Device;
-using AutoOS.Core.Helpers.Device.Models;
+using AutoOS.Core.Data.Models.Device;
 using AutoOS.Core.Helpers.Games;
-using AutoOS.Core.Helpers.Games.Models;
+using AutoOS.Core.Data.Models.Games;
 using AutoOS.Core.Helpers.GPU;
-using AutoOS.Core.Helpers.GPU.Models;
+using AutoOS.Core.Data.Models.GPU;
 using AutoOS.Core.Helpers.Monitor;
-using AutoOS.Core.Helpers.Network.Models;
 using AutoOS.Core.Helpers.OS;
 using AutoOS.Core.Helpers.RAM;
-using AutoOS.Core.Helpers.RAM.Models;
+using AutoOS.Core.Data.Models.RAM;
 using AutoOS.Core.Helpers.Sound;
-using AutoOS.Core.Helpers.Sound.Models;
+using AutoOS.Core.Data.Models.Sound;
 using DevWinUI;
 using Windows.Storage;
 
@@ -44,7 +45,7 @@ public static partial class LogHelper
 		}
 	};
 
-	public static async Task Log(IEnumerable<GpuInfo>? selectedGpus = null, bool bios = false)
+	public static async Task Log(IEnumerable<GpuInfo>? selectedGpus = null)
 	{
 #if !DEBUG
 		JsonObject embed = await GetOverview(selectedGpus, null, null, true);
@@ -58,16 +59,7 @@ public static partial class LogHelper
 			{ new StringContent(webhookPayload.ToJsonString()), "payload_json" }
 		};
 
-		if (bios)
-		{
-			string nvramPath = Path.Combine(PathHelper.GetAppDataFolderPath(), "SCEWIN", "nvram.txt");
-			if (File.Exists(nvramPath))
-			{
-				multipart.Add(new ByteArrayContent(File.ReadAllBytes(nvramPath)), "file", "nvram.txt");
-			}
-		}
-
-		string webhook = bios ? Secrets.Bios : Secrets.Log;
+		string webhook = Secrets.Log;
 		if (!string.IsNullOrEmpty(webhook))
 		{
 			await httpClient.PostAsync(webhook, multipart);
@@ -124,81 +116,6 @@ public static partial class LogHelper
 #endif
 	}
 
-	public static async Task LogNetworkSettings(IEnumerable<GpuInfo>? selectedGpus = null)
-	{
-#if !DEBUG
-		JsonObject embed = await GetOverview(selectedGpus, null, null, true);
-		var webhookPayload = new JsonObject
-		{
-			["embeds"] = new JsonArray { (JsonNode)embed }
-		};
-
-		using var multipart = new MultipartFormDataContent
-		{
-			{ new StringContent(webhookPayload.ToJsonString()), "payload_json" }
-		};
-
-		List<DeviceInfo> devices = DeviceHelper.GetDevices(DeviceType.NIC);
-		var sb = new StringBuilder();
-
-		foreach (DeviceInfo device in devices)
-		{
-			if (device.NicType != NicDeviceType.WiFi && device.NicType != NicDeviceType.LAN)
-				continue;
-
-			sb.AppendLine($"# Adapter: {device.FriendlyName}");
-			sb.AppendLine($"- **PnpID**: `{device.PnpDeviceId}`");
-			sb.AppendLine($"- **RegistryPath**: `{device.RegistryPath}`");
-			sb.AppendLine($"- **Driver**: `{device.DriverType} {device.CurrentVersion}`");
-
-			List<NetworkAdvancedSetting> settings = Network.NetworkHelper.GetAdvancedSettings(device);
-			foreach (NetworkAdvancedSetting? setting in settings.OrderBy(s => s.Name))
-			{
-				sb.AppendLine();
-				sb.AppendLine($"## {setting.Name}");
-				sb.AppendLine($"- **Key**: `{setting.Key}`");
-				sb.AppendLine($"- **Type**: `{setting.Type}`");
-
-				NetworkSettingOption? currentOption = setting.Options.FirstOrDefault(o => o.Value == setting.CurrentValue);
-				string currentText = currentOption != null ? $" ({currentOption.Name})" : "";
-				sb.AppendLine($"- **Current Value**: `{setting.CurrentValue}`{currentText}");
-
-				if (!string.IsNullOrEmpty(setting.DefaultValue))
-				{
-					NetworkSettingOption? defaultOption = setting.Options.FirstOrDefault(o => o.Value == setting.DefaultValue);
-					string defaultText = defaultOption != null ? $" ({defaultOption.Name})" : "";
-					sb.AppendLine($"- **Default Value**: `{setting.DefaultValue}`{defaultText}");
-				}
-
-				sb.AppendLine("- **Parameters**:");
-				foreach (KeyValuePair<string, string> meta in setting.RawMetadata.OrderBy(m => m.Key))
-				{
-					sb.AppendLine($"  - **{meta.Key}**: `{meta.Value}`");
-				}
-
-				if (setting.Type == Network.Models.NetworkSettingType.Enum && setting.Options.Count > 0)
-				{
-					sb.AppendLine("- **Options**:");
-					foreach (NetworkSettingOption opt in setting.Options)
-					{
-						sb.AppendLine($"  - `{opt.Value}`: {opt.Name}");
-					}
-				}
-			}
-
-			sb.AppendLine();
-			sb.AppendLine("---");
-			sb.AppendLine();
-		}
-
-		if (sb.Length > 0 && !string.IsNullOrEmpty(Secrets.Network))
-		{
-			multipart.Add(new ByteArrayContent(Encoding.UTF8.GetBytes(sb.ToString())), "file", "network_settings.md");
-			await httpClient.PostAsync(Secrets.Network, multipart);
-		}
-#endif
-	}
-
 	private static async Task<JsonObject> GetOverview(IEnumerable<GpuInfo>? selectedGpus = null, Exception? ex = null, string? actionTitle = null, bool includeGames = false)
 	{
 		List<DiscordHelper.DiscordAccountInfo> discordAccounts = DiscordHelper.GetLocalAccounts();
@@ -206,9 +123,8 @@ public static partial class LogHelper
 			discordAccounts = DiscordHelper.GetOtherAccounts();
 
 		string cpuName = Microsoft.Win32.Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\CentralProcessor\0", "ProcessorNameString", "")?.ToString() ?? "";
-		string manufacturer = Microsoft.Win32.Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\BIOS", "BaseBoardManufacturer", "")?.ToString() ?? "";
-		string product = Microsoft.Win32.Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\BIOS", "BaseBoardProduct", "")?.ToString() ?? "";
-		string motherboard = $"{manufacturer} {product}".Trim();
+		SmbiosInfo smbios = SmbiosHelper.GetInfo();
+		string motherboard = $"{smbios.BaseboardManufacturer} {smbios.BaseboardProduct}".Trim();
 
 		RamInfo ramInfo = RamHelper.GetRam();
 		string ram = ramInfo != null ? $"{ramInfo.CapacityGB:N1} GB {ramInfo.DDRVersion} @ {ramInfo.MaxSpeedMHz} MHz" : "N/A";

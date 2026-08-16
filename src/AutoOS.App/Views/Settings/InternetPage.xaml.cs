@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using AutoOS.Core.Helpers.Device;
-using AutoOS.Core.Helpers.Device.Models;
-using AutoOS.Core.Helpers.Network.Models;
+using AutoOS.Core.Data.Models.Device;
+using AutoOS.Core.Data.Models.Network;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using Windows.Win32;

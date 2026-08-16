@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
@@ -365,7 +365,7 @@ public static partial class RegistryHelper
 		}
 	}
 
-	private static unsafe void EnablePrivilege(string privilege)
+	public static unsafe void EnablePrivilege(string privilege)
 	{
 		if (!PInvoke.LookupPrivilegeValue(null, privilege, out LUID luid)) return;
 

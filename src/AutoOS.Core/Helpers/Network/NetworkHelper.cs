@@ -1,5 +1,5 @@
-using AutoOS.Core.Helpers.Device.Models;
-using AutoOS.Core.Helpers.Network.Models;
+using AutoOS.Core.Data.Models.Device;
+using AutoOS.Core.Data.Models.Network;
 using Microsoft.Win32;
 
 namespace AutoOS.Core.Helpers.Network;

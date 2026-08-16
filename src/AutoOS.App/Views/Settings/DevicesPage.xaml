@@ -8,7 +8,7 @@
 	xmlns:dev="using:DevWinUI"
 	xmlns:local="using:AutoOS"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:models="using:AutoOS.Core.Helpers.Device.Models"
+	xmlns:models="using:AutoOS.Core.Data.Models.Device"
 	xmlns:views="using:AutoOS.App.Views"
 	mc:Ignorable="d">
 	<Page.Resources>

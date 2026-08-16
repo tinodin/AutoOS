@@ -4,7 +4,7 @@ using AutoOS.App.Common;
 using AutoOS.Core.Helpers.Download;
 using AutoOS.Core.Helpers.Extract;
 using AutoOS.Core.Helpers.GPU;
-using AutoOS.Core.Helpers.GPU.Models;
+using AutoOS.Core.Data.Models.GPU;
 using AutoOS.Core.Helpers.Monitor;
 using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.Shortcut;

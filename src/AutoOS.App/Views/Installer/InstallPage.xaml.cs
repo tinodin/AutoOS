@@ -105,7 +105,6 @@ public sealed partial class InstallPage : Page
 		try
 		{
 			await LogHelper.Log(PreparingStage.GPUs);
-			await LogHelper.LogNetworkSettings(PreparingStage.GPUs);
 		}
 		catch (Exception ex)
 		{

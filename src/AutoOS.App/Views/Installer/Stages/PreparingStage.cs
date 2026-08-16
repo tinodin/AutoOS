@@ -1,12 +1,12 @@
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using AutoOS.Core.Helpers.CPU;
-using AutoOS.Core.Helpers.CPU.Models;
+using AutoOS.Core.Data.Models.CPU;
 using AutoOS.Core.Helpers.Database;
 using AutoOS.Core.Helpers.Device;
-using AutoOS.Core.Helpers.Device.Models;
+using AutoOS.Core.Data.Models.Device;
 using AutoOS.Core.Helpers.Games;
-using AutoOS.Core.Helpers.GPU.Models;
+using AutoOS.Core.Data.Models.GPU;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using ValveKeyValue;

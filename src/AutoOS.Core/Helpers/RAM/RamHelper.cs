@@ -1,5 +1,5 @@
 using System.Runtime.InteropServices;
-using AutoOS.Core.Helpers.RAM.Models;
+using AutoOS.Core.Data.Models.RAM;
 using Windows.Win32;
 using Windows.Win32.System.SystemInformation;
 

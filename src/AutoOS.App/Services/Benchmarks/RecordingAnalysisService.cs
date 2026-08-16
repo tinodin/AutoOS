@@ -99,7 +99,8 @@ public static class RecordingAnalysisService
 		List<double> untilDisplayed = [with(4096)];
 		List<double> renderPresentLatency = [with(4096)];
 
-		using SepReader reader = Sep.Reader(o => o with { Sep = new Sep(','), Unescape = true, ColNameComparer = StringComparer.OrdinalIgnoreCase }).FromFile(filePath);
+		using FileStream stream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+		using SepReader reader = Sep.Reader(o => o with { Sep = new Sep(','), Unescape = true, ColNameComparer = StringComparer.OrdinalIgnoreCase }).From(stream, true);
 
 		reader.Header.TryIndexOf("MsBetweenDisplayChange", out int idxDisplayChange);
 		reader.Header.TryIndexOf("MsBetweenPresents", out int idxPresents);

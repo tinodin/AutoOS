@@ -1,12 +1,12 @@
 using AutoOS.App.Data.Enums.Power;
 using AutoOS.App.Data.Models.Power;
+using AutoOS.App.Helpers.TreeGrid;
 using AutoOS.App.ViewModels;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Microsoft.UI.Xaml.Input;
 using Syncfusion.UI.Xaml.Data;
 using Syncfusion.UI.Xaml.DataGrid;
 using Syncfusion.UI.Xaml.Grids;
-using Syncfusion.UI.Xaml.Grids.ScrollAxis;
 using Syncfusion.UI.Xaml.TreeGrid;
 using Windows.System;
 
@@ -117,17 +117,8 @@ public sealed partial class PowerPage : Page
 
 	private void EditComboBox_DropDownClosed(object sender, object e)
 	{
-		foreach (SfTreeGrid treeGrid in new[] { TreeGrid, CompareTreeGrid, ChangesTreeGrid })
-		{
-			TreeGridCurrentCellManager manager = treeGrid.SelectionController.CurrentCellManager;
-			if (manager.CurrentCell?.IsEditing != true)
-				continue;
-
-			RowColumnIndex index = manager.CurrentRowColumnIndex;
-			manager.EndEdit();
-			treeGrid.SelectionController.MoveCurrentCell(index);
-			break;
-		}
+		if (!TreeGridEditingHelper.EndEditingIfActive(TreeGrid) && !TreeGridEditingHelper.EndEditingIfActive(CompareTreeGrid))
+			TreeGridEditingHelper.EndEditingIfActive(ChangesTreeGrid);
 	}
 
 	private void TreeGrid_TreeGridContextFlyoutOpening(object sender, TreeGridContextFlyoutEventArgs e)
@@ -137,7 +128,6 @@ public sealed partial class PowerPage : Page
 
 		if (e.ContextFlyoutType != Syncfusion.UI.Xaml.TreeGrid.ContextFlyoutType.HeaderCell)
 			return;
-
 
 		e.ContextFlyout.Items.Clear();
 
@@ -197,7 +187,7 @@ public sealed partial class PowerPage : Page
 		TreeGridView? view = treeGrid.View;
 		if (view == null)
 			return;
-		view.Filter = item => viewModel.MatchesFilter(item);
+		view.Filter = viewModel.MatchesFilter;
 		view.RefreshFilter();
 	}
 }

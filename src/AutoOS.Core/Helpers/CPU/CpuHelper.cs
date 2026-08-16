@@ -1,5 +1,5 @@
 using System.Runtime.InteropServices;
-using AutoOS.Core.Helpers.CPU.Models;
+using AutoOS.Core.Data.Models.CPU;
 using Microsoft.Win32;
 using Windows.Win32;
 using Windows.Win32.Foundation;

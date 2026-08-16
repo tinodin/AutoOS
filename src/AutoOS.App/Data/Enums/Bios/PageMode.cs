@@ -2,13 +2,13 @@ namespace AutoOS.App.Data.Enums.Bios;
 
 public enum PageMode
 {
-	Exporting,
-	Importing,
+	Reading,
 	Loaded,
 	Unsupported,
 	HiiResourcesRegular,
 	HiiResourcesProtected,
 	HiiResourcesOther,
+	Writing,
 	WriteProtectedAsus,
 	WriteProtectedAsRock,
 	WriteProtectedOther

@@ -128,12 +128,20 @@ public partial class ReadWriteHelper : IDisposable
 	}
 
 	// Physical Memory
-	public unsafe bool ReadMemory(ulong address, byte[] buffer)
+	public unsafe bool ReadMemory(ulong address, uint length, byte[] output)
 	{
-		IntPtr pLinAddr = InpOut.MapPhysToLin((IntPtr)address, (uint)buffer.Length, out nint hMapping);
-		if (pLinAddr == IntPtr.Zero) return false;
+		if (length == 0 || output.Length < length)
+			return false;
 
-		if (!IsReadableMemory(pLinAddr, buffer.Length))
+		ulong baseAddress = address & ~0xFFFUL;
+		uint extra = (uint)(address - baseAddress);
+		uint mapLength = extra + length + 0x1000;
+
+		IntPtr pLinAddr = InpOut.MapPhysToLin((IntPtr)baseAddress, mapLength, out nint hMapping);
+		if (pLinAddr == IntPtr.Zero)
+			return false;
+
+		if (!IsReadableMemory(pLinAddr, (int)(extra + length)))
 		{
 			_ = InpOut.UnmapPhysicalMemory(hMapping, pLinAddr);
 			return false;
@@ -141,9 +149,9 @@ public partial class ReadWriteHelper : IDisposable
 
 		try
 		{
-			fixed (byte* pBuffer = buffer)
+			fixed (byte* pOutput = output)
 			{
-				Buffer.MemoryCopy((void*)pLinAddr, pBuffer, buffer.Length, buffer.Length);
+				Buffer.MemoryCopy((void*)(pLinAddr + (nint)extra), pOutput, length, length);
 			}
 			return true;
 		}
@@ -215,7 +223,7 @@ public partial class ReadWriteHelper : IDisposable
 	public bool ReadMemory32(ulong address, out uint value)
 	{
 		byte[] buffer = new byte[4];
-		if (ReadMemory(address, buffer))
+		if (ReadMemory(address, 4, buffer))
 		{
 			value = BitConverter.ToUInt32(buffer, 0);
 			return true;

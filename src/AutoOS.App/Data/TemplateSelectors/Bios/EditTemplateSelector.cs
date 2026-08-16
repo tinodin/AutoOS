@@ -1,15 +1,17 @@
 using AutoOS.App.Data.Models.Bios;
+using AutoOS.Core.Data.Models.Bios;
 
 namespace AutoOS.App.Data.TemplateSelectors.Bios;
 
 public sealed partial class EditTemplateSelector : DataTemplateSelector
 {
-	public DataTemplate ComboBoxTemplate { get; set; } = null!;
-	public DataTemplate TextBoxTemplate { get; set; } = null!;
+	public DataTemplate? ComboBoxTemplate { get; set; }
 
-	protected override DataTemplate SelectTemplateCore(object item, DependencyObject container)
+	public DataTemplate? TextBoxTemplate { get; set; }
+
+	protected override DataTemplate? SelectTemplateCore(object item, DependencyObject container)
 	{
-		if (item is Node node && node.HasOptions)
+		if (item is Node { Setting: { Options.Count: > 0 } })
 			return ComboBoxTemplate;
 		return TextBoxTemplate;
 	}

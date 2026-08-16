@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text.Json.Nodes;
-using AutoOS.Core.Helpers.Device.Models;
+using AutoOS.Core.Data.Models.Device;
 using AutoOS.Core.Helpers.ReadWrite;
 using Microsoft.Win32;
 using Windows.Storage;
