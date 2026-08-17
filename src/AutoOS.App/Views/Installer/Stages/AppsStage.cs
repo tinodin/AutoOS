@@ -93,7 +93,9 @@ public class ApplicationSelection
 	public bool Cursor { get; set; }
 	public bool Devin { get; set; }
 	public bool Kiro { get; set; }
+	public bool Freebuff { get; set; }
 	public bool OpenCode { get; set; }
+	public bool OpenChamber { get; set; }
 	public bool SublimeText { get; set; }
 	public bool IDEA { get; set; }
 	public bool WinMerge { get; set; }
@@ -256,7 +258,9 @@ public static class AppsStage
 		bool Cursor = selection?.Cursor ?? PreparingStage.Cursor;
 		bool Devin = selection?.Devin ?? PreparingStage.Devin;
 		bool Kiro = selection?.Kiro ?? PreparingStage.Kiro;
+		bool Freebuff = selection?.Freebuff ?? PreparingStage.Freebuff;
 		bool OpenCode = selection?.OpenCode ?? PreparingStage.OpenCode;
+		bool OpenChamber = selection?.OpenChamber ?? PreparingStage.OpenChamber;
 		bool SublimeText = selection?.SublimeText ?? PreparingStage.SublimeText;
 		bool IDEA = selection?.IDEA ?? PreparingStage.IDEA;
 		bool WinMerge = selection?.WinMerge ?? PreparingStage.WinMerge;
@@ -1464,10 +1468,10 @@ public static class AppsStage
 			("Pinning Cursor to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Cursor", "Cursor.lnk")), () => Cursor == true),
 
 			// download devin
-			("Downloading Devin", async () => await DownloadHelper.Download("https://windsurf.com/api/windsurf/download-redirect?build=win32-x64-user&isNext=false", Path.GetTempPath(), "DevinUserSetup-x64.exe", reporter: reporter), () => Devin == true),
+			("Downloading Devin", async () => await DownloadHelper.Download("https://windsurf-stable.codeiumdata.com/win32-x64/stable/7e8e528a3057dcf000527b80072c9be7ea90a08d/DevinSetup-x64-3.7.25.exe", Path.GetTempPath(), "DevinUserSetup-x64.exe", reporter: reporter), () => Devin == true),
 
 			// install devin
-			("Installing Devin", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "DevinUserSetup-x64.exe"), Arguments = "/VERYSILENT /NORESTART /MERGETASKS=!runcode" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Devin == true),
+			("Installing Devin", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "DevinUserSetup-x64.exe"), Arguments = "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Devin == true),
 			("Cleaning up Devin files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "DevinUserSetup-x64.exe")), () => Devin == true),
 
 			// pin devin to the taskbar
@@ -1484,6 +1488,17 @@ public static class AppsStage
 			// pin kiro to the taskbar
 			("Pinning Kiro to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Kiro", "Kiro.lnk")), () => Kiro == true),
 
+			// download freebuff
+			("Downloading Freebuff", async () => await DownloadHelper.Download("https://freebuff.com/api/desktop/download/windows", Path.GetTempPath(), "Freebuff-win-x64.exe", reporter: reporter), () => Freebuff == true),
+
+			// install freebuff
+			("Installing Freebuff", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "Freebuff-win-x64.exe"), Arguments = "/S", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Freebuff == true),
+			("Cleaning up Freebuff files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "Freebuff-win-x64.exe")), () => Freebuff == true),
+			("Removing Freebuff desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Freebuff.lnk")), () => Freebuff == true),
+
+			// pin freebuff to the taskbar
+			("Pinning Freebuff to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "@codebufffreebuff-desktop", "Freebuff.exe")), () => Freebuff == true),
+
 			// download opencode
 			("Downloading OpenCode", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/anomalyco/opencode/releases")).RootElement.EnumerateArray().First(release => !release.GetProperty("prerelease").GetBoolean() && release.GetProperty("assets").EnumerateArray().Any(asset => (asset.GetProperty("name").GetString() ?? "").Contains("opencode-desktop-win-x64.exe"))).GetProperty("assets").EnumerateArray().First(asset => (asset.GetProperty("name").GetString() ?? "").Contains("opencode-desktop-win-x64.exe")).GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "opencode-desktop-win-x64.exe", reporter: reporter), () => OpenCode == true),
 
@@ -1494,6 +1509,17 @@ public static class AppsStage
 
 			// pin opencode to the taskbar
 			("Pinning OpenCode to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "OpenCode.lnk")), () => OpenCode == true),
+
+			// download openchamber
+			("Downloading OpenChamber", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/openchamber/openchamber/releases")).RootElement.EnumerateArray().First(release => !release.GetProperty("prerelease").GetBoolean() && release.GetProperty("assets").EnumerateArray().Any(asset => (asset.GetProperty("name").GetString() ?? "").Contains("win-x64.exe"))).GetProperty("assets").EnumerateArray().First(asset => (asset.GetProperty("name").GetString() ?? "").Contains("win-x64.exe")).GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "OpenChamber-win-x64.exe", reporter: reporter), () => OpenChamber == true),
+
+			// install openchamber
+			("Installing OpenChamber", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "OpenChamber-win-x64.exe"), Arguments = "/S", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => OpenChamber == true),
+			("Cleaning up OpenChamber files", async () => File.Delete(Path.Combine(Path.GetTempPath(), "OpenChamber-win-x64.exe")), () => OpenChamber == true),
+			("Removing OpenChamber desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "OpenChamber.lnk")), () => OpenChamber == true),
+
+			// pin openchamber to the taskbar
+			("Pinning OpenChamber to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "OpenChamber.lnk")), () => OpenChamber == true),
 
 			// download sublime text
 			("Downloading Sublime Text", async () => await DownloadHelper.Download("https://download.sublimetext.com/sublime_text_build_4200_x64_setup.exe", Path.GetTempPath(), "sublime_text_x64_setup.exe", reporter: reporter), () => SublimeText == true),

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<UserControl
+	x:Class="AutoOS.App.UserControls.MediaCarousel"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:local="using:AutoOS.App.UserControls"
+	mc:Ignorable="d"
+	UseSystemFocusVisuals="True"
+	XYFocusKeyboardNavigation="Enabled">
+	<UserControl.Resources>
+		<Style x:Key="MediaNavigationButtonStyle" TargetType="Button">
+			<Setter Property="Background" Value="#E6FFFFFF" />
+			<Setter Property="BorderThickness" Value="0" />
+			<Setter Property="CornerRadius" Value="16" />
+			<Setter Property="Padding" Value="0" />
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate TargetType="Button">
+						<ContentPresenter
+							Background="{TemplateBinding Background}"
+							BorderBrush="{TemplateBinding BorderBrush}"
+							BorderThickness="{TemplateBinding BorderThickness}"
+							Content="{TemplateBinding Content}"
+							ContentTemplate="{TemplateBinding ContentTemplate}"
+							ContentTransitions="{TemplateBinding ContentTransitions}"
+							CornerRadius="{TemplateBinding CornerRadius}"
+							HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+							Padding="{TemplateBinding Padding}"
+							VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>
+	</UserControl.Resources>
+	<Grid
+		x:Name="CarouselRoot"
+		Background="Transparent"
+		PointerEntered="CarouselRoot_PointerEntered"
+		PointerExited="CarouselRoot_PointerExited">
+
+		<!--  Media Scroll Viewer  -->
+		<ScrollViewer
+			x:Name="MediaScrollViewer"
+			HorizontalScrollBarVisibility="Hidden"
+			HorizontalScrollMode="Disabled"
+			IsHorizontalRailEnabled="False"
+			IsScrollInertiaEnabled="False"
+			IsTabStop="False"
+			VerticalScrollBarVisibility="Disabled"
+			VerticalScrollMode="Disabled"
+			ViewChanged="MediaScrollViewer_ViewChanged"
+			ZoomMode="Disabled">
+			<ItemsRepeater
+				x:Name="MediaItemsRepeater"
+				ItemsSource="{x:Bind MediaItems}">
+				<ItemsRepeater.Layout>
+					<StackLayout Orientation="Horizontal" Spacing="12" />
+				</ItemsRepeater.Layout>
+				<ItemsRepeater.ItemTemplate>
+					<DataTemplate x:DataType="local:MediaCarouselItem">
+						<Button
+							Width="400"
+							Height="225"
+							Padding="0"
+							HorizontalContentAlignment="Stretch"
+							VerticalContentAlignment="Stretch"
+							AutomationProperties.Name="{x:Bind Label}"
+							Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+							BorderThickness="0"
+							Click="MediaItem_Click"
+							CornerRadius="8"
+							DataContext="{x:Bind}">
+							<Grid
+								Background="Transparent"
+								PointerEntered="MediaItem_PointerEntered"
+								PointerExited="MediaItem_PointerExited">
+
+								<!--  Image  -->
+								<Image
+									x:Name="ItemImage"
+									HorizontalAlignment="Stretch"
+									VerticalAlignment="Stretch"
+									AutomationProperties.AccessibilityView="Raw"
+									Source="{x:Bind ImageUrl}"
+									Stretch="UniformToFill" />
+
+								<!--  Hover Overlay with Fade Animation  -->
+								<Border
+									x:Name="HoverOverlay"
+									Background="#30FFFFFF"
+									BorderBrush="#40FFFFFF"
+									BorderThickness="1"
+									CornerRadius="8"
+									IsHitTestVisible="False"
+									Opacity="0" />
+
+								<!--  Video Play Badge  -->
+								<Border
+									x:Name="VideoBadge"
+									Background="#99000000"
+									CornerRadius="20"
+									HorizontalAlignment="Center"
+									IsHitTestVisible="False"
+									Padding="10"
+									VerticalAlignment="Center"
+									Visibility="{x:Bind IsVideo}">
+									<FontIcon FontSize="18" Foreground="White" Glyph="&#xE768;" />
+								</Border>
+							</Grid>
+						</Button>
+					</DataTemplate>
+				</ItemsRepeater.ItemTemplate>
+			</ItemsRepeater>
+		</ScrollViewer>
+
+		<!--  Store-style navigation buttons are shown only while hovered.  -->
+		<Button
+			x:Name="LeftButton"
+			Width="32"
+			Height="32"
+			Margin="8,0,0,0"
+			HorizontalAlignment="Left"
+			VerticalAlignment="Center"
+			AutomationProperties.Name="Scroll left"
+			Click="LeftButton_Click"
+			FontFamily="{ThemeResource ContentControlThemeFontFamily}"
+			PointerEntered="NavigationButton_PointerEntered"
+			PointerExited="NavigationButton_PointerExited"
+			Style="{StaticResource MediaNavigationButtonStyle}"
+			ToolTipService.ToolTip="Scroll backward"
+			Visibility="Collapsed">
+			<FontIcon
+				FontSize="{ThemeResource FlipViewButtonFontSize}"
+				Foreground="#FF8A8A8A"
+				Glyph="&#xEDD9;" />
+		</Button>
+		<Button
+			x:Name="RightButton"
+			Width="32"
+			Height="32"
+			Margin="0,0,8,0"
+			HorizontalAlignment="Right"
+			VerticalAlignment="Center"
+			AutomationProperties.Name="Scroll right"
+			Click="RightButton_Click"
+			FontFamily="{ThemeResource ContentControlThemeFontFamily}"
+			PointerEntered="NavigationButton_PointerEntered"
+			PointerExited="NavigationButton_PointerExited"
+			Style="{StaticResource MediaNavigationButtonStyle}"
+			ToolTipService.ToolTip="Scroll forward"
+			Visibility="Collapsed">
+			<FontIcon
+				FontSize="{ThemeResource FlipViewButtonFontSize}"
+				Foreground="#FF8A8A8A"
+				Glyph="&#xEDDA;" />
+		</Button>
+	</Grid>
+</UserControl>

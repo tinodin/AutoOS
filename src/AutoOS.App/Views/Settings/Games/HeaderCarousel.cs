@@ -8,6 +8,7 @@ using AutoOS.Core.Helpers.Games;
 using AutoOS.Core.Helpers.Games.Models;
 using AutoOS.Core.Helpers.Processes;
 using AutoOS.Core.Helpers.Services;
+using AutoOS.App.UserControls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Media;
@@ -16,6 +17,7 @@ using ValveKeyValue;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Gaming.Input;
+using Windows.Media.Core;
 using Windows.Storage;
 using Windows.System;
 using Windows.UI.Input.Preview.Injection;
@@ -45,9 +47,10 @@ public partial class HeaderCarousel : ItemsControl
 	private Grid MetadataGrid = null!;
 	private ScrollViewer Metadata_ScrollViewer = null!;
 
-	private Card Screenshots_Card = null!;
-	//private GameGallery Screenshots_Gallery;
-	//private ScrollViewer Videos_ScrollViewer;
+	private Card Media_Card = null!;
+	private MediaCarousel MediaCarouselControl = null!;
+	private MediaFullscreenViewer MediaFullscreenControl = null!;
+	private Button MediaViewAllButton = null!;
 
 	private Button Play = null!;
 	private Button Update = null!;
@@ -202,9 +205,12 @@ public partial class HeaderCarousel : ItemsControl
 		AgeRatingDescriptionText = (TextBlock)GetTemplateChild("AgeRatingDescriptionText")!;
 		ElementsText = (TextBlock)GetTemplateChild("ElementsText")!;
 
-		Screenshots_Card = (Card)GetTemplateChild("Screenshots_Card")!;
-		//Screenshots_Gallery = GetTemplateChild("Screenshots_Gallery") as GameGallery;
-		//Videos_ScrollViewer = GetTemplateChild("Videos_ScrollViewer") as ScrollViewer;
+		Media_Card = (Card)GetTemplateChild("Media_Card")!;
+		MediaCarouselControl = (MediaCarousel)GetTemplateChild("MediaCarouselControl")!;
+		MediaCarouselControl.MediaClicked += MediaCarouselControl_MediaClicked;
+		MediaFullscreenControl = (MediaFullscreenViewer)GetTemplateChild("MediaFullscreenControl")!;
+		MediaViewAllButton = (Button)GetTemplateChild("MediaViewAllButton")!;
+		MediaViewAllButton.Click += MediaViewAllButton_Click;
 
 		Loaded -= HeaderCarousel_Loaded;
 		Loaded += HeaderCarousel_Loaded;
@@ -281,6 +287,22 @@ public partial class HeaderCarousel : ItemsControl
 
 		GamepadReading reading = gamepads[0].GetCurrentReading();
 		GamepadButtons buttons = reading.Buttons;
+
+		// While the fullscreen media viewer is open, let gamepad keys flow
+		// through untouched so the viewer can handle them itself.
+		if (activeInstance.MediaFullscreenControl != null && activeInstance.MediaFullscreenControl.Visibility == Visibility.Visible)
+		{
+			CheckAndInject(buttons, GamepadButtons.DPadLeft, VirtualKey.GamepadDPadLeft);
+			CheckAndInject(buttons, GamepadButtons.DPadRight, VirtualKey.GamepadDPadRight);
+			CheckAndInject(buttons, GamepadButtons.DPadUp, VirtualKey.GamepadDPadUp);
+			CheckAndInject(buttons, GamepadButtons.DPadDown, VirtualKey.GamepadDPadDown);
+			CheckAndInject(buttons, GamepadButtons.A, VirtualKey.GamepadA);
+			CheckAndInject(buttons, GamepadButtons.B, VirtualKey.GamepadB);
+			CheckAndInject(buttons, GamepadButtons.X, VirtualKey.GamepadX);
+			CheckAndInject(buttons, GamepadButtons.Y, VirtualKey.GamepadY);
+			_lastButtons = buttons;
+			return;
+		}
 
 		if (reading.LeftThumbstickX < -ThumbstickThreshold)
 			buttons |= GamepadButtons.DPadLeft;
@@ -734,6 +756,7 @@ public partial class HeaderCarousel : ItemsControl
 				Elements = game.Elements ?? "",
 				Description = game.Description ?? "",
 				Screenshots = game.Screenshots,
+				Videos = game.VideoUrls.Where(url => !string.IsNullOrEmpty(url)).Select(url => MediaSource.CreateFromUri(new Uri(url))).ToList(),
 				ReleaseDate = game.ReleaseDate ?? "",
 				Size = game.Size ?? "",
 				Version = game.Version ?? "",
@@ -758,6 +781,16 @@ public partial class HeaderCarousel : ItemsControl
 		{
 			_blurManager.DisableBlur();
 		}
+	}
+
+	private void MediaViewAllButton_Click(object sender, RoutedEventArgs e)
+	{
+		MediaFullscreenControl.Show(MediaCarouselControl.MediaItems.ToList(), 0, null);
+	}
+
+	private void MediaCarouselControl_MediaClicked(object? sender, MediaCarouselClickedEventArgs e)
+	{
+		MediaFullscreenControl.Show(e.Items, e.Index, e.SourceElement);
 	}
 
 	private void HeaderCarousel_Unloaded(object sender, RoutedEventArgs e)
@@ -1075,11 +1108,10 @@ public partial class HeaderCarousel : ItemsControl
 			{
 				CheckGameRunning();
 				Screenshots = selectedTile?.Screenshots!;
-				Screenshots_Card.Visibility = (Screenshots?.Count > 0) ? Visibility.Visible : Visibility.Collapsed;
-				//Screenshots_Gallery.ResetScrollPosition();
-
-				//Videos = selectedTile?.Videos;
-				//Videos_ScrollViewer.Visibility = (Videos?.Count > 0) ? Visibility.Visible : Visibility.Collapsed;
+				MediaCarouselControl.Screenshots = selectedTile?.Screenshots!;
+				MediaCarouselControl.Videos = selectedTile?.Videos!;
+				MediaCarouselControl.PosterUrl = selectedTile?.ImageUrl ?? "";
+				Media_Card.Visibility = ((selectedTile?.Screenshots?.Count ?? 0) > 0 || (selectedTile?.Videos?.Count ?? 0) > 0) ? Visibility.Visible : Visibility.Collapsed;
 			});
 		}
 	}

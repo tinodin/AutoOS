@@ -136,7 +136,9 @@ public sealed partial class AppsPage : Page
 			new() { Text = "Cursor", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Cursor.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "cursor", "Cursor.exe")) },
 			new() { Text = "Devin", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Devin.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Devin", "Devin.exe"))},
 			new() { Text = "Kiro", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Kiro.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Kiro", "Kiro.exe")) },
+			new() { Text = "Freebuff", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Freebuff.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "@codebufffreebuff-desktop", "Freebuff.exe")) },
 			new() { Text = "OpenCode", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/OpenCode.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "@opencode-aidesktop", "OpenCode.exe")) },
+			new() { Text = "OpenChamber", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/OpenChamber.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "@openchamberelectron", "OpenChamber.exe")) },
 			new() { Text = "Sublime Text", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/SublimeText.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Sublime Text", "sublime_text.exe")) },
 			new() { Text = "IntelliJ IDEA", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/IDEA.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "JetBrains", "IntelliJ IDEA 2026.1.3", "bin", "idea64.exe")) },
 			new() { Text = "WinMerge", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/WinMerge.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "WinMerge", "WinMergeU.exe"))},
@@ -345,7 +347,9 @@ public sealed partial class AppsPage : Page
 		selection.Cursor = selectedDev.Contains("Cursor");
 		selection.Devin = selectedDev.Contains("Devin");
 		selection.Kiro = selectedDev.Contains("Kiro");
+		selection.Freebuff = selectedDev.Contains("Freebuff");
 		selection.OpenCode = selectedDev.Contains("OpenCode");
+		selection.OpenChamber = selectedDev.Contains("OpenChamber");
 		selection.SublimeText = selectedDev.Contains("Sublime Text");
 		selection.IDEA = selectedDev.Contains("IntelliJ IDEA");
 		selection.WinMerge = selectedDev.Contains("WinMerge");

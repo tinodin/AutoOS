@@ -129,7 +129,9 @@ public sealed partial class AppsPage : Page
 			new() { Text = "Cursor", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Cursor.png" },
 			new() { Text = "Devin", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Devin.png" },
 			new() { Text = "Kiro", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Kiro.png" },
+			new() { Text = "Freebuff", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Freebuff.png" },
 			new() { Text = "OpenCode", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/OpenCode.png" },
+			new() { Text = "OpenChamber", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/OpenChamber.png" },
 			new() { Text = "Sublime Text", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/SublimeText.png" },
 			new() { Text = "IntelliJ IDEA", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/IDEA.png" },
 			new() { Text = "WinMerge", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/WinMerge.png" },
@@ -209,7 +211,7 @@ public sealed partial class AppsPage : Page
 		Miscellaneous.ItemsSource = new List<GridViewItem>
 		{
 			new() { Text = "CapFrameX", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/CapFrameX.png" },
-			new() { Text = "MiniTool Partition Wizard", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/MinitoolPartitionWizard.png" },
+			new() { Text = "Minitool Partition Wizard", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/MinitoolPartitionWizard.png" },
 			new() { Text = "AOMEI Partition Assistant", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/AomeiPartitionAssistant.png" },
 			new() { Text = "WizTree", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/WizTree.png" },
 			new() { Text = "CrystalDiskInfo", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/CrystalDiskInfo.png" },
