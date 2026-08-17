@@ -1,7 +1,7 @@
-using System.Diagnostics;
 using AutoOS.App.Views.Installer.Stages;
 using AutoOS.Core.Helpers.Logging;
 using AutoOS.Core.Helpers.OS;
+using AutoOS.Core.Helpers.Shutdown;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using Windows.Storage;
@@ -117,15 +117,7 @@ public sealed partial class InstallPage : Page
 		Info.Title = "Restarting in 1...";
 		await Task.Delay(1000);
 		Info.Title = "Restarting...";
-		await Task.Delay(750);
-		ProcessStartInfo processStartInfo = new()
-		{
-			FileName = "cmd.exe",
-			Arguments = $"/c shutdown /r /t 0",
-			UseShellExecute = false,
-			CreateNoWindow = true,
-		};
-		Process.Start(processStartInfo);
+		ShutdownHelper.Restart();
 	}
 
 	public static async Task RunStage(string status, List<(string Title, Func<Task> Action, Func<bool>? Condition)> actions, double stagePercentage)

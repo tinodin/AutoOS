@@ -43,6 +43,10 @@ public sealed partial class SettingState : ObservableObject
 	public static string GetCanonicalValue(Setting setting, string? value) =>
 		ResolveOption(setting, value)?.Value.ToString(CultureInfo.InvariantCulture) ?? value ?? string.Empty;
 
+	public static bool MatchesDefault(Setting setting, SettingState state) =>
+		!string.IsNullOrEmpty(setting.Default) &&
+		string.Equals(GetDisplayValue(setting, state.Value), setting.Default, StringComparison.OrdinalIgnoreCase);
+
 	public static bool HasPendingRecommendation(Setting setting, SettingState state)
 	{
 		if (setting.RecommendedOption != null)

@@ -4,14 +4,16 @@ using AutoOS.App.Data.Contracts;
 using AutoOS.App.Data.Enums;
 using AutoOS.App.Data.Enums.Bios;
 using AutoOS.App.Data.Models.Bios;
+using AutoOS.App.Extensions;
 using AutoOS.Core.Data.Models.Bios;
+using AutoOS.Core.Helpers.Shutdown;
 using AutoOS.App.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 namespace AutoOS.App.ViewModels;
 
-public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosService, IBiosBackupService backupService, IFilePickerService filePickerService) : ObservableObject
+public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosService, IBiosBackupService backupService, IFilePickerService filePickerService, IDialogService dialogService) : ObservableObject
 {
 	private readonly Stack<Dictionary<Setting, string?>> _undoStates = [];
 
@@ -23,6 +25,8 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 
 	private TreeState? _recommendedTree;
 
+	private TreeState? _compareTree;
+
 	private TreeState? _changesTree;
 
 	public Action? RefreshFilterAction { get; set; }
@@ -30,6 +34,8 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 	public Action? RefreshFilterOnlyAction { get; set; }
 
 	public ObservableCollection<Node> TreeNodes { get; } = [];
+
+	public ObservableCollection<Node> CompareNodes { get; } = [];
 
 	public ObservableCollection<Node> DiffNodes { get; } = [];
 
@@ -59,12 +65,14 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 	[NotifyPropertyChangedFor(nameof(CanApplyMerge))]
 	[NotifyPropertyChangedFor(nameof(CanWrite))]
 	[NotifyPropertyChangedFor(nameof(CanRestore))]
+	[NotifyPropertyChangedFor(nameof(CanToggleCompareToDefaults))]
 	[NotifyPropertyChangedFor(nameof(CanToggleViewChanges))]
 	[NotifyCanExecuteChangedFor(nameof(UndoCommand))]
 	[NotifyCanExecuteChangedFor(nameof(RedoCommand))]
 	[NotifyCanExecuteChangedFor(nameof(ApplyRecommendationsCommand))]
 	[NotifyCanExecuteChangedFor(nameof(WriteToNvramCommand))]
 	[NotifyCanExecuteChangedFor(nameof(RestoreCommand))]
+	[NotifyCanExecuteChangedFor(nameof(ToggleCompareToDefaultsCommand))]
 	[NotifyCanExecuteChangedFor(nameof(ToggleViewChangesCommand))]
 	public partial bool IsLoaded { get; set; }
 
@@ -85,8 +93,17 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(NormalVisibility))]
+	[NotifyPropertyChangedFor(nameof(CompareToDefaultsVisibility))]
+	public partial bool CompareToDefaults { get; set; }
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(NormalVisibility))]
 	[NotifyPropertyChangedFor(nameof(ViewChangesVisibility))]
 	public partial bool ViewChanges { get; set; }
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(CompareToDefaultsLabel))]
+	public partial int CompareToDefaultsCount { get; set; }
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(ViewChangesLabel))]
@@ -119,12 +136,26 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 
 	partial void OnFilterModeChanged(FilterMode value) => RefreshFilter();
 
+	partial void OnCompareToDefaultsChanged(bool value)
+	{
+		if (value)
+			ViewChanges = false;
+	}
+
+	partial void OnViewChangesChanged(bool value)
+	{
+		if (value)
+			CompareToDefaults = false;
+	}
+
 	public void RefreshFilter() => RefreshFilterAction?.Invoke();
 
 	[RelayCommand]
 	private void SetFilterMode(string value) => FilterMode = Enum.Parse<FilterMode>(value);
 
-	public Visibility NormalVisibility => ViewChanges ? Visibility.Collapsed : Visibility.Visible;
+	public Visibility NormalVisibility => ViewChanges || CompareToDefaults ? Visibility.Collapsed : Visibility.Visible;
+
+	public Visibility CompareToDefaultsVisibility => CompareToDefaults ? Visibility.Visible : Visibility.Collapsed;
 
 	public Visibility ViewChangesVisibility => ViewChanges ? Visibility.Visible : Visibility.Collapsed;
 
@@ -136,11 +167,15 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 
 	public bool CanApplyMerge => CanMerge && MergeCount > 0;
 
+	public bool CanToggleCompareToDefaults => IsLoaded;
+
 	public bool CanToggleViewChanges => IsLoaded;
 
 	public bool CanRestore => IsLoaded;
 
 	public bool CanWrite => IsLoaded && ModifiedCount > 0;
+
+	public string CompareToDefaultsLabel => $"Compare to Defaults ({CompareToDefaultsCount})";
 
 	public string ViewChangesLabel => $"View Changes ({ModifiedCount})";
 
@@ -148,6 +183,7 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 	{
 		PageState = PageMode.Reading;
 		IsLoaded = false;
+		CompareToDefaults = false;
 		ViewChanges = false;
 		SearchText = string.Empty;
 
@@ -179,6 +215,8 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		_recommendedTree = BuildTree("Recommended", static node => node.HasPendingRecommendation);
 		TreeNodes.Add(_recommendedTree.Root);
 		TreeNodes.Add(BuildTree("All Settings", static _ => true).Root);
+		_compareTree = BuildTree("Differences", static node => !string.IsNullOrEmpty(node.Setting?.Default) && !node.IsDefault);
+		CompareNodes.Add(_compareTree.Root);
 		_changesTree = BuildTree("Changes", static node => node.State?.IsModified == true);
 		DiffNodes.Add(_changesTree.Root);
 
@@ -229,6 +267,9 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		PushUndoState(previous);
 		UpdateState();
 	}
+
+	[RelayCommand(CanExecute = nameof(CanToggleCompareToDefaults))]
+	private void ToggleCompareToDefaults() => RefreshFilter();
 
 	[RelayCommand(CanExecute = nameof(CanToggleViewChanges))]
 	private void ToggleViewChanges() => RefreshFilter();
@@ -288,6 +329,15 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		PageState = PageMode.Loaded;
 	}
 
+	[RelayCommand]
+	private async Task RestartIntoBiosAsync()
+	{
+		if (await dialogService.ShowConfirmationDialogAsync("Restart into BIOS", "Are you sure you want to restart into the BIOS/UEFI firmware settings?", "Restart", "Cancel") != DialogResult.Primary)
+			return;
+
+		ShutdownHelper.RestartIntoBios();
+	}
+
 	public void BeginEdit(Node? node)
 	{
 		if (node == null)
@@ -319,6 +369,8 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 	public void UpdateNodeCounts()
 	{
 		foreach (Node root in TreeNodes)
+			Recount(root, static _ => 1);
+		foreach (Node root in CompareNodes)
 			Recount(root, static _ => 1);
 		foreach (Node root in DiffNodes)
 			Recount(root, static _ => 1);
@@ -354,6 +406,9 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 
 		if (node.NodeKind == NodeKind.Path)
 			return CountVisibleSettings(node.Children) > 0;
+
+		if (CompareToDefaults && node.IsDefault)
+			return false;
 
 		if (ViewChanges && !node.IsModified)
 			return false;
@@ -413,6 +468,7 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		var rootNode = new Node(NodeKind.Root, rootName);
 		var pathMap = new Dictionary<string, Node>(StringComparer.OrdinalIgnoreCase);
 		var settingNodes = new Dictionary<Setting, Node>();
+		int order = 0;
 
 		foreach (Setting setting in _settings)
 		{
@@ -430,7 +486,8 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 				{
 					pathNode = new Node(NodeKind.Path, seg)
 					{
-						Parent = currentParent
+						Parent = currentParent,
+						Order = order
 					};
 					currentParent.Children.Add(pathNode);
 					pathMap[currentChain] = pathNode;
@@ -440,8 +497,10 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 
 			var settingNode = new Node(NodeKind.Setting, setting.Name, setting.Description, setting, _settingStates[setting])
 			{
-				Parent = currentParent
+				Parent = currentParent,
+				Order = order
 			};
+			order++;
 			settingNodes[setting] = settingNode;
 			if (include(settingNode))
 				currentParent.Children.Add(settingNode);
@@ -462,7 +521,7 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 			bool included = include(node);
 			bool present = pathNode.Children.Contains(node);
 			if (included && !present)
-				pathNode.Children.Add(node);
+				pathNode.Children.InsertOrdered(node);
 			else if (!included && present)
 				pathNode.Children.Remove(node);
 		}
@@ -476,7 +535,7 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		{
 			Node parent = pathNode.Parent!;
 			if (pathNode.Children.Count > 0 && !parent.Children.Contains(pathNode))
-				parent.Children.Add(pathNode);
+				parent.Children.InsertOrdered(pathNode);
 			else if (pathNode.Children.Count == 0)
 				parent.Children.Remove(pathNode);
 		}
@@ -497,6 +556,7 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 	{
 		UpdateStateCore();
 		SyncTree(_recommendedTree, static node => node.HasPendingRecommendation);
+		SyncTree(_compareTree, static node => !string.IsNullOrEmpty(node.Setting?.Default) && !node.IsDefault);
 		SyncTree(_changesTree, static node => node.State?.IsModified == true);
 		UpdateNodeCounts();
 		RefreshFilterOnlyAction?.Invoke();
@@ -504,6 +564,7 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 
 	private void UpdateStateCore()
 	{
+		CompareToDefaultsCount = _settings.Count(setting => !string.IsNullOrEmpty(setting.Default) && !SettingState.MatchesDefault(setting, _settingStates[setting]));
 		ModifiedCount = _settings.Count(setting => _settingStates[setting].IsModified);
 		RecommendedCount = _settings.Count(setting => SettingState.HasPendingRecommendation(setting, _settingStates[setting]));
 		HasRecommendations = RecommendedCount > 0;

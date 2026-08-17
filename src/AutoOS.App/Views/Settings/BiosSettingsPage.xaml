@@ -25,21 +25,28 @@
 			<wctconverters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
 			<wctconverters:StringVisibilityConverter x:Key="StringVisibilityConverter" />
 
-			<!--  Cell style selector  -->
+			<!--  Cell Style Selector  -->
 			<selectors:CellStyleSelector
 				x:Key="BiosCellStyleSelector"
 				CautionStyle="{StaticResource CautionCellStyle}"
 				CriticalStyle="{StaticResource CriticalCellStyle}"
 				SuccessStyle="{StaticResource SuccessCellStyle}" />
 
-			<!--  Changes grid cell style selector  -->
+			<!--  Compare Cell Style Selector  -->
+			<selectors:CompareCellStyleSelector
+				x:Key="CompareCellStyleSelector"
+				CautionStyle="{StaticResource CautionCellStyle}"
+				CriticalStyle="{StaticResource CriticalCellStyle}"
+				SuccessStyle="{StaticResource SuccessCellStyle}" />
+
+			<!--  Changes Cell Style Selector  -->
 			<selectors:ChangesCellStyleSelector
 				x:Key="ChangesCellStyleSelector"
 				CautionStyle="{StaticResource CautionCellStyle}"
 				CriticalStyle="{StaticResource CriticalCellStyle}"
 				SuccessStyle="{StaticResource SuccessCellStyle}" />
 
-			<!--  ComboBox template  -->
+			<!--  ComboBox Template  -->
 			<DataTemplate x:Key="ComboBoxEditTemplate" x:DataType="local:Node">
 				<ComboBox
 					DropDownClosed="EditComboBox_DropDownClosed"
@@ -65,7 +72,7 @@
 				</ComboBox>
 			</DataTemplate>
 
-			<!--  TextBox template  -->
+			<!--  TextBox Template  -->
 			<DataTemplate x:Key="TextBoxEditTemplate" x:DataType="local:Node">
 				<TextBox
 					Loaded="EditControl_Loaded"
@@ -252,6 +259,19 @@
 					<!--  Separator  -->
 					<AppBarSeparator Margin="4,0" />
 
+					<!--  Compare to Defaults  -->
+					<AppBarToggleButton
+						x:Name="CompareToDefaults"
+						Command="{x:Bind ViewModel.ToggleCompareToDefaultsCommand}"
+						Icon="{dev:FontIcon Glyph=&#xEC77;}"
+						IsChecked="{x:Bind ViewModel.CompareToDefaults, Mode=TwoWay}"
+						Label="{x:Bind ViewModel.CompareToDefaultsLabel, Mode=OneWay}"
+						ToolTipService.ToolTip="Compare to Defaults (Ctrl+Shift+D)">
+						<AppBarToggleButton.KeyboardAccelerators>
+							<KeyboardAccelerator Key="D" Modifiers="Control, Shift" />
+						</AppBarToggleButton.KeyboardAccelerators>
+					</AppBarToggleButton>
+
 					<!--  View Changes  -->
 					<AppBarToggleButton
 						x:Name="ViewChanges"
@@ -288,6 +308,20 @@
 						Label="Write to NVRAM">
 						<AppBarButton.KeyboardAccelerators>
 							<KeyboardAccelerator Key="I" Modifiers="Control" />
+						</AppBarButton.KeyboardAccelerators>
+					</AppBarButton>
+
+					<!--  Separator  -->
+					<AppBarSeparator Margin="4,0" />
+
+					<!--  Restart into BIOS  -->
+					<AppBarButton
+						Command="{x:Bind ViewModel.RestartIntoBiosCommand}"
+						Icon="{dev:FontIcon Glyph=&#xE777;}"
+						Label="Restart into BIOS"
+						ToolTipService.ToolTip="Restart into BIOS (Ctrl+Shift+R)">
+						<AppBarButton.KeyboardAccelerators>
+							<KeyboardAccelerator Key="R" Modifiers="Control, Shift" />
 						</AppBarButton.KeyboardAccelerators>
 					</AppBarButton>
 				</CommandBar>
@@ -333,7 +367,7 @@
 			<dev:Case Value="Loaded">
 				<Grid Margin="36,0,36,36">
 
-					<!--  Tree Grid (Main)  -->
+					<!--  Tree Grid  -->
 					<sfgrid:SfTreeGrid
 						x:Name="TreeGrid"
 						helpers:TreeGridSelectionControllerHelper.UseCustomSelectionController="True"
@@ -432,7 +466,94 @@
 						</sfgrid:SfTreeGrid.Columns>
 					</sfgrid:SfTreeGrid>
 
-					<!--  Tree View (View Changes)  -->
+					<!--  Compare Tree Grid  -->
+					<sfgrid:SfTreeGrid
+						x:Name="CompareTreeGrid"
+						helpers:TreeGridSelectionControllerHelper.UseCustomSelectionController="True"
+						AllowEditing="True"
+						AllowSorting="True"
+						AllowTriStateSorting="True"
+						AutoExpandMode="AllNodesExpanded"
+						AutoGenerateColumns="False"
+						CellToolTipOpening="TreeGrid_CellToolTipOpening"
+						ChildPropertyName="Children"
+						ColumnWidthMode="Star"
+						CurrentCellBeginEdit="TreeGrid_CurrentCellBeginEdit"
+						CurrentCellEndEdit="TreeGrid_CurrentCellEndEdit"
+						DataValidationMode="InView"
+						EditTrigger="OnTap"
+						ExpandStateMappingName="IsExpanded"
+						FilterLevel="All"
+						GridLinesVisibility="Both"
+						HeaderLinesVisibility="Both"
+						ItemsSource="{x:Bind ViewModel.CompareNodes}"
+						NavigationMode="Cell"
+						PasteOption="None"
+						SelectionMode="Single"
+						ShowToolTip="True"
+						SizeChanged="TreeGrid_SizeChanged"
+						TreeGridContextFlyoutOpening="TreeGrid_TreeGridContextFlyoutOpening"
+						Visibility="{x:Bind ViewModel.CompareToDefaultsVisibility, Mode=OneWay}">
+						<sfgrid:SfTreeGrid.HeaderContextFlyout>
+							<MenuFlyout />
+						</sfgrid:SfTreeGrid.HeaderContextFlyout>
+						<sfgrid:SfTreeGrid.ColumnSizer>
+							<helpers:TreeGridStarColumnSizer />
+						</sfgrid:SfTreeGrid.ColumnSizer>
+						<sfgrid:SfTreeGrid.SortComparers>
+							<data:SortComparer Comparer="{StaticResource DisplayNameComparer}" PropertyName="DisplayName" />
+							<data:SortComparer Comparer="{StaticResource DisplayCurrentComparer}" PropertyName="DisplayCurrent" />
+							<data:SortComparer Comparer="{StaticResource DisplayDefaultComparer}" PropertyName="DisplayDefault" />
+						</sfgrid:SfTreeGrid.SortComparers>
+						<sfgrid:SfTreeGrid.Columns>
+
+							<!--  Setting  -->
+							<sfgrid:TreeGridTextColumn
+								helpers:StarRatio.ColumnRatio="3"
+								AllowFocus="False"
+								HeaderText="Setting"
+								IsReadOnly="True"
+								MappingName="DisplayName"
+								ShowToolTip="True"
+								TextTrimming="CharacterEllipsis"
+								TextWrapping="NoWrap" />
+
+							<!--  Current  -->
+							<sfgrid:TreeGridTemplateColumn
+								helpers:StarRatio.ColumnRatio="1"
+								AllowSorting="True"
+								CellStyleSelector="{StaticResource CompareCellStyleSelector}"
+								EditTemplateSelector="{StaticResource EditTemplateSelector}"
+								HeaderText="Current"
+								MappingName="DisplayCurrent"
+								ShowToolTip="True">
+								<sfgrid:TreeGridTemplateColumn.CellTemplate>
+									<DataTemplate x:DataType="local:Node">
+										<TextBlock
+											Margin="12,0"
+											VerticalAlignment="Center"
+											Text="{x:Bind DisplayCurrent, Mode=OneWay}"
+											TextTrimming="CharacterEllipsis"
+											TextWrapping="NoWrap" />
+									</DataTemplate>
+								</sfgrid:TreeGridTemplateColumn.CellTemplate>
+							</sfgrid:TreeGridTemplateColumn>
+
+							<!--  Default  -->
+							<sfgrid:TreeGridTextColumn
+								helpers:StarRatio.ColumnRatio="1"
+								AllowFocus="False"
+								CellStyleSelector="{StaticResource CompareCellStyleSelector}"
+								HeaderText="Default"
+								IsReadOnly="True"
+								MappingName="DisplayDefault"
+								ShowToolTip="True"
+								TextTrimming="CharacterEllipsis"
+								TextWrapping="NoWrap" />
+						</sfgrid:SfTreeGrid.Columns>
+					</sfgrid:SfTreeGrid>
+
+					<!--  View Changes Tree Grid  -->
 					<sfgrid:SfTreeGrid
 						x:Name="ChangesTreeGrid"
 						helpers:TreeGridSelectionControllerHelper.UseCustomSelectionController="True"

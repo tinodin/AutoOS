@@ -7,7 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace AutoOS.App.Data.Models.Bios;
 
-public sealed partial class Node : ObservableObject, INotifyDataErrorInfo
+public sealed partial class Node : ObservableObject, INotifyDataErrorInfo, IOrderedNode
 {
 	internal Node(
 		NodeKind nodeKind,
@@ -37,6 +37,10 @@ public sealed partial class Node : ObservableObject, INotifyDataErrorInfo
 
 	public ObservableCollection<Node> Children { get; } = [];
 
+	internal int Order { get; set; }
+
+	int IOrderedNode.Order => Order;
+
 	[ObservableProperty]
 	public partial string DisplayName { get; set; }
 
@@ -48,6 +52,7 @@ public sealed partial class Node : ObservableObject, INotifyDataErrorInfo
 	[NotifyPropertyChangedFor(nameof(SelectedOption))]
 	[NotifyPropertyChangedFor(nameof(IsModified))]
 	[NotifyPropertyChangedFor(nameof(HasPendingRecommendation))]
+	[NotifyPropertyChangedFor(nameof(IsDefault))]
 	[NotifyPropertyChangedFor(nameof(HasErrors))]
 	public partial SettingState? State { get; set; }
 
@@ -66,6 +71,8 @@ public sealed partial class Node : ObservableObject, INotifyDataErrorInfo
 	public bool HasPendingRecommendation => Setting is { } setting && State is { } state && SettingState.HasPendingRecommendation(setting, state);
 
 	public bool IsModified => State?.IsModified == true;
+
+	public bool IsDefault => Setting is { } setting && State is { } state && SettingState.MatchesDefault(setting, state);
 
 	public Option? SelectedOption => State is { } state && Setting is { } setting ? SettingState.ResolveOption(setting, state.Value) : null;
 
@@ -143,6 +150,7 @@ public sealed partial class Node : ObservableObject, INotifyDataErrorInfo
 		OnPropertyChanged(nameof(SelectedOption));
 		OnPropertyChanged(nameof(IsModified));
 		OnPropertyChanged(nameof(HasPendingRecommendation));
+		OnPropertyChanged(nameof(IsDefault));
 		OnPropertyChanged(nameof(HasErrors));
 		ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(nameof(DisplayCurrent)));
 	}

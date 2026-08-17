@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.ServiceProcess;
 using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.Services;
+using AutoOS.Core.Helpers.Shutdown;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
@@ -98,7 +99,7 @@ public sealed partial class SecurityPage : Page
 				Content = "Restart",
 				HorizontalAlignment = HorizontalAlignment.Right
 			};
-			((Button)infoBar.ActionButton).Click += (s, args) => Process.Start(new ProcessStartInfo("shutdown", "/r /f /t 0") { CreateNoWindow = true });
+			((Button)infoBar.ActionButton).Click += (s, args) => ShutdownHelper.Restart();
 			SecurityInfo.Children.Add(infoBar);
 		}
 		isInitializingWindowsDefenderState = false;
@@ -334,7 +335,7 @@ public sealed partial class SecurityPage : Page
 				Content = "Restart",
 				HorizontalAlignment = HorizontalAlignment.Right
 			};
-			((Button)infoBar.ActionButton).Click += (s, args) => Process.Start(new ProcessStartInfo("shutdown", "/r /f /t 0") { CreateNoWindow = true });
+			((Button)infoBar.ActionButton).Click += (s, args) => ShutdownHelper.Restart();
 		}
 		else
 		{
@@ -416,7 +417,7 @@ public sealed partial class SecurityPage : Page
 				HorizontalAlignment = HorizontalAlignment.Right
 			};
 			((Button)infoBar.ActionButton).Click += (s, args) =>
-			Process.Start(new ProcessStartInfo("shutdown", "/r /f /t 0") { CreateNoWindow = true });
+			ShutdownHelper.Restart();
 		}
 		else
 		{
@@ -458,7 +459,7 @@ public sealed partial class SecurityPage : Page
 					HorizontalAlignment = HorizontalAlignment.Right
 				};
 				((Button)infoBar.ActionButton).Click += (s, args) =>
-				Process.Start(new ProcessStartInfo("shutdown", "/r /f /t 0") { CreateNoWindow = true });
+				ShutdownHelper.Restart();
 				SecurityInfo.Children.Add(infoBar);
 			}
 
@@ -486,7 +487,7 @@ public sealed partial class SecurityPage : Page
 					}
 				};
 				((Button)infoBar.ActionButton).Click += (s, args) =>
-				Process.Start(new ProcessStartInfo("shutdown", "/r /f /t 0") { CreateNoWindow = true });
+				ShutdownHelper.Restart();
 				SecurityInfo.Children.Add(infoBar);
 			}
 		}
@@ -585,7 +586,7 @@ public sealed partial class SecurityPage : Page
 					HorizontalAlignment = HorizontalAlignment.Right
 				};
 				((Button)infoBar.ActionButton).Click += (s, args) =>
-				Process.Start(new ProcessStartInfo("shutdown", "/r /f /t 0") { CreateNoWindow = true });
+				ShutdownHelper.Restart();
 			}
 			else
 			{
@@ -663,7 +664,7 @@ public sealed partial class SecurityPage : Page
 				HorizontalAlignment = HorizontalAlignment.Right
 			};
 			((Button)infoBar.ActionButton).Click += (s, args) =>
-			Process.Start(new ProcessStartInfo("shutdown", "/r /f /t 0") { CreateNoWindow = true });
+			ShutdownHelper.Restart();
 		}
 		else
 		{
@@ -778,7 +779,7 @@ public sealed partial class SecurityPage : Page
 				HorizontalAlignment = HorizontalAlignment.Right
 			};
 			((Button)infoBar.ActionButton).Click += (s, args) =>
-				Process.Start(new ProcessStartInfo("shutdown", "/r /f /t 0") { CreateNoWindow = true });
+				ShutdownHelper.Restart();
 		}
 		else
 		{
@@ -895,7 +896,7 @@ public sealed partial class SecurityPage : Page
 				HorizontalAlignment = HorizontalAlignment.Right
 			};
 			((Button)infoBar.ActionButton).Click += (s, args) =>
-			Process.Start(new ProcessStartInfo("shutdown", "/r /f /t 0") { CreateNoWindow = true });
+			ShutdownHelper.Restart();
 		}
 		else
 		{
@@ -985,7 +986,7 @@ public sealed partial class SecurityPage : Page
 				HorizontalAlignment = HorizontalAlignment.Right
 			};
 			((Button)infoBar.ActionButton).Click += (s, args) =>
-			Process.Start(new ProcessStartInfo("shutdown", "/r /f /t 0") { CreateNoWindow = true });
+			ShutdownHelper.Restart();
 		}
 		else
 		{

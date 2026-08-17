@@ -117,8 +117,14 @@ public sealed partial class PowerPage : Page
 
 	private void EditComboBox_DropDownClosed(object sender, object e)
 	{
-		if (!TreeGridEditingHelper.EndEditingIfActive(TreeGrid) && !TreeGridEditingHelper.EndEditingIfActive(CompareTreeGrid))
-			TreeGridEditingHelper.EndEditingIfActive(ChangesTreeGrid);
+		if (TreeGridEditingHelper.EndEditingIfActive(TreeGrid))
+			return;
+
+		if (TreeGridEditingHelper.EndEditingIfActive(CompareTreeGrid))
+			return;
+
+		if (TreeGridEditingHelper.EndEditingIfActive(ChangesTreeGrid))
+			return;
 	}
 
 	private void TreeGrid_TreeGridContextFlyoutOpening(object sender, TreeGridContextFlyoutEventArgs e)

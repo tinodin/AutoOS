@@ -5,6 +5,7 @@ using AutoOS.App.Data.Contracts;
 using AutoOS.App.Data.Enums;
 using AutoOS.App.Data.Enums.Power;
 using AutoOS.App.Data.Models.Power;
+using AutoOS.App.Extensions;
 using AutoOS.App.Services;
 using AutoOS.App.ViewModels.Dialogs.Power;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -620,15 +621,24 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		var root = new Node(NodeKind.Root, baseName, string.Empty, Guid.Empty, baseDisplayName: baseName);
 		var subgroups = new Dictionary<Guid, Node>();
 		var settingNodes = new Dictionary<Setting, Node>();
+		int order = 0;
 		foreach (Subgroup subgroup in _subgroups)
 		{
-			var subgroupNode = new Node(NodeKind.Subgroup, subgroup.Name, subgroup.Description, subgroup.Guid, baseDisplayName: subgroup.Name);
+			var subgroupNode = new Node(NodeKind.Subgroup, subgroup.Name, subgroup.Description, subgroup.Guid, baseDisplayName: subgroup.Name)
+			{
+				Order = order
+			};
+			order++;
 			foreach (Setting setting in subgroup.Settings)
 			{
 				if (!_settingStates.TryGetValue(setting, out SettingState? values) || values is null)
 					continue;
 
-				var node = new Node(NodeKind.Setting, setting.Name, setting.Description, setting.Guid, setting, values);
+				var node = new Node(NodeKind.Setting, setting.Name, setting.Description, setting.Guid, setting, values)
+				{
+					Order = order
+				};
+				order++;
 				settingNodes[setting] = node;
 				if (include(node))
 					subgroupNode.Children.Add(node);
@@ -671,13 +681,13 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 				bool included = include(node);
 				bool present = subgroupNode.Children.Contains(node);
 				if (included && !present)
-					subgroupNode.Children.Add(node);
+					subgroupNode.Children.InsertOrdered(node);
 				else if (!included && present)
 					subgroupNode.Children.Remove(node);
 			}
 
 			if (subgroupNode.Children.Count > 0 && !root.Children.Contains(subgroupNode))
-				root.Children.Add(subgroupNode);
+				root.Children.InsertOrdered(subgroupNode);
 			else if (subgroupNode.Children.Count == 0)
 				root.Children.Remove(subgroupNode);
 		}

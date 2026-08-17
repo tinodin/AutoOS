@@ -2,11 +2,12 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using AutoOS.App.Data.Enums.Power;
+using AutoOS.App.Data.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace AutoOS.App.Data.Models.Power;
 
-public sealed partial class Node : ObservableObject
+public sealed partial class Node : ObservableObject, IOrderedNode
 {
 	[DynamicDependency(nameof(IsExpanded), typeof(Node))]
 	[DynamicDependency(nameof(Children), typeof(Node))]
@@ -46,6 +47,10 @@ public sealed partial class Node : ObservableObject
 	public bool IsExpanded { get; set; } = true;
 
 	public ObservableCollection<Node> Children { get; } = [];
+
+	internal int Order { get; set; }
+
+	int IOrderedNode.Order => Order;
 
 	[ObservableProperty]
 	public partial string DisplayName { get; set; }

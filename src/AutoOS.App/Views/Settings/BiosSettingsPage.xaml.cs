@@ -130,8 +130,14 @@ public sealed partial class BiosSettingsPage : Page
 
 	private void EditComboBox_DropDownClosed(object sender, object e)
 	{
-		if (!TreeGridEditingHelper.EndEditingIfActive(TreeGrid))
-			TreeGridEditingHelper.EndEditingIfActive(ChangesTreeGrid);
+		if (TreeGridEditingHelper.EndEditingIfActive(TreeGrid))
+			return;
+
+		if (TreeGridEditingHelper.EndEditingIfActive(CompareTreeGrid))
+			return;
+
+		if (TreeGridEditingHelper.EndEditingIfActive(ChangesTreeGrid))
+			return;
 	}
 
 	private void TreeGrid_TreeGridContextFlyoutOpening(object sender, TreeGridContextFlyoutEventArgs e)
@@ -185,6 +191,7 @@ public sealed partial class BiosSettingsPage : Page
 	private void RefreshFilterOnly()
 	{
 		ApplyFilter(TreeGrid, ViewModel);
+		ApplyFilter(CompareTreeGrid, ViewModel);
 		ApplyFilter(ChangesTreeGrid, ViewModel);
 	}
 

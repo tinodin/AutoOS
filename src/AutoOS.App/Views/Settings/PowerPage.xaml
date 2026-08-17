@@ -380,7 +380,7 @@
 			<dev:Case Value="Loaded">
 				<Grid Margin="36,0,36,36">
 
-					<!--  Active  -->
+					<!--  TreeGrid  -->
 					<sfgrid:SfTreeGrid
 						x:Name="TreeGrid"
 						helpers:TreeGridSelectionControllerHelper.UseCustomSelectionController="True"
@@ -475,7 +475,7 @@
 						</sfgrid:SfTreeGrid.Columns>
 					</sfgrid:SfTreeGrid>
 
-					<!--  Compare  -->
+					<!--  Compare TreeGrid  -->
 					<sfgrid:SfTreeGrid
 						x:Name="CompareTreeGrid"
 						helpers:TreeGridSelectionControllerHelper.UseCustomSelectionController="True"
@@ -595,7 +595,7 @@
 
 					</sfgrid:SfTreeGrid>
 
-					<!--  View Changes  -->
+					<!--  View Changes TreeGrid  -->
 					<sfgrid:SfTreeGrid
 						x:Name="ChangesTreeGrid"
 						helpers:TreeGridSelectionControllerHelper.UseCustomSelectionController="True"

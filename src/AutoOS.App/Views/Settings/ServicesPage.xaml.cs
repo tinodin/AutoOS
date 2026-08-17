@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.ServiceProcess;
 using AutoOS.Core.Helpers.Registry;
+using AutoOS.Core.Helpers.Shutdown;
 using Microsoft.Win32;
 
 namespace AutoOS.App.Views.Settings;
@@ -53,7 +54,7 @@ public sealed partial class ServicesPage : Page
 					HorizontalAlignment = HorizontalAlignment.Right
 				}
 			};
-			((Button)infoBar.ActionButton).Click += (s, args) => Process.Start(new ProcessStartInfo("shutdown", "/r /f /t 0") { CreateNoWindow = true });
+			((Button)infoBar.ActionButton).Click += (s, args) => ShutdownHelper.Restart();
 
 			ServiceInfo.Children.Add(infoBar);
 		}
@@ -137,7 +138,7 @@ public sealed partial class ServicesPage : Page
 				HorizontalAlignment = HorizontalAlignment.Right
 			};
 			((Button)infoBar.ActionButton).Click += (s, args) =>
-			Process.Start(new ProcessStartInfo("shutdown", "/r /f /t 0") { CreateNoWindow = true });
+			ShutdownHelper.Restart();
 		}
 		else
 		{
@@ -274,7 +275,7 @@ public sealed partial class ServicesPage : Page
 				}
 			};
 			((Button)infoBar.ActionButton).Click += (s, args) =>
-			Process.Start(new ProcessStartInfo("shutdown", "/r /f /t 0") { CreateNoWindow = true });
+			ShutdownHelper.Restart();
 
 			ServiceInfo.Children.Add(infoBar);
 		}
@@ -429,7 +430,7 @@ public sealed partial class ServicesPage : Page
 				}
 			};
 			((Button)infoBar.ActionButton).Click += (s, args) =>
-			Process.Start(new ProcessStartInfo("shutdown", "/r /f /t 0") { CreateNoWindow = true });
+			ShutdownHelper.Restart();
 
 			ServiceInfo.Children.Add(infoBar);
 		}

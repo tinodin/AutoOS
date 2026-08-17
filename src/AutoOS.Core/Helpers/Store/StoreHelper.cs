@@ -7,6 +7,7 @@ using System.Xml.Linq;
 using AutoOS.Core.Common;
 using AutoOS.Core.Helpers.Download;
 using AutoOS.Core.Helpers.Logging;
+using AutoOS.Core.Helpers.Shutdown;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Store.Preview.InstallControl;
 using Windows.Foundation;
@@ -134,7 +135,7 @@ public static partial class StoreHelper
 		}
 		catch (UnauthorizedAccessException)
 		{
-			Process.Start(new ProcessStartInfo { FileName = "shutdown", Arguments = "/r /t 0", CreateNoWindow = true, UseShellExecute = false });
+			ShutdownHelper.Restart();
 			await Task.Delay(Timeout.InfiniteTimeSpan);
 		}
 	}
@@ -147,7 +148,7 @@ public static partial class StoreHelper
 		}
 		catch (UnauthorizedAccessException)
 		{
-			Process.Start(new ProcessStartInfo { FileName = "shutdown", Arguments = "/r /t 0", CreateNoWindow = true, UseShellExecute = false });
+			ShutdownHelper.Restart();
 			await Task.Delay(Timeout.InfiniteTimeSpan);
 		}
 	}
@@ -220,7 +221,7 @@ public static partial class StoreHelper
 		}
 		catch (Exception ex) when (ex is ArgumentException or UnauthorizedAccessException)
 		{
-			Process.Start(new ProcessStartInfo { FileName = "shutdown", Arguments = "/r /t 0", CreateNoWindow = true, UseShellExecute = false });
+			ShutdownHelper.Restart();
 			await Task.Delay(Timeout.InfiniteTimeSpan);
 		}
 		finally

@@ -37,6 +37,7 @@ ERole
 EnumDisplayDevices
 EnumDisplaySettings
 EnumServicesStatusEx
+ExitWindowsEx
 FileOpenDialog
 FileSaveDialog
 GetAdaptersAddresses

@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using AutoOS.Core.Helpers.Device;
 using AutoOS.Core.Data.Models.Device;
+using AutoOS.Core.Helpers.Shutdown;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 
@@ -130,7 +130,7 @@ public sealed partial class DevicesPage : Page
 				HorizontalAlignment = HorizontalAlignment.Right
 			};
 			((Button)infoBar.ActionButton).Click += (s, args) =>
-			Process.Start(new ProcessStartInfo("shutdown", "/r /f /t 0") { CreateNoWindow = true });
+			ShutdownHelper.Restart();
 		}
 		else
 		{
