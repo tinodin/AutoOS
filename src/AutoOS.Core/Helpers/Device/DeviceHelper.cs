@@ -549,7 +549,7 @@ public static partial class DeviceHelper
 					isFirst = false;
 					currentHandle = resDes;
 
-					if (resType == 1 || resType == 7)
+					if (resType == (uint)CM_RESTYPE.ResType_Mem || resType == (uint)CM_RESTYPE.ResType_MemLarge)
 					{
 						uint dataSize;
 						if (PInvoke.CM_Get_Res_Des_Data_Size(&dataSize, resDes, 0) == CONFIGRET.CR_SUCCESS && dataSize >= 24)

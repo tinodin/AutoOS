@@ -48,6 +48,8 @@ GetSystemFirmwareTable
 GetTokenInformation
 GlobalMemoryStatusEx
 HANDLE
+IsBadReadPtr
+IsBadWritePtr
 HRESULT
 IAudioClient
 IAudioClient3
