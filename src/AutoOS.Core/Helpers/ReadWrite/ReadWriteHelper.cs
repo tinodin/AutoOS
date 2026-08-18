@@ -143,9 +143,6 @@ public partial class ReadWriteHelper : IDisposable
 
 		try
 		{
-			// IsBadReadPtr probes the range with SEH internally, so a faulting
-			// mapped physical address returns failure instead of raising an
-			// access violation that can crash the process during dispatch.
 			if (PInvoke.IsBadReadPtr((void*)(pLinAddr + (nint)extra), (nuint)length))
 				return false;
 
@@ -173,9 +170,6 @@ public partial class ReadWriteHelper : IDisposable
 
 		try
 		{
-			// IsBadWritePtr probes the range with SEH internally, so a faulting
-			// mapped physical address returns failure instead of raising an
-			// access violation that can crash the process during dispatch.
 			if (PInvoke.IsBadWritePtr((void*)(pLinAddr + (nint)extra), (nuint)buffer.Length))
 				return false;
 
