@@ -537,14 +537,13 @@ public static partial class DeviceHelper
 				while (true)
 				{
 					CONFIGRET result = PInvoke.CM_Get_Next_Res_Des(out nuint nextResDes, currentHandle, 0, out CM_RESTYPE outResType, 0);
-					resType = (uint)outResType;
+					if (result != CONFIGRET.CR_SUCCESS)
+						break;
 
 					if (!isFirst && resDes != 0)
 						PInvoke.CM_Free_Res_Des_Handle(resDes);
 
-					if (result != CONFIGRET.CR_SUCCESS)
-						break;
-
+					resType = (uint)outResType;
 					resDes = nextResDes;
 					isFirst = false;
 					currentHandle = resDes;
