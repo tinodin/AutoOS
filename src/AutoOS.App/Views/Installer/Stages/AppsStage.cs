@@ -1468,7 +1468,7 @@ public static class AppsStage
 			("Pinning Cursor to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Cursor", "Cursor.lnk")), () => Cursor == true),
 
 			// download devin
-			("Downloading Devin", async () => await DownloadHelper.Download("https://windsurf-stable.codeiumdata.com/win32-x64/stable/7e8e528a3057dcf000527b80072c9be7ea90a08d/DevinSetup-x64-3.7.25.exe", Path.GetTempPath(), "DevinUserSetup-x64.exe", reporter: reporter), () => Devin == true),
+			("Downloading Devin", async () => await DownloadHelper.Download("https://windsurf.com/api/windsurf/download-redirect?build=win32-x64-user&isNext=false", Path.GetTempPath(), "DevinUserSetup-x64.exe", reporter: reporter), () => Devin == true),
 
 			// install devin
 			("Installing Devin", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "DevinUserSetup-x64.exe"), Arguments = "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Devin == true),

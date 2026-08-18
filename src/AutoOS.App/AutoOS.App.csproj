@@ -5,7 +5,7 @@
     <AssemblyName>AutoOS</AssemblyName>
     <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>1.4.7.2</Version>
+    <Version>1.4.7.3</Version>
     <TargetFramework>$(WindowsTargetFramework)</TargetFramework>
     <TargetPlatformMinVersion>$(MinimalWindowsVersion)</TargetPlatformMinVersion>
 
