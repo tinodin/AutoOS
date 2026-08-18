@@ -61,7 +61,7 @@ public static partial class RegistryHelper
 						sc.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromSeconds(5));
 					}
 					catch (InvalidOperationException ex) when (ex.InnerException is Win32Exception { NativeErrorCode: 1056 })
-					{	}
+					{ }
 				}
 			}
 
@@ -79,7 +79,8 @@ public static partial class RegistryHelper
 			var pi = new PROCESS_INFORMATION();
 			string commandLine = (string.IsNullOrEmpty(psi.Arguments) ? $"\"{psi.FileName}\"" : $"\"{psi.FileName}\" {psi.Arguments}") + "\0";
 			PROCESS_CREATION_FLAGS creationFlags = 0;
-			if (psi.CreateNoWindow) creationFlags |= PROCESS_CREATION_FLAGS.CREATE_NO_WINDOW;
+			if (psi.CreateNoWindow)
+				creationFlags |= PROCESS_CREATION_FLAGS.CREATE_NO_WINDOW;
 
 			Span<char> pCommandLine = commandLine.ToCharArray();
 			unsafe
@@ -102,126 +103,150 @@ public static partial class RegistryHelper
 
 	public static void SetValue(Identity identity, string keyPath, string valueName, object value, RegistryValueKind valueKind = RegistryValueKind.Unknown, bool applyToDefault = false)
 	{
-		RunAs(identity, () =>
+		try
 		{
-			(RegistryKey? root, string? subKeyPath) = ParseKeyPath(keyPath);
-			using RegistryKey key = root.CreateSubKey(subKeyPath, true);
-			if (key != null)
+			RunAs(identity, () =>
 			{
-				if (valueKind == RegistryValueKind.DWord)
+				(RegistryKey? root, string? subKeyPath) = ParseKeyPath(keyPath);
+				using RegistryKey key = root.CreateSubKey(subKeyPath, true);
+				if (key != null)
 				{
-					if (value is uint u) value = unchecked((int)u);
-					else if (value is long l) value = unchecked((int)l);
-				}
-				else if (valueKind == RegistryValueKind.QWord)
-				{
-					if (value is ulong ul) value = unchecked((long)ul);
-				}
+					if (valueKind == RegistryValueKind.DWord)
+					{
+						if (value is uint u)
+							value = unchecked((int)u);
+						else if (value is long l)
+							value = unchecked((int)l);
+					}
+					else if (valueKind == RegistryValueKind.QWord)
+					{
+						if (value is ulong ul)
+							value = unchecked((long)ul);
+					}
 
-				if (valueKind == RegistryValueKind.Unknown)
-					key.SetValue(valueName, value);
-				else
-					key.SetValue(valueName, value, valueKind);
-			}
-
-			if (applyToDefault && identity == Identity.CurrentUser)
-			{
-				(RegistryKey? defaultRoot, string? defaultSubKeyPath) = ParseKeyPath(keyPath.Replace("HKEY_CURRENT_USER", @"HKEY_USERS\DefaultUser"));
-				using RegistryKey defaultKey = defaultRoot.CreateSubKey(defaultSubKeyPath, true);
-				if (defaultKey != null)
-				{
 					if (valueKind == RegistryValueKind.Unknown)
-						defaultKey.SetValue(valueName, value);
+						key.SetValue(valueName, value);
 					else
-						defaultKey.SetValue(valueName, value, valueKind);
+						key.SetValue(valueName, value, valueKind);
 				}
-			}
-		});
+
+				if (applyToDefault && identity == Identity.CurrentUser)
+				{
+					(RegistryKey? defaultRoot, string? defaultSubKeyPath) = ParseKeyPath(keyPath.Replace("HKEY_CURRENT_USER", @"HKEY_USERS\DefaultUser"));
+					using RegistryKey defaultKey = defaultRoot.CreateSubKey(defaultSubKeyPath, true);
+					if (defaultKey != null)
+					{
+						if (valueKind == RegistryValueKind.Unknown)
+							defaultKey.SetValue(valueName, value);
+						else
+							defaultKey.SetValue(valueName, value, valueKind);
+					}
+				}
+			});
+		}
+		catch (UnauthorizedAccessException) { }
 	}
 
 	public static void SetValue(Identity identity, string keyPath, string valueName, uint type, byte[] data)
 	{
-		RunAs(identity, () =>
+		try
 		{
-			string[] parts = keyPath.Split('\\', 2);
-			if (parts.Length < 2)
-				throw new ArgumentException($"Invalid registry key path: {keyPath}");
-
-			string rootName = parts[0].ToUpperInvariant();
-			string subKey = parts[1];
-
-			unsafe
+			RunAs(identity, () =>
 			{
-				SafeRegistryHandle hRoot = rootName switch
-				{
-					"HKEY_CURRENT_USER" or "HKCU" => new SafeRegistryHandle(unchecked((nint)0x80000001), false),
-					"HKEY_LOCAL_MACHINE" or "HKLM" => new SafeRegistryHandle(unchecked((nint)0x80000002), false),
-					"HKEY_CLASSES_ROOT" or "HKCR" => new SafeRegistryHandle(unchecked((nint)0x80000000), false),
-					"HKEY_USERS" or "HKU" => new SafeRegistryHandle(unchecked((nint)0x80000003), false),
-					"HKEY_CURRENT_CONFIG" or "HKCC" => new SafeRegistryHandle(unchecked((nint)0x80000005), false),
-					_ => throw new ArgumentException($"Unsupported registry root: {rootName}")
-				};
+				string[] parts = keyPath.Split('\\', 2);
+				if (parts.Length < 2)
+					throw new ArgumentException($"Invalid registry key path: {keyPath}");
 
-				WIN32_ERROR keyResult = PInvoke.RegCreateKeyEx(hRoot, subKey, default, REG_OPEN_CREATE_OPTIONS.REG_OPTION_NON_VOLATILE, REG_SAM_FLAGS.KEY_WRITE, null, out SafeRegistryHandle hSubKey, out _);
-				if (keyResult != WIN32_ERROR.ERROR_SUCCESS)
-				{
-					throw new Win32Exception((int)keyResult);
-				}
+				string rootName = parts[0].ToUpperInvariant();
+				string subKey = parts[1];
 
-				using (hSubKey)
+				unsafe
 				{
-					fixed (char* pValueName = valueName)
-					fixed (byte* pData = data)
+					SafeRegistryHandle hRoot = rootName switch
 					{
-						WIN32_ERROR setResult = PInvoke.RegSetValueEx(new HKEY(hSubKey.DangerousGetHandle()), pValueName, 0, (REG_VALUE_TYPE)type, pData, (uint)data.Length);
-						if (setResult != WIN32_ERROR.ERROR_SUCCESS)
+						"HKEY_CURRENT_USER" or "HKCU" => new SafeRegistryHandle(unchecked((nint)0x80000001), false),
+						"HKEY_LOCAL_MACHINE" or "HKLM" => new SafeRegistryHandle(unchecked((nint)0x80000002), false),
+						"HKEY_CLASSES_ROOT" or "HKCR" => new SafeRegistryHandle(unchecked((nint)0x80000000), false),
+						"HKEY_USERS" or "HKU" => new SafeRegistryHandle(unchecked((nint)0x80000003), false),
+						"HKEY_CURRENT_CONFIG" or "HKCC" => new SafeRegistryHandle(unchecked((nint)0x80000005), false),
+						_ => throw new ArgumentException($"Unsupported registry root: {rootName}")
+					};
+
+					WIN32_ERROR keyResult = PInvoke.RegCreateKeyEx(hRoot, subKey, default, REG_OPEN_CREATE_OPTIONS.REG_OPTION_NON_VOLATILE, REG_SAM_FLAGS.KEY_WRITE, null, out SafeRegistryHandle hSubKey, out _);
+					if (keyResult != WIN32_ERROR.ERROR_SUCCESS)
+					{
+						throw new Win32Exception((int)keyResult);
+					}
+
+					using (hSubKey)
+					{
+						fixed (char* pValueName = valueName)
+						fixed (byte* pData = data)
 						{
-							throw new Win32Exception((int)setResult);
+							WIN32_ERROR setResult = PInvoke.RegSetValueEx(new HKEY(hSubKey.DangerousGetHandle()), pValueName, 0, (REG_VALUE_TYPE)type, pData, (uint)data.Length);
+							if (setResult != WIN32_ERROR.ERROR_SUCCESS)
+							{
+								throw new Win32Exception((int)setResult);
+							}
 						}
 					}
 				}
-			}
-		});
+			});
+		}
+		catch (UnauthorizedAccessException) { }
 	}
 
 	public static void DeleteValue(Identity identity, string keyPath, string valueName)
 	{
-		RunAs(identity, () =>
+		try
 		{
-			(RegistryKey? root, string? subKeyPath) = ParseKeyPath(keyPath);
-			using RegistryKey? key = root.OpenSubKey(subKeyPath, true);
-			key?.DeleteValue(valueName, false);
-		});
+			RunAs(identity, () =>
+			{
+				(RegistryKey? root, string? subKeyPath) = ParseKeyPath(keyPath);
+				using RegistryKey? key = root.OpenSubKey(subKeyPath, true);
+				key?.DeleteValue(valueName, false);
+			});
+		}
+		catch (UnauthorizedAccessException) { }
 	}
 
 	public static void DeleteKey(Identity identity, string keyPath)
 	{
-		RunAs(identity, () =>
+		try
 		{
-			(RegistryKey? root, string? subKeyPath) = ParseKeyPath(keyPath);
-			root.DeleteSubKeyTree(subKeyPath, false);
-		});
+			RunAs(identity, () =>
+			{
+				(RegistryKey? root, string? subKeyPath) = ParseKeyPath(keyPath);
+				root.DeleteSubKeyTree(subKeyPath, false);
+			});
+		}
+		catch (UnauthorizedAccessException) { }
 	}
 
 	public static string[] GetValueNames(Identity identity, string keyPath)
 	{
 		string[] names = [];
-		RunAs(identity, () =>
+		try
 		{
-			(RegistryKey? root, string? subKeyPath) = ParseKeyPath(keyPath);
-			using RegistryKey? key = root.OpenSubKey(subKeyPath, false);
-			if (key != null)
+			RunAs(identity, () =>
 			{
-				names = key.GetValueNames();
-			}
-		});
+				(RegistryKey? root, string? subKeyPath) = ParseKeyPath(keyPath);
+				using RegistryKey? key = root.OpenSubKey(subKeyPath, false);
+				if (key != null)
+				{
+					names = key.GetValueNames();
+				}
+			});
+		}
+		catch (UnauthorizedAccessException) { }
 		return names;
 	}
 
 	private static (RegistryKey root, string subKey) ParseKeyPath(string fullPath)
 	{
 		int firstBackslash = fullPath.IndexOf('\\');
-		if (firstBackslash == -1) return (null!, fullPath);
+		if (firstBackslash == -1)
+			return (null!, fullPath);
 
 		string rootName = fullPath.Substring(0, firstBackslash).ToUpperInvariant();
 		string subKey = fullPath.Substring(firstBackslash + 1);
@@ -347,7 +372,8 @@ public static partial class RegistryHelper
 	{
 		uint tokenPrivilegesSize = 0;
 		PInvoke.GetTokenInformation(new HANDLE(hToken.DangerousGetHandle()), TOKEN_INFORMATION_CLASS.TokenPrivileges, null, 0, &tokenPrivilegesSize);
-		if (tokenPrivilegesSize == 0) return;
+		if (tokenPrivilegesSize == 0)
+			return;
 
 		byte[] buffer = new byte[tokenPrivilegesSize];
 		fixed (byte* pBuffer = buffer)
@@ -367,7 +393,8 @@ public static partial class RegistryHelper
 
 	public static unsafe void EnablePrivilege(string privilege)
 	{
-		if (!PInvoke.LookupPrivilegeValue(null, privilege, out LUID luid)) return;
+		if (!PInvoke.LookupPrivilegeValue(null, privilege, out LUID luid))
+			return;
 
 		TOKEN_PRIVILEGES tp = new()
 		{
