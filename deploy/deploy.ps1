@@ -359,11 +359,13 @@ if ($physicalDisks.Count -gt 1) {
 	$diskList | Sort-Object Disk | Format-Table -AutoSize
 
 	$recommendedDisk = $diskList | ForEach-Object {
-		$speedVal = 0.0
-		if ($_.Read -match '([\d\.]+)') { $speedVal = [double]$Matches[1] }
+		$readVal = 0.0
+		$writeVal = 0.0
+		if ($_.Read -match '([\d\.]+)') { $readVal = [double]$Matches[1] }
+		if ($_.Write -match '([\d\.]+)') { $writeVal = [double]$Matches[1] }
 		[PSCustomObject]@{
 			Disk     = $_.Disk
-			SpeedVal = $speedVal
+			SpeedVal = $readVal + $writeVal
 		}
 	} | Sort-Object SpeedVal -Descending | Select-Object -First 1
 
@@ -514,7 +516,7 @@ else {
 
 Write-Host "`n===== Step 4: Prepare Target Partition =====`n" -ForegroundColor Yellow
 Write-Host "Formatting partition $TargetDrive..."
-Start-Process -FilePath "cmd.exe" -ArgumentList "/c ""format $TargetDrive /fs:ntfs /q /y /v:AutoOS > nul 2> nul""" -NoNewWindow -Wait
+[TrustedInstaller]::Spawn("cmd /c format $TargetDrive /fs:ntfs /q /y /v:AutoOS")
 
 Write-Host "`n===== Step 5: Apply Windows Image =====`n" -ForegroundColor Yellow
 try {
