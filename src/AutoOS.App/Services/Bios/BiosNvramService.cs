@@ -4,11 +4,14 @@ using AutoOS.App.Data.Models.Bios;
 using AutoOS.Core.Data.Enums.Bios;
 using AutoOS.Core.Data.Models.Bios;
 using AutoOS.Core.Helpers.Bios;
+using AutoOS.Core.Helpers.ReadWrite;
 
 namespace AutoOS.App.Services.Bios;
 
 public sealed class BiosNvramService : IBiosNvramService
 {
+	private Dictionary<string, byte[]>? _nvarStore;
+
 	public void LoadCurrentValues(List<Setting> settings, Dictionary<ushort, QidTarget> qidMap)
 	{
 		var blobs = new Dictionary<(string Name, Guid Guid), byte[]>();
@@ -131,13 +134,103 @@ public sealed class BiosNvramService : IBiosNvramService
 
 	public bool TryGetCurrentBlob(Setting setting, out byte[]? blob, out uint attributes)
 	{
-		if (!HiiHelper.TryGetVariable(setting.VariableName, setting.VariableGuid, out blob, out attributes) || blob == null)
-			return false;
+		if (HiiHelper.TryGetVariable(setting.VariableName, setting.VariableGuid, out blob, out attributes) && blob != null)
+		{
+			if (setting.VarStoreSize > 0 && blob.Length > setting.VarStoreSize && !HiiHelper.TryDecodeStringValue(setting, blob, out _))
+				blob = blob.AsSpan(0, (int)setting.VarStoreSize).ToArray();
 
-		if (setting.VarStoreSize > 0 && blob.Length > setting.VarStoreSize && !HiiHelper.TryDecodeStringValue(setting, blob, out _))
-			blob = blob.AsSpan(0, (int)setting.VarStoreSize).ToArray();
+			return true;
+		}
 
-		return true;
+		_nvarStore ??= BuildNvarStore();
+		blob = _nvarStore.TryGetValue(setting.VariableName, out byte[]? nvarBlob) ? nvarBlob : null;
+		return blob != null;
+	}
+
+	private static Dictionary<string, byte[]> BuildNvarStore()
+	{
+		const int CHUNK_SIZE = 0x400000;
+		const int SCAN_LIMIT = 96 * 1024 * 1024;
+		const int OVERLAP = 0x10000;
+		const int STOP_GAP_CHUNKS = 2;
+
+		var store = new Dictionary<string, byte[]>(StringComparer.Ordinal);
+
+		if (!HiiHelper.TryGetVariable("HiiDB", new Guid("1B838190-4625-4EAD-ABC9-CD5E6AF18FE0"), out byte[]? hii) || hii == null || hii.Length < 8)
+			return store;
+
+		uint dbsize = BitConverter.ToUInt32(hii, 0);
+		uint address = BitConverter.ToUInt32(hii, 4);
+		if (dbsize == 0 || dbsize > 64 * 1024 * 1024)
+			return store;
+
+		ulong baseAddress = address & ~0xFFFUL;
+		uint totalSpan = dbsize + SCAN_LIMIT;
+		int lastFoundChunk = -1;
+		bool anyFound = false;
+
+		using ReadWriteHelper read = new();
+		byte[] chunk = new byte[CHUNK_SIZE];
+		byte[] window = new byte[CHUNK_SIZE + OVERLAP];
+		int windowLen = 0;
+		ReadOnlySpan<byte> magic = "NVAR"u8;
+
+		for (uint offset = 0; offset < totalSpan; offset += CHUNK_SIZE)
+		{
+			int chunkIndex = (int)(offset / CHUNK_SIZE);
+			if (anyFound && lastFoundChunk >= 0 && chunkIndex - lastFoundChunk > STOP_GAP_CHUNKS)
+				break;
+
+			uint length = Math.Min(CHUNK_SIZE, totalSpan - offset);
+			if (!read.ReadMemory(baseAddress + offset, length, chunk))
+			{
+				windowLen = 0;
+				continue;
+			}
+
+			int keep = Math.Min(OVERLAP, windowLen);
+			Buffer.BlockCopy(window, windowLen - keep, window, 0, keep);
+			chunk.AsSpan(0, (int)length).CopyTo(window.AsSpan(keep));
+			int scanLen = keep + (int)length;
+
+			bool foundInChunk = false;
+			int pos = 0;
+			while (pos < scanLen)
+			{
+				int match = window.AsSpan(0, scanLen).Slice(pos).IndexOf(magic);
+				if (match < 0)
+					break;
+				int entry = pos + match;
+				pos = entry + 1;
+
+				if (entry + 11 > scanLen)
+					continue;
+				ushort entrySize = BitConverter.ToUInt16(window, entry + 4);
+				if (entrySize < 12 || entry + entrySize > scanLen)
+					continue;
+
+				int nameOffset = entry + 11;
+				int nameEnd = Array.IndexOf(window, (byte)0, nameOffset, entrySize - 11);
+				if (nameEnd < 0)
+					continue;
+
+				string variableName = Encoding.ASCII.GetString(window, nameOffset, nameEnd - nameOffset);
+				if (variableName.Length == 0 || variableName != variableName.Trim())
+					continue;
+
+				store[variableName] = window.AsSpan(nameEnd + 1, entry + entrySize - nameEnd - 1).ToArray();
+				foundInChunk = true;
+			}
+
+			if (foundInChunk)
+			{
+				anyFound = true;
+				lastFoundChunk = chunkIndex;
+			}
+			windowLen = scanLen;
+		}
+
+		return store;
 	}
 
 	private static string ReadStringPrefix(byte[] blob, Setting setting)

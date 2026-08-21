@@ -133,9 +133,15 @@ public static partial class HiiHelper
 
 	public static bool TrySetVariable(string name, Guid guid, byte[] data, uint attributes)
 	{
+		return TrySetVariable(name, guid, data, attributes, out _);
+	}
+
+	public static bool TrySetVariable(string name, Guid guid, byte[] data, uint attributes, out int win32Error)
+	{
 		RegistryHelper.EnablePrivilege("SeSystemEnvironmentPrivilege");
 
 		string guidString = GetGuidString(guid);
+		win32Error = 0;
 
 		try
 		{
@@ -145,7 +151,10 @@ public static partial class HiiHelper
 				fixed (char* guidPtr = guidString)
 				fixed (byte* pointer = data)
 				{
-					return PInvoke.SetFirmwareEnvironmentVariableEx(new PCWSTR(namePtr), new PCWSTR(guidPtr), pointer, (uint)data.Length, attributes) != 0;
+					bool ok = PInvoke.SetFirmwareEnvironmentVariableEx(new PCWSTR(namePtr), new PCWSTR(guidPtr), pointer, (uint)data.Length, attributes) != 0;
+					if (!ok)
+						win32Error = Marshal.GetLastWin32Error();
+					return ok;
 				}
 			}
 		}
@@ -154,6 +163,18 @@ public static partial class HiiHelper
 			return false;
 		}
 	}
+
+	public static string FormatWin32Error(int error) => error switch
+	{
+		0 => "unknown",
+		5 => "ERROR_ACCESS_DENIED (5) - privilege not granted",
+		19 => "ERROR_WRITE_PROTECT (19) - variable is write-protected/locked",
+		87 => "ERROR_INVALID_PARAMETER (87) - attributes or data rejected by firmware",
+		122 => "ERROR_INSUFFICIENT_BUFFER (122) - data too large",
+		203 => "ERROR_ENVVAR_NOT_FOUND (203) - environment variable not found",
+		998 => "ERROR_NOACCESS (998)",
+		_ => $"Win32 error {error}"
+	};
 
 	public static string GetGuidString(Guid guid) => $"{{{guid.ToString().ToUpperInvariant()}}}";
 
@@ -765,10 +786,10 @@ public static partial class HiiHelper
 							Step = increment,
 							NumericFormat = numericFormat
 						};
-					questions.Add(currentQuestion);
-					AddFormItem(formId, new FormItem(currentQuestion, 0));
-					awaitingUInt64Default = false;
-					questionScopeIndex = scopes.Count - 1;
+						questions.Add(currentQuestion);
+						AddFormItem(formId, new FormItem(currentQuestion, 0));
+						awaitingUInt64Default = false;
+						questionScopeIndex = scopes.Count - 1;
 					}
 				}
 				else if (opcode == IfrOpcode.String && length >= 15)
@@ -961,14 +982,14 @@ public static partial class HiiHelper
 					BinaryPrimitives.ReadUInt16LittleEndian(data[(offset + 2)..]),
 					BinaryPrimitives.ReadUInt16LittleEndian(data[(offset + 4)..]));
 			case IfrOpcode.EqIdValList:
-			{
-				ushort qid = BinaryPrimitives.ReadUInt16LittleEndian(data[(offset + 2)..]);
-				ushort count = BinaryPrimitives.ReadUInt16LittleEndian(data[(offset + 4)..]);
-				var values = new List<ushort>();
-				for (int i = 0; i < count && offset + 6 + 2 * i + 2 <= offset + length; i++)
-					values.Add(BinaryPrimitives.ReadUInt16LittleEndian(data[(offset + 6 + 2 * i)..]));
-				return new SuppressionToken((byte)opcode, qid, 0, values);
-			}
+				{
+					ushort qid = BinaryPrimitives.ReadUInt16LittleEndian(data[(offset + 2)..]);
+					ushort count = BinaryPrimitives.ReadUInt16LittleEndian(data[(offset + 4)..]);
+					var values = new List<ushort>();
+					for (int i = 0; i < count && offset + 6 + 2 * i + 2 <= offset + length; i++)
+						values.Add(BinaryPrimitives.ReadUInt16LittleEndian(data[(offset + 6 + 2 * i)..]));
+					return new SuppressionToken((byte)opcode, qid, 0, values);
+				}
 			case IfrOpcode.QuestionRef1:
 				return new SuppressionToken((byte)opcode, BinaryPrimitives.ReadUInt16LittleEndian(data[(offset + 2)..]), 0);
 			case IfrOpcode.UInt8:

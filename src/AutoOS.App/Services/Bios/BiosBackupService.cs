@@ -128,9 +128,9 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 				if (nvramService.TryGetCurrentBlob(pairs[0].Key, out byte[]? currentBlob, out _) && currentBlob != null && currentBlob.AsSpan().SequenceEqual(patched))
 					continue;
 
-				if (!HiiHelper.TrySetVariable(group.Key.Name, group.Key.Guid, patched, attributes))
+				if (!HiiHelper.TrySetVariable(group.Key.Name, group.Key.Guid, patched, attributes, out int win32Error))
 				{
-					failureDetails.AppendLine($"TrySetVariable failed for '{group.Key.Name}' ({group.Key.Guid}), patched length {patched.Length}, attributes 0x{attributes:X}");
+					failureDetails.AppendLine($"TrySetVariable failed for '{group.Key.Name}' ({group.Key.Guid}), patched length {patched.Length}, attributes 0x{attributes:X}, {HiiHelper.FormatWin32Error(win32Error)}");
 					anyFailed = true;
 				}
 			}

@@ -673,7 +673,7 @@
 						HorizontalAlignment="Center"
 						Foreground="{ThemeResource TextFillColorSecondaryBrush}"
 						Style="{StaticResource BodyTextBlockStyle}"
-						Text="Reading NVRAM is only supported on systems with an AMI-based BIOS."
+						Text="Reading NVRAM is not supported on this system."
 						TextWrapping="Wrap" />
 				</StackPanel>
 			</dev:Case>

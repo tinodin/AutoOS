@@ -1,6 +1,6 @@
 using System.ComponentModel;
 using AutoOS.App.Data.Enums;
-using AutoOS.App.Dialogs;
+using AutoOS.App.Dialogs.Power;
 using AutoOS.App.ViewModels.Dialogs;
 using AutoOS.App.ViewModels.Dialogs.Power;
 
@@ -16,7 +16,7 @@ public sealed class DialogService : IDialogService
 	public IDialog<TViewModel> GetDialog<TViewModel>(TViewModel viewModel)
 		where TViewModel : class, INotifyPropertyChanged
 	{
-		if (!_dialogFactories.TryGetValue(typeof(TViewModel), out var factory))
+		if (!_dialogFactories.TryGetValue(typeof(TViewModel), out Func<ContentDialog>? factory))
 			throw new InvalidOperationException($"No dialog registered for ViewModel type '{typeof(TViewModel).Name}'.");
 
 		ContentDialog dialog = factory();

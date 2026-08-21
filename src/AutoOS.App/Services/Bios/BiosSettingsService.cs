@@ -11,20 +11,16 @@ namespace AutoOS.App.Services.Bios;
 
 public sealed class BiosSettingsService(IBiosSettingsContext context, IBiosNvramService nvramService, IBiosBackupService backupService, IBiosInfoService infoService) : IBiosSettingsService
 {
-	private static readonly string AmiVendorName = "American Megatrends Inc.";
-
 	public async Task<(PageMode Result, IReadOnlyList<Setting> Settings)> ReadFromNvramAsync()
 	{
-		PageMode unreadableState = string.Equals(infoService.Info.BiosVendor, AmiVendorName, StringComparison.OrdinalIgnoreCase) ? infoService.GetHiiState() : PageMode.Unsupported;
-
 		if (!HiiHelper.TryReadHiiDb(out byte[]? database) || database == null)
-			return (unreadableState, Array.Empty<Setting>());
+			return (PageMode.Unsupported, Array.Empty<Setting>());
 
 		Dictionary<ushort, QidTarget> qidMap = null!;
 		string language = HiiHelper.TryGetBiosLanguage(out string biosLanguage) ? biosLanguage : "en-US";
 		List<Setting> settings = await Task.Run(() => HiiHelper.ParseDatabase(database, language, out qidMap));
 		if (settings.Count == 0)
-			return (unreadableState, Array.Empty<Setting>());
+			return (infoService.GetHiiState(), Array.Empty<Setting>());
 
 		context.LastSettings = settings;
 		context.LastQidMap = qidMap;
@@ -61,9 +57,9 @@ public sealed class BiosSettingsService(IBiosSettingsContext context, IBiosNvram
 				if (nvramService.TryGetCurrentBlob(group.First().Key, out byte[]? currentBlob, out _) && currentBlob != null && currentBlob.AsSpan().SequenceEqual(patched))
 					continue;
 
-				if (!HiiHelper.TrySetVariable(group.Key.Name, group.Key.Guid, patched, attributes))
+				if (!HiiHelper.TrySetVariable(group.Key.Name, group.Key.Guid, patched, attributes, out int win32Error))
 				{
-					failureDetails.AppendLine($"TrySetVariable failed for '{group.Key.Name}' ({group.Key.Guid}), patched length {patched.Length}, attributes 0x{attributes:X}");
+					failureDetails.AppendLine($"TrySetVariable failed for '{group.Key.Name}' ({group.Key.Guid}), patched length {patched.Length}, attributes 0x{attributes:X}, {HiiHelper.FormatWin32Error(win32Error)}");
 					failures.AddRange(group.Select(pair => pair.Key));
 				}
 			}

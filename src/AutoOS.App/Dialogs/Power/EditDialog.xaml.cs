@@ -2,7 +2,7 @@ using AutoOS.App.Data.Enums;
 using AutoOS.App.ViewModels.Dialogs;
 using AutoOS.App.ViewModels.Dialogs.Power;
 
-namespace AutoOS.App.Dialogs;
+namespace AutoOS.App.Dialogs.Power;
 
 public sealed partial class EditDialog : ContentDialog, IDialog<EditDialogViewModel>
 {
