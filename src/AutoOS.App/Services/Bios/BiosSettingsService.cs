@@ -67,7 +67,7 @@ public sealed class BiosSettingsService(IBiosSettingsContext context, IBiosNvram
 			if (failures.Count > 0)
 			{
 				failureDetails.AppendLine($"Failed {failures.Count} of {modified.Count} settings");
-				LogHelper.LogError(new Exception(failureDetails.ToString()), actionTitle: $"Write to NVRAM partially failed");
+				LogHelper.LogError(new Exception(failureDetails.ToString()), actionTitle: failures.Count == modified.Count ? "Write to NVRAM failed" : "Write to NVRAM partially failed");
 				return (failures.Count == modified.Count ? infoService.GetWriteProtectedState() : PageMode.Loaded, failures);
 			}
 

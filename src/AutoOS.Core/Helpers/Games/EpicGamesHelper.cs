@@ -365,13 +365,11 @@ public static partial class EpicGamesHelper
 			}
 			catch (Exception)
 			{
-				LogHelper.LogError(new HttpRequestException($"Auth request failed with status {response.StatusCode}"), null, $"Failed to update Epic Games token from both {authUrl} and {authFallbackUrl}");
 				return null!;
 			}
 
 			if (!response.IsSuccessStatusCode)
 			{
-				LogHelper.LogError(new HttpRequestException($"Auth request failed with status {response.StatusCode}"), null, $"Failed to update Epic Games token from both {authUrl} and {authFallbackUrl}");
 				return null!;
 			}
 		}
@@ -811,8 +809,7 @@ public static partial class EpicGamesHelper
 
 			if (AccessToken == null)
 			{
-				LogHelper.LogError(new UnauthorizedAccessException("Failed to retrieve the Epic Games access token."));
-				return [.. games];
+				throw new UnauthorizedAccessException("Failed to retrieve the Epic Games access token. Please log in again in the Epic Games Launcher.");
 			}
 
 			loginClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
@@ -1426,6 +1423,9 @@ public static partial class EpicGamesHelper
 						Size = sizeBytes >= 1_000_000_000 ? $"{sizeBytes.Value / 1_000_000_000d:F1} GB" : $"{sizeBytes.Value / 1_000_000d:F2} MB",
 						Version = currentVersion
 					});
+
+					if (keyImages.FirstOrDefault(image => (image as JsonObject)?["type"]?.GetValue<string>() == "DieselGameBox") == null)
+						LogHelper.LogError(new UriFormatException($"No background image found for game: {(offerEntry as JsonObject)?["title"]?.GetValue<string>() ?? "Unknown"} ({(itemJson as JsonObject)?["Provider"]?.GetValue<string>() ?? "Epic Games"})"));
 				}
 				catch (Exception ex)
 				{

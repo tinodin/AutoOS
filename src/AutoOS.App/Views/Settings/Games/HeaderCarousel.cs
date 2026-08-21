@@ -705,9 +705,6 @@ public partial class HeaderCarousel : ItemsControl
 	{
 		foreach (GameModel game in games)
 		{
-			if (string.IsNullOrEmpty(game.BackgroundImageUrl))
-				LogHelper.LogError(new UriFormatException($"No background image found for game: {game.Title ?? "Unknown"} ({game.Launcher ?? "Unknown Launcher"})"));
-
 			Items.Add(new HeaderCarouselItem
 			{
 				Launcher = game.Launcher ?? "",
