@@ -1,16 +1,12 @@
 version: 2
 updates:
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: nuget
+    directory: /
     schedule:
-      interval: "daily"
+      interval: daily
+    open-pull-requests-limit: 10
 
-  - package-ecosystem: "nuget"
-    directory: "/src/AutoOS.Core"
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
-      interval: "daily"
-
-  - package-ecosystem: "nuget"
-    directory: "/src/AutoOS.App"
-    schedule:
-      interval: "daily"
+      interval: daily
