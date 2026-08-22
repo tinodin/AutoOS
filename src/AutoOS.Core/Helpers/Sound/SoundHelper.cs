@@ -566,12 +566,12 @@ public static partial class SoundHelper
 					PROPVARIANT propDev = default;
 					propDev.Anonymous.Anonymous.vt = VARENUM.VT_BLOB;
 					propDev.Anonymous.Anonymous.Anonymous.blob.cbSize = (uint)sizeof(WAVEFORMATEXTENSIBLE);
-					propDev.Anonymous.Anonymous.Anonymous.blob.pBlobData = (byte*)&endpointFormat;
+					propDev.Anonymous.Anonymous.Anonymous.blob.pBlobData = (byte*)pEndpointFormat;
 
 					PROPVARIANT propMix = default;
 					propMix.Anonymous.Anonymous.vt = VARENUM.VT_BLOB;
 					propMix.Anonymous.Anonymous.Anonymous.blob.cbSize = (uint)sizeof(WAVEFORMATEXTENSIBLE);
-					propMix.Anonymous.Anonymous.Anonymous.blob.pBlobData = (byte*)&mixFormat;
+					propMix.Anonymous.Anonymous.Anonymous.blob.pBlobData = (byte*)pMixFormat;
 
 					PROPERTYKEY keyDeviceFormat = new() { fmtid = new Guid("F19F064D-082C-4E27-BC73-6882A1BB8E4C"), pid = 0 };
 					PROPERTYKEY keyOemFormat = new() { fmtid = new Guid("E4870E26-3CC5-4CD2-BA46-CA0A9A70ED04"), pid = 0 };
