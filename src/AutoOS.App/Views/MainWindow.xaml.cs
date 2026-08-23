@@ -1,7 +1,12 @@
 using AutoOS.App.Assets.NavViewMenu;
+using AutoOS.App.Data.Contracts;
+using CommunityToolkit.Mvvm.DependencyInjection;
 using Microsoft.UI.Input;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
+using Windows.Storage;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using WinRT;
@@ -13,10 +18,15 @@ public sealed partial class MainWindow : Window
 {
 	public string TitleBarName { get; set; } = string.Empty;
 	internal static MainWindow Instance { get; set; } = null!;
+	public MainWindowViewModel ViewModel { get; }
 
 	public MainWindow()
 	{
 		Instance = this;
+
+		var appearanceSettingsService = Ioc.Default.GetRequiredService<IAppearanceSettingsService>();
+		ViewModel = new MainWindowViewModel(appearanceSettingsService);
+
 		InitializeComponent();
 		ExtendsContentIntoTitleBar = true;
 		SetTitleBar(AppTitleBar);

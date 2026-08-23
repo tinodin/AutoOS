@@ -1,5 +1,9 @@
+using AutoOS.App.Data.Contracts;
 using AutoOS.Core.Helpers.Picker;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.DependencyInjection;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.UI;
@@ -10,14 +14,33 @@ namespace AutoOS.App.Views.Settings;
 public sealed partial class SettingsPage : Page
 {
 	private readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
+	private readonly IAppearanceSettingsService appearanceSettingsService = Ioc.Default.GetRequiredService<IAppearanceSettingsService>();
 	private bool isInitializingSwitchEmulatorState = true;
+	private bool isLoadingBackgroundSettings = false;
+
+	private string _backgroundImagePath = string.Empty;
+	public string BackgroundImagePath
+	{
+		get => _backgroundImagePath;
+		set
+		{
+			if (_backgroundImagePath != value)
+			{
+				_backgroundImagePath = value;
+				Bindings.Update();
+			}
+		}
+	}
 
 	public SettingsPage()
 	{
+		// Guard against XAML-initialized controls firing change events before saved values are loaded
+		isLoadingBackgroundSettings = true;
 		InitializeComponent();
 		LoadSettings();
 		GetItems();
 		GetSwitchEmulator();
+		LoadBackgroundImageSettings();
 	}
 
 	private void CloneRepo_Click(object sender, RoutedEventArgs e)
@@ -320,6 +343,127 @@ public sealed partial class SettingsPage : Page
 				XamlRoot = App.MainWindow.Content.XamlRoot
 			};
 			await dialog.ShowAsync();
+		}
+	}
+
+	private void LoadBackgroundImageSettings()
+	{
+		isLoadingBackgroundSettings = true;
+
+		// Load background image source
+		string imagePath = appearanceSettingsService.AppThemeBackgroundImageSource;
+		if (!string.IsNullOrWhiteSpace(imagePath))
+		{
+			BackgroundImagePath = imagePath;
+		}
+
+		// Load opacity
+		ImageOpacitySlider.Value = appearanceSettingsService.AppThemeBackgroundImageOpacity;
+
+		// Load image fit
+		foreach (ComboBoxItem item in ImageFitComboBox.Items)
+		{
+			if (item.Tag?.ToString() == appearanceSettingsService.AppThemeBackgroundImageFit.ToString())
+			{
+				ImageFitComboBox.SelectedItem = item;
+				break;
+			}
+		}
+
+		// Load vertical alignment
+		foreach (ComboBoxItem item in ImageVerticalAlignmentComboBox.Items)
+		{
+			if (item.Tag?.ToString() == appearanceSettingsService.AppThemeBackgroundImageVerticalAlignment.ToString())
+			{
+				ImageVerticalAlignmentComboBox.SelectedItem = item;
+				break;
+			}
+		}
+
+		// Load horizontal alignment
+		foreach (ComboBoxItem item in ImageHorizontalAlignmentComboBox.Items)
+		{
+			if (item.Tag?.ToString() == appearanceSettingsService.AppThemeBackgroundImageHorizontalAlignment.ToString())
+			{
+				ImageHorizontalAlignmentComboBox.SelectedItem = item;
+				break;
+			}
+		}
+
+		isLoadingBackgroundSettings = false;
+	}
+
+	private async void SelectImage_Click(SplitButton sender, SplitButtonClickEventArgs args)
+	{
+		var picker = new FilePicker(App.MainWindow)
+		{
+			ShowAllFilesOption = false,
+			ShowDetailedExtension = true
+		};
+
+		picker.FileTypeChoices.Add("Image Files", ["*.bmp", "*.dib", "*.jpg", "*.jpeg", "*.jpe", "*.jfif", "*.gif", "*.tif", "*.tiff", "*.png", "*.heic", "*.hif", "*.webp"]);
+		picker.FileTypeChoices.Add("Bitmap Files", ["*.bmp", "*.dib"]);
+		picker.FileTypeChoices.Add("JPEG", ["*.jpg", "*.jpeg", "*.jpe", "*.jfif"]);
+		picker.FileTypeChoices.Add("GIF", ["*.gif"]);
+		picker.FileTypeChoices.Add("TIFF", ["*.tif", "*.tiff"]);
+		picker.FileTypeChoices.Add("PNG", ["*.png"]);
+		picker.FileTypeChoices.Add("HEIC", ["*.heic", "*.hif"]);
+		picker.FileTypeChoices.Add("WEBP", ["*.webp"]);
+
+		picker.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
+
+		StorageFile? file = await picker.PickSingleFileAsync();
+		if (file != null)
+		{
+			appearanceSettingsService.AppThemeBackgroundImageSource = file.Path;
+			BackgroundImagePath = file.Path;
+		}
+	}
+
+	private void RemoveImage_Click(object sender, RoutedEventArgs e)
+	{
+		appearanceSettingsService.AppThemeBackgroundImageSource = string.Empty;
+		BackgroundImagePath = string.Empty;
+	}
+
+	private void ImageOpacity_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+	{
+		if (isLoadingBackgroundSettings)
+			return;
+
+		appearanceSettingsService.AppThemeBackgroundImageOpacity = (float)e.NewValue;
+	}
+
+	private void ImageFit_SelectionChanged(object sender, SelectionChangedEventArgs e)
+	{
+		if (isLoadingBackgroundSettings)
+			return;
+
+		if (ImageFitComboBox.SelectedItem is ComboBoxItem item && item.Tag is string tag && Enum.TryParse(tag, out Stretch fit))
+		{
+			appearanceSettingsService.AppThemeBackgroundImageFit = fit;
+		}
+	}
+
+	private void ImageVerticalAlignment_SelectionChanged(object sender, SelectionChangedEventArgs e)
+	{
+		if (isLoadingBackgroundSettings)
+			return;
+
+		if (ImageVerticalAlignmentComboBox.SelectedItem is ComboBoxItem item && item.Tag is string tag && Enum.TryParse(tag, out VerticalAlignment verticalAlignment))
+		{
+			appearanceSettingsService.AppThemeBackgroundImageVerticalAlignment = verticalAlignment;
+		}
+	}
+
+	private void ImageHorizontalAlignment_SelectionChanged(object sender, SelectionChangedEventArgs e)
+	{
+		if (isLoadingBackgroundSettings)
+			return;
+
+		if (ImageHorizontalAlignmentComboBox.SelectedItem is ComboBoxItem item && item.Tag is string tag && Enum.TryParse(tag, out HorizontalAlignment horizontalAlignment))
+		{
+			appearanceSettingsService.AppThemeBackgroundImageHorizontalAlignment = horizontalAlignment;
 		}
 	}
 }

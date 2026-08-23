@@ -164,6 +164,81 @@
 							<ImageIcon Source="/Assets/FluentIcons/Pages/Settings/External.png" />
 						</dev:SettingsCard.ActionIcon>
 					</dev:SettingsCard>
+					<dev:SettingsExpander
+						x:Name="BackgroundImageExpander"
+						Description="{x:Bind BackgroundImagePath, Mode=OneWay}"
+						Header="Background Image"
+						HeaderIcon="{dev:FontIcon FontFamily={StaticResource SymbolThemeFontFamily},
+						                          Glyph=&#xE91B;}"
+						IsExpanded="False">
+						<SplitButton
+							x:Name="SelectImageButton"
+							Click="SelectImage_Click"
+							Content="Browse">
+							<SplitButton.Flyout>
+								<MenuFlyout Placement="Bottom">
+									<MenuFlyoutItem
+										x:Name="RemoveImageMenuItem"
+										Click="RemoveImage_Click"
+										Text="Remove" />
+								</MenuFlyout>
+							</SplitButton.Flyout>
+						</SplitButton>
+						<dev:SettingsExpander.Items>
+							<dev:SettingsCard Header="Opacity">
+								<Slider
+									x:Name="ImageOpacitySlider"
+									Width="140"
+									HorizontalAlignment="Right"
+									IsThumbToolTipEnabled="False"
+									Maximum="1"
+									Minimum="0.1"
+									StepFrequency="0.1"
+									Value="1"
+									ValueChanged="ImageOpacity_ValueChanged" />
+							</dev:SettingsCard>
+							<dev:SettingsCard Header="Image Fit">
+								<uc:ComboBoxEx
+									x:Name="ImageFitComboBox"
+									MinWidth="140"
+									SelectionChanged="ImageFit_SelectionChanged">
+									<ComboBoxItem Content="None" Tag="None" />
+									<ComboBoxItem Content="Fill" Tag="Fill" />
+									<ComboBoxItem Content="Uniform" Tag="Uniform" />
+									<ComboBoxItem
+										Content="Uniform To Fill"
+										IsSelected="True"
+										Tag="UniformToFill" />
+								</uc:ComboBoxEx>
+							</dev:SettingsCard>
+							<dev:SettingsCard Header="Vertical Alignment">
+								<uc:ComboBoxEx
+									x:Name="ImageVerticalAlignmentComboBox"
+									MinWidth="140"
+									SelectionChanged="ImageVerticalAlignment_SelectionChanged">
+									<ComboBoxItem Content="Top" Tag="Top" />
+									<ComboBoxItem
+										Content="Center"
+										IsSelected="True"
+										Tag="Center" />
+									<ComboBoxItem Content="Bottom" Tag="Bottom" />
+								</uc:ComboBoxEx>
+							</dev:SettingsCard>
+							<dev:SettingsCard Header="Horizontal Alignment">
+								<uc:ComboBoxEx
+									x:Name="ImageHorizontalAlignmentComboBox"
+									MinWidth="140"
+									SelectionChanged="ImageHorizontalAlignment_SelectionChanged">
+									<ComboBoxItem Content="Left" Tag="Left" />
+									<ComboBoxItem
+										Content="Center"
+										IsSelected="True"
+										Tag="Center" />
+									<ComboBoxItem Content="Right" Tag="Right" />
+								</uc:ComboBoxEx>
+							</dev:SettingsCard>
+						</dev:SettingsExpander.Items>
+					</dev:SettingsExpander>
 				</dev:SimpleSettingsGroup>
 				<dev:SimpleSettingsGroup Margin="0,0,0,36" Header="Games">
 					<dev:Card Title="Switch Emulator" Padding="24,24,24,12">

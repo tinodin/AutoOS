@@ -34,6 +34,7 @@ public partial class App : Application
 	private static IServiceProvider BuildServiceProvider => new ServiceCollection()
 		.AddSingleton<IFilePickerService, FilePickerService>()
 		.AddSingleton<IDialogService, DialogService>()
+		.AddSingleton<Data.Contracts.IAppearanceSettingsService, Services.AppearanceSettingsService>()
 		.AddSingleton<IBiosSettingsContext, BiosSettingsContext>()
 		.AddSingleton<IBiosNvramService, BiosNvramService>()
 		.AddSingleton<IBiosBackupService, BiosBackupService>()
@@ -94,9 +95,10 @@ public partial class App : Application
 				MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
 				ThemeService = new ThemeService().Initialize(MainWindow);
 
-				if (localSettings.Values.TryGetValue("TintColor", out object? tintValue) && tintValue is string tintHex)
+				if (MainWindow.Content is Grid rootGrid)
 				{
-					if (MainWindow.Content is Grid rootGrid)
+					// Apply tint color
+					if (localSettings.Values.TryGetValue("TintColor", out object? tintValue) && tintValue is string tintHex)
 					{
 						rootGrid.Background = new SolidColorBrush(DevWinUI.ColorHelper.GetColorFromHex(tintHex));
 					}
@@ -223,4 +225,5 @@ public partial class App : Application
 			await LogHelper.LogFallbackError(exception);
 		}
 	}
+
 }

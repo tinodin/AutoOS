@@ -13,6 +13,16 @@
 			<RowDefinition Height="Auto" />
 			<RowDefinition />
 		</Grid.RowDefinitions>
+
+		<!--  Background Image  -->
+		<Image
+			Grid.RowSpan="2"
+			HorizontalAlignment="{x:Bind ViewModel.BackgroundImageHorizontalAlignment, Mode=OneWay}"
+			VerticalAlignment="{x:Bind ViewModel.BackgroundImageVerticalAlignment, Mode=OneWay}"
+			Opacity="{x:Bind ViewModel.BackgroundImageOpacity, Mode=OneWay}"
+			Source="{x:Bind ViewModel.BackgroundImageSource, Mode=OneWay}"
+			Stretch="{x:Bind ViewModel.BackgroundImageFit, Mode=OneWay}" />
+
 		<TitleBar
 			x:Name="AppTitleBar"
 			IsBackButtonVisible="False"
