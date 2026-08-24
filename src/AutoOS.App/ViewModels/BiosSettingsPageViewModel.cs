@@ -80,6 +80,9 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 	public partial string SearchText { get; set; } = string.Empty;
 
 	[ObservableProperty]
+	public partial bool FilterPath { get; set; } = true;
+
+	[ObservableProperty]
 	public partial bool FilterSetting { get; set; } = true;
 
 	[ObservableProperty]
@@ -127,6 +130,8 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 	public partial int RecommendedCount { get; set; }
 
 	partial void OnSearchTextChanged(string value) => RefreshFilter();
+
+	partial void OnFilterPathChanged(bool value) => RefreshFilter();
 
 	partial void OnFilterSettingChanged(bool value) => RefreshFilter();
 
@@ -405,7 +410,16 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		}
 
 		if (node.NodeKind == NodeKind.Path)
+		{
+			if (!string.IsNullOrWhiteSpace(SearchText) && FilterPath)
+			{
+				string t = SearchText.Trim();
+				bool pm(string v) => FilterMode == FilterMode.ExactMatch ? string.Equals(v, t, StringComparison.OrdinalIgnoreCase) : v.Contains(t, StringComparison.OrdinalIgnoreCase);
+				if (pm(node.DisplayName))
+					return true;
+			}
 			return CountVisibleSettings(node.Children) > 0;
+		}
 
 		if (CompareToDefaults && node.IsDefault)
 			return false;
@@ -423,6 +437,9 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 			? string.Equals(value, term, comparison)
 			: value.Contains(term, comparison);
 
+		if (FilterPath && IsAncestorPathMatch(node, term, textMatches))
+			return true;
+
 		if (FilterSetting && textMatches(node.DisplayName))
 			return true;
 
@@ -432,6 +449,18 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		if (FilterCurrent && textMatches(node.DisplayCurrent))
 			return true;
 
+		return false;
+	}
+
+	private bool IsAncestorPathMatch(Node node, string term, Func<string, bool> textMatches)
+	{
+		Node? cur = node.Parent;
+		while (cur != null)
+		{
+			if (cur.NodeKind == NodeKind.Path && textMatches(cur.DisplayName))
+				return true;
+			cur = cur.Parent;
+		}
 		return false;
 	}
 

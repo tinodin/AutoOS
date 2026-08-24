@@ -109,6 +109,9 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 	public partial string SearchText { get; set; } = string.Empty;
 
 	[ObservableProperty]
+	public partial bool FilterSubgroup { get; set; } = true;
+
+	[ObservableProperty]
 	public partial bool FilterSetting { get; set; } = true;
 
 	[ObservableProperty]
@@ -532,6 +535,8 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 
 	partial void OnSearchTextChanged(string value) => RefreshFilter();
 
+	partial void OnFilterSubgroupChanged(bool value) => RefreshFilter();
+
 	partial void OnFilterSettingChanged(bool value) => RefreshFilter();
 
 	partial void OnFilterDescriptionChanged(bool value) => RefreshFilter();
@@ -554,6 +559,13 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		if (item is not Node node)
 			return true;
 
+		if (node.NodeKind == NodeKind.Subgroup)
+		{
+			if (SearchText.Length > 0 && FilterSubgroup && TextMatches(node.DisplayName, SearchText.Trim()))
+				return true;
+			return node.Children.Any(MatchesFilter);
+		}
+
 		if (node.NodeKind != NodeKind.Setting)
 			return node.Children.Any(MatchesFilter);
 
@@ -567,6 +579,13 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		if (setting == null)
 			return false;
 
+		string trimmed = query.Trim();
+		if (FilterSubgroup)
+		{
+			Subgroup? sg = _subgroups.FirstOrDefault(s => s.Guid == setting.SubgroupGuid);
+			if (sg != null && TextMatches(sg.Name, trimmed))
+				return true;
+		}
 		if (FilterSetting && TextMatches(setting.Name, query))
 			return true;
 		if (FilterDescription && TextMatches(setting.Description, query))

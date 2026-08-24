@@ -181,6 +181,9 @@
 					<DropDownButton.Flyout>
 						<MenuFlyout Placement="Bottom">
 
+							<!--  Subgroup  -->
+							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterSubgroup, Mode=TwoWay}" Text="Subgroup" />
+
 							<!--  Setting  -->
 							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterSetting, Mode=TwoWay}" Text="Setting" />
 

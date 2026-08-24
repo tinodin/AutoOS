@@ -147,6 +147,9 @@
 					<DropDownButton.Flyout>
 						<MenuFlyout Placement="Bottom">
 
+							<!--  Path  -->
+							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterPath, Mode=TwoWay}" Text="Path" />
+
 							<!--  Setting  -->
 							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterSetting, Mode=TwoWay}" Text="Setting" />
 
