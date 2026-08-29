@@ -117,7 +117,7 @@ public sealed partial class BiosSettingsPage : Page
 
 		Node? node = treeGrid.GetNodeAtRowIndex(e.RowColumnIndex.RowIndex)?.Item as Node ?? treeGrid.CurrentItem as Node;
 		if (ViewModel.CommitEdit(node))
-			DispatcherQueue.TryEnqueue(ViewModel.RefreshAfterEdit);
+			ViewModel.RefreshAfterEdit();
 	}
 
 	private void EditControl_Loaded(object sender, RoutedEventArgs e)

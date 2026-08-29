@@ -216,6 +216,7 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		_redoStates.Clear();
 		MergeCount = 0;
 		TreeNodes.Clear();
+		CompareNodes.Clear();
 		DiffNodes.Clear();
 		_recommendedTree = BuildTree("Recommended", static node => node.HasPendingRecommendation);
 		TreeNodes.Add(_recommendedTree.Root);
@@ -359,10 +360,7 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		Dictionary<Setting, string?> previous = CaptureState();
 		bool changed = node.CommitCellEdit();
 		if (changed)
-		{
 			PushUndoState(previous);
-			UpdateStateCore();
-		}
 		return changed;
 	}
 
@@ -583,7 +581,12 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 
 	private void UpdateState()
 	{
-		UpdateStateCore();
+		CompareToDefaultsCount = _settings.Count(setting => !string.IsNullOrEmpty(setting.Default) && !SettingState.MatchesDefault(setting, _settingStates[setting]));
+		ModifiedCount = _settings.Count(setting => _settingStates[setting].IsModified);
+		RecommendedCount = _settings.Count(setting => SettingState.HasPendingRecommendation(setting, _settingStates[setting]));
+		HasRecommendations = RecommendedCount > 0;
+		UndoCommand.NotifyCanExecuteChanged();
+		RedoCommand.NotifyCanExecuteChanged();
 		SyncTree(_recommendedTree, static node => node.HasPendingRecommendation);
 		SyncTree(_compareTree, static node => !string.IsNullOrEmpty(node.Setting?.Default) && !node.IsDefault);
 		SyncTree(_changesTree, static node => node.State?.IsModified == true);
@@ -591,15 +594,6 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		RefreshFilterOnlyAction?.Invoke();
 	}
 
-	private void UpdateStateCore()
-	{
-		CompareToDefaultsCount = _settings.Count(setting => !string.IsNullOrEmpty(setting.Default) && !SettingState.MatchesDefault(setting, _settingStates[setting]));
-		ModifiedCount = _settings.Count(setting => _settingStates[setting].IsModified);
-		RecommendedCount = _settings.Count(setting => SettingState.HasPendingRecommendation(setting, _settingStates[setting]));
-		HasRecommendations = RecommendedCount > 0;
-		UndoCommand.NotifyCanExecuteChanged();
-		RedoCommand.NotifyCanExecuteChanged();
-	}
 
 	private void SyncMergeCount() => MergeCount = RecommendedCount;
 

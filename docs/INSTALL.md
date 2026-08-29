@@ -9,7 +9,7 @@
 Join my [Discord Server](https://discord.gg/bZU4dMMWpg) to receive **installation support** and stay informed about **future updates or changes**.
 
 ### Step 2: Downloading the ISO
-Download the latest Windows `25H2.iso` file from [here](https://drive.google.com/drive/folders/1BlAYofjlW1bU-WPG3jXygO1ezoJ4gPs7?usp=sharing) (Log into your Google Account if you get an error).<br/>
+Download the latest Windows `25H2.iso` file from [here](https://drive.google.com/drive/folders/1e4dwuWYwu2i-NTPunT_zFRZYBG5Cgnpa?usp=sharing) (Log into your Google Account if you get an error).<br/>
 Other ISOs are not supported (will not work) to guarantee consistency and the latest features.
 
 ### Step 3: Downloading Drivers

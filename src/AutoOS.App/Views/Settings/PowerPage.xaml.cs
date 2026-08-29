@@ -104,7 +104,7 @@ public sealed partial class PowerPage : Page
 		int visibleIndex = treeGrid.ResolveToGridVisibleColumnIndex(e.RowColumnIndex.ColumnIndex);
 		string mappingName = treeGrid.Columns[visibleIndex].MappingName;
 		if (ViewModel.CommitEdit(node, mappingName))
-			DispatcherQueue.TryEnqueue(ViewModel.RefreshAfterEdit);
+			ViewModel.RefreshAfterEdit();
 	}
 
 	private void EditControl_Loaded(object sender, RoutedEventArgs e)
