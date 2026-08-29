@@ -4,7 +4,7 @@
 
 using System.Runtime.InteropServices;
 
-namespace AutoOS.Core.Helpers.ReadWrite;
+namespace AutoOS.Core.Drivers.InpOut;
 
 internal static partial class InpOut
 {

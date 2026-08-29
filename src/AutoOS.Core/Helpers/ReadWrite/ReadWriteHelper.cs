@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using AutoOS.Core.Drivers.InpOut;
 using Windows.Win32;
 
 namespace AutoOS.Core.Helpers.ReadWrite;
@@ -7,71 +8,40 @@ public partial class ReadWriteHelper : IDisposable
 {
 	public ReadWriteHelper()
 	{
-		//if (WinRing.InitializeOls() == 0)
-		//    throw new Exception("Failed to initialize WinRing0 driver.");
-
-		//if (WinRing.GetDllStatus() != 0)
-		//    throw new Exception($"WinRing0 status error: {WinRing.GetDllStatus()}");
 	}
 
-	// MSR
+	// MSR - WinRing0 removed; stubs until replacement driver is integrated
 	public static bool ReadMsr(uint index, out ulong value)
 	{
-		uint eax = 0, edx = 0;
-		if (WinRing.Rdmsr(index, ref eax, ref edx) != 0)
-		{
-			value = ((ulong)edx << 32) | eax;
-			return true;
-		}
 		value = 0;
 		return false;
 	}
 
 	public static bool WriteMsr(uint index, ulong value)
 	{
-		uint eax = (uint)(value & 0xFFFFFFFF);
-		uint edx = (uint)(value >> 32);
-		return WinRing.Wrmsr(index, eax, edx) != 0;
+		return false;
 	}
 
-	// PMC
+	// PMC - WinRing0 removed; stubs until replacement driver is integrated
 	public static ulong ReadPmc(uint index)
 	{
-		uint eax = 0, edx = 0;
-		WinRing.Rdpmc(index, ref eax, ref edx);
-		return ((ulong)edx << 32) | eax;
+		return 0;
 	}
 
 	public static ulong ReadPmcTx(uint index, UIntPtr threadAffinityMask)
 	{
-		uint eax = 0, edx = 0;
-		WinRing.RdpmcTx(index, ref eax, ref edx, threadAffinityMask);
-		return ((ulong)edx << 32) | eax;
+		return 0;
 	}
 
-	// PCI
+	// PCI - WinRing0 removed; stubs until replacement driver is integrated
 	public static bool ReadPci(uint bus, uint dev, uint func, byte offset, int size, out uint value)
 	{
-		uint address = WinRing.PciBusDevFunc(bus, dev, func);
-		value = size switch
-		{
-			8 => WinRing.ReadPciConfigByte(address, offset),
-			16 => WinRing.ReadPciConfigWord(address, offset),
-			32 => WinRing.ReadPciConfigDword(address, offset),
-			_ => 0
-		};
-		return true;
+		value = 0;
+		return false;
 	}
 
 	public static void WritePci(uint bus, uint dev, uint func, byte offset, uint value, int size)
 	{
-		uint address = WinRing.PciBusDevFunc(bus, dev, func);
-		switch (size)
-		{
-			case 8: WinRing.WritePciConfigByte(address, offset, (byte)value); break;
-			case 16: WinRing.WritePciConfigWord(address, offset, (ushort)value); break;
-			case 32: WinRing.WritePciConfigDword(address, offset, value); break;
-		}
 	}
 
 	public static ulong ReadPciBit(string bdf, byte offset, string bitRange, int size)
@@ -105,26 +75,14 @@ public partial class ReadWriteHelper : IDisposable
 		uint.TryParse(parts[2], System.Globalization.NumberStyles.HexNumber, null, out func);
 	}
 
-	// IO Port
+	// IO Port - WinRing0 removed; stubs until replacement driver is integrated
 	public static uint ReadIo(ushort port, int size)
 	{
-		return size switch
-		{
-			8 => WinRing.ReadIoPortByte(port),
-			16 => WinRing.ReadIoPortWord(port),
-			32 => WinRing.ReadIoPortDword(port),
-			_ => 0
-		};
+		return 0;
 	}
 
 	public static void WriteIo(ushort port, uint value, int size)
 	{
-		switch (size)
-		{
-			case 8: WinRing.WriteIoPortByte(port, (byte)value); break;
-			case 16: WinRing.WriteIoPortWord(port, (ushort)value); break;
-			case 32: WinRing.WriteIoPortDword(port, value); break;
-		}
 	}
 
 	// Physical Memory
@@ -233,7 +191,6 @@ public partial class ReadWriteHelper : IDisposable
 
 	public void Dispose()
 	{
-		WinRing.DeinitializeOls();
 		GC.SuppressFinalize(this);
 	}
 }

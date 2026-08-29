@@ -570,8 +570,8 @@ public static class AppsStage
 			("Importing Vencord settings", async () => await Task.Delay(500), () => Discord == true),
 
 			// set appearance to system
-			("Setting appearance to system", async () => { Process.Start(new ProcessStartInfo { FileName = Path.Combine(Directory.GetDirectories(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Discord"), "app-*").FirstOrDefault() ?? "", "Discord.exe"), WindowStyle = ProcessWindowStyle.Hidden }); while (Process.GetProcessesByName("OpenWith").Length == 0 && Process.GetProcessesByName("msedge").Length == 0) { await Task.Delay(500); } }, () => Discord == true),
-			("Setting appearance to system", async () => await Task.Delay(4000), () => Discord == true),
+			("Setting appearance to system", async () => Process.Start(new ProcessStartInfo { FileName = Path.Combine(Directory.GetDirectories(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Discord"), "app-*").FirstOrDefault() ?? "", "Discord.exe"), WindowStyle = ProcessWindowStyle.Hidden }), () => Discord == true),
+			("Setting appearance to system", async () => await Task.Delay(5000), () => Discord == true),
 			("Setting appearance to system", async () => { foreach (Process process in Process.GetProcessesByName("OpenWith")) { process.Kill(); process.WaitForExit(); } foreach (Process process in Process.GetProcessesByName("msedge")) { process.Kill(); process.WaitForExit(); } }, () => Discord == true),
 			("Setting appearance to system", async () => { foreach (Process process in Process.GetProcessesByName("Discord")) { if (process.MainWindowHandle != IntPtr.Zero) { PInvoke.PostMessage((HWND)process.MainWindowHandle, PInvoke.WM_CLOSE, default(WPARAM), default(LPARAM)); process.WaitForExit(); } } }, () => Discord == true),
 			("Setting appearance to system", async () => await DiscordHelper.SetSystemAppearance(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "discord", "Local Storage", "leveldb")), () => Discord == true),
@@ -1719,7 +1719,7 @@ public static class AppsStage
 			("Cleaning up Process Monitor files", async () => { string path = Path.Combine(Path.GetTempPath(), "ProcessMonitor.zip"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => ProcessMonitor == true),
 			
 			// download hwinfo
-			("Downloading HWiNFO® 64", async () => await DownloadHelper.Download("https://www.sac.sk/download/utildiag/hwi_850x.exe", Path.GetTempPath(), "hwi64.exe", reporter: reporter), () => HWInfo == true),
+			("Downloading HWiNFO® 64", async () => await DownloadHelper.Download("https://www.sac.sk/download/utildiag/hwi_852x.exe", Path.GetTempPath(), "hwi64.exe", reporter: reporter), () => HWInfo == true),
 
 			// install hwinfo
 			("Installing HWiNFO® 64", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "hwi64.exe"), Arguments = "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => HWInfo == true),
