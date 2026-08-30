@@ -4,6 +4,7 @@ using AutoOS.App.Data.Enums;
 using AutoOS.App.Data.Enums.Bios;
 using AutoOS.App.Data.Models.Bios;
 using AutoOS.App.Extensions;
+using AutoOS.App.ViewModels.Dialogs.Bios;
 using AutoOS.Core.Data.Models.Bios;
 using AutoOS.Core.Helpers.Bios;
 using AutoOS.Core.Helpers.Shutdown;
@@ -345,9 +346,6 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 			.Where(pair => pair.Value.IsModified)
 			.ToDictionary(pair => pair.Key, pair => pair.Value);
 
-		ModifiedCount = 0;
-		MergeCount = 0;
-
 		(PageMode result, IReadOnlyList<Setting> failed) = await biosService.WriteToNvramAsync(modified);
 		if (result != PageMode.Loaded)
 		{
@@ -384,6 +382,20 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		UpdateState();
 		SyncMergeCount();
 		PageState = PageMode.Loaded;
+	}
+
+	[RelayCommand]
+	private async Task UnlockWithPasswordAsync()
+	{
+		BiosPasswordDialogViewModel vm = new();
+		DialogResult result = await dialogService.ShowDialogAsync(vm);
+		if (result != DialogResult.Primary)
+			return;
+
+		if (_settingStates.Any(pair => pair.Value.IsModified))
+			await WriteToNvramAsync();
+		else
+			await ReadFromNvramAsync();
 	}
 
 	[RelayCommand]

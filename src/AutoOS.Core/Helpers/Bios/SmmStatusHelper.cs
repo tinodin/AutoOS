@@ -21,8 +21,9 @@ public static class SmmStatusHelper
 		AmiSmmStatus.BufferTooSmallWire => "AMI_BUFFER_TOO_SMALL (0x8500)",
 		AmiSmmStatus.NotFound => "AMI_NOT_FOUND (0x8F00)",
 		AmiSmmStatus.PasswordMismatch => "AMI_PASSWORD_MISMATCH (0x8200)",
-		AmiSmmStatus.PasswordRetryExceeded => "AMI_PASSWORD_RETRY_EXCEEDED (0x8600) - reboot required",
+		AmiSmmStatus.PasswordRetryExceeded => "AMI_PASSWORD_RETRY_EXCEEDED (0x8600)",
 		AmiSmmStatus.InvalidPassword => "AMI_INVALID_PASSWORD (0x9A00)",
+		AmiSmmStatus.PasswordUnlockSuccess => "AMI_PASSWORD_UNLOCK_SUCCESS (0xDF00)",
 		_ => $"AMI status 0x{(uint)status:X}"
 	};
 

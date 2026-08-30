@@ -6,5 +6,6 @@ public enum AmiSmmStatus : uint
 	NotFound = 0x8F00,
 	PasswordMismatch = 0x8200,
 	PasswordRetryExceeded = 0x8600,
-	InvalidPassword = 0x9A00
+	InvalidPassword = 0x9A00,
+	PasswordUnlockSuccess = 0xDF00
 }

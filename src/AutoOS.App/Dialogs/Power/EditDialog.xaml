@@ -16,8 +16,9 @@
 		<Style BasedOn="{StaticResource DefaultContentDialogStyle}" TargetType="local:EditDialog" />
 	</ContentDialog.Resources>
 
-	<!--  Name  -->
 	<StackPanel Spacing="12">
+
+		<!--  Name  -->
 		<TextBox
 			x:Name="NameTextBox"
 			Header="Name:"

@@ -878,6 +878,19 @@
 						<Run Text="3." />
 						<Run FontWeight="Bold" Text="Save Changes and Exit (F10)" />
 					</TextBlock>
+					<StackPanel
+						Margin="0,8,0,0"
+						HorizontalAlignment="Center"
+						Spacing="8">
+						<TextBlock
+							HorizontalAlignment="Center"
+							Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+							Text="Alternatively, try to unlock write protection temporarily using your BIOS administator password:" />
+						<Button
+							HorizontalAlignment="Center"
+							Command="{x:Bind ViewModel.UnlockWithPasswordCommand}"
+							Content="Unlock Write Protection" />
+					</StackPanel>
 				</StackPanel>
 			</dev:Case>
 
@@ -936,6 +949,19 @@
 						<Run Text="3." />
 						<Run FontWeight="Bold" Text="Save Changes and Exit (F10)" />
 					</TextBlock>
+					<StackPanel
+						Margin="0,8,0,0"
+						HorizontalAlignment="Center"
+						Spacing="8">
+						<TextBlock
+							HorizontalAlignment="Center"
+							Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+							Text="Alternatively, try to unlock write protection temporarily using your BIOS administator password:" />
+						<Button
+							HorizontalAlignment="Center"
+							Command="{x:Bind ViewModel.UnlockWithPasswordCommand}"
+							Content="Unlock Write Protection" />
+					</StackPanel>
 				</StackPanel>
 			</dev:Case>
 
@@ -965,6 +991,19 @@
 						</Hyperlink>
 						<Run Text="for updates." />
 					</TextBlock>
+					<StackPanel
+						Margin="0,8,0,0"
+						HorizontalAlignment="Center"
+						Spacing="8">
+						<TextBlock
+							HorizontalAlignment="Center"
+							Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+							Text="Alternatively, try to unlock write protection temporarily using your BIOS administator password:" />
+						<Button
+							HorizontalAlignment="Center"
+							Command="{x:Bind ViewModel.UnlockWithPasswordCommand}"
+							Content="Unlock Write Protection" />
+					</StackPanel>
 				</StackPanel>
 			</dev:Case>
 		</dev:SwitchPresenter>

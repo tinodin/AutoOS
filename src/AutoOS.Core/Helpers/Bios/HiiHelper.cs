@@ -7,7 +7,6 @@ namespace AutoOS.Core.Helpers.Bios;
 
 public static partial class HiiHelper
 {
-
 	private static readonly (byte Bit, string Name)[] FlagNamesMap =
 	[
 		(0x01, "READ_ONLY"),

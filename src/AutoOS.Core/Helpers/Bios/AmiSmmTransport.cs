@@ -280,7 +280,14 @@ public sealed partial class AmiSmmTransport : IDisposable
 		status = 0;
 		Guid unlockGuid = new("5855CE1B-FB8E-47E4-BC1A-39ECAA0C96CF");
 		byte[] pwdData = System.Text.Encoding.Unicode.GetBytes(password);
-		return TrySetVariable("$SETUPPASSWD", unlockGuid, UNLOCK_VARIABLE_ATTRIBUTES, pwdData, out status);
+
+		if (TrySetVariable("$SETUPPASSWD", unlockGuid, UNLOCK_VARIABLE_ATTRIBUTES, pwdData, out status))
+			return true;
+
+		if (status == (uint)AmiSmmStatus.PasswordUnlockSuccess)
+			return true;
+
+		return false;
 	}
 
 	public unsafe bool TryPhysRead(ulong phys, uint size, Span<byte> output)
@@ -354,7 +361,7 @@ public sealed partial class AmiSmmTransport : IDisposable
 						fixed (char* pName = SERVICE_NAME)
 						fixed (char* pPath = fullPath)
 						{
-							SC_HANDLE rawScm = (SC_HANDLE)scm.DangerousGetHandle();
+							var rawScm = (SC_HANDLE)scm.DangerousGetHandle();
 							SC_HANDLE created = PInvoke.CreateService(
 								rawScm,
 								pName,
@@ -438,7 +445,7 @@ public sealed partial class AmiSmmTransport : IDisposable
 	private unsafe bool WaitService(CloseServiceHandleSafeHandle svc, uint desiredState)
 	{
 		SERVICE_STATUS status = new();
-		SC_HANDLE handle = (SC_HANDLE)svc.DangerousGetHandle();
+		var handle = (SC_HANDLE)svc.DangerousGetHandle();
 		if (PInvoke.QueryServiceStatus(handle, &status) != 0 && (uint)status.dwCurrentState == desiredState)
 			return true;
 
@@ -460,7 +467,7 @@ public sealed partial class AmiSmmTransport : IDisposable
 			{
 				notify.pszServiceNames = pName;
 
-				SERVICE_NOTIFY notifyMask = (SERVICE_NOTIFY)2;
+				var notifyMask = (SERVICE_NOTIFY)2;
 				uint result = PInvoke.NotifyServiceStatusChange(svc, notifyMask, &notify);
 				if (result != 0)
 					return false;

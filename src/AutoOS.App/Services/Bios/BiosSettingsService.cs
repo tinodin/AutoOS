@@ -13,7 +13,7 @@ public sealed class BiosSettingsService(IBiosSettingsContext context, IBiosNvram
 {
 	public async Task<(PageMode Result, IReadOnlyList<Setting> Settings)> ReadFromNvramAsync()
 	{
-		(PageMode Result, List<Setting> Settings, Dictionary<ushort, QidTarget> QidMap) result = await Task.Run(() =>
+		(PageMode Result, List<Setting> Settings, Dictionary<ushort, QidTarget> QidMap) = await Task.Run(() =>
 		{
 			using AmiSmmTransport transport = new();
 			if (!transport.TryLoad())
@@ -36,13 +36,13 @@ public sealed class BiosSettingsService(IBiosSettingsContext context, IBiosNvram
 			return (PageMode.Loaded, settings, qidMap);
 		});
 
-		if (result.Result != PageMode.Loaded)
-			return (result.Result, Array.Empty<Setting>());
+		if (Result != PageMode.Loaded)
+			return (Result, Array.Empty<Setting>());
 
-		context.LastSettings = result.Settings;
-		context.LastQidMap = result.QidMap;
+		context.LastSettings = Settings;
+		context.LastQidMap = QidMap;
 
-		return (PageMode.Loaded, result.Settings);
+		return (PageMode.Loaded, Settings);
 	}
 
 	public async Task<(PageMode Result, IReadOnlyList<Setting> FailedSettings)> WriteToNvramAsync(IEnumerable<KeyValuePair<Setting, SettingState>> modifiedSettings)

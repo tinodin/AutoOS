@@ -1,7 +1,9 @@
 using System.ComponentModel;
 using AutoOS.App.Data.Enums;
+using AutoOS.App.Dialogs.Bios;
 using AutoOS.App.Dialogs.Power;
 using AutoOS.App.ViewModels.Dialogs;
+using AutoOS.App.ViewModels.Dialogs.Bios;
 using AutoOS.App.ViewModels.Dialogs.Power;
 
 namespace AutoOS.App.Services;
@@ -10,7 +12,8 @@ public sealed class DialogService : IDialogService
 {
 	private readonly Dictionary<Type, Func<ContentDialog>> _dialogFactories = new()
 	{
-		{ typeof(EditDialogViewModel), () => new EditDialog() }
+		{ typeof(EditDialogViewModel), () => new EditDialog() },
+		{ typeof(BiosPasswordDialogViewModel), () => new BiosPasswordDialog() }
 	};
 
 	public IDialog<TViewModel> GetDialog<TViewModel>(TViewModel viewModel)
