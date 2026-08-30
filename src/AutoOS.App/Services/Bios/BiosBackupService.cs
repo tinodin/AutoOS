@@ -88,7 +88,7 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 
 		string path = Path.Combine(BackupDirectory, $"{DateTime.Now.ToLocalTime():yyyy-MM-dd_HH-mm-ss}.json");
 		await using FileStream fs = File.Create(path);
-		await JsonSerializer.SerializeAsync(fs, backup, BackupJsonOptions);
+		await JsonSerializer.SerializeAsync(fs, backup, BackupJsonContext.Default.BackupFile);
 
 		context.LastBackupSettings = currentSettings;
 	}
