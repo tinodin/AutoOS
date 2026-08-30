@@ -5,6 +5,7 @@ public enum PageMode
 	Reading,
 	Loaded,
 	Unsupported,
+	DriverLoadFailed,
 	HiiResourcesRegular,
 	HiiResourcesProtected,
 	HiiResourcesOther,

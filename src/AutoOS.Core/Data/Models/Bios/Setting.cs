@@ -20,6 +20,8 @@ public sealed class Setting
 
 	public string Path { get; init; } = string.Empty;
 
+	public string[] PathSegments { get; init; } = [];
+
 	public string Name { get; init; } = string.Empty;
 
 	public string Description { get; init; } = string.Empty;
@@ -43,4 +45,12 @@ public sealed class Setting
 	public string? RecommendedValue { get; set; }
 
 	public Option? RecommendedOption { get; set; }
+
+	public uint VarAttributes { get; set; }
+
+	public uint HiiAttributes { get; set; }
+
+	public string VarStoreType { get; set; } = string.Empty;
+
+	public uint VarReadStatus { get; set; }
 }

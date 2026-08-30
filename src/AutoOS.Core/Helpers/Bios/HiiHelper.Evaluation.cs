@@ -21,7 +21,8 @@ public static partial class HiiHelper
 
 	private static bool? EvaluateExpression(IReadOnlyList<SuppressionToken> tokens, Func<ushort, byte?> currentValue)
 	{
-		var stack = new Stack<ExpressionValue>();
+		Span<ExpressionValue> stack = stackalloc ExpressionValue[32];
+		int sp = 0;
 
 		foreach (SuppressionToken token in tokens)
 		{
@@ -31,66 +32,106 @@ public static partial class HiiHelper
 				case (byte)IfrOpcode.UInt16:
 				case (byte)IfrOpcode.UInt32:
 				case (byte)IfrOpcode.UInt64:
-					stack.Push(ExpressionValue.FromNumber(token.Value));
+					if (sp >= 32)
+						return null;
+
+					stack[sp++] = ExpressionValue.FromNumber(token.Value);
 					break;
 				case (byte)IfrOpcode.True:
-					stack.Push(ExpressionValue.FromBoolean(true));
+					if (sp >= 32)
+						return null;
+
+					stack[sp++] = ExpressionValue.FromBoolean(true);
 					break;
 				case (byte)IfrOpcode.False:
-					stack.Push(ExpressionValue.FromBoolean(false));
+					if (sp >= 32)
+						return null;
+
+					stack[sp++] = ExpressionValue.FromBoolean(false);
 					break;
 				case (byte)IfrOpcode.EqIdVal:
 				{
+					if (sp >= 32)
+						return null;
+
 					byte? current = currentValue(token.Qid);
-					stack.Push(current is null ? ExpressionValue.Null : ExpressionValue.FromBoolean(current.Value == token.Value));
+					stack[sp++] = current is null ? ExpressionValue.Null : ExpressionValue.FromBoolean(current.Value == token.Value);
 					break;
 				}
 				case (byte)IfrOpcode.EqIdId:
 				{
+					if (sp >= 32)
+						return null;
+
 					byte? left = currentValue(token.Qid);
 					byte? right = currentValue((ushort)token.Value);
-					stack.Push(left is null || right is null ? ExpressionValue.Null : ExpressionValue.FromBoolean(left.Value == right.Value));
+					stack[sp++] = left is null || right is null ? ExpressionValue.Null : ExpressionValue.FromBoolean(left.Value == right.Value);
 					break;
 				}
 				case (byte)IfrOpcode.EqIdValList:
 				{
+					if (sp >= 32)
+						return null;
+
 					byte? current = currentValue(token.Qid);
-					stack.Push(current is null ? ExpressionValue.Null : ExpressionValue.FromBoolean(token.Values?.Contains(current.Value) == true));
+					bool contains = false;
+					if (current.HasValue && token.Values != null)
+					{
+						foreach (ushort v in token.Values)
+						{
+							if (v == current.Value)
+							{
+								contains = true;
+								break;
+							}
+						}
+					}
+
+					stack[sp++] = current is null ? ExpressionValue.Null : ExpressionValue.FromBoolean(contains);
 					break;
 				}
 				case (byte)IfrOpcode.QuestionRef1:
 				{
+					if (sp >= 32)
+						return null;
+
 					byte? current = currentValue(token.Qid);
-					stack.Push(current is null ? ExpressionValue.Null : ExpressionValue.FromNumber(current.Value));
+					stack[sp++] = current is null ? ExpressionValue.Null : ExpressionValue.FromNumber(current.Value);
 					break;
 				}
 				default:
-					if (!ApplyOperator(stack, token.Opcode))
+					if (!ApplyOperator(stack, ref sp, token.Opcode))
 						return null;
 					break;
 			}
 		}
 
-		return stack.Count > 0 && stack.Peek().TryGetBoolean(out bool result) ? result : (bool?)null;
+		return sp > 0 && stack[sp - 1].TryGetBoolean(out bool result) ? result : (bool?)null;
 	}
 
-	private static bool ApplyOperator(Stack<ExpressionValue> stack, byte op)
+	private static bool ApplyOperator(Span<ExpressionValue> stack, ref int sp, byte op)
 	{
 		if (op == (byte)IfrOpcode.Not)
 		{
-			if (stack.Count < 1)
+			if (sp < 1 || sp >= 32)
 				return false;
 
-			ExpressionValue operand = stack.Pop();
-			stack.Push(operand.TryGetBoolean(out bool boolean) ? ExpressionValue.FromBoolean(!boolean) : ExpressionValue.Null);
+			ExpressionValue operand = stack[--sp];
+			if (sp >= 32)
+				return false;
+
+			stack[sp++] = operand.TryGetBoolean(out bool boolean) ? ExpressionValue.FromBoolean(!boolean) : ExpressionValue.Null;
 			return true;
 		}
 
-		if (stack.Count < 2)
+		if (sp < 2)
 			return false;
 
-		ExpressionValue right = stack.Pop();
-		ExpressionValue left = stack.Pop();
+		ExpressionValue right = stack[--sp];
+		ExpressionValue left = stack[--sp];
+
+		if (sp >= 32)
+			return false;
 
 		switch (op)
 		{
@@ -98,35 +139,35 @@ public static partial class HiiHelper
 			{
 				bool? a = left.TryGetBoolean(out bool aVal) ? aVal : null;
 				bool? b = right.TryGetBoolean(out bool bVal) ? bVal : null;
-				stack.Push(a == false || b == false ? ExpressionValue.FromBoolean(false)
-					: a == true && b == true ? ExpressionValue.FromBoolean(true) : ExpressionValue.Null);
+				stack[sp++] = a == false || b == false ? ExpressionValue.FromBoolean(false)
+					: a == true && b == true ? ExpressionValue.FromBoolean(true) : ExpressionValue.Null;
 				break;
 			}
 			case (byte)IfrOpcode.Or:
 			{
 				bool? a = left.TryGetBoolean(out bool aVal) ? aVal : null;
 				bool? b = right.TryGetBoolean(out bool bVal) ? bVal : null;
-				stack.Push(a == true || b == true ? ExpressionValue.FromBoolean(true)
-					: a == false && b == false ? ExpressionValue.FromBoolean(false) : ExpressionValue.Null);
+				stack[sp++] = a == true || b == true ? ExpressionValue.FromBoolean(true)
+					: a == false && b == false ? ExpressionValue.FromBoolean(false) : ExpressionValue.Null;
 				break;
 			}
 			case (byte)IfrOpcode.Equal:
-				stack.Push(CompareNumbers(left, right, (a, b) => a == b));
+				stack[sp++] = CompareNumbers(left, right, (a, b) => a == b);
 				break;
 			case (byte)IfrOpcode.NotEqual:
-				stack.Push(CompareNumbers(left, right, (a, b) => a != b));
+				stack[sp++] = CompareNumbers(left, right, (a, b) => a != b);
 				break;
 			case (byte)IfrOpcode.LessThan:
-				stack.Push(CompareNumbers(left, right, (a, b) => a < b));
+				stack[sp++] = CompareNumbers(left, right, (a, b) => a < b);
 				break;
 			case (byte)IfrOpcode.LessEqual:
-				stack.Push(CompareNumbers(left, right, (a, b) => a <= b));
+				stack[sp++] = CompareNumbers(left, right, (a, b) => a <= b);
 				break;
 			case (byte)IfrOpcode.GreaterThan:
-				stack.Push(CompareNumbers(left, right, (a, b) => a > b));
+				stack[sp++] = CompareNumbers(left, right, (a, b) => a > b);
 				break;
 			case (byte)IfrOpcode.GreaterEqual:
-				stack.Push(CompareNumbers(left, right, (a, b) => a >= b));
+				stack[sp++] = CompareNumbers(left, right, (a, b) => a >= b);
 				break;
 			default:
 				return false;

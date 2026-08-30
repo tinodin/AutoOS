@@ -6,6 +6,7 @@ using AutoOS.App.Data.Contexts;
 using AutoOS.App.Data.Contracts;
 using AutoOS.App.Data.Enums.Bios;
 using AutoOS.App.Data.Models.Bios;
+using AutoOS.Core.Data.Enums.Bios;
 using AutoOS.Core.Data.Models.Bios;
 using AutoOS.Core.Helpers.Bios;
 using AutoOS.Core.Helpers.Logging;
@@ -46,15 +47,22 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 				Default = setting.Default,
 				VariableName = setting.VariableName,
 				VariableGuid = HiiHelper.GetGuidString(setting.VariableGuid),
+				Attributes = GetEfiVariableAttributeNames(setting.VarAttributes),
 				Offset = setting.Offset,
 				Width = setting.Width,
 				Token = setting.Token
 			};
 		})];
 
-		string latest = Directory.Exists(BackupDirectory)
-			? Directory.EnumerateFiles(BackupDirectory, "*.json").OrderByDescending(Path.GetFileName).FirstOrDefault() ?? string.Empty
-			: string.Empty;
+		string latest = string.Empty;
+		if (Directory.Exists(BackupDirectory))
+		{
+			foreach (string file in Directory.EnumerateFiles(BackupDirectory, "*.json"))
+			{
+				if (string.Compare(Path.GetFileName(file), Path.GetFileName(latest), StringComparison.Ordinal) > 0)
+					latest = file;
+			}
+		}
 
 		if (latest.Length > 0 && context.LastBackupSettings == null)
 		{
@@ -92,74 +100,104 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 		if (backup == null)
 			return infoService.GetWriteProtectedState();
 
-		bool failed = await Task.Run(() =>
+		(PageMode Result, bool Failed) = await Task.Run(() =>
 		{
-			bool anyFailed = false;
-			var failureDetails = new StringBuilder();
+			using AmiSmmTransport transport = new();
+			if (!transport.TryLoad())
+				return (PageMode.DriverLoadFailed, true);
 
-			foreach (IGrouping<(string Name, Guid Guid), BackupSetting> group in backup.Settings.GroupBy(GetVariableKey))
+			if (!transport.TryInitSmm())
+				return (PageMode.DriverLoadFailed, true);
+
+			Dictionary<(string VariableName, Guid Guid, uint Offset), Setting> settingsByKey = new((context.LastSettings?.Count ?? 0));
+			if (context.LastSettings != null)
 			{
-				if (group.Key.Guid == Constants.Bios.SecureBootVarStoreGuid)
-					continue;
+				foreach (Setting s in context.LastSettings)
+					settingsByKey[(s.VariableName, s.VariableGuid, s.Offset)] = s;
+			}
 
-				var pairs = new List<KeyValuePair<Setting, SettingState>>();
+			bool anyFailed = false;
+			StringBuilder failureDetails = new();
+
+			foreach (IGrouping<(string Name, Guid Guid), BackupSetting> group in backup.Settings.GroupBy(static setting => (Name: setting.VariableName, Guid: Guid.TryParse(setting.VariableGuid, out Guid guid) ? guid : Guid.Empty)))
+			{
+				List<KeyValuePair<Setting, SettingState>> pairs = [with(group.Count())];
 				foreach (BackupSetting backupSetting in group)
 				{
-					Setting? current = (context.LastSettings ?? [])
-						.FirstOrDefault(setting =>
-							string.Equals(setting.VariableName, backupSetting.VariableName, StringComparison.Ordinal) &&
-							setting.VariableGuid == group.Key.Guid &&
-							setting.Offset == backupSetting.Offset);
+					if (string.IsNullOrEmpty(backupSetting.Value))
+						continue;
 
-					if (current != null && !string.IsNullOrEmpty(backupSetting.Value))
+					if (!Guid.TryParse(backupSetting.VariableGuid, out Guid parsedGuid))
+						continue;
+
+					if (settingsByKey.TryGetValue((backupSetting.VariableName, parsedGuid, backupSetting.Offset), out Setting? current))
 						pairs.Add(new KeyValuePair<Setting, SettingState>(current, new SettingState { Value = backupSetting.Value }));
 				}
 
 				if (pairs.Count == 0)
 					continue;
 
-				if (!nvramService.PatchVariable(pairs, out byte[]? patched, out uint attributes) || patched == null)
+				if (!nvramService.PatchVariable(pairs, out byte[]? patched, out uint attributes, transport) || patched == null)
 				{
 					failureDetails.AppendLine($"PatchVariable failed for '{group.Key.Name}' ({group.Key.Guid}) with {pairs.Count} settings");
 					anyFailed = true;
 					continue;
 				}
 
-				if (nvramService.TryGetCurrentBlob(pairs[0].Key, out byte[]? currentBlob, out _) && currentBlob != null && currentBlob.AsSpan().SequenceEqual(patched))
+				if (nvramService.TryGetCurrentBlob(pairs[0].Key, out byte[]? currentBlob, out _, transport) && currentBlob != null && currentBlob.AsSpan().SequenceEqual(patched))
 					continue;
 
-				if (!HiiHelper.TrySetVariable(group.Key.Name, group.Key.Guid, patched, attributes, out int win32Error))
+				if (!transport.TrySetVariable(group.Key.Name, group.Key.Guid, attributes, patched, out uint status))
 				{
-					failureDetails.AppendLine($"TrySetVariable failed for '{group.Key.Name}' ({group.Key.Guid}), patched length {patched.Length}, attributes 0x{attributes:X}, {HiiHelper.FormatWin32Error(win32Error)}");
+					failureDetails.AppendLine($"TrySetVariable failed for '{group.Key.Name}' ({group.Key.Guid}), patched length {patched.Length}, attributes 0x{attributes:X}, {SmmStatusHelper.Format(status)}");
 					anyFailed = true;
 				}
 			}
 
 			if (anyFailed)
-				LogHelper.LogError(new Exception(failureDetails.ToString()), actionTitle: $"Restore from backup partially failed");
+				LogHelper.LogError(new Exception(failureDetails.ToString()), actionTitle: "Restore from backup partially failed");
 
-			return anyFailed;
+			return (PageMode.Loaded, anyFailed);
 		});
 
-		return failed ? infoService.GetWriteProtectedState() : PageMode.Loaded;
+		if (Result == PageMode.DriverLoadFailed)
+			return PageMode.DriverLoadFailed;
+
+		return Failed ? infoService.GetWriteProtectedState() : PageMode.Loaded;
 	}
 
-	private static (string Name, Guid Guid) GetVariableKey(BackupSetting setting) =>
-		(setting.VariableName, Guid.TryParse(setting.VariableGuid, out Guid guid) ? guid : Guid.Empty);
+	private static List<string> GetEfiVariableAttributeNames(uint attributes)
+	{
+		if (attributes == 0xFFFFFFFF || attributes == 0)
+			return [];
+
+		var flags = (EfiVariableAttributes)attributes;
+		List<string> names = [];
+
+		foreach (EfiVariableAttributes value in Enum.GetValues<EfiVariableAttributes>())
+		{
+			if (value == EfiVariableAttributes.None)
+				continue;
+
+			if (flags.HasFlag(value))
+				names.Add(value.ToString());
+		}
+
+		return names;
+	}
 
 	private static bool SettingsEqual(List<BackupSetting> previous, List<BackupSetting> current)
 	{
 		if (previous.Count != current.Count)
 			return false;
 
+		Dictionary<(string VariableName, string VariableGuid, uint Offset), string> previousMap = [with(previous.Count)];
+		foreach (BackupSetting p in previous)
+			previousMap[(p.VariableName, p.VariableGuid.ToUpperInvariant(), p.Offset)] = p.Value;
+
 		foreach (BackupSetting setting in current)
 		{
-			BackupSetting? match = previous.FirstOrDefault(p =>
-				string.Equals(p.VariableName, setting.VariableName, StringComparison.Ordinal) &&
-				string.Equals(p.VariableGuid, setting.VariableGuid, StringComparison.OrdinalIgnoreCase) &&
-				p.Offset == setting.Offset);
-
-			if (match == null || !string.Equals(match.Value, setting.Value, StringComparison.Ordinal))
+			if (!previousMap.TryGetValue((setting.VariableName, setting.VariableGuid.ToUpperInvariant(), setting.Offset), out string? prevValue) || !string.Equals(prevValue, setting.Value, StringComparison.Ordinal))
 				return false;
 		}
 

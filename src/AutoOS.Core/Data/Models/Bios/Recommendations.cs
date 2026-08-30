@@ -1077,28 +1077,74 @@ public static class Recommendations
 		//new Recommendation { Name = "Type C Support", Type = RecommendationType.Option, Recommended = "Disabled" },
 	];
 
-	private static readonly ILookup<string, Recommendation> RulesByName = Rules.ToLookup(rule => rule.Name.Trim(), StringComparer.OrdinalIgnoreCase);
+	private static readonly Dictionary<string, List<Recommendation>> RulesByName = BuildRulesByName();
+
+	private static readonly Dictionary<Recommendation, string?> NormalizedRecommendedCache = Rules.ToDictionary(static r => r, static r => r.Recommended?.Trim().ToLowerInvariant());
+
+	private static Dictionary<string, List<Recommendation>> BuildRulesByName()
+	{
+		Dictionary<string, List<Recommendation>> map = new(StringComparer.OrdinalIgnoreCase);
+		foreach (Recommendation rule in Rules)
+		{
+			string key = rule.Name.Trim();
+			if (!map.TryGetValue(key, out List<Recommendation>? list))
+			{
+				list = [];
+				map[key] = list;
+			}
+
+			list.Add(rule);
+		}
+
+		foreach (List<Recommendation> list in map.Values)
+			list.Sort((a, b) => (b.Condition != null).CompareTo(a.Condition != null));
+
+		return map;
+	}
 
 	public static void GetRecommendations(IEnumerable<Setting> settings)
 	{
-		foreach (Setting setting in settings)
+		List<Setting> settingsList = settings as List<Setting> ?? settings.ToList();
+		bool hasBarSupport = settingsList.Any(s => s.Name.Contains("BAR Support", StringComparison.OrdinalIgnoreCase));
+		Dictionary<string, bool> conditionCache = new(1) { ["BAR Support"] = hasBarSupport };
+
+		foreach (Setting setting in settingsList)
 		{
-			foreach (Recommendation rule in RulesByName[setting.Name.Trim()]
-				.Where(rule => rule.Condition == null || rule.Condition(settings))
-				.OrderByDescending(rule => rule.Condition != null))
+			string normalizedName = setting.Name.Trim();
+			if (!RulesByName.TryGetValue(normalizedName, out List<Recommendation>? candidates))
+				continue;
+
+			foreach (Recommendation rule in candidates)
 			{
-				string? recommendedLabel = rule.Recommended?.Trim().ToLowerInvariant();
+				if (rule.Condition != null)
+				{
+					bool conditionResult;
+					if (rule.Name.Contains("BAR Support", StringComparison.OrdinalIgnoreCase))
+					{
+						conditionResult = conditionCache["BAR Support"];
+					}
+					else
+					{
+						conditionResult = rule.Condition(settingsList);
+					}
+
+					if (!conditionResult)
+						continue;
+				}
+
+				string? recommendedLabel = NormalizedRecommendedCache[rule];
 				bool ruleApplicable = false;
 
-				if (rule.Type == RecommendationType.Option && setting.Options.Count > 0)
+				if (rule.Type == RecommendationType.Option && setting.Options.Count > 0 && recommendedLabel != null)
 				{
-					Option? recommended = setting.Options
-						.FirstOrDefault(option => option.Label?.Trim().ToLowerInvariant() == recommendedLabel);
-
-					if (recommended != null)
+					foreach (Option opt in setting.Options)
 					{
-						ruleApplicable = true;
-						setting.RecommendedOption = recommended;
+						if (string.Equals(opt.Label?.Trim().ToLowerInvariant(), recommendedLabel, StringComparison.Ordinal))
+						{
+							ruleApplicable = true;
+							setting.RecommendedOption = opt;
+							break;
+						}
 					}
 				}
 

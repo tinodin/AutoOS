@@ -8,7 +8,7 @@ namespace AutoOS.App.Services.Bios;
 public sealed class BiosInfoService : IBiosInfoService
 {
 	private static readonly string[] ProtectedChipsets = ["Z790", "B760", "H770", "X870", "X670", "B650", "A620"];
-private readonly Lazy<SmbiosInfo> _info = new(SmbiosHelper.GetInfo);
+	private readonly Lazy<SmbiosInfo> _info = new(SmbiosHelper.GetInfo);
 
 	public SmbiosInfo Info => _info.Value;
 

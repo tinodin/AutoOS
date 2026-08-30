@@ -681,6 +681,30 @@
 				</StackPanel>
 			</dev:Case>
 
+			<!--  Driver Load Failed  -->
+			<dev:Case Value="Driver Load Failed">
+				<StackPanel
+					HorizontalAlignment="Center"
+					VerticalAlignment="Center"
+					Spacing="8">
+					<FontIcon
+						HorizontalAlignment="Center"
+						FontSize="36"
+						Foreground="{ThemeResource SystemFillColorCritical}"
+						Glyph="&#xE783;" />
+					<TextBlock
+						HorizontalAlignment="Center"
+						Style="{StaticResource TitleTextBlockStyle}"
+						Text="Driver Load Failed" />
+					<TextBlock
+						HorizontalAlignment="Center"
+						Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+						Style="{StaticResource BodyTextBlockStyle}"
+						Text="Failed to load amifldrv64.sys / amigendrv64.sys."
+						TextWrapping="Wrap" />
+				</StackPanel>
+			</dev:Case>
+
 			<!--  HII Resources (Regular)  -->
 			<dev:Case Value="HII Resources (Regular)">
 				<StackPanel

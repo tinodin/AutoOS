@@ -42,6 +42,8 @@ public sealed class BackupSetting
 
 	public string VariableGuid { get; set; } = string.Empty;
 
+	public List<string> Attributes { get; set; } = [];
+
 	public uint Offset { get; set; }
 
 	public uint Width { get; set; }

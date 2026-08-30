@@ -1,15 +1,17 @@
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using AutoOS.App.Data.Contracts;
 using AutoOS.App.Data.Enums;
 using AutoOS.App.Data.Enums.Bios;
 using AutoOS.App.Data.Models.Bios;
 using AutoOS.App.Extensions;
 using AutoOS.Core.Data.Models.Bios;
+using AutoOS.Core.Helpers.Bios;
 using AutoOS.Core.Helpers.Shutdown;
 using AutoOS.App.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Diagnostics;
+using System.Text.Json;
 
 namespace AutoOS.App.ViewModels;
 
@@ -24,6 +26,8 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 	private readonly List<Setting> _settings = [];
 
 	private TreeState? _recommendedTree;
+
+	private TreeState? _allTree;
 
 	private TreeState? _compareTree;
 
@@ -49,6 +53,7 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		PageMode.Writing => "Writing",
 		PageMode.Loaded => "Loaded",
 		PageMode.Unsupported => "Unsupported",
+		PageMode.DriverLoadFailed => "Driver Load Failed",
 		PageMode.HiiResourcesRegular => "HII Resources (Regular)",
 		PageMode.HiiResourcesProtected => "HII Resources (Protected)",
 		PageMode.HiiResourcesOther => "HII Resources (Other)",
@@ -218,18 +223,26 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		TreeNodes.Clear();
 		CompareNodes.Clear();
 		DiffNodes.Clear();
+
 		_recommendedTree = BuildTree("Recommended", static node => node.HasPendingRecommendation);
 		TreeNodes.Add(_recommendedTree.Root);
-		TreeNodes.Add(BuildTree("All Settings", static _ => true).Root);
+
+		_allTree = BuildTree("All Settings", static _ => true);
+		TreeNodes.Add(_allTree.Root);
+
 		_compareTree = BuildTree("Differences", static node => !string.IsNullOrEmpty(node.Setting?.Default) && !node.IsDefault);
 		CompareNodes.Add(_compareTree.Root);
+
 		_changesTree = BuildTree("Changes", static node => node.State?.IsModified == true);
 		DiffNodes.Add(_changesTree.Root);
 
 		UpdateState();
 		SyncMergeCount();
+
 		IsLoaded = true;
 		PageState = PageMode.Loaded;
+
+		_ = backupService.BackupAsync(_settings);
 	}
 
 	[RelayCommand(CanExecute = nameof(CanUndo))]
@@ -295,7 +308,32 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 			return;
 		}
 
-		await ReadFromNvramAsync();
+
+		string json = await File.ReadAllTextAsync(file);
+		BackupFile? backup = JsonSerializer.Deserialize(json, BackupJsonContext.Default.BackupFile);
+		if (backup != null)
+		{
+			Dictionary<(string VariableName, string VariableGuid, uint Offset), string> backupMap = [with(backup.Settings.Count)];
+			foreach (BackupSetting s in backup.Settings)
+				backupMap[(s.VariableName, s.VariableGuid, s.Offset)] = s.Value;
+
+			foreach (Setting setting in _settings)
+			{
+				string guidStr = HiiHelper.GetGuidString(setting.VariableGuid);
+				if (backupMap.TryGetValue((setting.VariableName, guidStr, setting.Offset), out string? value))
+				{
+					setting.Value = value;
+					_settingStates[setting].Value = SettingState.GetCanonicalValue(setting, value);
+					_settingStates[setting].Commit();
+				}
+			}
+		}
+
+
+		UpdateState();
+		SyncMergeCount();
+		_ = backupService.BackupAsync(_settings);
+		PageState = PageMode.Loaded;
 	}
 
 	[RelayCommand(CanExecute = nameof(CanWrite))]
@@ -319,7 +357,18 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 
 		if (failed.Count == 0)
 		{
-			await ReadFromNvramAsync();
+			foreach (Setting setting in _settings)
+			{
+				if (_settingStates[setting].IsModified)
+				{
+					_settingStates[setting].Value = setting.Value;
+					_settingStates[setting].Commit();
+				}
+			}
+
+			UpdateState();
+			SyncMergeCount();
+			PageState = PageMode.Loaded;
 			return;
 		}
 
@@ -328,10 +377,12 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 			if (failed.Contains(setting))
 				continue;
 
+			_settingStates[setting].Value = setting.Value;
 			_settingStates[setting].Commit();
 		}
 
 		UpdateState();
+		SyncMergeCount();
 		PageState = PageMode.Loaded;
 	}
 
@@ -341,7 +392,19 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		if (await dialogService.ShowConfirmationDialogAsync("Restart into BIOS", "Are you sure you want to restart into the BIOS/UEFI firmware settings?", "Restart", "Cancel") != DialogResult.Primary)
 			return;
 
-		ShutdownHelper.RestartIntoBios();
+		if (!ShutdownHelper.TrySetOsIndications(out int win32Error))
+		{
+			string details = ShutdownHelper.FormatWin32Error(win32Error);
+			DialogResult result = await dialogService.ShowConfirmationDialogAsync("Restart into BIOS failed", $"Failed to set OsIndications to request firmware UI: {details} (0x{win32Error:X}).\n\nThe firmware may be write-protected or not support this feature. Restart anyway?", "Restart anyway", "Cancel");
+
+			if (result != DialogResult.Primary)
+				return;
+
+			ShutdownHelper.Restart();
+			return;
+		}
+
+		ShutdownHelper.Restart();
 	}
 
 	public void BeginEdit(Node? node)
@@ -435,7 +498,7 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 			? string.Equals(value, term, comparison)
 			: value.Contains(term, comparison);
 
-		if (FilterPath && IsAncestorPathMatch(node, term, textMatches))
+		if (FilterPath && IsAncestorPathMatch(node, textMatches))
 			return true;
 
 		if (FilterSetting && textMatches(node.DisplayName))
@@ -450,15 +513,17 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		return false;
 	}
 
-	private bool IsAncestorPathMatch(Node node, string term, Func<string, bool> textMatches)
+	private static bool IsAncestorPathMatch(Node node, Func<string, bool> textMatches)
 	{
 		Node? cur = node.Parent;
 		while (cur != null)
 		{
 			if (cur.NodeKind == NodeKind.Path && textMatches(cur.DisplayName))
 				return true;
+
 			cur = cur.Parent;
 		}
+
 		return false;
 	}
 
@@ -467,7 +532,8 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		int count = 0;
 		foreach (Node child in parent.Children)
 		{
-			if (MatchesFilter(child)) count++;
+			if (MatchesFilter(child))
+				count++;
 		}
 		return count;
 	}
@@ -479,7 +545,8 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		{
 			if (node.NodeKind == NodeKind.Setting)
 			{
-				if (MatchesFilter(node)) count++;
+				if (MatchesFilter(node))
+					count++;
 			}
 			else
 			{
@@ -494,19 +561,19 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 	{
 		var rootNode = new Node(NodeKind.Root, rootName);
 		var pathMap = new Dictionary<string, Node>(StringComparer.OrdinalIgnoreCase);
-		var settingNodes = new Dictionary<Setting, Node>();
+		var settingNodes = new Dictionary<Setting, Node>(_settings.Count);
 		int order = 0;
 
 		foreach (Setting setting in _settings)
 		{
-			string[] segs = setting.Path.Trim().Split([" / "], StringSplitOptions.RemoveEmptyEntries);
+			string[] segs = setting.PathSegments;
 
 			Node currentParent = rootNode;
 			string currentChain = string.Empty;
 
 			for (int i = 0; i < segs.Length; i++)
 			{
-				string seg = segs[i].Trim();
+				string seg = segs[i];
 				currentChain = i == 0 ? seg : $"{currentChain} / {seg}";
 
 				if (!pathMap.TryGetValue(currentChain, out Node? pathNode))
@@ -581,9 +648,25 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 
 	private void UpdateState()
 	{
-		CompareToDefaultsCount = _settings.Count(setting => !string.IsNullOrEmpty(setting.Default) && !SettingState.MatchesDefault(setting, _settingStates[setting]));
-		ModifiedCount = _settings.Count(setting => _settingStates[setting].IsModified);
-		RecommendedCount = _settings.Count(setting => SettingState.HasPendingRecommendation(setting, _settingStates[setting]));
+		int compare = 0;
+		int modified = 0;
+		int recommended = 0;
+		foreach (Setting setting in _settings)
+		{
+			SettingState state = _settingStates[setting];
+			if (!string.IsNullOrEmpty(setting.Default) && !SettingState.MatchesDefault(setting, state))
+				compare++;
+
+			if (state.IsModified)
+				modified++;
+
+			if (SettingState.HasPendingRecommendation(setting, state))
+				recommended++;
+		}
+
+		CompareToDefaultsCount = compare;
+		ModifiedCount = modified;
+		RecommendedCount = recommended;
 		HasRecommendations = RecommendedCount > 0;
 		UndoCommand.NotifyCanExecuteChanged();
 		RedoCommand.NotifyCanExecuteChanged();

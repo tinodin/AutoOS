@@ -28,7 +28,15 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Content Include="Drivers\InpOut\inpoutx64.dll">
+		<Content Include="Drivers\Ami\amigendrv64.sys">
+			<Link>Drivers\Ami\amigendrv64.sys</Link>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Drivers\Ami\amifldrv64.sys">
+			<Link>Drivers\Ami\amifldrv64.sys</Link>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+      <Content Include="Drivers\InpOut\inpoutx64.dll">
 			<Link>inpoutx64.dll</Link>
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>

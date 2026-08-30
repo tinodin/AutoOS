@@ -73,6 +73,7 @@
     <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" />
     <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="nucs.JsonSettings" />
+    <PackageReference Include="nucs.JsonSettings.AutoSave" />
     <PackageReference Include="nucs.JsonSettings.AutoSaveGenerator" />
     <PackageReference Include="System.ServiceProcess.ServiceController" />
     <PackageReference Include="Syncfusion.Chart.WinUI" />

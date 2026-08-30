@@ -13,53 +13,75 @@ public sealed class BiosSettingsService(IBiosSettingsContext context, IBiosNvram
 {
 	public async Task<(PageMode Result, IReadOnlyList<Setting> Settings)> ReadFromNvramAsync()
 	{
-		if (!HiiHelper.TryReadHiiDb(out byte[]? database) || database == null)
-			return (PageMode.Unsupported, Array.Empty<Setting>());
+		(PageMode Result, List<Setting> Settings, Dictionary<ushort, QidTarget> QidMap) result = await Task.Run(() =>
+		{
+			using AmiSmmTransport transport = new();
+			if (!transport.TryLoad())
+				return (PageMode.DriverLoadFailed, new List<Setting>(), new Dictionary<ushort, QidTarget>());
 
-		Dictionary<ushort, QidTarget> qidMap = null!;
-		string language = HiiHelper.TryGetBiosLanguage(out string biosLanguage) ? biosLanguage : "en-US";
-		List<Setting> settings = await Task.Run(() => HiiHelper.ParseDatabase(database, language, out qidMap));
-		if (settings.Count == 0)
-			return (infoService.GetHiiState(), Array.Empty<Setting>());
+			if (!transport.TryInitSmm())
+				return (PageMode.DriverLoadFailed, new List<Setting>(), new Dictionary<ushort, QidTarget>());
 
-		context.LastSettings = settings;
-		context.LastQidMap = qidMap;
-		nvramService.LoadCurrentValues(settings, qidMap);
-		Recommendations.GetRecommendations(settings);
-		await backupService.BackupAsync(settings);
+			if (!HiiHelper.TryReadHiiDb(transport, out byte[]? database) || database == null)
+				return (PageMode.Unsupported, new List<Setting>(), new Dictionary<ushort, QidTarget>());
 
-		return (PageMode.Loaded, settings);
+			string language = HiiHelper.TryGetBiosLanguage(transport, out string biosLanguage) ? biosLanguage : "en-US";
+			List<Setting> settings = HiiHelper.ParseDatabase(database, language, out Dictionary<ushort, QidTarget> qidMap);
+			if (settings.Count == 0)
+				return (infoService.GetHiiState(), new List<Setting>(), qidMap);
+
+			nvramService.LoadCurrentValues(settings, qidMap, transport);
+			Recommendations.GetRecommendations(settings);
+
+			return (PageMode.Loaded, settings, qidMap);
+		});
+
+		if (result.Result != PageMode.Loaded)
+			return (result.Result, Array.Empty<Setting>());
+
+		context.LastSettings = result.Settings;
+		context.LastQidMap = result.QidMap;
+
+		return (PageMode.Loaded, result.Settings);
 	}
 
 	public async Task<(PageMode Result, IReadOnlyList<Setting> FailedSettings)> WriteToNvramAsync(IEnumerable<KeyValuePair<Setting, SettingState>> modifiedSettings)
 	{
-		var modified = modifiedSettings.ToList();
+		List<KeyValuePair<Setting, SettingState>> modified = [.. modifiedSettings];
 		if (modified.Count == 0)
 			return (PageMode.Loaded, Array.Empty<Setting>());
 
+		using AmiSmmTransport transport = new();
+		if (!transport.TryLoad())
+			return (PageMode.DriverLoadFailed, modified.Select(p => p.Key).ToList());
+
+		if (!transport.TryInitSmm())
+			return (PageMode.DriverLoadFailed, modified.Select(p => p.Key).ToList());
+
 		(PageMode state, List<Setting> failed) = await Task.Run(() =>
 		{
-			var failures = new List<Setting>();
-			var failureDetails = new StringBuilder();
+			List<Setting> failures = [];
+			StringBuilder failureDetails = new();
 
 			foreach (IGrouping<(string Name, Guid Guid), KeyValuePair<Setting, SettingState>> group in modified.GroupBy(pair => (pair.Key.VariableName, pair.Key.VariableGuid)))
 			{
-				if (group.Key.Guid == Constants.Bios.SecureBootVarStoreGuid)
-					continue;
-
-				if (!nvramService.PatchVariable(group, out byte[]? patched, out uint attributes) || patched == null)
+				if (!nvramService.PatchVariable(group, out byte[]? patched, out uint attributes, transport))
 				{
 					failureDetails.AppendLine($"PatchVariable failed for '{group.Key.Name}' ({group.Key.Guid})");
 					failures.AddRange(group.Select(pair => pair.Key));
 					continue;
 				}
 
-				if (nvramService.TryGetCurrentBlob(group.First().Key, out byte[]? currentBlob, out _) && currentBlob != null && currentBlob.AsSpan().SequenceEqual(patched))
-					continue;
-
-				if (!HiiHelper.TrySetVariable(group.Key.Name, group.Key.Guid, patched, attributes, out int win32Error))
+				if (patched == null)
 				{
-					failureDetails.AppendLine($"TrySetVariable failed for '{group.Key.Name}' ({group.Key.Guid}), patched length {patched.Length}, attributes 0x{attributes:X}, {HiiHelper.FormatWin32Error(win32Error)}");
+					failureDetails.AppendLine($"PatchVariable returned null for '{group.Key.Name}' ({group.Key.Guid})");
+					failures.AddRange(group.Select(pair => pair.Key));
+					continue;
+				}
+
+				if (!transport.TrySetVariable(group.Key.Name, group.Key.Guid, attributes, patched, out uint status))
+				{
+					failureDetails.AppendLine($"TrySetVariable failed for '{group.Key.Name}' ({group.Key.Guid}), patched length {patched.Length}, attributes 0x{attributes:X}, {SmmStatusHelper.Format(status)}");
 					failures.AddRange(group.Select(pair => pair.Key));
 				}
 			}
@@ -72,7 +94,7 @@ public sealed class BiosSettingsService(IBiosSettingsContext context, IBiosNvram
 			}
 
 			if (context.LastSettings != null && context.LastQidMap != null)
-				nvramService.LoadCurrentValues(context.LastSettings, context.LastQidMap);
+				nvramService.LoadCurrentValues(context.LastSettings, context.LastQidMap, transport);
 
 			return (PageMode.Loaded, failures);
 		});

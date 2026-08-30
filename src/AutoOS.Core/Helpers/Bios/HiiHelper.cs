@@ -1,20 +1,12 @@
 using System.Buffers.Binary;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.RegularExpressions;
 using AutoOS.Core.Data.Enums.Bios;
 using AutoOS.Core.Data.Models.Bios;
-using AutoOS.Core.Helpers.ReadWrite;
-using AutoOS.Core.Helpers.Registry;
-using Windows.Win32;
-using Windows.Win32.Foundation;
 
 namespace AutoOS.Core.Helpers.Bios;
 
 public static partial class HiiHelper
 {
-	[GeneratedRegex("\u001b\\[[0-9;?]*(?:[ -/]*[@-~])")]
-	private static partial Regex AnsiCsiRegex();
 
 	private static readonly (byte Bit, string Name)[] FlagNamesMap =
 	[
@@ -37,11 +29,11 @@ public static partial class HiiHelper
 	private const int STRING_MAX_SIZE_OFFSET = 14;
 	private const int LANGUAGE_OFFSET = 42;
 
-	public static bool TryReadHiiDb(out byte[]? data)
+	public static bool TryReadHiiDb(AmiSmmTransport transport, out byte[]? data)
 	{
 		data = null;
 
-		if (!TryGetVariable("HiiDB", new Guid("1B838190-4625-4EAD-ABC9-CD5E6AF18FE0"), out byte[]? variable) || variable == null)
+		if (!transport.TryGetVariable("HiiDB", new Guid("1B838190-4625-4EAD-ABC9-CD5E6AF18FE0"), out byte[]? variable, out _, out _) || variable == null)
 			return false;
 
 		if (variable.Length < 8)
@@ -53,9 +45,8 @@ public static partial class HiiHelper
 		if (size == 0 || size > 64 * 1024 * 1024)
 			return false;
 
-		byte[] buffer = new byte[size];
-		using ReadWriteHelper read = new();
-		if (!read.ReadMemory(physicalAddress, size, buffer))
+		byte[]? buffer = transport.PhysRead(physicalAddress, size);
+		if (buffer == null)
 			return false;
 
 		if (buffer.Length < 20)
@@ -65,9 +56,9 @@ public static partial class HiiHelper
 		return true;
 	}
 
-	public static bool TryGetBiosLanguage(out string language)
+	public static bool TryGetBiosLanguage(AmiSmmTransport transport, out string language)
 	{
-		if (!TryGetVariable("PlatformLang", new Guid("8BE4DF61-93CA-11D2-AA0D-00E098032B8C"), out byte[]? data) || data == null)
+		if (!transport.TryGetVariable("PlatformLang", new Guid("8BE4DF61-93CA-11D2-AA0D-00E098032B8C"), out byte[]? data, out _, out _) || data == null)
 		{
 			language = string.Empty;
 			return false;
@@ -81,111 +72,19 @@ public static partial class HiiHelper
 		return !string.IsNullOrEmpty(language);
 	}
 
-	public static bool TryGetVariable(string name, Guid guid, out byte[]? data)
-	{
-		return TryGetVariable(name, guid, out data, out _);
-	}
-
-	public static bool TryGetVariable(string name, Guid guid, out byte[]? data, out uint attributes)
-	{
-		data = null;
-		attributes = 0;
-
-		RegistryHelper.EnablePrivilege("SeSystemEnvironmentPrivilege");
-
-		string guidString = GetGuidString(guid);
-
-		for (int capacity = 0x4000; capacity <= 0x20000; capacity *= 2)
-		{
-			byte[] buffer = new byte[capacity];
-			uint attrs = 0;
-
-			uint size;
-			unsafe
-			{
-				fixed (char* namePtr = name)
-				fixed (char* guidPtr = guidString)
-				fixed (byte* pointer = buffer)
-				{
-					size = PInvoke.GetFirmwareEnvironmentVariableEx(new PCWSTR(namePtr), new PCWSTR(guidPtr), pointer, (uint)buffer.Length, &attrs);
-				}
-			}
-
-			if (size > 0)
-			{
-				data = buffer.AsSpan(0, (int)size).ToArray();
-				attributes = attrs;
-				return true;
-			}
-
-			int error = Marshal.GetLastWin32Error();
-			if (error != (int)WIN32_ERROR.ERROR_INSUFFICIENT_BUFFER)
-				return false;
-		}
-
-		return false;
-	}
-
-	public static bool TrySetVariable(string name, Guid guid, byte[] data)
-	{
-		return TrySetVariable(name, guid, data, 0);
-	}
-
-	public static bool TrySetVariable(string name, Guid guid, byte[] data, uint attributes)
-	{
-		return TrySetVariable(name, guid, data, attributes, out _);
-	}
-
-	public static bool TrySetVariable(string name, Guid guid, byte[] data, uint attributes, out int win32Error)
-	{
-		RegistryHelper.EnablePrivilege("SeSystemEnvironmentPrivilege");
-
-		string guidString = GetGuidString(guid);
-		win32Error = 0;
-
-		try
-		{
-			unsafe
-			{
-				fixed (char* namePtr = name)
-				fixed (char* guidPtr = guidString)
-				fixed (byte* pointer = data)
-				{
-					bool ok = PInvoke.SetFirmwareEnvironmentVariableEx(new PCWSTR(namePtr), new PCWSTR(guidPtr), pointer, (uint)data.Length, attributes) != 0;
-					if (!ok)
-						win32Error = Marshal.GetLastWin32Error();
-					return ok;
-				}
-			}
-		}
-		catch
-		{
-			return false;
-		}
-	}
-
-	public static string FormatWin32Error(int error) => error switch
-	{
-		0 => "unknown",
-		5 => "ERROR_ACCESS_DENIED (5) - privilege not granted",
-		19 => "ERROR_WRITE_PROTECT (19) - variable is write-protected/locked",
-		87 => "ERROR_INVALID_PARAMETER (87) - attributes or data rejected by firmware",
-		122 => "ERROR_INSUFFICIENT_BUFFER (122) - data too large",
-		203 => "ERROR_ENVVAR_NOT_FOUND (203) - environment variable not found",
-		998 => "ERROR_NOACCESS (998)",
-		_ => $"Win32 error {error}"
-	};
-
 	public static string GetGuidString(Guid guid) => $"{{{guid.ToString().ToUpperInvariant()}}}";
 
 	public static List<Setting> ParseDatabase(byte[] data, string lang, out Dictionary<ushort, QidTarget> qidMap)
 	{
 		List<ParsedPackageList> parsedPackageLists = ParseAll(data, lang);
-		List<Setting> flattenedSettings = [];
+		int totalQuestions = 0;
+		foreach (ParsedPackageList pl in parsedPackageLists)
+			totalQuestions += pl.Questions.Count;
 
+		List<Setting> flattenedSettings = [with(totalQuestions)];
 		foreach (ParsedPackageList packageList in parsedPackageLists)
 		{
-			var byteDefaults = new Dictionary<(ushort VarStoreId, ushort Offset), ulong>();
+			var byteDefaults = new Dictionary<(ushort VarStoreId, ushort Offset), ulong>(packageList.Questions.Count);
 			foreach (Question question in packageList.Questions)
 			{
 				if (question.DefaultValue.HasValue)
@@ -255,10 +154,13 @@ public static partial class HiiHelper
 					Offset = question.Offset,
 					Width = question.Width,
 					VarStoreSize = varStore.Size,
+					HiiAttributes = varStore.HiiAttributes,
+					VarStoreType = varStore.StoreType,
 					Value = string.Empty,
 					Name = question.Prompt,
 					Description = question.Help,
 					Path = question.Path,
+					PathSegments = string.IsNullOrEmpty(question.Path) ? [] : question.Path.Split(" / ", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries),
 					Token = question.Token,
 					Minimum = question.Minimum ?? 0,
 					Maximum = question.Maximum ?? 0,
@@ -272,8 +174,8 @@ public static partial class HiiHelper
 			}
 		}
 
-		var resultList = new List<Setting>();
-		var uniqueByKey = new Dictionary<(string VariableName, uint Offset, uint Width), Setting>();
+		var resultList = new List<Setting>(flattenedSettings.Count);
+		var uniqueByKey = new Dictionary<(string VariableName, uint Offset, uint Width), Setting>(flattenedSettings.Count);
 
 		foreach (Setting setting in flattenedSettings)
 		{
@@ -361,12 +263,17 @@ public static partial class HiiHelper
 				}
 			}
 
-			for (int i = setting.Options.Count - 1; i >= 1; i--)
+			var seenValues = new HashSet<ulong>();
+			for (int i = 0; i < setting.Options.Count;)
 			{
-				if (setting.Options.Take(i).Any(option => option.Value == setting.Options[i].Value))
+				if (!seenValues.Add(setting.Options[i].Value))
 				{
 					setting.Options.RemoveAt(i);
 					blocks.RemoveAt(i);
+				}
+				else
+				{
+					i++;
 				}
 			}
 		}
@@ -378,7 +285,7 @@ public static partial class HiiHelper
 
 		foreach (PackageList packageList in GetPackageLists(database))
 		{
-			var packages = GetPackages(packageList.Payload).ToList();
+			List<(HiiPackageType Type, ReadOnlyMemory<byte> Payload)> packages = GetPackages(packageList.Payload);
 			var languageTables = new Dictionary<string, Dictionary<ushort, string>>();
 			var languages = new List<HiiLanguage>();
 			var uniqueLanguageTags = new HashSet<string>();
@@ -405,8 +312,8 @@ public static partial class HiiHelper
 				}
 			}
 
-			Dictionary<ushort, string> stringTable = englishStrings != null ? [with(englishStrings)] : [];
-			if (languageTables.TryGetValue(lang, out Dictionary<ushort, string>? selectedLanguageTable))
+			Dictionary<ushort, string> stringTable = englishStrings ?? [];
+			if (languageTables.TryGetValue(lang, out Dictionary<ushort, string>? selectedLanguageTable) && !ReferenceEquals(selectedLanguageTable, stringTable))
 			{
 				foreach ((ushort stringId, string text) in selectedLanguageTable)
 				{
@@ -415,12 +322,13 @@ public static partial class HiiHelper
 				}
 			}
 
-			var varStores = new Dictionary<ushort, VarStore>();
-			var formTitles = new Dictionary<ushort, string>();
-			var formReferences = new List<(ushort Parent, ushort Target, string Label)>();
-			var formQuestionLists = new List<List<Question>>();
-			var formOrder = new List<ushort>();
-			var itemsByForm = new Dictionary<ushort, List<FormItem>>();
+			var varStores = new Dictionary<ushort, VarStore>(16);
+			var formTitles = new Dictionary<ushort, string>(32);
+			var formReferences = new List<(ushort Parent, ushort Target, string Label)>(32);
+			var formQuestionLists = new List<List<Question>>(4);
+			var formOrder = new List<ushort>(32);
+			var formOrderSet = new HashSet<ushort>(32);
+			var itemsByForm = new Dictionary<ushort, List<FormItem>>(32);
 
 			foreach ((HiiPackageType type, ReadOnlyMemory<byte> payload) in packages)
 			{
@@ -437,7 +345,7 @@ public static partial class HiiHelper
 					formQuestionLists.Add(parsedForms.Questions);
 					foreach (ushort fid in parsedForms.FormOrder)
 					{
-						if (!formOrder.Contains(fid))
+						if (formOrderSet.Add(fid))
 							formOrder.Add(fid);
 					}
 					foreach ((ushort fid, List<FormItem> items) in parsedForms.FormItems)
@@ -550,14 +458,17 @@ public static partial class HiiHelper
 		return results;
 	}
 
-	private static IEnumerable<PackageList> GetPackageLists(ReadOnlyMemory<byte> database)
+	private static List<PackageList> GetPackageLists(ReadOnlyMemory<byte> database)
 	{
+		var result = new List<PackageList>(4);
 		int offset = 0;
 		while (TryReadPackageList(database, offset, out PackageList packageList, out int nextOffset))
 		{
-			yield return packageList;
+			result.Add(packageList);
 			offset = nextOffset;
 		}
+
+		return result;
 	}
 
 	private static bool TryReadPackageList(ReadOnlyMemory<byte> database, int offset, out PackageList packageList, out int nextOffset)
@@ -584,14 +495,17 @@ public static partial class HiiHelper
 		return true;
 	}
 
-	private static IEnumerable<(HiiPackageType Type, ReadOnlyMemory<byte> Payload)> GetPackages(ReadOnlyMemory<byte> payload)
+	private static List<(HiiPackageType Type, ReadOnlyMemory<byte> Payload)> GetPackages(ReadOnlyMemory<byte> payload)
 	{
+		var result = new List<(HiiPackageType Type, ReadOnlyMemory<byte> Payload)>(8);
 		int offset = 0;
 		while (TryReadPackage(payload, offset, out (HiiPackageType Type, ReadOnlyMemory<byte> Payload) package, out int nextOffset))
 		{
-			yield return package;
+			result.Add(package);
 			offset = nextOffset;
 		}
+
+		return result;
 	}
 
 	private static bool TryReadPackage(ReadOnlyMemory<byte> payload, int offset, out (HiiPackageType Type, ReadOnlyMemory<byte> Payload) package, out int nextOffset)
@@ -677,15 +591,16 @@ public static partial class HiiHelper
 					ushort varStoreSize = BinaryPrimitives.ReadUInt16LittleEndian(formPackage[(offset + 20)..]);
 					Guid guid = new(formPackage.Slice(offset + 2, 16));
 					string name = ReadAsciiNullTerminated(formPackage, offset + 22);
-					varStores[varStoreId] = new VarStore { Id = varStoreId, Name = name, Guid = guid, Size = varStoreSize };
+					varStores[varStoreId] = new VarStore { Id = varStoreId, Name = name, Guid = guid, Size = varStoreSize, HiiAttributes = 0xFFFFFFFF, StoreType = "Buffer" };
 				}
 				else if (opcode == IfrOpcode.VarStoreEfi && length >= 26)
 				{
 					ushort varStoreId = BinaryPrimitives.ReadUInt16LittleEndian(formPackage[(offset + 2)..]);
 					Guid guid = new(formPackage.Slice(offset + 4, 16));
+					uint hiiAttributes = BinaryPrimitives.ReadUInt32LittleEndian(formPackage[(offset + 20)..]);
 					ushort varStoreSize = BinaryPrimitives.ReadUInt16LittleEndian(formPackage[(offset + 24)..]);
 					string name = ReadAsciiNullTerminated(formPackage, offset + 26);
-					varStores[varStoreId] = new VarStore { Id = varStoreId, Name = name, Guid = guid, Size = varStoreSize };
+					varStores[varStoreId] = new VarStore { Id = varStoreId, Name = name, Guid = guid, Size = varStoreSize, HiiAttributes = hiiAttributes, StoreType = "Efi" };
 				}
 				else if (opcode == IfrOpcode.Form && length >= 6)
 				{
@@ -1104,11 +1019,62 @@ public static partial class HiiHelper
 		return matched != null;
 	}
 
+	public static string ReadStringValue(byte[] blob, Setting setting)
+	{
+		int start = (int)setting.Offset;
+		int byteLen = (int)setting.Width;
+		int end = start + byteLen;
+		int nullPos = end;
+		for (int j = start; j + 1 < end; j += 2)
+		{
+			if (blob[j] == 0 && blob[j + 1] == 0)
+			{
+				nullPos = j;
+				break;
+			}
+		}
+
+		string raw = Encoding.Unicode.GetString(blob, start, nullPos - start);
+		return StripAnsi(raw);
+	}
+
+	public static string GetStringPrefix(byte[] blob, Setting setting)
+	{
+		int start = (int)setting.Offset;
+		int byteLen = (int)setting.Width;
+		int end = start + byteLen;
+		int nullPos = end;
+		for (int j = start; j + 1 < end; j += 2)
+		{
+			if (blob[j] == 0 && blob[j + 1] == 0)
+			{
+				nullPos = j;
+				break;
+			}
+		}
+
+		string raw = Encoding.Unicode.GetString(blob, start, nullPos - start);
+		return GetAnsiPrefix(raw);
+	}
+
 	public static string StripAnsi(string? text)
 	{
 		if (string.IsNullOrEmpty(text))
 			return string.Empty;
-		return AnsiCsiRegex().Replace(text, string.Empty);
+
+		StringBuilder builder = new(text.Length);
+		for (int i = 0; i < text.Length;)
+		{
+			if (TryGetAnsiSequenceLength(text, i, out int length))
+				i += length;
+			else
+			{
+				builder.Append(text[i]);
+				i++;
+			}
+		}
+
+		return builder.ToString();
 	}
 
 	public static string GetAnsiPrefix(string? text)
@@ -1116,16 +1082,48 @@ public static partial class HiiHelper
 		if (string.IsNullOrEmpty(text))
 			return string.Empty;
 
-		var builder = new StringBuilder();
-		int index = 0;
-		Match match = AnsiCsiRegex().Match(text, index);
-		while (match.Success && match.Index == index)
+		StringBuilder builder = new();
+		int i = 0;
+		while (TryGetAnsiSequenceLength(text, i, out int length))
 		{
-			builder.Append(match.Value);
-			index = match.Index + match.Length;
-			match = AnsiCsiRegex().Match(text, index);
+			builder.Append(text, i, length);
+			i += length;
 		}
+
 		return builder.ToString();
+	}
+
+	private static bool TryGetAnsiSequenceLength(string text, int index, out int length)
+	{
+		length = 0;
+
+		if (index + 1 < text.Length && text[index] == '\x1b' && text[index + 1] == '[')
+		{
+			int j = index + 2;
+			while (j < text.Length && text[j] != 'm')
+				j++;
+
+			if (j >= text.Length)
+				return false;
+
+			length = j - index + 1;
+			return true;
+		}
+
+		if (index + 5 < text.Length && text[index] == '\\' && text[index + 1] == 'x' && text[index + 2] == '1' && text[index + 3] == 'b' && text[index + 4] == '[')
+		{
+			int j = index + 5;
+			while (j < text.Length && text[j] != 'm')
+				j++;
+
+			if (j >= text.Length)
+				return false;
+
+			length = j - index + 1;
+			return true;
+		}
+
+		return false;
 	}
 
 	public static byte[]? EncodeStringValue(string prefix, string value, uint width)
