@@ -135,6 +135,9 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 	[NotifyPropertyChangedFor(nameof(CanApplyMerge))]
 	public partial int RecommendedCount { get; set; }
 
+	[ObservableProperty]
+	public partial string? DriverLoadError { get; set; }
+
 	partial void OnSearchTextChanged(string value) => RefreshFilter();
 
 	partial void OnFilterPathChanged(bool value) => RefreshFilter();
@@ -201,9 +204,12 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		(PageMode result, IReadOnlyList<Setting> settings) = await biosService.ReadFromNvramAsync();
 		if (result != PageMode.Loaded)
 		{
+			DriverLoadError = biosService.LastDriverError;
 			PageState = result;
 			return;
 		}
+
+		DriverLoadError = null;
 
 		_settings.Clear();
 		_settings.AddRange(settings);
@@ -305,9 +311,12 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		PageMode result = await biosService.RestoreFromBackupAsync(file);
 		if (result != PageMode.Loaded)
 		{
+			DriverLoadError = biosService.LastDriverError;
 			PageState = result;
 			return;
 		}
+
+		DriverLoadError = null;
 
 
 		string json = await File.ReadAllTextAsync(file);
@@ -349,9 +358,12 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		(PageMode result, IReadOnlyList<Setting> failed) = await biosService.WriteToNvramAsync(modified);
 		if (result != PageMode.Loaded)
 		{
+			DriverLoadError = biosService.LastDriverError;
 			PageState = result;
 			return;
 		}
+
+		DriverLoadError = null;
 
 		if (failed.Count == 0)
 		{

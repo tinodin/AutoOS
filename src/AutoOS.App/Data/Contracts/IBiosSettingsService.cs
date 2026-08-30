@@ -6,6 +6,8 @@ namespace AutoOS.App.Data.Contracts;
 
 public interface IBiosSettingsService
 {
+	string? LastDriverError { get; }
+
 	Task<(PageMode Result, IReadOnlyList<Setting> Settings)> ReadFromNvramAsync();
 
 	Task<(PageMode Result, IReadOnlyList<Setting> FailedSettings)> WriteToNvramAsync(IEnumerable<KeyValuePair<Setting, SettingState>> modifiedSettings);

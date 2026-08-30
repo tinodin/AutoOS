@@ -7,6 +7,8 @@ public interface IBiosBackupService
 {
 	string BackupDirectory { get; }
 
+	string? LastDriverError { get; }
+
 	Task BackupAsync(List<Setting> settings);
 
 	Task<PageMode> RestoreFromBackupAsync(string filePath);

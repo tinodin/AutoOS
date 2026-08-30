@@ -702,6 +702,13 @@
 						Style="{StaticResource BodyTextBlockStyle}"
 						Text="Failed to load amifldrv64.sys / amigendrv64.sys."
 						TextWrapping="Wrap" />
+					<TextBlock
+						HorizontalAlignment="Center"
+						Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+						Style="{StaticResource CaptionTextBlockStyle}"
+						Text="{x:Bind ViewModel.DriverLoadError, Mode=OneWay}"
+						TextWrapping="Wrap"
+						Visibility="{x:Bind ViewModel.DriverLoadError, Mode=OneWay, Converter={StaticResource StringVisibilityConverter}}" />
 				</StackPanel>
 			</dev:Case>
 

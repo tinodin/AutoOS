@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -9,7 +8,6 @@ using AutoOS.App.Data.Models.Bios;
 using AutoOS.Core.Data.Enums.Bios;
 using AutoOS.Core.Data.Models.Bios;
 using AutoOS.Core.Helpers.Bios;
-using AutoOS.Core.Helpers.Logging;
 
 namespace AutoOS.App.Services.Bios;
 
@@ -25,6 +23,8 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 		IndentSize = 1,
 		Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
 	};
+
+	public string? LastDriverError { get; private set; }
 
 	public string BackupDirectory => Path.Combine(PathHelper.GetAppDataFolderPath(), "BIOS Settings", "Backups");
 
@@ -100,16 +100,24 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 		if (backup == null)
 			return infoService.GetWriteProtectedState();
 
+		LastDriverError = null;
+
 		(PageMode Result, bool Failed) = await Task.Run(() =>
 		{
 			using AmiSmmTransport transport = new();
 			if (!transport.TryLoad())
+			{
+				LastDriverError = transport.LastLoadError;
 				return (PageMode.DriverLoadFailed, true);
+			}
 
 			if (!transport.TryInitSmm())
+			{
+				LastDriverError = transport.LastInitError ?? transport.LastLoadError;
 				return (PageMode.DriverLoadFailed, true);
+			}
 
-			Dictionary<(string VariableName, Guid Guid, uint Offset), Setting> settingsByKey = new((context.LastSettings?.Count ?? 0));
+			Dictionary<(string VariableName, Guid Guid, uint Offset), Setting> settingsByKey = [with((context.LastSettings?.Count ?? 0))];
 			if (context.LastSettings != null)
 			{
 				foreach (Setting s in context.LastSettings)
@@ -117,7 +125,6 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 			}
 
 			bool anyFailed = false;
-			StringBuilder failureDetails = new();
 
 			foreach (IGrouping<(string Name, Guid Guid), BackupSetting> group in backup.Settings.GroupBy(static setting => (Name: setting.VariableName, Guid: Guid.TryParse(setting.VariableGuid, out Guid guid) ? guid : Guid.Empty)))
 			{
@@ -139,7 +146,6 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 
 				if (!nvramService.PatchVariable(pairs, out byte[]? patched, out uint attributes, transport) || patched == null)
 				{
-					failureDetails.AppendLine($"PatchVariable failed for '{group.Key.Name}' ({group.Key.Guid}) with {pairs.Count} settings");
 					anyFailed = true;
 					continue;
 				}
@@ -147,15 +153,9 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 				if (nvramService.TryGetCurrentBlob(pairs[0].Key, out byte[]? currentBlob, out _, transport) && currentBlob != null && currentBlob.AsSpan().SequenceEqual(patched))
 					continue;
 
-				if (!transport.TrySetVariable(group.Key.Name, group.Key.Guid, attributes, patched, out uint status))
-				{
-					failureDetails.AppendLine($"TrySetVariable failed for '{group.Key.Name}' ({group.Key.Guid}), patched length {patched.Length}, attributes 0x{attributes:X}, {SmmStatusHelper.Format(status)}");
+				if (!transport.TrySetVariable(group.Key.Name, group.Key.Guid, attributes, patched, out uint _))
 					anyFailed = true;
-				}
 			}
-
-			if (anyFailed)
-				LogHelper.LogError(new Exception(failureDetails.ToString()), actionTitle: "Restore from backup partially failed");
 
 			return (PageMode.Loaded, anyFailed);
 		});

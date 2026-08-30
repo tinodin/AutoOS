@@ -69,12 +69,25 @@ public sealed partial class AmiSmmTransport : IDisposable
 
 	private bool _disposed;
 
+	public string? LastLoadError { get; private set; }
+
+	public string? LastInitError { get; private set; }
+
 	public bool TryLoad()
 	{
+		LastLoadError = null;
+
 		if (TryLoadWithPath(PrimaryDriverPath))
 			return true;
 
-		return TryLoadWithPath(FallbackDriverPath);
+		string primaryError = LastLoadError ?? "unknown error";
+
+		if (TryLoadWithPath(FallbackDriverPath))
+			return true;
+
+		string fallbackError = LastLoadError ?? "unknown error";
+		LastLoadError = $"Primary ({Path.GetFileName(PrimaryDriverPath)}): {primaryError} | Fallback ({Path.GetFileName(FallbackDriverPath)}): {fallbackError}";
+		return false;
 	}
 
 	public void Unload()
@@ -106,6 +119,14 @@ public sealed partial class AmiSmmTransport : IDisposable
 
 	public unsafe bool TryInitSmm()
 	{
+		LastInitError = null;
+
+		if (_handle.IsNull && _deviceHandle == null)
+		{
+			LastInitError = "Device not opened (TryLoad failed)";
+			return false;
+		}
+
 		byte* inBuf = stackalloc byte[62];
 		byte* outBuf = stackalloc byte[62];
 		new Span<byte>(inBuf, 62).Clear();
@@ -117,7 +138,11 @@ public sealed partial class AmiSmmTransport : IDisposable
 		uint bytesReturned = 0;
 		BOOL ok = PInvoke.DeviceIoControl(_handle, IOCTL_SMM_INIT, inBuf, 62, outBuf, 62, &bytesReturned, null);
 		if (ok == 0)
+		{
+			int err = Marshal.GetLastWin32Error();
+			LastInitError = $"IOCTL_SMM_INIT (0x{IOCTL_SMM_INIT:X}) failed: {new System.ComponentModel.Win32Exception(err).Message} (0x{err:X})";
 			return false;
+		}
 
 		_commPhys = *(ulong*)(outBuf + 6);
 		_commVirt = *(ulong*)(outBuf + 0x0E);
@@ -128,7 +153,21 @@ public sealed partial class AmiSmmTransport : IDisposable
 		_mbv = (nint)_mailboxVirt;
 
 		MEMORY_BASIC_INFORMATION mbi = default;
-		return PInvoke.VirtualQuery((void*)_bv, &mbi, (nuint)sizeof(MEMORY_BASIC_INFORMATION)) != 0 && mbi.State == VIRTUAL_ALLOCATION_TYPE.MEM_COMMIT;
+		bool queried = PInvoke.VirtualQuery((void*)_bv, &mbi, (nuint)sizeof(MEMORY_BASIC_INFORMATION)) != 0;
+		if (!queried)
+		{
+			int err = Marshal.GetLastWin32Error();
+			LastInitError = $"VirtualQuery failed for comm buffer 0x{_commVirt:X}: {new System.ComponentModel.Win32Exception(err).Message} (0x{err:X})";
+			return false;
+		}
+
+		if (mbi.State != VIRTUAL_ALLOCATION_TYPE.MEM_COMMIT)
+		{
+			LastInitError = $"Comm buffer not committed (State=0x{(uint)mbi.State:X}, expected MEM_COMMIT 0x1000) — driver may not have mapped buffer (GENERICDRV required)";
+			return false;
+		}
+
+		return true;
 	}
 
 	public unsafe bool TryGetVariable(string name, Guid guid, out byte[]? data, out uint attributes, out uint status, uint maxSize = DEFAULT_GET_VARIABLE_SIZE)
@@ -336,52 +375,85 @@ public sealed partial class AmiSmmTransport : IDisposable
 
 	private unsafe bool TryLoadWithPath(string fullPath)
 	{
+		if (!File.Exists(fullPath))
+		{
+			LastLoadError = $"Driver file not found: {fullPath}";
+			return false;
+		}
+
 		using (CloseServiceHandleSafeHandle scm = PInvoke.OpenSCManager(null, null, SC_MANAGER_ALL_ACCESS_VALUE))
 		{
-			if (!scm.IsInvalid)
+			if (scm.IsInvalid)
 			{
-				using (CloseServiceHandleSafeHandle svc = PInvoke.OpenService(scm, SERVICE_NAME, PInvoke.SERVICE_ALL_ACCESS))
-				{
-					if (!svc.IsInvalid)
-					{
-						PInvoke.ControlService(svc, PInvoke.SERVICE_CONTROL_STOP, out SERVICE_STATUS _);
-						WaitService(svc, SERVICE_STOPPED);
-					}
-				}
+				int err = Marshal.GetLastWin32Error();
+				LastLoadError = $"OpenSCManager failed: {new System.ComponentModel.Win32Exception(err).Message} (0x{err:X})";
+				return false;
+			}
 
-				using (CloseServiceHandleSafeHandle svc = PInvoke.OpenService(scm, SERVICE_NAME, PInvoke.SERVICE_ALL_ACCESS))
+			using (CloseServiceHandleSafeHandle svc = PInvoke.OpenService(scm, SERVICE_NAME, PInvoke.SERVICE_ALL_ACCESS))
+			{
+				if (!svc.IsInvalid)
 				{
-					if (!svc.IsInvalid)
+					PInvoke.ControlService(svc, PInvoke.SERVICE_CONTROL_STOP, out SERVICE_STATUS _);
+					WaitService(svc, SERVICE_STOPPED);
+				}
+			}
+
+			using (CloseServiceHandleSafeHandle svc = PInvoke.OpenService(scm, SERVICE_NAME, PInvoke.SERVICE_ALL_ACCESS))
+			{
+				if (!svc.IsInvalid)
+				{
+					if (PInvoke.StartService(svc, null) == 0)
 					{
-						PInvoke.StartService(svc, null);
-						WaitService(svc, SERVICE_RUNNING);
+						int err = Marshal.GetLastWin32Error();
+						if (!WaitService(svc, SERVICE_RUNNING))
+							LastLoadError = $"StartService {SERVICE_NAME} failed: {new System.ComponentModel.Win32Exception(err).Message} (0x{err:X})";
 					}
 					else
 					{
-						fixed (char* pName = SERVICE_NAME)
-						fixed (char* pPath = fullPath)
+						WaitService(svc, SERVICE_RUNNING);
+					}
+				}
+				else
+				{
+					int openErr = Marshal.GetLastWin32Error();
+					fixed (char* pName = SERVICE_NAME)
+					fixed (char* pPath = fullPath)
+					{
+						var rawScm = (SC_HANDLE)scm.DangerousGetHandle();
+						SC_HANDLE created = PInvoke.CreateService(
+							rawScm,
+							pName,
+							pName,
+							PInvoke.SERVICE_ALL_ACCESS,
+							ENUM_SERVICE_TYPE.SERVICE_KERNEL_DRIVER,
+							SERVICE_START_TYPE.SERVICE_DEMAND_START,
+							SERVICE_ERROR.SERVICE_ERROR_NORMAL,
+							pPath,
+							null,
+							null,
+							null,
+							null,
+							null);
+						if (created.Value != null && created.Value != (void*)-1)
 						{
-							var rawScm = (SC_HANDLE)scm.DangerousGetHandle();
-							SC_HANDLE created = PInvoke.CreateService(
-								rawScm,
-								pName,
-								pName,
-								PInvoke.SERVICE_ALL_ACCESS,
-								ENUM_SERVICE_TYPE.SERVICE_KERNEL_DRIVER,
-								SERVICE_START_TYPE.SERVICE_DEMAND_START,
-								SERVICE_ERROR.SERVICE_ERROR_NORMAL,
-								pPath,
-								null,
-								null,
-								null,
-								null,
-								null);
-							if (created.Value != null && created.Value != (void*)-1)
+							using CloseServiceHandleSafeHandle createdSafe = new(created, true);
+							if (PInvoke.StartService(createdSafe, null) == 0)
 							{
-								using CloseServiceHandleSafeHandle createdSafe = new(created, true);
-								PInvoke.StartService(createdSafe, null);
+								int err = Marshal.GetLastWin32Error();
+								if (!WaitService(createdSafe, SERVICE_RUNNING))
+									LastLoadError = $"CreateService+StartService {SERVICE_NAME} -> {Path.GetFileName(fullPath)} failed: {new System.ComponentModel.Win32Exception(err).Message} (0x{err:X})";
+							}
+							else
+							{
 								WaitService(createdSafe, SERVICE_RUNNING);
 							}
+						}
+						else
+						{
+							int err = Marshal.GetLastWin32Error();
+							LastLoadError = $"CreateService {SERVICE_NAME} failed for {Path.GetFileName(fullPath)}: {new System.ComponentModel.Win32Exception(err).Message} (0x{err:X}) (open error 0x{openErr:X})";
+							return false;
 						}
 					}
 				}
@@ -392,14 +464,20 @@ public sealed partial class AmiSmmTransport : IDisposable
 		{
 			SafeFileHandle handle = File.OpenHandle(DEVICE_NAME, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
 			if (handle.IsInvalid)
+			{
+				int err = Marshal.GetLastWin32Error();
+				LastLoadError = $"CreateFile {DEVICE_NAME} failed after service start: {new System.ComponentModel.Win32Exception(err).Message} (0x{err:X}) — driver may be blocked or requires reboot";
 				return false;
+			}
 
 			_deviceHandle = handle;
 			_handle = new HANDLE(handle.DangerousGetHandle());
+			LastLoadError = null;
 			return true;
 		}
-		catch
+		catch (Exception ex)
 		{
+			LastLoadError = $"CreateFile {DEVICE_NAME} exception: {ex.Message} — driver {Path.GetFileName(fullPath)} at {fullPath}";
 			return false;
 		}
 	}
