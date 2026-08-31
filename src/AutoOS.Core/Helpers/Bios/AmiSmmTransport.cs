@@ -80,13 +80,64 @@ public sealed partial class AmiSmmTransport : IDisposable
 		if (TryLoadWithPath(PrimaryDriverPath))
 			return true;
 
-		string primaryError = LastLoadError ?? "unknown error";
+		string primaryError = LastLoadError ?? "Unknown error";
 
 		if (TryLoadWithPath(FallbackDriverPath))
 			return true;
 
-		string fallbackError = LastLoadError ?? "unknown error";
+		string fallbackError = LastLoadError ?? "Unknown error";
 		LastLoadError = $"Primary ({Path.GetFileName(PrimaryDriverPath)}): {primaryError} | Fallback ({Path.GetFileName(FallbackDriverPath)}): {fallbackError}";
+		return false;
+	}
+
+	public bool TryLoadAndInit()
+	{
+		LastLoadError = null;
+		LastInitError = null;
+
+		string? primaryLoadError = null;
+		string? primaryInitError = null;
+
+		if (TryLoadWithPath(PrimaryDriverPath))
+		{
+			if (TryInitSmm())
+				return true;
+
+			primaryInitError = LastInitError;
+			Unload();
+		}
+		else
+		{
+			primaryLoadError = LastLoadError;
+		}
+
+		string? fallbackLoadError = null;
+		string? fallbackInitError = null;
+
+		if (TryLoadWithPath(FallbackDriverPath))
+		{
+			if (TryInitSmm())
+				return true;
+
+			fallbackInitError = LastInitError;
+			Unload();
+		}
+		else
+		{
+			fallbackLoadError = LastLoadError;
+		}
+
+		if (primaryLoadError != null && fallbackLoadError != null)
+			LastLoadError = $"Primary ({Path.GetFileName(PrimaryDriverPath)}): {primaryLoadError} | Fallback ({Path.GetFileName(FallbackDriverPath)}): {fallbackLoadError}";
+		else if (primaryInitError != null && fallbackInitError != null)
+			LastLoadError = $"Primary init ({Path.GetFileName(PrimaryDriverPath)}): {primaryInitError} | Fallback init ({Path.GetFileName(FallbackDriverPath)}): {fallbackInitError}";
+		else if (primaryInitError != null && fallbackLoadError != null)
+			LastLoadError = $"Primary init ({Path.GetFileName(PrimaryDriverPath)}): {primaryInitError} | Fallback load ({Path.GetFileName(FallbackDriverPath)}): {fallbackLoadError}";
+		else if (primaryLoadError != null && fallbackInitError != null)
+			LastLoadError = $"Primary load ({Path.GetFileName(PrimaryDriverPath)}): {primaryLoadError} | Fallback init ({Path.GetFileName(FallbackDriverPath)}): {fallbackInitError}";
+		else
+			LastLoadError = primaryInitError ?? primaryLoadError ?? fallbackInitError ?? fallbackLoadError;
+
 		return false;
 	}
 

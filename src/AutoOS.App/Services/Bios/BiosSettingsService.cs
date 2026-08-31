@@ -12,12 +12,6 @@ public sealed class BiosSettingsService(IBiosSettingsContext context, IBiosNvram
 {
 	public string? LastDriverError { get; private set; }
 
-	private void LogDriverError()
-	{
-		string error = LastDriverError ?? "Unknown SMM driver failure";
-		LogHelper.LogError(new Exception(error), actionTitle: "SMM driver load failed");
-	}
-
 	public async Task<(PageMode Result, IReadOnlyList<Setting> Settings)> ReadFromNvramAsync()
 	{
 		LastDriverError = null;
@@ -28,18 +22,11 @@ public sealed class BiosSettingsService(IBiosSettingsContext context, IBiosNvram
 				return (PageMode.Unsupported, new List<Setting>(), new Dictionary<ushort, QidTarget>());
 
 			using AmiSmmTransport transport = new();
-			if (!transport.TryLoad())
+			if (!transport.TryLoadAndInit())
 			{
-				LastDriverError = transport.LastLoadError;
+				LastDriverError = transport.LastLoadError ?? transport.LastInitError;
 				return (PageMode.DriverLoadFailed, new List<Setting>(), new Dictionary<ushort, QidTarget>());
 			}
-
-			if (!transport.TryInitSmm())
-			{
-				LastDriverError = transport.LastInitError ?? transport.LastLoadError;
-				return (PageMode.DriverLoadFailed, new List<Setting>(), new Dictionary<ushort, QidTarget>());
-			}
-
 			if (!HiiHelper.TryReadHiiDb(transport, out byte[]? database) || database == null)
 				return (PageMode.Unsupported, new List<Setting>(), new Dictionary<ushort, QidTarget>());
 
@@ -55,7 +42,7 @@ public sealed class BiosSettingsService(IBiosSettingsContext context, IBiosNvram
 		});
 
 		if (Result == PageMode.DriverLoadFailed)
-			LogDriverError();
+			LogHelper.LogError(new Exception(LastDriverError ?? "Unknown SMM driver failure"), actionTitle: "SMM driver load failed");
 
 		if (Result != PageMode.Loaded)
 			return (Result, Array.Empty<Setting>());
@@ -75,17 +62,10 @@ public sealed class BiosSettingsService(IBiosSettingsContext context, IBiosNvram
 			return (PageMode.Loaded, Array.Empty<Setting>());
 
 		using AmiSmmTransport transport = new();
-		if (!transport.TryLoad())
+		if (!transport.TryLoadAndInit())
 		{
-			LastDriverError = transport.LastLoadError;
-			LogDriverError();
-			return (PageMode.DriverLoadFailed, modified.Select(p => p.Key).ToList());
-		}
-
-		if (!transport.TryInitSmm())
-		{
-			LastDriverError = transport.LastInitError ?? transport.LastLoadError;
-			LogDriverError();
+			LastDriverError = transport.LastLoadError ?? transport.LastInitError;
+			LogHelper.LogError(new Exception(LastDriverError ?? "Unknown SMM driver failure"), actionTitle: "SMM driver load failed");
 			return (PageMode.DriverLoadFailed, modified.Select(p => p.Key).ToList());
 		}
 
@@ -133,7 +113,7 @@ public sealed class BiosSettingsService(IBiosSettingsContext context, IBiosNvram
 		if (result == PageMode.DriverLoadFailed)
 		{
 			LastDriverError = backupService.LastDriverError;
-			LogDriverError();
+			LogHelper.LogError(new Exception(LastDriverError ?? "Unknown SMM driver failure"), actionTitle: "SMM driver load failed");
 		}
 
 		return result;
