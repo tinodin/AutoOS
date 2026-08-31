@@ -15,14 +15,14 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 {
 	private static readonly JsonSerializerOptions BackupJsonOptions = new()
 	{
-		TypeInfoResolver = BackupJsonContext.Default,
-		PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
 		DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
 		WriteIndented = true,
 		IndentCharacter = '\t',
 		IndentSize = 1,
 		Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
 	};
+
+	private static readonly BackupJsonContext BackupJsonContextRelaxed = new(BackupJsonOptions);
 
 	public string? LastDriverError { get; private set; }
 
@@ -88,7 +88,7 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 
 		string path = Path.Combine(BackupDirectory, $"{DateTime.Now.ToLocalTime():yyyy-MM-dd_HH-mm-ss}.json");
 		await using FileStream fs = File.Create(path);
-		await JsonSerializer.SerializeAsync(fs, backup, BackupJsonContext.Default.BackupFile);
+		await JsonSerializer.SerializeAsync(fs, backup, BackupJsonContextRelaxed.BackupFile);
 
 		context.LastBackupSettings = currentSettings;
 	}
@@ -105,15 +105,9 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 		(PageMode Result, bool Failed) = await Task.Run(() =>
 		{
 			using AmiSmmTransport transport = new();
-			if (!transport.TryLoad())
+			if (!transport.TryLoadAndInit())
 			{
-				LastDriverError = transport.LastLoadError;
-				return (PageMode.DriverLoadFailed, true);
-			}
-
-			if (!transport.TryInitSmm())
-			{
-				LastDriverError = transport.LastInitError ?? transport.LastLoadError;
+				LastDriverError = transport.LastLoadError ?? transport.LastInitError;
 				return (PageMode.DriverLoadFailed, true);
 			}
 

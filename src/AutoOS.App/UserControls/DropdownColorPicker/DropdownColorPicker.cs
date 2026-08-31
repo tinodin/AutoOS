@@ -7,7 +7,7 @@ public partial class DropdownColorPicker : DevWinUI.DropdownColorPicker
 	public DropdownColorPicker()
 	{
 		Loaded += OnDropdownColorPickerLoaded;
-		RegisterPropertyChangedCallback(DevWinUI.DropdownColorPicker.ColorProperty, OnColorPropertyChanged);
+		RegisterPropertyChangedCallback(ColorProperty, OnColorPropertyChanged);
 	}
 
 	private void OnColorPropertyChanged(DependencyObject sender, DependencyProperty dp)
