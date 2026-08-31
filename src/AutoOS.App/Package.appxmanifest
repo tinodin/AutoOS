@@ -12,7 +12,7 @@
   <Identity
     Name="AutoOS"
     Publisher="CN=tinodin"
-    Version="1.4.7.5" />
+    Version="1.4.7.6" />
 
   <Properties>
     <DisplayName>AutoOS</DisplayName>
