@@ -86,6 +86,87 @@ public sealed partial class HomePage : Page
 			}
 		}
 
+		// ; 58989092
+		// ; Low Latency Profile Feature Bundle June
+		if (ubr >= 8524 && (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1213986446", "EnabledState", null) is not int v1213986446 || v1213986446 != 2))
+		{
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1213986446", "EnabledState", 2, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1213986446", "EnabledStateOptions", 0, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1213986446", "Variant", 0, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1213986446", "VariantPayload", 0, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1213986446", "VariantPayloadKind", 0, RegistryValueKind.DWord);
+		}
+		// ; 60716524
+		// ; New Low Latency Profile
+		if (ubr >= 8524 && (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\3632644751", "EnabledState", null) is not int v3632644751 || v3632644751 != 2))
+		{
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\3632644751", "EnabledState", 2, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\3632644751", "EnabledStateOptions", 0, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\3632644751", "Variant", 0, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\3632644751", "VariantPayload", 0, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\3632644751", "VariantPayloadKind", 0, RegistryValueKind.DWord);
+		}
+		// ; 61391826
+		// ; New Low Latency Profile For Application Launch
+		if (ubr >= 8524 && (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\2783555215", "EnabledState", null) is not int v2783555215 || v2783555215 != 2))
+		{
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\2783555215", "EnabledState", 2, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\2783555215", "EnabledStateOptions", 0, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\2783555215", "Variant", 0, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\2783555215", "VariantPayload", 0, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\2783555215", "VariantPayloadKind", 0, RegistryValueKind.DWord);
+		}
+		// ; 58989177
+		// ; Low Latency Profile Feature Bundle July
+		if (ubr >= 8524 && (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\4066113166", "EnabledState", null) is not int v4066113166 || v4066113166 != 2))
+		{
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\4066113166", "EnabledState", 2, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\4066113166", "EnabledStateOptions", 0, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\4066113166", "Variant", 0, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\4066113166", "VariantPayload", 0, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\4066113166", "VariantPayloadKind", 0, RegistryValueKind.DWord);
+		}
+		// ; 61161244
+		// ; Main Feature Bundle
+		if (ubr >= 9278 && (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\940684430", "EnabledState", null) is not int v940684430 || v940684430 != 2))
+		{
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\940684430", "EnabledState", 2, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\940684430", "EnabledStateOptions", 0, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\940684430", "Variant", 0, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\940684430", "VariantPayload", 0, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\940684430", "VariantPayloadKind", 0, RegistryValueKind.DWord);
+		}
+		// ; 62353331
+		// ; New Start Menu Customization:
+		if (ubr >= 9278 && (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1722912911", "EnabledState", null) is not int v1722912911 || v1722912911 != 2))
+		{
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1722912911", "EnabledState", 2, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1722912911", "EnabledStateOptions", 0, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1722912911", "Variant", 0, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1722912911", "VariantPayload", 0, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1722912911", "VariantPayloadKind", 0, RegistryValueKind.DWord);
+		}
+		// ; 62762248
+		// ; New Search UI
+		if (ubr >= 9278 && (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\288720014", "EnabledState", null) is not int v288720014 || v288720014 != 2))
+		{
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\288720014", "EnabledState", 2, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\288720014", "EnabledStateOptions", 0, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\288720014", "Variant", 0, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\288720014", "VariantPayload", 0, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\288720014", "VariantPayloadKind", 0, RegistryValueKind.DWord);
+		}
+		// ; 61754985
+		// ; New Search UI
+		if (ubr >= 9278 && (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\3539182222", "EnabledState", null) is not int v3539182222 || v3539182222 != 2))
+		{
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\3539182222", "EnabledState", 2, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\3539182222", "EnabledStateOptions", 0, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\3539182222", "Variant", 0, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\3539182222", "VariantPayload", 0, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\3539182222", "VariantPayloadKind", 0, RegistryValueKind.DWord);
+		}
+
 		Version currentVersion = new(ProcessInfoHelper.Version);
 
 		localSettings.Values.TryGetValue("Version", out object? storedVersionObj);

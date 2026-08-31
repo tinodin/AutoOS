@@ -94,31 +94,53 @@ public static class ProcessActions
 	public static async Task UpdateWindhawkMods()
 	{
 		string windhawkDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk");
+		string exePath = Path.Combine(windhawkDir, "windhawk-cli.exe");
+		if (!File.Exists(exePath))
+			return;
 
 		using Process listProcess = Process.Start(new ProcessStartInfo
 		{
-			FileName = Path.Combine(windhawkDir, "windhawk-cli.exe"),
+			FileName = exePath,
 			Arguments = "mod list --update-available --json",
 			WorkingDirectory = windhawkDir,
 			UseShellExecute = false,
 			CreateNoWindow = true,
-			RedirectStandardOutput = true
+			RedirectStandardOutput = true,
+			RedirectStandardError = true
 		})!;
 
 		string json = await listProcess.StandardOutput.ReadToEndAsync();
+		_ = await listProcess.StandardError.ReadToEndAsync();
 		await listProcess.WaitForExitAsync();
 
-		string[] modIds = [.. JsonDocument.Parse(json).RootElement.GetProperty("data").GetProperty("mods").EnumerateArray().Select(mod => mod.GetProperty("id").GetString() ?? string.Empty).Where(id => !string.IsNullOrEmpty(id))];
+		if (listProcess.ExitCode != 0 || string.IsNullOrWhiteSpace(json))
+			return;
 
-		foreach (string modId in modIds)
+		using var doc = JsonDocument.Parse(json);
+		JsonElement root = doc.RootElement;
+		JsonElement mods = root.ValueKind == JsonValueKind.Object && root.TryGetProperty("data", out JsonElement data) && data.TryGetProperty("mods", out JsonElement modsFromData) ? modsFromData : root.TryGetProperty("mods", out JsonElement modsDirect) ? modsDirect : root.ValueKind == JsonValueKind.Array ? root : default;
+		if (mods.ValueKind != JsonValueKind.Array)
+			return;
+
+		foreach (JsonElement mod in mods.EnumerateArray())
 		{
-			await Process.Start(new ProcessStartInfo
+			if (!mod.TryGetProperty("id", out JsonElement idProp) || idProp.GetString() is not string modId || string.IsNullOrWhiteSpace(modId))
+				continue;
+
+			using Process updateProcess = Process.Start(new ProcessStartInfo
 			{
-				FileName = Path.Combine(windhawkDir, "windhawk-cli.exe"),
-				Arguments = $"mod update {modId} --quiet",
+				FileName = exePath,
+				Arguments = $"mod update {modId}",
 				WorkingDirectory = windhawkDir,
-				WindowStyle = ProcessWindowStyle.Hidden
-			})!.WaitForExitAsync();
+				UseShellExecute = false,
+				CreateNoWindow = true,
+				RedirectStandardOutput = true,
+				RedirectStandardError = true
+			})!;
+
+			_ = await updateProcess.StandardOutput.ReadToEndAsync();
+			_ = await updateProcess.StandardError.ReadToEndAsync();
+			await updateProcess.WaitForExitAsync();
 		}
 	}
 
