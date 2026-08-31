@@ -24,6 +24,9 @@ public sealed class BiosSettingsService(IBiosSettingsContext context, IBiosNvram
 
 		(PageMode Result, List<Setting> Settings, Dictionary<ushort, QidTarget> QidMap) = await Task.Run(() =>
 		{
+			if (!AmiPlatformHelper.IsSupported())
+				return (PageMode.Unsupported, new List<Setting>(), new Dictionary<ushort, QidTarget>());
+
 			using AmiSmmTransport transport = new();
 			if (!transport.TryLoad())
 			{
