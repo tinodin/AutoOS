@@ -1,11 +1,8 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json.Nodes;
-using AutoOS.Core.Helpers.Device;
 using AutoOS.Core.Data.Models.Device;
-using AutoOS.Core.Helpers.Sound;
 using AutoOS.Core.Data.Clients.Sound;
 using AutoOS.Core.Data.Models.Sound;
 using Windows.Storage;
@@ -56,7 +53,10 @@ public static partial class SoundHelper
 		{
 			IMMDeviceEnumerator* enumerator = pEnumerator;
 			IMMDevice* endpoint = null;
-			fixed (char* pId = device.RegistryPath) { enumerator->GetDevice(pId, &endpoint); }
+			fixed (char* pId = device.RegistryPath)
+			{
+				enumerator->GetDevice(pId, &endpoint);
+			}
 
 			if (endpoint != null)
 			{
@@ -193,18 +193,7 @@ public static partial class SoundHelper
 
 								if (isSupported)
 								{
-									string quality = (bit, rate) switch
-									{
-										(16, 8000) => " (Telephone Quality)",
-										(16, 16000) => " (Tape Recorder Quality)",
-										(16, 22050) => " (AM Radio Quality)",
-										(16, 32000) => " (FM Radio Quality)",
-										(16, 44100) => " (CD Quality)",
-										(16, 48000) => " (DVD Quality)",
-										(24 or 32, >= 44100) => " (Studio Quality)",
-										(16, >= 88200) => " (Studio Quality)",
-										_ => ""
-									};
+									string quality = GetQualityLabel(bit, rate);
 									formats.Add(new AudioFormatOption
 									{
 										SampleRate = rate,
@@ -213,7 +202,7 @@ public static partial class SoundHelper
 										ActualBitsPerSample = actualBits,
 										SubFormat = subFmt,
 										DisplayName = $"{ch} channels, {bit} bit, {rate} Hz{quality}",
-										IsCurrent = (rate == details.CurrentSampleRate && bit == details.CurrentBitDepth && ch == details.CurrentChannels)
+										IsCurrent = rate == details.CurrentSampleRate && bit == details.CurrentBitDepth && ch == details.CurrentChannels
 									});
 								}
 							}
@@ -228,19 +217,7 @@ public static partial class SoundHelper
 							{
 								foreach (ushort bit in testBits)
 								{
-									string quality = (bit, rate) switch
-									{
-										(16, 8000) => " (Telephone Quality)",
-										(16, 16000) => " (Tape Recorder Quality)",
-										(16, 22050) => " (AM Radio Quality)",
-										(16, 32000) => " (FM Radio Quality)",
-										(16, 44100) => " (CD Quality)",
-										(16, 48000) => " (DVD Quality)",
-										(24 or 32, >= 44100) => " (Studio Quality)",
-										(16, >= 88200) => " (Studio Quality)",
-										_ => ""
-									};
-
+									string quality = GetQualityLabel(bit, rate);
 									formats.Add(new AudioFormatOption
 									{
 										SampleRate = rate,
@@ -249,7 +226,7 @@ public static partial class SoundHelper
 										ActualBitsPerSample = bit,
 										SubFormat = KSDATAFORMAT_SUBTYPE_PCM,
 										DisplayName = $"{ch} channels, {bit} bit, {rate} Hz{quality}",
-										IsCurrent = (rate == details.CurrentSampleRate && bit == details.CurrentBitDepth && ch == details.CurrentChannels)
+										IsCurrent = rate == details.CurrentSampleRate && bit == details.CurrentBitDepth && ch == details.CurrentChannels
 									});
 								}
 							}
@@ -257,18 +234,7 @@ public static partial class SoundHelper
 
 						if (details.CurrentSampleRate > 0 && !formats.Any(f => f.IsCurrent))
 						{
-							string quality = (details.CurrentBitDepth, details.CurrentSampleRate) switch
-							{
-								(16, 8000) => " (Telephone Quality)",
-								(16, 16000) => " (Tape Recorder Quality)",
-								(16, 22050) => " (AM Radio Quality)",
-								(16, 32000) => " (FM Radio Quality)",
-								(16, 44100) => " (CD Quality)",
-								(16, 48000) => " (DVD Quality)",
-								(24 or 32, >= 44100) => " (Studio Quality)",
-								(16, >= 88200) => " (Studio Quality)",
-								_ => ""
-							};
+							string quality = GetQualityLabel(details.CurrentBitDepth, details.CurrentSampleRate);
 							formats.Add(new AudioFormatOption
 							{
 								SampleRate = details.CurrentSampleRate,
@@ -301,120 +267,124 @@ public static partial class SoundHelper
 		var bufferSizes = new List<BufferSizeOption>();
 
 		HRESULT hrEnum = PInvoke.CoCreateInstance<IMMDeviceEnumerator>(typeof(MMDeviceEnumerator).GUID, null, (CLSCTX)7, out IMMDeviceEnumerator* pEnumerator);
-		if (hrEnum.Succeeded)
-		{
-			IMMDeviceEnumerator* enumerator = pEnumerator;
-			IMMDevice* endpoint = null;
-			fixed (char* pId = device.RegistryPath) { enumerator->GetDevice(pId, &endpoint); }
+		if (!hrEnum.Succeeded)
+			return bufferSizes;
 
-			if (endpoint != null)
+		IMMDeviceEnumerator* enumerator = pEnumerator;
+		IMMDevice* endpoint = null;
+		fixed (char* pId = device.RegistryPath)
+		{ enumerator->GetDevice(pId, &endpoint); }
+
+		if (endpoint == null)
+		{
+			enumerator->Release();
+			return bufferSizes;
+		}
+
+		Guid clientId = typeof(IAudioClient3).GUID;
+		endpoint->Activate(clientId, (CLSCTX)7, null, out void* pAudioClient);
+		if (pAudioClient == null)
+		{
+			endpoint->Release();
+			enumerator->Release();
+			return bufferSizes;
+		}
+
+		var audioClient = (IAudioClient3*)pAudioClient;
+		WAVEFORMATEX* format = null;
+		WAVEFORMATEXTENSIBLE selectedFormat = default;
+		bool freeFormat = false;
+		WAVEFORMATEX* mixFormat = null;
+		try
+		{
+			if (device.SelectedFormat is AudioFormatOption selected)
 			{
-				Guid clientId = typeof(IAudioClient3).GUID;
-				endpoint->Activate(clientId, (CLSCTX)7, null, out void* pAudioClient);
-				if (pAudioClient != null)
+				selectedFormat = CreateWaveFormat(selected.SampleRate, selected.Bits, selected.Channels, selected.ActualBitsPerSample, selected.SubFormat);
+				format = (WAVEFORMATEX*)&selectedFormat;
+			}
+			else
+			{
+				audioClient->GetMixFormat(&format);
+				freeFormat = true;
+			}
+
+			audioClient->GetMixFormat(&mixFormat);
+
+			if (format != null && mixFormat != null)
+			{
+				uint current = 0;
+				WAVEFORMATEX* periodFormat = null;
+
+				if (TryGetEnginePeriod(audioClient, format, out uint def, out uint min, out uint max))
+					periodFormat = format;
+				else if (TryGetEnginePeriod(audioClient, mixFormat, out def, out min, out max))
+					periodFormat = mixFormat;
+
+				if (periodFormat != null)
 				{
-					var audioClient = (IAudioClient3*)pAudioClient;
-					WAVEFORMATEX* format = null;
-					WAVEFORMATEXTENSIBLE selectedFormat = default;
-					bool freeFormat = false;
 					try
 					{
-						if (device.SelectedFormat is AudioFormatOption selected)
-						{
-							selectedFormat = CreateWaveFormat(selected.SampleRate, selected.Bits, selected.Channels, selected.ActualBitsPerSample, selected.SubFormat);
-							format = (WAVEFORMATEX*)&selectedFormat;
-						}
-						else
-						{
-							audioClient->GetMixFormat(&format);
-							freeFormat = true;
-						}
-
-						if (format != null)
-						{
-							try
-							{
-								audioClient->GetSharedModeEnginePeriod(*format, out uint def, out _, out uint min, out uint max);
-								audioClient->GetCurrentSharedModeEnginePeriod(out _, out uint current);
-
-								if (min > 0)
-								{
-									const uint step = 64;
-									var options = new SortedSet<uint> { min };
-
-									uint aligned = ((min + step - 1) / step) * step;
-									for (uint frames = aligned; frames <= max; frames += step)
-										options.Add(frames);
-
-									if (max > 0) options.Add(max);
-									if (current > 0) options.Add(current);
-
-									double factor = 1000.0 / format->nSamplesPerSec;
-									foreach (uint frames in options)
-									{
-										float ms = (float)Math.Round(frames * factor, 2);
-										bufferSizes.Add(new BufferSizeOption
-										{
-											Frames = frames,
-											Ms = ms,
-											DisplayName = $"{frames} samples ({ms:0.#} ms)",
-											IsCurrent = (frames == current),
-											IsDefault = (frames == def)
-										});
-									}
-								}
-							}
-							catch { }
-						}
+						audioClient->GetCurrentSharedModeEnginePeriod(out _, out current);
 					}
 					catch { }
-					finally
+
+					const uint step = 64;
+					var options = new SortedSet<uint> { min };
+
+					uint aligned = ((min + step - 1) / step) * step;
+					for (uint frames = aligned; frames <= max; frames += step)
+						options.Add(frames);
+
+					if (max > 0)
+						options.Add(max);
+					if (current > 0)
+						options.Add(current);
+
+					double factor = 1000.0 / periodFormat->nSamplesPerSec;
+					foreach (uint frames in options)
 					{
-						if (freeFormat && format != null)
+						float ms = (float)Math.Round(frames * factor, 2);
+						bufferSizes.Add(new BufferSizeOption
 						{
-							PInvoke.CoTaskMemFree(format);
-						}
-						audioClient->Release();
+							Frames = frames,
+							Ms = ms,
+							DisplayName = $"{frames} samples ({ms:0.#} ms)",
+							IsCurrent = frames == current,
+							IsDefault = frames == def
+						});
 					}
 				}
-				endpoint->Release();
 			}
+		}
+		catch { }
+		finally
+		{
+			if (freeFormat && format != null)
+				PInvoke.CoTaskMemFree(format);
+			if (mixFormat != null)
+				PInvoke.CoTaskMemFree(mixFormat);
+			audioClient->Release();
+			endpoint->Release();
 			enumerator->Release();
 		}
 
 		return [.. bufferSizes.DistinctBy(x => x.Frames)];
 	}
 
-	private static unsafe uint GetDefaultSampleRate(EDataFlow flow)
+	private static unsafe bool TryGetEnginePeriod(IAudioClient3* client, WAVEFORMATEX* format, out uint def, out uint min, out uint max)
 	{
-		uint rate = 0;
-		PInvoke.CoInitializeEx(null, COINIT.COINIT_MULTITHREADED);
-		HRESULT hrEnum = PInvoke.CoCreateInstance<IMMDeviceEnumerator>(typeof(MMDeviceEnumerator).GUID, null, (CLSCTX)7, out IMMDeviceEnumerator* pEnumerator);
-		if (hrEnum.Succeeded)
+		def = 0;
+		min = 0;
+		max = 0;
+		try
 		{
-			IMMDeviceEnumerator* enumerator = pEnumerator;
-			IMMDevice* endpoint = null;
-			enumerator->GetDefaultAudioEndpoint(flow, ERole.eConsole, &endpoint);
-			if (endpoint != null)
-			{
-				endpoint->Activate(typeof(IAudioClient3).GUID, (CLSCTX)7, null, out void* pAudioClient);
-				if (pAudioClient != null)
-				{
-					var audioClient = (IAudioClient3*)pAudioClient;
-					WAVEFORMATEX* format = null;
-					audioClient->GetMixFormat(&format);
-					if (format != null)
-					{
-						rate = format->nSamplesPerSec;
-						PInvoke.CoTaskMemFree(format);
-					}
-					audioClient->Release();
-				}
-				endpoint->Release();
-			}
-			enumerator->Release();
+			client->GetSharedModeEnginePeriod(*format, out def, out _, out min, out max);
+			return min > 0;
 		}
-		return rate;
+		catch
+		{
+			return false;
+		}
 	}
 
 	public static unsafe float SetAudioVolume(DeviceInfo device, float volume)
@@ -429,7 +399,10 @@ public static partial class SoundHelper
 		{
 			IMMDeviceEnumerator* enumerator = pEnumerator;
 			IMMDevice* endpoint = null;
-			fixed (char* pId = device.RegistryPath) { enumerator->GetDevice(pId, &endpoint); }
+			fixed (char* pId = device.RegistryPath)
+			{
+				enumerator->GetDevice(pId, &endpoint);
+			}
 
 			if (endpoint != null)
 			{
@@ -457,7 +430,10 @@ public static partial class SoundHelper
 		{
 			IMMDeviceEnumerator* enumerator = pEnumerator;
 			IMMDevice* endpoint = null;
-			fixed (char* pId = device.RegistryPath) { enumerator->GetDevice(pId, &endpoint); }
+			fixed (char* pId = device.RegistryPath)
+			{
+				enumerator->GetDevice(pId, &endpoint);
+			}
 			if (endpoint != null)
 			{
 				Guid iid = typeof(IAudioEndpointVolume).GUID;
@@ -484,7 +460,10 @@ public static partial class SoundHelper
 		{
 			IMMDeviceEnumerator* enumerator = pEnumerator;
 			IMMDevice* endpoint = null;
-			fixed (char* pId = device.RegistryPath) { enumerator->GetDevice(pId, &endpoint); }
+			fixed (char* pId = device.RegistryPath)
+			{
+				enumerator->GetDevice(pId, &endpoint);
+			}
 
 			if (endpoint != null)
 			{
@@ -523,70 +502,101 @@ public static partial class SoundHelper
 		if (PInvoke.CoCreateInstance<IMMDeviceEnumerator>(clsidEnum, null, CLSCTX.CLSCTX_ALL, out IMMDeviceEnumerator* pEnumerator).Value >= 0)
 		{
 			IMMDeviceEnumerator* enumerator = pEnumerator;
-			IMMDevice* endpoint = null;
-			fixed (char* pId = device.RegistryPath) { enumerator->GetDevice(pId, &endpoint); }
-			if (endpoint != null)
+			try
 			{
-				IPropertyStore* store = null;
-				endpoint->OpenPropertyStore((STGM)2, &store);
-				if (store != null)
+				IMMDevice* endpoint = null;
+				fixed (char* pId = device.RegistryPath)
 				{
-					WAVEFORMATEXTENSIBLE endpointFormat = CreateWaveFormat(sampleRate, bits, channels, validBits, subFormat);
-					WAVEFORMATEXTENSIBLE mixFormat = default;
-					mixFormat.Format.wFormatTag = 0xFFFE;
-					mixFormat.Format.nChannels = channels;
-					mixFormat.Format.nSamplesPerSec = sampleRate;
-					mixFormat.Format.wBitsPerSample = 32;
-					mixFormat.Format.nBlockAlign = (ushort)(channels * 4);
-					mixFormat.Format.nAvgBytesPerSec = sampleRate * mixFormat.Format.nBlockAlign;
-					mixFormat.Format.cbSize = 22;
-					mixFormat.Samples.wValidBitsPerSample = 32;
-					mixFormat.dwChannelMask = channels == 1 ? 4u : (channels == 2 ? 3u : 0u);
-					mixFormat.SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
-
-					void* pEndpointFormat = (void*)Marshal.AllocCoTaskMem(sizeof(WAVEFORMATEXTENSIBLE));
-					void* pMixFormat = (void*)Marshal.AllocCoTaskMem(sizeof(WAVEFORMATEXTENSIBLE));
-					*(WAVEFORMATEXTENSIBLE*)pEndpointFormat = endpointFormat;
-					*(WAVEFORMATEXTENSIBLE*)pMixFormat = mixFormat;
-
-					Guid clsidPolicy = new("870af99c-171d-4f9e-af0d-e63df40c2bc9");
-					Guid iidPolicy = new("f8679f50-850a-41cf-9c72-430f290290c8");
-
-					void* pPolicyOut;
-					if (PInvoke.CoCreateInstance(&clsidPolicy, null, CLSCTX.CLSCTX_ALL, &iidPolicy, &pPolicyOut).Value >= 0)
-					{
-						var policy = (IPolicyConfigNativeOut*)pPolicyOut;
-						fixed (char* pwzDeviceId = device.RegistryPath)
-						{
-							policy->Vtbl->SetDeviceFormat(pPolicyOut, pwzDeviceId, pEndpointFormat, pMixFormat);
-						}
-						policy->Vtbl->Release(pPolicyOut);
-					}
-
-					PROPVARIANT propDev = default;
-					propDev.Anonymous.Anonymous.vt = VARENUM.VT_BLOB;
-					propDev.Anonymous.Anonymous.Anonymous.blob.cbSize = (uint)sizeof(WAVEFORMATEXTENSIBLE);
-					propDev.Anonymous.Anonymous.Anonymous.blob.pBlobData = (byte*)&endpointFormat;
-
-					PROPVARIANT propMix = default;
-					propMix.Anonymous.Anonymous.vt = VARENUM.VT_BLOB;
-					propMix.Anonymous.Anonymous.Anonymous.blob.cbSize = (uint)sizeof(WAVEFORMATEXTENSIBLE);
-					propMix.Anonymous.Anonymous.Anonymous.blob.pBlobData = (byte*)&mixFormat;
-
-					PROPERTYKEY keyDeviceFormat = new() { fmtid = new Guid("F19F064D-082C-4E27-BC73-6882A1BB8E4C"), pid = 0 };
-					PROPERTYKEY keyOemFormat = new() { fmtid = new Guid("E4870E26-3CC5-4CD2-BA46-CA0A9A70ED04"), pid = 0 };
-
-					store->SetValue(in keyDeviceFormat, in propDev);
-					store->SetValue(in keyOemFormat, in propMix);
-					store->Commit();
-
-					Marshal.FreeCoTaskMem((IntPtr)pEndpointFormat);
-					Marshal.FreeCoTaskMem((IntPtr)pMixFormat);
-					store->Release();
+					enumerator->GetDevice(pId, &endpoint);
 				}
-				endpoint->Release();
+
+				if (endpoint != null)
+				{
+					try
+					{
+						IPropertyStore* store = null;
+						endpoint->OpenPropertyStore((STGM)2, &store);
+						if (store != null)
+						{
+							void* pEndpointFormat = null;
+							void* pMixFormat = null;
+							try
+							{
+								WAVEFORMATEXTENSIBLE endpointFormat = CreateWaveFormat(sampleRate, bits, channels, validBits, subFormat);
+								WAVEFORMATEXTENSIBLE mixFormat = default;
+								mixFormat.Format.wFormatTag = 0xFFFE;
+								mixFormat.Format.nChannels = channels;
+								mixFormat.Format.nSamplesPerSec = sampleRate;
+								mixFormat.Format.wBitsPerSample = 32;
+								mixFormat.Format.nBlockAlign = (ushort)(channels * 4);
+								mixFormat.Format.nAvgBytesPerSec = sampleRate * mixFormat.Format.nBlockAlign;
+								mixFormat.Format.cbSize = 22;
+								mixFormat.Samples.wValidBitsPerSample = 32;
+								mixFormat.dwChannelMask = channels == 1 ? 4u : (channels == 2 ? 3u : 0u);
+								mixFormat.SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
+
+								pEndpointFormat = (void*)Marshal.AllocCoTaskMem(sizeof(WAVEFORMATEXTENSIBLE));
+								pMixFormat = (void*)Marshal.AllocCoTaskMem(sizeof(WAVEFORMATEXTENSIBLE));
+								*(WAVEFORMATEXTENSIBLE*)pEndpointFormat = endpointFormat;
+								*(WAVEFORMATEXTENSIBLE*)pMixFormat = mixFormat;
+
+								Guid clsidPolicy = new("870af99c-171d-4f9e-af0d-e63df40c2bc9");
+								Guid iidPolicy = new("f8679f50-850a-41cf-9c72-430f290290c8");
+
+								void* pPolicyOut = null;
+								if (PInvoke.CoCreateInstance(&clsidPolicy, null, CLSCTX.CLSCTX_ALL, &iidPolicy, &pPolicyOut).Value >= 0 && pPolicyOut != null)
+								{
+									try
+									{
+										var policy = (IPolicyConfigNativeOut*)pPolicyOut;
+										fixed (char* pwzDeviceId = device.RegistryPath)
+										{
+											policy->Vtbl->SetDeviceFormat(pPolicyOut, pwzDeviceId, pEndpointFormat, pMixFormat);
+										}
+									}
+									finally
+									{
+										((IPolicyConfigNativeOut*)pPolicyOut)->Vtbl->Release(pPolicyOut);
+									}
+								}
+
+								PROPVARIANT propDev = default;
+								propDev.Anonymous.Anonymous.vt = VARENUM.VT_BLOB;
+								propDev.Anonymous.Anonymous.Anonymous.blob.cbSize = (uint)sizeof(WAVEFORMATEXTENSIBLE);
+								propDev.Anonymous.Anonymous.Anonymous.blob.pBlobData = (byte*)pEndpointFormat;
+
+								PROPVARIANT propMix = default;
+								propMix.Anonymous.Anonymous.vt = VARENUM.VT_BLOB;
+								propMix.Anonymous.Anonymous.Anonymous.blob.cbSize = (uint)sizeof(WAVEFORMATEXTENSIBLE);
+								propMix.Anonymous.Anonymous.Anonymous.blob.pBlobData = (byte*)pMixFormat;
+
+								PROPERTYKEY keyDeviceFormat = new() { fmtid = new Guid("F19F064D-082C-4E27-BC73-6882A1BB8E4C"), pid = 0 };
+								PROPERTYKEY keyOemFormat = new() { fmtid = new Guid("E4870E26-3CC5-4CD2-BA46-CA0A9A70ED04"), pid = 0 };
+
+								store->SetValue(in keyDeviceFormat, in propDev);
+								store->SetValue(in keyOemFormat, in propMix);
+								store->Commit();
+							}
+							finally
+							{
+								if (pEndpointFormat != null)
+									Marshal.FreeCoTaskMem((IntPtr)pEndpointFormat);
+								if (pMixFormat != null)
+									Marshal.FreeCoTaskMem((IntPtr)pMixFormat);
+								store->Release();
+							}
+						}
+					}
+					finally
+					{
+						endpoint->Release();
+					}
+				}
 			}
-			enumerator->Release();
+			finally
+			{
+				enumerator->Release();
+			}
 		}
 	}
 
@@ -610,14 +620,18 @@ public static partial class SoundHelper
 	{
 		PInvoke.CoInitializeEx(null, COINIT.COINIT_MULTITHREADED);
 		Observers.TryRemove(device.RegistryPath, out object? old);
-		if (old is IDisposable disp) disp.Dispose();
+		if (old is IDisposable disp)
+			disp.Dispose();
 
 		HRESULT hrEnum = PInvoke.CoCreateInstance<IMMDeviceEnumerator>(typeof(MMDeviceEnumerator).GUID, null, (CLSCTX)7, out IMMDeviceEnumerator* pEnumerator);
 		if (hrEnum.Succeeded)
 		{
 			IMMDeviceEnumerator* enumerator = pEnumerator;
 			IMMDevice* endpoint = null;
-			fixed (char* pId = device.RegistryPath) { enumerator->GetDevice(pId, &endpoint); }
+			fixed (char* pId = device.RegistryPath)
+			{
+				enumerator->GetDevice(pId, &endpoint);
+			}
 			if (endpoint != null)
 			{
 				Guid iid = typeof(IAudioEndpointVolume).GUID;
@@ -628,7 +642,8 @@ public static partial class SoundHelper
 					((IAudioEndpointVolume*)pVol)->RegisterControlChangeNotify((IAudioEndpointVolumeCallback*)client.GetComPointer());
 					Observers[device.RegistryPath] = client;
 				}
-				else endpoint->Release();
+				else
+					endpoint->Release();
 			}
 			enumerator->Release();
 		}
@@ -638,7 +653,8 @@ public static partial class SoundHelper
 	{
 		PInvoke.CoInitializeEx(null, COINIT.COINIT_MULTITHREADED);
 		Observers.TryRemove("DeviceChange", out object? old);
-		if (old is IDisposable disp) disp.Dispose();
+		if (old is IDisposable disp)
+			disp.Dispose();
 
 		HRESULT hrEnum = PInvoke.CoCreateInstance<IMMDeviceEnumerator>(typeof(MMDeviceEnumerator).GUID, null, (CLSCTX)7, out IMMDeviceEnumerator* pEnumerator);
 		if (hrEnum.Succeeded)
@@ -736,7 +752,8 @@ public static partial class SoundHelper
 
 	public static void ApplyAudioSettings(DeviceInfo device, BufferSizeOption option)
 	{
-		if (option == null) return;
+		if (option == null)
+			return;
 
 		string? json = localSettings.Values["Sound"]?.ToString();
 		JsonArray array = JsonNode.Parse(json ?? "[]")?.AsArray() ?? [];
@@ -773,10 +790,12 @@ public static partial class SoundHelper
 		}
 
 		string? json = localSettings.Values["Sound"]?.ToString();
-		if (string.IsNullOrEmpty(json)) return;
+		if (string.IsNullOrEmpty(json))
+			return;
 
 		JsonArray? array = JsonNode.Parse(json)?.AsArray();
-		if (array == null || array.Count == 0) return;
+		if (array == null || array.Count == 0)
+			return;
 
 		PInvoke.CoInitializeEx(null, COINIT.COINIT_MULTITHREADED);
 		string? currentOutputId = GetDefaultAudioEndpointId(EDataFlow.eRender)?.Replace(@"SWD\MMDEVAPI\", "");
@@ -791,30 +810,44 @@ public static partial class SoundHelper
 			float ms = item?["BufferSize"]?.GetValue<float>() ?? 0;
 			if (ms > 0 && ms < 10)
 			{
-				if (id == currentOutputId) outputMs = ms;
-				if (id == currentInputId) inputMs = ms;
+				if (id == currentOutputId)
+					outputMs = ms;
+				if (id == currentInputId)
+					inputMs = ms;
 			}
 		}
 
-		if (outputMs > 0 || inputMs > 0)
+		if (outputMs <= 0 && inputMs <= 0)
+			return;
+
+		File.Copy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "AutoOS.Sound.exe"), Path.Combine(ApplicationData.Current.LocalFolder.Path, "AutoOS.Sound.exe"), true);
+
+		string args = "";
+		if (outputMs > 0)
+			args += $"-output-ms {outputMs.ToString(System.Globalization.CultureInfo.InvariantCulture)} ";
+		if (inputMs > 0)
+			args += $"-input-ms {inputMs.ToString(System.Globalization.CultureInfo.InvariantCulture)} ";
+
+		Process.Start(new ProcessStartInfo
 		{
-			File.Copy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "AutoOS.Sound.exe"), Path.Combine(ApplicationData.Current.LocalFolder.Path, "AutoOS.Sound.exe"), true);
-
-			string args = "";
-			if (outputMs > 0) args += $"-output-ms {outputMs.ToString(System.Globalization.CultureInfo.InvariantCulture)} ";
-			if (inputMs > 0) args += $"-input-ms {inputMs.ToString(System.Globalization.CultureInfo.InvariantCulture)} ";
-
-			if (!string.IsNullOrEmpty(args))
-			{
-				Process.Start(new ProcessStartInfo
-				{
-					FileName = Path.Combine(ApplicationData.Current.LocalFolder.Path, "AutoOS.Sound.exe"),
-					Arguments = args.Trim(),
-					CreateNoWindow = true,
-					UseShellExecute = false
-				});
-			}
-		}
+			FileName = Path.Combine(ApplicationData.Current.LocalFolder.Path, "AutoOS.Sound.exe"),
+			Arguments = args.Trim(),
+			CreateNoWindow = true,
+			UseShellExecute = false
+		});
 	}
+
+	private static string GetQualityLabel(ushort bits, uint rate) => (bits, rate) switch
+	{
+		(16, 8000) => " (Telephone Quality)",
+		(16, 16000) => " (Tape Recorder Quality)",
+		(16, 22050) => " (AM Radio Quality)",
+		(16, 32000) => " (FM Radio Quality)",
+		(16, 44100) => " (CD Quality)",
+		(16, 48000) => " (DVD Quality)",
+		(24 or 32, >= 44100) => " (Studio Quality)",
+		(16, >= 88200) => " (Studio Quality)",
+		_ => ""
+	};
 
 }

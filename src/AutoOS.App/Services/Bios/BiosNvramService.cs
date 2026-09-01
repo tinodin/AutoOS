@@ -20,7 +20,7 @@ public sealed class BiosNvramService : IBiosNvramService
 		if (created)
 		{
 			transport = CreateTransport();
-			if (!transport.TryLoad() || !transport.TryInitSmm())
+			if (!transport.TryLoadAndInit())
 				return;
 		}
 
@@ -113,7 +113,7 @@ public sealed class BiosNvramService : IBiosNvramService
 		if (created)
 		{
 			transport = CreateTransport();
-			if (!transport.TryLoad() || !transport.TryInitSmm())
+			if (!transport.TryLoadAndInit())
 			{
 				patched = null;
 				attributes = 0;
@@ -200,7 +200,7 @@ public sealed class BiosNvramService : IBiosNvramService
 		if (created)
 		{
 			transport = CreateTransport();
-			if (!transport.TryLoad() || !transport.TryInitSmm())
+			if (!transport.TryLoadAndInit())
 			{
 				blob = null;
 				attributes = 0;

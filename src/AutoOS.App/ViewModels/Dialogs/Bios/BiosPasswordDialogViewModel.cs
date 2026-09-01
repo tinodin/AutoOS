@@ -79,10 +79,7 @@ public sealed partial class BiosPasswordDialogViewModel : BaseDialogViewModel, I
 		(bool Success, uint Status) = await Task.Run(() =>
 		{
 			using AmiSmmTransport transport = new();
-			if (!transport.TryLoad())
-				return (false, 0xFFFFFFFFu);
-
-			if (!transport.TryInitSmm())
+			if (!transport.TryLoadAndInit())
 				return (false, 0xFFFFFFFEu);
 
 			bool ok = transport.TryUnlockWithPassword(Password, out uint status);
