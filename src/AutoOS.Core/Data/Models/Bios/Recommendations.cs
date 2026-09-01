@@ -741,6 +741,7 @@ public static class Recommendations
 		new Recommendation { Name = "Freeze DF module queues on error", Type = RecommendationType.Option, Recommended = "Disabled" },
 		new Recommendation { Name = "GMI encryption control", Type = RecommendationType.Option, Recommended = "Disabled" },
 		new Recommendation { Name = "GPP Serial Debug Bus Enable", Type = RecommendationType.Option, Recommended = "Disabled" },
+		new Recommendation { Name = "Gaming Mode", Type = RecommendationType.Option, Recommended = "Disable" },
 		new Recommendation { Name = "Gear Down Mode", Type = RecommendationType.Option, Recommended = "Disabled" },
 		new Recommendation { Name = "Global C-state Control", Type = RecommendationType.Option, Recommended = "Disabled", Condition = _ => X3D == false },
 		new Recommendation { Name = "Global C-state Control", Type = RecommendationType.Option, Recommended = "Enabled", Condition = _ => X3D == true },

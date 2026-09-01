@@ -13,8 +13,9 @@ namespace AutoOS.App.Services.Bios;
 
 public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramService nvramService, IBiosInfoService infoService) : IBiosBackupService
 {
-	private static readonly JsonSerializerOptions BackupJsonOptions = new()
+	internal static readonly JsonSerializerOptions BackupJsonOptions = new()
 	{
+		PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
 		DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
 		WriteIndented = true,
 		IndentCharacter = '\t',
@@ -22,7 +23,7 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 		Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
 	};
 
-	private static readonly BackupJsonContext BackupJsonContextRelaxed = new(BackupJsonOptions);
+	internal static readonly BackupJsonContext BackupJsonContextRelaxed = new(BackupJsonOptions);
 
 	public string? LastDriverError { get; private set; }
 
@@ -67,7 +68,7 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 		if (latest.Length > 0 && context.LastBackupSettings == null)
 		{
 			await using FileStream latestFs = File.OpenRead(latest);
-			BackupFile? previous = await JsonSerializer.DeserializeAsync(latestFs, BackupJsonContext.Default.BackupFile);
+			BackupFile? previous = await JsonSerializer.DeserializeAsync(latestFs, BackupJsonContextRelaxed.BackupFile);
 			context.LastBackupSettings = previous?.Settings;
 		}
 
@@ -96,7 +97,7 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 	public async Task<PageMode> RestoreFromBackupAsync(string filePath)
 	{
 		await using FileStream fs = File.OpenRead(filePath);
-		BackupFile? backup = await JsonSerializer.DeserializeAsync(fs, BackupJsonContext.Default.BackupFile);
+		BackupFile? backup = await JsonSerializer.DeserializeAsync(fs, BackupJsonContextRelaxed.BackupFile);
 		if (backup == null)
 			return infoService.GetWriteProtectedState();
 

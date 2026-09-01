@@ -9,6 +9,7 @@ using AutoOS.Core.Data.Models.Bios;
 using AutoOS.Core.Helpers.Bios;
 using AutoOS.Core.Helpers.Shutdown;
 using AutoOS.App.Services;
+using AutoOS.App.Services.Bios;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Diagnostics;
@@ -320,7 +321,7 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 
 
 		string json = await File.ReadAllTextAsync(file);
-		BackupFile? backup = JsonSerializer.Deserialize(json, BackupJsonContext.Default.BackupFile);
+		BackupFile? backup = JsonSerializer.Deserialize(json, BiosBackupService.BackupJsonContextRelaxed.BackupFile);
 		if (backup != null)
 		{
 			Dictionary<(string VariableName, string VariableGuid, uint Offset), string> backupMap = [with(backup.Settings.Count)];
@@ -339,7 +340,10 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 			}
 		}
 
-
+		SearchText = string.Empty;
+		_undoStates.Clear();
+		_redoStates.Clear();
+		ViewChanges = false;
 		UpdateState();
 		SyncMergeCount();
 		_ = backupService.BackupAsync(_settings);
@@ -376,6 +380,10 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 				}
 			}
 
+			SearchText = string.Empty;
+			_undoStates.Clear();
+			_redoStates.Clear();
+			ViewChanges = false;
 			UpdateState();
 			SyncMergeCount();
 			PageState = PageMode.Loaded;
@@ -391,6 +399,10 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 			_settingStates[setting].Commit();
 		}
 
+		SearchText = string.Empty;
+		_undoStates.Clear();
+		_redoStates.Clear();
+		ViewChanges = false;
 		UpdateState();
 		SyncMergeCount();
 		PageState = PageMode.Loaded;

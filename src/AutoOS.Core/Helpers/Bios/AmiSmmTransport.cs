@@ -86,7 +86,7 @@ public sealed partial class AmiSmmTransport : IDisposable
 			return true;
 
 		string fallbackError = LastLoadError ?? "Unknown error";
-		LastLoadError = $"Primary ({Path.GetFileName(PrimaryDriverPath)}): {primaryError} | Fallback ({Path.GetFileName(FallbackDriverPath)}): {fallbackError}";
+		LastLoadError = $"{Path.GetFileName(PrimaryDriverPath)}: {primaryError} | {Path.GetFileName(FallbackDriverPath)}: {fallbackError}";
 		return false;
 	}
 
@@ -128,15 +128,15 @@ public sealed partial class AmiSmmTransport : IDisposable
 		}
 
 		if (primaryLoadError != null && fallbackLoadError != null)
-			LastLoadError = $"Primary ({Path.GetFileName(PrimaryDriverPath)}): {primaryLoadError} | Fallback ({Path.GetFileName(FallbackDriverPath)}): {fallbackLoadError}";
+			LastLoadError = primaryLoadError;
 		else if (primaryInitError != null && fallbackInitError != null)
-			LastLoadError = $"Primary init ({Path.GetFileName(PrimaryDriverPath)}): {primaryInitError} | Fallback init ({Path.GetFileName(FallbackDriverPath)}): {fallbackInitError}";
+			LastLoadError = primaryInitError;
 		else if (primaryInitError != null && fallbackLoadError != null)
-			LastLoadError = $"Primary init ({Path.GetFileName(PrimaryDriverPath)}): {primaryInitError} | Fallback load ({Path.GetFileName(FallbackDriverPath)}): {fallbackLoadError}";
+			LastLoadError = primaryInitError;
 		else if (primaryLoadError != null && fallbackInitError != null)
-			LastLoadError = $"Primary load ({Path.GetFileName(PrimaryDriverPath)}): {primaryLoadError} | Fallback init ({Path.GetFileName(FallbackDriverPath)}): {fallbackInitError}";
+			LastLoadError = primaryLoadError;
 		else
-			LastLoadError = primaryInitError ?? primaryLoadError ?? fallbackInitError ?? fallbackLoadError;
+			LastLoadError = primaryInitError ?? primaryLoadError;
 
 		return false;
 	}
@@ -174,7 +174,7 @@ public sealed partial class AmiSmmTransport : IDisposable
 
 		if (_handle.IsNull && _deviceHandle == null)
 		{
-			LastInitError = "Device not opened (TryLoad failed)";
+			LastInitError = "Device not opened";
 			return false;
 		}
 
@@ -428,7 +428,7 @@ public sealed partial class AmiSmmTransport : IDisposable
 	{
 		if (!File.Exists(fullPath))
 		{
-			LastLoadError = $"Driver file not found: {fullPath}";
+			LastLoadError = $"Driver file not found: {Path.GetFileName(fullPath)}";
 			return false;
 		}
 
@@ -528,7 +528,7 @@ public sealed partial class AmiSmmTransport : IDisposable
 		}
 		catch (Exception ex)
 		{
-			LastLoadError = $"CreateFile {DEVICE_NAME} exception: {ex.Message} — driver {Path.GetFileName(fullPath)} at {fullPath}";
+			LastLoadError = $"CreateFile {DEVICE_NAME} exception: {ex.Message} — driver {Path.GetFileName(fullPath)}";
 			return false;
 		}
 	}
