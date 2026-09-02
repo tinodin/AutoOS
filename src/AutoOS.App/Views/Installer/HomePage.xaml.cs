@@ -1,6 +1,6 @@
-using System.Diagnostics;
-using AutoOS.Core.Helpers.OS;
 using AutoOS.Core.Helpers.Registry;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.Win32;
 //using Microsoft.Windows.ApplicationModel.WindowsAppRuntime;
 

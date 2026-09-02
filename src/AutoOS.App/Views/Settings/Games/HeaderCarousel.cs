@@ -1,14 +1,13 @@
-using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Globalization;
 using System.ServiceProcess;
 using System.Text;
 using System.Text.RegularExpressions;
-using AutoOS.Core.Helpers.Games;
 using AutoOS.Core.Data.Models.Games;
-using AutoOS.Core.Helpers.Logging;
+using AutoOS.Core.Helpers.Games;
 using AutoOS.Core.Helpers.Processes;
 using AutoOS.Core.Helpers.Services;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Media;

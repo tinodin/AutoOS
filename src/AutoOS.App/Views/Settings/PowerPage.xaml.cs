@@ -2,13 +2,14 @@ using AutoOS.App.Data.Enums.Power;
 using AutoOS.App.Data.Models.Power;
 using AutoOS.App.Helpers.TreeGrid;
 using AutoOS.App.ViewModels;
-using CommunityToolkit.Mvvm.DependencyInjection;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Navigation;
 using Syncfusion.UI.Xaml.Data;
 using Syncfusion.UI.Xaml.DataGrid;
 using Syncfusion.UI.Xaml.Grids;
 using Syncfusion.UI.Xaml.TreeGrid;
-using Windows.System;
 
 namespace AutoOS.App.Views.Settings;
 

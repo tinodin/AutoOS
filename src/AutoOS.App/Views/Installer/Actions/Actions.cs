@@ -1,8 +1,8 @@
-using System.Diagnostics;
 using System.Net.Http.Headers;
-using System.Text.Json;
 using System.Xml;
 using AutoOS.Core.Helpers.Registry;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using WinRT.Interop;
@@ -90,7 +90,7 @@ public static class ProcessActions
 			process.WaitForExit();
 		}
 	}
-	
+
 	public static async Task UpdateWindhawkMods()
 	{
 		string windhawkDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windhawk");

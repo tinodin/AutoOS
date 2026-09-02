@@ -1,5 +1,7 @@
 using AutoOS.App.Data.Enums.Benchmarks;
 using AutoOS.App.ViewModels;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Syncfusion.UI.Xaml.TreeGrid;
 
 namespace AutoOS.App.Data.TemplateSelectors.Benchmarks;

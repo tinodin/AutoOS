@@ -1,19 +1,15 @@
-using System.Collections.ObjectModel;
 using AutoOS.App.Data.Contracts;
 using AutoOS.App.Data.Enums;
 using AutoOS.App.Data.Enums.Bios;
 using AutoOS.App.Data.Models.Bios;
 using AutoOS.App.Extensions;
+using AutoOS.App.Services;
+using AutoOS.App.Services.Bios;
 using AutoOS.App.ViewModels.Dialogs.Bios;
 using AutoOS.Core.Data.Models.Bios;
 using AutoOS.Core.Helpers.Bios;
 using AutoOS.Core.Helpers.Shutdown;
-using AutoOS.App.Services;
-using AutoOS.App.Services.Bios;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using System.Diagnostics;
-using System.Text.Json;
+using Microsoft.UI.Xaml;
 
 namespace AutoOS.App.ViewModels;
 

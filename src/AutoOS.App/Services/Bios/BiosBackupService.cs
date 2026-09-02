@@ -1,6 +1,4 @@
 using System.Text.Encodings.Web;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using AutoOS.App.Data.Contexts;
 using AutoOS.App.Data.Contracts;
 using AutoOS.App.Data.Enums.Bios;

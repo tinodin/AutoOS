@@ -1,4 +1,6 @@
 using AutoOS.App.Data.Models.Power;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Syncfusion.UI.Xaml.TreeGrid;
 
 namespace AutoOS.App.Data.TemplateSelectors.Power;

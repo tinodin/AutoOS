@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using AutoOS.Core.Data.Models.Device;
 using WinRT;

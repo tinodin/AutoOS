@@ -1,6 +1,5 @@
-using System.Diagnostics;
-using AutoOS.Core.Helpers.Device;
 using AutoOS.Core.Data.Models.Device;
+using AutoOS.Core.Helpers.Device;
 using AutoOS.Core.Helpers.Download;
 using AutoOS.Core.Helpers.Extract;
 using AutoOS.Core.Helpers.Processes;

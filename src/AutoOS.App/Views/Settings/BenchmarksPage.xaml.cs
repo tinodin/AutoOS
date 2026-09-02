@@ -1,12 +1,13 @@
-using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Runtime.InteropServices.WindowsRuntime;
 using AutoOS.App.ViewModels;
 using AutoOS.Core.Helpers.Picker;
-using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.WinUI.Controls;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
+using Microsoft.UI.Xaml.Navigation;
 using Syncfusion.UI.Xaml.Charts;
 using Syncfusion.UI.Xaml.DataGrid;
 using Syncfusion.UI.Xaml.Grids;

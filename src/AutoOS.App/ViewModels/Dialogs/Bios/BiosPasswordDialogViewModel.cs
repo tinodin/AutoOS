@@ -1,7 +1,4 @@
-using System.Collections;
-using System.ComponentModel;
 using AutoOS.Core.Helpers.Bios;
-using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace AutoOS.App.ViewModels.Dialogs.Bios;
 

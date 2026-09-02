@@ -1,5 +1,3 @@
-using CommunityToolkit.Mvvm.ComponentModel;
-
 namespace AutoOS.App.ViewModels.Dialogs.Power;
 
 public sealed partial class EditDialogViewModel : BaseDialogViewModel

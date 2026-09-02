@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using AutoOS.App.Common;
 using AutoOS.Core.Helpers.Download;
 using AutoOS.Core.Helpers.Extract;

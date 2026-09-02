@@ -1,7 +1,6 @@
-using System.Diagnostics;
 using AutoOS.App.Views.Installer.Actions;
-using AutoOS.Core.Helpers.Device;
 using AutoOS.Core.Data.Models.Device;
+using AutoOS.Core.Helpers.Device;
 using AutoOS.Core.Helpers.Registry;
 using Microsoft.Win32;
 

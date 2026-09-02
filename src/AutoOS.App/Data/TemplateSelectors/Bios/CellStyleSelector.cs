@@ -1,5 +1,7 @@
 using AutoOS.App.Data.Enums.Bios;
 using AutoOS.App.Data.Models.Bios;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Syncfusion.UI.Xaml.TreeGrid;
 
 namespace AutoOS.App.Data.TemplateSelectors.Bios;

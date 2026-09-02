@@ -1,5 +1,4 @@
 using System.Net.Http.Headers;
-using System.Text.Json;
 using AutoOS.App.Views.Installer.Stages;
 using AutoOS.App.Views.Updater;
 using AutoOS.App.Views.Updater.Stages;
@@ -7,6 +6,8 @@ using AutoOS.Core.Helpers.Database;
 using AutoOS.Core.Helpers.Logging;
 using AutoOS.Core.Helpers.OS;
 using CommunityToolkit.WinUI.Controls;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.Win32;
 using Windows.Storage;
 

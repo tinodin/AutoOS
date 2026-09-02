@@ -1,9 +1,5 @@
-using System.Collections;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
 using AutoOS.App.Data.Enums.Bios;
 using AutoOS.Core.Data.Models.Bios;
-using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace AutoOS.App.Data.Models.Bios;
 

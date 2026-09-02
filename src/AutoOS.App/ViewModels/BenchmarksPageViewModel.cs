@@ -1,5 +1,3 @@
-using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Globalization;
 using AutoOS.App.Data.Enums;
 using AutoOS.App.Data.Enums.Benchmarks;
@@ -7,8 +5,8 @@ using AutoOS.App.Data.Models.Benchmarks;
 using AutoOS.App.Services;
 using AutoOS.App.Services.Benchmarks;
 using AutoOS.Core.Helpers.Picker;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
+using Microsoft.UI;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using nietras.SeparatedValues;
 using Windows.Storage;

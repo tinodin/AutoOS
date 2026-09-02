@@ -1,8 +1,10 @@
-using System.Collections.ObjectModel;
 using System.Text.Json.Nodes;
-using AutoOS.Core.Helpers.GPU;
 using AutoOS.Core.Data.Models.GPU;
+using AutoOS.Core.Helpers.GPU;
 using AutoOS.Core.Helpers.Picker;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Navigation;
 using Windows.Storage;
 
 namespace AutoOS.App.Views.Installer;

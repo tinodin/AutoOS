@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using AutoOS.App.Views.Installer.Actions;
 using AutoOS.Core.Helpers.Processes;
 using AutoOS.Core.Helpers.Registry;

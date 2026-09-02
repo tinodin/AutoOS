@@ -1,10 +1,11 @@
-using System.Collections.ObjectModel;
 using AutoOS.App.Views.Settings.Scheduling;
-using AutoOS.Core.Helpers.CPU;
 using AutoOS.Core.Data.Models.CPU;
-using AutoOS.Core.Helpers.Device;
 using AutoOS.Core.Data.Models.Device;
+using AutoOS.Core.Helpers.CPU;
+using AutoOS.Core.Helpers.Device;
 using AutoOS.Core.Helpers.Scheduling;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
 namespace AutoOS.App.Views.Settings;
 

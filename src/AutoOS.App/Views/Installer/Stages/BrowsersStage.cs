@@ -1,5 +1,3 @@
-using System.Diagnostics;
-using System.Text.Json;
 using System.Text.Json.Nodes;
 using AutoOS.App.Common;
 using AutoOS.App.Views.Installer.Actions;

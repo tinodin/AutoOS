@@ -1,3 +1,5 @@
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 namespace AutoOS.App.Views.Settings.Scheduling;
 
 public sealed partial class SchedulingItemTemplateSelector : DataTemplateSelector

@@ -1,7 +1,6 @@
 using System.Globalization;
 using AutoOS.Core.Data.Models.Bios;
 using AutoOS.Core.Helpers.Bios;
-using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace AutoOS.App.Data.Models.Bios;
 

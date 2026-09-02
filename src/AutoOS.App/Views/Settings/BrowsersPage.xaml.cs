@@ -1,7 +1,8 @@
-using System.Collections.ObjectModel;
 using AutoOS.App.Common;
 using AutoOS.App.Views.Installer.Stages;
 using AutoOS.App.Views.Updater;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
 namespace AutoOS.App.Views.Settings;
 

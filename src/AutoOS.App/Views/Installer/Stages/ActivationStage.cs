@@ -1,5 +1,3 @@
-using System.Diagnostics;
-
 namespace AutoOS.App.Views.Installer.Stages;
 
 public static class ActivationStage

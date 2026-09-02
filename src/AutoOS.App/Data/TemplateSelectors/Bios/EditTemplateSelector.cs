@@ -1,5 +1,6 @@
 using AutoOS.App.Data.Models.Bios;
-using AutoOS.Core.Data.Models.Bios;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
 namespace AutoOS.App.Data.TemplateSelectors.Bios;
 

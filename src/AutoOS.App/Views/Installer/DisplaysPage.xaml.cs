@@ -1,4 +1,7 @@
 using AutoOS.Core.Helpers.Picker;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Navigation;
 using Windows.Storage;
 using Windows.Storage.FileProperties;
 

@@ -1,5 +1,4 @@
 using System.Globalization;
-using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace AutoOS.App.Data.Models.Power;
 

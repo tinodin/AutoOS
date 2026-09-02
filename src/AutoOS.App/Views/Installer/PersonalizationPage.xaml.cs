@@ -1,4 +1,7 @@
 using System.Runtime.InteropServices;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Navigation;
 using Microsoft.Win32;
 using Windows.Devices.Geolocation;
 using Windows.Storage;

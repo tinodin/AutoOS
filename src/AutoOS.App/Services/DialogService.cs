@@ -1,10 +1,11 @@
-using System.ComponentModel;
 using AutoOS.App.Data.Enums;
 using AutoOS.App.Dialogs.Bios;
 using AutoOS.App.Dialogs.Power;
 using AutoOS.App.ViewModels.Dialogs;
 using AutoOS.App.ViewModels.Dialogs.Bios;
 using AutoOS.App.ViewModels.Dialogs.Power;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
 namespace AutoOS.App.Services;
 

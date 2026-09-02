@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using AutoOS.Core.Helpers.Power;
 using AutoOS.Core.Helpers.Registry;
 using Microsoft.Win32;

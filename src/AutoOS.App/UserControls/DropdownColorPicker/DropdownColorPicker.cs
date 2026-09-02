@@ -1,3 +1,6 @@
+using Microsoft.UI;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 namespace AutoOS.App.UserControls;
 
 public partial class DropdownColorPicker : DevWinUI.DropdownColorPicker

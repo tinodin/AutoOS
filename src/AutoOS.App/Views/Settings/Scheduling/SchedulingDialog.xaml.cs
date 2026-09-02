@@ -1,5 +1,7 @@
 using AutoOS.App.Views.Settings.Scheduling.ViewModels;
 using AutoOS.Core.Data.Models.CPU;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
 namespace AutoOS.App.Views.Settings.Scheduling;
 

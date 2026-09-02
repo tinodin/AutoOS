@@ -1,10 +1,8 @@
-using System.Diagnostics;
-using System.Text.Json;
 using AutoOS.App.Common;
+using AutoOS.Core.Data.Models.GPU;
 using AutoOS.Core.Helpers.Download;
 using AutoOS.Core.Helpers.Extract;
 using AutoOS.Core.Helpers.GPU;
-using AutoOS.Core.Data.Models.GPU;
 using AutoOS.Core.Helpers.Monitor;
 using AutoOS.Core.Helpers.Processes;
 using AutoOS.Core.Helpers.Registry;

@@ -1,4 +1,6 @@
 using AutoOS.App.ViewModels.Dialogs.Bios;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
 namespace AutoOS.App.Dialogs.Bios;
 

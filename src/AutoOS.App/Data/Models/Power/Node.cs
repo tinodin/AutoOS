@@ -1,9 +1,5 @@
-using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using AutoOS.App.Data.Enums.Power;
-using AutoOS.App.Data.Models;
-using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace AutoOS.App.Data.Models.Power;
 

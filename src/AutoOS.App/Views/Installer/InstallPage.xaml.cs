@@ -2,6 +2,8 @@ using AutoOS.App.Views.Installer.Stages;
 using AutoOS.Core.Helpers.Logging;
 using AutoOS.Core.Helpers.OS;
 using AutoOS.Core.Helpers.Shutdown;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using Windows.Storage;

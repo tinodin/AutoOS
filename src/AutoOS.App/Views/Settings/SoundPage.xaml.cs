@@ -1,9 +1,9 @@
-using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using AutoOS.Core.Data.Models.Device;
-using AutoOS.Core.Helpers.Sound;
 using AutoOS.Core.Data.Models.Sound;
+using AutoOS.Core.Helpers.Sound;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Windows.Win32;
 using Windows.Win32.Foundation;

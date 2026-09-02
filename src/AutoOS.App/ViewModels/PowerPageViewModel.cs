@@ -1,5 +1,3 @@
-using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Globalization;
 using AutoOS.App.Data.Contracts;
 using AutoOS.App.Data.Enums;
@@ -8,8 +6,7 @@ using AutoOS.App.Data.Models.Power;
 using AutoOS.App.Extensions;
 using AutoOS.App.Services;
 using AutoOS.App.ViewModels.Dialogs.Power;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
+using Microsoft.UI.Xaml;
 
 namespace AutoOS.App.ViewModels;
 

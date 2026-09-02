@@ -1,6 +1,7 @@
-using System.Diagnostics;
 using AutoOS.App.Views.Installer.Actions;
 using AutoOS.Core.Helpers.Picker;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Windows.Storage;
 using Windows.Storage.FileProperties;
 

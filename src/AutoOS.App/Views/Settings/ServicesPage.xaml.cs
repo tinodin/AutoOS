@@ -1,7 +1,8 @@
-using System.Diagnostics;
 using System.ServiceProcess;
 using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.Shutdown;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.Win32;
 
 namespace AutoOS.App.Views.Settings;
