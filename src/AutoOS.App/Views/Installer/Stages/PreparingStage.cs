@@ -531,7 +531,7 @@ public static partial class PreparingStage
 			GMenu = (localSettings.Values["Peripherals"]?.ToString()?.Contains("G-Menu") ?? false);
 			EndgameGear = (localSettings.Values["Peripherals"]?.ToString()?.Contains("Endgame Gear") ?? false);
 			GloriousCORE = (localSettings.Values["Peripherals"]?.ToString()?.Contains("Glorious CORE") ?? false);
-			MCHOSE = (localSettings.Values["Peripherals"]?.ToString()?.Contains("MCHOSE") ?? false);
+			MCHOSE = (localSettings.Values["Peripherals"]?.ToString()?.Contains("MCHOSE HUB") ?? false);
 			CorsairICue = (localSettings.Values["Peripherals"]?.ToString()?.Contains("Corsair iCUE") ?? false);
 			OpenRGB = (localSettings.Values["Peripherals"]?.ToString()?.Contains("OpenRGB") ?? false);
 			FanControl = (localSettings.Values["Peripherals"]?.ToString()?.Contains("FanControl") ?? false);
@@ -580,18 +580,18 @@ public static partial class PreparingStage
 			AIDA64Extreme = (localSettings.Values["Overclocking"]?.ToString()?.Contains("AIDA64 Extreme") ?? false);
 			MemtestVulkan = (localSettings.Values["Overclocking"]?.ToString()?.Contains("Memtest Vulkan") ?? false);
 
-			Reaper = (localSettings.Values["Music Production"]?.ToString()?.Contains("Reaper") ?? false);
-			FLStudio = (localSettings.Values["Music Production"]?.ToString()?.Contains("FL Studio") ?? false);
-			Audacity = (localSettings.Values["Music Production"]?.ToString()?.Contains("Audacity") ?? false);
-			FlexASIO = (localSettings.Values["Music Production"]?.ToString()?.Contains("FlexASIO") ?? false);
-			ASIO4ALL = (localSettings.Values["Music Production"]?.ToString()?.Contains("ASIO4ALL") ?? false);
-			ArturiaMidiControlCenter = (localSettings.Values["Music Production"]?.ToString()?.Contains("Arturia MIDI Control Center") ?? false);
-			Voicemeeter = (localSettings.Values["Music Production"]?.ToString()?.Contains("Voicemeeter") ?? false);
+			Reaper = ((localSettings.Values["MusicProduction"]?.ToString() ?? localSettings.Values["Music Production"]?.ToString())?.Contains("Reaper") ?? false);
+			FLStudio = ((localSettings.Values["MusicProduction"]?.ToString() ?? localSettings.Values["Music Production"]?.ToString())?.Contains("FL Studio") ?? false);
+			Audacity = ((localSettings.Values["MusicProduction"]?.ToString() ?? localSettings.Values["Music Production"]?.ToString())?.Contains("Audacity") ?? false);
+			FlexASIO = ((localSettings.Values["MusicProduction"]?.ToString() ?? localSettings.Values["Music Production"]?.ToString())?.Contains("FlexASIO") ?? false);
+			ASIO4ALL = ((localSettings.Values["MusicProduction"]?.ToString() ?? localSettings.Values["Music Production"]?.ToString())?.Contains("ASIO4ALL") ?? false);
+			ArturiaMidiControlCenter = ((localSettings.Values["MusicProduction"]?.ToString() ?? localSettings.Values["Music Production"]?.ToString())?.Contains("Arturia MIDI Control Center") ?? false);
+			Voicemeeter = ((localSettings.Values["MusicProduction"]?.ToString() ?? localSettings.Values["Music Production"]?.ToString())?.Contains("Voicemeeter") ?? false);
 
-			DaVinciResolve = (localSettings.Values["Video Production"]?.ToString()?.Contains("DaVinci Resolve") ?? false);
-			Blender = (localSettings.Values["Video Production"]?.ToString()?.Contains("Blender") ?? false);
-			CapCut = (localSettings.Values["Video Production"]?.ToString()?.Contains("CapCut") ?? false);
-			LosslessCut = (localSettings.Values["Video Production"]?.ToString()?.Contains("LosslessCut") ?? false);
+			DaVinciResolve = ((localSettings.Values["VideoProduction"]?.ToString() ?? localSettings.Values["Video Production"]?.ToString())?.Contains("DaVinci Resolve") ?? false);
+			Blender = ((localSettings.Values["VideoProduction"]?.ToString() ?? localSettings.Values["Video Production"]?.ToString())?.Contains("Blender") ?? false);
+			CapCut = ((localSettings.Values["VideoProduction"]?.ToString() ?? localSettings.Values["Video Production"]?.ToString())?.Contains("CapCut") ?? false);
+			LosslessCut = ((localSettings.Values["VideoProduction"]?.ToString() ?? localSettings.Values["Video Production"]?.ToString())?.Contains("LosslessCut") ?? false);
 
 			Netflix = (localSettings.Values["Multimedia"]?.ToString()?.Contains("Netflix") ?? false);
 			DisneyPlus = (localSettings.Values["Multimedia"]?.ToString()?.Contains("Disney+") ?? false);
@@ -617,7 +617,7 @@ public static partial class PreparingStage
 			CrystalDiskMark = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("CrystalDiskMark") ?? false);
 			ProtonVPN = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("Proton VPN") ?? false);
 			BulkCrapUninstaller = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("Bulk Crap Uninstaller") ?? false);
-			BluetoothAudioReceiver = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("BluetoothAudioReceiver") ?? false);
+			BluetoothAudioReceiver = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("Bluetooth Audio Receiver") ?? false);
 			AnyDesk = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("AnyDesk") ?? false);
 			RustDesk = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("RustDesk") ?? false);
 			Apollo = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("Apollo") ?? false);
