@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO.Compression;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
@@ -71,7 +72,6 @@ public static partial class StoreHelper
 						LogHelper.LogError(new Exception($"[StoreHelper] No download URL resolved for {identifier}"), actionTitle: $"[StoreHelper] Download failed for {identifier}");
 						return;
 					}
-					Debug.WriteLine($"[StoreHelper] Selected Package: {main.Name}");
 
 					await DownloadHelper.Download(main.ResourceUri, folderPath, reporter: reporter);
 					return;
@@ -86,16 +86,16 @@ public static partial class StoreHelper
 
 	public static async Task Install(string identifier)
 	{
-		string folderPath = Path.Combine(Path.Combine(Path.GetTempPath(), "StoreHelper"), identifier);
+		string folderPath = Path.Combine(Path.GetTempPath(), "StoreHelper", identifier);
 
 		try
 		{
-			var allFiles = Directory.GetFiles(folderPath, "*.*", SearchOption.TopDirectoryOnly)
-				.Where(f => f.EndsWith(".appx", StringComparison.OrdinalIgnoreCase) ||
-							f.EndsWith(".appxbundle", StringComparison.OrdinalIgnoreCase) ||
-							f.EndsWith(".msix", StringComparison.OrdinalIgnoreCase) ||
-							f.EndsWith(".msixbundle", StringComparison.OrdinalIgnoreCase))
-				.ToList();
+			List<string> allFiles = [.. Directory.GetFiles(folderPath, "*.*", SearchOption.TopDirectoryOnly)
+				.Where(file =>
+					file.EndsWith(".appx", StringComparison.OrdinalIgnoreCase) ||
+					file.EndsWith(".appxbundle", StringComparison.OrdinalIgnoreCase) ||
+					file.EndsWith(".msix", StringComparison.OrdinalIgnoreCase) ||
+					file.EndsWith(".msixbundle", StringComparison.OrdinalIgnoreCase))];
 
 			if (allFiles.Count == 0)
 			{
@@ -103,11 +103,96 @@ public static partial class StoreHelper
 				return;
 			}
 
-			string mainPath = allFiles.FirstOrDefault(f => Path.GetFileName(f).StartsWith(identifier.Split('_')[0], StringComparison.OrdinalIgnoreCase)) ?? allFiles[0];
+			string mainPath = allFiles.FirstOrDefault(file => Path.GetFileName(file).StartsWith(identifier.Split('_')[0], StringComparison.OrdinalIgnoreCase)) ?? allFiles[0];
 
-			await new PackageManager().StagePackageAsync(new Uri(mainPath), null);
-			await new PackageManager().ProvisionPackageForAllUsersAsync(identifier);
-			await new PackageManager().AddPackageAsync(new Uri(mainPath), null, DeploymentOptions.ForceApplicationShutdown);
+			List<string> depPaths = [.. allFiles.Where(file => !file.Equals(mainPath, StringComparison.OrdinalIgnoreCase))];
+
+			List<string> manifestDeps = GetDependenciesFromPackage(mainPath);
+
+			foreach (string depFamily in manifestDeps)
+			{
+				if (depPaths.Any(p => Path.GetFileName(p).StartsWith(depFamily.Split('_')[0], StringComparison.OrdinalIgnoreCase)))
+					continue;
+
+				PackageManager pmCheck = new();
+
+				if (pmCheck.FindPackagesForUser(string.Empty, depFamily).Any())
+					continue;
+
+				string depNameOnly = depFamily.Split('_')[0];
+
+				if (pmCheck.FindPackagesForUser(string.Empty).Any(p =>
+					p.Id.FullName.StartsWith(depNameOnly, StringComparison.OrdinalIgnoreCase)))
+					continue;
+
+				string depFolder = Path.Combine(Path.GetTempPath(), "StoreHelper", depFamily);
+
+				try
+				{
+					await Download(depFamily, 0, null);
+
+					if (Directory.Exists(depFolder))
+					{
+						List<string> depFiles = [.. Directory.GetFiles(depFolder, "*.*", SearchOption.TopDirectoryOnly)
+							.Where(f =>
+								f.EndsWith(".appx", StringComparison.OrdinalIgnoreCase) ||
+								f.EndsWith(".appxbundle", StringComparison.OrdinalIgnoreCase) ||
+								f.EndsWith(".msix", StringComparison.OrdinalIgnoreCase) ||
+								f.EndsWith(".msixbundle", StringComparison.OrdinalIgnoreCase))];
+
+						foreach (string df in depFiles)
+						{
+							string dest = Path.Combine(folderPath, Path.GetFileName(df));
+
+							if (!File.Exists(dest))
+								File.Copy(df, dest, true);
+
+							if (!depPaths.Contains(dest))
+								depPaths.Add(dest);
+						}
+					}
+				}
+				catch
+				{
+				}
+				finally
+				{
+					if (Directory.Exists(depFolder))
+						try
+						{
+							Directory.Delete(depFolder, true);
+						}
+						catch { }
+				}
+			}
+
+			PackageManager pm = new();
+
+			foreach (string depPath in depPaths.ToList())
+			{
+				try
+				{
+					await pm.AddPackageAsync(new Uri(depPath), null, DeploymentOptions.ForceApplicationShutdown);
+				}
+				catch
+				{
+				}
+			}
+
+			List<Uri> depUris = [.. depPaths.Select(p => new Uri(p))];
+
+			if (depUris.Count > 0)
+				await pm.AddPackageAsync(new Uri(mainPath), depUris, DeploymentOptions.ForceApplicationShutdown);
+			else
+				await pm.AddPackageAsync(new Uri(mainPath), null, DeploymentOptions.ForceApplicationShutdown);
+
+			try
+			{
+				await pm.ProvisionPackageForAllUsersAsync(identifier);
+			}
+			catch
+			{
+			}
 		}
 		catch (Exception ex)
 		{
@@ -116,10 +201,171 @@ public static partial class StoreHelper
 		finally
 		{
 			if (Directory.Exists(folderPath))
+				try
+				{
+					Directory.Delete(folderPath, true);
+				}
+				catch { }
+		}
+	}
+
+	private static List<string> GetDependenciesFromPackage(string packagePath)
+	{
+		List<string> deps = [];
+
+		if (Directory.Exists(packagePath))
+		{
+			string? innerFile = Directory.GetFiles(packagePath, "*.*", SearchOption.TopDirectoryOnly)
+				.FirstOrDefault(f =>
+					f.EndsWith(".msixbundle", StringComparison.OrdinalIgnoreCase) ||
+					f.EndsWith(".appxbundle", StringComparison.OrdinalIgnoreCase) ||
+					f.EndsWith(".msix", StringComparison.OrdinalIgnoreCase) ||
+					f.EndsWith(".appx", StringComparison.OrdinalIgnoreCase));
+
+			if (innerFile != null)
+				packagePath = innerFile;
+			else
+				return deps;
+		}
+
+		if (packagePath.EndsWith(".appxbundle", StringComparison.OrdinalIgnoreCase) || packagePath.EndsWith(".msixbundle", StringComparison.OrdinalIgnoreCase))
+		{
+			using ZipArchive zip = ZipFile.OpenRead(packagePath);
+
+			List<ZipArchiveEntry> inners = [.. zip.Entries
+				.Where(e =>
+					e.FullName.EndsWith(".appx", StringComparison.OrdinalIgnoreCase) ||
+					e.FullName.EndsWith(".msix", StringComparison.OrdinalIgnoreCase))];
+
+			if (inners.Count == 0)
 			{
-				Directory.Delete(folderPath, true);
+				ZipArchiveEntry? entry = zip.Entries.FirstOrDefault(e => e.Name.Equals("AppxManifest.xml", StringComparison.OrdinalIgnoreCase));
+
+				if (entry != null)
+				{
+					using StreamReader r = new(entry.Open());
+
+					string xml = r.ReadToEnd();
+
+					if (!string.IsNullOrEmpty(xml))
+					{
+						var doc = XDocument.Parse(xml);
+
+						foreach (XElement d in doc.Descendants().Where(e => e.Name.LocalName == "PackageDependency"))
+						{
+							string? name = d.Attribute("Name")?.Value;
+
+							if (string.IsNullOrEmpty(name))
+								continue;
+
+							string family = $"{name}_8wekyb3d8bbwe";
+
+							if (!deps.Contains(family))
+								deps.Add(family);
+						}
+					}
+				}
+			}
+			else
+			{
+				foreach (ZipArchiveEntry inner in inners)
+				{
+					using MemoryStream innerStream = new();
+
+					inner.Open().CopyTo(innerStream);
+					innerStream.Position = 0;
+
+					using ZipArchive innerZip = new(innerStream, ZipArchiveMode.Read);
+
+					ZipArchiveEntry? innerManifest = innerZip.GetEntry("AppxManifest.xml");
+
+					if (innerManifest != null)
+					{
+						using StreamReader r = new(innerManifest.Open());
+
+						string xml = r.ReadToEnd();
+
+						if (string.IsNullOrEmpty(xml))
+							continue;
+
+						var doc = XDocument.Parse(xml);
+
+						foreach (XElement d in doc.Descendants().Where(e => e.Name.LocalName == "PackageDependency"))
+						{
+							string? name = d.Attribute("Name")?.Value;
+
+							if (string.IsNullOrEmpty(name))
+								continue;
+
+							string family = $"{name}_8wekyb3d8bbwe";
+
+							if (!deps.Contains(family))
+								deps.Add(family);
+						}
+					}
+				}
+			}
+
+			ZipArchiveEntry? bundleManifest = zip.Entries.FirstOrDefault(e => e.Name.Equals("AppxBundleManifest.xml", StringComparison.OrdinalIgnoreCase));
+
+			if (bundleManifest != null)
+			{
+				using StreamReader r = new(bundleManifest.Open());
+
+				string xml = r.ReadToEnd();
+
+				if (!string.IsNullOrEmpty(xml))
+				{
+					var doc = XDocument.Parse(xml);
+
+					foreach (XElement d in doc.Descendants().Where(e => e.Name.LocalName == "PackageDependency"))
+					{
+						string? name = d.Attribute("Name")?.Value;
+
+						if (string.IsNullOrEmpty(name))
+							continue;
+
+						string family = $"{name}_8wekyb3d8bbwe";
+
+						if (!deps.Contains(family))
+							deps.Add(family);
+					}
+				}
 			}
 		}
+		else
+		{
+			using ZipArchive zip = ZipFile.OpenRead(packagePath);
+
+			ZipArchiveEntry? entry = zip.GetEntry("AppxManifest.xml");
+
+			if (entry != null)
+			{
+				using StreamReader r = new(entry.Open());
+
+				string xml = r.ReadToEnd();
+
+				if (!string.IsNullOrEmpty(xml))
+				{
+					var doc = XDocument.Parse(xml);
+
+					foreach (XElement d in doc.Descendants().Where(e => e.Name.LocalName == "PackageDependency"))
+					{
+						string? name = d.Attribute("Name")?.Value;
+
+						if (string.IsNullOrEmpty(name))
+							continue;
+
+						string family = $"{name}_8wekyb3d8bbwe";
+
+						if (!deps.Contains(family))
+							deps.Add(family);
+					}
+				}
+			}
+		}
+
+		return deps;
 	}
 
 	public static async Task Remove(string packageFamilyName)
@@ -428,7 +674,6 @@ public static partial class StoreHelper
 						Version = versionStr ?? string.Empty
 					};
 					results.Add(infoItem);
-					Debug.WriteLine($"[StoreHelper] Package found: {infoItem.Name}, Version: {infoItem.Version}, Modified: {infoItem.LastModified:yyyy-MM-dd HH:mm:ss}");
 				}
 			}
 		}
@@ -483,7 +728,6 @@ public static partial class StoreHelper
 		if (!res.IsSuccessStatusCode)
 		{
 			string error = await res.Content.ReadAsStringAsync();
-			Debug.WriteLine($"[StoreHelper] SOAP request failed: {res.StatusCode} - {error}");
 			return string.Empty;
 		}
 		return await res.Content.ReadAsStringAsync();
