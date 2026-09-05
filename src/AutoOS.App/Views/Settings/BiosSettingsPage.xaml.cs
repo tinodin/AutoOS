@@ -1,6 +1,5 @@
 using AutoOS.App.Data.Enums.Bios;
 using AutoOS.App.Data.Models.Bios;
-using AutoOS.App.Helpers.TreeGrid;
 using AutoOS.App.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -130,14 +129,9 @@ public sealed partial class BiosSettingsPage : Page
 
 	private void EditComboBox_DropDownClosed(object sender, object e)
 	{
-		if (TreeGridEditingHelper.EndEditingIfActive(TreeGrid))
-			return;
-
-		if (TreeGridEditingHelper.EndEditingIfActive(CompareTreeGrid))
-			return;
-
-		if (TreeGridEditingHelper.EndEditingIfActive(ChangesTreeGrid))
-			return;
+		TreeGrid.SelectionController.CurrentCellManager.EndEdit();
+		CompareTreeGrid.SelectionController.CurrentCellManager.EndEdit();
+		ChangesTreeGrid.SelectionController.CurrentCellManager.EndEdit();
 	}
 
 	private void TreeGrid_TreeGridContextFlyoutOpening(object sender, TreeGridContextFlyoutEventArgs e)

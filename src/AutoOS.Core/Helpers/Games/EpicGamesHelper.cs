@@ -596,7 +596,7 @@ public static partial class EpicGamesHelper
 				if (string.IsNullOrWhiteSpace(content))
 					continue;
 
-				JsonNode? obj = JsonNode.Parse(content);
+				var obj = JsonNode.Parse(content);
 
 				if (obj?["InstallationList"] is JsonArray list && list.Count > 0)
 				{
