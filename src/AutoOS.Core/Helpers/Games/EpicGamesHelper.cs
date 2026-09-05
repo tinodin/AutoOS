@@ -582,18 +582,38 @@ public static partial class EpicGamesHelper
 		if (foundFiles.Count == 0)
 			return;
 
-		FileInfo newestFile = foundFiles.First();
-		string oldDrive = Path.GetPathRoot(newestFile.FullName)!;
+		FileInfo? newestFile = null;
+		string? oldDrive = null;
+		JsonNode? jsonObject = null;
+		JsonArray? installationList = null;
 
-		string jsonContent = await File.ReadAllTextAsync(newestFile.FullName);
+		foreach (FileInfo candidate in foundFiles)
+		{
+			try
+			{
+				string content = await File.ReadAllTextAsync(candidate.FullName);
 
-		if (string.IsNullOrWhiteSpace(jsonContent))
-			return;
+				if (string.IsNullOrWhiteSpace(content))
+					continue;
 
-		var jsonObject = JsonNode.Parse(jsonContent);
+				JsonNode? obj = JsonNode.Parse(content);
 
-		// return if install list is empty
-		if (jsonObject?["InstallationList"] is not JsonArray installationList || installationList.Count == 0)
+				if (obj?["InstallationList"] is JsonArray list && list.Count > 0)
+				{
+					newestFile = candidate;
+					oldDrive = Path.GetPathRoot(candidate.FullName)!;
+					jsonObject = obj;
+					installationList = list;
+					break;
+				}
+			}
+			catch
+			{
+				continue;
+			}
+		}
+
+		if (newestFile == null || oldDrive == null || jsonObject == null || installationList == null)
 			return;
 
 		// check and set new game paths in LauncherInstalled.dat
