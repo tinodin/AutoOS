@@ -29,7 +29,7 @@ public static class RuntimesStage
 			("Cleaning up Microsoft Edge WebView2 Runtime files", async () => { string path = Path.Combine(Path.GetTempPath(), "MicrosoftEdgeWebView2RuntimeInstallerX64.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, null),
 
 			// download .net 6 desktop runtime
-			("Downloading .NET 6 Desktop Runtime", async () => await DownloadHelper.Download("https://aka.ms/dotnet/8.0/windowsdesktop-runtime-win-x64.exe", Path.GetTempPath(), "windowsdesktop-runtime-win-x64.exe", new InstallPageReporter()), null),
+			("Downloading .NET 6 Desktop Runtime", async () => await DownloadHelper.Download("https://aka.ms/dotnet/6.0/windowsdesktop-runtime-win-x64.exe", Path.GetTempPath(), "windowsdesktop-runtime-win-x64.exe", new InstallPageReporter()), null),
 
 			// install .net 6 desktop runtime
 			("Installing .NET 6 Desktop Runtime", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "windowsdesktop-runtime-win-x64.exe"), Arguments = "/install /quiet /norestart" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), null),
