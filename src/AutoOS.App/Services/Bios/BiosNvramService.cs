@@ -30,11 +30,11 @@ public sealed class BiosNvramService : IBiosNvramService
 
 			foreach (Setting setting in settings)
 			{
-				(string Name, Guid Guid) key = (setting.VariableName, setting.VariableGuid);
+				(string Name, Guid Guid) key = (setting.Variable, setting.VariableGuid);
 				if (cache.ContainsKey(key))
 					continue;
 
-				if (transport!.TryGetVariable(setting.VariableName, setting.VariableGuid, out byte[]? blob, out uint attrs, out uint status) && blob != null)
+				if (transport!.TryGetVariable(setting.Variable, setting.VariableGuid, out byte[]? blob, out uint attrs, out uint status) && blob != null)
 				{
 					if (setting.VarStoreSize > 0 && blob.Length > setting.VarStoreSize && !HiiHelper.TryDecodeStringValue(setting, blob, out _))
 						blob = blob.AsSpan(0, (int)setting.VarStoreSize).ToArray();
@@ -49,12 +49,12 @@ public sealed class BiosNvramService : IBiosNvramService
 
 			foreach (Setting setting in settings)
 			{
-				if (cache.TryGetValue((setting.VariableName, setting.VariableGuid), out (byte[] Blob, uint Attributes, uint Status) entry) && entry.Blob.Length != 0)
+				if (cache.TryGetValue((setting.Variable, setting.VariableGuid), out (byte[] Blob, uint Attributes, uint Status) entry) && entry.Blob.Length != 0)
 				{
 					setting.VarAttributes = entry.Attributes;
 					setting.VarReadStatus = entry.Status;
 				}
-				else if (cache.TryGetValue((setting.VariableName, setting.VariableGuid), out (byte[] Blob, uint Attributes, uint Status) failed))
+				else if (cache.TryGetValue((setting.Variable, setting.VariableGuid), out (byte[] Blob, uint Attributes, uint Status) failed))
 				{
 					setting.VarReadStatus = failed.Status;
 				}
@@ -70,13 +70,13 @@ public sealed class BiosNvramService : IBiosNvramService
 			HiiHelper.ApplySuppression(settings, blobs, qidMap);
 
 			settings.RemoveAll(setting =>
-				!blobs.TryGetValue((setting.VariableName, setting.VariableGuid), out byte[]? blob)
+				!blobs.TryGetValue((setting.Variable, setting.VariableGuid), out byte[]? blob)
 				|| setting.Width < 1
 				|| setting.Offset + setting.Width > blob.Length);
 
 			foreach (Setting setting in settings)
 			{
-				byte[] blob = blobs[(setting.VariableName, setting.VariableGuid)];
+				byte[] blob = blobs[(setting.Variable, setting.VariableGuid)];
 
 				if (HiiHelper.TryDecodeStringValue(setting, blob, out Option? stringMatched))
 				{
@@ -132,7 +132,7 @@ public sealed class BiosNvramService : IBiosNvramService
 
 			Setting first = enumerator.Current.Key;
 
-			if (!transport!.TryGetVariable(first.VariableName, first.VariableGuid, out byte[]? blob, out uint attrs, out _) || blob == null)
+			if (!transport!.TryGetVariable(first.Variable, first.VariableGuid, out byte[]? blob, out uint attrs, out _) || blob == null)
 				return false;
 
 			attributes = attrs;
@@ -210,7 +210,7 @@ public sealed class BiosNvramService : IBiosNvramService
 
 		try
 		{
-			if (transport!.TryGetVariable(setting.VariableName, setting.VariableGuid, out byte[]? data, out uint attrs, out _) && data != null)
+			if (transport!.TryGetVariable(setting.Variable, setting.VariableGuid, out byte[]? data, out uint attrs, out _) && data != null)
 			{
 				if (setting.VarStoreSize > 0 && data.Length > setting.VarStoreSize && !HiiHelper.TryDecodeStringValue(setting, data, out _))
 					data = data.AsSpan(0, (int)setting.VarStoreSize).ToArray();

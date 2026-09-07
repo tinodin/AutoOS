@@ -148,8 +148,9 @@ public static partial class HiiHelper
 
 				flattenedSettings.Add(new Setting
 				{
-					VariableName = varStore.Name,
+					Variable = varStore.Name,
 					VariableGuid = varStore.Guid,
+					Token = question.Token,
 					Offset = question.Offset,
 					Width = question.Width,
 					VarStoreSize = varStore.Size,
@@ -160,11 +161,10 @@ public static partial class HiiHelper
 					Description = question.Help,
 					Path = question.Path,
 					PathSegments = string.IsNullOrEmpty(question.Path) ? [] : question.Path.Split(" / ", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries),
-					Token = question.Token,
-					Minimum = question.Minimum ?? 0,
-					Maximum = question.Maximum ?? 0,
+					Minimum = question.Minimum,
+					Maximum = question.Maximum,
 					Default = defaultLabel,
-					Increment = (uint)(question.Step ?? 1),
+					Increment = (uint?)question.Step,
 					NumericFormat = question.NumericFormat,
 					Options = options,
 					SuppressionBlocks = question.SuppressionBlocks,
@@ -174,11 +174,11 @@ public static partial class HiiHelper
 		}
 
 		var resultList = new List<Setting>(flattenedSettings.Count);
-		var uniqueByKey = new Dictionary<(string VariableName, uint Offset, uint Width), Setting>(flattenedSettings.Count);
+		var uniqueByKey = new Dictionary<(string Variable, uint Offset, uint Width), Setting>(flattenedSettings.Count);
 
 		foreach (Setting setting in flattenedSettings)
 		{
-			(string VariableName, uint Offset, uint Width) key = (setting.VariableName, setting.Offset, setting.Width);
+			(string Variable, uint Offset, uint Width) key = (setting.Variable, setting.Offset, setting.Width);
 			if (uniqueByKey.TryAdd(key, setting))
 			{
 				resultList.Add(setting);
@@ -218,7 +218,7 @@ public static partial class HiiHelper
 			if (!ushort.TryParse(setting.Token, out ushort qid) || !rawQids.TryGetValue(qid, out (ushort VarStoreId, ushort Offset) target))
 				continue;
 
-			resolvableVarStores.TryAdd(target.VarStoreId, (setting.VariableName, setting.VariableGuid));
+			resolvableVarStores.TryAdd(target.VarStoreId, (setting.Variable, setting.VariableGuid));
 		}
 
 		var qidMap = new Dictionary<ushort, QidTarget>();
@@ -238,7 +238,7 @@ public static partial class HiiHelper
 			if (!qidMap.TryGetValue(qid, out QidTarget target))
 				return null;
 
-			if (!variableBlobs.TryGetValue((target.VariableName, target.VariableGuid), out byte[]? blob))
+			if (!variableBlobs.TryGetValue((target.Variable, target.VariableGuid), out byte[]? blob))
 				return null;
 
 			if (target.Offset >= blob.Length)
@@ -655,7 +655,7 @@ public static partial class HiiHelper
 						}
 
 						ulong? minimum = null, maximum = null, increment = null;
-						if (opcode is IfrOpcode.OneOf or IfrOpcode.Numeric && length >= 17)
+						if (opcode is IfrOpcode.Numeric && length >= 17)
 						{
 							int dataSize = length - 14;
 							if (dataSize == 3 && offset + 16 < offset + length)
@@ -694,7 +694,7 @@ public static partial class HiiHelper
 							Help = GetString(stringTable, helpStringId),
 							Flags = questionFlags,
 							FormId = formId,
-							Token = token.ToString(),
+							Token = ToHexString(token),
 							Minimum = minimum,
 							Maximum = maximum,
 							Step = increment,
@@ -730,7 +730,7 @@ public static partial class HiiHelper
 						Help = GetString(stringTable, helpStringId),
 						Flags = questionFlags,
 						FormId = formId,
-						Token = token.ToString()
+						Token = ToHexString(token)
 					};
 					questions.Add(currentQuestion);
 					AddFormItem(formId, new FormItem(currentQuestion, 0));
@@ -949,6 +949,42 @@ public static partial class HiiHelper
 				result.Add(name);
 		}
 		return result;
+	}
+
+	public static List<string> GetEfiVariableAttributeNames(uint attributes)
+	{
+		if (attributes == 0xFFFFFFFF || attributes == 0)
+			return [];
+
+		var flags = (EfiVariableAttributes)attributes;
+		List<string> names = [];
+
+		foreach (EfiVariableAttributes value in Enum.GetValues<EfiVariableAttributes>())
+		{
+			if (value == EfiVariableAttributes.None)
+				continue;
+
+			if (flags.HasFlag(value))
+				names.Add(value.ToString());
+		}
+
+		return names;
+	}
+
+	public static string ToHexString(ulong value)
+	{
+		string hex = value.ToString("X", System.Globalization.CultureInfo.InvariantCulture);
+		return hex.Length % 2 == 0 ? hex : "0" + hex;
+	}
+
+	public static bool TryParseHexUInt32(string? text, out uint value)
+	{
+		value = 0;
+		if (string.IsNullOrEmpty(text))
+			return false;
+
+		string hex = text.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? text[2..] : text;
+		return uint.TryParse(hex, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out value);
 	}
 
 	public static string FormatValue(ulong rawValue, IEnumerable<Option> options)

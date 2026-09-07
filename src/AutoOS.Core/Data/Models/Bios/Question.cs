@@ -8,6 +8,8 @@ public sealed class Question
 
 	public ushort VarStoreId { get; set; }
 
+	public string Token { get; set; } = string.Empty;
+
 	public ushort Offset { get; set; }
 
 	public uint Width { get; set; }
@@ -21,8 +23,6 @@ public sealed class Question
 	public ushort FormId { get; set; }
 
 	public string Path { get; set; } = string.Empty;
-
-	public string Token { get; set; } = string.Empty;
 
 	public ulong? Minimum { get; set; }
 

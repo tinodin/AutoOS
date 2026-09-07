@@ -34,7 +34,7 @@ public static partial class DiscordHelper
 			(@"AppData\Local\Perplexity\Comet\User Data\Default\Local Storage\leveldb", "Perplexity")
 		}
 		.Where(entry => Directory.Exists(Path.Combine(userDir, entry.Item1)))
-		.Select(entry => (Path: Path.Combine(userDir, entry.Item1), Browser: entry.Item2, LastWriteTime: new DirectoryInfo(Path.Combine(userDir, entry.Item1)).LastWriteTime));
+		.Select(entry => (Path: Path.Combine(userDir, entry.Item1), Browser: entry.Item2, new DirectoryInfo(Path.Combine(userDir, entry.Item1)).LastWriteTime));
 
 		IEnumerable<(string Path, string Browser, DateTime LastWriteTime)> firefox = new[]
 		{
@@ -256,7 +256,7 @@ public static partial class DiscordHelper
 		{
 			if (process.MainWindowHandle != IntPtr.Zero)
 			{
-				PInvoke.PostMessage((HWND)process.MainWindowHandle, PInvoke.WM_CLOSE, default(WPARAM), default(LPARAM));
+				PInvoke.PostMessage((HWND)process.MainWindowHandle, PInvoke.WM_CLOSE, default, default);
 				process.WaitForExit(500);
 				try
 				{

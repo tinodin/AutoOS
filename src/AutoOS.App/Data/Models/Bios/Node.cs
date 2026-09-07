@@ -29,6 +29,8 @@ public sealed partial class Node : ObservableObject, INotifyDataErrorInfo, IOrde
 
 	public Node? Parent { get; set; }
 
+	public string FullPath { get; set; } = string.Empty;
+
 	public bool IsExpanded { get; set; } = true;
 
 	public ObservableCollection<Node> Children { get; } = [];
@@ -64,6 +66,11 @@ public sealed partial class Node : ObservableObject, INotifyDataErrorInfo, IOrde
 
 	public string DisplayOriginal => State is { } state && Setting is { } setting ? SettingState.GetDisplayValue(setting, state.OriginalValue) : string.Empty;
 
+	public string ValueToolTip => GetRangeToolTipOr(DisplayCurrent);
+
+	public string OriginalValueToolTip => GetRangeToolTipOr(DisplayOriginal);
+	private string GetRangeToolTipOr(string displayValue) =>
+		Setting is { } setting && setting.Options.Count == 0 && (setting.Minimum.HasValue || setting.Maximum.HasValue) ? SettingState.GetRangeToolTip(setting) : displayValue;
 	public bool HasPendingRecommendation => Setting is { } setting && State is { } state && SettingState.HasPendingRecommendation(setting, state);
 
 	public bool IsModified => State?.IsModified == true;

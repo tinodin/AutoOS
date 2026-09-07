@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.Json.Nodes;
 using LevelDB;
 using Microsoft.Data.Sqlite;
@@ -130,10 +130,10 @@ public static partial class DatabaseHelper
 
 	private static JsonNode? ReadSqlite(string sqlitePath, string keyName)
 	{
-		using var connection = new Microsoft.Data.Sqlite.SqliteConnection(new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder { DataSource = sqlitePath, Mode = Microsoft.Data.Sqlite.SqliteOpenMode.ReadOnly }.ToString());
+		using var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = sqlitePath, Mode = SqliteOpenMode.ReadOnly }.ToString());
 		connection.Open();
 
-		using var cmd = new Microsoft.Data.Sqlite.SqliteCommand("SELECT value, compression_type, conversion_type FROM data WHERE key = @keyName;", connection);
+		using var cmd = new SqliteCommand("SELECT value, compression_type, conversion_type FROM data WHERE key = @keyName;", connection);
 		cmd.Parameters.AddWithValue("@keyName", keyName);
 
 		using SqliteDataReader reader = cmd.ExecuteReader();

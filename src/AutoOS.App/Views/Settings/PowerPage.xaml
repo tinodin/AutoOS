@@ -190,14 +190,17 @@
 							<!--  Description  -->
 							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterDescription, Mode=TwoWay}" Text="Description" />
 
+							<!--  GUID  -->
+							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterGuid, Mode=TwoWay}" Text="GUID" />
+
+							<!--  Separator  -->
+							<MenuFlyoutSeparator />
+
 							<!--  AC  -->
 							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterAc, Mode=TwoWay}" Text="AC" />
 
 							<!--  DC  -->
 							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterDc, Mode=TwoWay}" Text="DC" />
-
-							<!--  GUID  -->
-							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterGuid, Mode=TwoWay}" Text="GUID" />
 
 							<!--  Separator  -->
 							<MenuFlyoutSeparator />
@@ -395,6 +398,7 @@
 						CellToolTipOpening="TreeGrid_CellToolTipOpening"
 						ChildPropertyName="Children"
 						ColumnWidthMode="Star"
+						ContextRequested="TreeGrid_ContextRequested"
 						CurrentCellBeginEdit="TreeGrid_CurrentCellBeginEdit"
 						CurrentCellEndEdit="TreeGrid_CurrentCellEndEdit"
 						DataValidationMode="InView"
@@ -490,6 +494,7 @@
 						CellToolTipOpening="TreeGrid_CellToolTipOpening"
 						ChildPropertyName="Children"
 						ColumnWidthMode="Star"
+						ContextRequested="TreeGrid_ContextRequested"
 						CurrentCellBeginEdit="TreeGrid_CurrentCellBeginEdit"
 						CurrentCellEndEdit="TreeGrid_CurrentCellEndEdit"
 						DataValidationMode="InView"
@@ -610,6 +615,7 @@
 						CellToolTipOpening="TreeGrid_CellToolTipOpening"
 						ChildPropertyName="Children"
 						ColumnWidthMode="Star"
+						ContextRequested="TreeGrid_ContextRequested"
 						CurrentCellBeginEdit="TreeGrid_CurrentCellBeginEdit"
 						CurrentCellEndEdit="TreeGrid_CurrentCellEndEdit"
 						DataValidationMode="InView"

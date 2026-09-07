@@ -39,6 +39,15 @@ public sealed partial class SettingState : ObservableObject
 	public static string GetDisplayValue(Setting setting, string? value) =>
 		setting.Options.Count > 0 ? ResolveOption(setting, value)?.Label ?? value ?? string.Empty : value ?? string.Empty;
 
+	public static string GetRangeToolTip(Setting setting)
+	{
+		List<string> lines = [$"Range: {setting.Minimum} - {setting.Maximum}"];
+		if (setting.Increment.HasValue)
+			lines.Add($"Increment: {setting.Increment.Value}");
+
+		return string.Join(Environment.NewLine, lines);
+	}
+
 	public static string GetCanonicalValue(Setting setting, string? value) =>
 		ResolveOption(setting, value)?.Value.ToString(CultureInfo.InvariantCulture) ?? value ?? string.Empty;
 

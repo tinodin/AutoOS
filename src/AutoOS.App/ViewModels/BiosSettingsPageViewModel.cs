@@ -1,3 +1,6 @@
+using System.Globalization;
+using System.Windows.Input;
+using AutoOS.App.Data.Commands;
 using AutoOS.App.Data.Contracts;
 using AutoOS.App.Data.Enums;
 using AutoOS.App.Data.Enums.Bios;
@@ -92,7 +95,34 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 	public partial bool FilterDescription { get; set; }
 
 	[ObservableProperty]
+	public partial bool FilterVariable { get; set; }
+
+	[ObservableProperty]
+	public partial bool FilterVariableGuid { get; set; }
+
+	[ObservableProperty]
+	public partial bool FilterAttributes { get; set; }
+
+	[ObservableProperty]
+	public partial bool FilterFlags { get; set; }
+
+	[ObservableProperty]
+	public partial bool FilterToken { get; set; }
+
+	[ObservableProperty]
+	public partial bool FilterOffset { get; set; }
+
+	[ObservableProperty]
+	public partial bool FilterWidth { get; set; }
+
+	[ObservableProperty]
 	public partial bool FilterCurrent { get; set; }
+
+	[ObservableProperty]
+	public partial bool FilterRecommended { get; set; }
+
+	[ObservableProperty]
+	public partial bool FilterDefault { get; set; }
 
 	[ObservableProperty]
 	public partial FilterMode FilterMode { get; set; } = FilterMode.Contains;
@@ -143,7 +173,25 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 
 	partial void OnFilterDescriptionChanged(bool value) => RefreshFilter();
 
+	partial void OnFilterVariableChanged(bool value) => RefreshFilter();
+
+	partial void OnFilterVariableGuidChanged(bool value) => RefreshFilter();
+
+	partial void OnFilterAttributesChanged(bool value) => RefreshFilter();
+
+	partial void OnFilterFlagsChanged(bool value) => RefreshFilter();
+
+	partial void OnFilterTokenChanged(bool value) => RefreshFilter();
+
+	partial void OnFilterOffsetChanged(bool value) => RefreshFilter();
+
+	partial void OnFilterWidthChanged(bool value) => RefreshFilter();
+
 	partial void OnFilterCurrentChanged(bool value) => RefreshFilter();
+
+	partial void OnFilterRecommendedChanged(bool value) => RefreshFilter();
+
+	partial void OnFilterDefaultChanged(bool value) => RefreshFilter();
 
 	partial void OnFilterModeChanged(FilterMode value) => RefreshFilter();
 
@@ -160,6 +208,8 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 	}
 
 	public void RefreshFilter() => RefreshFilterAction?.Invoke();
+
+	public ICommand CopyTextCommand { get; } = new CopyTextCommand();
 
 	[RelayCommand]
 	private void SetFilterMode(string value) => FilterMode = Enum.Parse<FilterMode>(value);
@@ -300,7 +350,7 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 	[RelayCommand(CanExecute = nameof(CanRestore))]
 	private async Task RestoreAsync()
 	{
-		string? file = await filePickerService.PickSingleFileAsync("HII Backup", ["*.json"], backupService.BackupDirectory);
+		string? file = await filePickerService.PickSingleFileAsync("HII Backup", ["*.json.zip", "*.json"], backupService.BackupDirectory);
 		if (string.IsNullOrEmpty(file))
 			return;
 
@@ -316,18 +366,22 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		DriverLoadError = null;
 
 
-		string json = await File.ReadAllTextAsync(file);
-		BackupFile? backup = JsonSerializer.Deserialize(json, BiosBackupService.BackupJsonContextRelaxed.BackupFile);
+		BackupFile? backup = await BiosBackupService.ReadBackupFileAsync(file);
 		if (backup != null)
 		{
-			Dictionary<(string VariableName, string VariableGuid, uint Offset), string> backupMap = [with(backup.Settings.Count)];
+			Dictionary<(string Variable, string VariableGuid, uint Offset), string> backupMap = [with(backup.Settings.Count)];
 			foreach (BackupSetting s in backup.Settings)
-				backupMap[(s.VariableName, s.VariableGuid, s.Offset)] = s.Value;
+			{
+				if (!HiiHelper.TryParseHexUInt32(s.Offset, out uint offset))
+					continue;
+
+				backupMap[(s.Variable, s.VariableGuid, offset)] = s.Value;
+			}
 
 			foreach (Setting setting in _settings)
 			{
 				string guidStr = HiiHelper.GetGuidString(setting.VariableGuid);
-				if (backupMap.TryGetValue((setting.VariableName, guidStr, setting.Offset), out string? value))
+				if (backupMap.TryGetValue((setting.Variable, guidStr, setting.Offset), out string? value))
 				{
 					setting.Value = value;
 					_settingStates[setting].Value = SettingState.GetCanonicalValue(setting, value);
@@ -459,6 +513,80 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		return changed;
 	}
 
+	public static IReadOnlyList<(string Text, string Value)> GetContextFlyoutItems(Node node, string columnMappingName)
+	{
+		if (node.NodeKind == NodeKind.Root)
+		{
+			return Array.Empty<(string Text, string Value)>();
+		}
+		if (node.NodeKind == NodeKind.Path)
+		{
+			if (columnMappingName == nameof(Node.DisplayName))
+			{
+				return new[]
+				{
+					("Copy Path", node.FullPath)
+				};
+			}
+			else
+			{
+				return Array.Empty<(string Text, string Value)>();
+			}
+		}
+		else if (node.NodeKind == NodeKind.Setting)
+		{
+			Setting setting = node.Setting!;
+
+			if (columnMappingName == nameof(Node.DisplayName))
+			{
+				return new[]
+				{
+					("Copy Path", setting.Path),
+					("Copy Setting", setting.Name),
+					("Copy Description", setting.Description),
+					("Copy Variable", setting.Variable),
+					("Copy Variable GUID", setting.VariableGuid.ToString()),
+					("Copy Flags", setting.Flags.Count > 0 ? string.Join(", ", setting.Flags) : string.Empty),
+					("Copy Attributes", string.Join(", ", HiiHelper.GetEfiVariableAttributeNames(setting.VarAttributes))),
+					("Copy Token", setting.Token),
+					("Copy Offset", HiiHelper.ToHexString(setting.Offset)),
+					("Copy Width", HiiHelper.ToHexString(setting.Width)),
+				};
+			}
+
+			string displayValue = columnMappingName switch
+			{
+				nameof(Node.DisplayCurrent) => node.State?.Value ?? string.Empty,
+				nameof(Node.DisplayRecommended) => setting.RecommendedValue ?? setting.RecommendedOption?.Value.ToString(CultureInfo.InvariantCulture) ?? string.Empty,
+				nameof(Node.DisplayDefault) => setting.Default,
+				nameof(Node.DisplayOriginal) => node.State?.OriginalValue ?? string.Empty,
+				_ => setting.Name
+			};
+
+			if (setting.Options.Count > 0)
+			{
+				return new[]
+				{
+					("Copy Value", displayValue)
+				};
+			}
+			else
+			{
+				return new[]
+				{
+					("Copy Value", displayValue),
+					("Copy Minimum", setting.Minimum?.ToString(CultureInfo.InvariantCulture) ?? string.Empty),
+					("Copy Maximum", setting.Maximum?.ToString(CultureInfo.InvariantCulture) ?? string.Empty),
+					("Copy Increment", setting.Increment?.ToString(CultureInfo.InvariantCulture) ?? string.Empty),
+				};
+			}
+		}
+		else
+		{
+			return Array.Empty<(string Text, string Value)>();
+		}
+	}
+
 	public void RefreshAfterEdit()
 	{
 		UpdateState();
@@ -539,7 +667,37 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		if (FilterDescription && textMatches(node.Description))
 			return true;
 
+		if (node.Setting is { } setting)
+		{
+			if (FilterVariable && textMatches(setting.Variable))
+				return true;
+
+			if (FilterVariableGuid && textMatches(setting.VariableGuid.ToString()))
+				return true;
+
+			if (FilterAttributes && textMatches(string.Join(", ", HiiHelper.GetEfiVariableAttributeNames(setting.VarAttributes))))
+				return true;
+
+			if (FilterFlags && textMatches(string.Join(", ", setting.Flags)))
+				return true;
+
+			if (FilterToken && textMatches(setting.Token))
+				return true;
+
+			if (FilterOffset && textMatches(HiiHelper.ToHexString(setting.Offset)))
+				return true;
+
+			if (FilterWidth && textMatches(HiiHelper.ToHexString(setting.Width)))
+				return true;
+		}
+
 		if (FilterCurrent && textMatches(node.DisplayCurrent))
+			return true;
+
+		if (FilterRecommended && textMatches(node.DisplayRecommended))
+			return true;
+
+		if (FilterDefault && textMatches(node.DisplayDefault))
 			return true;
 
 		return false;
@@ -547,6 +705,9 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 
 	private static bool IsAncestorPathMatch(Node node, Func<string, bool> textMatches)
 	{
+		if (node.Setting != null && textMatches(node.Setting.Path))
+			return true;
+
 		Node? cur = node.Parent;
 		while (cur != null)
 		{
@@ -613,6 +774,7 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 					pathNode = new Node(NodeKind.Path, seg)
 					{
 						Parent = currentParent,
+						FullPath = currentChain,
 						Order = order
 					};
 					currentParent.Children.Add(pathNode);

@@ -153,17 +153,44 @@
 							<!--  Setting  -->
 							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterSetting, Mode=TwoWay}" Text="Setting" />
 
-							<!--  Description  -->
-							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterDescription, Mode=TwoWay}" Text="Description" />
+						<!--  Description  -->
+						<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterDescription, Mode=TwoWay}" Text="Description" />
 
-							<!--  Separator  -->
-							<MenuFlyoutSeparator />
+						<!--  Variable  -->
+						<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterVariable, Mode=TwoWay}" Text="Variable" />
 
-							<!--  Current  -->
-							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterCurrent, Mode=TwoWay}" Text="Current" />
+						<!--  Variable GUID  -->
+						<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterVariableGuid, Mode=TwoWay}" Text="Variable GUID" />
 
-							<!--  Separator  -->
-							<MenuFlyoutSeparator />
+						<!--  Attributes  -->
+						<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterAttributes, Mode=TwoWay}" Text="Attributes" />
+
+						<!--  Flags  -->
+						<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterFlags, Mode=TwoWay}" Text="Flags" />
+
+						<!--  Token  -->
+						<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterToken, Mode=TwoWay}" Text="Token" />
+
+						<!--  Offset  -->
+						<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterOffset, Mode=TwoWay}" Text="Offset" />
+
+						<!--  Width  -->
+						<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterWidth, Mode=TwoWay}" Text="Width" />
+
+						<!--  Separator  -->
+						<MenuFlyoutSeparator />
+
+						<!--  Current  -->
+						<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterCurrent, Mode=TwoWay}" Text="Current" />
+
+						<!--  Recommended  -->
+						<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterRecommended, Mode=TwoWay}" Text="Recommended" />
+
+						<!--  Default  -->
+						<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterDefault, Mode=TwoWay}" Text="Default" />
+
+						<!--  Separator  -->
+						<MenuFlyoutSeparator />
 
 							<!--  Contains  -->
 							<RadioMenuFlyoutItem
@@ -382,6 +409,7 @@
 						CellToolTipOpening="TreeGrid_CellToolTipOpening"
 						ChildPropertyName="Children"
 						ColumnWidthMode="Star"
+						ContextRequested="TreeGrid_ContextRequested"
 						CurrentCellBeginEdit="TreeGrid_CurrentCellBeginEdit"
 						CurrentCellEndEdit="TreeGrid_CurrentCellEndEdit"
 						DataValidationMode="InView"
@@ -481,6 +509,7 @@
 						CellToolTipOpening="TreeGrid_CellToolTipOpening"
 						ChildPropertyName="Children"
 						ColumnWidthMode="Star"
+						ContextRequested="TreeGrid_ContextRequested"
 						CurrentCellBeginEdit="TreeGrid_CurrentCellBeginEdit"
 						CurrentCellEndEdit="TreeGrid_CurrentCellEndEdit"
 						DataValidationMode="InView"
@@ -568,6 +597,7 @@
 						CellToolTipOpening="TreeGrid_CellToolTipOpening"
 						ChildPropertyName="Children"
 						ColumnWidthMode="Star"
+						ContextRequested="TreeGrid_ContextRequested"
 						CurrentCellBeginEdit="TreeGrid_CurrentCellBeginEdit"
 						CurrentCellEndEdit="TreeGrid_CurrentCellEndEdit"
 						DataValidationMode="InView"

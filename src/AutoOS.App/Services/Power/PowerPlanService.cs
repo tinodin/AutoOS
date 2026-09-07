@@ -74,6 +74,8 @@ public sealed class PowerPlanService : IPowerPlanService
 				}
 			}
 
+			string unit = PowerHelper.ReadValueUnitsSpecifier(subgroupGuid, settingGuid);
+			string normalizedUnit = string.IsNullOrEmpty(unit) ? unit : string.Concat(char.ToUpperInvariant(unit[0]).ToString(), unit.AsSpan(1));
 			var setting = new Setting(
 				subgroupGuid,
 				settingGuid,
@@ -82,7 +84,7 @@ public sealed class PowerPlanService : IPowerPlanService
 				minimum,
 				maximum,
 				increment,
-				PowerHelper.ReadValueUnitsSpecifier(subgroupGuid, settingGuid),
+				normalizedUnit,
 				options);
 			settings.Add(setting);
 			values[setting] = new Value(acValue, dcValue);

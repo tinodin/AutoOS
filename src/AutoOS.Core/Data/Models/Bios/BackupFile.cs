@@ -38,15 +38,17 @@ public sealed class BackupSetting
 
 	public string Default { get; set; } = string.Empty;
 
-	public string VariableName { get; set; } = string.Empty;
+	public string Variable { get; set; } = string.Empty;
 
 	public string VariableGuid { get; set; } = string.Empty;
 
+	public List<string> Flags { get; set; } = [];
+
 	public List<string> Attributes { get; set; } = [];
 
-	public uint Offset { get; set; }
-
-	public uint Width { get; set; }
-
 	public string Token { get; set; } = string.Empty;
+
+	public string Offset { get; set; } = string.Empty;
+
+	public string Width { get; set; } = string.Empty;
 }

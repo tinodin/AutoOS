@@ -1,5 +1,6 @@
 using System.ServiceProcess;
 using AutoOS.App.Common;
+using AutoOS.App.Helpers.Xaml;
 using AutoOS.App.Views.Installer.Actions;
 using AutoOS.Core.Data.Models.Device;
 using AutoOS.Core.Data.Models.GPU;
@@ -10,7 +11,6 @@ using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.Scheduling;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using Windows.Storage;
 
@@ -395,7 +395,7 @@ public sealed partial class GraphicsPage : Page
 
 		ToggleSwitch toggleSwitch = (ToggleSwitch)sender;
 		GpuInfo gpu = (GpuInfo)toggleSwitch.DataContext;
-		var GpuInfo = FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") as StackPanel;
+		var GpuInfo = DependencyObjectHelpers.FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") as StackPanel;
 		if (GpuInfo is null)
 			return;
 		if (!gpu.IsInstalled)
@@ -497,7 +497,7 @@ public sealed partial class GraphicsPage : Page
 
 		ToggleSwitch toggleSwitch = (ToggleSwitch)sender;
 		GpuInfo gpu = (GpuInfo)toggleSwitch.DataContext;
-		var GpuInfo = FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") as StackPanel;
+		var GpuInfo = DependencyObjectHelpers.FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") as StackPanel;
 		if (GpuInfo is null)
 			return;
 		if (!gpu.IsInstalled)
@@ -605,7 +605,7 @@ public sealed partial class GraphicsPage : Page
 
 		ToggleSwitch toggleSwitch = (ToggleSwitch)sender;
 		GpuInfo gpu = (GpuInfo)toggleSwitch.DataContext;
-		var GpuInfo = FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") as StackPanel;
+		var GpuInfo = DependencyObjectHelpers.FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") as StackPanel;
 		if (GpuInfo is null)
 			return;
 		if (!gpu.IsInstalled)
@@ -707,7 +707,7 @@ public sealed partial class GraphicsPage : Page
 
 		ToggleSwitch toggleSwitch = (ToggleSwitch)sender;
 		GpuInfo gpu = (GpuInfo)toggleSwitch.DataContext;
-		var GpuInfo = FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") as StackPanel;
+		var GpuInfo = DependencyObjectHelpers.FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") as StackPanel;
 		if (GpuInfo is null)
 			return;
 		if (!gpu.IsInstalled)
@@ -809,7 +809,7 @@ public sealed partial class GraphicsPage : Page
 
 		ToggleSwitch toggleSwitch = (ToggleSwitch)sender;
 		GpuInfo gpu = (GpuInfo)toggleSwitch.DataContext;
-		var GpuInfo = FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") as StackPanel;
+		var GpuInfo = DependencyObjectHelpers.FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") as StackPanel;
 		if (GpuInfo is null)
 			return;
 		if (!gpu.IsInstalled)
@@ -1137,15 +1137,5 @@ public sealed partial class GraphicsPage : Page
 
 		// remove infobar
 		ObsStudioInfo.Children.Clear();
-	}
-
-	public static T? FindParent<T>(DependencyObject child) where T : DependencyObject
-	{
-		DependencyObject? parent = VisualTreeHelper.GetParent(child);
-
-		while (parent != null && parent is not T)
-			parent = VisualTreeHelper.GetParent(parent);
-
-		return parent as T;
 	}
 }

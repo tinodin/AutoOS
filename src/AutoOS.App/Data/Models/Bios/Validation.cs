@@ -15,9 +15,9 @@ public static class Validation
 
 		if (HiiHelper.TryParseNumericValue(state.Value, setting.NumericFormat, out ulong val))
 		{
-			if (setting.Minimum != 0 || setting.Maximum != 0)
+			if (setting.Minimum.HasValue || setting.Maximum.HasValue)
 			{
-				if (val < setting.Minimum || val > setting.Maximum)
+				if ((setting.Minimum.HasValue && val < setting.Minimum.Value) || (setting.Maximum.HasValue && val > setting.Maximum.Value))
 					return [$"Value must be between {setting.Minimum} and {setting.Maximum}"];
 			}
 		}

@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Windows.Input;
+using AutoOS.App.Data.Commands;
 using AutoOS.App.Data.Contracts;
 using AutoOS.App.Data.Enums;
 using AutoOS.App.Data.Enums.Power;
@@ -115,13 +117,13 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 	public partial bool FilterDescription { get; set; }
 
 	[ObservableProperty]
+	public partial bool FilterGuid { get; set; } = true;
+
+	[ObservableProperty]
 	public partial bool FilterAc { get; set; }
 
 	[ObservableProperty]
 	public partial bool FilterDc { get; set; }
-
-	[ObservableProperty]
-	public partial bool FilterGuid { get; set; } = true;
 
 	[ObservableProperty]
 	public partial FilterMode FilterMode { get; set; } = FilterMode.Contains;
@@ -135,6 +137,8 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 	public bool CanDelete => Plans.Count > 1;
 
 	public bool CanRestore => IsLoaded;
+
+	public ICommand CopyTextCommand { get; } = new CopyTextCommand();
 
 	[RelayCommand(CanExecute = nameof(CanUndo))]
 	private void Undo()
@@ -523,6 +527,82 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		return true;
 	}
 
+	public static IReadOnlyList<(string Text, string Value)> GetContextFlyoutItems(Node node, string columnMappingName)
+	{
+		if (node.NodeKind == NodeKind.Root)
+		{
+			return Array.Empty<(string Text, string Value)>();
+		}
+		else if (node.NodeKind == NodeKind.Subgroup)
+		{
+			if (columnMappingName == nameof(Node.DisplayName))
+			{
+				return new[]
+				{
+					("Copy Subgroup", node.BaseDisplayName),
+					("Copy Description", node.Description),
+					("Copy GUID", node.Guid.ToString())
+				};
+			}
+			else
+			{
+				return Array.Empty<(string Text, string Value)>();
+			}
+		}
+		else if (node.NodeKind == NodeKind.Setting)
+		{
+			Setting setting = node.Setting!;
+
+			if (columnMappingName == nameof(Node.DisplayName))
+			{
+				return new[]
+				{
+					("Copy Setting", setting.Name),
+					("Copy Description", setting.Description)
+				};
+			}
+
+			(string displayValue, string description) = columnMappingName switch
+			{
+				nameof(Node.DisplayAc) => (node.DisplayAc, node.AcToolTip),
+				nameof(Node.DisplayCompareAc) => (node.DisplayCompareAc, node.CompareAcToolTip),
+				nameof(Node.DisplayOriginalAc) => (node.DisplayOriginalAc, node.OriginalAcToolTip),
+				nameof(Node.DisplayDc) => (node.DisplayDc, node.DcToolTip),
+				nameof(Node.DisplayCompareDc) => (node.DisplayCompareDc, node.CompareDcToolTip),
+				nameof(Node.DisplayOriginalDc) => (node.DisplayOriginalDc, node.OriginalDcToolTip),
+				_ => (setting.Name, setting.Description)
+			};
+
+			if (setting.Options.Count > 0)
+			{
+				return new[]
+				{
+					("Copy Value", displayValue),
+					("Copy Description", description)
+				};
+			}
+			else if (setting.Minimum.HasValue && setting.Maximum.HasValue && setting.Increment.HasValue)
+			{
+				return new[]
+				{
+					("Copy Value", displayValue),
+					("Copy Minimum", setting.Minimum.Value.ToString(CultureInfo.InvariantCulture)),
+					("Copy Maximum", setting.Maximum.Value.ToString(CultureInfo.InvariantCulture)),
+					("Copy Increment", setting.Increment.Value.ToString(CultureInfo.InvariantCulture)),
+					("Copy Unit", setting.Unit)
+				};
+			}
+			else
+			{
+				return Array.Empty<(string Text, string Value)>();
+			}
+		}
+		else
+		{
+			return Array.Empty<(string Text, string Value)>();
+		}
+	}
+
 	public void RefreshAfterEdit()
 	{
 		SyncCompareAndChanges();
@@ -538,11 +618,11 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 
 	partial void OnFilterDescriptionChanged(bool value) => RefreshFilter();
 
+	partial void OnFilterGuidChanged(bool value) => RefreshFilter();
+
 	partial void OnFilterAcChanged(bool value) => RefreshFilter();
 
 	partial void OnFilterDcChanged(bool value) => RefreshFilter();
-
-	partial void OnFilterGuidChanged(bool value) => RefreshFilter();
 
 	partial void OnFilterModeChanged(FilterMode value) => RefreshFilter();
 
@@ -558,8 +638,14 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 
 		if (node.NodeKind == NodeKind.Subgroup)
 		{
-			if (SearchText.Length > 0 && FilterSubgroup && TextMatches(node.DisplayName, SearchText.Trim()))
-				return true;
+			if (SearchText.Length > 0)
+			{
+				string trimmed = SearchText.Trim();
+				if (FilterSubgroup && TextMatches(node.DisplayName, trimmed))
+					return true;
+				if (FilterDescription && TextMatches(node.Description, trimmed))
+					return true;
+			}
 			return node.Children.Any(MatchesFilter);
 		}
 
@@ -577,16 +663,18 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 			return false;
 
 		string trimmed = query.Trim();
-		if (FilterSubgroup)
-		{
-			Subgroup? sg = _subgroups.FirstOrDefault(s => s.Guid == setting.SubgroupGuid);
-			if (sg != null && TextMatches(sg.Name, trimmed))
-				return true;
-		}
+		Subgroup? subgroup = _subgroups.FirstOrDefault(s => s.Guid == setting.SubgroupGuid);
+		if (FilterSubgroup && subgroup != null && TextMatches(subgroup.Name, trimmed))
+			return true;
 		if (FilterSetting && TextMatches(setting.Name, query))
 			return true;
-		if (FilterDescription && TextMatches(setting.Description, query))
-			return true;
+		if (FilterDescription)
+		{
+			if (TextMatches(setting.Description, query))
+				return true;
+			if (subgroup != null && TextMatches(subgroup.Description, trimmed))
+				return true;
+		}
 		if (FilterGuid && (TextMatches(setting.Guid.ToString(), query) || TextMatches(setting.SubgroupGuid.ToString(), query)))
 			return true;
 		if ((FilterAc || FilterDc) && ValuesMatch(node, query))

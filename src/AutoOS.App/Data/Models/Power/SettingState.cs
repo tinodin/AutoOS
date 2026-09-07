@@ -119,7 +119,7 @@ public sealed partial class SettingState(Setting setting) : ObservableObject
 		{
 			$"Range: {setting.Minimum.Value} - {setting.Maximum.Value}",
 			$"Increment: {setting.Increment.Value}",
-			$"Unit: {char.ToUpperInvariant(setting.Unit[0])}{setting.Unit[1..]}"
+			$"Unit: {setting.Unit}"
 		};
 
 		return string.Join(Environment.NewLine, lines);

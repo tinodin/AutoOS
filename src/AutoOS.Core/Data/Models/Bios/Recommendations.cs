@@ -1157,7 +1157,7 @@ public static class Recommendations
 					{
 						if (setting.Width is >= 1 and <= 8)
 						{
-							if (HiiHelper.TryParseNumericValue(rule.Recommended, setting.NumericFormat, out ulong numeric) && !((setting.Minimum > 0 || setting.Maximum > 0) && (numeric < setting.Minimum || numeric > setting.Maximum)))
+							if (HiiHelper.TryParseNumericValue(rule.Recommended, setting.NumericFormat, out ulong numeric) && !((setting.Minimum.HasValue && numeric < setting.Minimum.Value) || (setting.Maximum.HasValue && numeric > setting.Maximum.Value)))
 								recommendedValue = HiiHelper.FormatNumericValue(numeric, setting.NumericFormat);
 						}
 						else

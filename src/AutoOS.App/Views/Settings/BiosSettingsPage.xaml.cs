@@ -1,13 +1,12 @@
 using AutoOS.App.Data.Enums.Bios;
 using AutoOS.App.Data.Models.Bios;
+using AutoOS.App.Helpers.TreeGrid;
 using AutoOS.App.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
-using Syncfusion.UI.Xaml.Data;
 using Syncfusion.UI.Xaml.DataGrid;
-using Syncfusion.UI.Xaml.Grids;
 using Syncfusion.UI.Xaml.TreeGrid;
 using Windows.System;
 
@@ -78,8 +77,8 @@ public sealed partial class BiosSettingsPage : Page
 		string? content = e.Column?.MappingName switch
 		{
 			nameof(Node.DisplayName) => node.ToolTipText,
-			nameof(Node.DisplayCurrent) => node.DisplayCurrent,
-			nameof(Node.DisplayOriginal) => node.DisplayOriginal,
+			nameof(Node.DisplayCurrent) => node.ValueToolTip,
+			nameof(Node.DisplayOriginal) => node.OriginalValueToolTip,
 			nameof(Node.DisplayRecommended) => node.DisplayRecommended,
 			nameof(Node.DisplayDefault) => node.DisplayDefault,
 			_ => null
@@ -134,53 +133,10 @@ public sealed partial class BiosSettingsPage : Page
 		ChangesTreeGrid.SelectionController.CurrentCellManager.EndEdit();
 	}
 
-	private void TreeGrid_TreeGridContextFlyoutOpening(object sender, TreeGridContextFlyoutEventArgs e)
-	{
-		if (sender is not SfTreeGrid treeGrid)
-			return;
+	private void TreeGrid_ContextRequested(UIElement sender, ContextRequestedEventArgs args)
+		=> TreeGridContextFlyoutHelper.HandleCellContextRequested<Node>(sender, args, BiosSettingsPageViewModel.GetContextFlyoutItems, ViewModel.CopyTextCommand);
 
-		if (e.ContextFlyoutType != Syncfusion.UI.Xaml.TreeGrid.ContextFlyoutType.HeaderCell)
-			return;
-
-		e.ContextFlyout.Items.Clear();
-
-		TreeGridColumn column = treeGrid.Columns[treeGrid.ResolveToGridVisibleColumnIndex(e.RowColumnIndex.ColumnIndex)];
-
-		bool isAscending = treeGrid.SortColumnDescriptions.Any(description => description.ColumnName == column.MappingName && description.SortDirection == SortDirection.Ascending);
-		bool isDescending = treeGrid.SortColumnDescriptions.Any(description => description.ColumnName == column.MappingName && description.SortDirection == SortDirection.Descending);
-
-		var ascending = new RadioMenuFlyoutItem
-		{
-			Text = "Sort Ascending",
-			IsChecked = isAscending && !isDescending
-		};
-		ascending.Click += (_, _) => SetSort(treeGrid, column.MappingName, SortDirection.Ascending);
-		e.ContextFlyout.Items.Add(ascending);
-
-		var descending = new RadioMenuFlyoutItem
-		{
-			Text = "Sort Descending",
-			IsChecked = isDescending
-		};
-		descending.Click += (_, _) => SetSort(treeGrid, column.MappingName, SortDirection.Descending);
-		e.ContextFlyout.Items.Add(descending);
-
-		e.ContextFlyout.Items.Add(new MenuFlyoutSeparator());
-
-		var clear = new MenuFlyoutItem { Text = "Clear Sorting" };
-		clear.Click += (_, _) => treeGrid.SortColumnDescriptions.Clear();
-		e.ContextFlyout.Items.Add(clear);
-	}
-
-	private static void SetSort(SfTreeGrid treeGrid, string mappingName, SortDirection direction)
-	{
-		treeGrid.SortColumnDescriptions.Clear();
-		treeGrid.SortColumnDescriptions.Add(new SortColumnDescription
-		{
-			ColumnName = mappingName,
-			SortDirection = direction
-		});
-	}
+	private void TreeGrid_TreeGridContextFlyoutOpening(object sender, TreeGridContextFlyoutEventArgs e) => TreeGridContextFlyoutHelper.ShowHeaderContextFlyout(sender, e);
 
 	private void RefreshFilterOnly()
 	{

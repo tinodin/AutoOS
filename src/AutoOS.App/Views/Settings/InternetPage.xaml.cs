@@ -1,9 +1,9 @@
+using AutoOS.App.Helpers.Xaml;
 using AutoOS.Core.Data.Models.Device;
 using AutoOS.Core.Data.Models.Network;
 using AutoOS.Core.Helpers.Device;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 using Windows.Win32;
 
@@ -178,7 +178,7 @@ public sealed partial class InternetPage : Page
 
 	private void ChangeSetting(FrameworkElement control, NetworkAdvancedSetting setting, string value, string displayValue)
 	{
-		SettingsGroup? settingsGroup = FindParent<SettingsGroup>(control);
+		SettingsGroup? settingsGroup = DependencyObjectHelpers.FindParent<SettingsGroup>(control);
 		if (settingsGroup?.DataContext is not DeviceInfo device)
 			return;
 
@@ -192,7 +192,7 @@ public sealed partial class InternetPage : Page
 		else
 			deviceChanges[setting.Key] = (value, displayValue);
 
-		StackPanel? repeaterItem = FindParent<StackPanel>(settingsGroup);
+		StackPanel? repeaterItem = DependencyObjectHelpers.FindParent<StackPanel>(settingsGroup);
 		if (repeaterItem == null)
 			return;
 		var infoBarContainer = (StackPanel)repeaterItem.FindName("AdapterInfo")!;
@@ -272,7 +272,7 @@ public sealed partial class InternetPage : Page
 	private async void Optimize_Checked(object sender, RoutedEventArgs e)
 	{
 		var button = (ProgressButton)sender;
-		SettingsGroup? settingsGroup = FindParent<SettingsGroup>(button);
+		SettingsGroup? settingsGroup = DependencyObjectHelpers.FindParent<SettingsGroup>(button);
 
 		if (settingsGroup?.DataContext is not DeviceInfo device)
 			return;
@@ -280,7 +280,7 @@ public sealed partial class InternetPage : Page
 		_pendingChanges.Remove(device);
 		UpdateSettings(settingsGroup, device);
 
-		StackPanel? repeaterItem = FindParent<StackPanel>(settingsGroup);
+		StackPanel? repeaterItem = DependencyObjectHelpers.FindParent<StackPanel>(settingsGroup);
 		if (repeaterItem != null)
 		{
 			var infoBarContainer = (StackPanel)repeaterItem.FindName("AdapterInfo")!;
@@ -383,15 +383,5 @@ public sealed partial class InternetPage : Page
 			return xInt.CompareTo(yInt);
 
 		return PInvoke.StrCmpLogical(x, y);
-	}
-
-	public static T? FindParent<T>(DependencyObject child) where T : DependencyObject
-	{
-		DependencyObject? parent = VisualTreeHelper.GetParent(child);
-
-		while (parent != null && parent is not T)
-			parent = VisualTreeHelper.GetParent(parent);
-
-		return parent as T;
 	}
 }

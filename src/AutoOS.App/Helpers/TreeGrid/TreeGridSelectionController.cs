@@ -1,7 +1,10 @@
+using AutoOS.App.Helpers.Xaml;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Syncfusion.UI.Xaml.Grids.ScrollAxis;
 using Syncfusion.UI.Xaml.TreeGrid;
 using Windows.System;
 
@@ -57,15 +60,16 @@ public sealed partial class TreeGridSelectionController : TreeGridRowSelectionCo
 			if (focused is ComboBox || focused is ComboBoxItem)
 				return;
 
-			if (focused is Microsoft.UI.Xaml.Controls.TextBox textBox)
+		if (focused is Microsoft.UI.Xaml.Controls.TextBox textBox && DependencyObjectHelpers.FindParent<TreeGridCell>(textBox) is not null)
+			return;
+
+			if (CurrentCellManager.CurrentCell?.IsEditing == true)
 			{
-				DependencyObject parent = VisualTreeHelper.GetParent(textBox);
-				while (parent != null)
-				{
-					if (parent is TreeGridCell)
-						return;
-					parent = VisualTreeHelper.GetParent(parent);
-				}
+				if (focused is MenuFlyoutItem || focused is MenuFlyoutPresenter)
+					return;
+
+			if (focused is Popup || DependencyObjectHelpers.FindParent<Popup>(focused) is not null)
+				return;
 			}
 
 			DependencyObject current = focused;
@@ -92,5 +96,15 @@ public sealed partial class TreeGridSelectionController : TreeGridRowSelectionCo
 		}
 
 		base.ProcessKeyDown(args);
+	}
+
+	protected override void ProcessPointerPressed(PointerRoutedEventArgs args, RowColumnIndex rowColumnIndex)
+	{
+		ClearSelections(false);
+
+		if (args.GetCurrentPoint(null).Properties.IsRightButtonPressed)
+			return;
+
+		base.ProcessPointerPressed(args, rowColumnIndex);
 	}
 }

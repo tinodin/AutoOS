@@ -1,9 +1,9 @@
+using System.IO.Compression;
 using System.Text.Encodings.Web;
 using AutoOS.App.Data.Contexts;
 using AutoOS.App.Data.Contracts;
 using AutoOS.App.Data.Enums.Bios;
 using AutoOS.App.Data.Models.Bios;
-using AutoOS.Core.Data.Enums.Bios;
 using AutoOS.Core.Data.Models.Bios;
 using AutoOS.Core.Helpers.Bios;
 
@@ -31,32 +31,31 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 	{
 		List<BackupSetting> currentSettings = [.. settings.Select(setting =>
 		{
-			bool hasRange = setting.Options.Count == 0 && (setting.Minimum != 0 || setting.Maximum != 0);
-
 			return new BackupSetting
 			{
 				Path = setting.Path,
 				Setting = setting.Name,
 				Description = setting.Description,
-				Minimum = hasRange ? setting.Minimum : null,
-				Maximum = hasRange ? setting.Maximum : null,
-				Increment = hasRange ? setting.Increment : null,
+				Minimum = setting.Minimum,
+				Maximum = setting.Maximum,
+				Increment = setting.Increment,
 				Value = SettingState.GetDisplayValue(setting, setting.Value),
 				Options = [.. setting.Options.Select(o => o.Label)],
 				Default = setting.Default,
-				VariableName = setting.VariableName,
+				Variable = setting.Variable,
 				VariableGuid = HiiHelper.GetGuidString(setting.VariableGuid),
-				Attributes = GetEfiVariableAttributeNames(setting.VarAttributes),
-				Offset = setting.Offset,
-				Width = setting.Width,
-				Token = setting.Token
+				Flags = setting.Flags,
+				Attributes = HiiHelper.GetEfiVariableAttributeNames(setting.VarAttributes),
+				Token = setting.Token,
+				Offset = HiiHelper.ToHexString(setting.Offset),
+				Width = HiiHelper.ToHexString(setting.Width)
 			};
 		})];
 
 		string latest = string.Empty;
 		if (Directory.Exists(BackupDirectory))
 		{
-			foreach (string file in Directory.EnumerateFiles(BackupDirectory, "*.json"))
+			foreach (string file in Directory.EnumerateFiles(BackupDirectory, "*.json*"))
 			{
 				if (string.Compare(Path.GetFileName(file), Path.GetFileName(latest), StringComparison.Ordinal) > 0)
 					latest = file;
@@ -65,8 +64,7 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 
 		if (latest.Length > 0 && context.LastBackupSettings == null)
 		{
-			await using FileStream latestFs = File.OpenRead(latest);
-			BackupFile? previous = await JsonSerializer.DeserializeAsync(latestFs, BackupJsonContextRelaxed.BackupFile);
+			BackupFile? previous = await ReadBackupFileAsync(latest);
 			context.LastBackupSettings = previous?.Settings;
 		}
 
@@ -85,17 +83,35 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 			Settings = currentSettings
 		};
 
-		string path = Path.Combine(BackupDirectory, $"{DateTime.Now.ToLocalTime():yyyy-MM-dd_HH-mm-ss}.json");
+		string timestamp = $"{DateTime.Now.ToLocalTime():yyyy-MM-dd_HH-mm-ss}";
+		string path = Path.Combine(BackupDirectory, $"{timestamp}.json.zip");
 		await using FileStream fs = File.Create(path);
-		await JsonSerializer.SerializeAsync(fs, backup, BackupJsonContextRelaxed.BackupFile);
+		using ZipArchive archive = new(fs, ZipArchiveMode.Create);
+		ZipArchiveEntry entry = archive.CreateEntry($"{timestamp}.json", CompressionLevel.Optimal);
+		await using Stream entryStream = entry.Open();
+		await JsonSerializer.SerializeAsync(entryStream, backup, BackupJsonContextRelaxed.BackupFile);
 
 		context.LastBackupSettings = currentSettings;
 	}
 
-	public async Task<PageMode> RestoreFromBackupAsync(string filePath)
+	internal static async Task<BackupFile?> ReadBackupFileAsync(string filePath)
 	{
 		await using FileStream fs = File.OpenRead(filePath);
-		BackupFile? backup = await JsonSerializer.DeserializeAsync(fs, BackupJsonContextRelaxed.BackupFile);
+		if (!filePath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+			return await JsonSerializer.DeserializeAsync(fs, BackupJsonContextRelaxed.BackupFile);
+
+		using ZipArchive archive = new(fs, ZipArchiveMode.Read);
+		ZipArchiveEntry? entry = archive.Entries.FirstOrDefault(static e => e.Name.EndsWith(".json", StringComparison.OrdinalIgnoreCase));
+		if (entry == null)
+			return null;
+
+		await using Stream entryStream = entry.Open();
+		return await JsonSerializer.DeserializeAsync(entryStream, BackupJsonContextRelaxed.BackupFile);
+	}
+
+	public async Task<PageMode> RestoreFromBackupAsync(string filePath)
+	{
+		BackupFile? backup = await ReadBackupFileAsync(filePath);
 		if (backup == null)
 			return infoService.GetWriteProtectedState();
 
@@ -110,16 +126,16 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 				return (PageMode.DriverLoadFailed, true);
 			}
 
-			Dictionary<(string VariableName, Guid Guid, uint Offset), Setting> settingsByKey = [with((context.LastSettings?.Count ?? 0))];
+			Dictionary<(string Variable, Guid Guid, uint Offset), Setting> settingsByKey = [with((context.LastSettings?.Count ?? 0))];
 			if (context.LastSettings != null)
 			{
 				foreach (Setting s in context.LastSettings)
-					settingsByKey[(s.VariableName, s.VariableGuid, s.Offset)] = s;
+					settingsByKey[(s.Variable, s.VariableGuid, s.Offset)] = s;
 			}
 
 			bool anyFailed = false;
 
-			foreach (IGrouping<(string Name, Guid Guid), BackupSetting> group in backup.Settings.GroupBy(static setting => (Name: setting.VariableName, Guid: Guid.TryParse(setting.VariableGuid, out Guid guid) ? guid : Guid.Empty)))
+			foreach (IGrouping<(string Name, Guid Guid), BackupSetting> group in backup.Settings.GroupBy(static setting => (Name: setting.Variable, Guid: Guid.TryParse(setting.VariableGuid, out Guid guid) ? guid : Guid.Empty)))
 			{
 				List<KeyValuePair<Setting, SettingState>> pairs = [with(group.Count())];
 				foreach (BackupSetting backupSetting in group)
@@ -130,7 +146,10 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 					if (!Guid.TryParse(backupSetting.VariableGuid, out Guid parsedGuid))
 						continue;
 
-					if (settingsByKey.TryGetValue((backupSetting.VariableName, parsedGuid, backupSetting.Offset), out Setting? current))
+					if (!HiiHelper.TryParseHexUInt32(backupSetting.Offset, out uint offset))
+						continue;
+
+					if (settingsByKey.TryGetValue((backupSetting.Variable, parsedGuid, offset), out Setting? current))
 						pairs.Add(new KeyValuePair<Setting, SettingState>(current, new SettingState { Value = backupSetting.Value }));
 				}
 
@@ -159,38 +178,26 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 		return Failed ? infoService.GetWriteProtectedState() : PageMode.Loaded;
 	}
 
-	private static List<string> GetEfiVariableAttributeNames(uint attributes)
-	{
-		if (attributes == 0xFFFFFFFF || attributes == 0)
-			return [];
-
-		var flags = (EfiVariableAttributes)attributes;
-		List<string> names = [];
-
-		foreach (EfiVariableAttributes value in Enum.GetValues<EfiVariableAttributes>())
-		{
-			if (value == EfiVariableAttributes.None)
-				continue;
-
-			if (flags.HasFlag(value))
-				names.Add(value.ToString());
-		}
-
-		return names;
-	}
-
 	private static bool SettingsEqual(List<BackupSetting> previous, List<BackupSetting> current)
 	{
 		if (previous.Count != current.Count)
 			return false;
 
-		Dictionary<(string VariableName, string VariableGuid, uint Offset), string> previousMap = [with(previous.Count)];
+		Dictionary<(string Variable, string VariableGuid, uint Offset), string> previousMap = [with(previous.Count)];
 		foreach (BackupSetting p in previous)
-			previousMap[(p.VariableName, p.VariableGuid.ToUpperInvariant(), p.Offset)] = p.Value;
+		{
+			if (!HiiHelper.TryParseHexUInt32(p.Offset, out uint offset))
+				return false;
+
+			previousMap[(p.Variable, p.VariableGuid.ToUpperInvariant(), offset)] = p.Value;
+		}
 
 		foreach (BackupSetting setting in current)
 		{
-			if (!previousMap.TryGetValue((setting.VariableName, setting.VariableGuid.ToUpperInvariant(), setting.Offset), out string? prevValue) || !string.Equals(prevValue, setting.Value, StringComparison.Ordinal))
+			if (!HiiHelper.TryParseHexUInt32(setting.Offset, out uint currentOffset))
+				return false;
+
+			if (!previousMap.TryGetValue((setting.Variable, setting.VariableGuid.ToUpperInvariant(), currentOffset), out string? prevValue) || !string.Equals(prevValue, setting.Value, StringComparison.Ordinal))
 				return false;
 		}
 

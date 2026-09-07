@@ -73,7 +73,7 @@ public sealed class BiosSettingsService(IBiosSettingsContext context, IBiosNvram
 		{
 			List<Setting> failures = [];
 
-			foreach (IGrouping<(string Name, Guid Guid), KeyValuePair<Setting, SettingState>> group in modified.GroupBy(pair => (pair.Key.VariableName, pair.Key.VariableGuid)))
+			foreach (IGrouping<(string Name, Guid Guid), KeyValuePair<Setting, SettingState>> group in modified.GroupBy(pair => (pair.Key.Variable, pair.Key.VariableGuid)))
 			{
 				if (!nvramService.PatchVariable(group, out byte[]? patched, out uint attributes, transport))
 				{

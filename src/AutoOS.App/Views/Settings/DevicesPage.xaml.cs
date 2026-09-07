@@ -1,9 +1,9 @@
+using AutoOS.App.Helpers.Xaml;
 using AutoOS.Core.Data.Models.Device;
 using AutoOS.Core.Helpers.Device;
 using AutoOS.Core.Helpers.Shutdown;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
 
 namespace AutoOS.App.Views.Settings;
@@ -163,7 +163,7 @@ public sealed partial class DevicesPage : Page
 		ToggleSwitch toggleSwitch = (ToggleSwitch)sender;
 		DeviceInfo device = (DeviceInfo)toggleSwitch.DataContext;
 		bool isOn = toggleSwitch.IsOn;
-		StackPanel? DevicesInfo = FindParent<StackPanel>(toggleSwitch)!.FindName("DevicesInfo") as StackPanel;
+		StackPanel? DevicesInfo = DependencyObjectHelpers.FindParent<StackPanel>(toggleSwitch)!.FindName("DevicesInfo") as StackPanel;
 
 		// disable hittestvisible to avoid double-clicking
 		toggleSwitch.IsHitTestVisible = false;
@@ -208,15 +208,5 @@ public sealed partial class DevicesPage : Page
 
 		// remove infobar
 		DevicesInfo.Children.Clear();
-	}
-
-	public static T? FindParent<T>(DependencyObject child) where T : DependencyObject
-	{
-		DependencyObject? parent = VisualTreeHelper.GetParent(child);
-
-		while (parent != null && parent is not T)
-			parent = VisualTreeHelper.GetParent(parent);
-
-		return parent as T;
 	}
 }
