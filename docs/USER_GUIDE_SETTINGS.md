@@ -187,6 +187,7 @@ Adjust, Edit, Duplicate, Delete, Restore, Export, Import Power plans and compare
 
 ![Energy & Power](https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/AutoOS%20Settings/Energy%20&%20Power.png)
 ![Energy & Power2](https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/AutoOS%20Settings/Energy%20&%20Power2.png)
+![Energy & Power3](https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/AutoOS%20Settings/Energy%20&%20Power3.png)
 
 ### Services & Drivers
 Toggle Services & Drivers states with configured functionality:
@@ -221,6 +222,8 @@ Manually adjust or merge recommended BIOS Settings:
       - Lower `All Core Curve Optimizer Magnitude`
 
 ![BIOS Settings](https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/AutoOS%20Settings/BIOS%20Settings.png)
+![BIOS Settings2](https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/AutoOS%20Settings/BIOS%20Settings2.png)
+![BIOS Settings3](https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/AutoOS%20Settings/BIOS%20Settings3.png)
 
 ### Disk Cleanup
 Clean up your drives:
