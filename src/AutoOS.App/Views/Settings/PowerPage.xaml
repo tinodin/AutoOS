@@ -7,13 +7,13 @@
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:dev="using:DevWinUI"
 	xmlns:ext="using:AutoOS.App.Extensions"
-	xmlns:helpers="using:AutoOS.App.Helpers.TreeGrid"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:menuflyout="using:AutoOS.App.Helpers.MenuFlyout"
 	xmlns:models="using:AutoOS.App.Data.Models.Power"
 	xmlns:sfgrid="using:Syncfusion.UI.Xaml.TreeGrid"
 	xmlns:templateselectors="using:AutoOS.App.Data.TemplateSelectors.Power"
+	xmlns:treegrid="using:AutoOS.App.Helpers.TreeGrid"
 	xmlns:uc="using:AutoOS.App.UserControls"
-	xmlns:xamlhelpers="using:AutoOS.App.Helpers.Xaml"
 	mc:Ignorable="d">
 	<Page.Resources>
 
@@ -172,9 +172,9 @@
 
 				<!--  Filter  -->
 				<DropDownButton
-					xamlhelpers:MenuFlyoutHelper.KeepOpenOnToggleClick="True"
 					Grid.Column="1"
 					VerticalAlignment="Stretch"
+					menuflyout:MenuFlyoutHelper.KeepOpenOnToggleClick="True"
 					IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"
 					ToolTipService.ToolTip="Filter (Alt+Shift+F)">
 					<DropDownButton.Content>
@@ -391,7 +391,7 @@
 					<!--  TreeGrid  -->
 					<sfgrid:SfTreeGrid
 						x:Name="TreeGrid"
-						helpers:TreeGridSelectionControllerHelper.UseCustomSelectionController="True"
+						treegrid:TreeGridSelectionControllerHelper.UseCustomSelectionController="True"
 						AllowEditing="True"
 						AllowSorting="True"
 						AllowTriStateSorting="True"
@@ -422,14 +422,14 @@
 						</sfgrid:SfTreeGrid.HeaderContextFlyout>
 
 						<sfgrid:SfTreeGrid.ColumnSizer>
-							<helpers:TreeGridStarColumnSizer />
+							<treegrid:TreeGridStarColumnSizer />
 						</sfgrid:SfTreeGrid.ColumnSizer>
 
 						<sfgrid:SfTreeGrid.Columns>
 
 							<!--  Setting  -->
 							<sfgrid:TreeGridTextColumn
-								helpers:StarRatio.ColumnRatio="2"
+								treegrid:StarRatio.ColumnRatio="2"
 								AllowEditing="False"
 								AllowFocus="False"
 								HeaderText="Setting"
@@ -440,7 +440,7 @@
 
 							<!--  Plugged in (AC)  -->
 							<sfgrid:TreeGridTemplateColumn
-								helpers:StarRatio.ColumnRatio="1"
+								treegrid:StarRatio.ColumnRatio="1"
 								AllowEditing="True"
 								AllowSorting="True"
 								CellStyleSelector="{StaticResource CompareCellStyleSelector}"
@@ -462,7 +462,7 @@
 
 							<!--  On battery (DC)  -->
 							<sfgrid:TreeGridTemplateColumn
-								helpers:StarRatio.ColumnRatio="1"
+								treegrid:StarRatio.ColumnRatio="1"
 								AllowEditing="True"
 								AllowSorting="True"
 								CellStyleSelector="{StaticResource CompareCellStyleSelector}"
@@ -487,7 +487,7 @@
 					<!--  Compare TreeGrid  -->
 					<sfgrid:SfTreeGrid
 						x:Name="CompareTreeGrid"
-						helpers:TreeGridSelectionControllerHelper.UseCustomSelectionController="True"
+						treegrid:TreeGridSelectionControllerHelper.UseCustomSelectionController="True"
 						AllowEditing="True"
 						AllowSorting="True"
 						AllowTriStateSorting="True"
@@ -518,14 +518,14 @@
 						</sfgrid:SfTreeGrid.HeaderContextFlyout>
 
 						<sfgrid:SfTreeGrid.ColumnSizer>
-							<helpers:TreeGridStarColumnSizer />
+							<treegrid:TreeGridStarColumnSizer />
 						</sfgrid:SfTreeGrid.ColumnSizer>
 
 						<sfgrid:SfTreeGrid.Columns>
 
 							<!--  Setting  -->
 							<sfgrid:TreeGridTextColumn
-								helpers:StarRatio.ColumnRatio="2"
+								treegrid:StarRatio.ColumnRatio="2"
 								AllowEditing="False"
 								AllowFocus="False"
 								HeaderText="Setting"
@@ -536,7 +536,7 @@
 
 							<!--  Power Plan 1 (AC)  -->
 							<sfgrid:TreeGridTemplateColumn
-								helpers:StarRatio.ColumnRatio="1"
+								treegrid:StarRatio.ColumnRatio="1"
 								AllowEditing="True"
 								AllowSorting="True"
 								CellStyleSelector="{StaticResource CompareCellStyleSelector}"
@@ -558,7 +558,7 @@
 
 							<!--  Power Plan 1 (DC)  -->
 							<sfgrid:TreeGridTemplateColumn
-								helpers:StarRatio.ColumnRatio="1"
+								treegrid:StarRatio.ColumnRatio="1"
 								AllowEditing="True"
 								AllowSorting="True"
 								CellStyleSelector="{StaticResource CompareCellStyleSelector}"
@@ -580,7 +580,7 @@
 
 							<!--  Power Plan 2 (AC)  -->
 							<sfgrid:TreeGridTextColumn
-								helpers:StarRatio.ColumnRatio="1"
+								treegrid:StarRatio.ColumnRatio="1"
 								AllowEditing="False"
 								AllowFocus="False"
 								CellStyleSelector="{StaticResource CompareCellStyleSelector}"
@@ -592,7 +592,7 @@
 
 							<!--  Power Plan 2 (DC)  -->
 							<sfgrid:TreeGridTextColumn
-								helpers:StarRatio.ColumnRatio="1"
+								treegrid:StarRatio.ColumnRatio="1"
 								AllowEditing="False"
 								AllowFocus="False"
 								CellStyleSelector="{StaticResource CompareCellStyleSelector}"
@@ -608,7 +608,7 @@
 					<!--  View Changes TreeGrid  -->
 					<sfgrid:SfTreeGrid
 						x:Name="ChangesTreeGrid"
-						helpers:TreeGridSelectionControllerHelper.UseCustomSelectionController="True"
+						treegrid:TreeGridSelectionControllerHelper.UseCustomSelectionController="True"
 						AllowEditing="True"
 						AllowSorting="True"
 						AllowTriStateSorting="True"
@@ -639,14 +639,14 @@
 						</sfgrid:SfTreeGrid.HeaderContextFlyout>
 
 						<sfgrid:SfTreeGrid.ColumnSizer>
-							<helpers:TreeGridStarColumnSizer />
+							<treegrid:TreeGridStarColumnSizer />
 						</sfgrid:SfTreeGrid.ColumnSizer>
 
 						<sfgrid:SfTreeGrid.Columns>
 
 							<!--  Setting  -->
 							<sfgrid:TreeGridTextColumn
-								helpers:StarRatio.ColumnRatio="2"
+								treegrid:StarRatio.ColumnRatio="2"
 								AllowEditing="False"
 								AllowFocus="False"
 								HeaderText="Setting"
@@ -657,7 +657,7 @@
 
 							<!--  Original (AC)  -->
 							<sfgrid:TreeGridTextColumn
-								helpers:StarRatio.ColumnRatio="1"
+								treegrid:StarRatio.ColumnRatio="1"
 								AllowEditing="False"
 								AllowFocus="False"
 								CellStyleSelector="{StaticResource ChangesCellStyleSelector}"
@@ -669,7 +669,7 @@
 
 							<!--  Original (DC)  -->
 							<sfgrid:TreeGridTextColumn
-								helpers:StarRatio.ColumnRatio="1"
+								treegrid:StarRatio.ColumnRatio="1"
 								AllowEditing="False"
 								AllowFocus="False"
 								CellStyleSelector="{StaticResource ChangesCellStyleSelector}"
@@ -681,7 +681,7 @@
 
 							<!--  New (AC)  -->
 							<sfgrid:TreeGridTemplateColumn
-								helpers:StarRatio.ColumnRatio="1"
+								treegrid:StarRatio.ColumnRatio="1"
 								AllowEditing="True"
 								AllowSorting="True"
 								CellStyleSelector="{StaticResource ChangesCellStyleSelector}"
@@ -703,7 +703,7 @@
 
 							<!--  New (DC)  -->
 							<sfgrid:TreeGridTemplateColumn
-								helpers:StarRatio.ColumnRatio="1"
+								treegrid:StarRatio.ColumnRatio="1"
 								AllowEditing="True"
 								AllowSorting="True"
 								CellStyleSelector="{StaticResource ChangesCellStyleSelector}"

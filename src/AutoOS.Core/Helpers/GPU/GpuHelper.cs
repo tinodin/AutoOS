@@ -26,7 +26,7 @@ public static partial class GpuHelper
 		}
 	};
 
-	public unsafe static List<GpuInfo> GetGPUs()
+	public static unsafe List<GpuInfo> GetGPUs()
 	{
 		var gpus = new List<GpuInfo>();
 		Dictionary<string, (string Vendor, Dictionary<string, string> Devices)> pciDb = null!;
@@ -107,9 +107,6 @@ public static partial class GpuHelper
 
 						if (pciDb.TryGetValue(vendorId, out (string Vendor, Dictionary<string, string> Devices) vendor) && vendor.Devices.TryGetValue(deviceId, out string? name))
 						{
-							string[] versionParts = currentVersion.Split('.');
-							if (versionParts.Length >= 4)
-								currentVersion = versionParts[2] + "." + versionParts[3];
 							codename = name.Split('[')[0].Trim();
 						}
 					}
@@ -319,7 +316,7 @@ public static partial class GpuHelper
 		gpu.RegistryPath = updated.RegistryPath;
 	}
 
-	private unsafe static string GetDeviceName(HDEVINFO hDevInfo, SP_DEVINFO_DATA devInfo)
+	private static unsafe string GetDeviceName(HDEVINFO hDevInfo, SP_DEVINFO_DATA devInfo)
 	{
 		uint regType;
 		uint requiredSize;
@@ -344,7 +341,7 @@ public static partial class GpuHelper
 		return new string((char*)buffer);
 	}
 
-	private unsafe static string GetDriverVersion(HDEVINFO hDevInfo, SP_DEVINFO_DATA devInfo)
+	private static unsafe string GetDriverVersion(HDEVINFO hDevInfo, SP_DEVINFO_DATA devInfo)
 	{
 		uint requiredSize;
 		Windows.Win32.Devices.Properties.DEVPROPTYPE propType;
@@ -397,7 +394,7 @@ public static partial class GpuHelper
 		return string.Empty;
 	}
 
-	private unsafe static string GetRegistryPath(HDEVINFO hDevInfo, SP_DEVINFO_DATA devInfo)
+	private static unsafe string GetRegistryPath(HDEVINFO hDevInfo, SP_DEVINFO_DATA devInfo)
 	{
 		uint regType;
 		uint requiredSize;

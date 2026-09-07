@@ -57,7 +57,7 @@ public static class TreeGridContextFlyoutHelper
 
 		e.ContextFlyout.Items.Clear();
 
-		MenuFlyout flyout = e.ContextFlyout;
+		Microsoft.UI.Xaml.Controls.MenuFlyout flyout = e.ContextFlyout;
 		TreeGridColumn column = treeGrid.Columns[treeGrid.ResolveToGridVisibleColumnIndex(e.RowColumnIndex.ColumnIndex)];
 
 		bool isAscending = treeGrid.SortColumnDescriptions.Any(description => description.ColumnName == column.MappingName && description.SortDirection == SortDirection.Ascending);
@@ -94,7 +94,7 @@ public static class TreeGridContextFlyoutHelper
 		if (items.Count == 0)
 			return;
 
-		var flyout = new MenuFlyout();
+		var flyout = new Microsoft.UI.Xaml.Controls.MenuFlyout();
 
 		foreach ((string Text, string Value) in items)
 		{

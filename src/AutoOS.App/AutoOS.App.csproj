@@ -33,7 +33,7 @@
     <AppxBundle>Never</AppxBundle>
     <AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
     <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
-    <PackageCertificateKeyFile>C:\Users\AutoOS\Desktop\AutoOS\AutoOS_TemporaryKey.pfx</PackageCertificateKeyFile>
+    <PackageCertificateKeyFile>G:\GitHub\My Repositories\AutoOS\AutoOS_TemporaryKey.pfx</PackageCertificateKeyFile>
     <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
     <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
     <AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>

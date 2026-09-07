@@ -76,8 +76,7 @@ public sealed partial class GraphicsPage : Page
 
 	private async void ProgressButton_Loaded(object sender, RoutedEventArgs e)
 	{
-		ProgressButton progressButton = (ProgressButton)sender;
-
+		var progressButton = (ProgressButton)sender;
 		progressButton.IsChecked = true;
 	}
 
@@ -87,8 +86,8 @@ public sealed partial class GraphicsPage : Page
 		string? newestVersion = null;
 		string? newestDownloadUrl = null;
 
-		ProgressButton progressButton = (ProgressButton)sender;
-		GpuInfo gpu = (GpuInfo)progressButton.DataContext;
+		var progressButton = (ProgressButton)sender;
+		var gpu = (GpuInfo)progressButton.DataContext;
 
 		progressButton.IsHitTestVisible = false;
 
@@ -264,7 +263,7 @@ public sealed partial class GraphicsPage : Page
 
 				string currentVersion = gpu.CurrentVersion;
 
-				if (string.Compare(newestVersion ?? "", currentVersion, StringComparison.Ordinal) > 0)
+				if (Version.TryParse(newestVersion, out Version? newestVer) && Version.TryParse(currentVersion, out Version? currentVer) && newestVer > currentVer)
 				{
 					progressButton.Content = $"Update to {newestVersion}";
 				}
@@ -393,10 +392,9 @@ public sealed partial class GraphicsPage : Page
 		if (isInitializingPStatesState)
 			return;
 
-		ToggleSwitch toggleSwitch = (ToggleSwitch)sender;
-		GpuInfo gpu = (GpuInfo)toggleSwitch.DataContext;
-		var GpuInfo = DependencyObjectHelpers.FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") as StackPanel;
-		if (GpuInfo is null)
+		var toggleSwitch = (ToggleSwitch)sender;
+		var gpu = (GpuInfo)toggleSwitch.DataContext;
+		if (DependencyObjectHelpers.FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") is not StackPanel GpuInfo)
 			return;
 		if (!gpu.IsInstalled)
 		{
@@ -495,10 +493,9 @@ public sealed partial class GraphicsPage : Page
 		if (isInitializingECCState)
 			return;
 
-		ToggleSwitch toggleSwitch = (ToggleSwitch)sender;
-		GpuInfo gpu = (GpuInfo)toggleSwitch.DataContext;
-		var GpuInfo = DependencyObjectHelpers.FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") as StackPanel;
-		if (GpuInfo is null)
+		var toggleSwitch = (ToggleSwitch)sender;
+		var gpu = (GpuInfo)toggleSwitch.DataContext;
+		if (DependencyObjectHelpers.FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") is not StackPanel GpuInfo)
 			return;
 		if (!gpu.IsInstalled)
 		{
@@ -603,10 +600,9 @@ public sealed partial class GraphicsPage : Page
 		if (isInitializingGspFirmwareState)
 			return;
 
-		ToggleSwitch toggleSwitch = (ToggleSwitch)sender;
-		GpuInfo gpu = (GpuInfo)toggleSwitch.DataContext;
-		var GpuInfo = DependencyObjectHelpers.FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") as StackPanel;
-		if (GpuInfo is null)
+		var toggleSwitch = (ToggleSwitch)sender;
+		var gpu = (GpuInfo)toggleSwitch.DataContext;
+		if (DependencyObjectHelpers.FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") is not StackPanel GpuInfo)
 			return;
 		if (!gpu.IsInstalled)
 		{
@@ -705,10 +701,9 @@ public sealed partial class GraphicsPage : Page
 		if (isInitializingHDCPState)
 			return;
 
-		ToggleSwitch toggleSwitch = (ToggleSwitch)sender;
-		GpuInfo gpu = (GpuInfo)toggleSwitch.DataContext;
-		var GpuInfo = DependencyObjectHelpers.FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") as StackPanel;
-		if (GpuInfo is null)
+		var toggleSwitch = (ToggleSwitch)sender;
+		var gpu = (GpuInfo)toggleSwitch.DataContext;
+		if (DependencyObjectHelpers.FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") is not StackPanel GpuInfo)
 			return;
 		if (!gpu.IsInstalled)
 		{
@@ -807,10 +802,9 @@ public sealed partial class GraphicsPage : Page
 		if (isInitializingHDMIDPAudioState)
 			return;
 
-		ToggleSwitch toggleSwitch = (ToggleSwitch)sender;
-		GpuInfo gpu = (GpuInfo)toggleSwitch.DataContext;
-		var GpuInfo = DependencyObjectHelpers.FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") as StackPanel;
-		if (GpuInfo is null)
+		var toggleSwitch = (ToggleSwitch)sender;
+		var gpu = (GpuInfo)toggleSwitch.DataContext;
+		if (DependencyObjectHelpers.FindParent<StackPanel>(toggleSwitch)?.FindName("GpuInfo") is not StackPanel GpuInfo)
 			return;
 		if (!gpu.IsInstalled)
 		{

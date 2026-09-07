@@ -1,7 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-namespace AutoOS.App.Helpers.Xaml;
+namespace AutoOS.App.Helpers.MenuFlyout;
 
 public static class MenuFlyoutHelper
 {
@@ -31,7 +31,7 @@ public static class MenuFlyoutHelper
 		var button = (DropDownButton)sender;
 		button.Loaded -= OnButtonLoaded;
 
-		if (button.Flyout is not MenuFlyout flyout)
+		if (button.Flyout is not Microsoft.UI.Xaml.Controls.MenuFlyout flyout)
 			return;
 
 		bool keepOpen = false;
