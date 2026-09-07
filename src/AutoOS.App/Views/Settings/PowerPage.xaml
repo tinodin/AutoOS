@@ -13,6 +13,7 @@
 	xmlns:sfgrid="using:Syncfusion.UI.Xaml.TreeGrid"
 	xmlns:templateselectors="using:AutoOS.App.Data.TemplateSelectors.Power"
 	xmlns:uc="using:AutoOS.App.UserControls"
+	xmlns:xamlhelpers="using:AutoOS.App.Helpers.Xaml"
 	mc:Ignorable="d">
 	<Page.Resources>
 
@@ -171,6 +172,7 @@
 
 				<!--  Filter  -->
 				<DropDownButton
+					xamlhelpers:MenuFlyoutHelper.KeepOpenOnToggleClick="True"
 					Grid.Column="1"
 					VerticalAlignment="Stretch"
 					IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"

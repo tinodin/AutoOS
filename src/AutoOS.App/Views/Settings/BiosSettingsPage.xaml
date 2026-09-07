@@ -16,6 +16,7 @@
 	xmlns:sfgrid="using:Syncfusion.UI.Xaml.TreeGrid"
 	xmlns:views="using:AutoOS.App.Views"
 	xmlns:wctconverters="using:CommunityToolkit.WinUI.Converters"
+	xmlns:xamlhelpers="using:AutoOS.App.Helpers.Xaml"
 	DataContext="{x:Bind ViewModel, Mode=OneWay}"
 	mc:Ignorable="d">
 	<Page.Resources>
@@ -137,6 +138,7 @@
 
 				<!--  Filter  -->
 				<DropDownButton
+					xamlhelpers:MenuFlyoutHelper.KeepOpenOnToggleClick="True"
 					Grid.Column="1"
 					VerticalAlignment="Stretch"
 					IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"
@@ -153,44 +155,44 @@
 							<!--  Setting  -->
 							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterSetting, Mode=TwoWay}" Text="Setting" />
 
-						<!--  Description  -->
-						<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterDescription, Mode=TwoWay}" Text="Description" />
+							<!--  Description  -->
+							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterDescription, Mode=TwoWay}" Text="Description" />
 
-						<!--  Variable  -->
-						<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterVariable, Mode=TwoWay}" Text="Variable" />
+							<!--  Variable  -->
+							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterVariable, Mode=TwoWay}" Text="Variable" />
 
-						<!--  Variable GUID  -->
-						<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterVariableGuid, Mode=TwoWay}" Text="Variable GUID" />
+							<!--  Variable GUID  -->
+							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterVariableGuid, Mode=TwoWay}" Text="Variable GUID" />
 
-						<!--  Attributes  -->
-						<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterAttributes, Mode=TwoWay}" Text="Attributes" />
+							<!--  Attributes  -->
+							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterAttributes, Mode=TwoWay}" Text="Attributes" />
 
-						<!--  Flags  -->
-						<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterFlags, Mode=TwoWay}" Text="Flags" />
+							<!--  Flags  -->
+							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterFlags, Mode=TwoWay}" Text="Flags" />
 
-						<!--  Token  -->
-						<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterToken, Mode=TwoWay}" Text="Token" />
+							<!--  Token  -->
+							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterToken, Mode=TwoWay}" Text="Token" />
 
-						<!--  Offset  -->
-						<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterOffset, Mode=TwoWay}" Text="Offset" />
+							<!--  Offset  -->
+							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterOffset, Mode=TwoWay}" Text="Offset" />
 
-						<!--  Width  -->
-						<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterWidth, Mode=TwoWay}" Text="Width" />
+							<!--  Width  -->
+							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterWidth, Mode=TwoWay}" Text="Width" />
 
-						<!--  Separator  -->
-						<MenuFlyoutSeparator />
+							<!--  Separator  -->
+							<MenuFlyoutSeparator />
 
-						<!--  Current  -->
-						<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterCurrent, Mode=TwoWay}" Text="Current" />
+							<!--  Current  -->
+							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterCurrent, Mode=TwoWay}" Text="Current" />
 
-						<!--  Recommended  -->
-						<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterRecommended, Mode=TwoWay}" Text="Recommended" />
+							<!--  Recommended  -->
+							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterRecommended, Mode=TwoWay}" Text="Recommended" />
 
-						<!--  Default  -->
-						<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterDefault, Mode=TwoWay}" Text="Default" />
+							<!--  Default  -->
+							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterDefault, Mode=TwoWay}" Text="Default" />
 
-						<!--  Separator  -->
-						<MenuFlyoutSeparator />
+							<!--  Separator  -->
+							<MenuFlyoutSeparator />
 
 							<!--  Contains  -->
 							<RadioMenuFlyoutItem
