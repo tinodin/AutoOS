@@ -254,17 +254,21 @@ public static partial class DiscordHelper
 	{
 		foreach (Process process in Process.GetProcessesByName("Discord"))
 		{
-			if (process.MainWindowHandle != IntPtr.Zero)
+			try
 			{
-				PInvoke.PostMessage((HWND)process.MainWindowHandle, PInvoke.WM_CLOSE, default, default);
-				process.WaitForExit(500);
-				try
-				{
-					process.Kill();
-				}
-				catch { }
+				if (process.MainWindowHandle != IntPtr.Zero)
+					PInvoke.PostMessage((HWND)process.MainWindowHandle, PInvoke.WM_CLOSE, default, default);
 
+				process.WaitForExit(500);
 			}
+			catch { }
+
+			try
+			{
+				if (!process.HasExited)
+					process.Kill();
+			}
+			catch { }
 		}
 	}
 
