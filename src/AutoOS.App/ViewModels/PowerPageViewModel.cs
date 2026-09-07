@@ -643,7 +643,7 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 				string trimmed = SearchText.Trim();
 				if (FilterSubgroup && TextMatches(node.DisplayName, trimmed))
 					return true;
-				if (FilterDescription && TextMatches(node.Description, trimmed))
+				if (FilterSubgroup && FilterDescription && TextMatches(node.Description, trimmed))
 					return true;
 			}
 			return node.Children.Any(MatchesFilter);
@@ -672,7 +672,7 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		{
 			if (TextMatches(setting.Description, query))
 				return true;
-			if (subgroup != null && TextMatches(subgroup.Description, trimmed))
+			if (FilterSubgroup && subgroup != null && TextMatches(subgroup.Description, trimmed))
 				return true;
 		}
 		if (FilterGuid && (TextMatches(setting.Guid.ToString(), query) || TextMatches(setting.SubgroupGuid.ToString(), query)))
@@ -710,7 +710,7 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 	}
 
 	private bool CandidatesMatch(uint[] candidates, Setting setting, string query) =>
-		candidates.Any(value => TextMatches(SettingState.GetDisplayValue(setting, value), query) || TextMatches(value.ToString(CultureInfo.InvariantCulture), query));
+		candidates.Any(value => TextMatches(SettingState.GetDisplayValue(setting, value), query) || TextMatches(value.ToString(CultureInfo.InvariantCulture), query) || (FilterDescription && TextMatches(SettingState.GetValueToolTip(setting, value), query)));
 
 	private bool TextMatches(string text, string query)
 	{

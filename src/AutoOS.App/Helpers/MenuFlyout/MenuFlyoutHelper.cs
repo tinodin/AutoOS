@@ -5,20 +5,20 @@ namespace AutoOS.App.Helpers.MenuFlyout;
 
 public static class MenuFlyoutHelper
 {
-	public static readonly DependencyProperty KeepOpenOnToggleClickProperty =
+	public static readonly DependencyProperty KeepOpenOnItemClickProperty =
 		DependencyProperty.RegisterAttached(
-			"KeepOpenOnToggleClick",
+			"KeepOpenOnItemClick",
 			typeof(bool),
 			typeof(MenuFlyoutHelper),
-			new PropertyMetadata(false, OnKeepOpenOnToggleClickChanged));
+			new PropertyMetadata(false, OnKeepOpenOnItemClickChanged));
 
-	public static bool GetKeepOpenOnToggleClick(DependencyObject obj)
-		=> (bool)obj.GetValue(KeepOpenOnToggleClickProperty);
+	public static bool GetKeepOpenOnItemClick(DependencyObject obj)
+		=> (bool)obj.GetValue(KeepOpenOnItemClickProperty);
 
-	public static void SetKeepOpenOnToggleClick(DependencyObject obj, bool value)
-		=> obj.SetValue(KeepOpenOnToggleClickProperty, value);
+	public static void SetKeepOpenOnItemClick(DependencyObject obj, bool value)
+		=> obj.SetValue(KeepOpenOnItemClickProperty, value);
 
-	private static void OnKeepOpenOnToggleClickChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+	private static void OnKeepOpenOnItemClickChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
 	{
 		if (d is not DropDownButton button || e.NewValue is not true)
 			return;
@@ -35,8 +35,11 @@ public static class MenuFlyoutHelper
 			return;
 
 		bool keepOpen = false;
-		foreach (ToggleMenuFlyoutItem toggle in flyout.Items.OfType<ToggleMenuFlyoutItem>())
-			toggle.Click += (_, _) => keepOpen = true;
+		foreach (MenuFlyoutItem item in flyout.Items.OfType<MenuFlyoutItem>())
+		{
+			if (item is ToggleMenuFlyoutItem || item is RadioMenuFlyoutItem)
+				item.Click += (_, _) => keepOpen = true;
+		}
 
 		flyout.Closing += (_, args) =>
 		{

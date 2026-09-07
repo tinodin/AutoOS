@@ -174,7 +174,7 @@
 				<DropDownButton
 					Grid.Column="1"
 					VerticalAlignment="Stretch"
-					menuflyout:MenuFlyoutHelper.KeepOpenOnToggleClick="True"
+					menuflyout:MenuFlyoutHelper.KeepOpenOnItemClick="True"
 					IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"
 					ToolTipService.ToolTip="Filter (Alt+Shift+F)">
 					<DropDownButton.Content>
