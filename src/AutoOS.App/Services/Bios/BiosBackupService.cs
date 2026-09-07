@@ -1,6 +1,6 @@
 using System.IO.Compression;
 using System.Text.Encodings.Web;
-using AutoOS.App.Data.Contexts;
+using AutoOS.App.Data.Contexts.Bios;
 using AutoOS.App.Data.Contracts;
 using AutoOS.App.Data.Enums.Bios;
 using AutoOS.App.Data.Models.Bios;

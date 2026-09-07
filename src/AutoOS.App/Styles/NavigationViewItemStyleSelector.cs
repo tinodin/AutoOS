@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-namespace AutoOS.App.Themes;
+
+namespace AutoOS.App.Styles;
 
 public partial class NavigationViewItemStyleSelector : StyleSelector
 {

@@ -251,9 +251,7 @@ public partial class HeaderCarousel : ItemsControl
 			_gamepadPollingTimer.Start();
 		}
 
-		if (MainWindow.Instance != null)
-		{
-			MainWindow.Instance.Activated += (s, e) =>
+		MainWindow.Instance?.Activated += (s, e) =>
 			{
 				_windowIsActive = e.WindowActivationState != WindowActivationState.Deactivated;
 				if (_windowIsActive)
@@ -266,7 +264,6 @@ public partial class HeaderCarousel : ItemsControl
 					_gamepadPollingTimer?.Stop();
 				}
 			};
-		}
 	}
 
 	private static void GamepadPollingTimer_Tick(object? sender, object e)
@@ -593,12 +590,12 @@ public partial class HeaderCarousel : ItemsControl
 
 	private void BottomButtons_KeyDown(object sender, KeyRoutedEventArgs e)
 	{
-		if (e.Key == VirtualKey.GamepadDPadDown || e.Key == VirtualKey.Down)
+		if (e.Key is VirtualKey.GamepadDPadDown or VirtualKey.Down)
 		{
 			Metadata_ScrollViewer.ChangeView(null, Metadata_ScrollViewer.VerticalOffset + 100, null);
 			e.Handled = true;
 		}
-		else if (e.Key == VirtualKey.GamepadDPadUp || e.Key == VirtualKey.Up)
+		else if (e.Key is VirtualKey.GamepadDPadUp or VirtualKey.Up)
 		{
 			if (Metadata_ScrollViewer.VerticalOffset > 0)
 			{
@@ -1111,10 +1108,7 @@ public partial class HeaderCarousel : ItemsControl
 			t.IsSelected = false;
 		}
 
-		if (selectedTile != null)
-		{
-			selectedTile.IsSelected = true;
-		}
+		selectedTile?.IsSelected = true;
 
 		SetTileVisuals(playSound);
 	}
@@ -1438,7 +1432,7 @@ public partial class HeaderCarousel : ItemsControl
 		LoadEpicGamesAccounts();
 
 		// refresh library
-		foreach (HeaderCarouselItem? item in Items.OfType<HeaderCarouselItem>().Where(item => item.Launcher == "Epic Games" || item.Launcher == "Ubisoft Connect" || item.Launcher == "The EA App" || item.Launcher == "Origin").ToList())
+		foreach (HeaderCarouselItem? item in Items.OfType<HeaderCarouselItem>().Where(item => item.Launcher is "Epic Games" or "Ubisoft Connect" or "The EA App" or "Origin").ToList())
 			Items.Remove(item);
 
 		AddGames(await EpicGamesHelper.GetGames());
@@ -1512,7 +1506,7 @@ public partial class HeaderCarousel : ItemsControl
 		LoadEpicGamesAccounts();
 
 		// refresh library
-		foreach (HeaderCarouselItem? item in Items.OfType<HeaderCarouselItem>().Where(item => item.Launcher == "Epic Games" || item.Launcher == "Ubisoft Connect" || item.Launcher == "The EA App" || item.Launcher == "Origin").ToList())
+		foreach (HeaderCarouselItem? item in Items.OfType<HeaderCarouselItem>().Where(item => item.Launcher is "Epic Games" or "Ubisoft Connect" or "The EA App" or "Origin").ToList())
 			Items.Remove(item);
 
 		AddGames(await EpicGamesHelper.GetGames());
@@ -1605,7 +1599,7 @@ public partial class HeaderCarousel : ItemsControl
 			LoadEpicGamesAccounts();
 
 			// refresh library
-			foreach (HeaderCarouselItem? item in Items.OfType<HeaderCarouselItem>().Where(item => item.Launcher == "Epic Games" || item.Launcher == "Ubisoft Connect" || item.Launcher == "The EA App" || item.Launcher == "Origin").ToList())
+			foreach (HeaderCarouselItem? item in Items.OfType<HeaderCarouselItem>().Where(item => item.Launcher is "Epic Games" or "Ubisoft Connect" or "The EA App" or "Origin").ToList())
 				Items.Remove(item);
 
 			AddGames(await EpicGamesHelper.GetGames());
@@ -1958,7 +1952,7 @@ public partial class HeaderCarousel : ItemsControl
 
 			var newRoot = new KVObject();
 
-			foreach (var child in newChildren)
+			foreach (KeyValuePair<string, KVObject> child in newChildren)
 			{
 				newRoot[child.Key] = child.Value;
 			}
@@ -2069,7 +2063,7 @@ public partial class HeaderCarousel : ItemsControl
 		{
 			Process.Start(new ProcessStartInfo($"uplay://launch/{gameId}/0") { UseShellExecute = true });
 		}
-		else if (launcher == "The EA App" || launcher == "Origin")
+		else if (launcher is "The EA App" or "Origin")
 		{
 			string exchangeCode = await EpicGamesHelper.Exchange();
 			(string? accountId, string? displayName, string _, int _) = EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath);
@@ -2411,11 +2405,8 @@ public partial class HeaderCarousel : ItemsControl
 
 	void StartGameWatcher(Func<bool> isGameRunning)
 	{
-		if (gameWatcherTimer != null)
-		{
-			gameWatcherTimer.Stop();
-			gameWatcherTimer = null;
-		}
+		gameWatcherTimer?.Stop();
+		gameWatcherTimer = null;
 
 		previousGameState = null;
 		previousExplorerState = null;
@@ -2517,7 +2508,7 @@ public partial class HeaderCarousel : ItemsControl
 		{
 			StartGameWatcher(() => Process.GetProcessesByName("UbisoftGameLauncher").Any(process => ProcessesHelper.GetCommandLine(process).Contains($"-upc_uplay_id {GameID}", StringComparison.OrdinalIgnoreCase)));
 		}
-		else if (Launcher == "The EA App" || Launcher == "Origin")
+		else if (Launcher is "The EA App" or "Origin")
 		{
 			StartGameWatcher(() => Process.GetProcessesByName("EAEgsProxy").Any(process => ProcessesHelper.GetCommandLine(process).Contains(InstallLocation, StringComparison.OrdinalIgnoreCase)));
 		}

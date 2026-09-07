@@ -41,7 +41,7 @@ public static class InternetStage
 			(@"Disabling ""Packet Coalescing Filter""", async () => await ProcessActions.RunPowerShell(@"Set-NetOffloadGlobalSetting -PacketCoalescingFilter Disabled"), null)
 		};
 
-		foreach (DeviceInfo adapter in DeviceHelper.GetDevices(DeviceType.NIC).Where(d => d.NicType == NicDeviceType.WiFi || d.NicType == NicDeviceType.LAN).ToList())
+		foreach (DeviceInfo adapter in DeviceHelper.GetDevices(DeviceType.NIC).Where(device => device.NicType is NicDeviceType.WiFi or NicDeviceType.LAN).ToList())
 		{
 			actions.Add(($@"Optimizing advanced network adapter settings for {adapter.FriendlyName}", async () => await Task.Run(() => Core.Helpers.Network.NetworkHelper.OptimizeAdapter(adapter)), null));
 			actions.Add(($@"Optimizing advanced network adapter settings for {adapter.FriendlyName}", async () => await Task.Delay(500), null));

@@ -1,3 +1,4 @@
+using AutoOS.Core.Helpers.OS;
 using AutoOS.Core.Helpers.Registry;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;

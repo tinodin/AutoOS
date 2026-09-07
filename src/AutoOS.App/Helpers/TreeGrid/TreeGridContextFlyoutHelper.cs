@@ -3,12 +3,12 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Syncfusion.UI.Xaml.Data;
 using Syncfusion.UI.Xaml.Grids;
+using Syncfusion.UI.Xaml.Grids.ScrollAxis;
 using Syncfusion.UI.Xaml.TreeGrid;
 using Windows.Foundation;
-using Microsoft.UI.Xaml.Media;
-using Syncfusion.UI.Xaml.Grids.ScrollAxis;
 
 namespace AutoOS.App.Helpers.TreeGrid;
 
@@ -46,7 +46,7 @@ public static class TreeGridContextFlyoutHelper
 		TNode? node = treeGrid.GetNodeAtRowIndex(rowColumnIndex.RowIndex)?.Item as TNode ?? treeGrid.CurrentItem as TNode;
 		if (node == null)
 			return;
-		FrameworkElement target = manager.CurrentCell?.Element as FrameworkElement ?? treeGrid;
+		FrameworkElement target = manager.CurrentCell?.Element ?? treeGrid;
 		ShowCellContextFlyout(getItems(node, mappingName), copyTextCommand, target, null);
 	}
 
@@ -146,7 +146,7 @@ public static class TreeGridContextFlyoutHelper
 
 			DependencyObject? parent = VisualTreeHelper.GetParent(current);
 			if (parent == null && current is FrameworkElement fe)
-				parent = fe.Parent as DependencyObject;
+				parent = fe.Parent;
 
 			current = parent;
 		}

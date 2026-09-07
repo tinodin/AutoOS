@@ -1,4 +1,4 @@
-using AutoOS.App.Data.Contexts;
+using AutoOS.App.Data.Contexts.Bios;
 using AutoOS.App.Data.Contracts;
 using AutoOS.App.Services;
 using AutoOS.App.Services.Bios;

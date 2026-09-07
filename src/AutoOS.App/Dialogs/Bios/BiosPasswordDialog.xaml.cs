@@ -24,8 +24,7 @@ public sealed partial class BiosPasswordDialog : ContentDialog, ViewModels.Dialo
 
 	private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
 	{
-		if (ViewModel != null)
-			ViewModel.Password = PasswordBox.Password;
+		ViewModel?.Password = PasswordBox.Password;
 	}
 
 	private async void ContentDialog_PrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)

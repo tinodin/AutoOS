@@ -173,7 +173,7 @@ public sealed partial class SettingsPage : Page
 					}
 				}
 			}
-			else if (itemToSelect.Text == "Eden" || itemToSelect.Text == "Citron")
+			else if (itemToSelect.Text is "Eden" or "Citron")
 			{
 				if (!string.IsNullOrWhiteSpace(DataLocationValue.Text))
 				{
@@ -279,7 +279,7 @@ public sealed partial class SettingsPage : Page
 			{
 				string folderName = Path.GetFileName(DataLocationValue.Text).ToLowerInvariant();
 
-				if (folderName == "portable" || folderName == "ryujinx")
+				if (folderName is "portable" or "ryujinx")
 				{
 					localSettings.Values["RyujinxDataLocation"] = DataLocationValue.Text;
 				}
@@ -306,7 +306,7 @@ public sealed partial class SettingsPage : Page
 			return;
 
 		string folderName = Path.GetFileName(folder.Path).ToLowerInvariant();
-		if (folderName == "portable" || folderName == "ryujinx")
+		if (folderName is "portable" or "ryujinx")
 		{
 			DataLocationValue.Text = folder.Path;
 			localSettings.Values["RyujinxDataLocation"] = folder.Path;

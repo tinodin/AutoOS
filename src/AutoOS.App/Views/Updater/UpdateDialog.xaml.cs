@@ -71,7 +71,7 @@ public sealed partial class UpdateDialog : UserControl
 			}
 		}
 
-		double incrementPerTitle = groupedTitleCount > 0 ? 100.0 / (double)groupedTitleCount : 0;
+		double incrementPerTitle = groupedTitleCount > 0 ? 100.0 / groupedTitleCount : 0;
 
 		ProgressBar.IsIndeterminate = false;
 

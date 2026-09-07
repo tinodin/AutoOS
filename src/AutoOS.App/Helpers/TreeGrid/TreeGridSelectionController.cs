@@ -57,19 +57,19 @@ public sealed partial class TreeGridSelectionController : TreeGridRowSelectionCo
 				return;
 			}
 
-			if (focused is ComboBox || focused is ComboBoxItem)
+			if (focused is ComboBox or ComboBoxItem)
 				return;
 
-		if (focused is Microsoft.UI.Xaml.Controls.TextBox textBox && DependencyObjectHelpers.FindParent<TreeGridCell>(textBox) is not null)
-			return;
+			if (focused is Microsoft.UI.Xaml.Controls.TextBox textBox && DependencyObjectHelpers.FindParent<TreeGridCell>(textBox) is not null)
+				return;
 
 			if (CurrentCellManager.CurrentCell?.IsEditing == true)
 			{
-				if (focused is MenuFlyoutItem || focused is MenuFlyoutPresenter)
+				if (focused is MenuFlyoutItem or MenuFlyoutPresenter)
 					return;
 
-			if (focused is Popup || DependencyObjectHelpers.FindParent<Popup>(focused) is not null)
-				return;
+				if (focused is Popup || DependencyObjectHelpers.FindParent<Popup>(focused) is not null)
+					return;
 			}
 
 			DependencyObject current = focused;

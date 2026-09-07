@@ -28,8 +28,7 @@ public sealed partial class SchedulingDialog : Page
 		if (sender is not ItemsControl itemsControl)
 			return;
 
-		CpuCoreGroup? group = itemsControl.DataContext as CpuCoreGroup;
-		if (group == null)
+		if (itemsControl.DataContext is not CpuCoreGroup group)
 			return;
 
 		if (itemsControl.ItemsPanelRoot is CommunityToolkit.WinUI.Controls.UniformGrid uniformGrid)

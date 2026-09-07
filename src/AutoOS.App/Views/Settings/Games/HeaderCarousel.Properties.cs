@@ -19,10 +19,7 @@ public partial class HeaderCarousel
 	private static void OnIsAutoScrollEnabledChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
 	{
 		var ctl = (HeaderCarousel)d;
-		if (ctl != null)
-		{
-			ctl.ApplyAutoScroll();
-		}
+		ctl?.ApplyAutoScroll();
 	}
 
 	public string BackgroundImageUrl
@@ -334,10 +331,7 @@ public partial class HeaderCarousel
 	private static void OnSelectionDurationChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
 	{
 		var ctl = (HeaderCarousel)d;
-		if (ctl != null)
-		{
-			ctl.selectionTimer.Interval = (TimeSpan)e.NewValue;
-		}
+		ctl?.selectionTimer.Interval = (TimeSpan)e.NewValue;
 	}
 
 	public TimeSpan DeSelectionDuration
@@ -352,10 +346,7 @@ public partial class HeaderCarousel
 	private static void OnDeSelectionDurationChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
 	{
 		var ctl = (HeaderCarousel)d;
-		if (ctl != null)
-		{
-			ctl.deselectionTimer.Interval = (TimeSpan)e.NewValue;
-		}
+		ctl?.deselectionTimer.Interval = (TimeSpan)e.NewValue;
 	}
 
 	public bool IsBlurEnabled

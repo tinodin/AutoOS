@@ -1,6 +1,6 @@
 using AutoOS.Core.Data.Models.Bios;
 
-namespace AutoOS.App.Data.Contexts;
+namespace AutoOS.App.Data.Contexts.Bios;
 
 public interface IBiosSettingsContext
 {

@@ -363,8 +363,7 @@ public static partial class PreparingStage
 		{
 			string jsonContent = await File.ReadAllTextAsync(epicLauncherFile.FullName);
 			var jsonObject = JsonNode.Parse(jsonContent);
-			JsonArray? installationList = jsonObject?["InstallationList"] as JsonArray;
-			epicGamesGames = installationList != null && installationList.Count > 0;
+			epicGamesGames = jsonObject?["InstallationList"] is JsonArray installationList && installationList.Count > 0;
 		}
 
 		bool steamGames = DriveInfo.GetDrives()

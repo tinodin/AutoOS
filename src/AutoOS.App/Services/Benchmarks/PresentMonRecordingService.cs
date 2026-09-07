@@ -41,7 +41,7 @@ public static class PresentMonRecordingService
 
 		bool found = false;
 		HWND hwnd = HWND.Null;
-		while ((hwnd = PInvoke.FindWindowEx((HWND)(IntPtr)(-3), hwnd, "PresentMon", "PresentMonWnd")) != HWND.Null)
+		while ((hwnd = PInvoke.FindWindowEx((HWND)(-3), hwnd, "PresentMon", "PresentMonWnd")) != HWND.Null)
 		{
 			PInvoke.GetWindowThreadProcessId(hwnd, out uint pid);
 			if (pid == process.Id)

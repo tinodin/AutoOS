@@ -251,7 +251,7 @@ public sealed partial class ProcessDiscoveryService : IDisposable
 			return;
 		}
 
-		if (eventId != ProcessStartEventId && eventId != ProcessRundownEventId)
+		if (eventId is not ProcessStartEventId and not ProcessRundownEventId)
 			return;
 
 		int nameIdx = Array.IndexOf(processEvent.PayloadNames, "ImageName");
@@ -271,7 +271,7 @@ public sealed partial class ProcessDiscoveryService : IDisposable
 			return;
 		}
 
-		if (eventId == DxgiPresentStartEventId || eventId == DxgiPresentMultiplaneOverlayStartEventId)
+		if (eventId is DxgiPresentStartEventId or DxgiPresentMultiplaneOverlayStartEventId)
 		{
 			if (!TryReadUInt32(presentEvent, "Flags", out uint flags) || (flags & DxgiPresentTest) != 0)
 				return;
@@ -280,7 +280,7 @@ public sealed partial class ProcessDiscoveryService : IDisposable
 			return;
 		}
 
-		if (eventId != DxgiPresentStopEventId && eventId != DxgiPresentMultiplaneOverlayStopEventId)
+		if (eventId is not DxgiPresentStopEventId and not DxgiPresentMultiplaneOverlayStopEventId)
 			return;
 
 		if (!CompleteRuntimePresent(DxgiProvider, presentEvent, out int processId) || !TryReadUInt32(presentEvent, "Result", out uint result) ||

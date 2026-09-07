@@ -37,7 +37,7 @@ public static class MenuFlyoutHelper
 		bool keepOpen = false;
 		foreach (MenuFlyoutItem item in flyout.Items.OfType<MenuFlyoutItem>())
 		{
-			if (item is ToggleMenuFlyoutItem || item is RadioMenuFlyoutItem)
+			if (item is ToggleMenuFlyoutItem or RadioMenuFlyoutItem)
 				item.Click += (_, _) => keepOpen = true;
 		}
 

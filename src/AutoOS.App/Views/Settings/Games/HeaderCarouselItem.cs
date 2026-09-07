@@ -108,10 +108,7 @@ public partial class HeaderCarouselItem : Button
 	}
 	private void OnShadowHostSizeChanged(object sender, SizeChangedEventArgs e)
 	{
-		if (_cardShadowVisual != null)
-		{
-			_cardShadowVisual.Size = new Vector2((float)e.NewSize.Width, (float)e.NewSize.Height);
-		}
+		_cardShadowVisual?.Size = new Vector2((float)e.NewSize.Width, (float)e.NewSize.Height);
 	}
 
 	private void PlaySelectAnimation()

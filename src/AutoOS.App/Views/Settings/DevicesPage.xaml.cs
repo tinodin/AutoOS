@@ -160,10 +160,10 @@ public sealed partial class DevicesPage : Page
 		if (isInitializingIMODState)
 			return;
 
-		ToggleSwitch toggleSwitch = (ToggleSwitch)sender;
-		DeviceInfo device = (DeviceInfo)toggleSwitch.DataContext;
+		var toggleSwitch = (ToggleSwitch)sender;
+		var device = (DeviceInfo)toggleSwitch.DataContext;
 		bool isOn = toggleSwitch.IsOn;
-		StackPanel? DevicesInfo = DependencyObjectHelpers.FindParent<StackPanel>(toggleSwitch)!.FindName("DevicesInfo") as StackPanel;
+		var DevicesInfo = DependencyObjectHelpers.FindParent<StackPanel>(toggleSwitch)!.FindName("DevicesInfo") as StackPanel;
 
 		// disable hittestvisible to avoid double-clicking
 		toggleSwitch.IsHitTestVisible = false;

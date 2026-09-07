@@ -23,7 +23,7 @@ public sealed partial class GamesPage : Page
 	{
 		IntPtr hWnd = WindowNative.GetWindowHandle(App.MainWindow);
 		WindowId windowId = Win32Interop.GetWindowIdFromWindow(hWnd);
-		AppWindow appWindow = AppWindow.GetFromWindowId(windowId);
+		var appWindow = AppWindow.GetFromWindowId(windowId);
 
 		NavigationView navView = MainWindow.Instance.GetNavView();
 		TitleBar titleBar = MainWindow.Instance.GetTitleBar();

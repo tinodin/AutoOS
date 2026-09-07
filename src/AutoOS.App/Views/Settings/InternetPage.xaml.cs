@@ -32,7 +32,7 @@ public sealed partial class InternetPage : Page
 		NetworkAdapters.Clear();
 		foreach (DeviceInfo device in DeviceHelper.GetDevices(DeviceType.NIC))
 		{
-			if (device.NicType == NicDeviceType.WiFi || device.NicType == NicDeviceType.LAN)
+			if (device.NicType is NicDeviceType.WiFi or NicDeviceType.LAN)
 			{
 				device.AdvancedSettings = Core.Helpers.Network.NetworkHelper.GetAdvancedSettings(device);
 				NetworkAdapters.Add(device);
@@ -284,8 +284,7 @@ public sealed partial class InternetPage : Page
 		if (repeaterItem != null)
 		{
 			var infoBarContainer = (StackPanel)repeaterItem.FindName("AdapterInfo")!;
-			if (infoBarContainer != null)
-				infoBarContainer.Children.Clear();
+			infoBarContainer?.Children.Clear();
 		}
 
 		bool anyChanged = Core.Helpers.Network.NetworkHelper.OptimizeAdapter(device);

@@ -49,7 +49,7 @@ public sealed partial class PersonalizationPage : Page
 		MainWindow.Instance.CheckAllPagesVisited();
 	}
 
-	public unsafe static Task ApplyTheme(string themePath)
+	public static unsafe Task ApplyTheme(string themePath)
 	{
 		return Task.Run(() =>
 		{
@@ -248,7 +248,7 @@ public sealed partial class PersonalizationPage : Page
 
 		LightTimeCard.Visibility = mode == "Custom" ? Visibility.Visible : Visibility.Collapsed;
 		DarkTimeCard.Visibility = mode == "Custom" ? Visibility.Visible : Visibility.Collapsed;
-		TimelineCard.Visibility = (mode == "Custom" || mode == "Sunset to sunrise") ? Visibility.Visible : Visibility.Collapsed;
+		TimelineCard.Visibility = (mode is "Custom" or "Sunset to sunrise") ? Visibility.Visible : Visibility.Collapsed;
 	}
 
 	private void GetTrayIconsState()

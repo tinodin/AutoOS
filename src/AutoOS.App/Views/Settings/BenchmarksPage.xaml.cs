@@ -453,7 +453,7 @@ public sealed partial class BenchmarksPage : Page
 
 		string fileName = $"{recordingNames} - {ViewModel.AnalysisChartType} Chart";
 
-		FrameworkElement saveTarget = ViewModel.AnalysisChartType == "Pie" ? (FrameworkElement)PieChartContainer : chart;
+		FrameworkElement saveTarget = ViewModel.AnalysisChartType == "Pie" ? PieChartContainer : chart;
 
 		var flyout = new MenuFlyout();
 
