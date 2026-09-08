@@ -69,6 +69,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "EA", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/EA.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Electronic Arts", "EA Desktop", "EA Desktop", "EADesktop.exe")) },
 			new() { Text = "Battle.Net", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/BattleNet.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Battle.net", "Battle.net.exe")) },
 			new() { Text = "Minecraft Launcher", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/MinecraftLauncher.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Minecraft Launcher", "MinecraftLauncher.exe")) },
+            new() { Text = "Modrinth", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/Modrinth.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Modrinth App", "Modrinth App.exe")) },
 			new() { Text = "CurseForge", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/CurseForge.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "CurseForge", "CurseForge.exe")) },
 			new() { Text = "Lunar Client", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/LunarClient.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "launcher", "Lunar Client.exe")) },
 			new() { Text = "Feather Client", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/FeatherClient.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "feather", "Feather Launcher.exe")) },
@@ -292,6 +293,7 @@ public sealed partial class AppsPage : Page
 		selection.EA = selectedLaunchers.Contains("EA");
 		selection.BattleNet = selectedLaunchers.Contains("Battle.Net");
 		selection.MinecraftLauncher = selectedLaunchers.Contains("Minecraft Launcher");
+		selection.Modrinth = selectedLaunchers.Contains("Modrinth");
 		selection.CurseForge = selectedLaunchers.Contains("CurseForge");
 		selection.LunarClient = selectedLaunchers.Contains("Lunar Client");
 		selection.FeatherClient = selectedLaunchers.Contains("Feather Client");
