@@ -47,6 +47,7 @@ public class ApplicationSelection
 	public bool EA { get; set; }
 	public bool BattleNet { get; set; }
 	public bool MinecraftLauncher { get; set; }
+	public bool Modrinth { get; set; }
 	public bool CurseForge { get; set; }
 	public bool LunarClient { get; set; }
 	public bool FeatherClient { get; set; }
@@ -208,6 +209,7 @@ public static class AppsStage
 		bool EA = selection?.EA ?? PreparingStage.EA;
 		bool BattleNet = selection?.BattleNet ?? PreparingStage.BattleNet;
 		bool MinecraftLauncher = selection?.MinecraftLauncher ?? PreparingStage.MinecraftLauncher;
+		bool Modrinth = selection?.Modrinth ?? PreparingStage.Modrinth;
 		bool CurseForge = selection?.CurseForge ?? PreparingStage.CurseForge;
 		bool LunarClient = selection?.LunarClient ?? PreparingStage.LunarClient;
 		bool FeatherClient = selection?.FeatherClient ?? PreparingStage.FeatherClient;
@@ -810,6 +812,16 @@ public static class AppsStage
 			// remove minecraft launcher desktop shortcut
 			("Removing Minecraft Launcher desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Minecraft Launcher.lnk")), () => MinecraftLauncher == true),
 
+			// download modrinth launcher
+			("Downloading Modrinth", async () => await DownloadHelper.Download("https://launcher-files.modrinth.com/versions/0.20.0/windows/Modrinth%20App_0.20.0_x64-setup.exe", Path.GetTempPath(), "Modrinth App_0.20.0_x64-setup.exe", reporter: reporter), () => Modrinth == true),
+
+		    // install modrinth
+			("Installing Modrinth", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "Modrinth App_0.20.0_x64-setup.exe"), Arguments = "/S" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Modrinth == true),
+			("Cleaning up Modrinth files", async () => { string path = Path.Combine(Path.GetTempPath(), "Modrinth App_0.20.0_x64-setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Modrinth == true),
+
+			// remove modrinth desktop shortcut
+			("Removing Modrinth desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Modrinth App.lnk")), () => Modrinth == true),
+			
 			// download curseforge
 			("Downloading CurseForge", async () => await DownloadHelper.Download("https://curseforge.overwolf.com/downloads/curseforge-latest-win64.exe", Path.GetTempPath(), "CurseForge-Setup.exe", reporter: reporter), () => CurseForge == true),
 
