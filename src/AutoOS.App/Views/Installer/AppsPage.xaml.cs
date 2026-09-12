@@ -129,6 +129,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "Visual Studio Code", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/VisualStudioCode.png" },
 			new() { Text = "Antigravity IDE", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Antigravity.png" },
 			new() { Text = "Cursor", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Cursor.png" },
+			new() { Text = "Zed", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Zed.png" },
 			new() { Text = "Devin", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Devin.png" },
 			new() { Text = "Kiro", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Kiro.png" },
 			new() { Text = "Freebuff", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Freebuff.png" },

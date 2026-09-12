@@ -89,6 +89,7 @@ public class ApplicationSelection
 	public bool VisualStudioCode { get; set; }
 	public bool Antigravity { get; set; }
 	public bool Cursor { get; set; }
+	public bool Zed { get; set; }
 	public bool Devin { get; set; }
 	public bool Kiro { get; set; }
 	public bool Freebuff { get; set; }
@@ -254,6 +255,7 @@ public static class AppsStage
 		bool VisualStudioCode = selection?.VisualStudioCode ?? PreparingStage.VisualStudioCode;
 		bool Antigravity = selection?.Antigravity ?? PreparingStage.Antigravity;
 		bool Cursor = selection?.Cursor ?? PreparingStage.Cursor;
+		bool Zed = selection?.Zed ?? PreparingStage.Zed;
 		bool Devin = selection?.Devin ?? PreparingStage.Devin;
 		bool Kiro = selection?.Kiro ?? PreparingStage.Kiro;
 		bool Freebuff = selection?.Freebuff ?? PreparingStage.Freebuff;
@@ -1462,10 +1464,20 @@ public static class AppsStage
 			("Installing Cursor", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "CursorSetup-x64.exe"), Arguments = "/VERYSILENT /NORESTART /MERGETASKS=!runcode" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Cursor == true),
 			("Cleaning up Cursor files", async () => { string path = Path.Combine(Path.GetTempPath(), "CursorSetup-x64.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Cursor == true),
 
-			// pin cursor to the taskbar
-			("Pinning Cursor to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Cursor", "Cursor.lnk")), () => Cursor == true),
+		// pin cursor to the taskbar
+		("Pinning Cursor to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Cursor", "Cursor.lnk")), () => Cursor == true),
 
-			// download devin
+		// download zed
+		("Downloading Zed", async () => await DownloadHelper.Download("https://github.com/zed-industries/zed/releases/latest/download/Zed-x86_64.exe", Path.GetTempPath(), "Zed-x86_64.exe", reporter: reporter), () => Zed == true),
+
+		// install zed
+		("Installing Zed", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "Zed-x86_64.exe"), Arguments = "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Zed == true),
+		("Cleaning up Zed files", async () => { string path = Path.Combine(Path.GetTempPath(), "Zed-x86_64.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Zed == true),
+
+		// pin zed to the taskbar
+		("Pinning Zed to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Zed", "Zed.lnk")), () => Zed == true),
+
+		// download devin
 			("Downloading Devin", async () => await DownloadHelper.Download("https://windsurf.com/api/windsurf/download-redirect?build=win32-x64-user&isNext=false", Path.GetTempPath(), "DevinUserSetup-x64.exe", reporter: reporter), () => Devin == true),
 
 			// install devin

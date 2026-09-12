@@ -125,6 +125,7 @@ public static partial class PreparingStage
 	public static bool VisualStudioCode;
 	public static bool Antigravity;
 	public static bool Cursor;
+	public static bool Zed;
 	public static bool Devin;
 	public static bool Kiro;
 	public static bool Freebuff;
@@ -547,6 +548,7 @@ public static partial class PreparingStage
 			VisualStudioCode = (localSettings.Values["Development"]?.ToString()?.Contains("Visual Studio Code") ?? false);
 			Antigravity = (localSettings.Values["Development"]?.ToString()?.Contains("Antigravity IDE") ?? false);
 			Cursor = (localSettings.Values["Development"]?.ToString()?.Contains("Cursor") ?? false);
+			Zed = (localSettings.Values["Development"]?.ToString()?.Contains("Zed") ?? false);
 			Devin = (localSettings.Values["Development"]?.ToString()?.Contains("Devin") ?? false);
 			Kiro = (localSettings.Values["Development"]?.ToString()?.Contains("Kiro") ?? false);
 			Freebuff = (localSettings.Values["Development"]?.ToString()?.Contains("Freebuff") ?? false);
