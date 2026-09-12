@@ -813,11 +813,11 @@ public static class AppsStage
 			("Removing Minecraft Launcher desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Minecraft Launcher.lnk")), () => MinecraftLauncher == true),
 
 			// download modrinth launcher
-			("Downloading Modrinth", async () => await DownloadHelper.Download("https://launcher-files.modrinth.com/versions/0.20.0/windows/Modrinth%20App_0.20.0_x64-setup.exe", Path.GetTempPath(), "Modrinth App_0.20.0_x64-setup.exe", reporter: reporter), () => Modrinth == true),
+			("Downloading Modrinth", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/modrinth/code/releases")).RootElement.EnumerateArray().First(release => !release.GetProperty("prerelease").GetBoolean() && release.GetProperty("assets").EnumerateArray().Any(asset => (asset.GetProperty("name").GetString() ?? "").EndsWith("_x64-setup.exe"))).GetProperty("assets").EnumerateArray().First(asset => (asset.GetProperty("name").GetString() ?? "").EndsWith("_x64-setup.exe")).GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "Modrinth-Setup.exe", reporter: reporter), () => Modrinth == true),
 
-		    // install modrinth
-			("Installing Modrinth", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "Modrinth App_0.20.0_x64-setup.exe"), Arguments = "/S" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Modrinth == true),
-			("Cleaning up Modrinth files", async () => { string path = Path.Combine(Path.GetTempPath(), "Modrinth App_0.20.0_x64-setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Modrinth == true),
+			// install modrinth
+			("Installing Modrinth", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "Modrinth-Setup.exe"), Arguments = "/S" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Modrinth == true),
+			("Cleaning up Modrinth files", async () => { string path = Path.Combine(Path.GetTempPath(), "Modrinth-Setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Modrinth == true),
 
 			// remove modrinth desktop shortcut
 			("Removing Modrinth desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Modrinth App.lnk")), () => Modrinth == true),
