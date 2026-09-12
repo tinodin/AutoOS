@@ -71,6 +71,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "EA", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/EA.png" },
 			new() { Text = "Battle.Net", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/BattleNet.png" },
 			new() { Text = "Minecraft Launcher", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/MinecraftLauncher.png" },
+			new() { Text = "Modrinth", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/Modrinth.png" },
 			new() { Text = "CurseForge", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/CurseForge.png" },
 			new() { Text = "Lunar Client", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/LunarClient.png" },
 			new() { Text = "Feather Client", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/FeatherClient.png" },

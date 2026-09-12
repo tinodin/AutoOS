@@ -79,6 +79,7 @@ public static partial class PreparingStage
 	public static bool EA;
 	public static bool BattleNet;
 	public static bool MinecraftLauncher;
+	public static bool Modrinth;
 	public static bool CurseForge;
 	public static bool LunarClient;
 	public static bool FeatherClient;
@@ -501,6 +502,7 @@ public static partial class PreparingStage
 			EA = (localSettings.Values["Launchers"]?.ToString()?.Contains("EA") ?? false);
 			BattleNet = (localSettings.Values["Launchers"]?.ToString()?.Contains("Battle.Net") ?? false);
 			MinecraftLauncher = (localSettings.Values["Launchers"]?.ToString()?.Contains("Minecraft Launcher") ?? false);
+			Modrinth = (localSettings.Values["Launchers"]?.ToString()?.Contains("Modrinth") ?? false);
 			CurseForge = (localSettings.Values["Launchers"]?.ToString()?.Contains("CurseForge") ?? false);
 			LunarClient = (localSettings.Values["Launchers"]?.ToString()?.Contains("Lunar Client") ?? false);
 			FeatherClient = (localSettings.Values["Launchers"]?.ToString()?.Contains("Feather Client") ?? false);
