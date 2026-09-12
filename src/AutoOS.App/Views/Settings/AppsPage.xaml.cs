@@ -136,6 +136,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "Visual Studio Code", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/VisualStudioCode.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Microsoft VS Code", "Code.exe")) },
 			new() { Text = "Antigravity IDE", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Antigravity.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Antigravity IDE", "Antigravity IDE.exe")) },
 			new() { Text = "Cursor", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Cursor.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "cursor", "Cursor.exe")) || File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "cursor", "Cursor.exe")) },
+			new() { Text = "Zed", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Zed.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Zed", "Zed.exe")) },
 			new() { Text = "Devin", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Devin.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Devin", "Devin.exe"))},
 			new() { Text = "Kiro", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Kiro.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Kiro", "Kiro.exe")) },
 			new() { Text = "Freebuff", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Freebuff.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "@codebufffreebuff-desktop", "Freebuff.exe")) },
@@ -348,6 +349,7 @@ public sealed partial class AppsPage : Page
 		selection.VisualStudioCode = selectedDev.Contains("Visual Studio Code");
 		selection.Antigravity = selectedDev.Contains("Antigravity IDE");
 		selection.Cursor = selectedDev.Contains("Cursor");
+		selection.Zed = selectedDev.Contains("Zed");
 		selection.Devin = selectedDev.Contains("Devin");
 		selection.Kiro = selectedDev.Contains("Kiro");
 		selection.Freebuff = selectedDev.Contains("Freebuff");
