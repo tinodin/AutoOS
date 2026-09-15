@@ -164,6 +164,7 @@ public class ApplicationSelection
 	public bool QBittorrent { get; set; }
 	public bool Deluge { get; set; }
 	public bool FreeDownloadManager { get; set; }
+	public bool LatencyMon { get; set; }
 }
 
 public static class AppsStage
@@ -338,6 +339,7 @@ public static class AppsStage
 		bool QBittorrent = selection?.QBittorrent ?? PreparingStage.QBittorrent;
 		bool Deluge = selection?.Deluge ?? PreparingStage.Deluge;
 		bool FreeDownloadManager = selection?.FreeDownloadManager ?? PreparingStage.FreeDownloadManager;
+		bool LatencyMon = selection?.LatencyMon ?? PreparingStage.LatencyMon;
 
 		string rockstarGamesLauncherVersion = "";
 		string spotifyVersion = "";
@@ -2385,6 +2387,16 @@ public static class AppsStage
             // remove free download manager desktop shortcut
 			("Removing Free Download Manager desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Free Download Manager.lnk")), () => FreeDownloadManager == true),
 			("Disabling Free Download Manager startup entry", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", "Free Download Manager", new byte[] { 0x03 }, RegistryValueKind.Binary), () => FreeDownloadManager == true),
+
+			// download latencymon
+			("Downloading LatencyMon", async () => await DownloadHelper.Download("https://www.resplendence.com/download/LatencyMon.exe", Path.GetTempPath(), "LatencyMon.exe", reporter: reporter), () => LatencyMon == true),
+
+			// install latencymon
+			("Installing LatencyMon", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "LatencyMon.exe"), Arguments = "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => LatencyMon == true),
+			("Cleaning up LatencyMon files", async () => { string path = Path.Combine(Path.GetTempPath(), "LatencyMon.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => LatencyMon == true),
+
+			// remove latencymon desktop shortcut
+			("Removing LatencyMon desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "LatencyMon (Home Edition).lnk")), () => LatencyMon == true),
 		};
 
 		if (selection != null)

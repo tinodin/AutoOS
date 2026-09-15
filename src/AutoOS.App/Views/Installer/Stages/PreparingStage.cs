@@ -207,6 +207,7 @@ public static partial class PreparingStage
 	public static bool QBittorrent;
 	public static bool Deluge;
 	public static bool FreeDownloadManager;
+	public static bool LatencyMon;
 
 	public static List<GpuInfo> GPUs { get; set; } = [];
 	public static bool MSI;
@@ -631,6 +632,7 @@ public static partial class PreparingStage
 			QBittorrent = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("qBittorrent") ?? false);
 			Deluge = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("Deluge") ?? false);
 			FreeDownloadManager = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("Free Download Manager") ?? false);
+			LatencyMon = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("LatencyMon") ?? false);
 
 			JsonArray? gpuArray = JsonNode.Parse(localSettings.Values["GPUs"]?.ToString() ?? "[]")?.AsArray();
 			if (gpuArray != null)

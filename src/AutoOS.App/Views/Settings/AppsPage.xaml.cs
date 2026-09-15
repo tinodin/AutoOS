@@ -251,7 +251,8 @@ public sealed partial class AppsPage : Page
 			new() { Text = "WinDbg", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/WinDbg.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "Microsoft.WinDbg_8wekyb3d8bbwe")) },
 			new() { Text = "qBittorrent", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/QBittorrent.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "qBittorrent", "qbittorrent.exe")) },
 			new() { Text = "Deluge", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/Deluge.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Deluge", "Deluge.exe")) },
-			new() { Text = "Free Download Manager", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/FreeDownloadManager.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Softdeluxe", "Free Download Manager", "fdm.exe")) }
+			new() { Text = "Free Download Manager", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/FreeDownloadManager.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Softdeluxe", "Free Download Manager", "fdm.exe")) },
+			new() { Text = "LatencyMon", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/LatencyMon.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "LatencyMon", "LatMon.exe")) }
 		};
 		foreach (GridViewItem item in miscellaneousList.Where(item => !item.IsInstalled))
 			miscellaneousItems.Add(item);
@@ -444,6 +445,7 @@ public sealed partial class AppsPage : Page
 		selection.QBittorrent = selectedMiscellaneous.Contains("qBittorrent");
 		selection.Deluge = selectedMiscellaneous.Contains("Deluge");
 		selection.FreeDownloadManager = selectedMiscellaneous.Contains("Free Download Manager");
+		selection.LatencyMon = selectedMiscellaneous.Contains("LatencyMon");
 
 		var updateDialog = new UpdateDialog();
 		var reporter = new UpdateDialogReporter(updateDialog);

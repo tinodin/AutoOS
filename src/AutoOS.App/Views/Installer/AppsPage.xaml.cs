@@ -232,7 +232,8 @@ public sealed partial class AppsPage : Page
 			new() { Text = "WinDbg", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/WinDbg.png" },
 			new() { Text = "qBittorrent", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/QBittorrent.png" },
 			new() { Text = "Deluge", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/Deluge.png" },
-			new() { Text = "Free Download Manager", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/FreeDownloadManager.png" }
+			new() { Text = "Free Download Manager", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/FreeDownloadManager.png" },
+			new() { Text = "LatencyMon", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/LatencyMon.png" }
 		};
 	}
 
