@@ -212,6 +212,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "Prime Video", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Multimedia/PrimeVideo.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "AmazonVideo.PrimeVideo_pwbj9vvecjh7j")) },
 			new() { Text = "MPC-QT", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Multimedia/MpcQt.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "MPC-QT", "mpc-qt.exe")) },
 			new() { Text = "mpv", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Multimedia/MPV.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "mpv", "mpv.exe")) },
+			new() { Text = "MPC-HC", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Multimedia/MpcHc.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "MPC-HC", "mpc-hc64.exe")) },
 			new() { Text = "VLC", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Multimedia/VLC.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "VideoLAN", "VLC", "vlc.exe")) },
 			new() { Text = "MediaInfo", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Multimedia/MediaInfo.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "MediaInfo", "MediaInfo.exe")) || Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "MediaArea.net.MediaInfo_9bzbd7xajy7ar")) }
 		};
@@ -410,6 +411,7 @@ public sealed partial class AppsPage : Page
 		selection.PrimeVideo = selectedMultimedia.Contains("Prime Video");
 		selection.MpcQt = selectedMultimedia.Contains("MPC-QT");
 		selection.MPV = selectedMultimedia.Contains("mpv");
+		selection.MpcHc = selectedMultimedia.Contains("MPC-HC");
 		selection.VLC = selectedMultimedia.Contains("VLC");
 		selection.MediaInfo = selectedMultimedia.Contains("MediaInfo");
 
