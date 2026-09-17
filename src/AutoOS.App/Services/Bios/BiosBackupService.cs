@@ -55,7 +55,7 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 		string latest = string.Empty;
 		if (Directory.Exists(BackupDirectory))
 		{
-			foreach (string file in Directory.EnumerateFiles(BackupDirectory, "*.json*"))
+			foreach (string file in Directory.EnumerateFiles(BackupDirectory, "*.json.zip"))
 			{
 				if (string.Compare(Path.GetFileName(file), Path.GetFileName(latest), StringComparison.Ordinal) > 0)
 					latest = file;
