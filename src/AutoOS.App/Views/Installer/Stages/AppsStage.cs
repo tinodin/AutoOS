@@ -778,7 +778,8 @@ public static class AppsStage
 			("Downloading EA", async () => await DownloadHelper.Download("https://origin-a.akamaihd.net/EA-Desktop-Client-Download/installer-releases/EAappInstaller.exe", Path.GetTempPath(), "EAappInstaller.exe", reporter: reporter), () => EA == true),
 
 			// install ea
-			("Installing EA", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "EAappInstaller.exe"), Arguments = "/s", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => EA == true),
+			("Installing EA", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "EAappInstaller.exe"), Arguments = "/quiet /norestart", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => EA == true),
+			("Installing EA", async () => { foreach (Process process in Process.GetProcessesByName("EADesktop")) { process.Kill(); process.WaitForExit(); } }, () => EA == true),
 			("Cleaning up EA files", async () => { string path = Path.Combine(Path.GetTempPath(), "EAappInstaller.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => EA == true),
 
 			// disable ea startup entry
