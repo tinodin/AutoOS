@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Xml;
 using AutoOS.Core.Helpers.Registry;
+using AutoOS.Core.Helpers.TaskScheduler;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -97,6 +98,8 @@ public static class ProcessActions
 		string exePath = Path.Combine(windhawkDir, "windhawk-cli.exe");
 		if (!File.Exists(exePath))
 			return;
+
+		await TaskSchedulerHelper.RunAsync("WindhawkUpdateTask");
 
 		using Process listProcess = Process.Start(new ProcessStartInfo
 		{

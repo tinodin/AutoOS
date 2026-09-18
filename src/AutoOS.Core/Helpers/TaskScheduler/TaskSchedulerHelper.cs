@@ -93,6 +93,7 @@ internal partial interface IRegisteredTask
 	[return: MarshalAs(UnmanagedType.VariantBool)]
 	bool Get_Enabled();
 	void Put_Enabled([MarshalAs(UnmanagedType.VariantBool)] bool enabled);
+	[PreserveSig] int Run(VARIANT @params, out nint runningTask);
 }
 
 public static partial class TaskSchedulerHelper
@@ -164,5 +165,34 @@ public static partial class TaskSchedulerHelper
 			folder.DeleteTask(task.Get_Name(), 0);
 			return true;
 		});
+	}
+
+	public static async Task RunAsync(string wildcard)
+	{
+		ITaskService ts = CreateTaskService();
+		ts.Connect(VARIANT.Empty, VARIANT.Empty, VARIANT.Empty, VARIANT.Empty);
+
+		IRegisteredTask? target = null;
+		SearchTasks(ts.GetFolder("\\"), (_, task) =>
+		{
+			if (!task.Get_Path().Contains(wildcard, StringComparison.OrdinalIgnoreCase))
+				return false;
+			target = task;
+			return true;
+		});
+
+		if (target is null)
+			return;
+
+		target.Run(VARIANT.Empty, out _);
+
+		DateTimeOffset deadline = DateTimeOffset.Now + TimeSpan.FromSeconds(60);
+		while (DateTimeOffset.Now < deadline)
+		{
+			int state = target.Get_State();
+			if (state != 2 && state != 4)
+				break;
+			await Task.Delay(100);
+		}
 	}
 }
