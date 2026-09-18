@@ -175,8 +175,8 @@ public static partial class PreparingStage
 	public static bool Netflix;
 	public static bool DisneyPlus;
 	public static bool PrimeVideo;
-	public static bool MpcQt;
 	public static bool MPV;
+	public static bool MpcQt;
 	public static bool MpcHc;
 	public static bool VLC;
 	public static bool MediaInfo;
@@ -600,8 +600,8 @@ public static partial class PreparingStage
 			Netflix = (localSettings.Values["Multimedia"]?.ToString()?.Contains("Netflix") ?? false);
 			DisneyPlus = (localSettings.Values["Multimedia"]?.ToString()?.Contains("Disney+") ?? false);
 			PrimeVideo = (localSettings.Values["Multimedia"]?.ToString()?.Contains("Prime Video") ?? false);
-			MpcQt = (localSettings.Values["Multimedia"]?.ToString()?.Contains("MPC-QT") ?? false);
 			MPV = (localSettings.Values["Multimedia"]?.ToString()?.Contains("mpv") ?? false);
+			MpcQt = (localSettings.Values["Multimedia"]?.ToString()?.Contains("MPC-QT") ?? false);
 			MpcHc = (localSettings.Values["Multimedia"]?.ToString()?.Contains("MPC-HC") ?? false);
 			VLC = (localSettings.Values["Multimedia"]?.ToString()?.Contains("VLC") ?? false);
 			MediaInfo = (localSettings.Values["Multimedia"]?.ToString()?.Contains("MediaInfo") ?? false);

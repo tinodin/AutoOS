@@ -134,8 +134,8 @@ public class ApplicationSelection
 	public bool Netflix { get; set; }
 	public bool DisneyPlus { get; set; }
 	public bool PrimeVideo { get; set; }
-	public bool MpcQt { get; set; }
 	public bool MPV { get; set; }
+	public bool MpcQt { get; set; }
 	public bool MpcHc { get; set; }
 	public bool VLC { get; set; }
 	public bool MediaInfo { get; set; }
@@ -307,8 +307,8 @@ public static class AppsStage
 		bool Netflix = selection?.Netflix ?? PreparingStage.Netflix;
 		bool DisneyPlus = selection?.DisneyPlus ?? PreparingStage.DisneyPlus;
 		bool PrimeVideo = selection?.PrimeVideo ?? PreparingStage.PrimeVideo;
-		bool MpcQt = selection?.MpcQt ?? PreparingStage.MpcQt;
 		bool MPV = selection?.MPV ?? PreparingStage.MPV;
+		bool MpcQt = selection?.MpcQt ?? PreparingStage.MpcQt;
 		bool MpcHc = selection?.MpcHc ?? PreparingStage.MpcHc;
 		bool VLC = selection?.VLC ?? PreparingStage.VLC;
 		bool MediaInfo = selection?.MediaInfo ?? PreparingStage.MediaInfo;
@@ -2023,13 +2023,6 @@ public static class AppsStage
 			// install prime video
 			("Installing Prime Video", async () => await StoreHelper.Install("AmazonVideo.PrimeVideo_pwbj9vvecjh7j"), () => PrimeVideo == true),
 
-			// download mpc-qt
-			("Downloading MPC-QT", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/mpc-qt/mpc-qt/releases")).RootElement.EnumerateArray().First(release => !release.GetProperty("prerelease").GetBoolean() && release.GetProperty("assets").EnumerateArray().Any(asset => (asset.GetProperty("name").GetString() ?? "").StartsWith("mpc-qt-win-x64-") && (asset.GetProperty("name").GetString() ?? "").EndsWith("-installer.exe"))).GetProperty("assets").EnumerateArray().First(asset => (asset.GetProperty("name").GetString() ?? "").StartsWith("mpc-qt-win-x64-") && (asset.GetProperty("name").GetString() ?? "").EndsWith("-installer.exe")).GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "mpc-qt-win-x64-installer.exe", reporter: reporter), () => MpcQt == true),
-
-			// install mpc-qt
-			("Installing MPC-QT", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "mpc-qt-win-x64-installer.exe"), Arguments = "/S", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => MpcQt == true),
-			("Cleaning up MPC-QT files", async () => { string path = Path.Combine(Path.GetTempPath(), "mpc-qt-win-x64-installer.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => MpcQt == true),
-
 			// download mpv
 			("Downloading mpv", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/zhongfly/mpv-winbuild/releases")).RootElement.EnumerateArray().First(release => !release.GetProperty("prerelease").GetBoolean() && release.GetProperty("assets").EnumerateArray().Any(asset => (asset.GetProperty("name").GetString() ?? "").StartsWith("mpv-x86_64-v3-") && (asset.GetProperty("name").GetString() ?? "").EndsWith(".7z"))).GetProperty("assets").EnumerateArray().First(asset => (asset.GetProperty("name").GetString() ?? "").StartsWith("mpv-x86_64-v3-") && (asset.GetProperty("name").GetString() ?? "").EndsWith(".7z")).GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "mpv-x86_64-v3.7z"), () => MPV == true),
 
@@ -2038,6 +2031,13 @@ public static class AppsStage
 			("Installing mpv", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "mpv", "mpv.exe"), Arguments = "--register", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => MPV == true),
 			("Installing mpv", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\mpv", "UninstallString", $@"cmd.exe /c """"{Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}\mpv\mpv.exe"" --no-config --unregister && rmdir /s /q ""{Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}\mpv""""", RegistryValueKind.String), () => MPV == true),
 			("Cleaning up mpv files", async () => { string path = Path.Combine(Path.GetTempPath(), "mpv-x86_64-v3.7z"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => MPV == true),
+
+			// download mpc-qt
+			("Downloading MPC-QT", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/mpc-qt/mpc-qt/releases")).RootElement.EnumerateArray().First(release => !release.GetProperty("prerelease").GetBoolean() && release.GetProperty("assets").EnumerateArray().Any(asset => (asset.GetProperty("name").GetString() ?? "").StartsWith("mpc-qt-win-x64-") && (asset.GetProperty("name").GetString() ?? "").EndsWith("-installer.exe"))).GetProperty("assets").EnumerateArray().First(asset => (asset.GetProperty("name").GetString() ?? "").StartsWith("mpc-qt-win-x64-") && (asset.GetProperty("name").GetString() ?? "").EndsWith("-installer.exe")).GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "mpc-qt-win-x64-installer.exe", reporter: reporter), () => MpcQt == true),
+
+			// install mpc-qt
+			("Installing MPC-QT", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "mpc-qt-win-x64-installer.exe"), Arguments = "/S", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => MpcQt == true),
+			("Cleaning up MPC-QT files", async () => { string path = Path.Combine(Path.GetTempPath(), "mpc-qt-win-x64-installer.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => MpcQt == true),
 
 			// download mpc-hc
 		("Downloading MPC-HC", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/clsid2/mpc-hc/releases")).RootElement.EnumerateArray().First(release => !release.GetProperty("prerelease").GetBoolean() && release.GetProperty("assets").EnumerateArray().Any(asset => (asset.GetProperty("name").GetString() ?? "").StartsWith("MPC-HC.") && (asset.GetProperty("name").GetString() ?? "").EndsWith(".x64.exe"))).GetProperty("assets").EnumerateArray().First(asset => (asset.GetProperty("name").GetString() ?? "").StartsWith("MPC-HC.") && (asset.GetProperty("name").GetString() ?? "").EndsWith(".x64.exe")).GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "MPC-HC.x64.exe", reporter: reporter), () => MpcHc == true),

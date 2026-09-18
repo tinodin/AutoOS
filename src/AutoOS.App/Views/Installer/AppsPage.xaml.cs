@@ -195,8 +195,8 @@ public sealed partial class AppsPage : Page
 			new() { Text = "Netflix", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Multimedia/Netflix.png" },
 			new() { Text = "Disney+", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Multimedia/Disney+.png" },
 			new() { Text = "Prime Video", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Multimedia/PrimeVideo.png" },
-			new() { Text = "MPC-QT", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Multimedia/MpcQt.png" },
 			new() { Text = "mpv", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Multimedia/MPV.png" },
+			new() { Text = "MPC-QT", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Multimedia/MpcQt.png" },
 			new() { Text = "MPC-HC", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Multimedia/MpcHc.png" },
 			new() { Text = "VLC", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Multimedia/VLC.png" },
 			new() { Text = "MediaInfo", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Multimedia/MediaInfo.png" }
