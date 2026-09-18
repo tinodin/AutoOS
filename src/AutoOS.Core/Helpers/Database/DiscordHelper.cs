@@ -259,7 +259,7 @@ public static partial class DiscordHelper
 				if (process.MainWindowHandle != IntPtr.Zero)
 					PInvoke.PostMessage((HWND)process.MainWindowHandle, PInvoke.WM_CLOSE, default, default);
 
-				process.WaitForExit(500);
+				process.WaitForExit(5000);
 			}
 			catch { }
 
