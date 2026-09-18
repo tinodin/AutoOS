@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using AutoOS.Core.Data.Models.Device;
 using WinRT;
 
 namespace AutoOS.App.Views.Settings.Scheduling;
@@ -6,6 +7,8 @@ namespace AutoOS.App.Views.Settings.Scheduling;
 [GeneratedBindableCustomProperty]
 public partial class SchedulingGroup : INotifyPropertyChanged
 {
+	public DeviceType DeviceType { get; set; }
+
 	public string Name { get; set; } = null!;
 
 	private bool _isExpanded;
@@ -22,7 +25,7 @@ public partial class SchedulingGroup : INotifyPropertyChanged
 		}
 	}
 
-	public ObservableCollection<SchedulingItem> SubItems { get; set; } = [];
+	public ObservableCollection<SchedulingItem> SubItems { get; } = [];
 
 	public event PropertyChangedEventHandler? PropertyChanged;
 	protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)

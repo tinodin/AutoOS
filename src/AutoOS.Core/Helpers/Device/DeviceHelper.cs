@@ -280,7 +280,10 @@ public static partial class DeviceHelper
 
 	public static void SetMSIMode(string pnpDeviceId, bool msiSupported, uint msiLimit)
 	{
-		using RegistryKey interruptKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Enum\{pnpDeviceId}\Device Parameters", true)!.CreateSubKey("Interrupt Management");
+		using RegistryKey? deviceParamsKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey($@"SYSTEM\CurrentControlSet\Enum\{pnpDeviceId}\Device Parameters", true);
+		if (deviceParamsKey == null) return;
+
+		using RegistryKey interruptKey = deviceParamsKey.CreateSubKey("Interrupt Management");
 
 		if (msiSupported)
 		{
@@ -295,7 +298,7 @@ public static partial class DeviceHelper
 		}
 		else
 		{
-			interruptKey?.DeleteSubKeyTree("MessageSignaledInterruptProperties", false);
+			interruptKey.DeleteSubKeyTree("MessageSignaledInterruptProperties", false);
 		}
 	}
 
@@ -313,9 +316,11 @@ public static partial class DeviceHelper
 		using RegistryKey affinityKey = devParamsKey.CreateSubKey("Interrupt Management").CreateSubKey("Affinity Policy");
 		affinityKey.SetValue("DevicePolicy", devicePolicy, RegistryValueKind.DWord);
 
+		ulong effectiveMask = devicePolicy == 4 ? assignmentSetOverride : 0;
+
 		if (devicePolicy == 4)
 		{
-			byte[] bytes = BitConverter.GetBytes(assignmentSetOverride);
+			byte[] bytes = BitConverter.GetBytes(effectiveMask);
 			int length = bytes.Length;
 			while (length > 1 && bytes[length - 1] == 0) length--;
 
@@ -335,6 +340,7 @@ public static partial class DeviceHelper
 	public static ApplyResult ApplySettingsToDevices(List<DeviceInfo> devices, bool msiSupported, uint msiLimit, uint devicePolicy, uint devicePriority, ulong assignmentSetOverride, DeviceType deviceType = DeviceType.GPU)
 	{
 		var result = new ApplyResult();
+		ulong effectiveMask = devicePolicy == 4 ? assignmentSetOverride : 0;
 
 		foreach (DeviceInfo device in devices)
 		{
@@ -348,19 +354,19 @@ public static partial class DeviceHelper
 				changed = true;
 			}
 
-			if (device.DevicePolicy != devicePolicy || device.DevicePriority != devicePriority || device.AssignmentSetOverride != ((devicePolicy == 4) ? assignmentSetOverride : 0))
+			if (device.DevicePolicy != devicePolicy || device.DevicePriority != devicePriority || device.AssignmentSetOverride != effectiveMask)
 			{
-				SetAffinityPolicy(device.PnpDeviceId, devicePolicy, devicePriority, (devicePolicy == 4) ? assignmentSetOverride : 0);
+				SetAffinityPolicy(device.PnpDeviceId, devicePolicy, devicePriority, effectiveMask);
 				device.DevicePolicy = devicePolicy;
 				device.DevicePriority = devicePriority;
-				device.AssignmentSetOverride = (devicePolicy == 4) ? assignmentSetOverride : 0;
+				device.AssignmentSetOverride = effectiveMask;
 				changed = true;
 			}
 
 			if (changed)
 			{
-				if (deviceType == DeviceType.NIC && device.DriverType == NicDriverType.NDIS && ((devicePolicy == 4) ? assignmentSetOverride : 0) != 0)
-					SetRSS(device, (devicePolicy == 4) ? assignmentSetOverride : 0);
+				if (deviceType == DeviceType.NIC && device.DriverType == NicDriverType.NDIS && effectiveMask != 0)
+					SetRSS(device, effectiveMask);
 
 				result.ChangedDevices.Add(device);
 				result.AppliedSettings[device.PnpDeviceId] = device;

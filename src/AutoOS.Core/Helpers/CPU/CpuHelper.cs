@@ -330,6 +330,8 @@ public static partial class CpuHelper
 		};
 	}
 
+	public static ulong GetCoreMask(CpuCore core) => core.Threads.Aggregate(0UL, (mask, t) => mask | t.BitMask);
+
 	public static List<CpuCore> GroupCpuSetsByCore(List<CpuSet> cpuSets, int offset = 0)
 	{
 		var cores = new Dictionary<byte, CpuCore>();
