@@ -136,6 +136,7 @@ public class ApplicationSelection
 	public bool PrimeVideo { get; set; }
 	public bool MpcQt { get; set; }
 	public bool MPV { get; set; }
+	public bool MpcHc { get; set; }
 	public bool VLC { get; set; }
 	public bool MediaInfo { get; set; }
 	public bool Word { get; set; }
@@ -308,6 +309,7 @@ public static class AppsStage
 		bool PrimeVideo = selection?.PrimeVideo ?? PreparingStage.PrimeVideo;
 		bool MpcQt = selection?.MpcQt ?? PreparingStage.MpcQt;
 		bool MPV = selection?.MPV ?? PreparingStage.MPV;
+		bool MpcHc = selection?.MpcHc ?? PreparingStage.MpcHc;
 		bool VLC = selection?.VLC ?? PreparingStage.VLC;
 		bool MediaInfo = selection?.MediaInfo ?? PreparingStage.MediaInfo;
 
@@ -2037,7 +2039,14 @@ public static class AppsStage
 			("Installing mpv", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\mpv", "UninstallString", $@"cmd.exe /c """"{Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}\mpv\mpv.exe"" --no-config --unregister && rmdir /s /q ""{Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}\mpv""""", RegistryValueKind.String), () => MPV == true),
 			("Cleaning up mpv files", async () => { string path = Path.Combine(Path.GetTempPath(), "mpv-x86_64-v3.7z"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => MPV == true),
 
-			// download vlc
+			// download mpc-hc
+		("Downloading MPC-HC", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/clsid2/mpc-hc/releases")).RootElement.EnumerateArray().First(release => !release.GetProperty("prerelease").GetBoolean() && release.GetProperty("assets").EnumerateArray().Any(asset => (asset.GetProperty("name").GetString() ?? "").StartsWith("MPC-HC.") && (asset.GetProperty("name").GetString() ?? "").EndsWith(".x64.exe"))).GetProperty("assets").EnumerateArray().First(asset => (asset.GetProperty("name").GetString() ?? "").StartsWith("MPC-HC.") && (asset.GetProperty("name").GetString() ?? "").EndsWith(".x64.exe")).GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "MPC-HC.x64.exe", reporter: reporter), () => MpcHc == true),
+
+		// install mpc-hc
+		("Installing MPC-HC", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "MPC-HC.x64.exe"), Arguments = "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => MpcHc == true),
+		("Cleaning up MPC-HC files", async () => { string path = Path.Combine(Path.GetTempPath(), "MPC-HC.x64.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => MpcHc == true),
+
+		// download vlc
 			("Downloading VLC", async () => await DownloadHelper.Download("https://mirror.solnet.ch/videolan/vlc/3.0.23/win64/vlc-3.0.23-win64.exe", Path.GetTempPath(), "vlc-win64.exe", reporter: reporter), () => VLC == true),
 
 			// install vlc
