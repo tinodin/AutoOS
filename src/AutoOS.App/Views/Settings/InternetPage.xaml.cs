@@ -1,386 +1,160 @@
-using AutoOS.App.Helpers.Xaml;
-using AutoOS.Core.Data.Models.Device;
-using AutoOS.Core.Data.Models.Network;
-using AutoOS.Core.Helpers.Device;
+using AutoOS.App.Data.Enums.Network;
+using AutoOS.App.Data.Models.Network;
+using AutoOS.App.Helpers.TreeGrid;
+using AutoOS.App.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.Win32;
-using Windows.Win32;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Navigation;
+using Syncfusion.UI.Xaml.DataGrid;
+using Syncfusion.UI.Xaml.TreeGrid;
 
 namespace AutoOS.App.Views.Settings;
 
 public sealed partial class InternetPage : Page
 {
-	private bool isInitializingAdvancedNetworkSettings = true;
-	private readonly Dictionary<DeviceInfo, Dictionary<string, (string Value, string DisplayValue)>> _pendingChanges = [];
-	public ObservableCollection<DeviceInfo> NetworkAdapters { get; } = [];
+
+	public InternetPageViewModel ViewModel { get; } = Ioc.Default.GetRequiredService<InternetPageViewModel>();
 
 	public InternetPage()
 	{
 		InitializeComponent();
-		GetNetworkAdapters();
-		Loaded += InternetPage_Loaded;
 	}
 
-	private void InternetPage_Loaded(object sender, RoutedEventArgs e)
+	protected override void OnNavigatedTo(NavigationEventArgs e)
 	{
-		isInitializingAdvancedNetworkSettings = false;
+		base.OnNavigatedTo(e);
+		ViewModel.RefreshFilterAction = RefreshSearchFilter;
+		ViewModel.RefreshFilterOnlyAction = RefreshFilterOnly;
+		_ = ViewModel.LoadAdaptersAsync();
 	}
 
-	private void GetNetworkAdapters()
+	protected override void OnNavigatedFrom(NavigationEventArgs e)
 	{
-		NetworkAdapters.Clear();
-		foreach (DeviceInfo device in DeviceHelper.GetDevices(DeviceType.NIC))
-		{
-			if (device.NicType is NicDeviceType.WiFi or NicDeviceType.LAN)
-			{
-				device.AdvancedSettings = Core.Helpers.Network.NetworkHelper.GetAdvancedSettings(device);
-				NetworkAdapters.Add(device);
-			}
-		}
+		ViewModel.RefreshFilterAction = null;
+		ViewModel.RefreshFilterOnlyAction = null;
+		base.OnNavigatedFrom(e);
 	}
 
-	private void SettingsGroup_Loaded(object sender, RoutedEventArgs e)
+	private void Search_AcceleratorInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
 	{
-		if (sender is not SettingsGroup settingsGroup)
+		Search.Focus(FocusState.Programmatic);
+		args.Handled = true;
+	}
+
+	private void TreeGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+	{
+		if (e.NewSize.Width <= 0 || e.NewSize.Width == e.PreviousSize.Width)
 			return;
-		if (settingsGroup.DataContext is not DeviceInfo device)
+
+		if (sender is not SfTreeGrid treeGrid)
 			return;
-		List<NetworkAdvancedSetting> settings = device.AdvancedSettings;
-		settingsGroup.Description = $"Current version: {device.DriverType} {device.CurrentVersion}";
 
-		foreach (NetworkAdvancedSetting setting in settings.OrderBy(s => string.IsNullOrEmpty(s.Name) || !char.IsDigit(s.Name[0])).ThenBy(s => s.Name, Comparer<string>.Create(NaturalSort)))
-		{
-			FrameworkElement control = setting.Type switch
-			{
-				NetworkSettingType.Dword or NetworkSettingType.Int => CreateNumberBox(setting),
-				NetworkSettingType.Edit => CreateTextBox(setting),
-				_ => CreateComboBox(setting)
-			};
+		foreach (TreeGridColumn column in treeGrid.Columns)
+			column.Width = double.NaN;
+		treeGrid.InvalidateMeasure();
+		treeGrid.UpdateLayout();
 
-			var settingsCard = new SettingsCard
-			{
-				Header = setting.Name,
-				Description = setting.Key,
-				Content = control
-			};
-
-			settingsGroup.Items.Add(settingsCard);
-		}
+		RefreshFilterOnly();
 	}
 
-	private ComboBox CreateComboBox(NetworkAdvancedSetting setting)
+	private void TreeGrid_CellToolTipOpening(object? sender, TreeGridCellToolTipOpeningEventArgs e)
 	{
-		var sortedOptions = setting.Options.OrderBy(opt => opt.Name, Comparer<string>.Create(NaturalSort)).ToList();
-
-		int selectedIndex = sortedOptions.FindIndex(opt => string.Equals(opt.Value, setting.CurrentValue, StringComparison.OrdinalIgnoreCase));
-		if (selectedIndex < 0)
-			selectedIndex = sortedOptions.FindIndex(opt => string.Equals(opt.Value, setting.DefaultValue, StringComparison.OrdinalIgnoreCase));
-		if (selectedIndex < 0)
-			selectedIndex = 0;
-
-		var comboBox = new ComboBox
+		if (e.Record is not Node node)
 		{
-			MinWidth = 300,
-			DisplayMemberPath = "Name",
-			ItemsSource = sortedOptions,
-			SelectedIndex = selectedIndex,
-			Tag = setting
+			e.ToolTip.Visibility = Visibility.Collapsed;
+			return;
+		}
+
+		string? content = e.Column?.MappingName switch
+		{
+			nameof(Node.DisplayName) => node.NodeKind == NodeKind.Adapter ? null : node.Description,
+			nameof(Node.DisplayCurrent) => node.ValueToolTip,
+			nameof(Node.DisplayOriginal) => node.OriginalValueToolTip,
+			nameof(Node.DisplayRecommended) => node.DisplayRecommended,
+			nameof(Node.DisplayDefault) => node.DisplayDefault,
+			_ => null
 		};
-		comboBox.SelectionChanged += AdvancedSetting_SelectionChanged;
-		return comboBox;
-	}
-
-	private NumberBox CreateNumberBox(NetworkAdvancedSetting setting)
-	{
-		var numberBox = new NumberBox
+		if (string.IsNullOrWhiteSpace(content))
 		{
-			MinWidth = 300,
-			SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline,
-			Tag = setting
-		};
-
-		string currentValue = setting.CurrentValue;
-		if (setting.Base == 16 && currentValue.StartsWith("0x"))
-			currentValue = currentValue[2..];
-
-		if (int.TryParse(currentValue, setting.Base == 16 ? System.Globalization.NumberStyles.HexNumber : System.Globalization.NumberStyles.Integer, null, out int value))
-			numberBox.Value = value;
-
-		if (setting.Min.HasValue)
-			numberBox.Minimum = setting.Min.Value;
-		if (setting.Max.HasValue)
-			numberBox.Maximum = setting.Max.Value;
-		if (setting.Step.HasValue)
-			numberBox.SmallChange = setting.Step.Value;
-
-		numberBox.ValueChanged += AdvancedSetting_ValueChanged;
-		return numberBox;
-	}
-
-	private Microsoft.UI.Xaml.Controls.TextBox CreateTextBox(NetworkAdvancedSetting setting)
-	{
-		var textBox = new Microsoft.UI.Xaml.Controls.TextBox
-		{
-			MinWidth = 300,
-			Text = setting.CurrentValue,
-			Tag = setting
-		};
-
-		if (setting.LimitText.HasValue)
-			textBox.MaxLength = setting.LimitText.Value;
-
-		if (setting.UpperCase)
-		{
-			textBox.CharacterCasing = CharacterCasing.Upper;
-		}
-
-		textBox.LostFocus += AdvancedSetting_TextChanged;
-		return textBox;
-	}
-
-	private void AdvancedSetting_SelectionChanged(object sender, SelectionChangedEventArgs e)
-	{
-		if (isInitializingAdvancedNetworkSettings)
-			return;
-
-		var comboBox = (ComboBox)sender;
-		if (comboBox.SelectedItem is not NetworkSettingOption selectedOption || comboBox.Tag is not NetworkAdvancedSetting setting)
-			return;
-
-		ChangeSetting(comboBox, setting, selectedOption.Value, selectedOption.Name);
-	}
-
-	private void AdvancedSetting_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
-	{
-		if (isInitializingAdvancedNetworkSettings)
-			return;
-
-		if (sender.Tag is not NetworkAdvancedSetting setting)
-			return;
-
-		string value = setting.Base == 16 ? $"0x{((int)sender.Value):X}" : ((int)sender.Value).ToString();
-		ChangeSetting(sender, setting, value, value);
-	}
-
-	private void AdvancedSetting_TextChanged(object sender, RoutedEventArgs e)
-	{
-		if (isInitializingAdvancedNetworkSettings)
-			return;
-
-		var textBox = (Microsoft.UI.Xaml.Controls.TextBox)sender;
-		if (textBox.Tag is not NetworkAdvancedSetting setting)
-			return;
-
-		string value = textBox.Text;
-		ChangeSetting(textBox, setting, value, value);
-	}
-
-	private void ChangeSetting(FrameworkElement control, NetworkAdvancedSetting setting, string value, string displayValue)
-	{
-		SettingsGroup? settingsGroup = DependencyObjectHelpers.FindParent<SettingsGroup>(control);
-		if (settingsGroup?.DataContext is not DeviceInfo device)
-			return;
-
-		if (!_pendingChanges.ContainsKey(device))
-			_pendingChanges[device] = [];
-
-		Dictionary<string, (string Value, string DisplayValue)> deviceChanges = _pendingChanges[device];
-
-		if (setting.CurrentValue == value)
-			deviceChanges.Remove(setting.Key);
-		else
-			deviceChanges[setting.Key] = (value, displayValue);
-
-		StackPanel? repeaterItem = DependencyObjectHelpers.FindParent<StackPanel>(settingsGroup);
-		if (repeaterItem == null)
-			return;
-		var infoBarContainer = (StackPanel)repeaterItem.FindName("AdapterInfo")!;
-		if (infoBarContainer == null)
-			return;
-
-		if (!_pendingChanges.TryGetValue(device, out Dictionary<string, (string Value, string DisplayValue)>? changes) || changes == null || changes.Count == 0)
-		{
-			infoBarContainer.Children.Clear();
+			e.ToolTip.Visibility = Visibility.Collapsed;
 			return;
 		}
 
-		if (infoBarContainer.Children.Count > 0 && infoBarContainer.Children[0] is InfoBar existingBar && existingBar.Title == "Unsaved changes")
+		e.ToolTip.Content = content;
+		e.ToolTip.Visibility = Visibility.Visible;
+	}
+
+	private void TreeGrid_CurrentCellBeginEdit(object? sender, TreeGridCurrentCellBeginEditEventArgs e)
+	{
+		if (sender is not SfTreeGrid treeGrid)
 			return;
 
-		var infoBar = new InfoBar
+		Node? node = treeGrid.GetNodeAtRowIndex(e.RowColumnIndex.RowIndex)?.Item as Node ?? treeGrid.CurrentItem as Node;
+		if (node is not { IsAdjustable: true } || !ViewModel.IsLoaded)
 		{
-			Title = "You have unsaved changes. Applying changes will restart your network adapter.",
-			IsClosable = false,
-			IsOpen = true,
-			Severity = InfoBarSeverity.Informational,
-			Margin = new Thickness(0, 0, 0, 12)
-		};
+			e.Cancel = true;
+			return;
+		}
 
-		var stackPanel = new StackPanel
-		{
-			Orientation = Orientation.Horizontal,
-			Spacing = 8,
-			HorizontalAlignment = HorizontalAlignment.Right,
-			Margin = new Thickness(0, -52, 16, 0)
-		};
-
-		var applyBtn = new Button { Content = "Apply", Style = (Style)Application.Current.Resources["AccentButtonStyle"]! };
-		applyBtn.Click += async (s, e) =>
-		{
-			infoBar.Severity = InfoBarSeverity.Informational;
-			infoBar.Title = "Applying changes...";
-			infoBar.Message = string.Empty;
-			infoBar.Content = null;
-
-			bool success = await Task.Run(() =>
-			{
-				foreach (KeyValuePair<string, (string Value, string DisplayValue)> change in changes)
-					Core.Helpers.Network.NetworkHelper.SetAdvancedSetting(device, change.Key, change.Value.Value);
-
-				return DeviceHelper.RestartDevice(device);
-			});
-
-			_pendingChanges.Remove(device);
-			UpdateSettings(settingsGroup, device);
-
-			infoBar.Severity = success ? InfoBarSeverity.Success : InfoBarSeverity.Error;
-			infoBar.Title = success ? "Successfully applied changes." : "Failed to apply changes.";
-			infoBar.IsHitTestVisible = true;
-
-			await Task.Delay(2000);
-			infoBarContainer.Children.Clear();
-		};
-
-		var cancelBtn = new Button { Content = "Cancel" };
-		cancelBtn.Click += (s, e) =>
-		{
-			_pendingChanges.Remove(device);
-			UpdateSettings(settingsGroup, device);
-			infoBarContainer.Children.Clear();
-		};
-
-		stackPanel.Children.Add(cancelBtn);
-		stackPanel.Children.Add(applyBtn);
-
-		infoBar.Content = stackPanel;
-
-		infoBarContainer.Children.Clear();
-		infoBarContainer.Children.Add(infoBar);
+		ViewModel.BeginEdit(node, e.Column?.MappingName ?? string.Empty);
 	}
 
-	private async void Optimize_Checked(object sender, RoutedEventArgs e)
+	private void TreeGrid_CurrentCellEndEdit(object? sender, CurrentCellEndEditEventArgs e)
 	{
-		var button = (ProgressButton)sender;
-		SettingsGroup? settingsGroup = DependencyObjectHelpers.FindParent<SettingsGroup>(button);
-
-		if (settingsGroup?.DataContext is not DeviceInfo device)
+		if (sender is not SfTreeGrid treeGrid)
 			return;
 
-		_pendingChanges.Remove(device);
-		UpdateSettings(settingsGroup, device);
-
-		StackPanel? repeaterItem = DependencyObjectHelpers.FindParent<StackPanel>(settingsGroup);
-		if (repeaterItem != null)
-		{
-			var infoBarContainer = (StackPanel)repeaterItem.FindName("AdapterInfo")!;
-			infoBarContainer?.Children.Clear();
-		}
-
-		bool anyChanged = Core.Helpers.Network.NetworkHelper.OptimizeAdapter(device);
-
-		if (anyChanged)
-		{
-			UpdateSettings(settingsGroup, device);
-			await Task.Run(() => DeviceHelper.RestartDevice(device));
-		}
-		else
-		{
-			await Task.Delay(500);
-		}
-
-		button.IsChecked = false;
+		Node? node = treeGrid.GetNodeAtRowIndex(e.RowColumnIndex.RowIndex)?.Item as Node ?? treeGrid.CurrentItem as Node;
+		int visibleIndex = treeGrid.ResolveToGridVisibleColumnIndex(e.RowColumnIndex.ColumnIndex);
+		string mappingName = treeGrid.Columns[visibleIndex].MappingName;
+		if (ViewModel.CommitEdit(node, mappingName))
+			ViewModel.RefreshAfterEdit();
 	}
 
-	private void UpdateSettings(SettingsGroup settingsGroup, DeviceInfo device)
+	private void EditControl_Loaded(object? sender, RoutedEventArgs e)
 	{
-		isInitializingAdvancedNetworkSettings = true;
-
-		using RegistryKey? deviceKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(device.RegistryPath);
-
-		foreach (object? item in settingsGroup.Items)
-		{
-			if (item is not SettingsCard card || card.Content is not FrameworkElement control)
-				continue;
-			if (control.Tag is not NetworkAdvancedSetting setting)
-				continue;
-
-			string newValue = deviceKey?.GetValue(setting.Key)?.ToString() ?? string.Empty;
-			setting.CurrentValue = newValue;
-
-			switch (control)
-			{
-				case ComboBox combobox:
-					var options = (List<NetworkSettingOption>)combobox.ItemsSource!;
-					int idx = options.FindIndex(opt => string.Equals(opt.Value, newValue, StringComparison.OrdinalIgnoreCase));
-					if (idx < 0)
-						idx = options.FindIndex(opt => string.Equals(opt.Value, setting.DefaultValue, StringComparison.OrdinalIgnoreCase));
-					if (idx < 0)
-						idx = 0;
-					combobox.SelectedIndex = idx;
-					break;
-
-				case NumberBox numberbox:
-					if (setting.Base == 16 && newValue.StartsWith("0x"))
-						newValue = newValue[2..];
-					if (int.TryParse(newValue, setting.Base == 16 ? System.Globalization.NumberStyles.HexNumber : System.Globalization.NumberStyles.Integer, null, out int val))
-						numberbox.Value = val;
-					break;
-
-				case Microsoft.UI.Xaml.Controls.TextBox textbox:
-					textbox.Text = newValue;
-					break;
-			}
-		}
-
-		isInitializingAdvancedNetworkSettings = false;
+		if (sender is Control control)
+			control.Focus(FocusState.Programmatic);
+		if (sender is Microsoft.UI.Xaml.Controls.TextBox textBox)
+			textBox.SelectAll();
 	}
 
-	private static int NaturalSort(string x, string y)
+	private void EditComboBox_DropDownClosed(object? sender, object e)
 	{
-		if (x == y)
-			return 0;
-		if (x == null)
-			return -1;
-		if (y == null)
-			return 1;
+		TreeGrid.SelectionController.CurrentCellManager.EndEdit();
+		CompareTreeGrid.SelectionController.CurrentCellManager.EndEdit();
+	ChangesTreeGrid.SelectionController.CurrentCellManager.EndEdit();
+	}
 
-		bool xIsUsec = x.Contains("usec", StringComparison.OrdinalIgnoreCase);
-		bool yIsUsec = y.Contains("usec", StringComparison.OrdinalIgnoreCase);
-		bool xIsMsec = x.Contains("msec", StringComparison.OrdinalIgnoreCase);
-		bool yIsMsec = y.Contains("msec", StringComparison.OrdinalIgnoreCase);
+	private void TreeGrid_ContextRequested(UIElement sender, ContextRequestedEventArgs args)
+		=> TreeGridContextFlyoutHelper.HandleCellContextRequested<Node>(sender, args, InternetPageViewModel.GetContextFlyoutItems, ViewModel.CopyTextCommand);
 
-		if (xIsUsec && yIsMsec)
-			return -1;
-		if (yIsUsec && xIsMsec)
-			return 1;
+	private void TreeGrid_TreeGridContextFlyoutOpening(object? sender, TreeGridContextFlyoutEventArgs e) => TreeGridContextFlyoutHelper.ShowHeaderContextFlyout(sender!, e);
 
-		bool xIsMbps = x.Contains("Mbps", StringComparison.OrdinalIgnoreCase);
-		bool yIsMbps = y.Contains("Mbps", StringComparison.OrdinalIgnoreCase);
-		bool xIsGbps = x.Contains("Gbps", StringComparison.OrdinalIgnoreCase);
-		bool yIsGbps = y.Contains("Gbps", StringComparison.OrdinalIgnoreCase);
+	private void RefreshFilterOnly()
+	{
+		ViewModel.RefreshFilterSnapshot();
+		ApplyFilter(TreeGrid, ViewModel);
+		ApplyFilter(CompareTreeGrid, ViewModel);
+		ApplyFilter(ChangesTreeGrid, ViewModel);
+		TreeGrid.QueueRowHeightRefresh();
+		CompareTreeGrid.QueueRowHeightRefresh();
+		ChangesTreeGrid.QueueRowHeightRefresh();
+	}
 
-		if (xIsMbps && yIsGbps)
-			return -1;
-		if (yIsMbps && xIsGbps)
-			return 1;
+	private void RefreshSearchFilter()
+	{
+		ViewModel.UpdateNodeCounts();
+		RefreshFilterOnly();
+	}
 
-		string[] rates = ["Disabled", "Off", "Minimal", "Low", "Medium", "Middle", "High", "Extreme", "Adaptive"];
-		int xInt = Array.FindIndex(rates, i => x.Equals(i, StringComparison.OrdinalIgnoreCase));
-		int yInt = Array.FindIndex(rates, i => y.Equals(i, StringComparison.OrdinalIgnoreCase));
-		if (xInt != -1 && yInt != -1)
-			return xInt.CompareTo(yInt);
-
-		return PInvoke.StrCmpLogical(x, y);
+	private static void ApplyFilter(SfTreeGrid treeGrid, InternetPageViewModel viewModel)
+	{
+		TreeGridView? view = treeGrid.View;
+		if (view == null)
+			return;
+		view.Filter = viewModel.MatchesFilter;
+		view.RefreshFilter();
 	}
 }

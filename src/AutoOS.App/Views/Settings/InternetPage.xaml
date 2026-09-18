@@ -3,67 +3,685 @@
 	x:Class="AutoOS.App.Views.Settings.InternetPage"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:converters="using:CommunityToolkit.WinUI.Converters"
+	xmlns:converters="using:AutoOS.App.Converters"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	xmlns:data="using:Syncfusion.UI.Xaml.Data"
 	xmlns:dev="using:DevWinUI"
-	xmlns:local="using:AutoOS"
+	xmlns:ext="using:AutoOS.App.Extensions"
+	xmlns:local="using:AutoOS.App.Data.Models.Network"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:models="using:AutoOS.Core.Data.Models.Device"
-	xmlns:net="using:AutoOS.Core.Helpers.Network"
-	xmlns:views="using:AutoOS.App.Views"
+	xmlns:menuflyout="using:AutoOS.App.Helpers.MenuFlyout"
+	xmlns:network="using:AutoOS.Core.Data.Models.Network"
+	xmlns:sfgrid="using:Syncfusion.UI.Xaml.TreeGrid"
+	xmlns:templateselectors="using:AutoOS.App.Data.TemplateSelectors.Network"
+	xmlns:treegrid="using:AutoOS.App.Helpers.TreeGrid"
 	mc:Ignorable="d">
 	<Page.Resources>
-		<converters:BoolToObjectConverter
-			x:Key="BoolToObjectConverter"
-			FalseValue="&#xE839;"
-			TrueValue="&#xE701;" />
+
+		<!--  Enum to Bool Converter  -->
+		<converters:EnumToBoolConverter x:Key="EnumToBoolConverter" />
+
+		<!--  ComboBox Template  -->
+		<DataTemplate x:Key="ComboBoxEditTemplate" x:DataType="local:Node">
+			<ComboBox
+				DropDownClosed="EditComboBox_DropDownClosed"
+				ItemsSource="{x:Bind Options, Mode=OneTime}"
+				Loaded="EditControl_Loaded"
+				SelectedItem="{x:Bind State.EditOption, Mode=TwoWay}"
+				Style="{StaticResource TreeGridComboBoxStyle}"
+				ToolTipService.ToolTip="{x:Bind ValueToolTip, Mode=OneTime}">
+				<ComboBox.Resources>
+					<SolidColorBrush x:Key="ComboBoxBackgroundBorderBrushFocused" Color="Transparent" />
+					<SolidColorBrush x:Key="ComboBoxBackgroundFocused" Color="{ThemeResource ControlFillColorSecondary}" />
+					<Thickness x:Key="ComboBoxBackgroundBorderThicknessFocused">0</Thickness>
+				</ComboBox.Resources>
+				<ComboBox.ItemTemplate>
+					<DataTemplate x:DataType="network:Option">
+						<TextBlock
+							Padding="0,2,0,0"
+							FontFamily="Segoe UI Variable Static Text"
+							Text="{x:Bind Name, Mode=OneTime}"
+							TextTrimming="CharacterEllipsis"
+							TextWrapping="NoWrap"
+							ToolTipService.ToolTip="{x:Bind Name, Mode=OneTime}" />
+					</DataTemplate>
+				</ComboBox.ItemTemplate>
+			</ComboBox>
+		</DataTemplate>
+
+		<!--  TextBox Template  -->
+		<DataTemplate x:Key="TextBoxEditTemplate" x:DataType="local:Node">
+			<TextBox
+				Loaded="EditControl_Loaded"
+				Style="{StaticResource TreeGridTextBoxStyle}"
+				Text="{x:Bind State.EditValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+				ToolTipService.ToolTip="{x:Bind ValueToolTip, Mode=OneTime}">
+				<TextBox.Resources>
+					<SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="Transparent" />
+					<SolidColorBrush x:Key="TextControlBackgroundFocused" Color="{ThemeResource ControlFillColorSecondary}" />
+					<Thickness x:Key="TextControlBorderThemeThicknessFocused">0</Thickness>
+				</TextBox.Resources>
+			</TextBox>
+		</DataTemplate>
+
+		<!--  Cell Style Selector  -->
+		<templateselectors:CellStyleSelector
+			x:Key="CellStyleSelector"
+			CautionStyle="{StaticResource CautionCellStyle}"
+			CriticalStyle="{StaticResource CriticalCellStyle}"
+			SuccessStyle="{StaticResource SuccessCellStyle}" />
+
+		<!--  Compare Cell Style Selector  -->
+		<templateselectors:CompareCellStyleSelector
+			x:Key="CompareCellStyleSelector"
+			CautionStyle="{StaticResource CautionCellStyle}"
+			CriticalStyle="{StaticResource CriticalCellStyle}"
+			SuccessStyle="{StaticResource SuccessCellStyle}" />
+
+		<!--  Changes Cell Style Selector  -->
+		<templateselectors:ChangesCellStyleSelector
+			x:Key="ChangesCellStyleSelector"
+			CautionStyle="{StaticResource CautionCellStyle}"
+			CriticalStyle="{StaticResource CriticalCellStyle}"
+			SuccessStyle="{StaticResource SuccessCellStyle}" />
+
+		<!--  Edit Template Selectors  -->
+		<templateselectors:EditTemplateSelector
+			x:Key="EditTemplateSelector"
+			ComboBoxTemplate="{StaticResource ComboBoxEditTemplate}"
+			TextBoxTemplate="{StaticResource TextBoxEditTemplate}" />
+
+		<DataTemplate x:Key="AdapterNameTemplate" x:DataType="local:Node">
+			<Grid VerticalAlignment="Center">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="Auto" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+				</Grid.RowDefinitions>
+
+				<FontIcon
+					Grid.RowSpan="2"
+					Width="16"
+					Height="16"
+					Margin="0,0,8,0"
+					HorizontalAlignment="Center"
+					VerticalAlignment="Center"
+					FontSize="16"
+					Foreground="{ThemeResource SystemAccentColor}"
+					Glyph="{x:Bind AdapterGlyph, Mode=OneTime}" />
+
+				<TextBlock
+					Grid.Column="1"
+					VerticalAlignment="Center"
+					Text="{x:Bind DisplayName, Mode=OneWay}"
+					TextTrimming="CharacterEllipsis" />
+
+				<TextBlock
+					Grid.Row="1"
+					Grid.Column="1"
+					Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+					Style="{StaticResource CaptionTextBlockStyle}"
+					Text="{x:Bind DriverVersion, Mode=OneWay}"
+					TextTrimming="CharacterEllipsis" />
+			</Grid>
+		</DataTemplate>
+
+		<DataTemplate x:Key="SettingNameTemplate" x:DataType="local:Node">
+			<TextBlock
+				Margin="12,0"
+				VerticalAlignment="Center"
+				Text="{x:Bind DisplayName, Mode=OneWay}"
+				TextTrimming="CharacterEllipsis"
+				TextWrapping="NoWrap" />
+		</DataTemplate>
+
+		<templateselectors:NameTemplateSelector
+			x:Key="NameTemplateSelector"
+			AdapterTemplate="{StaticResource AdapterNameTemplate}"
+			SettingTemplate="{StaticResource SettingNameTemplate}" />
+
+		<treegrid:TreeGridSortComparer x:Key="DisplayNameComparer" PropertyName="DisplayName" />
+		<treegrid:TreeGridSortComparer x:Key="DisplayCurrentComparer" PropertyName="DisplayCurrent" />
+		<treegrid:TreeGridSortComparer x:Key="DisplayRecommendedComparer" PropertyName="DisplayRecommended" />
+		<treegrid:TreeGridSortComparer x:Key="DisplayDefaultComparer" PropertyName="DisplayDefault" />
+		<treegrid:TreeGridSortComparer x:Key="DisplayOriginalComparer" PropertyName="DisplayOriginal" />
 	</Page.Resources>
+
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto" />
 			<RowDefinition Height="*" />
 		</Grid.RowDefinitions>
-		<TextBlock
-			Margin="36,24,0,0"
-			Style="{StaticResource TitleTextBlockStyle}"
-			Text="Network &amp; Internet" />
-		<ScrollViewer
-			Grid.Row="1"
-			VerticalScrollBarVisibility="Auto"
-			VerticalScrollMode="Auto">
-			<StackPanel Margin="{ThemeResource ContentPageMargin}" Padding="{ThemeResource ContentPagePadding}">
-				<ItemsRepeater
-					x:Name="AdapterRepeater"
-					Margin="0,0,0,28"
-					ItemsSource="{x:Bind NetworkAdapters, Mode=OneWay}">
-					<ItemsRepeater.ItemTemplate>
-						<DataTemplate x:DataType="models:DeviceInfo">
-							<StackPanel>
-								<dev:SettingsGroup
-									DataContext="{x:Bind}"
-									Header="{x:Bind FriendlyName, Mode=OneWay}"
-									Loaded="SettingsGroup_Loaded">
-									<dev:SettingsGroup.HeaderIcon>
-										<FontIcon Foreground="{ThemeResource SystemAccentColor}" Glyph="{x:Bind IsWiFi, Mode=OneWay, Converter={StaticResource BoolToObjectConverter}}" />
-									</dev:SettingsGroup.HeaderIcon>
-									<dev:SettingsGroup.Content>
-										<dev:ProgressButton
-											x:Name="Optimize"
-											HorizontalAlignment="Left"
-											Checked="Optimize_Checked"
-											CheckedContent="Optimizing Adapter..."
-											Content="Optimize Adapter"
-											IsIndeterminate="True"
-											Style="{ThemeResource AccentProgressButtonStyle}" />
 
-									</dev:SettingsGroup.Content>
-								</dev:SettingsGroup>
-								<StackPanel x:Name="AdapterInfo" Margin="4,8,4,0" />
-							</StackPanel>
-						</DataTemplate>
-					</ItemsRepeater.ItemTemplate>
-				</ItemsRepeater>
-			</StackPanel>
-		</ScrollViewer>
+		<!--  Header  -->
+		<StackPanel Grid.Row="0" Margin="36,24,36,0">
+			<TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Network &amp; Internet" />
+
+			<Grid Margin="0,48,0,8" ColumnSpacing="8">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="Auto" />
+				</Grid.ColumnDefinitions>
+
+				<!--  Search  -->
+				<dev:TextBox
+					x:Name="Search"
+					Grid.Column="0"
+					IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"
+					IsSpellCheckEnabled="False"
+					PlaceholderText="Search..."
+					Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+					ToolTipService.ToolTip="Search (Ctrl+F)">
+					<dev:TextBox.KeyboardAccelerators>
+						<KeyboardAccelerator
+							Key="F"
+							Invoked="Search_AcceleratorInvoked"
+							Modifiers="Control" />
+					</dev:TextBox.KeyboardAccelerators>
+					<dev:TextBox.Content>
+						<Button Content="&#xE71E;" />
+					</dev:TextBox.Content>
+				</dev:TextBox>
+
+				<!--  Filter  -->
+				<DropDownButton
+					Grid.Column="1"
+					VerticalAlignment="Stretch"
+					menuflyout:MenuFlyoutHelper.KeepOpenOnItemClick="True"
+					IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"
+					ToolTipService.ToolTip="Filter (Alt+Shift+F)">
+					<DropDownButton.Content>
+						<FontIcon FontSize="12" Glyph="&#xE71C;" />
+					</DropDownButton.Content>
+					<DropDownButton.Flyout>
+						<MenuFlyout Placement="Bottom">
+
+							<!--  Adapter  -->
+							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterAdapter, Mode=TwoWay}" Text="Adapter" />
+
+							<!--  Setting  -->
+							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterSetting, Mode=TwoWay}" Text="Setting" />
+
+							<!--  Description  -->
+							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterDescription, Mode=TwoWay}" Text="Description" />
+
+							<!--  Key  -->
+							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterKey, Mode=TwoWay}" Text="Key" />
+
+							<!--  Separator  -->
+							<MenuFlyoutSeparator />
+
+							<!--  Value  -->
+							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterValue, Mode=TwoWay}" Text="Value" />
+
+							<!--  Recommended  -->
+							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterRecommended, Mode=TwoWay}" Text="Recommended" />
+
+							<!--  Separator  -->
+							<MenuFlyoutSeparator />
+
+							<!--  Contains  -->
+							<RadioMenuFlyoutItem
+								Command="{x:Bind ViewModel.SetFilterModeCommand}"
+								CommandParameter="Contains"
+								GroupName="InternetFilterMode"
+								IsChecked="{x:Bind ViewModel.FilterMode, Mode=OneWay, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Contains}"
+								Text="Contains" />
+
+							<!--  Exact Match  -->
+							<RadioMenuFlyoutItem
+								Command="{x:Bind ViewModel.SetFilterModeCommand}"
+								CommandParameter="ExactMatch"
+								GroupName="InternetFilterMode"
+								IsChecked="{x:Bind ViewModel.FilterMode, Mode=OneWay, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=ExactMatch}"
+								Text="Exact Match" />
+
+						</MenuFlyout>
+					</DropDownButton.Flyout>
+					<DropDownButton.KeyboardAccelerators>
+						<KeyboardAccelerator Key="F" Modifiers="Menu, Shift" />
+					</DropDownButton.KeyboardAccelerators>
+				</DropDownButton>
+			</Grid>
+
+			<Border
+				Margin="0,0,0,8"
+				Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+				BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+				BorderThickness="1"
+				CornerRadius="{ThemeResource OverlayCornerRadius}">
+
+				<!--  Command Bar  -->
+				<CommandBar
+					ext:CommandBarExtensions.ApplyOverflowIndent="True"
+					ext:CommandBarExtensions.CommandAlignment="Left"
+					ext:CommandBarExtensions.OverflowButtonAlignment="Right"
+					DefaultLabelPosition="Right">
+
+					<!--  Undo  -->
+					<AppBarButton
+						Command="{x:Bind ViewModel.UndoCommand}"
+						Icon="{dev:FontIcon Glyph=&#xE7A7;}"
+						Label="Undo"
+						ToolTipService.ToolTip="Undo (Ctrl+Z)">
+						<AppBarButton.KeyboardAccelerators>
+							<KeyboardAccelerator Key="Z" Modifiers="Control" />
+						</AppBarButton.KeyboardAccelerators>
+					</AppBarButton>
+
+					<!--  Redo  -->
+					<AppBarButton
+						Command="{x:Bind ViewModel.RedoCommand}"
+						Icon="{dev:FontIcon Glyph=&#xE7A6;}"
+						Label="Redo"
+						ToolTipService.ToolTip="Redo (Ctrl+Y)">
+						<AppBarButton.KeyboardAccelerators>
+							<KeyboardAccelerator Key="Y" Modifiers="Control" />
+						</AppBarButton.KeyboardAccelerators>
+					</AppBarButton>
+
+					<!--  Separator  -->
+					<AppBarSeparator Margin="4,0" />
+
+					<!--  Optimize  -->
+					<AppBarButton
+						Command="{x:Bind ViewModel.OptimizeCommand}"
+						Icon="{dev:FontIcon Glyph=&#xE945;}"
+						Label="Optimize"
+						ToolTipService.ToolTip="Optimize" />
+
+					<!--  Separator  -->
+					<AppBarSeparator Margin="4,0" />
+
+					<!--  Compare to Defaults  -->
+					<AppBarToggleButton
+						x:Name="CompareToDefaults"
+						Command="{x:Bind ViewModel.ToggleCompareToDefaultsCommand}"
+						Icon="{dev:FontIcon Glyph=&#xEC77;}"
+						IsChecked="{x:Bind ViewModel.CompareToDefaults, Mode=TwoWay}"
+						Label="{x:Bind ViewModel.CompareToDefaultsLabel, Mode=OneWay}"
+						ToolTipService.ToolTip="Compare to Defaults (Ctrl+Shift+D)">
+						<AppBarToggleButton.KeyboardAccelerators>
+							<KeyboardAccelerator Key="D" Modifiers="Control, Shift" />
+						</AppBarToggleButton.KeyboardAccelerators>
+					</AppBarToggleButton>
+
+					<!--  View Changes  -->
+					<AppBarToggleButton
+						x:Name="ViewChanges"
+						Icon="{dev:FontIcon Glyph=&#xF28B;}"
+						IsChecked="{x:Bind ViewModel.ViewChangesActive, Mode=TwoWay}"
+						IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"
+						Label="{x:Bind ViewModel.ViewChangesLabel, Mode=OneWay}"
+						ToolTipService.ToolTip="View Changes (Ctrl+D)">
+						<AppBarToggleButton.KeyboardAccelerators>
+							<KeyboardAccelerator Key="D" Modifiers="Control" />
+						</AppBarToggleButton.KeyboardAccelerators>
+					</AppBarToggleButton>
+
+					<!--  Separator  -->
+					<AppBarSeparator Margin="4,0" />
+
+					<!--  Restore  -->
+					<AppBarButton
+						Command="{x:Bind ViewModel.RestoreCommand}"
+						Icon="{dev:FontIcon Glyph=&#xE777;}"
+						Label="Restore"
+						ToolTipService.ToolTip="Restore (Ctrl+R)">
+						<AppBarButton.KeyboardAccelerators>
+							<KeyboardAccelerator Key="R" Modifiers="Control" />
+						</AppBarButton.KeyboardAccelerators>
+					</AppBarButton>
+
+					<!--  Separator  -->
+					<AppBarSeparator Margin="4,0" />
+
+					<!--  Save Changes  -->
+					<AppBarButton
+						Command="{x:Bind ViewModel.SaveChangesCommand}"
+						Icon="{dev:FontIcon Glyph=&#xE74E;}"
+						Label="Save Changes"
+						ToolTipService.ToolTip="Save Changes (Ctrl+S)">
+						<AppBarButton.KeyboardAccelerators>
+							<KeyboardAccelerator Key="S" Modifiers="Control" />
+						</AppBarButton.KeyboardAccelerators>
+					</AppBarButton>
+				</CommandBar>
+			</Border>
+		</StackPanel>
+
+		<dev:SwitchPresenter Grid.Row="1" Value="{x:Bind ViewModel.SwitchPresenterValue, Mode=OneWay}">
+
+			<!--  Loading  -->
+			<dev:Case Value="Loading">
+				<StackPanel
+					HorizontalAlignment="Center"
+					VerticalAlignment="Center"
+					Spacing="8">
+					<ProgressRing IsActive="True" />
+					<TextBlock
+						HorizontalAlignment="Center"
+						Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+						Style="{StaticResource CaptionTextBlockStyle}"
+						Text="Loading network adapters..." />
+				</StackPanel>
+			</dev:Case>
+
+			<!--  Saving  -->
+			<dev:Case Value="Saving">
+				<StackPanel
+					HorizontalAlignment="Center"
+					VerticalAlignment="Center"
+					Spacing="8">
+					<ProgressRing IsActive="True" />
+					<TextBlock
+						HorizontalAlignment="Center"
+						Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+						Style="{StaticResource CaptionTextBlockStyle}"
+						Text="Saving changes..." />
+				</StackPanel>
+			</dev:Case>
+
+			<!--  Loaded  -->
+			<dev:Case Value="Loaded">
+				<Grid Margin="36,0,36,36">
+
+					<!--  TreeGrid  -->
+					<treegrid:NetworkTreeGrid
+						x:Name="TreeGrid"
+						treegrid:TreeGridSelectionControllerHelper.UseCustomSelectionController="True"
+						AllowEditing="True"
+						AllowSorting="True"
+						AllowTriStateSorting="True"
+						AutoExpandMode="AllNodesExpanded"
+						AutoGenerateColumns="False"
+						CellToolTipOpening="TreeGrid_CellToolTipOpening"
+						ChildPropertyName="Children"
+						ColumnWidthMode="Star"
+						ContextRequested="TreeGrid_ContextRequested"
+						CurrentCellBeginEdit="TreeGrid_CurrentCellBeginEdit"
+						CurrentCellEndEdit="TreeGrid_CurrentCellEndEdit"
+						DataValidationMode="InView"
+						EditTrigger="OnTap"
+						ExpandStateMappingName="IsExpanded"
+						FilterLevel="All"
+						GridLinesVisibility="Both"
+						HeaderLinesVisibility="Both"
+						IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"
+						ItemsSource="{x:Bind ViewModel.TreeNodes}"
+						NavigationMode="Cell"
+						PasteOption="None"
+						SelectionMode="Single"
+						ShowToolTip="True"
+						SizeChanged="TreeGrid_SizeChanged"
+						TreeGridContextFlyoutOpening="TreeGrid_TreeGridContextFlyoutOpening"
+						Visibility="{x:Bind ViewModel.NormalVisibility, Mode=OneWay}">
+						<treegrid:NetworkTreeGrid.HeaderContextFlyout>
+							<MenuFlyout />
+						</treegrid:NetworkTreeGrid.HeaderContextFlyout>
+
+						<treegrid:NetworkTreeGrid.ColumnSizer>
+							<treegrid:TreeGridStarColumnSizer />
+						</treegrid:NetworkTreeGrid.ColumnSizer>
+						<treegrid:NetworkTreeGrid.SortComparers>
+							<data:SortComparer Comparer="{StaticResource DisplayNameComparer}" PropertyName="DisplayName" />
+							<data:SortComparer Comparer="{StaticResource DisplayCurrentComparer}" PropertyName="DisplayCurrent" />
+							<data:SortComparer Comparer="{StaticResource DisplayRecommendedComparer}" PropertyName="DisplayRecommended" />
+							<data:SortComparer Comparer="{StaticResource DisplayDefaultComparer}" PropertyName="DisplayDefault" />
+						</treegrid:NetworkTreeGrid.SortComparers>
+						<treegrid:NetworkTreeGrid.Columns>
+
+							<!--  Setting  -->
+							<sfgrid:TreeGridTemplateColumn
+								treegrid:StarRatio.ColumnRatio="3"
+								AllowEditing="False"
+								AllowFocus="False"
+								CellTemplateSelector="{StaticResource NameTemplateSelector}"
+								HeaderText="Setting"
+								MappingName="DisplayName"
+								ShowToolTip="True" />
+
+							<!--  Value  -->
+							<sfgrid:TreeGridTemplateColumn
+								treegrid:StarRatio.ColumnRatio="1"
+								AllowEditing="True"
+								AllowSorting="True"
+								CellStyleSelector="{StaticResource CellStyleSelector}"
+								EditTemplateSelector="{StaticResource EditTemplateSelector}"
+								HeaderText="Value"
+								MappingName="DisplayCurrent"
+								ShowToolTip="True">
+								<sfgrid:TreeGridTemplateColumn.CellTemplate>
+									<DataTemplate x:DataType="local:Node">
+										<TextBlock
+											Margin="12,0"
+											VerticalAlignment="Center"
+											Text="{x:Bind State.DisplayCurrent, Mode=OneWay, FallbackValue=''}"
+											TextTrimming="CharacterEllipsis"
+											TextWrapping="NoWrap" />
+									</DataTemplate>
+								</sfgrid:TreeGridTemplateColumn.CellTemplate>
+							</sfgrid:TreeGridTemplateColumn>
+
+							<!--  Recommended  -->
+							<sfgrid:TreeGridTextColumn
+								treegrid:StarRatio.ColumnRatio="1"
+								AllowEditing="False"
+								AllowFocus="False"
+								CellStyleSelector="{StaticResource CellStyleSelector}"
+								HeaderText="Recommended"
+								MappingName="DisplayRecommended"
+								ShowToolTip="True"
+								TextTrimming="CharacterEllipsis"
+								TextWrapping="NoWrap" />
+
+							<!--  Default  -->
+							<sfgrid:TreeGridTextColumn
+								treegrid:StarRatio.ColumnRatio="1"
+								AllowEditing="False"
+								AllowFocus="False"
+								HeaderText="Default"
+								MappingName="DisplayDefault"
+								ShowToolTip="True"
+								TextTrimming="CharacterEllipsis"
+								TextWrapping="NoWrap" />
+						</treegrid:NetworkTreeGrid.Columns>
+					</treegrid:NetworkTreeGrid>
+
+					<!--  Compare Tree Grid  -->
+					<treegrid:NetworkTreeGrid
+						x:Name="CompareTreeGrid"
+						treegrid:TreeGridSelectionControllerHelper.UseCustomSelectionController="True"
+						AllowEditing="True"
+						AllowSorting="True"
+						AllowTriStateSorting="True"
+						AutoExpandMode="AllNodesExpanded"
+						AutoGenerateColumns="False"
+						CellToolTipOpening="TreeGrid_CellToolTipOpening"
+						ChildPropertyName="Children"
+						ColumnWidthMode="Star"
+						ContextRequested="TreeGrid_ContextRequested"
+						CurrentCellBeginEdit="TreeGrid_CurrentCellBeginEdit"
+						CurrentCellEndEdit="TreeGrid_CurrentCellEndEdit"
+						DataValidationMode="InView"
+						EditTrigger="OnTap"
+						ExpandStateMappingName="IsExpanded"
+						FilterLevel="All"
+						GridLinesVisibility="Both"
+						HeaderLinesVisibility="Both"
+						IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"
+						ItemsSource="{x:Bind ViewModel.CompareNodes}"
+						NavigationMode="Cell"
+						PasteOption="None"
+						SelectionMode="Single"
+						ShowToolTip="True"
+						SizeChanged="TreeGrid_SizeChanged"
+						TreeGridContextFlyoutOpening="TreeGrid_TreeGridContextFlyoutOpening"
+						Visibility="{x:Bind ViewModel.CompareToDefaultsVisibility, Mode=OneWay}">
+						<treegrid:NetworkTreeGrid.HeaderContextFlyout>
+							<MenuFlyout />
+						</treegrid:NetworkTreeGrid.HeaderContextFlyout>
+						<treegrid:NetworkTreeGrid.ColumnSizer>
+							<treegrid:TreeGridStarColumnSizer />
+						</treegrid:NetworkTreeGrid.ColumnSizer>
+						<treegrid:NetworkTreeGrid.SortComparers>
+							<data:SortComparer Comparer="{StaticResource DisplayNameComparer}" PropertyName="DisplayName" />
+							<data:SortComparer Comparer="{StaticResource DisplayCurrentComparer}" PropertyName="DisplayCurrent" />
+							<data:SortComparer Comparer="{StaticResource DisplayDefaultComparer}" PropertyName="DisplayDefault" />
+						</treegrid:NetworkTreeGrid.SortComparers>
+						<treegrid:NetworkTreeGrid.Columns>
+
+							<!--  Setting  -->
+							<sfgrid:TreeGridTemplateColumn
+								treegrid:StarRatio.ColumnRatio="3"
+								AllowEditing="False"
+								AllowFocus="False"
+								CellTemplateSelector="{StaticResource NameTemplateSelector}"
+								HeaderText="Setting"
+								MappingName="DisplayName"
+								ShowToolTip="True" />
+
+							<!--  Current  -->
+							<sfgrid:TreeGridTemplateColumn
+								treegrid:StarRatio.ColumnRatio="1"
+								AllowSorting="True"
+								CellStyleSelector="{StaticResource CompareCellStyleSelector}"
+								EditTemplateSelector="{StaticResource EditTemplateSelector}"
+								HeaderText="Current"
+								MappingName="DisplayCurrent"
+								ShowToolTip="True">
+								<sfgrid:TreeGridTemplateColumn.CellTemplate>
+									<DataTemplate x:DataType="local:Node">
+										<TextBlock
+											Margin="12,0"
+											VerticalAlignment="Center"
+											Text="{x:Bind DisplayCurrent, Mode=OneWay}"
+											TextTrimming="CharacterEllipsis"
+											TextWrapping="NoWrap" />
+									</DataTemplate>
+								</sfgrid:TreeGridTemplateColumn.CellTemplate>
+							</sfgrid:TreeGridTemplateColumn>
+
+							<!--  Default  -->
+							<sfgrid:TreeGridTextColumn
+								treegrid:StarRatio.ColumnRatio="1"
+								AllowEditing="False"
+								AllowFocus="False"
+								CellStyleSelector="{StaticResource CompareCellStyleSelector}"
+								HeaderText="Default"
+								MappingName="DisplayDefault"
+								ShowToolTip="True"
+								TextTrimming="CharacterEllipsis"
+								TextWrapping="NoWrap" />
+						</treegrid:NetworkTreeGrid.Columns>
+					</treegrid:NetworkTreeGrid>
+
+					<!--  View Changes TreeGrid  -->
+					<treegrid:NetworkTreeGrid
+						x:Name="ChangesTreeGrid"
+						treegrid:TreeGridSelectionControllerHelper.UseCustomSelectionController="True"
+						AllowEditing="True"
+						AllowSorting="True"
+						AllowTriStateSorting="True"
+						AutoExpandMode="AllNodesExpanded"
+						AutoGenerateColumns="False"
+						CellToolTipOpening="TreeGrid_CellToolTipOpening"
+						ChildPropertyName="Children"
+						ColumnWidthMode="Star"
+						ContextRequested="TreeGrid_ContextRequested"
+						CurrentCellBeginEdit="TreeGrid_CurrentCellBeginEdit"
+						CurrentCellEndEdit="TreeGrid_CurrentCellEndEdit"
+						DataValidationMode="InView"
+						EditTrigger="OnTap"
+						ExpandStateMappingName="IsExpanded"
+						FilterLevel="All"
+						GridLinesVisibility="Both"
+						HeaderLinesVisibility="Both"
+						IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"
+						ItemsSource="{x:Bind ViewModel.ChangesNodes}"
+						NavigationMode="Cell"
+						PasteOption="None"
+						SelectionMode="Single"
+						ShowToolTip="True"
+						SizeChanged="TreeGrid_SizeChanged"
+						TreeGridContextFlyoutOpening="TreeGrid_TreeGridContextFlyoutOpening"
+						Visibility="{x:Bind ViewModel.ViewChangesVisibility, Mode=OneWay}">
+						<treegrid:NetworkTreeGrid.HeaderContextFlyout>
+							<MenuFlyout />
+						</treegrid:NetworkTreeGrid.HeaderContextFlyout>
+
+						<treegrid:NetworkTreeGrid.ColumnSizer>
+							<treegrid:TreeGridStarColumnSizer />
+						</treegrid:NetworkTreeGrid.ColumnSizer>
+						<treegrid:NetworkTreeGrid.SortComparers>
+							<data:SortComparer Comparer="{StaticResource DisplayNameComparer}" PropertyName="DisplayName" />
+							<data:SortComparer Comparer="{StaticResource DisplayOriginalComparer}" PropertyName="DisplayOriginal" />
+							<data:SortComparer Comparer="{StaticResource DisplayCurrentComparer}" PropertyName="DisplayCurrent" />
+							<data:SortComparer Comparer="{StaticResource DisplayDefaultComparer}" PropertyName="DisplayDefault" />
+						</treegrid:NetworkTreeGrid.SortComparers>
+						<treegrid:NetworkTreeGrid.Columns>
+
+							<!--  Setting  -->
+							<sfgrid:TreeGridTemplateColumn
+								treegrid:StarRatio.ColumnRatio="3"
+								AllowEditing="False"
+								AllowFocus="False"
+								CellTemplateSelector="{StaticResource NameTemplateSelector}"
+								HeaderText="Setting"
+								MappingName="DisplayName"
+								ShowToolTip="True" />
+
+							<!--  Original  -->
+							<sfgrid:TreeGridTextColumn
+								treegrid:StarRatio.ColumnRatio="1"
+								AllowEditing="False"
+								AllowFocus="False"
+								CellStyleSelector="{StaticResource ChangesCellStyleSelector}"
+								HeaderText="Original"
+								MappingName="DisplayOriginal"
+								ShowToolTip="True"
+								TextTrimming="CharacterEllipsis"
+								TextWrapping="NoWrap" />
+
+							<!--  New  -->
+							<sfgrid:TreeGridTemplateColumn
+								treegrid:StarRatio.ColumnRatio="1"
+								AllowEditing="True"
+								AllowSorting="True"
+								CellStyleSelector="{StaticResource ChangesCellStyleSelector}"
+								EditTemplateSelector="{StaticResource EditTemplateSelector}"
+								HeaderText="New"
+								MappingName="DisplayCurrent"
+								ShowToolTip="True">
+								<sfgrid:TreeGridTemplateColumn.CellTemplate>
+									<DataTemplate x:DataType="local:Node">
+										<TextBlock
+											Margin="12,0"
+											VerticalAlignment="Center"
+											Text="{x:Bind State.DisplayCurrent, Mode=OneWay, FallbackValue=''}"
+											TextTrimming="CharacterEllipsis"
+											TextWrapping="NoWrap" />
+									</DataTemplate>
+								</sfgrid:TreeGridTemplateColumn.CellTemplate>
+							</sfgrid:TreeGridTemplateColumn>
+
+							<!--  Default  -->
+							<sfgrid:TreeGridTextColumn
+								treegrid:StarRatio.ColumnRatio="1"
+								AllowEditing="False"
+								AllowFocus="False"
+								HeaderText="Default"
+								MappingName="DisplayDefault"
+								ShowToolTip="True"
+								TextTrimming="CharacterEllipsis"
+								TextWrapping="NoWrap" />
+						</treegrid:NetworkTreeGrid.Columns>
+					</treegrid:NetworkTreeGrid>
+				</Grid>
+			</dev:Case>
+		</dev:SwitchPresenter>
 	</Grid>
 </Page>

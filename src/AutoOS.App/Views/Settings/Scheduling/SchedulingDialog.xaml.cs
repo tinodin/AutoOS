@@ -1,26 +1,46 @@
 using AutoOS.App.Views.Settings.Scheduling.ViewModels;
 using AutoOS.Core.Data.Models.CPU;
+using AutoOS.Core.Data.Models.Device;
+using AutoOS.Core.Helpers.Device;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 namespace AutoOS.App.Views.Settings.Scheduling;
 
-public sealed partial class SchedulingDialog : Page
+public sealed partial class SchedulingDialog : ContentDialog
 {
-	public DeviceAffinityViewModel ViewModel { get; } = null!;
-
-	public string Location { get; } = null!;
-
-	public SchedulingDialog()
+	public DeviceAffinityViewModel ViewModel
 	{
-		InitializeComponent();
+		get => (DeviceAffinityViewModel)DataContext;
+		set => DataContext = value;
 	}
+
+	public string Location { get; }
+
+	public string DeviceName { get; }
+
+	public ApplyResult? ApplyResult { get; private set; }
 
 	internal SchedulingDialog(SchedulingItem device, CpuSetsInfo cpuSetsInfo)
 	{
 		Location = device.Location;
+		DeviceName = device.Name;
 		ViewModel = new DeviceAffinityViewModel(device, cpuSetsInfo);
 		InitializeComponent();
+	}
+
+	private void ContentDialog_PrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
+	{
+		ContentDialogButtonClickDeferral deferral = args.GetDeferral();
+
+		try
+		{
+			ApplyResult = ViewModel.ApplySettings();
+		}
+		finally
+		{
+			deferral.Complete();
+		}
 	}
 
 	private void GroupItemsControl_Loaded(object sender, RoutedEventArgs e)
@@ -38,9 +58,7 @@ public sealed partial class SchedulingDialog : Page
 			group.PropertyChanged += (s, args) =>
 			{
 				if (args.PropertyName == nameof(CpuCoreGroup.RecommendedColumns))
-				{
 					uniformGrid.Columns = group.RecommendedColumns;
-				}
 			};
 		}
 	}
