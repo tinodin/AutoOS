@@ -600,14 +600,14 @@
 		x:Key="NavigationViewItemTopLevelStyle"
 		BasedOn="{StaticResource NavigationViewItemExBaseStyle}"
 		TargetType="NavigationViewItem">
-		<Setter Property="local:NavigationViewItemAttach.IsSubItem" Value="False" />
+		<Setter Property="Tag" Value="False" />
 
 	</Style>
 	<Style
 		x:Key="NavigationViewItemSubLevelStyle"
 		BasedOn="{StaticResource NavigationViewItemExBaseStyle}"
 		TargetType="NavigationViewItem">
-		<Setter Property="local:NavigationViewItemAttach.IsSubItem" Value="True" />
+		<Setter Property="Tag" Value="True" />
 	</Style>
 
 	<local:NavigationViewItemStyleSelector

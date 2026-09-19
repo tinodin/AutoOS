@@ -21,7 +21,7 @@
 				<ResourceDictionary Source="ms-appx:///Views/Settings/Games/HeaderCarousel.xaml" />
 				<ResourceDictionary Source="ms-appx:///Views/Settings/Games/HeaderCarouselItem.xaml" />
 			</ResourceDictionary.MergedDictionaries>
-			<Style BasedOn="{StaticResource DefaultComboBoxStyle}" TargetType="uc:ComboBoxEx" />
+			<Style BasedOn="{StaticResource DefaultComboBoxStyle}" TargetType="ComboBox" />
 			<SolidColorBrush x:Key="CommandBarBackgroundOpen" Color="Transparent" />
 			<SolidColorBrush x:Key="CommandBarBorderBrushOpen" Color="Transparent" />
 			<ResourceDictionary.ThemeDictionaries>

@@ -14,11 +14,6 @@ public enum CpuVendor
 public sealed class CpuArchitecture
 {
 	public CpuVendor Vendor { get; set; }
-	public uint Family { get; set; }
-	public uint Model { get; set; }
-	public uint Stepping { get; set; }
-	public uint DisplayFamily { get; set; }
-	public uint DisplayModel { get; set; }
 	public string DisplayName { get; set; } = string.Empty;
 	public string ArchitectureName { get; set; } = string.Empty;
 }
@@ -37,7 +32,6 @@ public sealed class CpuSet
 public sealed partial class CpuThread : INotifyPropertyChanged
 {
 	private bool _isSelected;
-	public uint CpuId { get; set; }
 	public string Name { get; set; } = string.Empty;
 	public ulong BitMask { get; set; }
 
@@ -62,7 +56,6 @@ public event PropertyChangedEventHandler? PropertyChanged;
 [GeneratedBindableCustomProperty]
 public sealed partial class CpuCore
 {
-	public byte CoreIndex { get; set; }
 	public string Name { get; set; } = string.Empty;
 	public List<CpuThread> Threads { get; set; } = [];
 }
@@ -89,13 +82,11 @@ public sealed partial class CpuCoreGroup : INotifyPropertyChanged
 		set { if (_fixedColumns != value) { _fixedColumns = value; OnPropertyChanged(nameof(RecommendedColumns)); } }
 	}
 
-	public int ColumnIndex { get; set; }
-
 	public int RecommendedColumns
 	{
 		get
 		{
-			if (FixedColumns.HasValue) return FixedColumns.Value;
+			if (_fixedColumns.HasValue) return _fixedColumns.Value;
 
 			int count = Cores.Count;
 			if (count == 0) return 1;
@@ -115,8 +106,6 @@ public sealed partial class CpuCoreGroup : INotifyPropertyChanged
 public sealed class CpuSetsInfo
 {
 	public bool HyperThreading { get; set; }
-	public int CoreCount { get; set; }
-	public int MaxThreadsPerCore { get; set; }
 	public bool NumaNode { get; set; }
 	public bool LastLevelCache { get; set; }
 	public bool EfficiencyClass { get; set; }
