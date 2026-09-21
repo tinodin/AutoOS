@@ -7,7 +7,7 @@ namespace AutoOS.App.Converters;
 /// Renders a scanned timestamp as a culture-invariant local time, so the File View and Tree View
 /// date columns stay stable and sortable-looking. <see cref="DateTime.MinValue"/> renders empty.
 /// </summary>
-public sealed class DateTimeToStringConverter : IValueConverter
+public sealed partial class DateTimeToStringConverter : IValueConverter
 {
 	public object Convert(object value, Type targetType, object parameter, string language)
 	{

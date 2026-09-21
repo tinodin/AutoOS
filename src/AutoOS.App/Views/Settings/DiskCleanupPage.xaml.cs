@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using AutoOS.App.Helpers;
-using AutoOS.App.Helpers.TreeGrid;
+using AutoOS.App.UserControls.Treemap;
 using AutoOS.App.ViewModels;
 using AutoOS.Core.Services.DiskAnalyzer;
 using Microsoft.UI.Dispatching;
@@ -9,20 +9,26 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
+using Syncfusion.UI.Xaml.Grids;
 using Syncfusion.UI.Xaml.TreeGrid;
-using RightTappedEventArgs = Microsoft.UI.Xaml.Input.RightTappedRoutedEventArgs;
 using DoubleTappedEventArgs = Microsoft.UI.Xaml.Input.DoubleTappedRoutedEventArgs;
+using RightTappedEventArgs = Microsoft.UI.Xaml.Input.RightTappedRoutedEventArgs;
 
 namespace AutoOS.App.Views.Settings;
 
 public sealed partial class DiskCleanupPage : Page
 {
-	private static readonly TimeSpan SizeDebounce = TimeSpan.FromMilliseconds(150);
+	private static readonly TimeSpan SIZE_DEBOUNCE = TimeSpan.FromMilliseconds(150);
 
 	public DiskCleanupViewModel ViewModel { get; } = new();
 
 	private DispatcherTimer? _sizeTimer;
 	private SfTreeGrid? _pendingSizeGrid;
+	private readonly List<SfTreeGrid> _suspendedGrids = new(3);
+	// Widths already sized per grid instance: star widths persist on the columns, so a repeat
+	// pass at the same width (settle ticks, rebinds) would only re-walk 100k rows for nothing.
+	private readonly Dictionary<SfTreeGrid, double> _sizedWidths = new();
+	private long _treemapSelectionToken;
 
 	public DiskCleanupPage()
 	{
@@ -32,19 +38,16 @@ public sealed partial class DiskCleanupPage : Page
 	protected override void OnNavigatedTo(NavigationEventArgs e)
 	{
 		base.OnNavigatedTo(e);
-		ViewModel.RefreshFilterAction = RefreshFilter;
 		// File View filters rebuild the observable on a background debounce; marshal to UI thread.
 		ViewModel.RefreshFileFilterAction = () => DispatcherQueue.TryEnqueue(() => ViewModel.ApplyFileFilter());
-		ViewModel.SuspendGridUpdatesAction = () =>
-		{
-			// Do not call SfTreeGrid.View.BeginInit here. SwitchPresenter can detach the
-			// TreeView case while a scan is still binding data, and Syncfusion does not
-			// support ending a deferred view refresh after that detach.
-		};
-		ViewModel.ResumeGridUpdatesAction = () =>
-		{
-		};
+		// Doc-backed bulk-update bracket (winui-docs TreeGrid Data-Binding: View.BeginInit /
+		// EndInit with TreeViewRefreshMode.DeferRefresh recreates the nodes once instead of
+		// once per collection change). Both halves run back-to-back on the UI thread around
+		// the bind, so navigation cannot interleave them; every EndInit is still guarded.
+		ViewModel.SuspendGridUpdatesAction = SuspendGridViews;
+		ViewModel.ResumeGridUpdatesAction = ResumeGridViews;
 		ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+		_treemapSelectionToken = Treemap.RegisterPropertyChangedCallback(TreemapView.SelectedNodeProperty, OnTreemapSelectedNodeChanged);
 		// WizTree default: all grids sort by Allocated descending
 		// (data arrives pre-sorted; this shows the arrow).
 		SetDefaultSort(TreeGrid, "Allocated");
@@ -52,46 +55,96 @@ public sealed partial class DiskCleanupPage : Page
 		SetDefaultSort(ExtensionGrid, "Allocated");
 		// Size the star columns once the page has its real width, then again whenever rows settle.
 		ResetAllColumnWidths();
+		// Treemap mirrors the current tree, if a scan already ran (folders + files paint together).
+		Treemap.SetTree(ViewModel.TreeNodes.FirstOrDefault(), ViewModel.TreemapFileGroups);
 		// Auto-scan on entry if desired — keep manual for now
 	}
 
 	protected override void OnNavigatedFrom(NavigationEventArgs e)
 	{
-		ViewModel.RefreshFilterAction = null;
 		ViewModel.RefreshFileFilterAction = null;
 		ViewModel.SuspendGridUpdatesAction = null;
 		ViewModel.ResumeGridUpdatesAction = null;
 		ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+		Treemap.UnregisterPropertyChangedCallback(TreemapView.SelectedNodeProperty, _treemapSelectionToken);
+		_treemapSelectionToken = 0;
 		_sizeTimer?.Stop();
+		_sizedWidths.Clear();
+		_suspendedGrids.Clear();
 		base.OnNavigatedFrom(e);
-	}
-
-	private static DiskNode? FindNodeByPath(IEnumerable<DiskNode> roots, string path)
-	{
-		foreach (var r in roots)
-		{
-			if (r.FullPath.Equals(path, StringComparison.OrdinalIgnoreCase))
-				return r;
-			var found = FindNodeByPath(r.Children, path);
-			if (found != null)
-				return found;
-		}
-		return null;
 	}
 
 	private static bool ExpandPath(DiskNode current, string targetPath)
 	{
 		if (current.FullPath.Equals(targetPath, StringComparison.OrdinalIgnoreCase))
 			return true;
+
 		foreach (var child in current.Children)
 		{
-			if (targetPath.StartsWith(child.FullPath, StringComparison.OrdinalIgnoreCase) && ExpandPath(child, targetPath))
+			bool isAncestor = targetPath.Equals(child.FullPath, StringComparison.OrdinalIgnoreCase)
+				|| targetPath.StartsWith(child.FullPath + "\\", StringComparison.OrdinalIgnoreCase);
+
+			if (isAncestor && ExpandPath(child, targetPath))
 			{
 				current.IsExpanded = true;
+
 				return true;
 			}
 		}
+
 		return false;
+	}
+
+	private void ExtensionGrid_SelectionChanged(object sender, GridSelectionChangedEventArgs e)
+	{
+		DiskExtensionStat? stat = ExtensionGrid.SelectedItem as DiskExtensionStat;
+		if (stat is not null)
+			Treemap.SetHighlightedExtension(stat.Extension);
+		else
+			Treemap.ClearHighlightedExtension();
+	}
+
+	private void OnTreemapSelectedNodeChanged(DependencyObject sender, DependencyProperty dp)
+	{
+		if (Treemap.SelectedNode is not DiskNode node)
+			return;
+
+		bool expanded = false;
+
+		foreach (var root in ViewModel.TreeNodes)
+		{
+			if (ExpandPath(root, node.FullPath))
+			{
+				expanded = true;
+
+				break;
+			}
+		}
+
+		if (!expanded)
+			return;
+
+		TreeGrid.SelectedItem = node;
+
+		DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
+		{
+			if (TreeGrid.View == null || !TreeGrid.IsLoaded)
+				return;
+
+			try
+			{
+				int rowIndex = Syncfusion.UI.Xaml.TreeGrid.TreeGridIndexResolver.ResolveToRowIndex(TreeGrid, node);
+
+				if (rowIndex < 0)
+					return;
+
+				TreeGrid.ScrollInView(new Syncfusion.UI.Xaml.Grids.ScrollAxis.RowColumnIndex(rowIndex, 0));
+			}
+			catch (Exception ex)
+			{
+				Trace.WriteLine($"[DiskCleanup] treemap jump scroll skipped: {ex.Message}");
+			}
+		});
 	}
 
 	private void DiskCleanupViewSelector_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
@@ -100,6 +153,45 @@ public sealed partial class DiskCleanupPage : Page
 			ViewModel.ActiveTab = "FileView";
 		else
 			ViewModel.ActiveTab = "TreeView";
+	}
+
+	private void SuspendGridViews()
+	{
+		_suspendedGrids.Clear();
+		foreach (SfTreeGrid? grid in new SfTreeGrid?[] { TreeGrid, ExtensionGrid, FileGrid })
+		{
+			if (grid == null || !grid.IsLoaded)
+				continue;
+			try
+			{
+				var view = grid.View;
+				if (view == null || view.IsInDeferRefresh)
+					continue;
+				view.BeginInit(TreeViewRefreshMode.DeferRefresh);
+				_suspendedGrids.Add(grid);
+			}
+			catch (Exception ex)
+			{
+				Trace.WriteLine($"[DiskCleanup] grid suspend skipped: {ex.Message}");
+			}
+		}
+	}
+
+	private void ResumeGridViews()
+	{
+		for (int i = _suspendedGrids.Count - 1; i >= 0; i--)
+		{
+			try
+			{
+				_suspendedGrids[i].View?.EndInit();
+			}
+			catch (Exception ex)
+			{
+				Trace.WriteLine($"[DiskCleanup] grid resume skipped: {ex.Message}");
+			}
+		}
+
+		_suspendedGrids.Clear();
 	}
 
 	private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -118,6 +210,9 @@ public sealed partial class DiskCleanupPage : Page
 			// While content loads the grids are collapsed behind the scan overlay, so any column
 			// sizing measured then is stale once the rows (and their vertical scrollbar) appear.
 			ResetAllColumnWidths();
+			// Treemap mirrors the freshly bound tree (null when the scan found nothing);
+			// folders and files paint together in one rebuild.
+			Treemap.SetTree(ViewModel.TreeNodes.FirstOrDefault(), ViewModel.TreemapFileGroups);
 		}
 	}
 
@@ -149,11 +244,16 @@ public sealed partial class DiskCleanupPage : Page
 	/// whole page down. Anything that is not ready is skipped here and sized by
 	/// <see cref="TreeGrid_Loaded"/> once it enters the visual tree.
 	/// </remarks>
-	private static void ResetColumnWidths(SfTreeGrid? grid)
+	private void ResetColumnWidths(SfTreeGrid? grid)
 	{
 		// A grid that is not loaded yet (an unselected tab case) or has no measured width cannot be
 		// sized: resetting its widths there would only leave NaN behind until the next pass.
 		if (grid == null || !grid.IsLoaded || grid.Columns.Count == 0 || grid.ActualWidth <= 0)
+			return;
+
+		// Star widths persist on the columns across rebinds: sizing twice at the same width only
+		// re-walks the whole view (100k rows on a full drive scan) for an identical result.
+		if (_sizedWidths.TryGetValue(grid, out double sizedWidth) && sizedWidth == grid.ActualWidth)
 			return;
 
 		try
@@ -167,6 +267,7 @@ public sealed partial class DiskCleanupPage : Page
 			}
 
 			grid.ColumnSizer?.Refresh();
+			_sizedWidths[grid] = grid.ActualWidth;
 		}
 		catch (Exception ex)
 		{
@@ -202,7 +303,7 @@ public sealed partial class DiskCleanupPage : Page
 			return;
 
 		_pendingSizeGrid = grid;
-		_sizeTimer ??= new DispatcherTimer { Interval = SizeDebounce };
+		_sizeTimer ??= new DispatcherTimer { Interval = SIZE_DEBOUNCE };
 		_sizeTimer.Tick -= OnSizeTick;
 		_sizeTimer.Tick += OnSizeTick;
 		_sizeTimer.Stop();
@@ -266,6 +367,34 @@ public sealed partial class DiskCleanupPage : Page
 			nameof(DiskFileRow.Allocated) => $"{row.Allocated:N0} bytes ({row.AllocatedText})",
 			nameof(DiskFileRow.PercentOfDrive) => $"{row.PercentOfDrive:F2}% of drive",
 			nameof(DiskFileRow.DupCount) => row.DupCount > 1 ? $"{row.DupCount:N0} duplicates — {DiskNode.FormatBytes(row.DupSize)} total" : null,
+			_ => null
+		};
+		if (string.IsNullOrWhiteSpace(content))
+		{
+			e.ToolTip.Visibility = Visibility.Collapsed;
+			return;
+		}
+
+		e.ToolTip.Content = content;
+		e.ToolTip.Visibility = Visibility.Visible;
+	}
+
+	private void ExtensionGrid_CellToolTipOpening(object sender, TreeGridCellToolTipOpeningEventArgs e)
+	{
+		if (e.Record is not DiskExtensionStat stat)
+		{
+			e.ToolTip.Visibility = Visibility.Collapsed;
+			return;
+		}
+
+		string? content = e.Column?.MappingName switch
+		{
+			nameof(DiskExtensionStat.Extension) => $"{stat.Extension} — {stat.FileType}",
+			nameof(DiskExtensionStat.FileType) => stat.FileType,
+			nameof(DiskExtensionStat.Percent) => $"{stat.Percent:F2}% of drive",
+			nameof(DiskExtensionStat.Size) => $"{stat.Size:N0} bytes ({stat.SizeText})",
+			nameof(DiskExtensionStat.Allocated) => $"{stat.Allocated:N0} bytes ({stat.AllocatedText})",
+			nameof(DiskExtensionStat.Files) => $"{stat.FilesText} files",
 			_ => null
 		};
 		if (string.IsNullOrWhiteSpace(content))
@@ -355,6 +484,15 @@ public sealed partial class DiskCleanupPage : Page
 				File.Delete(node.FullPath);
 
 			RemoveNodeFromTree(node);
+			DiskNode? currentRoot = ViewModel.TreeNodes.FirstOrDefault();
+			if (!ReferenceEquals(Treemap.Root, currentRoot))
+				Treemap.Root = currentRoot;
+			// Folder deletes prune descendant tiles via RefreshTree (stale parents); file
+			// deletes remove the single tile directly.
+			if (node.IsFolder)
+				Treemap.RefreshTree();
+			else
+				Treemap.RemoveFileTile(node.FullPath);
 		}
 		catch (Exception ex)
 		{
@@ -377,9 +515,12 @@ public sealed partial class DiskCleanupPage : Page
 				ancestor.Allocated -= node.Allocated;
 				ancestor.FileCount -= node.FileCount;
 				ancestor.FolderCount -= foldersRemoved;
-				if (ancestor.FileCount < 0) ancestor.FileCount = 0;
-				if (ancestor.FolderCount < 0) ancestor.FolderCount = 0;
+				if (ancestor.FileCount < 0)
+					ancestor.FileCount = 0;
+				if (ancestor.FolderCount < 0)
+					ancestor.FolderCount = 0;
 			}
+
 			// Recompute % of parent down the affected subtree (root total shrank).
 			if (ViewModel.TreeNodes.Count > 0)
 			{
@@ -457,22 +598,12 @@ public sealed partial class DiskCleanupPage : Page
 
 	private void DriveScan_Click(object sender, RoutedEventArgs e)
 	{
-		if (sender is Button button && button.DataContext is DriveModelLite drive)
+		// CommandParameter carries the card's item straight from the compiled template;
+		// DataContext is the fallback (typed templates don't guarantee it the same way).
+		DriveModelLite? drive = (sender as Button)?.CommandParameter as DriveModelLite
+			?? (sender as Button)?.DataContext as DriveModelLite;
+		if (drive != null)
 			ViewModel.StartScan(drive.RootPath);
 	}
 
-	private void RefreshFilter()
-	{
-		ApplyFilter(TreeGrid);
-	}
-
-	private void ApplyFilter(SfTreeGrid grid)
-	{
-		var view = grid.View;
-		if (view == null)
-			return;
-
-		view.Filter = ViewModel.MatchesFilter;
-		view.RefreshFilter();
-	}
 }

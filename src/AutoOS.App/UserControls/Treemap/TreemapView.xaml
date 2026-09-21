@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<UserControl
+	x:Class="AutoOS.App.UserControls.Treemap.TreemapView"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	Background="Transparent"
+	mc:Ignorable="d">
+
+	<Grid>
+		<!--  Composition tile and folder-outline layer (labels live in LabelLayer).  -->
+		<Grid x:Name="VisualHost" Background="Transparent" />
+		<!--  Text labels, only for tiles big enough to read.  -->
+		<Canvas x:Name="LabelLayer" IsHitTestVisible="False" />
+		<!--  Hit testing + hover tooltip.  -->
+		<Border
+			x:Name="HitOverlay"
+			Background="Transparent"
+			PointerExited="HitOverlay_PointerExited"
+			PointerMoved="HitOverlay_PointerMoved"
+			PointerPressed="HitOverlay_PointerPressed" />
+		<!--  Zero-footprint anchor the hover tooltip opens above; moved to the hovered tile in code.
+			The tip is attached to the anchor itself so the service always resolves the live
+			anchor position instead of a stale whole-overlay target.  -->
+		<Border
+			x:Name="TooltipAnchor"
+			HorizontalAlignment="Left"
+			Height="0"
+			IsHitTestVisible="False"
+			VerticalAlignment="Top"
+			Width="0">
+			<ToolTipService.ToolTip>
+				<ToolTip x:Name="HoverTip" MaxWidth="600" />
+			</ToolTipService.ToolTip>
+		</Border>
+	</Grid>
+</UserControl>

@@ -11,7 +11,7 @@ public sealed class DiskAnalyzerService
 	private const string NO_EXTENSION_KEY = "(No Extension)";
 
 	private readonly EverythingIpcScanner _everythingIpc = new();
-	private readonly MftScanner _mftScanner = new();
+	private readonly EnumerationScanner _enumerationScanner = new();
 
 	private bool? _cachedAvailability;
 	private bool _cachedIpcAvailable;
@@ -63,7 +63,7 @@ public sealed class DiskAnalyzerService
 			if (options.PreferredScanner == ScannerKind.Everything)
 			{
 				// Re-probe when the cache is stale or cold so a first post-boot scan
-				// lands on IPC instead of racing to the MFT fallback.
+				// lands on IPC instead of racing to the enumeration fallback.
 				if (!_cachedAvailability.HasValue || DateTime.UtcNow - _cachedAvailabilityAt > AvailabilityCacheTtl)
 					await IsEverythingAvailableAsync(token).ConfigureAwait(false);
 				Report("Probing Everything", detail: _cachedProbeDetails);
@@ -85,26 +85,26 @@ public sealed class DiskAnalyzerService
 				}
 				else
 				{
-					Report("Everything not available — falling back to MFT/fast enumeration", detail: EverythingProbeDetails);
+					Report("Everything not available — falling back to enumeration", detail: EverythingProbeDetails);
 					fallback = true;
 					used = ScannerKind.Enumeration;
-					items = await _mftScanner.ScanAsync(options, progress, token).ConfigureAwait(false);
+					items = await _enumerationScanner.ScanAsync(options, progress, token).ConfigureAwait(false);
 				}
 			}
 			else
 			{
-				Report("Enumerating filesystem (WizTree-like fast fallback)");
-				items = await _mftScanner.ScanAsync(options, progress, token).ConfigureAwait(false);
+				Report("Enumerating filesystem (single universal fallback)");
+				items = await _enumerationScanner.ScanAsync(options, progress, token).ConfigureAwait(false);
 				used = ScannerKind.Enumeration;
 			}
 		}
 		catch (Exception ex) when (options.PreferredScanner == ScannerKind.Everything && ex is not OperationCanceledException)
 		{
 			Trace.WriteLine($"Everything scan failed, falling back: {ex.Message}");
-			Report("Everything failed — fallback fast enumeration", detail: ex.Message);
+			Report("Everything failed — fallback enumeration", detail: ex.Message);
 			fallback = true;
 			used = ScannerKind.Enumeration;
-			items = await _mftScanner.ScanAsync(options, progress, token).ConfigureAwait(false);
+			items = await _enumerationScanner.ScanAsync(options, progress, token).ConfigureAwait(false);
 		}
 
 		// IPC + MFT align allocated sizes inline, so no fixup pass is needed.
@@ -117,19 +117,24 @@ public sealed class DiskAnalyzerService
 		{
 			// The File View aggregation is a second full pass over the scan rows, but it shares no
 			// state with the tree build, so both run at once and the File View data is ready the
-			// moment the scan finishes instead of on the first File-tab open.
+			// moment the scan finishes instead of on the first File-tab open. Treemap tiles ride
+			// inside the tree's own file pass, so no separate retain/regroup pass exists at all.
+			var fileViewSw = Stopwatch.StartNew();
 			Task<FileViewInputs> fileViewTask = Task.Run(() => BuildFileViewInputs(items, token), token);
 
-			var roots = BuildTree(items, options.RootPath, out long totalSize, out long totalAllocated, out int fileCount, out int folderCount, detailedProgress, sw, token);
-
-			// Percents are allocated-based like WizTree: % of parent = Allocated / parent Allocated.
-			foreach (var r in roots) ComputePercents(r, totalAllocated);
+			var treeSw = Stopwatch.StartNew();
+			var roots = BuildTree(items, options.RootPath, out long totalSize, out long totalAllocated, out int fileCount, out int folderCount, out Dictionary<long, DiskNode>? recordNodes, out Dictionary<DiskNode, List<TreemapFile>> treemapGroups, detailedProgress, sw, token);
+			treeSw.Stop();
 
 			// The aggregation cannot know the drive total on its own, so percents land here.
 			FileViewInputs fileView = fileViewTask.GetAwaiter().GetResult();
-			ApplyTotalAllocated(fileView, totalAllocated);
+			fileViewSw.Stop();
+			ApplyTotalAllocated(fileView, totalAllocated, recordNodes);
 
-			return (roots, totalSize, totalAllocated, fileCount, folderCount, fileView);
+			// P2 telemetry: per-phase splits so the next bottleneck is measured, not guessed.
+			Trace.WriteLine($"[DiskAnalyzer] build split: tree {treeSw.Elapsed.TotalMilliseconds:F0}ms, fileview {fileViewSw.Elapsed.TotalMilliseconds:F0}ms for {items.Count:N0} items");
+
+			return (roots, totalSize, totalAllocated, fileCount, folderCount, fileView, treemapGroups, recordNodes);
 		}, token).ConfigureAwait(false);
 
 		scanSw.Stop();
@@ -148,9 +153,36 @@ public sealed class DiskAnalyzerService
 			FileCount = buildResult.fileCount,
 			FolderCount = buildResult.folderCount,
 			Roots = buildResult.roots,
-			FileView = buildResult.fileView
+			FileView = buildResult.fileView,
+			TreemapFileGroups = buildResult.treemapGroups,
+			RecordNodes = buildResult.recordNodes
 		};
 	}
+
+	// Normalized-extension cache: a drive holds hundreds of thousands of files but only a
+	// few hundred distinct extensions, so each distinct spelling is lowered/dotted once and
+	// every file after that is a single dictionary hit (no per-file Trim/Lower/Concat garbage).
+	private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> _treemapExtensionCache =
+		new(StringComparer.Ordinal);
+
+	/// <summary>
+	/// Normalizes a raw scanner extension to treemap palette form: lowercase with a leading
+	/// dot, empty when there is no extension. Mirrors the app-side palette helper so tiles
+	/// grouped here hash to exactly the same colors as the extension grid.
+	/// </summary>
+	private static string NormalizeTreemapExtension(string extension)
+		=> _treemapExtensionCache.GetOrAdd(extension, static raw =>
+		{
+			if (string.IsNullOrWhiteSpace(raw) ||
+				raw.Trim().Equals("(No Extension)", StringComparison.OrdinalIgnoreCase))
+				return string.Empty;
+
+			string normalized = raw.Trim().ToLowerInvariant();
+			if (normalized.Length == 0 || normalized.StartsWith('.'))
+				return normalized;
+
+			return string.Concat(".", normalized);
+		});
 
 	/// <summary>
 	/// Builds the File View inputs in one background pass: the largest files with their duplicate
@@ -162,7 +194,9 @@ public sealed class DiskAnalyzerService
 	public static FileViewInputs BuildFileViewInputs(IReadOnlyList<ScanItem> items, CancellationToken token)
 	{
 		// Duplicate groups by (name, size, modified): WizTree "Locate by Name, Size, Date" default.
-		var duplicateGroups = new Dictionary<DuplicateKey, DuplicateGroup>(items.Count / 4, DuplicateKeyComparer.Instance);
+		// P1: keys are ~unique per file, so size for items.Count, not items.Count/4:
+		// the old quarter-size forced two full rehashes on a 400k-file drive scan.
+		var duplicateGroups = new Dictionary<DuplicateKey, DuplicateGroup>(items.Count, DuplicateKeyComparer.Instance);
 		var extensionMap = new Dictionary<string, DiskExtensionStat>(256, StringComparer.OrdinalIgnoreCase);
 		var extensionLookup = extensionMap.GetAlternateLookup<ReadOnlySpan<char>>();
 		// Top files: bounded min-heap instead of materializing and sorting every row — the previous
@@ -178,24 +212,38 @@ public sealed class DiskAnalyzerService
 				continue;
 
 			hasFile = true;
+			// Lite rows carry the bare name (no path string was ever built); classic rows
+			// split it out of the full path. Either way nothing allocates per file here.
+			string? liteName = item.Name;
 			string fullPath = item.FullPath;
-			int separator = fullPath.LastIndexOf('\\');
-			ReadOnlySpan<char> nameSpan = separator >= 0 ? fullPath.AsSpan(separator + 1) : fullPath.AsSpan();
-			ReadOnlySpan<char> extensionSpan = Path.GetExtension(nameSpan);
+			ReadOnlySpan<char> nameSpan = liteName is not null ? liteName.AsSpan()
+				: fullPath.AsSpan(GetNameOffset(fullPath));
+			ReadOnlySpan<char> extensionSpan = !string.IsNullOrEmpty(item.Extension)
+				? item.Extension.AsSpan()
+				: Path.GetExtension(nameSpan);
 
-			// The key holds the already-allocated path and compares only its name part, so a drive
-			// walk allocates nothing per file here (was one name string per file).
-			DuplicateKey duplicateKey = new(fullPath, item.Size, item.Modified.Ticks);
-			if (duplicateGroups.TryGetValue(duplicateKey, out DuplicateGroup group))
+			// Duplicate info is only ever resolved for listed rows, and rows strictly below
+			// the heap floor can never be listed (equal keys still tracked: a tie member
+			// may join the heap, and its group count must include skipped members).
+			bool trackDup = topFiles.Count < TOP_FILES_KEEP
+				|| !topFiles.TryPeek(out _, out (long Allocated, long Size) floor)
+				|| (item.AllocatedSize, item.Size).CompareTo(floor) >= 0;
+			if (trackDup)
 			{
-				group.Count++;
-				group.TotalSize += item.Size;
-				group.TotalAllocated += item.AllocatedSize;
-				duplicateGroups[duplicateKey] = group;
-			}
-			else
-			{
-				duplicateGroups[duplicateKey] = new DuplicateGroup { Count = 1, TotalSize = item.Size, TotalAllocated = item.AllocatedSize };
+				// The key compares only the name part and never allocates: lite rows hand
+				// over their stored name, classic rows keep the already-allocated path.
+				DuplicateKey duplicateKey = new(fullPath, liteName, item.Size, item.Modified.Ticks);
+				if (duplicateGroups.TryGetValue(duplicateKey, out DuplicateGroup group))
+				{
+					group.Count++;
+					group.TotalSize += item.Size;
+					group.TotalAllocated += item.AllocatedSize;
+					duplicateGroups[duplicateKey] = group;
+				}
+				else
+				{
+					duplicateGroups[duplicateKey] = new DuplicateGroup { Count = 1, TotalSize = item.Size, TotalAllocated = item.AllocatedSize };
+				}
 			}
 
 			// Alternate lookup keeps the per-file extension probe allocation-free: the span only
@@ -216,12 +264,12 @@ public sealed class DiskAnalyzerService
 
 			if (topFiles.Count < TOP_FILES_KEEP)
 			{
-				topFiles.Enqueue(CreateFileRow(item, fullPath, separator), (item.AllocatedSize, item.Size));
+				topFiles.Enqueue(CreateFileRow(item, fullPath, nameSpan, liteName), (item.AllocatedSize, item.Size));
 			}
 			else if (topFiles.TryPeek(out _, out (long Allocated, long Size) smallest) && (item.AllocatedSize, item.Size).CompareTo(smallest) > 0)
 			{
 				topFiles.Dequeue();
-				topFiles.Enqueue(CreateFileRow(item, fullPath, separator), (item.AllocatedSize, item.Size));
+				topFiles.Enqueue(CreateFileRow(item, fullPath, nameSpan, liteName), (item.AllocatedSize, item.Size));
 			}
 		}
 
@@ -232,7 +280,8 @@ public sealed class DiskAnalyzerService
 		foreach ((DiskFileRow row, _) in topFiles.UnorderedItems)
 		{
 			// Duplicate info is only resolved for the rows that actually get listed.
-			if (duplicateGroups.TryGetValue(new DuplicateKey(row.FullPath, row.Size, row.Modified.Ticks), out DuplicateGroup group) && group.Count > 1)
+			// row.FileName is the effective name on both paths, so lite and classic keys agree.
+			if (duplicateGroups.TryGetValue(new DuplicateKey(row.FullPath, row.FileName, row.Size, row.Modified.Ticks), out DuplicateGroup group) && group.Count > 1)
 			{
 				row.DupCount = group.Count;
 				row.DupSize = group.TotalSize;
@@ -250,27 +299,50 @@ public sealed class DiskAnalyzerService
 
 	/// <summary>
 	/// Fills in the drive-relative percents of a File View aggregate. Only the tree knows the drive
-	/// total, and the aggregation runs before it, so percents are applied as a cheap fix-up pass.
+	/// total, and the aggregation runs before it, so percents land here — along with the deferred
+	/// lite-row paths: MFT file rows ship without path strings, and only listed rows ever pay
+	/// for the parent-path concat. <paramref name="recordNodes"/> maps MFT record ids to folder
+	/// nodes; null (or ParentId &lt; 0 rows) keeps classic behavior.
 	/// </summary>
-	public static void ApplyTotalAllocated(FileViewInputs inputs, long totalAllocated)
+	public static void ApplyTotalAllocated(FileViewInputs inputs, long totalAllocated, IReadOnlyDictionary<long, DiskNode>? recordNodes = null)
 	{
 		foreach (DiskFileRow row in inputs.TopFiles)
+		{
 			row.PercentOfDrive = totalAllocated > 0 ? (double)row.Allocated / totalAllocated * 100 : 0;
+			if (row.ParentId > 0 && row.FullPath.Length == 0 && recordNodes != null && recordNodes.TryGetValue(row.ParentId, out DiskNode? parent) && parent != null)
+			{
+				row.Directory = parent.FullPath;
+				row.FullPath = parent.FullPath + "\\" + row.FileName;
+			}
+		}
 
 		foreach (DiskExtensionStat extension in inputs.Extensions)
 			extension.Percent = totalAllocated > 0 ? (double)extension.Allocated / totalAllocated * 100 : 0;
 	}
 
-	private static DiskFileRow CreateFileRow(ScanItem item, string fullPath, int separator)
+	private static int GetNameOffset(string fullPath)
 	{
-		ReadOnlySpan<char> nameSpan = separator >= 0 ? fullPath.AsSpan(separator + 1) : fullPath.AsSpan();
+		int separator = fullPath.LastIndexOf('\\');
+		return separator >= 0 ? separator + 1 : 0;
+	}
+
+	private static ReadOnlySpan<char> GetFileNameSpan(string fullPath)
+		=> fullPath.AsSpan(GetNameOffset(fullPath));
+
+	private static DiskFileRow CreateFileRow(ScanItem item, string fullPath, ReadOnlySpan<char> nameSpan, string? liteName)
+	{
+		bool isLite = liteName is not null;
+		int separator = isLite ? -1 : fullPath.LastIndexOf('\\');
 
 		return new DiskFileRow
 		{
-			FileName = new string(nameSpan),
-			Directory = separator > 0 ? fullPath.Substring(0, separator) : fullPath,
-			FullPath = fullPath,
-			Extension = new string(Path.GetExtension(nameSpan)),
+			FileName = isLite ? liteName! : new string(nameSpan),
+			Directory = isLite ? string.Empty : separator > 0 ? fullPath.Substring(0, separator) : fullPath,
+			FullPath = isLite ? string.Empty : fullPath,
+			ParentId = item.ParentId,
+			Extension = !string.IsNullOrEmpty(item.Extension)
+				? item.Extension
+				: new string(Path.GetExtension(nameSpan)),
 			Size = item.Size,
 			Allocated = item.AllocatedSize,
 			Modified = item.Modified,
@@ -315,17 +387,28 @@ public sealed class DiskAnalyzerService
 			CollectFolderRows(child, rows, totalAllocated);
 	}
 
-	private static IReadOnlyList<DiskNode> BuildTree(IReadOnlyList<ScanItem> items, string rootPath, out long totalSize, out long totalAllocated, out int fileCount, out int folderCount, IProgress<ScanProgressReport>? progress = null, Stopwatch? sw = null, CancellationToken token = default)
+	private static IReadOnlyList<DiskNode> BuildTree(IReadOnlyList<ScanItem> items, string rootPath, out long totalSize, out long totalAllocated, out int fileCount, out int folderCount, out Dictionary<long, DiskNode>? recordNodes, out Dictionary<DiskNode, List<TreemapFile>> treemapGroups, IProgress<ScanProgressReport>? progress = null, Stopwatch? sw = null, CancellationToken token = default)
 	{
-		totalSize = 0; totalAllocated = 0; fileCount = 0; folderCount = 0;
+		totalSize = 0;
+		totalAllocated = 0;
+		fileCount = 0;
+		folderCount = 0;
+		treemapGroups = new();
 		string rootFull = Path.GetFullPath(rootPath).TrimEnd('\\');
-		var map = new Dictionary<string, DiskNode>(items.Count / 4, StringComparer.OrdinalIgnoreCase);
+		// ConcurrentDictionary: the file-accumulation pass below runs on all cores with
+		// lock-free map reads; folder creation (above) stays sequential, and a rare
+		// missing parent falls back to a locked create (structurally impossible: every
+		// emitted file's parent ships as a folder row, created before this pass).
+		var map = new System.Collections.Concurrent.ConcurrentDictionary<string, DiskNode>(Environment.ProcessorCount, items.Count / 4, StringComparer.OrdinalIgnoreCase);
+		// Record-id map for lite rows (MFT scans): file parents resolve by array-like dict
+		// hit instead of a path hash — no LastIndexOf, no hashing, no parent compare.
+		var recMap = new Dictionary<long, DiskNode>(4096);
 		// Span lookup avoids allocating a parent-path key per level: folder creation keeps
 		// string keys, but every hit (the common case — IPC rows arrive unordered, so the
 		// consecutive-parent cache misses) resolves straight from the FullPath span.
 		var lookup = map.GetAlternateLookup<ReadOnlySpan<char>>();
-		long lastProgressTicks = sw?.ElapsedTicks ?? 0;
-		const long progressIntervalTicks = TimeSpan.TicksPerSecond / 4; // 250ms throttle
+		var folderLock = new object();
+		long lastProgressTicksMs = Environment.TickCount64;
 
 		DiskNode GetOrCreateFolder(ReadOnlySpan<char> path)
 		{
@@ -349,7 +432,7 @@ public sealed class DiskAnalyzerService
 			{
 				var parentNode = GetOrCreateFolder(span.Slice(0, sep));
 				parentNode.Children.Add(node);
-				parentNode.FolderCount++; // direct child folders; PropagateSizes rolls up to recursive
+				parentNode.FolderCount++; // direct child folders; PropagateSortAndPercent rolls up to recursive
 			}
 			return node;
 		}
@@ -362,7 +445,7 @@ public sealed class DiskAnalyzerService
 		// Add folders — WizTree: folder Modified/Attributes = its own directory entry
 		// (not aggregated from children). Sizes are intentionally NOT applied here when
 		// file rows exist: Everything's folder SIZE index is already recursive, so
-		// applying it plus file accumulation plus PropagateSizes would triple-count.
+		// applying it plus file accumulation plus the fused propagation would triple-count.
 		// Single source of truth: file accumulation + bottom-up propagation (MFT path
 		// has folder Size=0 anyway). Folder-only scans use the fast path below.
 		bool hasFiles = false;
@@ -384,6 +467,9 @@ public sealed class DiskAnalyzerService
 
 			folderRows++;
 			var n = GetOrCreateFolder(it.FullPath);
+			// MFT folder rows carry their record id: lite file rows resolve parents by id.
+			if (it.FileId > 0)
+				recMap[it.FileId] = n;
 			if (!hasFiles && it.Size > 0)
 			{
 				sizedFolderRows++;
@@ -396,7 +482,7 @@ public sealed class DiskAnalyzerService
 				n.Attributes = it.Attributes;
 		}
 		// Folder-first fast path: folder-only rows with recursive sizes — sizes already
-		// applied above, so skip file accumulate + PropagateSizes (would double-count).
+		// applied above, so skip file accumulate + propagation (would double-count).
 		if (folderRows == items.Count && folderRows > 50000 && sizedFolderRows > folderRows / 2)
 		{
 			totalSize = rootNode.Size;
@@ -415,8 +501,12 @@ public sealed class DiskAnalyzerService
 			folderCount = map.Count - 1;
 			if (folderCount < 0)
 				folderCount = 0;
-			SortChildren(rootNode, token);
-			Trace.WriteLine($"[BuildTree] folder-first {folderRows:N0} folders ({sizedFolderRows:N0} sized), sort {phaseSw.ElapsedMilliseconds}ms (no file pass, no propagate)");
+			// P2: one fused walk sorts, sets percents and reports the latest date —
+			// was SortChildren here plus ComputePercents + FindLatestModified walks.
+			DateTime fastLatest = SortAndPercent(rootNode, totalAllocated, token);
+			ApplyLatestModified(rootNode, rootFull, fastLatest);
+			Trace.WriteLine($"[BuildTree] folder-first {folderRows:N0} folders ({sizedFolderRows:N0} sized), sort+percents {phaseSw.ElapsedMilliseconds}ms (no file pass, no propagate)");
+			recordNodes = recMap.Count > 0 ? recMap : null;
 			return [rootNode];
 		}
 		long folderMs = phaseSw.ElapsedMilliseconds;
@@ -424,84 +514,171 @@ public sealed class DiskAnalyzerService
 		int parentCacheHits = 0;
 
 		// Add files — folder-only tree for perf (only folder nodes are bound to the TreeGrid).
-		// Accumulate per-direct-folder then propagate bottom-up (no per-file ancestor walk O(n*depth)).
-		// Consecutive files in the same directory reuse the parent node: span-compare first so
-		// hits skip both the parent-path alloc and the dictionary lookup (common: scans are
-		// directory-grouped, so hit rate is high).
-		// FRN-deduping keeps the size sums consistent with the grid.
-		int processed = 0;
-		string? lastParentPath = null;
-		DiskNode? lastParentNode = null;
-		var seenFileIds = new HashSet<long>();
-		foreach (var it in items)
+		// Parallel accumulation: every file's parent folder node already exists (all folder
+		// rows were created above), so workers only READ the map lock-free and pile sizes
+		// into thread-local per-node deltas merged once at the end. No per-file ancestor
+		// walk O(n*depth), no shared mutation during the walk.
+		// Select the winning FRN row before partitioning. MFT hard-link aliases can otherwise
+		// land on opposite sides of a worker range, which would make thread-local deduping
+		// double-count the same allocated bytes in folder and drive totals.
+		var keptFileRows = new bool[items.Count];
+		var seenFileIds = new HashSet<long>(items.Count);
+		int keptFileCount = 0;
+		for (int index = 0; index < items.Count; index++)
 		{
+			var probe = items[index];
 			token.ThrowIfCancellationRequested();
-			if (it.IsFolder)
+			if (probe.IsFolder)
 				continue;
+			if (probe.FileId <= 0 || seenFileIds.Add(probe.FileId))
+			{
+				keptFileRows[index] = true;
+				keptFileCount++;
+			}
+		}
 
-		ReadOnlySpan<char> full = it.FullPath.AsSpan();
-		int sep = full.LastIndexOf('\\');
-		ReadOnlySpan<char> parentSpan = sep < 0 ? rootFull.AsSpan() : full.Slice(0, sep);
-			DiskNode parent;
-			if (lastParentNode != null && lastParentPath != null && parentSpan.Equals(lastParentPath.AsSpan(), StringComparison.Ordinal))
+		long processedTotal = 0;
+		var accSlots = new List<FileThreadState>();
+		var accLock = new object();
+		long accSize = 0, accAlloc = 0;
+		int accFiles = 0, accCacheHits = 0;
+		Parallel.ForEach(System.Collections.Concurrent.Partitioner.Create(0, items.Count),
+			new ParallelOptions { MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount), CancellationToken = token },
+			() => new FileThreadState(),
+			(range, _, st) =>
 			{
-				parent = lastParentNode;
-				parentCacheHits++;
-			}
-			else
+				for (int i = range.Item1; i < range.Item2; i++)
+				{
+					var it = items[i];
+					if (it.IsFolder)
+						continue;
+					if (!keptFileRows[i])
+						continue;
+
+					if ((st.n & 0xFFF) == 0)
+					{
+						token.ThrowIfCancellationRequested();
+						if (sw != null && Environment.TickCount64 - Interlocked.Read(ref lastProgressTicksMs) >= 250)
+						{
+							Interlocked.Exchange(ref lastProgressTicksMs, Environment.TickCount64);
+							progress?.Report(new ScanProgressReport { Phase = "Building tree", FilesScanned = (int)Math.Min(Interlocked.Read(ref processedTotal), int.MaxValue), TotalFiles = keptFileCount, Elapsed = sw.Elapsed, Detail = "accumulating" });
+						}
+					}
+					st.n++;
+					Interlocked.Increment(ref processedTotal);
+
+					// Lite rows (MFT scans): parent node by record id — one dict hit, no
+					// LastIndexOf, no span hashing, no parent-path compare.
+					DiskNode? parent;
+					if (it.ParentId > 0 && recMap.TryGetValue(it.ParentId, out DiskNode? byId) && byId != null)
+					{
+						parent = byId;
+					}
+					else
+					{
+						ReadOnlySpan<char> full = it.FullPath.AsSpan();
+						int sep = full.LastIndexOf('\\');
+						ReadOnlySpan<char> parentSpan = sep < 0 ? rootFull.AsSpan() : full.Slice(0, sep);
+						parent = st.lastNode;
+						if (parent is null || st.lastPath is null || !parentSpan.Equals(st.lastPath.AsSpan(), StringComparison.Ordinal))
+						{
+							if (!lookup.TryGetValue(parentSpan, out parent) || parent is null)
+								parent = GetOrCreateFolderLocked(parentSpan, lookup, map, folderLock, rootFull);
+							st.lastPath = parent.FullPath;
+							st.lastNode = parent;
+						}
+						else
+						{
+							st.cacheHits++;
+						}
+					}
+
+					if (!st.acc.TryGetValue(parent, out FileAcc a))
+						a = default;
+					a.Files++;
+					st.files++;
+					a.Size += it.Size;
+					a.Alloc += it.AllocatedSize;
+					st.size += it.Size;
+					st.alloc += it.AllocatedSize;
+					st.acc[parent] = a;
+					// Treemap tile rides the same parent resolution: no second walk of the
+					// file rows after the scan, and no path strings for lite rows. Zero-byte
+					// entries never render, so they stay out of the groups.
+					if (it.AllocatedSize > 0)
+					{
+						string name = it.Name ?? new string(GetFileNameSpan(it.FullPath));
+						string rawExtension = !string.IsNullOrEmpty(it.Extension)
+							? it.Extension
+							: Path.GetExtension(name);
+						st.tiles.Add((parent, new TreemapFile(name, NormalizeTreemapExtension(rawExtension), it.AllocatedSize, it.Size)));
+					}
+				}
+				return st;
+			},
+			st =>
 			{
-				parent = GetOrCreateFolder(parentSpan);
-				lastParentPath = parent.FullPath;
-				lastParentNode = parent;
+				lock (accLock)
+				{
+					accSlots.Add(st);
+					accSize += st.size;
+					accAlloc += st.alloc;
+					accFiles += st.files;
+					accCacheHits += st.cacheHits;
+				}
+			});
+
+		totalSize = accSize;
+		totalAllocated = accAlloc;
+		fileCount = accFiles;
+		parentCacheHits = accCacheHits;
+		foreach (var st in accSlots)
+			foreach (var kvp in st.acc)
+			{
+				kvp.Key.FileCount += kvp.Value.Files;
+				kvp.Key.Size += kvp.Value.Size;
+				kvp.Key.Allocated += kvp.Value.Alloc;
 			}
-		parent.FileCount++;
-		fileCount++;
-		if (it.FileId <= 0 || seenFileIds.Add(it.FileId))
+
+		// Single merge of the per-thread tile lists into parent-keyed groups: one linear
+		// pass that replaces the old retain-every-ScanItem plus regroup-after-bind passes.
+		// Pre-sized so 70k+ parent keys never trigger a rehash storm mid-merge.
+		treemapGroups.EnsureCapacity(110000);
+		long groupStart = Stopwatch.GetTimestamp();
+		foreach (var st in accSlots)
 		{
-			parent.Size += it.Size;
-			parent.Allocated += it.AllocatedSize;
-			totalSize += it.Size;
-			totalAllocated += it.AllocatedSize;
-		}
-
-		if (++processed % 50000 == 0 && sw != null && sw.ElapsedTicks - lastProgressTicks >= progressIntervalTicks)
+			foreach (var (parent, file) in st.tiles)
 			{
-				lastProgressTicks = sw.ElapsedTicks;
-				progress?.Report(new ScanProgressReport { Phase = "Building tree", FilesScanned = processed, TotalFiles = items.Count, Elapsed = sw.Elapsed, Detail = $"{processed:N0}/{items.Count:N0} files — accumulating" });
+				if (!treemapGroups.TryGetValue(parent, out var list))
+				{
+					// Most parents hold a handful of files: start tiny and let the few
+					// crowded folders grow, instead of pre-allocating 64 slots (~3KB)
+					// for all 70k parents (~200MB of instant garbage).
+					list = new List<TreemapFile>(4);
+					treemapGroups[parent] = list;
+				}
+				list.Add(file);
 			}
+			st.tiles.Clear();
 		}
+		long groupMs = (Stopwatch.GetTimestamp() - groupStart) * 1000 / Stopwatch.Frequency;
+		Trace.WriteLine($"[BuildTree] treemap groups {groupMs}ms");
 
-	// Bottom-up propagation via Children links (no GetDirectoryName per folder, no path-length sort).
+		// Bottom-up propagation via Children links (no GetDirectoryName per folder, no path-length sort).
 		// Replaces per-file while(cur) walk that did 3M dict lookups for 500k files.
+		// P2: propagation, sibling sort, allocated-based percents and the latest-modified
+		// rollup ride a single post-order walk (was 4 separate tree traversals).
 		long fileMs = phaseSw.ElapsedMilliseconds;
 		phaseSw.Restart();
-		PropagateSizes(rootNode, token);
-		long propagateMs = phaseSw.ElapsedMilliseconds;
+		DateTime latest = PropagateSortAndPercent(rootNode, totalAllocated, token);
+		long fusedMs = phaseSw.ElapsedMilliseconds;
 		phaseSw.Restart();
 
 		// WizTree parity: root (C:) shows a last-modified time. Hybrid scans get it
 		// from the MFT DirMeta overlay, but folder-index fallback and enumeration
 		// synthetic roots have none — propagate the latest descendant time instead
 		// of leaving the cell blank. Fall back to the volume's directory time.
-		if (rootNode.Modified == DateTime.MinValue)
-		{
-			DateTime latest = FindLatestModified(rootNode);
-			if (latest != DateTime.MinValue)
-				rootNode.Modified = latest;
-			else
-			{
-				try
-				{
-					DateTime volTime = Directory.GetLastWriteTimeUtc(rootFull);
-					if (volTime != DateTime.MinValue)
-						rootNode.Modified = volTime;
-				}
-				catch
-				{
-					// Offline or denied volume root: the newest descendant time stands.
-				}
-			}
-		}
+		ApplyLatestModified(rootNode, rootFull, latest);
 
 		if (sw != null)
 			progress?.Report(new ScanProgressReport { Phase = "Building tree", FilesScanned = fileCount, TotalFiles = items.Count, Elapsed = sw.Elapsed, Detail = $"{fileCount:N0} files aggregated — sorting..." });
@@ -510,19 +687,20 @@ public sealed class DiskAnalyzerService
 		if (folderCount < 0)
 			folderCount = 0;
 
-		// Single recursive sort from root — was foreach(map.Values) SortChildren(n) O(n^2).
-		// Runs before UI bind so CollectionChanged has no grid subscribers yet.
-		SortChildren(rootNode, token);
-		Trace.WriteLine($"[BuildTree] folders {folderMs}ms, files {fileMs}ms (cache hits {parentCacheHits:N0}/{fileCount:N0}), propagate {propagateMs}ms, sort {phaseSw.ElapsedMilliseconds}ms");
+		Trace.WriteLine($"[BuildTree] folders {folderMs}ms, files {fileMs}ms (cache hits {parentCacheHits:N0}/{fileCount:N0}), fused propagate+sort+percents {fusedMs}ms");
 
+		recordNodes = recMap.Count > 0 ? recMap : null;
 		return [rootNode];
 	}
 
 	/// <summary>
 	/// Drive-root scan: one direct MFT parse supplies both the file rows (true allocated sizes,
-	/// dates, attributes) and the folder skeleton from its directory overlay, so no Everything
-	/// query runs on the common path. The Everything folder index is only queried when the MFT
-	/// pass yields no file records, and the full Everything query backs both failures.
+	/// dates, attributes) and the folder skeleton from its directory overlay.
+	/// Single fallback: anything MFT-related that fails (denied handle, non-NTFS volume,
+	/// empty record set) throws so <see cref="AnalyzeAsync"/> runs the enumeration
+	/// walker — the one universal fallback. There is deliberately no Everything
+	/// query in this path: on an NTFS volume the MFT parse is already the fastest
+	/// source, and on other volumes the walker is the only correct one.
 	/// </summary>
 	private async Task<IReadOnlyList<ScanItem>> ScanDriveRootAsync(ScanOptions options, string root, IProgress<ScanProgressReport>? detailedProgress, Stopwatch sw, CancellationToken token)
 	{
@@ -533,7 +711,7 @@ public sealed class DiskAnalyzerService
 		uint cluster = DiskCluster.GetClusterSize(root);
 		bool clusterIsPowerOfTwo = DiskCluster.IsPowerOfTwo(cluster);
 
-		(List<ScanItem> files, Dictionary<string, MftDataScanner.DirMeta> dirs, string diagnostics) mft;
+		(List<ScanItem> files, List<MftDataScanner.MftDirRow> dirs, string diagnostics) mft;
 		try
 		{
 			mft = await Task.Run(() => MftDataScanner.ScanFiles(root, cluster, clusterIsPowerOfTwo, token), token).ConfigureAwait(false);
@@ -541,37 +719,30 @@ public sealed class DiskAnalyzerService
 		}
 		catch (Exception ex) when (ex is not OperationCanceledException)
 		{
-			Trace.WriteLine($"MFT pass failed, full Everything query: {ex}");
-			return await _everythingIpc.ScanAsync(options, null, token).ConfigureAwait(false);
+			Trace.WriteLine($"MFT pass failed, falling back to enumeration: {ex.Message}");
+			throw new InvalidOperationException($"MFT scan failed for {root}, falling back to enumeration.", ex);
 		}
 
-		// No file records (non-NTFS volume, denied handle): the Everything folder index is all we have.
+		// No file records (non-NTFS volume or fully denied handle): the walker is
+		// the single fallback — it works on every filesystem.
 		if (mft.files.Count == 0)
-		{
-			try
-			{
-				return await _everythingIpc.ScanFoldersAsync(options, null, token).ConfigureAwait(false);
-			}
-			catch (Exception ex) when (ex is not OperationCanceledException)
-			{
-				Trace.WriteLine($"Folder index unavailable, full Everything query: {ex.Message}");
-				return await _everythingIpc.ScanAsync(options, null, token).ConfigureAwait(false);
-			}
-		}
+			throw new InvalidOperationException($"MFT returned no file records for {root}, falling back to enumeration.");
 
 		// Folder rows carry the directory's own Modified/Attributes; their sizes stay 0 because
-		// BuildTree propagates them from the file rows it also receives.
+		// BuildTree propagates them from the file rows it also receives. FileId carries the
+		// MFT record id so lite file rows resolve their parent node by id (no path hashing).
 		var combined = new List<ScanItem>(mft.dirs.Count + mft.files.Count);
-		foreach ((string folderPath, MftDataScanner.DirMeta meta) in mft.dirs)
+		foreach (MftDataScanner.MftDirRow dir in mft.dirs)
 		{
 			combined.Add(new ScanItem
 			{
-				FullPath = folderPath,
+				FullPath = dir.Path,
 				Size = 0,
 				AllocatedSize = 0,
-				Modified = meta.Modified,
+				Modified = dir.Meta.Modified,
 				IsFolder = true,
-				Attributes = meta.Attributes
+				Attributes = dir.Meta.Attributes,
+				FileId = dir.Record
 			});
 		}
 
@@ -579,30 +750,137 @@ public sealed class DiskAnalyzerService
 		return combined;
 	}
 
-	private static void PropagateSizes(DiskNode node, CancellationToken token)
+	/// <summary>
+	/// Per-node file deltas collected by one parallel accumulation worker, then merged
+	/// once into the shared tree. Keeps all shared mutation out of the hot loop.
+	/// </summary>
+	private struct FileAcc
+	{
+		public long Size;
+		public long Alloc;
+		public int Files;
+	}
+
+	private sealed class FileThreadState
+	{
+		public readonly Dictionary<DiskNode, FileAcc> acc = new(65536);
+		public readonly List<(DiskNode Parent, TreemapFile File)> tiles = new();
+
+		public string? lastPath;
+		public DiskNode? lastNode;
+		public long size;
+		public long alloc;
+		public int files;
+		public int cacheHits;
+		public int n;
+	}
+
+	/// <summary>
+	/// Locked folder create for the structurally-impossible missing parent (every emitted
+	/// file's parent ships as a folder row, created before the parallel pass). Single-writer
+	/// under the lock, so it simply mirrors the sequential create — no races by construction.
+	/// </summary>
+	private static DiskNode GetOrCreateFolderLocked(ReadOnlySpan<char> parentSpan,
+		System.Collections.Concurrent.ConcurrentDictionary<string, DiskNode>.AlternateLookup<ReadOnlySpan<char>> lookup,
+		System.Collections.Concurrent.ConcurrentDictionary<string, DiskNode> map,
+		object folderLock, string rootFull)
+	{
+		lock (folderLock)
+		{
+			return GetOrCreateFolderUnderLock(parentSpan, lookup, map, rootFull);
+		}
+	}
+
+	private static DiskNode GetOrCreateFolderUnderLock(ReadOnlySpan<char> path,
+		System.Collections.Concurrent.ConcurrentDictionary<string, DiskNode>.AlternateLookup<ReadOnlySpan<char>> lookup,
+		System.Collections.Concurrent.ConcurrentDictionary<string, DiskNode> map,
+		string rootFull)
+	{
+		ReadOnlySpan<char> span = path;
+		if (span.Length > 0 && span[^1] == '\\')
+			span = span.TrimEnd('\\');
+		if (lookup.TryGetValue(span, out DiskNode? existing) && existing != null)
+			return existing;
+
+		int sep = span.LastIndexOf('\\');
+		string trimmed = new string(span);
+		string name = sep < 0 ? trimmed : new string(span.Slice(sep + 1));
+		if (name.Length == 0)
+			name = trimmed;
+
+		var node = new DiskNode { Name = name, FullPath = trimmed, IsFolder = true };
+		map[trimmed] = node;
+		if (!trimmed.Equals(rootFull, StringComparison.OrdinalIgnoreCase) && sep > 0)
+		{
+			var parentNode = GetOrCreateFolderUnderLock(span.Slice(0, sep), lookup, map, rootFull);
+			parentNode.Children.Add(node);
+			parentNode.FolderCount++;
+		}
+		return node;
+	}
+
+	/// <summary>
+	/// Single post-order walk that rolls child sizes/counts up, sorts each sibling
+	/// group, stamps allocated-based percents (WizTree: % of parent = Allocated /
+	/// parent Allocated) and bubbles the latest modified date. Replaces four
+	/// separate traversals (propagate, sort, percents, latest-date). Runs before UI
+	/// bind so CollectionChanged has no grid subscribers yet. Returns the newest
+	/// modified time in the subtree.
+	/// </summary>
+	private static DateTime PropagateSortAndPercent(DiskNode node, long totalAllocated, CancellationToken token)
 	{
 		token.ThrowIfCancellationRequested();
+		DateTime latest = node.Modified;
 		foreach (var child in node.Children)
 		{
-			PropagateSizes(child, token);
+			DateTime childLatest = PropagateSortAndPercent(child, totalAllocated, token);
+			if (childLatest > latest)
+				latest = childLatest;
 			node.Size += child.Size;
 			node.Allocated += child.Allocated;
 			node.FileCount += child.FileCount;
 			node.FolderCount += child.FolderCount;
 		}
+		if (totalAllocated > 0)
+			node.PercentOfTotal = (double)node.Allocated / totalAllocated * 100;
+		SortNodeChildren(node);
+		if (node.Children.Count > 0 && node.Allocated > 0)
+		{
+			foreach (var c in node.Children)
+				c.PercentOfParent = (double)c.Allocated / node.Allocated * 100;
+		}
+		return latest;
 	}
 
-	private static void SortChildren(DiskNode node, CancellationToken token = default)
+	/// <summary>
+	/// Sort + percents + latest-date walk for the folder-first fast path, whose
+	/// recursive sizes are already applied (no roll-up — that would double-count).
+	/// </summary>
+	private static DateTime SortAndPercent(DiskNode node, long totalAllocated, CancellationToken token)
 	{
 		token.ThrowIfCancellationRequested();
-		if (node.Children.Count <= 1)
+		DateTime latest = node.Modified;
+		foreach (var child in node.Children)
 		{
-			foreach (DiskNode child in node.Children)
-				if (child.IsFolder)
-					SortChildren(child, token);
-
-			return;
+			DateTime childLatest = SortAndPercent(child, totalAllocated, token);
+			if (childLatest > latest)
+				latest = childLatest;
 		}
+		if (totalAllocated > 0)
+			node.PercentOfTotal = (double)node.Allocated / totalAllocated * 100;
+		SortNodeChildren(node);
+		if (node.Children.Count > 0 && node.Allocated > 0)
+		{
+			foreach (var c in node.Children)
+				c.PercentOfParent = (double)c.Allocated / node.Allocated * 100;
+		}
+		return latest;
+	}
+
+	private static void SortNodeChildren(DiskNode node)
+	{
+		if (node.Children.Count <= 1)
+			return;
 
 		// Sort through a pooled buffer: ~40k folders have siblings, and one array per folder
 		// was pure GC pressure on a 500k-row scan.
@@ -614,12 +892,7 @@ public sealed class DiskAnalyzerService
 			Array.Sort(array, 0, count, AllocatedDescendingComparer.Instance);
 			node.Children.Clear();
 			for (int index = 0; index < count; index++)
-			{
-				DiskNode child = array[index];
-				node.Children.Add(child);
-				if (child.IsFolder)
-					SortChildren(child, token);
-			}
+				node.Children.Add(array[index]);
 		}
 		finally
 		{
@@ -627,31 +900,26 @@ public sealed class DiskAnalyzerService
 		}
 	}
 
-	private static DateTime FindLatestModified(DiskNode node)
+	private static void ApplyLatestModified(DiskNode rootNode, string rootFull, DateTime latest)
 	{
-		DateTime best = node.Modified;
-		foreach (var child in node.Children)
+		if (rootNode.Modified != DateTime.MinValue)
+			return;
+
+		if (latest != DateTime.MinValue)
 		{
-			DateTime childBest = FindLatestModified(child);
-			if (childBest > best)
-				best = childBest;
+			rootNode.Modified = latest;
+			return;
 		}
-		return best;
-	}
 
-	private static void ComputePercents(DiskNode node, long totalAllocated)
-	{
-		// WizTree percents are allocated-based: % of parent = Allocated / parent Allocated.
-		if (totalAllocated > 0)
-			node.PercentOfTotal = (double)node.Allocated / totalAllocated * 100;
-
-		if (node.Children.Count > 0 && node.Allocated > 0)
+		try
 		{
-			foreach (var c in node.Children)
-			{
-				c.PercentOfParent = (double)c.Allocated / node.Allocated * 100;
-				ComputePercents(c, totalAllocated);
-			}
+			DateTime volTime = Directory.GetLastWriteTimeUtc(rootFull);
+			if (volTime != DateTime.MinValue)
+				rootNode.Modified = volTime;
+		}
+		catch
+		{
+			// Offline or denied volume root: the newest descendant time stands.
 		}
 	}
 
@@ -675,9 +943,10 @@ public sealed class DiskAnalyzerService
 	/// <summary>
 	/// Duplicate candidate key (WizTree "Locate by Name, Size, Date") compared case-insensitively and
 	/// on the file name only, so neither the concatenated key string nor a per-file name string has
-	/// to be allocated during a drive walk.
+	/// to be allocated during a drive walk. <c>Name</c> carries lite-row names; classic rows leave
+	/// it null and compare the name span of <c>FullPath</c> instead — same content, same hash.
 	/// </summary>
-	private readonly record struct DuplicateKey(string FullPath, long Size, long ModifiedTicks);
+	private readonly record struct DuplicateKey(string FullPath, string? Name, long Size, long ModifiedTicks);
 
 	private sealed class DuplicateKeyComparer : IEqualityComparer<DuplicateKey>
 	{
@@ -686,10 +955,13 @@ public sealed class DiskAnalyzerService
 		public bool Equals(DuplicateKey x, DuplicateKey y)
 			=> x.Size == y.Size
 			&& x.ModifiedTicks == y.ModifiedTicks
-			&& NameSpan(x.FullPath).Equals(NameSpan(y.FullPath), StringComparison.OrdinalIgnoreCase);
+			&& EffectiveName(x).Equals(EffectiveName(y), StringComparison.OrdinalIgnoreCase);
 
 		public int GetHashCode(DuplicateKey key)
-			=> HashCode.Combine(key.Size, key.ModifiedTicks, string.GetHashCode(NameSpan(key.FullPath), StringComparison.OrdinalIgnoreCase));
+			=> HashCode.Combine(key.Size, key.ModifiedTicks, string.GetHashCode(EffectiveName(key), StringComparison.OrdinalIgnoreCase));
+
+		private static ReadOnlySpan<char> EffectiveName(DuplicateKey key)
+			=> key.Name is not null ? key.Name.AsSpan() : NameSpan(key.FullPath);
 
 		private static ReadOnlySpan<char> NameSpan(string fullPath)
 		{

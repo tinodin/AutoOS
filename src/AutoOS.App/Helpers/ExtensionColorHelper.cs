@@ -4,11 +4,11 @@ namespace AutoOS.App.Helpers;
 
 public static class ExtensionColorHelper
 {
-	private static readonly Color NoExtensionColor = Color.FromArgb(255, 160, 160, 160);
+	private static readonly Color NO_EXTENSION_COLOR = Color.FromArgb(255, 160, 160, 160);
 
 	// Per-extension palette for the extension breakdown legend. Extensions hash
 	// into this palette, so each extension always maps to the same colour.
-	private static readonly Color[] ExtensionPalette =
+	private static readonly Color[] EXTENSION_PALETTE =
 	[
 		Color.FromArgb(255, 232, 119, 12),
 		Color.FromArgb(255, 139, 195, 74),
@@ -43,7 +43,7 @@ public static class ExtensionColorHelper
 	// The extensions WizTree surfaces most often get pinned palette slots, so the top
 	// legend rows (and their treemap tiles) are always mutually distinct. Anything
 	// else hashes into the palette.
-	private static readonly Dictionary<string, int> FixedExtensionPaletteIndex = new(StringComparer.OrdinalIgnoreCase)
+	private static readonly Dictionary<string, int> FIXED_EXTENSION_PALETTE_INDEX = new(StringComparer.OrdinalIgnoreCase)
 	{
 		[".dll"] = 0,
 		[".sys"] = 1,
@@ -78,17 +78,17 @@ public static class ExtensionColorHelper
 	public static Color GetColor(string extension)
 	{
 		if (IsNoExtension(extension))
-			return NoExtensionColor;
+			return NO_EXTENSION_COLOR;
 
 		string normalized = NormalizeExtension(extension);
 		if (normalized.Length == 0)
-			return NoExtensionColor;
+			return NO_EXTENSION_COLOR;
 
-		if (FixedExtensionPaletteIndex.TryGetValue(normalized, out int fixedIndex))
-			return ExtensionPalette[fixedIndex];
+		if (FIXED_EXTENSION_PALETTE_INDEX.TryGetValue(normalized, out int fixedIndex))
+			return EXTENSION_PALETTE[fixedIndex];
 
 		uint hash = Fnv1a32(normalized);
-		return ExtensionPalette[hash % (uint)ExtensionPalette.Length];
+		return EXTENSION_PALETTE[hash % (uint)EXTENSION_PALETTE.Length];
 	}
 
 	public static bool IsNoExtension(string extension)
@@ -101,6 +101,9 @@ public static class ExtensionColorHelper
 
 	public static string NormalizeExtension(string extension)
 	{
+		if (IsNoExtension(extension))
+			return string.Empty;
+
 		string normalized = extension.Trim().ToLowerInvariant();
 		if (normalized.Length == 0 || normalized.StartsWith('.'))
 			return normalized;

@@ -76,7 +76,8 @@ internal static class EverythingIpc
 		BinaryPrimitives.WriteUInt32LittleEndian(span.Slice(24, 4), QUERY2_SORT_NONE);
 		Encoding.Unicode.GetBytes(search.AsSpan(), span.Slice(28));
 		// NUL terminator: payload is zero-initialized, the last 2 bytes already read 0.
-		LRESULT send; nuint reply = 0;
+		LRESULT send;
+		nuint reply = 0;
 		// Arm the target BEFORE the send: the server may reply synchronously while
 		// SendMessageTimeout blocks, so OnReply must already know where to parse.
 		receiver.ArmQuery(rows, rowOptions);
@@ -140,7 +141,8 @@ internal static class EverythingIpc
 			thread.Start();
 			if (!ready.Wait(TimeSpan.FromSeconds(10)))
 				throw new InvalidOperationException("Timed out creating Everything IPC receiver window.");
-			if (_hwnd == HWND.Null) throw new InvalidOperationException("Failed to create Everything IPC receiver window.");
+			if (_hwnd == HWND.Null)
+				throw new InvalidOperationException("Failed to create Everything IPC receiver window.");
 		}
 
 		/// <summary>
@@ -188,7 +190,8 @@ internal static class EverythingIpc
 			{
 				try
 				{
-					if (_replyError != null) throw new InvalidOperationException("Everything reply failed validation.", _replyError);
+					if (_replyError != null)
+						throw new InvalidOperationException("Everything reply failed validation.", _replyError);
 					return _targetReceived;
 				}
 				finally
@@ -213,15 +216,18 @@ internal static class EverythingIpc
 						return;
 
 					_hwnd = PInvoke.CreateWindowEx(WINDOW_EX_STYLE.WS_EX_NOACTIVATE, pClass, pTitle, WINDOW_STYLE.WS_POPUP, 0, 0, 0, 0, HWND.Null, default, default, null);
-					if (_hwnd == HWND.Null) return;
-					lock (_lock) _active[(nint)_hwnd.Value] = this;
+					if (_hwnd == HWND.Null)
+						return;
+					lock (_lock)
+						_active[(nint)_hwnd.Value] = this;
 				}
 			}
 			finally
 			{
 				ready.Set();
 			}
-			if (_hwnd == HWND.Null) return;
+			if (_hwnd == HWND.Null)
+				return;
 			MSG msg;
 			while (PInvoke.GetMessage(&msg, HWND.Null, 0, 0))
 			{
@@ -237,7 +243,8 @@ internal static class EverythingIpc
 			{
 				CopyDataStruct* cds = (CopyDataStruct*)(void*)lParam.Value;
 				CopyDataReceiver? recv;
-				lock (_lock) _active.TryGetValue((nint)hwnd.Value, out recv);
+				lock (_lock)
+					_active.TryGetValue((nint)hwnd.Value, out recv);
 				if (recv != null)
 				{
 					recv.OnReply(cds);
@@ -266,7 +273,8 @@ internal static class EverythingIpc
 					throw new InvalidOperationException("Everything reply arrived with no pending query.");
 				ReadOnlySpan<byte> reply = new(cds->lpData, (int)cds->cbData);
 				int received = ParseList2(reply, rows, rowOptions);
-				lock (_lock) _targetReceived = received;
+				lock (_lock)
+					_targetReceived = received;
 			}
 			catch (Exception ex)
 			{
@@ -292,14 +300,17 @@ internal static class EverythingIpc
 			// EVERYTHING_IPC_LIST2: totitems, numitems, offset, request_flags, sort_type (20B),
 			// then numitems x { flags, data_offset } (8B), then variable data per item in
 			// request_flags order: [len:u32 + WCHAR[len+1]] for strings, Int64 size, FILETIME dates.
-			if (data.Length < LIST2_HEADER_SIZE) throw new InvalidOperationException("Everything reply too short.");
+			if (data.Length < LIST2_HEADER_SIZE)
+				throw new InvalidOperationException("Everything reply too short.");
 			uint totItems = BinaryPrimitives.ReadUInt32LittleEndian(data.Slice(0, 4));
 			uint numItems = BinaryPrimitives.ReadUInt32LittleEndian(data.Slice(4, 4));
 			uint listRequestFlags = BinaryPrimitives.ReadUInt32LittleEndian(data.Slice(12, 4));
 			uint n = Math.Min(totItems, numItems);
-			if (n > MAX_REPLY_ITEMS) throw new InvalidOperationException($"Everything reply count implausible ({n}).");
+			if (n > MAX_REPLY_ITEMS)
+				throw new InvalidOperationException($"Everything reply count implausible ({n}).");
 			long itemsEnd = (long)LIST2_HEADER_SIZE + (long)n * ITEM2_SIZE;
-			if (itemsEnd > data.Length) throw new InvalidOperationException("Everything reply truncated.");
+			if (itemsEnd > data.Length)
+				throw new InvalidOperationException("Everything reply truncated.");
 			bool wantName = (listRequestFlags & QUERY2_REQUEST_FILE_NAME) != 0;
 			bool wantPath = (listRequestFlags & QUERY2_REQUEST_PATH) != 0;
 			bool wantFull = (listRequestFlags & QUERY2_REQUEST_FULL_PATH_AND_NAME) != 0;
@@ -320,7 +331,8 @@ internal static class EverythingIpc
 				ReadOnlySpan<byte> h = data.Slice(LIST2_HEADER_SIZE + (int)i * ITEM2_SIZE, ITEM2_SIZE);
 				uint flags = BinaryPrimitives.ReadUInt32LittleEndian(h.Slice(0, 4));
 				uint dataOffset = BinaryPrimitives.ReadUInt32LittleEndian(h.Slice(4, 4));
-				if (dataOffset >= data.Length) throw new InvalidOperationException("Everything reply strings out of range.");
+				if (dataOffset >= data.Length)
+					throw new InvalidOperationException("Everything reply strings out of range.");
 				int cursor = (int)dataOffset;
 				string name = string.Empty;
 				string path = string.Empty;
@@ -378,7 +390,8 @@ internal static class EverythingIpc
 					SkipListString(data, ref cursor);
 				if (full.Length == 0)
 				{
-					if (name.Length == 0 || path.Length == 0) throw new InvalidOperationException("Everything reply failed validation.");
+					if (name.Length == 0 || path.Length == 0)
+						throw new InvalidOperationException("Everything reply failed validation.");
 					full = path.EndsWith('\\') ? path + name : path + '\\' + name;
 				}
 				// A stray row from another root would silently corrupt the tree.
@@ -412,7 +425,8 @@ internal static class EverythingIpc
 						Size = fileSize,
 						AllocatedSize = DiskCluster.AlignSize(fileSize, rowOptions.Cluster, rowOptions.ClusterIsPowerOfTwo),
 						Modified = rowOptions.IncludeDates ? DiskCluster.FromFileTimeUtcOrMinValue(modified) : DateTime.MinValue,
-						IsFolder = false
+						IsFolder = false,
+						Extension = Path.GetExtension(full)
 					});
 				}
 			}
@@ -421,12 +435,15 @@ internal static class EverythingIpc
 
 		private static string ReadListString(ReadOnlySpan<byte> data, ref int cursor)
 		{
-			if (cursor + 4 > data.Length) throw new InvalidOperationException("Everything reply truncated.");
+			if (cursor + 4 > data.Length)
+				throw new InvalidOperationException("Everything reply truncated.");
 			uint len = BinaryPrimitives.ReadUInt32LittleEndian(data.Slice(cursor, 4));
-			if (len > MAX_STRING_CHARS) throw new InvalidOperationException("Everything reply has invalid string extents.");
+			if (len > MAX_STRING_CHARS)
+				throw new InvalidOperationException("Everything reply has invalid string extents.");
 			cursor += 4;
 			long byteLen = ((long)len + 1) * 2;
-			if ((long)cursor + byteLen > data.Length) throw new InvalidOperationException("Everything reply strings out of range.");
+			if ((long)cursor + byteLen > data.Length)
+				throw new InvalidOperationException("Everything reply strings out of range.");
 			string s = len == 0 ? string.Empty : Encoding.Unicode.GetString(data.Slice(cursor, (int)len * 2));
 			cursor += (int)byteLen;
 			return s;
@@ -434,18 +451,22 @@ internal static class EverythingIpc
 
 		private static void SkipListString(ReadOnlySpan<byte> data, ref int cursor)
 		{
-			if (cursor + 4 > data.Length) throw new InvalidOperationException("Everything reply truncated.");
+			if (cursor + 4 > data.Length)
+				throw new InvalidOperationException("Everything reply truncated.");
 			uint len = BinaryPrimitives.ReadUInt32LittleEndian(data.Slice(cursor, 4));
-			if (len > MAX_STRING_CHARS) throw new InvalidOperationException("Everything reply has invalid string extents.");
+			if (len > MAX_STRING_CHARS)
+				throw new InvalidOperationException("Everything reply has invalid string extents.");
 			cursor += 4;
 			long byteLen = ((long)len + 1) * 2;
-			if ((long)cursor + byteLen > data.Length) throw new InvalidOperationException("Everything reply strings out of range.");
+			if ((long)cursor + byteLen > data.Length)
+				throw new InvalidOperationException("Everything reply strings out of range.");
 			cursor += (int)byteLen;
 		}
 
 		private static long ReadInt64(ReadOnlySpan<byte> data, ref int cursor)
 		{
-			if (cursor + 8 > data.Length) throw new InvalidOperationException("Everything reply truncated.");
+			if (cursor + 8 > data.Length)
+				throw new InvalidOperationException("Everything reply truncated.");
 			long v = BinaryPrimitives.ReadInt64LittleEndian(data.Slice(cursor, 8));
 			cursor += 8;
 			return v;
@@ -453,15 +474,18 @@ internal static class EverythingIpc
 
 		private static void SkipBytes(ReadOnlySpan<byte> data, ref int cursor, int count)
 		{
-			if (cursor + count > data.Length) throw new InvalidOperationException("Everything reply truncated.");
+			if (cursor + count > data.Length)
+				throw new InvalidOperationException("Everything reply truncated.");
 			cursor += count;
 		}
 
 		public void Dispose()
 		{
-			if (_disposed) return;
+			if (_disposed)
+				return;
 			_disposed = true;
-			unsafe { lock (_lock) _active.Remove((nint)_hwnd.Value); }
+			unsafe
+			{ lock (_lock) _active.Remove((nint)_hwnd.Value); }
 			if (_hwnd != HWND.Null)
 			{
 				PInvoke.DestroyWindow(_hwnd);

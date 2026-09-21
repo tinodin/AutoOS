@@ -5,19 +5,19 @@ using System.IO.Enumeration;
 namespace AutoOS.Core.Services.DiskAnalyzer;
 
 /// <summary>
-/// WizTree-like fallback: parallel bulk enumeration.
+/// The single universal fallback: parallel bulk enumeration.
 /// Depth-2 shards enumerate in parallel. Single <c>FileSystemEnumerable</c> pass per
 /// directory builds records straight from Find data: no FileInfo/DirectoryInfo per
 /// row, no extra syscalls per file. Timestamps stay UTC. Work shards at depth 2 so one
 /// huge subtree (Windows, Program Files) cannot pin a single thread while others idle.
-/// Metadata-I/O-bound, not CPU.
+/// Metadata-I/O-bound, not CPU. Works on every filesystem (unlike the MFT parse).
 /// </summary>
-public sealed class MftScanner : IDiskScanner
+public sealed class EnumerationScanner : IDiskScanner
 {
 	// Parallelism: metadata enumeration scales to full core count on NVMe SSD (no cap).
 
 	public ScannerKind Kind => ScannerKind.Enumeration;
-	public bool IsAvailable => true; // fast path always available; MFT path auto-falls back
+	public bool IsAvailable => true; // always available; this is the single fallback
 
 	private static readonly EnumerationOptions SharedEnumerationOptions = new()
 	{
@@ -104,7 +104,7 @@ public sealed class MftScanner : IDiskScanner
 		if (workRoots.Count == 0)
 		{
 			// Flat hierarchy (or capped/denied): phase 1 + 1b already collected everything.
-			Trace.WriteLine($"[Mft] {topLevel.Count:N0} items, no subtrees in {sw.Elapsed.TotalSeconds:F2}s");
+			Trace.WriteLine($"[Enum] {topLevel.Count:N0} items, no subtrees in {sw.Elapsed.TotalSeconds:F2}s");
 			return topLevel;
 		}
 
@@ -117,9 +117,6 @@ public sealed class MftScanner : IDiskScanner
 		// private stack with zero synchronization during the walk. A shared
 		// work-stealing stack measured slower on NVMe — contention cost more
 		// than the imbalance it fixed; depth-2 shards fix the imbalance instead.
-		var results = new ConcurrentBag<List<ScanItem>>();
-		results.Add(topLevel);
-		long totalCount = topLevel.Count;
 		var parallelOptions = new ParallelOptions
 		{
 			CancellationToken = token,
@@ -129,19 +126,28 @@ public sealed class MftScanner : IDiskScanner
 		};
 
 		int localCapacity = workRoots.Count > 64 ? 4096 : 16384;
-		Parallel.ForEach(workRoots, parallelOptions, subRoot =>
+		// P1: indexed slots instead of ConcurrentBag + Interlocked per shard. One
+		// thread owns each slot, so no contention during the walk, and the merge
+		// is a single ordered pass (was: bag enumeration + atomic adds).
+		var slots = new List<ScanItem>?[workRoots.Count];
+		Parallel.For(0, workRoots.Count, parallelOptions, i =>
 		{
 			var local = new List<ScanItem>(localCapacity);
-			ScanSubtree(subRoot, cluster, clusterIsPowerOfTwo, includeDates, local, token, progress, progressState);
-			Interlocked.Add(ref totalCount, local.Count);
-			results.Add(local);
+			ScanSubtree(workRoots[i], cluster, clusterIsPowerOfTwo, includeDates, local, token, progress, progressState);
+			slots[i] = local;
 		});
 
-		var merged = new List<ScanItem>((int)Math.Min(totalCount, int.MaxValue));
-		foreach (var local in results)
-			merged.AddRange(local);
+		long totalCount = topLevel.Count;
+		for (int i = 0; i < slots.Length; i++)
+			totalCount += slots[i]?.Count ?? 0;
 
-		Trace.WriteLine($"[Mft] {merged.Count:N0} items, {workRoots.Count} shards in {sw.Elapsed.TotalSeconds:F2}s (phase1b {phase1bMs}ms, dop {parallelOptions.MaxDegreeOfParallelism})");
+		var merged = new List<ScanItem>((int)Math.Min(totalCount, int.MaxValue));
+		merged.AddRange(topLevel);
+		for (int i = 0; i < slots.Length; i++)
+			if (slots[i] is { Count: > 0 } slot)
+				merged.AddRange(slot);
+
+		Trace.WriteLine($"[Enum] {merged.Count:N0} items, {workRoots.Count} shards in {sw.Elapsed.TotalSeconds:F2}s (phase1b {phase1bMs}ms, dop {parallelOptions.MaxDegreeOfParallelism})");
 		return merged;
 	}
 
@@ -168,7 +174,8 @@ public sealed class MftScanner : IDiskScanner
 					AllocatedSize = isDirectory ? 0 : DiskCluster.AlignSize(size, cluster, clusterIsPowerOfTwo),
 					Modified = includeDates ? entry.LastWriteTimeUtc.UtcDateTime : DateTime.MinValue,
 					IsFolder = isDirectory,
-					Attributes = DiskNode.FormatAttributes(entry.Attributes)
+					Attributes = DiskNode.FormatAttributes(entry.Attributes),
+					Extension = isDirectory ? string.Empty : Path.GetExtension(fullPath)
 				};
 			},
 			SharedEnumerationOptions)

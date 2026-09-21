@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 
 namespace AutoOS.Core.Services.DiskAnalyzer;
@@ -19,6 +19,13 @@ public sealed class ScanOptions
 
 public record struct ScanItem
 {
+	public ScanItem()
+	{
+		FullPath = string.Empty;
+		Attributes = string.Empty;
+		Extension = string.Empty;
+	}
+
 	public required string FullPath { get; init; }
 	public long Size { get; init; }              // logical size
 	public long AllocatedSize { get; set; }      // size on disk (cluster aligned)
@@ -26,6 +33,14 @@ public record struct ScanItem
 	public bool IsFolder { get; init; }
 	public string Attributes { get; set; }       // WizTree-style: e.g. "R", "HS", "A" (null/empty = none)
 	public long FileId { get; init; }            // MFT record number for FRN-once sums; 0 = count every row
+	public string Extension { get; init; } = string.Empty; // Scanner-provided extension; treemap normalizes before coloring.
+	// Lite-row fast path (MFT scans): parent MFT record id + bare file name. The tree
+	// resolves the parent node by id (no path hash) and no file path string is ever
+	// built for the ~95% of rows that never display. FullPath stays empty; the File View
+	// materializes paths lazily for listed rows only. 0 = classic path rows (no MFT
+	// record is ever 0 — system records live at 0-15 and are never file parents).
+	public long ParentId { get; init; }
+	public string? Name { get; init; }
 }
 
 public sealed class ScanResult
@@ -42,7 +57,21 @@ public sealed class ScanResult
 	// File rows and the extension breakdown are aggregated inside the scan, on the same background
 	// pass that builds the tree, so opening File View never waits for a second walk of the drive.
 	public FileViewInputs FileView { get; init; } = FileViewInputs.Empty;
+	// Treemap file tiles, grouped by parent folder during the tree build itself, so the
+	// treemap can paint folders and files in a single pass the moment the scan binds.
+	// Lite rows carry no path strings — only names — so this stays compact.
+	public Dictionary<DiskNode, List<TreemapFile>> TreemapFileGroups { get; init; } = new();
+	// MFT record id → folder node, for treemap file grouping. Null on classic scans
+	// (IPC/enumeration rows resolve parents by path instead).
+	public IReadOnlyDictionary<long, DiskNode>? RecordNodes { get; init; }
 }
+
+/// <summary>
+/// One treemap file tile: the bare file name plus a normalized extension. The parent folder
+/// is the dictionary key in <see cref="ScanResult.TreemapFileGroups"/>, so no path string
+/// is ever built for the ~95% of rows that never display.
+/// </summary>
+public readonly record struct TreemapFile(string Name, string Extension, long AllocatedSize, long Size, bool IsAggregate = false);
 
 /// <summary>
 /// Hierarchical node for SfTreeGrid. WizTree-like: Name, Size, Allocated, Percent, Items, Modified.
@@ -60,8 +89,11 @@ public sealed class DiskNode : INotifyPropertyChanged
 	private DateTime _modified;
 	private string _attributes = string.Empty;
 
-	public required string Name { get; init; }
-	public required string FullPath { get; init; }
+	// Name/FullPath were `required` until the treemap exposed DiskNode-typed dependency
+	// properties: the XAML compiler emits a parameterless activator for such types, which
+	// `required` forbids (CS9035). Every construction site still sets both.
+	public string Name { get; init; } = string.Empty;
+	public string FullPath { get; init; } = string.Empty;
 	public bool IsFolder { get; init; }
 
 	public string Extension
@@ -301,11 +333,15 @@ public sealed class DiskFileRow
 
 	public required string FileName { get; init; }
 
-	public required string Directory { get; init; }
+	public required string Directory { get; set; }
 
-	public required string FullPath { get; init; }
+	public required string FullPath { get; set; }
 
 	public string Extension { get; init; } = string.Empty;
+
+	// Lite-row carry-over: MFT parent record id so post-tree path fill can materialize
+	// FullPath/Directory for listed rows only. 0 = classic rows (paths already set).
+	public long ParentId { get; init; }
 
 	public long Size { get; set; }
 

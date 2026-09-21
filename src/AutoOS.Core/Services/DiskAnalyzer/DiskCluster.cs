@@ -1,9 +1,14 @@
+using System.Collections.Concurrent;
 using Windows.Win32;
 
 namespace AutoOS.Core.Services.DiskAnalyzer;
 
 internal static class DiskCluster
 {
+	// P0: cluster size is queried up to 3x per scan (service + scanners) and never
+	// changes without a reformat. Cache per volume root; keys are drive roots so
+	// the map stays tiny.
+	private static readonly ConcurrentDictionary<string, uint> _clusterCache = new(StringComparer.OrdinalIgnoreCase);
 	public static long AlignSize(long size, uint cluster, bool isPowerOfTwo)
 	{
 		if (cluster == 0 || size == 0)
@@ -40,11 +45,16 @@ internal static class DiskCluster
 	{
 		try
 		{
-			string root = Path.GetPathRoot(path) ?? "C:\\";
-			if (!PInvoke.GetDiskFreeSpace(root, out uint sPerCluster, out uint bPerSector, out uint _, out uint _))
-				return 4096;
+			string root = (Path.GetPathRoot(path) ?? "C:\\").ToUpperInvariant();
+			if (_clusterCache.TryGetValue(root, out uint cached))
+				return cached;
 
-			return sPerCluster * bPerSector;
+			uint size = 4096;
+			if (PInvoke.GetDiskFreeSpace(root, out uint sPerCluster, out uint bPerSector, out uint _, out uint _))
+				size = sPerCluster * bPerSector;
+
+			_clusterCache[root] = size;
+			return size;
 		}
 		catch
 		{

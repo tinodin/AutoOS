@@ -1,0 +1,17 @@
+<!--
+  Trimmer roots for data-bound model types. The Disk Cleanup grids resolve most members
+  through runtime {Binding} paths and Syncfusion MappingName strings, which the Release
+  trimmer cannot see: unreferenced getters get stripped and the cells/cards render blank
+  (or bindings silently fail). Preserving these three small model types plus the drive-card
+  model keeps data binding working under TrimMode=full at negligible size cost.
+-->
+<linker>
+  <assembly fullname="AutoOS.Core">
+    <type fullname="AutoOS.Core.Services.DiskAnalyzer.DiskNode" preserve="all" />
+    <type fullname="AutoOS.Core.Services.DiskAnalyzer.DiskFileRow" preserve="all" />
+    <type fullname="AutoOS.Core.Services.DiskAnalyzer.DiskExtensionStat" preserve="all" />
+  </assembly>
+  <assembly fullname="AutoOS">
+    <type fullname="AutoOS.App.ViewModels.DriveModelLite" preserve="all" />
+  </assembly>
+</linker>

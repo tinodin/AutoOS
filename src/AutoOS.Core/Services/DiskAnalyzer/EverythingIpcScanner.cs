@@ -15,9 +15,7 @@ public sealed class EverythingIpcScanner : IDiskScanner
 	// Everything server serializes WM_COPYDATA queries internally, so fewer
 	// round trips always dominate over individual reply size.
 	private const int PAGE_SIZE = 1000000;
-	private const int FOLDER_PAGE_SIZE = 400000;
 	private const int DEFAULT_FILE_CAPACITY = 900000;
-	private const int DEFAULT_FOLDER_CAPACITY = 250000;
 
 	// Process-lifetime receiver: one hidden window plus one thread shared by all scans.
 	// Creating it per scan costs ~150ms on first scan; scans serialize on this lock
@@ -154,80 +152,6 @@ public sealed class EverythingIpcScanner : IDiskScanner
 			Trace.WriteLine($"[EverythingIpc] {items.Count:N0} items, {pages} pages in {sw.Elapsed.TotalSeconds:F2}s (query+parse {querySw.Elapsed.TotalSeconds:F2}s)");
 			progress?.Report(1.0d);
 			return (IReadOnlyList<ScanItem>)items;
-		}, token);
-	}
-
-	/// <summary>
-	/// Folder-only query for drive-root scans: one ~113k folder-only request with indexed
-	/// sizes (~0.5s). The service pairs this with <see cref="MftDataScanner"/> file rows.
-	/// Throws when the folder query fails or the size index is off so callers fall back
-	/// to the full query. Cancellation still bubbles as <see cref="OperationCanceledException"/>.
-	/// </summary>
-	public Task<List<ScanItem>> ScanFoldersAsync(ScanOptions options, IProgress<double>? progress = null, CancellationToken cancellationToken = default)
-	{
-		CancellationToken token = cancellationToken;
-
-		return Task.Run(() =>
-		{
-			token.ThrowIfCancellationRequested();
-			string root = DiskCluster.NormalizeRoot(options.RootPath);
-			var sw = Stopwatch.StartNew();
-			var querySw = new Stopwatch();
-
-			bool includeDates = options.IncludeModifiedDates;
-			uint cluster = DiskCluster.GetClusterSize(root);
-			uint flags = EverythingIpc.QUERY2_REQUEST_FULL_PATH_AND_NAME |
-				EverythingIpc.QUERY2_REQUEST_SIZE;
-			if (includeDates)
-				flags |= EverythingIpc.QUERY2_REQUEST_DATE_MODIFIED;
-
-			bool isDriveRoot = root.Length == 3 && root[1] == ':' && root[2] == '\\';
-			if (!EverythingIpc.TryFindServer(out var server))
-				throw new InvalidOperationException($"Everything window not found for {root}.");
-
-			var folderItems = new List<ScanItem>(DEFAULT_FOLDER_CAPACITY);
-			var rowOptions = new EverythingIpc.ScanRowOptions(cluster, DiskCluster.IsPowerOfTwo(cluster), includeDates, root, isDriveRoot, token);
-			lock (_receiverLock)
-			{
-				var receiver = EnsureSharedReceiverLocked();
-				string folderSearch = $"folder:\"{root}\"";
-				int folderOffset = 0;
-				while (true)
-				{
-					token.ThrowIfCancellationRequested();
-					int folderReceived;
-					querySw.Start();
-					try
-					{
-						folderReceived = EverythingIpc.Query(receiver, server, folderSearch, flags, FOLDER_PAGE_SIZE, folderOffset, folderItems, rowOptions, QUERY_TIMEOUT_MS);
-					}
-					finally
-					{
-						querySw.Stop();
-					}
-					if (folderReceived == 0)
-						break;
-					folderOffset += folderReceived;
-					if (folderReceived < FOLDER_PAGE_SIZE)
-						break;
-				}
-			}
-
-			if (folderItems.Count == 0)
-				throw new InvalidOperationException($"Everything folder query returned no rows for {root}.");
-
-			int sized = 0;
-			for (int fi = 0; fi < folderItems.Count; fi++)
-				if (folderItems[fi].Size > 0)
-					sized++;
-			// Heuristics tuned for C:\ (~100k folders, most sized). Small drives like E:\ with 520 folders
-			// legitimately have far fewer entries and many unsized system folders – don't fail them.
-			if (folderItems.Count >= 20000 && sized <= folderItems.Count / 2)
-				throw new InvalidOperationException($"Everything folder size index is off for {root} ({sized:N0}/{folderItems.Count:N0} sized).");
-
-			Trace.WriteLine($"[EverythingIpc] folder-first {folderItems.Count:N0} folders ({sized:N0} sized) in {sw.Elapsed.TotalSeconds:F2}s (query+parse {querySw.Elapsed.TotalSeconds:F2}s)");
-			progress?.Report(1.0d);
-			return folderItems;
 		}, token);
 	}
 

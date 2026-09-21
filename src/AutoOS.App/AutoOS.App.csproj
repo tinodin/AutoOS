@@ -48,6 +48,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <TrimmerRootDescriptor Include="TrimmerRoots.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <TrimmerRootAssembly Include="Syncfusion.Calendar.WinUI" />
     <TrimmerRootAssembly Include="Syncfusion.Chart.WinUI" />
     <TrimmerRootAssembly Include="Syncfusion.Core.WinUI" />

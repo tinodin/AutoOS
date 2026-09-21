@@ -10,11 +10,7 @@ public sealed partial class DiskCleanupViewModel : ObservableObject
 	private readonly DiskAnalyzerService _service = new();
 	private readonly DispatcherQueue? _ui;
 	private CancellationTokenSource? _cts;
-	private CancellationTokenSource? _filterDebounceCts;
 	private CancellationTokenSource? _probeCts;
-	private CancellationTokenSource? _fileFilterDebounceCts;
-	private string _cachedFilterSource = string.Empty;
-	private string _cachedFilterQuery = string.Empty;
 	// File View row sets. The scan itself ships the largest files, the extension breakdown and the
 	// duplicate flags, and the folder rows land right after it, so every Folders / Duplicates only
 	// combination is a list pick instead of a fresh walk of the drive.
@@ -25,49 +21,70 @@ public sealed partial class DiskCleanupViewModel : ObservableObject
 	private IReadOnlyList<DiskFileRow> _cachedDuplicatesWithFolders = [];
 	private long _cachedTotalAllocated;
 	private int _scanGen;
+	// Treemap file layer: parent-grouped tiles built during the scan itself, handed to the
+	// treemap control together with the tree so both paint in one pass. The treemap owns
+	// (and mutates, on delete) the dictionary after handoff.
+	public Dictionary<DiskNode, List<TreemapFile>> TreemapFileGroups { get; private set; } = new();
 
 	public ObservableCollection<DiskNode> TreeNodes { get; } = [];
 	public ObservableCollection<DriveModelLite> Drives { get; } = [];
 	// Plain list, not an ObservableCollection: the File View grid rebinds once per filter instead of
 	// processing one collection change per row (10k row Adds were the toggle delay).
-	[ObservableProperty] private IReadOnlyList<DiskFileRow> fileRows = [];
+	[ObservableProperty]
+	public partial IReadOnlyList<DiskFileRow> FileRows { get; set; } = [];
 	public ObservableCollection<DiskExtensionStat> ExtensionStats { get; } = [];
 
-	[ObservableProperty] private string selectedRoot = "C:\\";
-	[ObservableProperty] private string searchText = string.Empty;
+	[ObservableProperty]
+	public partial string SelectedRoot { get; set; } = "C:\\";
+
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(IsContentBusy))]
 	[NotifyPropertyChangedFor(nameof(IsContentReady))]
 	[NotifyPropertyChangedFor(nameof(LoadingVisibility))]
 	[NotifyPropertyChangedFor(nameof(TreeResultsVisibility))]
-	private bool isScanning;
-	[ObservableProperty] private bool useEverything = true;
-	[ObservableProperty] private bool isEverythingAvailable;
-	// WizTree File View toolbar (lazy: applied only when the File tab builds)
-	[ObservableProperty] private string fileSearchText = string.Empty;
-	[ObservableProperty] private bool includeFoldersInFileView;
-	[ObservableProperty] private double maxFilesToDisplay = 1000;
-	[ObservableProperty] private bool duplicatesOnly;
+	public partial bool IsScanning { get; set; }
 
-	[ObservableProperty] private string fileStatusText = string.Empty;
-	[ObservableProperty] private int selectedViewIndex;
+	[ObservableProperty]
+	public partial bool UseEverything { get; set; } = true;
+
+	[ObservableProperty]
+	public partial bool IsEverythingAvailable { get; set; }
+
+	// WizTree File View toolbar (lazy: applied only when the File tab builds)
+	[ObservableProperty]
+	public partial bool IncludeFoldersInFileView { get; set; }
+
+	[ObservableProperty]
+	public partial double MaxFilesToDisplay { get; set; } = 1000;
+
+	[ObservableProperty]
+	public partial bool DuplicatesOnly { get; set; }
+
+	[ObservableProperty]
+	public partial string FileStatusText { get; set; } = string.Empty;
+
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(FileToolbarVisibility))]
-	private string activeTab = "TreeView";
+	public partial string ActiveTab { get; set; } = "TreeView";
 
 	public bool IsContentBusy => IsScanning;
+
 	public bool IsContentReady => !IsContentBusy;
+
 	public Visibility LoadingVisibility => IsContentBusy ? Visibility.Visible : Visibility.Collapsed;
+
 	public Visibility TreeResultsVisibility => IsContentReady ? Visibility.Visible : Visibility.Collapsed;
+
 	public Visibility FileToolbarVisibility => ActiveTab == "FileView" ? Visibility.Visible : Visibility.Collapsed;
+
 	public Action? RefreshFileFilterAction { get; set; }
 
-	public Action? RefreshFilterAction { get; set; }
 	/// <summary>
 	/// SfTreeGrid bulk-update bracket. Call before TreeNodes / ExtensionStats bulk-Adds to
 	/// suppress one CollectionView refresh per row (Syncfusion TreeGrid perf best-practice).
 	/// </summary>
 	public Action? SuspendGridUpdatesAction { get; set; }
+
 	public Action? ResumeGridUpdatesAction { get; set; }
 
 	public DiskCleanupViewModel()
@@ -84,13 +101,13 @@ public sealed partial class DiskCleanupViewModel : ObservableObject
 		{
 			Drives.Add(new DriveModelLite
 			{
-				Name = d.Name.TrimEnd('\\'),
 				Label = string.IsNullOrWhiteSpace(d.VolumeLabel) ? d.Name.TrimEnd('\\') : $"{d.VolumeLabel} ({d.Name.TrimEnd('\\')})",
 				RootPath = d.Name,
 				TotalBytes = d.TotalSize,
 				FreeBytes = d.TotalFreeSpace
 			});
 		}
+
 		if (Drives.Count > 0 && !Drives.Any(x => x.RootPath.Equals(SelectedRoot, StringComparison.OrdinalIgnoreCase)))
 			SelectedRoot = Drives[0].RootPath;
 	}
@@ -111,20 +128,13 @@ public sealed partial class DiskCleanupViewModel : ObservableObject
 		}
 	}
 
-	partial void OnSelectedViewIndexChanged(int value)
-	{
-		ActiveTab = value == 1 ? "FileView" : "TreeView";
-		// WizTree loads File View only when the tab is opened.
-		if (value == 1)
-			EnsureFileViewLoaded();
-	}
 	partial void OnActiveTabChanged(string value)
 	{
-		int index = value == "FileView" ? 1 : 0;
-		if (SelectedViewIndex != index)
-			SelectedViewIndex = index;
+		// WizTree loads File View only when the tab is opened.
+		if (value == "FileView")
+			EnsureFileViewLoaded();
 	}
-	partial void OnFileSearchTextChanged(string value) => DebounceFileFilter();
+
 	// Toggles and the row cap only re-filter pre-built rows, so they apply immediately.
 	partial void OnIncludeFoldersInFileViewChanged(bool value) => RefreshFileRows();
 	partial void OnMaxFilesToDisplayChanged(double value) => RefreshFileRows();
@@ -137,28 +147,6 @@ public sealed partial class DiskCleanupViewModel : ObservableObject
 		RefreshFileFilterAction?.Invoke();
 	}
 
-	private void DebounceFileFilter()
-	{
-		_fileFilterDebounceCts?.Cancel();
-		_fileFilterDebounceCts?.Dispose();
-		_fileFilterDebounceCts = new CancellationTokenSource();
-		CancellationToken token = _fileFilterDebounceCts.Token;
-		_ = Task.Run(async () =>
-		{
-			try
-			{
-				await Task.Delay(250, token);
-				if (!token.IsCancellationRequested)
-					RefreshFileFilterAction?.Invoke();
-			}
-			catch (OperationCanceledException)
-			{
-				// A newer toggle superseded this debounce.
-			}
-		});
-	}
-
-	/// <summary>
 	/// Called when the File tab is selected. The scan already aggregated the file rows and the
 	/// extension breakdown, so opening the tab only re-applies the search text and the toggles.
 	/// </summary>
@@ -180,14 +168,22 @@ public sealed partial class DiskCleanupViewModel : ObservableObject
 			{
 				void Apply()
 				{
-					if (generation != _scanGen || task.IsFaulted || task.IsCanceled)
+					if (generation != _scanGen)
 						return; // newer scan started; discard stale rows
+					if (task.IsCanceled)
+						return;
+					if (task.IsFaulted)
+					{
+						Trace.WriteLine($"[DiskCleanup] folder-row build failed: {task.Exception?.GetBaseException().Message}");
+						return;
+					}
 
 					_cachedFilesWithFolders = MergeWithFolders(task.Result, _cachedTopFiles);
 					_cachedDuplicatesWithFolders = FilterDuplicates(_cachedFilesWithFolders);
 					if (IncludeFoldersInFileView)
 						ApplyFileFilter();
 				}
+
 				if (_ui != null)
 					_ui.TryEnqueue(Apply);
 				else
@@ -204,16 +200,19 @@ public sealed partial class DiskCleanupViewModel : ObservableObject
 		if (_cachedTopFiles.Count == 0)
 		{
 			FileRows = [];
-			FileStatusText = TreeNodes.Count == 0
-				? "Scan a drive first."
-				: "Folder-index scan has no file rows — extension and file views need a full scan.";
+			// Never clobber a real scan failure: opening the File View tab re-runs this
+			// filter, which used to overwrite "Scan failed: ..." with the text below and
+			// hide the actual error.
+			if (!FileStatusText.StartsWith("Scan failed", StringComparison.OrdinalIgnoreCase))
+			{
+				FileStatusText = TreeNodes.Count == 0
+					? "Scan a drive first."
+					: "Folder-index scan has no file rows — extension and file views need a full scan.";
+			}
+
 			return;
 		}
 
-		string query = (FileSearchText ?? string.Empty).Trim();
-		bool hasQuery = query.Length > 0;
-		bool extensionQuery = hasQuery && query.Length > 2 && query[0] == '*' && query[1] == '.';
-		string extension = extensionQuery ? query.Substring(1) : string.Empty;
 		int max = Math.Clamp((int)MaxFilesToDisplay, 100, 10000);
 		var rows = new List<DiskFileRow>(Math.Min(max, _cachedTopFiles.Count));
 		long shownSize = 0;
@@ -222,17 +221,6 @@ public sealed partial class DiskCleanupViewModel : ObservableObject
 		{
 			if (rows.Count >= max)
 				break;
-
-			if (hasQuery)
-			{
-				if (extensionQuery)
-				{
-					if (!row.Extension.Equals(extension, StringComparison.OrdinalIgnoreCase))
-						continue;
-				}
-				else if (!row.FullPath.Contains(query, StringComparison.OrdinalIgnoreCase))
-					continue;
-			}
 
 			rows.Add(row);
 			shownSize += row.Size;
@@ -297,80 +285,6 @@ public sealed partial class DiskCleanupViewModel : ObservableObject
 		return merged;
 	}
 
-	[RelayCommand]
-	private void ClearFileSearch()
-	{
-		FileSearchText = string.Empty;
-	}
-
-	// Debounce filter to avoid per-keystroke full tree traversal freeze (45k nodes recursive)
-	partial void OnSearchTextChanged(string value)
-	{
-		_filterDebounceCts?.Cancel();
-		_filterDebounceCts?.Dispose();
-		_filterDebounceCts = new CancellationTokenSource();
-		CancellationToken token = _filterDebounceCts.Token;
-		_ = DebounceFilterAsync(token);
-	}
-
-	private async Task DebounceFilterAsync(CancellationToken token)
-	{
-		try
-		{
-			await Task.Delay(280, token);
-			if (!token.IsCancellationRequested)
-				RefreshFilterAction?.Invoke();
-		}
-		catch (OperationCanceledException)
-		{
-		}
-	}
-
-	public bool MatchesFilter(object item)
-	{
-		if (item is not DiskNode node)
-			return true;
-
-		if (string.IsNullOrWhiteSpace(SearchText))
-			return true;
-
-		// Refresh the cached normalized query only when the source text changes.
-		// SfTreeGrid calls this per node per refresh — the old Trim() per node
-		// allocated once per row on every keystroke (WizTree-level lists stall).
-		if (!ReferenceEquals(SearchText, _cachedFilterSource))
-		{
-			_cachedFilterSource = SearchText;
-			_cachedFilterQuery = SearchText.Trim();
-		}
-
-		string q = _cachedFilterQuery;
-		if (q.Length == 0)
-			return true;
-
-		// Extension filter like *.iso: span check, no range alloc.
-		if (q.Length > 2 && q[0] == '*' && q[1] == '.')
-		{
-			if (node.Extension.AsSpan().Equals(q.AsSpan(1), StringComparison.OrdinalIgnoreCase))
-				return true;
-		}
-		else if (node.FullPath.Contains(q, StringComparison.OrdinalIgnoreCase))
-		{
-			// FullPath subsumes Name; single Contains per node.
-			return true;
-		}
-
-		// Explorer Folder Size Details has no filter pass — it shows sizes inline.
-		// We only reach here on a real query; folder match = any descendant matches.
-		if (!node.IsFolder)
-			return false;
-
-		foreach (var child in node.Children)
-			if (MatchesFilter(child))
-				return true;
-
-		return false;
-	}
-
 	/// <summary>
 	/// Starts a scan of <paramref name="rootPath"/> for the drive cards, so the page never invokes
 	/// the generated command itself.
@@ -401,6 +315,7 @@ public sealed partial class DiskCleanupViewModel : ObservableObject
 		_cachedDuplicateFiles = [];
 		_cachedFilesWithFolders = [];
 		_cachedDuplicatesWithFolders = [];
+		TreemapFileGroups = new();
 
 		try
 		{
@@ -420,8 +335,8 @@ public sealed partial class DiskCleanupViewModel : ObservableObject
 			// Batch UI updates to avoid freeze on 45k folder nodes + 1k file nodes
 			await Task.Yield();
 
-		var bindWatch = Stopwatch.StartNew();
-		SuspendGridUpdatesAction?.Invoke();
+			var bindWatch = Stopwatch.StartNew();
+			SuspendGridUpdatesAction?.Invoke();
 			try
 			{
 				TreeNodes.Clear();
@@ -434,21 +349,33 @@ public sealed partial class DiskCleanupViewModel : ObservableObject
 				_cachedTopFiles = result.FileView.TopFiles;
 				_cachedExtensions = result.FileView.Extensions;
 				_cachedDuplicateFiles = FilterDuplicates(_cachedTopFiles);
+				TreemapFileGroups = result.TreemapFileGroups;
 				ExtensionStats.Clear();
 				foreach (DiskExtensionStat stat in _cachedExtensions)
 					ExtensionStats.Add(stat);
 
 				ApplyFileFilter();
-				BuildFolderRowsInBackground(generation, [.. TreeNodes], _cachedTotalAllocated);
+				BuildFolderRowsInBackground(generation, new List<DiskNode>(TreeNodes), _cachedTotalAllocated);
 			}
-		finally
-		{
-			ResumeGridUpdatesAction?.Invoke();
-		}
+			finally
+			{
+				ResumeGridUpdatesAction?.Invoke();
+			}
 
 			bindWatch.Stop();
 			Trace.WriteLine($"[DiskCleanup] UI bind: {bindWatch.Elapsed.TotalSeconds:F2}s");
-			IsEverythingAvailable = await _service.IsEverythingAvailableAsync(token);
+			try
+			{
+				IsEverythingAvailable = await _service.IsEverythingAvailableAsync(token);
+			}
+			catch (OperationCanceledException)
+			{
+			}
+			catch (Exception ex)
+			{
+				IsEverythingAvailable = false;
+				Trace.WriteLine($"[DiskCleanup] Everything availability probe failed: {ex.Message}");
+			}
 		}
 		catch (OperationCanceledException)
 		{
@@ -465,21 +392,25 @@ public sealed partial class DiskCleanupViewModel : ObservableObject
 		}
 	}
 
-	[RelayCommand]
-	private void CancelScan()
-	{
-		_cts?.Cancel();
-	}
-
 }
 
 public sealed class DriveModelLite
 {
-	public string Name { get; set; } = string.Empty;
 	public string Label { get; set; } = string.Empty;
+
 	public string RootPath { get; set; } = string.Empty;
+
 	public long TotalBytes { get; set; }
+
 	public long FreeBytes { get; set; }
+
 	public long UsedBytes => TotalBytes - FreeBytes;
+
+	// Double projections for the compiled StorageBar bindings (x:Bind has no long→double
+	// implicit conversion, and a XAML-side cast trips the experimental markup compiler).
+	public double TotalBytesDouble => TotalBytes;
+
+	public double UsedBytesDouble => UsedBytes;
+
 	public string FreeText => $"{DiskNode.FormatBytes(FreeBytes)} free of {DiskNode.FormatBytes(TotalBytes)}";
 }
