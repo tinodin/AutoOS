@@ -654,7 +654,6 @@ public static partial class PreparingStage
 						IsInstalled = obj["IsInstalled"]?.GetValue<bool>() ?? false,
 						RegistryPath = obj["RegistryPath"]?.ToString() ?? string.Empty,
 						Location = obj["Location"]?.ToString() ?? string.Empty,
-						PStates = obj["PStates"]?.GetValue<bool>() ?? false,
 						ECC = obj["ECC"]?.GetValue<bool>() ?? false,
 						GspFirmware = obj["GspFirmware"]?.GetValue<bool>() ?? false,
 						HDCP = obj["HDCP"]?.GetValue<bool>() ?? false,

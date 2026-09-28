@@ -71,7 +71,6 @@ public static partial class GpuHelper
 
 				string deviceName = string.Empty;
 				string codename = string.Empty;
-				bool pstates = false;
 				bool hdcp = false;
 				bool ecc = false;
 				bool gspFirmware = false;
@@ -92,7 +91,6 @@ public static partial class GpuHelper
 						{
 							currentVersion = string.Concat(versionParts[2].AsSpan()[1..], versionParts[3].AsSpan()[..2], ".", versionParts[3].AsSpan(2, 2));
 						}
-						pstates = Microsoft.Win32.Registry.GetValue(registryPath, "DisableDynamicPstate", null) is not int pstateValue || pstateValue == 0;
 						ecc = Microsoft.Win32.Registry.GetValue(registryPath, "RMEnableL1ECC", null) is not int eccValue || eccValue == 1;
 						gspFirmware = Microsoft.Win32.Registry.GetValue(registryPath, "EnableGpuFirmware", null) is int firmwareValue && firmwareValue == 1;
 						hdcp = Microsoft.Win32.Registry.GetValue(registryPath, "RMHdcpKeyglobZero", null) is int intValue && intValue == 0;
@@ -178,7 +176,6 @@ public static partial class GpuHelper
 					CurrentVersion = currentVersion,
 					IsInstalled = isInstalled,
 					RegistryPath = registryPath,
-					PStates = pstates,
 					ECC = ecc,
 					GspFirmware = gspFirmware,
 					HDCP = hdcp,

@@ -1,8 +1,5 @@
-using System.Diagnostics;
 using System.Text.Json.Nodes;
 using AutoOS.Core.Common;
-using Windows.Win32;
-using Windows.Win32.Foundation;
 
 namespace AutoOS.Core.Helpers.Database;
 
@@ -250,28 +247,6 @@ public static partial class DiscordHelper
 		}
 	}
 
-	public static async Task KillDiscord()
-	{
-		foreach (Process process in Process.GetProcessesByName("Discord"))
-		{
-			try
-			{
-				if (process.MainWindowHandle != IntPtr.Zero)
-					PInvoke.PostMessage((HWND)process.MainWindowHandle, PInvoke.WM_CLOSE, default, default);
-
-				process.WaitForExit(5000);
-			}
-			catch { }
-
-			try
-			{
-				if (!process.HasExited)
-					process.Kill();
-			}
-			catch { }
-		}
-	}
-
 	public static List<DiscordAccountInfo>? GetAccountData(string levelDbPath, string? origin = null)
 	{
 		JsonNode? multiAccountStore = DatabaseHelper.Read(levelDbPath, "_https://discord.com", "MultiAccountStore");
@@ -378,7 +353,6 @@ public static partial class DiscordHelper
 
 	public static async Task SetSystemAppearance(string databasePath)
 	{
-		await KillDiscord();
 		JsonNode UnsyncedUserSettingsStore = new JsonObject
 		{
 			["_state"] = new JsonObject
@@ -411,7 +385,6 @@ public static partial class DiscordHelper
 
 	public static async Task DisableGameOverlay(string databasePath)
 	{
-		await KillDiscord();
 		JsonNode OverlayStore6 = new JsonObject
 		{
 			["legacyEnabled"] = false,
@@ -422,7 +395,6 @@ public static partial class DiscordHelper
 
 	public static async Task DisableClips(string databasePath)
 	{
-		await KillDiscord();
 		JsonNode? ClipsStore = DatabaseHelper.Read(databasePath, "_https://discordapp.com", "ClipsStore");
 
 		if (ClipsStore != null)

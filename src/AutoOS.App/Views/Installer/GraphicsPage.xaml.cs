@@ -46,7 +46,6 @@ public sealed partial class GraphicsPage : Page
 				["IsInstalled"] = gpu.IsInstalled,
 				["RegistryPath"] = gpu.RegistryPath,
 				["Location"] = gpu.Location,
-				["PStates"] = gpu.PStates,
 				["ECC"] = gpu.ECC,
 				["GspFirmware"] = gpu.GspFirmware,
 				["HDCP"] = gpu.HDCP,
@@ -86,9 +85,8 @@ public sealed partial class GraphicsPage : Page
 							Install = obj["Install"]?.GetValue<bool>() ?? false,
 							IsInstalled = obj["IsInstalled"]?.GetValue<bool>() ?? false,
 							RegistryPath = obj["RegistryPath"]?.ToString() ?? string.Empty,
-							Location = obj["Location"]?.ToString() ?? string.Empty,
-							PStates = obj["PStates"]?.GetValue<bool>() ?? false,
-							ECC = obj["ECC"]?.GetValue<bool>() ?? false,
+						Location = obj["Location"]?.ToString() ?? string.Empty,
+						ECC = obj["ECC"]?.GetValue<bool>() ?? false,
 							GspFirmware = obj["GspFirmware"]?.GetValue<bool>() ?? false,
 							HDCP = obj["HDCP"]?.GetValue<bool>() ?? false,
 							HDMIDPAudio = obj["HDMIDPAudio"]?.GetValue<bool>() ?? false,
@@ -110,7 +108,6 @@ public sealed partial class GraphicsPage : Page
 			if (saved != null)
 			{
 				gpu.Install = saved.Install;
-				gpu.PStates = saved.PStates;
 				gpu.ECC = saved.ECC;
 				gpu.GspFirmware = saved.GspFirmware;
 				gpu.HDCP = saved.HDCP;

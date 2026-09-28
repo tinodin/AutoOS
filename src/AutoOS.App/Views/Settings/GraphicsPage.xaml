@@ -58,15 +58,6 @@
 									</dev:SettingsGroup.Content>
 									<dev:SettingsGroup.Items>
 										<dev:SettingsCard
-											Description="Disabling Dynamic Performance States (P-States) locks the GPU at its maximum clock frequency which increases temperatures and power consumption."
-											Header="Dynamic Performance States (P-States)"
-											Visibility="{x:Bind NVIDIA, Converter={StaticResource BoolToVisibilityConverter}}">
-											<ToggleSwitch
-												DataContext="{x:Bind}"
-												IsOn="{x:Bind PStates, Mode=TwoWay}"
-												Toggled="PStates_Toggled" />
-										</dev:SettingsCard>
-										<dev:SettingsCard
 											Description="Disabling Error Correction Code (ECC) can slightly increase memory performance and bandwidth but removes protection against silent data corruption and memory-related system crashes."
 											Header="Error Code Correction (ECC)"
 											Visibility="{x:Bind ECCSupport, Converter={StaticResource BoolToVisibilityConverter}}">

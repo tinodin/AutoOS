@@ -473,12 +473,6 @@ public static partial class NvidiaHelper
 			("Disabling logging", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\nvlddmkm\Parameters", "LogEventEntries", 0, RegistryValueKind.DWord), null),
 			("Disabling logging", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\nvlddmkm\Parameters", "LogErrorEntries", 0, RegistryValueKind.DWord), null),
 
-			// disable dynamic P-State/adaptive clocking
-			("Disabling Dynamic Performance States (P-States)", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, gpu.RegistryPath, "DisableDynamicPstate", 1, RegistryValueKind.DWord), () => gpu.PStates == false),
-				
-			// disable asynchronous p-state changes
-			("Disabling Dynamic Performance States (P-States)", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, gpu.RegistryPath, "DisableAsyncPstates", 1, RegistryValueKind.DWord), () => gpu.PStates == false),
-
 			// disable error code correction (ecc)
 			("Disabling Error Code Correction (ECC)", async () => await RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, new ProcessStartInfo { FileName = "nvidia-smi.exe", Arguments = "-e 0", CreateNoWindow = true }), () => gpu.ECCSupport && gpu.ECC == false),
 			("Disabling Error Code Correction (ECC)", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, gpu.RegistryPath, "RMEnableL1ECC", 0, RegistryValueKind.DWord), () => gpu.ECCSupport && gpu.ECC == false),
