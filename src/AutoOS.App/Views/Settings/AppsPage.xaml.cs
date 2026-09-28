@@ -241,6 +241,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "CrystalDiskInfo", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/CrystalDiskInfo.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "CrystalDiskInfo", "DiskInfo64.exe")) },
 			new() { Text = "CrystalDiskMark", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/CrystalDiskMark.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "CrystalDiskMark9", "DiskMark64.exe")) },
 			new() { Text = "Proton VPN", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/ProtonVPN.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Proton", "VPN", "ProtonVPN.Launcher.exe")) },
+			new() { Text = "WireGuard", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/WireGuard.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "WireGuard", "wireguard.exe")) },
 			new() { Text = "Bulk Crap Uninstaller", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/BulkCrapUninstaller.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "BCUninstaller", "BCUninstaller.exe")) },
 			new() { Text = "Bluetooth Audio Receiver", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/BluetoothAudioReceiver.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "55746MarkSmirnov.BluetoothAudioReveicer_xwrbx6997tsfc")) },
 			new() { Text = "AnyDesk", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/AnyDesk.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "AnyDesk", "AnyDesk.exe")) },
@@ -434,6 +435,7 @@ public sealed partial class AppsPage : Page
 		selection.CrystalDiskInfo = selectedMiscellaneous.Contains("CrystalDiskInfo");
 		selection.CrystalDiskMark = selectedMiscellaneous.Contains("CrystalDiskMark");
 		selection.ProtonVPN = selectedMiscellaneous.Contains("Proton VPN");
+		selection.WireGuard = selectedMiscellaneous.Contains("WireGuard");
 		selection.BulkCrapUninstaller = selectedMiscellaneous.Contains("Bulk Crap Uninstaller");
 		selection.BluetoothAudioReceiver = selectedMiscellaneous.Contains("Bluetooth Audio Receiver");
 		selection.AnyDesk = selectedMiscellaneous.Contains("AnyDesk");

@@ -153,6 +153,7 @@ public class ApplicationSelection
 	public bool CrystalDiskInfo { get; set; }
 	public bool CrystalDiskMark { get; set; }
 	public bool ProtonVPN { get; set; }
+	public bool WireGuard { get; set; }
 	public bool BulkCrapUninstaller { get; set; }
 	public bool BluetoothAudioReceiver { get; set; }
 	public bool AnyDesk { get; set; }
@@ -328,6 +329,7 @@ public static class AppsStage
 		bool CrystalDiskInfo = selection?.CrystalDiskInfo ?? PreparingStage.CrystalDiskInfo;
 		bool CrystalDiskMark = selection?.CrystalDiskMark ?? PreparingStage.CrystalDiskMark;
 		bool ProtonVPN = selection?.ProtonVPN ?? PreparingStage.ProtonVPN;
+		bool WireGuard = selection?.WireGuard ?? PreparingStage.WireGuard;
 		bool BulkCrapUninstaller = selection?.BulkCrapUninstaller ?? PreparingStage.BulkCrapUninstaller;
 		bool BluetoothAudioReceiver = selection?.BluetoothAudioReceiver ?? PreparingStage.BluetoothAudioReceiver;
 		bool AnyDesk = selection?.AnyDesk ?? PreparingStage.AnyDesk;
@@ -2286,6 +2288,13 @@ public static class AppsStage
 
 			// remove proton vpn desktop shortcut
 			("Removing Proton VPN desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Proton VPN.lnk")), () => ProtonVPN == true),
+
+			// download wireguard
+			("Downloading WireGuard", async () => await DownloadHelper.Download("https://download.wireguard.com/windows-client/wireguard-amd64-1.1.msi", Path.GetTempPath(), "wireguard-amd64-1.1.msi", reporter: reporter), () => WireGuard == true),
+
+			// install wireguard
+			("Installing WireGuard", async () => await Process.Start(new ProcessStartInfo { FileName = "msiexec.exe", Arguments = $@"/i ""{Path.Combine(Path.GetTempPath(), "wireguard-amd64-1.1.msi")}"" DO_NOT_LAUNCH=1 /qn" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => WireGuard ==  true),
+			("Cleaning up WireGuard files", async () => { string path = Path.Combine(Path.GetTempPath(), "wireguard-amd64-1.1.msi"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => WireGuard ==  true),
 
 			// download bulk crap uninstaller
 			("Downloading Bulk Crap Uninstaller", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/Klocman/Bulk-Crap-Uninstaller/releases/latest")).RootElement.GetProperty("assets").EnumerateArray().First(a => (a.GetProperty("name").GetString() ?? "").Contains("setup.exe")).GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "BCUninstaller_setup.exe", reporter: reporter), () => BulkCrapUninstaller == true),

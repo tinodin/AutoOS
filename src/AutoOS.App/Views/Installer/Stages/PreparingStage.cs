@@ -196,6 +196,7 @@ public static partial class PreparingStage
 	public static bool CrystalDiskInfo;
 	public static bool CrystalDiskMark;
 	public static bool ProtonVPN;
+	public static bool WireGuard;
 	public static bool BulkCrapUninstaller;
 	public static bool BluetoothAudioReceiver;
 	public static bool AnyDesk;
@@ -621,6 +622,7 @@ public static partial class PreparingStage
 			CrystalDiskInfo = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("CrystalDiskInfo") ?? false);
 			CrystalDiskMark = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("CrystalDiskMark") ?? false);
 			ProtonVPN = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("Proton VPN") ?? false);
+			WireGuard = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("WireGuard") ?? false);
 			BulkCrapUninstaller = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("Bulk Crap Uninstaller") ?? false);
 			BluetoothAudioReceiver = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("Bluetooth Audio Receiver") ?? false);
 			AnyDesk = (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("AnyDesk") ?? false);

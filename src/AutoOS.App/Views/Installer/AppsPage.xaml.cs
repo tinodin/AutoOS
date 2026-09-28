@@ -222,6 +222,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "CrystalDiskInfo", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/CrystalDiskInfo.png" },
 			new() { Text = "CrystalDiskMark", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/CrystalDiskMark.png" },
 			new() { Text = "Proton VPN", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/ProtonVPN.png" },
+			new() { Text = "WireGuard", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/WireGuard.png" },
 			new() { Text = "Bulk Crap Uninstaller", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/BulkCrapUninstaller.png" },
 			new() { Text = "Bluetooth Audio Receiver", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/BluetoothAudioReceiver.png" },
 			new() { Text = "AnyDesk", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Miscellaneous/AnyDesk.png" },
