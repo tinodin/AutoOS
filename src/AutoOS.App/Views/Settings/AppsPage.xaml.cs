@@ -123,6 +123,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "ViGEmBus", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Controllers/ViGEmBus.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "drivers", "ViGEmBus.sys")) },
 			new() { Text = "HidHide", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Controllers/HidHide.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "drivers", "HidHide.sys")) },
 			new() { Text = "DualSenseY", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Controllers/DualSenseY.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "DualSenseY", "DualSenseY.exe")) },
+			new() { Text = "DS4Windows", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Controllers/DS4Windows.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "DS4Windows", "DS4Windows.exe")) },
 			new() { Text = "RaceElement", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Controllers/RaceElement.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "RaceElement", "RaceElement.exe")) },
 			new() { Text = "PlayStation® Accessories", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Controllers/PlaystationAccessories.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Sony", "PlayStationAccessories", "PlayStationAccessories.exe")) },
 			new() { Text = "Xbox Accessories", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Controllers/XboxAccessories.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "Microsoft.XboxDevices_8wekyb3d8bbwe")) },
@@ -341,6 +342,7 @@ public sealed partial class AppsPage : Page
 		selection.ViGEmBus = selectedControllers.Contains("ViGEmBus");
 		selection.HidHide = selectedControllers.Contains("HidHide");
 		selection.DualSenseY = selectedControllers.Contains("DualSenseY");
+		selection.DS4Windows = selectedControllers.Contains("DS4Windows");
 		selection.RaceElement = selectedControllers.Contains("RaceElement");
 		selection.PlaystationAccessories = selectedControllers.Contains("PlayStation® Accessories");
 		selection.XboxAccessories = selectedControllers.Contains("Xbox Accessories");

@@ -119,6 +119,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "ViGEmBus", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Controllers/ViGEmBus.png" },
 			new() { Text = "HidHide", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Controllers/HidHide.png" },
 			new() { Text = "DualSenseY", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Controllers/DualSenseY.png" },
+			new() { Text = "DS4Windows", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Controllers/DS4Windows.png" },
 			new() { Text = "RaceElement", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Controllers/RaceElement.png" },
 			new() { Text = "PlayStation® Accessories", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Controllers/PlaystationAccessories.png" },
 			new() { Text = "Xbox Accessories", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Controllers/XboxAccessories.png" }

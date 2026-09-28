@@ -118,6 +118,7 @@ public static partial class PreparingStage
 	public static bool ViGEmBus;
 	public static bool HidHide;
 	public static bool DualSenseY;
+	public static bool DS4Windows;
 	public static bool RaceElement;
 	public static bool PlaystationAccessories;
 	public static bool XboxAccessories;
@@ -544,6 +545,7 @@ public static partial class PreparingStage
 			ViGEmBus = (localSettings.Values["Controllers"]?.ToString()?.Contains("ViGEmBus") ?? false) || (localSettings.Values["Miscellaneous"]?.ToString()?.Contains("Apollo") ?? false);
 			HidHide = (localSettings.Values["Controllers"]?.ToString()?.Contains("HidHide") ?? false);
 			DualSenseY = (localSettings.Values["Controllers"]?.ToString()?.Contains("DualSenseY") ?? false);
+			DS4Windows = (localSettings.Values["Controllers"]?.ToString()?.Contains("DS4Windows") ?? false);
 			RaceElement = (localSettings.Values["Controllers"]?.ToString()?.Contains("RaceElement") ?? false);
 			PlaystationAccessories = (localSettings.Values["Controllers"]?.ToString()?.Contains("PlayStation® Accessories") ?? false);
 			XboxAccessories = (localSettings.Values["Controllers"]?.ToString()?.Contains("Xbox Accessories") ?? false);

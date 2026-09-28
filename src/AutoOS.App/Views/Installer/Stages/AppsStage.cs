@@ -83,6 +83,7 @@ public class ApplicationSelection
 	public bool ViGEmBus { get; set; }
 	public bool HidHide { get; set; }
 	public bool DualSenseY { get; set; }
+	public bool DS4Windows { get; set; }
 	public bool RaceElement { get; set; }
 	public bool PlaystationAccessories { get; set; }
 	public bool XboxAccessories { get; set; }
@@ -251,6 +252,7 @@ public static class AppsStage
 		bool ViGEmBus = selection?.ViGEmBus ?? PreparingStage.ViGEmBus;
 		bool HidHide = selection?.HidHide ?? PreparingStage.HidHide;
 		bool DualSenseY = selection?.DualSenseY ?? PreparingStage.DualSenseY;
+		bool DS4Windows = selection?.DS4Windows ?? PreparingStage.DS4Windows;
 		bool RaceElement = selection?.RaceElement ?? PreparingStage.RaceElement;
 		bool PlaystationAccessories = selection?.PlaystationAccessories ?? PreparingStage.PlaystationAccessories;
 		bool XboxAccessories = selection?.XboxAccessories ?? PreparingStage.XboxAccessories;
@@ -1394,7 +1396,21 @@ public static class AppsStage
 			("Installing DualSenseY", async () => await Task.Delay(500), () => DualSenseY == true),
 			("Cleaning up DualSenseY files", async () => { string path = Path.Combine(Path.GetTempPath(), "x64-release.zip"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => DualSenseY == true),
 
-			// download raceelement
+		// download ds4windows
+		("Downloading DS4Windows", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/ds4windowsapp/DS4Windows/releases")).RootElement.EnumerateArray().First(release => !release.GetProperty("prerelease").GetBoolean() && release.GetProperty("assets").EnumerateArray().Any(asset => (asset.GetProperty("name").GetString() ?? "").StartsWith("ds4windows-") && (asset.GetProperty("name").GetString() ?? "").EndsWith(".zip"))).GetProperty("assets").EnumerateArray().First(asset => (asset.GetProperty("name").GetString() ?? "").StartsWith("ds4windows-") && (asset.GetProperty("name").GetString() ?? "").EndsWith(".zip")).GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "ds4windows.zip", reporter: reporter), () => DS4Windows == true),
+
+		// install ds4windows
+		("Installing DS4Windows", async () => await ExtractHelper.Extract(Path.Combine(Path.GetTempPath(), "ds4windows.zip"), Path.Combine(Path.GetTempPath(), "DS4Windows-Extract")), () => DS4Windows == true),
+		("Installing DS4Windows", async () => Directory.Move(Path.Combine(Path.GetTempPath(), "DS4Windows-Extract", "DS4Windows"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "DS4Windows")), () => DS4Windows == true),
+		("Installing DS4Windows", async () => ShortcutHelper.Create(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "DS4Windows.lnk"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "DS4Windows", "DS4Windows.exe")), () => DS4Windows == true),
+		("Installing DS4Windows", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\DS4Windows", "DisplayName", "DS4Windows", RegistryValueKind.String), () => DS4Windows == true),
+		("Installing DS4Windows", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\DS4Windows", "UninstallString", $@"cmd /c rd /s /q ""{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "DS4Windows")}"" & del ""{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "DS4Windows.lnk")}"" & reg delete ""HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\DS4Windows"" /f", RegistryValueKind.String), () => DS4Windows == true),
+		("Installing DS4Windows", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\DS4Windows", "DisplayIcon", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), @"DS4Windows\DS4Windows.exe"), RegistryValueKind.String), () => DS4Windows == true),
+		("Installing DS4Windows", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\DS4Windows", "Publisher", "Ryochan7", RegistryValueKind.String), () => DS4Windows == true),
+		("Installing DS4Windows", async () => await Task.Delay(500), () => DS4Windows == true),
+		("Cleaning up DS4Windows files", async () => { string path = Path.Combine(Path.GetTempPath(), "ds4windows.zip"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => DS4Windows == true),
+
+		// download raceelement
 			("Downloading RaceElement", async () => await DownloadHelper.Download("https://github.com/RiddleTime/Race-Element/releases/latest/download/RaceElement.exe", Path.GetTempPath(), "RaceElement.exe"), () => RaceElement == true),
 
 			// install raceelement
