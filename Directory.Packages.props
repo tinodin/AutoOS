@@ -11,11 +11,11 @@
     <PackageVersion Include="CommunityToolkit.WinUI.Controls.Primitives" Version="8.3.260402-preview2" />
     <PackageVersion Include="CommunityToolkit.WinUI.Controls.TabbedCommandBar" Version="8.3.260402-preview2" />
     <PackageVersion Include="CommunityToolkit.WinUI.Converters" Version="8.3.260402-preview2" />
-    <PackageVersion Include="DevWinUI" Version="10.4.1" />
+    <PackageVersion Include="DevWinUI" Version="10.4.2" />
     <PackageVersion Include="Downloader" Version="5.9.6" />
     <PackageVersion Include="LevelDBSharp" Version="1.0.0" />
     <PackageVersion Include="Microsoft.Data.Sqlite" Version="11.0.0-preview.5.26302.115" />
-    <PackageVersion Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.2.6" />
+    <PackageVersion Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.2.8" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0-rc.1.26425.128" />
     <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.335" />
     <PackageVersion Include="Microsoft.Windows.CsWinRT" Version="[2.3.0-prerelease.251115.2]" />
@@ -30,8 +30,8 @@
     <PackageVersion Include="Snappier" Version="1.3.1" />
     <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />
     <PackageVersion Include="System.ServiceProcess.ServiceController" Version="11.0.0-rc.1.26425.128" />
-    <PackageVersion Include="Syncfusion.Chart.WinUI" Version="34.2.9" />
-    <PackageVersion Include="Syncfusion.Grid.WinUI" Version="34.2.9" />
+    <PackageVersion Include="Syncfusion.Chart.WinUI" Version="35.1.37" />
+    <PackageVersion Include="Syncfusion.Grid.WinUI" Version="35.1.37" />
     <PackageVersion Include="ValveKeyValue" Version="0.71.0.528" />
   </ItemGroup>
 </Project>
