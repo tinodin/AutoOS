@@ -32,8 +32,10 @@
     <WindowsPackageType>MSIX</WindowsPackageType>
     <AppxBundle>Never</AppxBundle>
     <AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
-    <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
-    <PackageCertificateKeyFile>G:\GitHub\My Repositories\AutoOS\AutoOS_TemporaryKey.pfx</PackageCertificateKeyFile>
+    <!-- Signing: use project-local TemporaryKey.pfx if present; otherwise disable signing to avoid APPX0104 / APPX0107 on machines without the absolute-path cert -->
+    <AppxPackageSigningEnabled Condition="Exists('$(ProjectDir)AutoOS_TemporaryKey.pfx')">True</AppxPackageSigningEnabled>
+    <AppxPackageSigningEnabled Condition="!Exists('$(ProjectDir)AutoOS_TemporaryKey.pfx')">False</AppxPackageSigningEnabled>
+    <PackageCertificateKeyFile Condition="Exists('$(ProjectDir)AutoOS_TemporaryKey.pfx')">$(ProjectDir)AutoOS_TemporaryKey.pfx</PackageCertificateKeyFile>
     <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
     <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
     <AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
@@ -43,6 +45,10 @@
 
   <ItemGroup>
     <Manifest Include="$(ApplicationManifest)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <TrimmerRootDescriptor Include="TrimmerRoots.xml" />
   </ItemGroup>
 
   <ItemGroup>

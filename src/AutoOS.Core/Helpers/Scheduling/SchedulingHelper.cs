@@ -9,11 +9,70 @@ public static partial class SchedulingHelper
 {
 	public static async Task OptimizeAffinities(DeviceInfo? device = null, Action<DeviceType, string, DeviceInfo>? onDeviceUpdated = null)
 	{
-		CpuSetsInfo cpuSetsInfo = CpuHelper.GetCpuSets();
-		(List<CpuCore>? pCores, List<CpuCore>? eCores) = CpuHelper.GroupCpuSetsByEfficiencyClass(cpuSetsInfo);
-
-		if (pCores.Count < 4)
+		if (device == null)
+		{
+			await OptimizeAffinities(deviceTypes: [DeviceType.AudioController, DeviceType.GPU, DeviceType.XHCI, DeviceType.NIC], onDeviceUpdated: onDeviceUpdated);
 			return;
+		}
+
+		await OptimizeAffinities([(device.DeviceType, device.PnpDeviceId)], onDeviceUpdated);
+	}
+
+	public static async Task OptimizeAffinities(IEnumerable<(DeviceType DeviceType, string PnpDeviceId)> selectedDevices, Action<DeviceType, string, DeviceInfo>? onDeviceUpdated = null)
+	{
+		var selectedByType = selectedDevices
+			.GroupBy(d => d.DeviceType)
+			.ToDictionary(g => g.Key, g => new HashSet<string>(g.Select(x => x.PnpDeviceId), StringComparer.OrdinalIgnoreCase));
+
+		if (selectedByType.Count == 0)
+			return;
+
+		await OptimizeAffinities(deviceTypes: [.. selectedByType.Keys], selectedIdsByType: selectedByType, onDeviceUpdated: onDeviceUpdated);
+	}
+
+	private static async Task OptimizeAffinities(DeviceType[] deviceTypes, Dictionary<DeviceType, HashSet<string>>? selectedIdsByType = null, Action<DeviceType, string, DeviceInfo>? onDeviceUpdated = null)
+	{
+		Dictionary<DeviceType, ulong>? affinityByType = GetAffinityMasks();
+		if (affinityByType == null)
+			return;
+
+		var allChangedDevices = new List<(DeviceInfo device, DeviceType deviceType)>();
+
+		foreach (DeviceType deviceType in deviceTypes)
+		{
+			IEnumerable<DeviceInfo> candidates = DeviceHelper.GetDevices(deviceType).Where(d => d.SupportsIrq);
+			if (selectedIdsByType != null && selectedIdsByType.TryGetValue(deviceType, out HashSet<string>? selectedIds))
+				candidates = candidates.Where(d => selectedIds.Contains(d.PnpDeviceId));
+
+			List<DeviceInfo> devices = [.. candidates];
+			if (devices.Count == 0)
+				continue;
+
+			ApplyResult result = ApplyAffinityOnly(devices, affinityByType[deviceType], deviceType);
+			allChangedDevices.AddRange(result.ChangedDevices.Select(d => (d, deviceType)));
+		}
+
+		if (allChangedDevices.Count == 0)
+			return;
+
+		if (onDeviceUpdated != null)
+		{
+			foreach ((DeviceInfo? changedDevice, DeviceType deviceType) in allChangedDevices)
+			{
+				onDeviceUpdated(deviceType, changedDevice.PnpDeviceId, changedDevice);
+			}
+		}
+
+		await DeviceHelper.RestartDevicesAsync([.. allChangedDevices.Select(d => d.device)]);
+	}
+
+	public static Dictionary<DeviceType, ulong>? GetAffinityMasks()
+	{
+		CpuSetsInfo cpuSetsInfo = CpuHelper.GetCpuSets();
+		(List<CpuCore>? pCores, List<CpuCore>? _) = CpuHelper.GroupCpuSetsByEfficiencyClass(cpuSetsInfo);
+
+		if (pCores == null || pCores.Count < 4)
+			return null;
 
 		int cores = pCores.Count;
 		ulong nicMask, xhciMask, gpuMask, audioMask;
@@ -33,60 +92,16 @@ public static partial class SchedulingHelper
 			audioMask = GetCoreMask(pCores[cores - 5]);
 		}
 
-		List<DeviceInfo> audioDevices = (device == null || device.DeviceType == DeviceType.AudioController) ? [.. DeviceHelper.GetDevices(DeviceType.AudioController).Where(d => d.SupportsIrq)] : new List<DeviceInfo>();
-		List<DeviceInfo> gpuDevices = (device == null || device.DeviceType == DeviceType.GPU) ? [.. DeviceHelper.GetDevices(DeviceType.GPU).Where(d => d.SupportsIrq)] : new List<DeviceInfo>();
-		List<DeviceInfo> xhciDevices = (device == null || device.DeviceType == DeviceType.XHCI) ? [.. DeviceHelper.GetDevices(DeviceType.XHCI).Where(d => d.SupportsIrq)] : new List<DeviceInfo>();
-		List<DeviceInfo> nicDevices = (device == null || device.DeviceType == DeviceType.NIC) ? [.. DeviceHelper.GetDevices(DeviceType.NIC).Where(d => d.SupportsIrq)] : new List<DeviceInfo>();
-
-		if (device != null)
+		return new Dictionary<DeviceType, ulong>
 		{
-			audioDevices = [.. audioDevices.Where(device => device.PnpDeviceId == device.PnpDeviceId)];
-			gpuDevices = [.. gpuDevices.Where(device => device.PnpDeviceId == device.PnpDeviceId)];
-			xhciDevices = [.. xhciDevices.Where(device => device.PnpDeviceId == device.PnpDeviceId)];
-			nicDevices = [.. nicDevices.Where(device => device.PnpDeviceId == device.PnpDeviceId)];
-		}
-
-		var allChangedDevices = new List<(DeviceInfo device, DeviceType deviceType)>();
-
-		if (audioDevices.Count > 0)
-		{
-			ApplyResult result = ApplyAffinityOnly(audioDevices, audioMask, DeviceType.AudioController);
-			allChangedDevices.AddRange(result.ChangedDevices.Select(d => (d, DeviceType.AudioController)));
-		}
-		if (gpuDevices.Count > 0)
-		{
-			ApplyResult result = ApplyAffinityOnly(gpuDevices, gpuMask, DeviceType.GPU);
-			allChangedDevices.AddRange(result.ChangedDevices.Select(d => (d, DeviceType.GPU)));
-		}
-		if (xhciDevices.Count > 0)
-		{
-			ApplyResult result = ApplyAffinityOnly(xhciDevices, xhciMask, DeviceType.XHCI);
-			allChangedDevices.AddRange(result.ChangedDevices.Select(d => (d, DeviceType.XHCI)));
-		}
-		if (nicDevices.Count > 0)
-		{
-			ApplyResult result = ApplyAffinityOnly(nicDevices, nicMask, DeviceType.NIC);
-			allChangedDevices.AddRange(result.ChangedDevices.Select(d => (d, DeviceType.NIC)));
-		}
-
-		if (allChangedDevices.Count > 0)
-		{
-			if (onDeviceUpdated != null)
-			{
-				foreach ((DeviceInfo? changedDevice, DeviceType deviceType) in allChangedDevices)
-				{
-					onDeviceUpdated(deviceType, changedDevice.PnpDeviceId, changedDevice);
-				}
-			}
-
-			foreach (DeviceInfo changedDevice in allChangedDevices.Select(d => d.device))
-			{
-				await Task.Run(() => DeviceHelper.RestartDevice(changedDevice));
-			}
-		}
+			{ DeviceType.AudioController, audioMask },
+			{ DeviceType.GPU, gpuMask },
+			{ DeviceType.XHCI, xhciMask },
+			{ DeviceType.NIC, nicMask }
+		};
 	}
 
-	private static ulong GetCoreMask(CpuCore core) => core.Threads.Aggregate(0UL, (mask, t) => mask | t.BitMask);
+	private static ulong GetCoreMask(CpuCore core) => CpuHelper.GetCoreMask(core);
 
 	private static ApplyResult ApplyAffinityOnly(List<DeviceInfo> devices, ulong assignmentSetOverride, DeviceType deviceType)
 	{

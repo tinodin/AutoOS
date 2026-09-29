@@ -57,34 +57,14 @@ public partial class DeviceAffinityViewModel : INotifyPropertyChanged
 	public int DevicePolicy
 	{
 		get => _devicePolicy;
-		set
-		{
-			if (SetProperty(ref _devicePolicy, value))
-				OnPropertyChanged(nameof(IsCoreSelectionEnabled));
-		}
+		set => SetProperty(ref _devicePolicy, value);
 	}
-
-	public bool IsCoreSelectionEnabled => DevicePolicy == 4;
 
 	private ObservableCollection<CpuCoreGroup> _cpuGroups = [];
 	public ObservableCollection<CpuCoreGroup> CpuGroups
 	{
 		get => _cpuGroups;
 		set => SetProperty(ref _cpuGroups, value);
-	}
-
-	private string _groupColumnDefinitions = "1*";
-	public string GroupColumnDefinitions
-	{
-		get => _groupColumnDefinitions;
-		set => SetProperty(ref _groupColumnDefinitions, value);
-	}
-
-	private int _totalColumns = 1;
-	public int TotalColumns
-	{
-		get => _totalColumns;
-		set => SetProperty(ref _totalColumns, value);
 	}
 
 	public GridLength Group0Width => GetGroupWidth(0);
@@ -94,10 +74,6 @@ public partial class DeviceAffinityViewModel : INotifyPropertyChanged
 	public CpuCoreGroup? Group0 => CpuGroups.Count > 0 ? CpuGroups[0] : null;
 	public CpuCoreGroup? Group1 => CpuGroups.Count > 1 ? CpuGroups[1] : null;
 	public CpuCoreGroup? Group2 => CpuGroups.Count > 2 ? CpuGroups[2] : null;
-
-	public int Group0Columns => CpuGroups.Count > 0 ? CpuGroups[0].RecommendedColumns : 1;
-	public int Group1Columns => CpuGroups.Count > 1 ? CpuGroups[1].RecommendedColumns : 1;
-	public int Group2Columns => CpuGroups.Count > 2 ? CpuGroups[2].RecommendedColumns : 1;
 
 	public Visibility Group1Visibility => CpuGroups.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
 	public Visibility Group2Visibility => CpuGroups.Count > 2 ? Visibility.Visible : Visibility.Collapsed;
@@ -113,17 +89,12 @@ public partial class DeviceAffinityViewModel : INotifyPropertyChanged
 		return new GridLength(CpuGroups[index].RecommendedColumns, GridUnitType.Star);
 	}
 
-	public double Group1Spacing => CpuGroups.Count > 1 ? 12 : 0;
-	public double Group2Spacing => CpuGroups.Count > 2 ? 12 : 0;
-
 	private ulong _processMask;
 	public ulong ProcessMask
 	{
 		get => _processMask;
 		set => SetProperty(ref _processMask, value);
 	}
-
-	public bool HasEfficiencyClass { get; private set; }
 
 	private uint _MaxMsiLimit;
 	public uint MaxMsiLimit
@@ -140,9 +111,6 @@ public partial class DeviceAffinityViewModel : INotifyPropertyChanged
 
 	public ObservableCollection<IrqPolicyItem> IrqPolicies { get; } = [];
 	public ObservableCollection<IrqPriorityItem> IrqPriorities { get; } = [];
-
-	public GridLength ECoreColumnWidth => HasEfficiencyClass ? new GridLength(1, GridUnitType.Star) : GridLength.Auto;
-	public double ColumnSpacing => HasEfficiencyClass ? 12 : 0;
 
 	public DeviceAffinityViewModel(SchedulingItem selectedItem, CpuSetsInfo cpuSetsInfo)
 	{
@@ -198,12 +166,6 @@ public partial class DeviceAffinityViewModel : INotifyPropertyChanged
 			}
 		}
 
-		for (int i = 0; i < groups.Count; i++)
-			groups[i].ColumnIndex = i;
-
-		GroupColumnDefinitions = string.Join(", ", groups.Select(g => $"{g.RecommendedColumns}*"));
-		TotalColumns = groups.Sum(g => g.RecommendedColumns);
-
 		CpuGroups = [with(groups)];
 		OnPropertyChanged(nameof(Group0Width));
 		OnPropertyChanged(nameof(Group1Width));
@@ -211,16 +173,11 @@ public partial class DeviceAffinityViewModel : INotifyPropertyChanged
 		OnPropertyChanged(nameof(Group0));
 		OnPropertyChanged(nameof(Group1));
 		OnPropertyChanged(nameof(Group2));
-		OnPropertyChanged(nameof(Group0Columns));
-		OnPropertyChanged(nameof(Group1Columns));
-		OnPropertyChanged(nameof(Group2Columns));
 		OnPropertyChanged(nameof(Group1Visibility));
 		OnPropertyChanged(nameof(Group2Visibility));
 		OnPropertyChanged(nameof(Group0Margin));
 		OnPropertyChanged(nameof(Group1Margin));
 		OnPropertyChanged(nameof(Group2Margin));
-
-		HasEfficiencyClass = cpuSetsInfo.EfficiencyClass && CpuGroups.Any(g => g.Name == "E-Cores");
 
 		SetCpuSelectionFromMask(ProcessMask);
 
@@ -240,12 +197,14 @@ public partial class DeviceAffinityViewModel : INotifyPropertyChanged
 			ProcessMask = thread.IsSelected ? ProcessMask | thread.BitMask : ProcessMask & ~thread.BitMask;
 	}
 
-	public void ApplySettings()
+	public ApplyResult ApplySettings()
 	{
 		DeviceInfo? targetDevice = DeviceHelper.GetDevices(_selectedItem.DeviceType).FirstOrDefault(device => string.Equals(device.PnpDeviceId, _selectedItem.PnpDeviceId, StringComparison.OrdinalIgnoreCase));
+		if (targetDevice == null)
+			return new ApplyResult();
 
-		ApplyResult result = DeviceHelper.ApplySettingsToDevices(
-			[targetDevice!],
+		return DeviceHelper.ApplySettingsToDevices(
+			[targetDevice],
 			MsiSupported,
 			(uint)MsiLimit,
 			(uint)DevicePolicy,
@@ -253,11 +212,7 @@ public partial class DeviceAffinityViewModel : INotifyPropertyChanged
 			ProcessMask,
 			_selectedItem.DeviceType
 		);
-
-		OnSettingsApplied?.Invoke(result);
 	}
-
-	internal event Action<ApplyResult>? OnSettingsApplied;
 	public event PropertyChangedEventHandler? PropertyChanged;
 
 	protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)

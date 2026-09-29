@@ -23,7 +23,6 @@ public partial class SchedulingItem : INotifyPropertyChanged
 		set { _friendlyName = value; OnPropertyChanged(); OnPropertyChanged(nameof(Name)); }
 	}
 
-	public string DevObjName { get; set; } = string.Empty;
 	public string PnpDeviceId { get; set; } = string.Empty;
 
 	private string _location = string.Empty;

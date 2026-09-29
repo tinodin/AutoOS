@@ -149,7 +149,7 @@ public partial class DeviceInfo : INotifyPropertyChanged
 
 	public bool IsWiFi => NicType == NicDeviceType.WiFi;
 	public bool IsLAN => NicType == NicDeviceType.LAN;
-	public List<NetworkAdvancedSetting> AdvancedSettings { get; set; } = [];
+	public List<Setting> AdvancedSettings { get; set; } = [];
 
 	public event PropertyChangedEventHandler? PropertyChanged;
 	private void OnPropertyChanged([CallerMemberName] string? name = null)

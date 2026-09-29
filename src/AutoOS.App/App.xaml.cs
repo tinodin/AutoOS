@@ -3,6 +3,7 @@ using AutoOS.App.Data.Contracts;
 using AutoOS.App.Services;
 using AutoOS.App.Services.Bios;
 using AutoOS.App.Services.Power;
+using AutoOS.App.Services.Network;
 using AutoOS.App.ViewModels;
 using AutoOS.App.Views;
 using AutoOS.App.Views.Installer.Stages;
@@ -42,6 +43,8 @@ public partial class App : Application
 		.AddTransient<IBiosSettingsService, BiosSettingsService>()
 		.AddTransient<IPowerPlanService, PowerPlanService>()
 		.AddTransient<PowerPageViewModel>()
+		.AddTransient<INetworkSettingsService, NetworkSettingsService>()
+		.AddTransient<InternetPageViewModel>()
 		.AddTransient<BiosSettingsPageViewModel>()
 		.AddTransient<BenchmarksPageViewModel>()
 		.BuildServiceProvider();
