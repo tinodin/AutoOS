@@ -55,6 +55,7 @@ public sealed partial class AppsPage : Page
 		{
 			new() { Text = "Discord", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/Discord.png" },
 			new() { Text = "WhatsApp", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/Whatsapp.png" },
+			new() { Text = "Messenger", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/Messenger.png" },
 			new() { Text = "Telegram Desktop", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/Telegram.png" },
 			new() { Text = "Unigram", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/Unigram.png" },
 			new() { Text = "Zoom Workplace", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/Zoom.png" },
