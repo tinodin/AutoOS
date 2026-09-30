@@ -267,7 +267,7 @@ if ($restartRequired) {
 	return
 }
 
-Write-Host "Please select the 25H2.iso file you downloaded in Step 2..."
+Write-Host "Please select the 26H2.iso file you downloaded in Step 2..."
 Add-Type -AssemblyName System.Windows.Forms
 $IsoPicker = New-Object System.Windows.Forms.OpenFileDialog
 $IsoPicker.Filter = "ISO Files (*.iso)|*.iso"
@@ -278,8 +278,8 @@ if ($IsoPicker.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
 	return
 }
 $fileName = [System.IO.Path]::GetFileName($IsoPicker.FileName)
-if ($fileName -notin @("25H2.iso", "25H2-001.iso")) {
-    Write-Host "Invalid file. Please select 25H2.iso downloaded in Step 2." -ForegroundColor Red
+if ($fileName -notin @("26H2.iso", "26H2-001.iso")) {
+    Write-Host "Invalid file. Please select 26H2.iso downloaded in Step 2." -ForegroundColor Red
     return
 }
 

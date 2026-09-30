@@ -56,7 +56,7 @@ public sealed partial class HomePage : Page
 			var dialog = new ContentDialog
 			{
 				Title = "Unsupported Windows Version",
-				Content = $"AutoOS is only supported on Windows 11 25H2. \nPlease follow the installation guide on GitHub.",
+				Content = "AutoOS is only supported on Windows 11 26H2. \nPlease follow the installation guide on GitHub.",
 				CloseButtonText = "OK",
 				DefaultButton = ContentDialogButton.Close,
 				XamlRoot = XamlRoot

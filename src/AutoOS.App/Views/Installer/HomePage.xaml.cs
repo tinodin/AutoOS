@@ -41,12 +41,12 @@ public sealed partial class HomePage : Page
 		}
 
 		(ushort major, ushort minor, ushort build, ushort ubr) = OSHelper.GetWindowsVersion();
-		if (build < 26200 || (build == 26200 && ubr < 8737))
+		if (build < 26300 || (build == 26300 && ubr < 9457))
 		{
 			var dialog = new ContentDialog
 			{
 				Title = "Unsupported Windows Version",
-				Content = $"AutoOS is only supported on new versions of Windows 11 25H2. \nPlease follow the installation guide on GitHub.",
+				Content = $"AutoOS is only supported on new versions of Windows 11 26H2. \nPlease follow the installation guide on GitHub.",
 				CloseButtonText = "OK",
 				DefaultButton = ContentDialogButton.Close,
 				XamlRoot = XamlRoot

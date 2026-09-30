@@ -31,7 +31,7 @@ There is also a lot of Discord Servers selling services to apply custom ISOs / p
 With AutoOS I have completely reimagined the way Windows is installed and used. AutoOS is written in **C#** and **WinUI3** while being fully **NativeAOT** compatible and utilizing **Win32 APIs**. It is tailored towards **competitive gamers** and **power users** while being **fully open source** and receiving **regular updates** that don't require you to reinstall Windows every time. All the changes are also applied to **new user accounts**, making it an **ideal choice** for **shared PCs**.
 
 ### The Installation Process
-For the installation, users are provided with the latest `25H2 Professional ISO` which is built and updated by GitHub Actions using the `uupdump API`. Check out my [uup-dump-get-windows-iso](https://github.com/tinodin/uup-dump-get-windows-iso) repository.
+For the installation, users are provided with the latest `26H2 Professional ISO` which is built and updated by GitHub Actions using the `uupdump API`. Check out my [uup-dump-get-windows-iso](https://github.com/tinodin/uup-dump-get-windows-iso) repository.
 
 The installation bypasses the need for unreliable and slow USB drives and instead relies on a PowerShell Script to create a new partition, apply the `install.wim`, add the custom `unattend.xml` file and create the boot entry.
 

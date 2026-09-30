@@ -9,7 +9,7 @@
 Join my [Discord Server](https://discord.gg/bZU4dMMWpg) to receive **installation support** and stay informed about **future updates or changes**.
 
 ### Step 2: Downloading the ISO
-Download the latest Windows `25H2.iso` file from [here](https://drive.google.com/drive/folders/1e4dwuWYwu2i-NTPunT_zFRZYBG5Cgnpa?usp=sharing) (Log into your Google Account if you get an error).<br/>
+Download the latest Windows `26H2.iso` file from [here](https://drive.google.com/drive/folders/1P6IKRI529YJw24EmVMC4j0wTpZ8vgF1U?usp=sharing) (Log into your Google Account if you get an error).<br/>
 Other ISOs are not supported (will not work) to guarantee consistency and the latest features.
 
 ### Step 3: Downloading Drivers
@@ -85,7 +85,7 @@ $PSDefaultParameterValues['Invoke-WebRequest:UseBasicParsing'] = $true
 Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 irm https://raw.githubusercontent.com/tinodin/AutoOS/master/deploy/deploy.ps1 | iex
 ```
-Select the `25H2.iso` you downloaded in Step 2 and your **drivers folder** you created in Step 3.<br/>
+Select the `26H2.iso` you downloaded in Step 2 and your **drivers folder** you created in Step 3.<br/>
 If you get any errors during the script, please leave a message on my [Discord Server](https://discord.gg/bZU4dMMWpg).
 
 ### Step 5: Restarting into AutoOS

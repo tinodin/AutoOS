@@ -20,7 +20,7 @@
     <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.335" />
     <PackageVersion Include="Microsoft.Windows.CsWinRT" Version="[2.3.0-prerelease.251115.2]" />
     <PackageVersion Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.29648.1000-preview" />
-    <PackageVersion Include="Microsoft.WindowsAppSDK" Version="2.5.1" />
+    <PackageVersion Include="Microsoft.WindowsAppSDK" Version="2.5.4-experimental" />
     <PackageVersion Include="Newtonsoft.Json" Version="14.0.1-beta2" />
     <PackageVersion Include="nucs.JsonSettings" Version="2.3.2" />
     <PackageVersion Include="nucs.JsonSettings.AutoSave" Version="2.3.2" />
