@@ -112,8 +112,8 @@ public sealed partial class UpdatePage : Page
 
 		if (!string.IsNullOrEmpty(current))
 		{
-			if (string.Compare("25H2", current, StringComparison.OrdinalIgnoreCase) >= 0)
-				TargetVersion.Items.Add(new ComboBoxItem { Content = "25H2" });
+			if (string.Compare("26H2", current, StringComparison.OrdinalIgnoreCase) >= 0)
+				TargetVersion.Items.Add(new ComboBoxItem { Content = "26H2" });
 		}
 
 		string version = "Default";
