@@ -1765,7 +1765,7 @@ public static class AppsStage
 			("Cleaning up Process Monitor files", async () => { string path = Path.Combine(Path.GetTempPath(), "ProcessMonitor.zip"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => ProcessMonitor == true),
 			
 			// download hwinfo
-			("Downloading HWiNFO® 64", async () => await DownloadHelper.Download("https://www.sac.sk/download/utildiag/hwi_852x.exe", Path.GetTempPath(), "hwi64.exe", reporter: reporter), () => HWInfo == true),
+			("Downloading HWiNFO® 64", async () => await DownloadHelper.Download("https://www.sac.sk/download/utildiag/hwi_854x.exe", Path.GetTempPath(), "hwi64.exe", reporter: reporter), () => HWInfo == true),
 
 			// install hwinfo
 			("Installing HWiNFO® 64", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "hwi64.exe"), Arguments = "/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => HWInfo == true),
