@@ -233,3 +233,29 @@ The license for original unRAR code has the following restriction:
 --
 ```
 - Source: [7-Zip](https://www.7-zip.org)
+
+#### Applications downloaded during installation (not redistributed, see `src/AutoOS.App/Views/Installer/Stages/AppsStage.cs`):
+8. **DS4Windows**
+   - Licensed under the **GNU General Public License v3.0**.
+   - Source: [ds4windowsapp/DS4Windows](https://github.com/ds4windowsapp/DS4Windows) (fork of Ryochan7/DS4Windows)
+9. **MPC-HC (clsid2)**
+   - Licensed under the **GNU General Public License v3.0**.
+   - Source: [clsid2/mpc-hc](https://github.com/clsid2/mpc-hc)
+10. **mpv (zhongfly build)**
+    - Licensed under the **GNU General Public License v2.0 or later** (parts LGPLv2.1).
+    - Source: [mpv-player/mpv](https://github.com/mpv-player/mpv), build: [zhongfly/mpv-winbuild](https://github.com/zhongfly/mpv-winbuild)
+11. **MPC-QT**
+    - Licensed under the **GNU General Public License v2.0**.
+    - Source: [mpc-qt/mpc-qt](https://github.com/mpc-qt/mpc-qt)
+12. **Modrinth App**
+    - Licensed under the **GNU General Public License v3.0 only**.
+    - Source: [modrinth/code](https://github.com/modrinth/code/tree/main/apps/app)
+13. **Zed**
+    - Licensed primarily under the **GNU General Public License v3.0 or later** (GPUI components Apache-2.0).
+    - Source: [zed-industries/zed](https://github.com/zed-industries/zed)
+14. **WireGuard for Windows**
+    - Open source, see upstream licensing (WireGuard protocol GPLv2, Windows client MIT).
+    - Source: [WireGuard/wireguard-windows](https://git.zx2c4.com/wireguard-windows/), installer: [download.wireguard.com](https://download.wireguard.com/windows-client/)
+15. **HWiNFO64 / ZenTimings / Vanguard / other installer selections**
+    - Proprietary freeware / see upstream terms. Not redistributed, downloaded at install time.
+    - Sources: [HWiNFO](https://www.hwinfo.com), [irusanov/ZenTimings](https://github.com/irusanov/ZenTimings), [Riot Vanguard](https://www.riotgames.com)
