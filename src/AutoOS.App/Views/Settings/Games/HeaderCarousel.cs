@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using AutoOS.Core.Data.Models.Games;
 using AutoOS.Core.Helpers.Games;
+using AutoOS.Core.Helpers.Logging;
 using AutoOS.Core.Helpers.Processes;
 using AutoOS.Core.Helpers.Services;
 using Microsoft.UI.Xaml;
@@ -662,7 +663,7 @@ public partial class HeaderCarousel : ItemsControl
 
 		foreach (Exception exception in exceptions)
 		{
-			DispatcherQueue.TryEnqueue(() => { throw exception; });
+			LogHelper.LogError(exception, null, "Failed to load games");
 		}
 
 		// sort games

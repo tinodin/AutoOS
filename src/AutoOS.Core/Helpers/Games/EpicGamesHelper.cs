@@ -7,10 +7,10 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
 using AutoOS.Core.Common;
 using AutoOS.Core.Data.Clients.Games;
 using AutoOS.Core.Data.Models.Games;
+using AutoOS.Core.Helpers.Cryptography;
 using AutoOS.Core.Helpers.Logging;
 using DevWinUI;
 using Microsoft.VisualBasic.FileIO;
@@ -38,6 +38,8 @@ public static partial class EpicGamesHelper
 	private const string ClientSecret = "daafbccc737745039dffe53d94fc76cf";
 
 	private const string AesKey = "A09C853C9E95409BB94D707EADEFA52E";
+
+	private const string DpopKeyName = "Epic/EpicGamesLauncher/EOS/Auth";
 
 	private const string itemOfferQuery = @"
 		query searchStoreQuery(
@@ -249,7 +251,7 @@ public static partial class EpicGamesHelper
 	{
 		try
 		{
-			string AccessToken = await UpdateEpicGamesToken(ActiveEpicGamesAccountPath);
+			string? AccessToken = await UpdateEpicGamesToken(ActiveEpicGamesAccountPath);
 
 			if (AccessToken == null)
 				return null!;
@@ -306,7 +308,7 @@ public static partial class EpicGamesHelper
 		}
 	}
 
-	public static async Task<string> UpdateEpicGamesToken(string file)
+	public static async Task<string?> UpdateEpicGamesToken(string file)
 	{
 		// close epic games launcher
 		CloseEpicGames();
@@ -330,30 +332,32 @@ public static partial class EpicGamesHelper
 		// authenticate
 		httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{ClientId}:{ClientSecret}")));
 
-		var content = new FormUrlEncodedContent(
+		List<KeyValuePair<string, string>> form =
 		[
 			new KeyValuePair<string, string>("grant_type", "refresh_token"),
 			new KeyValuePair<string, string>("refresh_token", oldRefreshToken),
 			new KeyValuePair<string, string>("token_type", "eg1"),
-		]);
+		];
 
 		string authUrl = "https://account-public-service-prod.ol.epicgames.com/account/api/oauth/token";
 		string authFallbackUrl = "https://account-public-service-prod03.ol.epicgames.com/account/api/oauth/token";
 		HttpResponseMessage response;
 		try
 		{
-			response = await httpClient.PostAsync(authUrl, content);
+			response = await DpopHelper.SendFormPostAsync(httpClient, authUrl, DpopKeyName, form);
 		}
-		catch (Exception)
+		catch (Exception ex)
 		{
+			LogHelper.LogError(ex, null, $"Failed to update Epic Games token from {authUrl}");
+
 			try
 			{
-				response = await httpClient.PostAsync(authFallbackUrl, content);
+				response = await DpopHelper.SendFormPostAsync(httpClient, authFallbackUrl, DpopKeyName, form);
 			}
 			catch (Exception fallbackEx)
 			{
 				LogHelper.LogError(fallbackEx, null, $"Failed to update Epic Games token from both {authUrl} and {authFallbackUrl}");
-				return null!;
+				return null;
 			}
 		}
 
@@ -361,20 +365,24 @@ public static partial class EpicGamesHelper
 		{
 			try
 			{
-				response = await httpClient.PostAsync(authFallbackUrl, content);
+				response = await DpopHelper.SendFormPostAsync(httpClient, authFallbackUrl, DpopKeyName, form);
 			}
-			catch (Exception)
+			catch (Exception ex)
 			{
-				return null!;
-			}
-
-			if (!response.IsSuccessStatusCode)
-			{
-				return null!;
+				LogHelper.LogError(ex, null, $"Failed to update Epic Games token from both {authUrl} and {authFallbackUrl}");
+				return null;
 			}
 		}
 
-		var responseJson = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+		string responseBody = await response.Content.ReadAsStringAsync();
+
+		if (!response.IsSuccessStatusCode)
+		{
+			LogHelper.LogError(new HttpRequestException($"Token request to {response.RequestMessage?.RequestUri} failed with status {(int)response.StatusCode} {response.StatusCode}. Body: {responseBody}"), null, "Failed to update Epic Games token");
+			return null;
+		}
+
+		var responseJson = JsonDocument.Parse(responseBody);
 
 		string newDisplayName = responseJson.RootElement.GetProperty("displayName").GetString()!;
 		string newAccessToken = responseJson.RootElement.GetProperty("access_token").GetString()!;
@@ -493,77 +501,6 @@ public static partial class EpicGamesHelper
 			var ts = TimeSpan.FromSeconds(newTotalTime);
 			string formattedTime = ts.TotalHours >= 1 ? $"{(int)ts.TotalHours}h {ts.Minutes}m" : $"{ts.Minutes}m";
 			onPlayTimeUpdated?.Invoke(artifactId, formattedTime);
-		}
-	}
-
-	public static async Task ImportAccount(IStatusReporter? reporter = null)
-	{
-		// get all configs from other drives
-		string? systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));
-		var foundFiles = DriveInfo.GetDrives()
-			.Where(d => d.DriveType == DriveType.Fixed && d.Name != systemDrive)
-			.SelectMany(d =>
-			{
-				string usersPath = Path.Combine(d.Name, "Users");
-				if (!Directory.Exists(usersPath)) return [];
-
-				return Directory.GetDirectories(usersPath)
-					.Select(userDir =>
-						File.Exists(Path.Combine(userDir, "AppData", "Local", "EpicGamesLauncher", "Saved", "Config", "WindowsEditor", "GameUserSettings.ini"))
-						? Path.Combine(userDir, "AppData", "Local", "EpicGamesLauncher", "Saved", "Config", "WindowsEditor", "GameUserSettings.ini")
-						: Path.Combine(userDir, "AppData", "Local", "EpicGamesLauncher", "Saved", "Config", "Windows", "GameUserSettings.ini")
-					)
-					.Where(File.Exists);
-			})
-			.Select(path => new FileInfo(path))
-			.ToList();
-
-		string newestFilePath = null!;
-
-		// check if files are valid
-		foreach (FileInfo? file in foundFiles)
-		{
-			string configContent = await File.ReadAllTextAsync(file.FullName);
-			Match dataMatch = Regex.Match(configContent, @"Data=([^\r\n]+)");
-
-			if (ValidateData(file.FullName))
-			{
-				// use the latest one
-				if (newestFilePath == null || file.LastWriteTime > new FileInfo(newestFilePath).LastWriteTime)
-				{
-					// copy the file
-					Directory.CreateDirectory(Path.GetDirectoryName(ActiveEpicGamesAccountPath)!);
-					File.Copy(file.FullName, ActiveEpicGamesAccountPath, true);
-
-					// disable tray and notifications
-					DisableMinimizeToTray(ActiveEpicGamesAccountPath);
-					DisableNotifications(ActiveEpicGamesAccountPath);
-
-					// get accountId
-					string accountId = GetAccountData(file.FullName).AccountId;
-
-					// create backup folder
-					Directory.CreateDirectory(Path.Combine(EpicGamesAccountDir, accountId));
-
-					// copy config
-					File.Copy(ActiveEpicGamesAccountPath, Path.Combine(EpicGamesAccountDir, accountId, "GameUserSettings.ini"), true);
-
-					// create reg file
-					File.WriteAllText(Path.Combine(Path.Combine(EpicGamesAccountDir, accountId), "accountId.reg"), $"Windows Registry Editor Version 5.00\r\n\r\n[HKEY_CURRENT_USER\\Software\\Epic Games\\Unreal Engine\\Identifiers]\r\n\"AccountId\"=\"{accountId}\"");
-
-					// update refresh token
-					await UpdateEpicGamesToken(ActiveEpicGamesAccountPath);
-
-					// update the backed up config
-					File.Copy(file.FullName, Path.Combine(EpicGamesAccountDir, accountId, "GameUserSettings.ini"), true);
-
-					reporter?.SetTitle($"Succesfully logged in as {GetAccountData(ActiveEpicGamesAccountPath).DisplayName}...");
-
-					await Task.Delay(1000);
-
-					return;
-				}
-			}
 		}
 	}
 
@@ -825,11 +762,12 @@ public static partial class EpicGamesHelper
 		if (File.Exists(EpicGamesPath) && (Directory.Exists(EpicGamesManifestDir) || Directory.Exists(EpicGamesThirdPartyManifestDir)))
 		{
 			// get access token
-			string AccessToken = await UpdateEpicGamesToken(ActiveEpicGamesAccountPath);
+			string? AccessToken = await UpdateEpicGamesToken(ActiveEpicGamesAccountPath);
 
 			if (AccessToken == null)
 			{
-				throw new UnauthorizedAccessException("Failed to retrieve the Epic Games access token. Please log in again in the Epic Games Launcher.");
+				LogHelper.LogError(new UnauthorizedAccessException($"Failed to retrieve the Epic Games access token for {GetAccountData(ActiveEpicGamesAccountPath).DisplayName ?? "the active account"}. Check the Epic Games Launcher session."), null, "Failed to load Epic Games library");
+				return [];
 			}
 
 			loginClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
@@ -1025,10 +963,12 @@ public static partial class EpicGamesHelper
 					CancellationToken token = cts.Token;
 
 					// return if not a game
-					if (itemJson is not JsonObject manifest) return;
-					if (manifest?["bIsApplication"]?.GetValue<bool>() != true) return;
-					JsonArray? appCategories = manifest?["AppCategories"] as JsonArray;
-					if (appCategories == null || !appCategories.Any(children => children?.GetValue<string>()?.Equals("games", StringComparison.OrdinalIgnoreCase) == true)) return;
+					if (itemJson is not JsonObject manifest)
+						return;
+					if (manifest?["bIsApplication"]?.GetValue<bool>() != true)
+						return;
+					if (manifest?["AppCategories"] is not JsonArray appCategories || !appCategories.Any(children => children?.GetValue<string>()?.Equals("games", StringComparison.OrdinalIgnoreCase) == true))
+						return;
 					string catalogItemId = manifest?["CatalogItemId"]?.GetValue<string>() ?? "";
 					string catalogNamespace = manifest?["CatalogNamespace"]?.GetValue<string>() ?? "";
 					string appName = manifest?["AppName"]?.GetValue<string>() ?? "";
@@ -1066,13 +1006,11 @@ public static partial class EpicGamesHelper
 					string? productId = null;
 					if (offerResponse.IsSuccess)
 					{
-						JsonArray? elements = ((((JsonNode.Parse(offerResponse.Body ?? "") as JsonObject)?["data"] as JsonObject)?["Catalog"] as JsonObject)?["searchStore"] as JsonObject)?["elements"] as JsonArray;
-						JsonNode? searchElement = elements != null && elements.Count > 0 ? elements[0] : null;
+						JsonNode? searchElement = ((((JsonNode.Parse(offerResponse.Body ?? "") as JsonObject)?["data"] as JsonObject)?["Catalog"] as JsonObject)?["searchStore"] as JsonObject)?["elements"] is JsonArray elements && elements.Count > 0 ? elements[0] : null;
 
 						offerId = (searchElement as JsonObject)?["id"]?.GetValue<string>();
 
-						JsonArray? mappings = ((searchElement as JsonObject)?["catalogNs"] as JsonObject)?["mappings"] as JsonArray;
-						if (mappings != null)
+						if (((searchElement as JsonObject)?["catalogNs"] as JsonObject)?["mappings"] is JsonArray mappings)
 						{
 							JsonNode? homeMapping = mappings.FirstOrDefault(mapping => (mapping as JsonObject)?["pageType"]?.GetValue<string>() == "productHome");
 							if (homeMapping != null)
@@ -1225,12 +1163,11 @@ public static partial class EpicGamesHelper
 					}
 
 					// get key images
-					JsonArray? keyImages = (manifestEntry as JsonObject)?["keyImages"] as JsonArray;
-					if (keyImages == null) keyImages = [];
+					var keyImages = (manifestEntry as JsonObject)?["keyImages"] as JsonArray;
+					keyImages ??= [];
 
 					// get artifactid
-					JsonArray? releaseInfo = (manifestEntry as JsonObject)?["releaseInfo"] as JsonArray;
-					string artifactId = releaseInfo != null && releaseInfo.Count > 0 ? (releaseInfo[0] as JsonObject)?["appId"]?.ToString() ?? "" : "";
+					string artifactId = (manifestEntry as JsonObject)?["releaseInfo"] is JsonArray releaseInfo && releaseInfo.Count > 0 ? (releaseInfo[0] as JsonObject)?["appId"]?.ToString() ?? "" : "";
 					if (string.IsNullOrEmpty(artifactId))
 						LogHelper.LogError(new InvalidOperationException($"Failed to get artifactId for {catalogItemId}"), null, $"Failed to get artifactId for game {(itemJson as JsonObject)?["DisplayName"]?.ToString()}, {catalogItemId}");
 
@@ -1258,7 +1195,7 @@ public static partial class EpicGamesHelper
 						sizeBytes = new DirectoryInfo(installLocation).EnumerateFiles("*", System.IO.SearchOption.AllDirectories).Sum(fi => fi.Length);
 
 					// get screenshots
-					JsonArray? keyImagesList = (offerEntry as JsonObject)?["keyImages"] as JsonArray;
+					var keyImagesList = (offerEntry as JsonObject)?["keyImages"] as JsonArray;
 					var screenshots = new List<string>();
 					foreach (JsonNode? image in keyImagesList ?? [])
 					{
@@ -1279,18 +1216,18 @@ public static partial class EpicGamesHelper
 						if (cmsResponse.IsSuccess)
 						{
 							var cmsJson = JsonNode.Parse(cmsResponse.Body ?? "");
-							JsonArray? pages = (cmsJson as JsonObject)?["pages"] as JsonArray;
+							var pages = (cmsJson as JsonObject)?["pages"] as JsonArray;
 							if (pages != null)
 							{
 								var sortedPages = pages.OrderByDescending(page => (page as JsonObject)?["type"]?.GetValue<string>() == "productHome").ToList();
 								foreach (JsonNode? page in sortedPages)
 								{
-									JsonArray? carouselItems = (((page as JsonObject)?["data"] as JsonObject)?["carousel"] as JsonObject)?["items"] as JsonArray;
-									if (carouselItems != null)
+									if ((((page as JsonObject)?["data"] as JsonObject)?["carousel"] as JsonObject)?["items"] is JsonArray carouselItems)
 									{
 										foreach (JsonNode? item in carouselItems)
 										{
-											if (item == null) continue;
+											if (item == null)
+												continue;
 
 											string? src = ((item as JsonObject)?["image"] as JsonObject)?["src"]?.GetValue<string>();
 											if (!string.IsNullOrEmpty(src))
@@ -1377,8 +1314,7 @@ public static partial class EpicGamesHelper
 										}
 									}
 
-									JsonArray? galleryImages = (((page as JsonObject)?["data"] as JsonObject)?["gallery"] as JsonObject)?["galleryImages"] as JsonArray;
-									if (galleryImages != null)
+									if ((((page as JsonObject)?["data"] as JsonObject)?["gallery"] as JsonObject)?["galleryImages"] is JsonArray galleryImages)
 									{
 										foreach (JsonNode? img in galleryImages)
 										{

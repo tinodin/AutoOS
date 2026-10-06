@@ -26,6 +26,8 @@ CreateEventW
 CreateFileW
 CreateProcessWithToken
 CreateService
+CryptProtectData
+CryptUnprotectData
 DEVICE_STATE
 DEVPKEY_Device_DriverVersion
 DEVPKEY_PciDevice_InterruptMessageMaximum
@@ -71,6 +73,9 @@ LookupPrivilegeValue
 MEMORYSTATUSEX
 MEMORY_BASIC_INFORMATION
 MMDeviceEnumerator
+NCryptOpenKey
+NCryptOpenStorageProvider
+NCryptSignHash
 NotifyServiceStatusChange
 NtQueryInformationProcess
 OpenProcess

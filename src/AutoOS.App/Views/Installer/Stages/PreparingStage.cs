@@ -68,7 +68,6 @@ public static partial class PreparingStage
 	public static bool Signal;
 
 	public static bool EpicGames;
-	public static bool EpicGamesAccount;
 	public static bool EpicGamesGames;
 	public static bool Steam;
 	public static bool SteamGames;
@@ -239,7 +238,7 @@ public static partial class PreparingStage
 
 	private static readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 
-	public static async Task<(bool DiscordAccount, bool DiscordKeybinds, bool EpicGamesAccount, bool EpicGamesGames, bool SteamGames, bool RiotClientAccount, bool RiotClientGames)> CheckAccountsAndGames()
+	public static async Task<(bool DiscordAccount, bool DiscordKeybinds, bool EpicGamesGames, bool SteamGames, bool RiotClientAccount, bool RiotClientGames)> CheckAccountsAndGames()
 	{
 		string? systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))?.ToUpperInvariant();
 
@@ -330,31 +329,6 @@ public static partial class PreparingStage
 				}
 			});
 
-		bool epicGamesAccount = DriveInfo.GetDrives()
-			.Where(d => d.DriveType == DriveType.Fixed && d.Name != systemDrive)
-			.SelectMany(d =>
-			{
-				string usersPath = Path.Combine(d.Name, "Users");
-				if (!Directory.Exists(usersPath))
-					return [];
-
-				return Directory.GetDirectories(usersPath)
-					.Select(userDir =>
-						File.Exists(Path.Combine(userDir, "AppData", "Local", "EpicGamesLauncher", "Saved", "Config", "WindowsEditor", "GameUserSettings.ini"))
-						? Path.Combine(userDir, "AppData", "Local", "EpicGamesLauncher", "Saved", "Config", "WindowsEditor", "GameUserSettings.ini")
-						: Path.Combine(userDir, "AppData", "Local", "EpicGamesLauncher", "Saved", "Config", "Windows", "GameUserSettings.ini")
-					)
-					.Where(File.Exists);
-			})
-			.Select(path => new FileInfo(path))
-			.Any(file =>
-			{
-				string configContent = File.ReadAllText(file.FullName);
-				Match dataMatch = Regex.Match(configContent, @"Data=([^\r\n]+)");
-
-				return dataMatch.Success && dataMatch.Groups[1].Value.Length >= 1000;
-			});
-
 		bool epicGamesGames = false;
 		FileInfo? epicLauncherFile = DriveInfo.GetDrives()
 			.Where(d => d.DriveType == DriveType.Fixed && d.Name != systemDrive)
@@ -430,7 +404,7 @@ public static partial class PreparingStage
 			})
 			.Any(hasGame => hasGame);
 
-		return (discordAccount, discordKeybinds, epicGamesAccount, epicGamesGames, steamGames, riotClientAccount, riotClientGames);
+		return (discordAccount, discordKeybinds, epicGamesGames, steamGames, riotClientAccount, riotClientGames);
 	}
 
 	public static async Task Run()
@@ -689,7 +663,7 @@ public static partial class PreparingStage
 			PCores = pCores?.Count ?? 0;
 			HyperThreading = cpuSetsInfo.HyperThreading;
 
-			(DiscordAccount, DiscordKeybinds, EpicGamesAccount, EpicGamesGames, SteamGames, RiotClientAccount, RiotClientGames) = await CheckAccountsAndGames();
+			(DiscordAccount, DiscordKeybinds, EpicGamesGames, SteamGames, RiotClientAccount, RiotClientGames) = await CheckAccountsAndGames();
 
 			List<DeviceInfo> nics = DeviceHelper.GetDevices(DeviceType.NIC);
 			Wifi = nics.Any(device => device.NicType == NicDeviceType.WiFi);

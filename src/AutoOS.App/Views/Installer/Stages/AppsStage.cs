@@ -36,7 +36,6 @@ public class ApplicationSelection
 	public bool Thunderbird { get; set; }
 	public bool Signal { get; set; }
 	public bool EpicGames { get; set; }
-	public bool EpicGamesAccount { get; set; }
 	public bool EpicGamesGames { get; set; }
 	public bool Steam { get; set; }
 	public bool SteamGames { get; set; }
@@ -202,7 +201,6 @@ public static class AppsStage
 		bool Signal = selection?.Signal ?? PreparingStage.Signal;
 
 		bool EpicGames = selection?.EpicGames ?? PreparingStage.EpicGames;
-		bool EpicGamesAccount = selection?.EpicGamesAccount ?? PreparingStage.EpicGamesAccount;
 		bool EpicGamesGames = selection?.EpicGamesGames ?? PreparingStage.EpicGamesGames;
 		bool Steam = selection?.Steam ?? PreparingStage.Steam;
 		bool SteamGames = selection?.SteamGames ?? PreparingStage.SteamGames;
@@ -693,9 +691,6 @@ public static class AppsStage
 			("Updating Epic Games Launcher", async () => await Process.Start(new ProcessStartInfo { FileName = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Epic Games", "Launcher", "Portal", "Binaries", "Win64", "EpicGamesLauncher.exe")) ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Epic Games", "Launcher", "Portal", "Binaries", "Win64", "EpicGamesLauncher.exe") : File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Epic Games", "Launcher", "Portal", "Binaries", "Win32", "EpicGamesLauncher.exe")) ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Epic Games", "Launcher", "Portal", "Binaries", "Win32", "EpicGamesLauncher.exe") : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Epic Games", "Launcher", "Engine", "Binaries", "Win64", "EpicGamesLauncher.exe") })!.WaitForExitAsync(), () => EpicGames == true),
 			("Updating Epic Games Launcher", async () => { while (true) { foreach (Process proc in Process.GetProcessesByName("EpicGamesLauncher")) { if (ProcessesHelper.GetCommandLine(proc).Contains("-AllowSoftwareRendering -SaveToUserDir -Messaging", StringComparison.OrdinalIgnoreCase)) { EpicGamesHelper.CloseEpicGames(); return; } } await Task.Delay(100); } }, () => EpicGames == true),
 			
-			// import epic games launcher account
-			("Importing Epic Games Launcher Account", async () => await EpicGamesHelper.ImportAccount(), () => EpicGames == true && EpicGamesAccount == true),
-
 			// import epic games launcher games
 			("Importing Epic Games Launcher Games", async () => await EpicGamesHelper.ImportGames(), () => EpicGames == true && EpicGamesGames == true),
 			("Importing Epic Games Launcher Games", async () => Fortnite = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Epic", "UnrealEngineLauncher", "LauncherInstalled.dat")) && (JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Epic", "UnrealEngineLauncher", "LauncherInstalled.dat")))?["InstallationList"] is JsonArray installations) && installations.Any(entry => entry?["AppName"]?.ToString() == "Fortnite") , () => EpicGames == true && EpicGamesGames == true),

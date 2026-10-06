@@ -75,7 +75,7 @@ Pressing **Install AutoOS** in the **AutoOS Installer** does the following:
 - Installs NanaZip, Everything, StartAllBack and Windhawk with Mods for Start Menu, Taskbar, File Explorer etc.
 - Installs selected Apps for Messaging, Launchers, Music, Peripherals, Controllers, Development, Sysinternals, Overclocking, Music Production, Video Production, Multimedia, Office and Miscellaneous
 - Imports Discord account and keybinds from old Installation, applies system theme and disables game overlay and clips
-- Imports the Epic Games and Riot Games Account from the old Windows installation
+- Imports the Riot Games Account from the old Windows installation
 - Imports / Links Epic Games, Riot Games and Steam titles from the old Windows installation
 - Sets Fortnite frame rate depending on your main monitors refresh rate
 - Cleans up temporary files and creates a restore point
