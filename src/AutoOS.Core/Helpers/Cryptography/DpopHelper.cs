@@ -1,9 +1,7 @@
 using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using Windows.Win32;
 
 namespace AutoOS.Core.Helpers.Cryptography;
@@ -32,7 +30,7 @@ public static class DpopHelper
 
 	private const string NonceHeaderName = "DPoP-Nonce";
 
-	private static readonly ConcurrentDictionary<string, string> _publicJwks = [];
+	private static readonly ConcurrentDictionary<string, (string X, string Y)> _publicCoordinates = [];
 
 	public static async Task<HttpResponseMessage> SendFormPostAsync(HttpClient client, string url, string keyName, List<KeyValuePair<string, string>> form)
 	{
@@ -65,32 +63,42 @@ public static class DpopHelper
 
 	private static bool TryAddProofHeader(HttpRequestMessage request, string keyName, string? nonce)
 	{
-		if (!TryGetPublicJwk(keyName, out string? jwk))
+		if (!TryGetPublicCoordinates(keyName, out (string X, string Y) coordinates))
 		{
 			return false;
 		}
 
-		string header = Base64UrlEncode(JsonSerializer.SerializeToUtf8Bytes(new JsonObject
+		string header = Base64UrlEncode(WriteJson(writer =>
 		{
-			["typ"] = "dpop+jwt",
-			["alg"] = "ES256",
-			["jwk"] = JsonNode.Parse(jwk)
+			writer.WriteStartObject();
+			writer.WriteString("typ", "dpop+jwt");
+			writer.WriteString("alg", "ES256");
+			writer.WritePropertyName("jwk");
+			writer.WriteStartObject();
+			writer.WriteString("kty", "EC");
+			writer.WriteString("crv", "P-256");
+			writer.WriteString("x", coordinates.X);
+			writer.WriteString("y", coordinates.Y);
+			writer.WriteEndObject();
+			writer.WriteEndObject();
 		}));
 
-		var claims = new JsonObject
+		string payload = Base64UrlEncode(WriteJson(writer =>
 		{
-			["jti"] = Guid.NewGuid().ToString(),
-			["htm"] = request.Method.Method,
-			["htu"] = NormalizeHttpUri(request.RequestUri!),
-			["iat"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
-		};
+			writer.WriteStartObject();
+			writer.WriteString("jti", Guid.NewGuid().ToString());
+			writer.WriteString("htm", request.Method.Method);
+			writer.WriteString("htu", NormalizeHttpUri(request.RequestUri!));
+			writer.WriteNumber("iat", DateTimeOffset.UtcNow.ToUnixTimeSeconds());
 
-		if (!string.IsNullOrEmpty(nonce))
-		{
-			claims["nonce"] = nonce;
-		}
+			if (!string.IsNullOrEmpty(nonce))
+			{
+				writer.WriteString("nonce", nonce);
+			}
 
-		string payload = Base64UrlEncode(JsonSerializer.SerializeToUtf8Bytes(claims));
+			writer.WriteEndObject();
+		}));
+
 		string signingInput = $"{header}.{payload}";
 
 		if (!TrySignHash(keyName, SHA256.HashData(Encoding.UTF8.GetBytes(signingInput)), out byte[]? signature))
@@ -101,14 +109,14 @@ public static class DpopHelper
 		return request.Headers.TryAddWithoutValidation(DpopHeaderName, $"{signingInput}.{Base64UrlEncode(signature)}");
 	}
 
-	private static bool TryGetPublicJwk(string keyName, [NotNullWhen(true)] out string? jwk)
+	private static bool TryGetPublicCoordinates(string keyName, out (string X, string Y) coordinates)
 	{
-		if (_publicJwks.TryGetValue(keyName, out jwk))
+		if (_publicCoordinates.TryGetValue(keyName, out coordinates))
 		{
 			return true;
 		}
 
-		jwk = null;
+		coordinates = default;
 
 		byte[]? container = FindKeyContainer(keyName);
 
@@ -116,6 +124,8 @@ public static class DpopHelper
 		{
 			return false;
 		}
+
+		(string X, string Y)? found = null;
 
 		for (int offset = 0; offset <= container.Length - EcCpuPublicBlobSize; offset++)
 		{
@@ -135,23 +145,20 @@ public static class DpopHelper
 			container.AsSpan(offset + EcCpuPublicBlobHeaderSize, CoordinateSize).CopyTo(x);
 			container.AsSpan(offset + EcCpuPublicBlobHeaderSize + CoordinateSize, CoordinateSize).CopyTo(y);
 
-			jwk = new JsonObject
-			{
-				["kty"] = "EC",
-				["crv"] = "P-256",
-				["x"] = Base64UrlEncode(x),
-				["y"] = Base64UrlEncode(y)
-			}.ToJsonString();
+			found = (Base64UrlEncode(x), Base64UrlEncode(y));
 
 			break;
 		}
 
-		if (jwk != null)
+		if (found == null)
 		{
-			_publicJwks[keyName] = jwk;
+			return false;
 		}
 
-		return jwk != null;
+		coordinates = found.Value;
+		_publicCoordinates[keyName] = coordinates;
+
+		return true;
 	}
 
 	private static unsafe bool TrySignHash(string keyName, byte[] hash, out byte[]? signature)
@@ -243,6 +250,18 @@ public static class DpopHelper
 		var builder = new UriBuilder(uri) { Query = "", Fragment = "" };
 
 		return builder.Uri.GetLeftPart(UriPartial.Path);
+	}
+
+	private static byte[] WriteJson(Action<Utf8JsonWriter> write)
+	{
+		using var stream = new MemoryStream();
+
+		using (Utf8JsonWriter writer = new(stream))
+		{
+			write(writer);
+		}
+
+		return stream.ToArray();
 	}
 
 	private static string Base64UrlEncode(ReadOnlySpan<byte> bytes) =>
