@@ -51,6 +51,7 @@ public sealed partial class AppsPage : Page
 		{
 			new() { Text = "Discord", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/Discord.png", IsInstalled = Directory.GetDirectories(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Discord").SelectMany(directory => Directory.GetDirectories(directory, "app-*")).Any() },
 			new() { Text = "WhatsApp", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/Whatsapp.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "5319275A.WhatsAppDesktop_cv1g1gvanyjgm")) },
+			new() { Text = "Messenger", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/Messenger.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "Facebook.317180B0BB486_8xx8rvfyw5nnt")) },
 			new() { Text = "Telegram Desktop", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/Telegram.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "TelegramMessengerLLP.TelegramDesktop_t4vj0pshhgkwm")) },
 			new() { Text = "Unigram", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/Unigram.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "38833FF26BA1D.UnigramPreview_g9c9v27vpyspw")) },
 			new() { Text = "Zoom Workplace", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/Zoom.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Zoom", "bin", "Zoom.exe")) },
@@ -281,6 +282,7 @@ public sealed partial class AppsPage : Page
 		var selectedMessaging = selectedMessagingItems.Select(item => item.Text).ToList();
 		selection.Discord = selectedMessaging.Contains("Discord");
 		selection.WhatsApp = selectedMessaging.Contains("WhatsApp");
+		selection.Messenger = selectedMessaging.Contains("Messenger");
 		selection.Telegram = selectedMessaging.Contains("Telegram Desktop");
 		selection.Unigram = selectedMessaging.Contains("Unigram");
 		selection.ZoomWorkplace = selectedMessaging.Contains("Zoom Workplace");
