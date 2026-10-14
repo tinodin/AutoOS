@@ -793,8 +793,7 @@ public static partial class EpicGamesHelper
 					break;
 				}
 
-				JsonArray? records = (json as JsonObject)?["records"] as JsonArray;
-				if (records != null)
+				if ((json as JsonObject)?["records"] is JsonArray records)
 					libraryData.AddRange(records);
 
 				nextCursor = ((json as JsonObject)?["responseMetadata"] as JsonObject)?["nextCursor"]?.GetValue<string>();
@@ -908,7 +907,7 @@ public static partial class EpicGamesHelper
 							File.Delete(file);
 							continue;
 						}
-						var json = JsonNode.Parse(fileContent)!;
+						JsonNode json = JsonNode.Parse(fileContent)!;
 
 						string? installLocation = null;
 
@@ -1104,8 +1103,7 @@ public static partial class EpicGamesHelper
 					{
 						try
 						{
-							TlsResponse ratingResponse = await tlsClient.Value.PostAsync(
-								"https://store.epicgames.com/graphql",
+							TlsResponse ratingResponse = await tlsClient.Value.PostAsync("https://store.epicgames.com/graphql",
 								new JsonObject
 								{
 									["query"] = ratingQuery,
@@ -1216,8 +1214,7 @@ public static partial class EpicGamesHelper
 						if (cmsResponse.IsSuccess)
 						{
 							var cmsJson = JsonNode.Parse(cmsResponse.Body ?? "");
-							var pages = (cmsJson as JsonObject)?["pages"] as JsonArray;
-							if (pages != null)
+							if ((cmsJson as JsonObject)?["pages"] is JsonArray pages)
 							{
 								var sortedPages = pages.OrderByDescending(page => (page as JsonObject)?["type"]?.GetValue<string>() == "productHome").ToList();
 								foreach (JsonNode? page in sortedPages)
@@ -1338,13 +1335,11 @@ public static partial class EpicGamesHelper
 						}
 					}
 
-					JsonArray? ratingDescriptors = ((ageRatingData as JsonObject)?["ageRating"] as JsonObject)?["contentDescriptors"] as JsonArray;
-					string? ratingDescription = ratingDescriptors != null
+					string? ratingDescription = ((ageRatingData as JsonObject)?["ageRating"] as JsonObject)?["contentDescriptors"] is JsonArray ratingDescriptors
 						? string.Join(", ", ratingDescriptors.Select(descriptor => descriptor?.ToString()).Where(descriptor => !string.IsNullOrWhiteSpace(descriptor)))
 						: null;
 
-					JsonArray? interactiveElms = ((ageRatingData as JsonObject)?["ageRating"] as JsonObject)?["interactiveElements"] as JsonArray;
-					string? interactiveElements = interactiveElms != null
+					string? interactiveElements = ((ageRatingData as JsonObject)?["ageRating"] as JsonObject)?["interactiveElements"] is JsonArray interactiveElms
 						? string.Join(", ", interactiveElms.Select(element => element?.ToString()).Where(element => !string.IsNullOrWhiteSpace(element)))
 						: null;
 
