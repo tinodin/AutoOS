@@ -61,6 +61,7 @@ public static partial class PreparingStage
 	public static bool DiscordAccount;
 	public static bool DiscordKeybinds;
 	public static bool WhatsApp;
+	public static bool Messenger;
 	public static bool Telegram;
 	public static bool Unigram;
 	public static bool ZoomWorkplace;
@@ -467,6 +468,7 @@ public static partial class PreparingStage
 
 			Discord = (localSettings.Values["Messaging"]?.ToString()?.Contains("Discord") ?? false);
 			WhatsApp = (localSettings.Values["Messaging"]?.ToString()?.Contains("WhatsApp") ?? false);
+			Messenger = (localSettings.Values["Messaging"]?.ToString()?.Contains("Messenger") ?? false);
 			Telegram = (localSettings.Values["Messaging"]?.ToString()?.Contains("Telegram Desktop") ?? false);
 			Unigram = (localSettings.Values["Messaging"]?.ToString()?.Contains("Unigram") ?? false);
 			ZoomWorkplace = (localSettings.Values["Messaging"]?.ToString()?.Contains("Zoom Workplace") ?? false);
