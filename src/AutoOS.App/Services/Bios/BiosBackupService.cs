@@ -1,7 +1,7 @@
 using System.IO.Compression;
 using System.Text.Encodings.Web;
 using AutoOS.App.Data.Contexts.Bios;
-using AutoOS.App.Data.Contracts;
+using AutoOS.App.Data.Contracts.Bios;
 using AutoOS.App.Data.Enums.Bios;
 using AutoOS.App.Data.Models.Bios;
 using AutoOS.Core.Data.Models.Bios;
@@ -29,6 +29,9 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 
 	public async Task BackupAsync(List<Setting> settings)
 	{
+		if (settings.Count == 0)
+			return;
+
 		List<BackupSetting> currentSettings = [.. settings.Select(setting =>
 		{
 			return new BackupSetting
@@ -42,8 +45,8 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 				Value = SettingState.GetDisplayValue(setting, setting.Value),
 				Options = [.. setting.Options.Select(o => o.Label)],
 				Default = setting.Default,
-				Variable = setting.Variable,
-				VariableGuid = HiiHelper.GetGuidString(setting.VariableGuid),
+				VarStoreName = setting.VarStoreName,
+				VarStoreGuid = HiiHelper.GetGuidString(setting.VarStoreGuid),
 				Flags = setting.Flags,
 				Attributes = HiiHelper.GetEfiVariableAttributeNames(setting.VarAttributes),
 				Token = setting.Token,
@@ -109,47 +112,67 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 		return await JsonSerializer.DeserializeAsync(entryStream, BackupJsonContextRelaxed.BackupFile);
 	}
 
-	public async Task<PageMode> RestoreFromBackupAsync(string filePath)
+	public async Task<(PageMode Result, IReadOnlyList<Setting> UnappliedSettings)> RestoreFromBackupAsync(string filePath)
 	{
 		BackupFile? backup = await ReadBackupFileAsync(filePath);
 		if (backup == null)
-			return infoService.GetWriteProtectedState();
+			return (infoService.GetWriteProtectedState(), []);
 
 		LastDriverError = null;
 
-		(PageMode Result, bool Failed) = await Task.Run(() =>
+		(PageMode Result, bool Failed, List<Setting> Unapplied) = await Task.Run(() =>
 		{
+			List<Setting> unapplied = [];
+			bool anyFailed = false;
+
 			using AmiSmmTransport transport = new();
 			if (!transport.TryLoadAndInit())
 			{
 				LastDriverError = transport.LastLoadError ?? transport.LastInitError;
-				return (PageMode.DriverLoadFailed, true);
+				return (PageMode.DriverLoadFailed, true, unapplied);
 			}
 
 			Dictionary<(string Variable, Guid Guid, uint Offset), Setting> settingsByKey = [with((context.LastSettings?.Count ?? 0))];
+			Dictionary<Guid, List<Setting>> settingsByVarStore = [with((context.LastSettings?.Count ?? 0))];
 			if (context.LastSettings != null)
 			{
 				foreach (Setting s in context.LastSettings)
-					settingsByKey[(s.Variable, s.VariableGuid, s.Offset)] = s;
+				{
+					settingsByKey[(s.VarStoreName, s.VarStoreGuid, s.Offset)] = s;
+
+					if (!settingsByVarStore.TryGetValue(s.VarStoreGuid, out List<Setting>? varStoreSettings))
+					{
+						varStoreSettings = [];
+						settingsByVarStore[s.VarStoreGuid] = varStoreSettings;
+					}
+
+					varStoreSettings.Add(s);
+				}
 			}
 
-			bool anyFailed = false;
-
-			foreach (IGrouping<(string Name, Guid Guid), BackupSetting> group in backup.Settings.GroupBy(static setting => (Name: setting.Variable, Guid: Guid.TryParse(setting.VariableGuid, out Guid guid) ? guid : Guid.Empty)))
+			foreach (IGrouping<(string Name, Guid Guid), BackupSetting> group in backup.Settings.GroupBy(static setting => (Name: setting.VarStoreName, Guid: Guid.TryParse(setting.VarStoreGuid, out Guid guid) ? guid : Guid.Empty)))
 			{
+				if (group.Key.Guid == Constants.Bios.SecureBootVarStoreGuid)
+				{
+					if (settingsByVarStore.TryGetValue(group.Key.Guid, out List<Setting>? skipped))
+						unapplied.AddRange(skipped);
+
+					continue;
+				}
+
 				List<KeyValuePair<Setting, SettingState>> pairs = [with(group.Count())];
 				foreach (BackupSetting backupSetting in group)
 				{
 					if (string.IsNullOrEmpty(backupSetting.Value))
 						continue;
 
-					if (!Guid.TryParse(backupSetting.VariableGuid, out Guid parsedGuid))
+					if (!Guid.TryParse(backupSetting.VarStoreGuid, out Guid parsedGuid))
 						continue;
 
 					if (!HiiHelper.TryParseHexUInt32(backupSetting.Offset, out uint offset))
 						continue;
 
-					if (settingsByKey.TryGetValue((backupSetting.Variable, parsedGuid, offset), out Setting? current))
+					if (settingsByKey.TryGetValue((backupSetting.VarStoreName, parsedGuid, offset), out Setting? current))
 						pairs.Add(new KeyValuePair<Setting, SettingState>(current, new SettingState { Value = backupSetting.Value }));
 				}
 
@@ -159,6 +182,7 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 				if (!nvramService.PatchVariable(pairs, out byte[]? patched, out uint attributes, transport) || patched == null)
 				{
 					anyFailed = true;
+					unapplied.AddRange(pairs.Select(pair => pair.Key));
 					continue;
 				}
 
@@ -166,16 +190,19 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 					continue;
 
 				if (!transport.TrySetVariable(group.Key.Name, group.Key.Guid, attributes, patched, out uint _))
+				{
 					anyFailed = true;
+					unapplied.AddRange(pairs.Select(pair => pair.Key));
+				}
 			}
 
-			return (PageMode.Loaded, anyFailed);
+			return (PageMode.Loaded, anyFailed, unapplied);
 		});
 
 		if (Result == PageMode.DriverLoadFailed)
-			return PageMode.DriverLoadFailed;
+			return (Result, Unapplied);
 
-		return Failed ? infoService.GetWriteProtectedState() : PageMode.Loaded;
+		return (Failed ? infoService.GetWriteProtectedState() : PageMode.Loaded, Unapplied);
 	}
 
 	private static bool SettingsEqual(List<BackupSetting> previous, List<BackupSetting> current)
@@ -183,13 +210,13 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 		if (previous.Count != current.Count)
 			return false;
 
-		Dictionary<(string Variable, string VariableGuid, uint Offset), string> previousMap = [with(previous.Count)];
+		Dictionary<(string VarStoreName, string VarStoreGuid, uint Offset), string> previousMap = [with(previous.Count)];
 		foreach (BackupSetting p in previous)
 		{
 			if (!HiiHelper.TryParseHexUInt32(p.Offset, out uint offset))
 				return false;
 
-			previousMap[(p.Variable, p.VariableGuid.ToUpperInvariant(), offset)] = p.Value;
+			previousMap[(p.VarStoreName, p.VarStoreGuid.ToUpperInvariant(), offset)] = p.Value;
 		}
 
 		foreach (BackupSetting setting in current)
@@ -197,7 +224,7 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 			if (!HiiHelper.TryParseHexUInt32(setting.Offset, out uint currentOffset))
 				return false;
 
-			if (!previousMap.TryGetValue((setting.Variable, setting.VariableGuid.ToUpperInvariant(), currentOffset), out string? prevValue) || !string.Equals(prevValue, setting.Value, StringComparison.Ordinal))
+			if (!previousMap.TryGetValue((setting.VarStoreName, setting.VarStoreGuid.ToUpperInvariant(), currentOffset), out string? prevValue) || !string.Equals(prevValue, setting.Value, StringComparison.Ordinal))
 				return false;
 		}
 

@@ -2,7 +2,7 @@ using AutoOS.App.Data.Enums.Bios;
 using AutoOS.App.Data.Models.Bios;
 using AutoOS.Core.Data.Models.Bios;
 
-namespace AutoOS.App.Data.Contracts;
+namespace AutoOS.App.Data.Contracts.Bios;
 
 public interface IBiosSettingsService
 {
@@ -12,5 +12,5 @@ public interface IBiosSettingsService
 
 	Task<(PageMode Result, IReadOnlyList<Setting> FailedSettings)> WriteToNvramAsync(IEnumerable<KeyValuePair<Setting, SettingState>> modifiedSettings);
 
-	Task<PageMode> RestoreFromBackupAsync(string filePath);
+	Task<(PageMode Result, IReadOnlyList<Setting> UnappliedSettings)> RestoreFromBackupAsync(string filePath);
 }

@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Windows.Input;
 using AutoOS.App.Data.Commands;
-using AutoOS.App.Data.Contracts;
+using AutoOS.App.Data.Contracts.Power;
 using AutoOS.App.Data.Enums;
 using AutoOS.App.Data.Enums.Power;
 using AutoOS.App.Data.Models.Power;
@@ -245,7 +245,7 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 	[RelayCommand(CanExecute = nameof(CanRestore))]
 	private async Task RestoreAsync()
 	{
-		if (await dialogService.ShowConfirmationDialogAsync("Restore default power plans", "Are you sure that you want to restore the default power plans and re-apply the AutoOS power plan?", "Yes", "No") != DialogResult.Primary)
+		if (await dialogService.ShowConfirmationDialogAsync("Restore default power plans", "Are you sure that you want to restore the default power plans?", "Yes", "No") != DialogResult.Primary)
 			return;
 
 		await powerService.RestoreDefaultPowerPlansAsync();

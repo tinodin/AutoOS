@@ -1,7 +1,7 @@
 using AutoOS.App.Data.Enums.Bios;
 using AutoOS.Core.Data.Models.Bios;
 
-namespace AutoOS.App.Data.Contracts;
+namespace AutoOS.App.Data.Contracts.Bios;
 
 public interface IBiosInfoService
 {

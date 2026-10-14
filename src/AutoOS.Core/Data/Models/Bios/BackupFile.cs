@@ -38,9 +38,9 @@ public sealed class BackupSetting
 
 	public string Default { get; set; } = string.Empty;
 
-	public string Variable { get; set; } = string.Empty;
+	public string VarStoreName { get; set; } = string.Empty;
 
-	public string VariableGuid { get; set; } = string.Empty;
+	public string VarStoreGuid { get; set; } = string.Empty;
 
 	public List<string> Flags { get; set; } = [];
 

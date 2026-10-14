@@ -158,11 +158,11 @@
 							<!--  Description  -->
 							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterDescription, Mode=TwoWay}" Text="Description" />
 
-							<!--  Variable  -->
-							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterVariable, Mode=TwoWay}" Text="Variable" />
+							<!--  VarStore Name  -->
+							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterVarStoreName, Mode=TwoWay}" Text="VarStore Name" />
 
-							<!--  Variable GUID  -->
-							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterVariableGuid, Mode=TwoWay}" Text="Variable GUID" />
+							<!--  VarStore GUID  -->
+							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterVarStoreGuid, Mode=TwoWay}" Text="VarStore GUID" />
 
 							<!--  Attributes  -->
 							<ToggleMenuFlyoutItem IsChecked="{x:Bind ViewModel.FilterAttributes, Mode=TwoWay}" Text="Attributes" />

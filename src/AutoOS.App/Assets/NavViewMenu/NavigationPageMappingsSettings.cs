@@ -10,7 +10,7 @@ public partial class NavigationPageMappingsSettings
 		{"AutoOS.App.Views.Settings.GraphicsPage", typeof(AutoOS.App.Views.Settings.GraphicsPage)},
 		{"AutoOS.App.Views.Settings.SchedulingPage", typeof(AutoOS.App.Views.Settings.SchedulingPage)},
 		{"AutoOS.App.Views.Settings.DevicesPage", typeof(AutoOS.App.Views.Settings.DevicesPage)},
-		{"AutoOS.App.Views.Settings.InternetPage", typeof(AutoOS.App.Views.Settings.InternetPage)},
+		{"AutoOS.App.Views.Settings.NetworkPage", typeof(AutoOS.App.Views.Settings.NetworkPage)},
 		{"AutoOS.App.Views.Settings.PowerPage", typeof(AutoOS.App.Views.Settings.PowerPage)},
 		{"AutoOS.App.Views.Settings.ServicesPage", typeof(AutoOS.App.Views.Settings.ServicesPage)},
 		{"AutoOS.App.Views.Settings.BiosSettingsPage", typeof(AutoOS.App.Views.Settings.BiosSettingsPage)},

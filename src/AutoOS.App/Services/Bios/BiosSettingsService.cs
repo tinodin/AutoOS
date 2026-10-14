@@ -1,5 +1,5 @@
 using AutoOS.App.Data.Contexts.Bios;
-using AutoOS.App.Data.Contracts;
+using AutoOS.App.Data.Contracts.Bios;
 using AutoOS.App.Data.Enums.Bios;
 using AutoOS.App.Data.Models.Bios;
 using AutoOS.Core.Data.Models.Bios;
@@ -73,8 +73,11 @@ public sealed class BiosSettingsService(IBiosSettingsContext context, IBiosNvram
 		{
 			List<Setting> failures = [];
 
-			foreach (IGrouping<(string Name, Guid Guid), KeyValuePair<Setting, SettingState>> group in modified.GroupBy(pair => (pair.Key.Variable, pair.Key.VariableGuid)))
+			foreach (IGrouping<(string Name, Guid Guid), KeyValuePair<Setting, SettingState>> group in modified.GroupBy(pair => (pair.Key.VarStoreName, pair.Key.VarStoreGuid)))
 			{
+				if (group.Key.Guid == Constants.Bios.SecureBootVarStoreGuid)
+					continue;
+
 				if (!nvramService.PatchVariable(group, out byte[]? patched, out uint attributes, transport))
 				{
 					failures.AddRange(group.Select(pair => pair.Key));
@@ -91,13 +94,10 @@ public sealed class BiosSettingsService(IBiosSettingsContext context, IBiosNvram
 					failures.AddRange(group.Select(pair => pair.Key));
 			}
 
-			if (failures.Count > 0)
-				return (infoService.GetWriteProtectedState(), failures);
-
 			if (context.LastSettings != null && context.LastQidMap != null)
 				nvramService.LoadCurrentValues(context.LastSettings, context.LastQidMap, transport);
 
-			return (PageMode.Loaded, failures);
+			return (failures.Count > 0 ? infoService.GetWriteProtectedState() : PageMode.Loaded, failures);
 		});
 
 		if (state == PageMode.Loaded && failed.Count == 0 && context.LastSettings != null && context.LastQidMap != null)
@@ -106,16 +106,16 @@ public sealed class BiosSettingsService(IBiosSettingsContext context, IBiosNvram
 		return (state, failed);
 	}
 
-	public async Task<PageMode> RestoreFromBackupAsync(string filePath)
+	public async Task<(PageMode Result, IReadOnlyList<Setting> UnappliedSettings)> RestoreFromBackupAsync(string filePath)
 	{
 		LastDriverError = null;
-		PageMode result = await backupService.RestoreFromBackupAsync(filePath);
+		(PageMode result, IReadOnlyList<Setting> unapplied) = await backupService.RestoreFromBackupAsync(filePath);
 		if (result == PageMode.DriverLoadFailed)
 		{
 			LastDriverError = backupService.LastDriverError;
 			LogHelper.LogError(new Exception(LastDriverError ?? "Unknown SMM driver failure"), actionTitle: "SMM driver load failed");
 		}
 
-		return result;
+		return (result, unapplied);
 	}
 }

@@ -5,7 +5,7 @@
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:dev="using:DevWinUI"
-	xmlns:local="using:AutoOS"
+	xmlns:local="using:AutoOS.App"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	mc:Ignorable="d">
 	<Grid x:Name="RootGrid" Loaded="RootGrid_Loaded">
@@ -27,6 +27,7 @@
 					Source="/Assets/AppIcon.png" />
 			</TitleBar.LeftHeader>
 		</TitleBar>
+		<dev:ModernWindowCaptionButtonToolTip Window="{x:Bind}" />
 		<NavigationView
 			x:Name="NavView"
 			Grid.Row="1"

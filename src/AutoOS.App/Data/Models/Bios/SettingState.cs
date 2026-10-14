@@ -57,10 +57,9 @@ public sealed partial class SettingState : ObservableObject
 
 	public static bool HasPendingRecommendation(Setting setting, SettingState state)
 	{
-		if (setting.RecommendedOption != null)
-			return ResolveOption(setting, state.Value)?.Value != setting.RecommendedOption.Value;
+		if (string.IsNullOrEmpty(setting.Recommended))
+			return false;
 
-		return !string.IsNullOrEmpty(setting.RecommendedValue) &&
-			!string.Equals(state.Value, setting.RecommendedValue, StringComparison.Ordinal);
+		return !string.Equals(GetCanonicalValue(setting, state.Value), setting.Recommended, StringComparison.Ordinal);
 	}
 }

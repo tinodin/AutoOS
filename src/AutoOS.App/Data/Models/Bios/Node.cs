@@ -62,7 +62,7 @@ public sealed partial class Node : ObservableObject, INotifyDataErrorInfo, IOrde
 
 	public string DisplayDefault => Setting?.Default ?? string.Empty;
 
-	public string DisplayRecommended => Setting?.RecommendedOption?.Label ?? Setting?.RecommendedValue ?? string.Empty;
+	public string DisplayRecommended => Setting is { } setting ? SettingState.GetDisplayValue(setting, setting.Recommended) : string.Empty;
 
 	public string DisplayOriginal => State is { } state && Setting is { } setting ? SettingState.GetDisplayValue(setting, state.OriginalValue) : string.Empty;
 

@@ -1,4 +1,4 @@
-using AutoOS.App.Data.Contracts;
+using AutoOS.App.Data.Contracts.Bios;
 using AutoOS.App.Data.Enums.Bios;
 using AutoOS.Core.Data.Models.Bios;
 using AutoOS.Core.Helpers.Bios;

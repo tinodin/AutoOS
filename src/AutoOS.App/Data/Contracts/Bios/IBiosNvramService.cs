@@ -2,7 +2,7 @@ using AutoOS.App.Data.Models.Bios;
 using AutoOS.Core.Data.Models.Bios;
 using AutoOS.Core.Helpers.Bios;
 
-namespace AutoOS.App.Data.Contracts;
+namespace AutoOS.App.Data.Contracts.Bios;
 
 public interface IBiosNvramService
 {

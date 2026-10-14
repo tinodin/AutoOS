@@ -1,7 +1,7 @@
 using AutoOS.App.Data.Enums.Bios;
 using AutoOS.Core.Data.Models.Bios;
 
-namespace AutoOS.App.Data.Contracts;
+namespace AutoOS.App.Data.Contracts.Bios;
 
 public interface IBiosBackupService
 {
@@ -11,5 +11,5 @@ public interface IBiosBackupService
 
 	Task BackupAsync(List<Setting> settings);
 
-	Task<PageMode> RestoreFromBackupAsync(string filePath);
+	Task<(PageMode Result, IReadOnlyList<Setting> UnappliedSettings)> RestoreFromBackupAsync(string filePath);
 }

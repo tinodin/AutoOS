@@ -57,7 +57,7 @@ public static partial class HiiHelper
 
 	public static bool TryGetBiosLanguage(AmiSmmTransport transport, out string language)
 	{
-		if (!transport.TryGetVariable("PlatformLang", new Guid("8BE4DF61-93CA-11D2-AA0D-00E098032B8C"), out byte[]? data, out _, out _) || data == null)
+		if (!transport.TryGetVariable("PlatformLang", Constants.Bios.GlobalVariableGuid, out byte[]? data, out _, out _) || data == null)
 		{
 			language = string.Empty;
 			return false;
@@ -148,8 +148,8 @@ public static partial class HiiHelper
 
 				flattenedSettings.Add(new Setting
 				{
-					Variable = varStore.Name,
-					VariableGuid = varStore.Guid,
+					VarStoreName = varStore.Name,
+					VarStoreGuid = varStore.Guid,
 					Token = question.Token,
 					Offset = question.Offset,
 					Width = question.Width,
@@ -178,7 +178,7 @@ public static partial class HiiHelper
 
 		foreach (Setting setting in flattenedSettings)
 		{
-			(string Variable, uint Offset, uint Width) key = (setting.Variable, setting.Offset, setting.Width);
+			(string VarStoreName, uint Offset, uint Width) key = (setting.VarStoreName, setting.Offset, setting.Width);
 			if (uniqueByKey.TryAdd(key, setting))
 			{
 				resultList.Add(setting);
@@ -218,7 +218,7 @@ public static partial class HiiHelper
 			if (!ushort.TryParse(setting.Token, out ushort qid) || !rawQids.TryGetValue(qid, out (ushort VarStoreId, ushort Offset) target))
 				continue;
 
-			resolvableVarStores.TryAdd(target.VarStoreId, (setting.Variable, setting.VariableGuid));
+			resolvableVarStores.TryAdd(target.VarStoreId, (setting.VarStoreName, setting.VarStoreGuid));
 		}
 
 		var qidMap = new Dictionary<ushort, QidTarget>();
@@ -238,7 +238,7 @@ public static partial class HiiHelper
 			if (!qidMap.TryGetValue(qid, out QidTarget target))
 				return null;
 
-			if (!variableBlobs.TryGetValue((target.Variable, target.VariableGuid), out byte[]? blob))
+			if (!variableBlobs.TryGetValue((target.VarStoreName, target.VarStoreGuid), out byte[]? blob))
 				return null;
 
 			if (target.Offset >= blob.Length)

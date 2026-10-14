@@ -4,9 +4,9 @@ namespace AutoOS.Core.Data.Models.Bios;
 
 public sealed class Setting
 {
-	public string Variable { get; init; } = string.Empty;
+	public string VarStoreName { get; init; } = string.Empty;
 
-	public Guid VariableGuid { get; init; } = Guid.Empty;
+	public Guid VarStoreGuid { get; init; } = Guid.Empty;
 
 	public string Token { get; init; } = string.Empty;
 
@@ -42,9 +42,7 @@ public sealed class Setting
 
 	public string Default { get; init; } = string.Empty;
 
-	public string? RecommendedValue { get; set; }
-
-	public Option? RecommendedOption { get; set; }
+	public string Recommended { get; set; } = string.Empty;
 
 	public uint VarAttributes { get; set; }
 

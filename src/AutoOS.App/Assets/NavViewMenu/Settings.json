@@ -52,7 +52,7 @@
           "HideItem": true
         },
         {
-          "UniqueId": "AutoOS.App.Views.Settings.InternetPage",
+          "UniqueId": "AutoOS.App.Views.Settings.NetworkPage",
           "Title": "Network & Internet",
           "Subtitle": "Network & Internet",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Internet.png",

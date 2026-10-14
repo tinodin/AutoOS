@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using AutoOS.Core.Data.Enums.Bios;
 using AutoOS.Core.Data.Models.CPU;
@@ -1143,7 +1144,7 @@ public static class Recommendations
 						if (string.Equals(opt.Label?.Trim().ToLowerInvariant(), recommendedLabel, StringComparison.Ordinal))
 						{
 							ruleApplicable = true;
-							setting.RecommendedOption = opt;
+							setting.Recommended = opt.Value.ToString(CultureInfo.InvariantCulture);
 							break;
 						}
 					}
@@ -1171,7 +1172,7 @@ public static class Recommendations
 					if (recommendedValue != null)
 					{
 						ruleApplicable = true;
-						setting.RecommendedValue = recommendedValue;
+						setting.Recommended = recommendedValue;
 					}
 				}
 

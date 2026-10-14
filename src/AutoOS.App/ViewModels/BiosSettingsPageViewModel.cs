@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Windows.Input;
 using AutoOS.App.Data.Commands;
-using AutoOS.App.Data.Contracts;
+using AutoOS.App.Data.Contracts.Bios;
 using AutoOS.App.Data.Enums;
 using AutoOS.App.Data.Enums.Bios;
 using AutoOS.App.Data.Models.Bios;
@@ -95,10 +95,10 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 	public partial bool FilterDescription { get; set; }
 
 	[ObservableProperty]
-	public partial bool FilterVariable { get; set; }
+	public partial bool FilterVarStoreName { get; set; }
 
 	[ObservableProperty]
-	public partial bool FilterVariableGuid { get; set; }
+	public partial bool FilterVarStoreGuid { get; set; }
 
 	[ObservableProperty]
 	public partial bool FilterAttributes { get; set; }
@@ -173,9 +173,9 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 
 	partial void OnFilterDescriptionChanged(bool value) => RefreshFilter();
 
-	partial void OnFilterVariableChanged(bool value) => RefreshFilter();
+	partial void OnFilterVarStoreNameChanged(bool value) => RefreshFilter();
 
-	partial void OnFilterVariableGuidChanged(bool value) => RefreshFilter();
+	partial void OnFilterVarStoreGuidChanged(bool value) => RefreshFilter();
 
 	partial void OnFilterAttributesChanged(bool value) => RefreshFilter();
 
@@ -329,13 +329,7 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 			return;
 
 		foreach (Setting setting in targets)
-		{
-			SettingState state = _settingStates[setting];
-			if (setting.RecommendedOption != null)
-				state.Value = setting.RecommendedOption.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
-			else if (setting.RecommendedValue != null)
-				state.Value = setting.RecommendedValue;
-		}
+			_settingStates[setting].Value = setting.Recommended;
 
 		PushUndoState(previous);
 		UpdateState();
@@ -355,33 +349,29 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 			return;
 
 		PageState = PageMode.Writing;
-		PageMode result = await biosService.RestoreFromBackupAsync(file);
-		if (result != PageMode.Loaded)
-		{
-			DriverLoadError = biosService.LastDriverError;
-			PageState = result;
-			return;
-		}
+		(PageMode result, IReadOnlyList<Setting> unapplied) = await biosService.RestoreFromBackupAsync(file);
 
-		DriverLoadError = null;
-
+		DriverLoadError = biosService.LastDriverError;
 
 		BackupFile? backup = await BiosBackupService.ReadBackupFileAsync(file);
 		if (backup != null)
 		{
-			Dictionary<(string Variable, string VariableGuid, uint Offset), string> backupMap = [with(backup.Settings.Count)];
+			Dictionary<(string VarStoreName, string VarStoreGuid, uint Offset), string> backupMap = [with(backup.Settings.Count)];
 			foreach (BackupSetting s in backup.Settings)
 			{
 				if (!HiiHelper.TryParseHexUInt32(s.Offset, out uint offset))
 					continue;
 
-				backupMap[(s.Variable, s.VariableGuid, offset)] = s.Value;
+				backupMap[(s.VarStoreName, s.VarStoreGuid, offset)] = s.Value;
 			}
 
 			foreach (Setting setting in _settings)
 			{
-				string guidStr = HiiHelper.GetGuidString(setting.VariableGuid);
-				if (backupMap.TryGetValue((setting.Variable, guidStr, setting.Offset), out string? value))
+				if (unapplied.Contains(setting))
+					continue;
+
+				string guidStr = HiiHelper.GetGuidString(setting.VarStoreGuid);
+				if (backupMap.TryGetValue((setting.VarStoreName, guidStr, setting.Offset), out string? value))
 				{
 					setting.Value = value;
 					_settingStates[setting].Value = SettingState.GetCanonicalValue(setting, value);
@@ -396,8 +386,11 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		ViewChanges = false;
 		UpdateState();
 		SyncMergeCount();
-		_ = backupService.BackupAsync(_settings);
-		PageState = PageMode.Loaded;
+
+		if (result == PageMode.Loaded)
+			_ = backupService.BackupAsync(_settings);
+
+		PageState = result;
 	}
 
 	[RelayCommand(CanExecute = nameof(CanWrite))]
@@ -410,39 +403,12 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 			.ToDictionary(pair => pair.Key, pair => pair.Value);
 
 		(PageMode result, IReadOnlyList<Setting> failed) = await biosService.WriteToNvramAsync(modified);
-		if (result != PageMode.Loaded)
-		{
-			DriverLoadError = biosService.LastDriverError;
-			PageState = result;
-			return;
-		}
 
-		DriverLoadError = null;
-
-		if (failed.Count == 0)
-		{
-			foreach (Setting setting in _settings)
-			{
-				if (_settingStates[setting].IsModified)
-				{
-					_settingStates[setting].Value = setting.Value;
-					_settingStates[setting].Commit();
-				}
-			}
-
-			SearchText = string.Empty;
-			_undoStates.Clear();
-			_redoStates.Clear();
-			ViewChanges = false;
-			UpdateState();
-			SyncMergeCount();
-			PageState = PageMode.Loaded;
-			return;
-		}
+		DriverLoadError = biosService.LastDriverError;
 
 		foreach (Setting setting in _settings)
 		{
-			if (failed.Contains(setting))
+			if (failed.Contains(setting) || !_settingStates[setting].IsModified)
 				continue;
 
 			_settingStates[setting].Value = setting.Value;
@@ -455,7 +421,8 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		ViewChanges = false;
 		UpdateState();
 		SyncMergeCount();
-		PageState = PageMode.Loaded;
+
+		PageState = result;
 	}
 
 	[RelayCommand]
@@ -544,8 +511,8 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 					("Copy Path", setting.Path),
 					("Copy Setting", setting.Name),
 					("Copy Description", setting.Description),
-					("Copy Variable", setting.Variable),
-					("Copy Variable GUID", setting.VariableGuid.ToString()),
+					("Copy VarStore Name", setting.VarStoreName),
+					("Copy VarStore GUID", setting.VarStoreGuid.ToString()),
 					("Copy Flags", setting.Flags.Count > 0 ? string.Join(", ", setting.Flags) : string.Empty),
 					("Copy Attributes", string.Join(", ", HiiHelper.GetEfiVariableAttributeNames(setting.VarAttributes))),
 					("Copy Token", setting.Token),
@@ -557,7 +524,7 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 			string displayValue = columnMappingName switch
 			{
 				nameof(Node.DisplayCurrent) => node.State?.Value ?? string.Empty,
-				nameof(Node.DisplayRecommended) => setting.RecommendedValue ?? setting.RecommendedOption?.Value.ToString(CultureInfo.InvariantCulture) ?? string.Empty,
+				nameof(Node.DisplayRecommended) => SettingState.GetDisplayValue(setting, setting.Recommended),
 				nameof(Node.DisplayDefault) => setting.Default,
 				nameof(Node.DisplayOriginal) => node.State?.OriginalValue ?? string.Empty,
 				_ => setting.Name
@@ -669,10 +636,10 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 
 		if (node.Setting is { } setting)
 		{
-			if (FilterVariable && textMatches(setting.Variable))
+			if (FilterVarStoreName && textMatches(setting.VarStoreName))
 				return true;
 
-			if (FilterVariableGuid && textMatches(setting.VariableGuid.ToString()))
+			if (FilterVarStoreGuid && textMatches(setting.VarStoreGuid.ToString()))
 				return true;
 
 			if (FilterAttributes && textMatches(string.Join(", ", HiiHelper.GetEfiVariableAttributeNames(setting.VarAttributes))))

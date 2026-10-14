@@ -1,6 +1,6 @@
 using AutoOS.App.Data.Models.Power;
 
-namespace AutoOS.App.Data.Contracts;
+namespace AutoOS.App.Data.Contracts.Power;
 
 public interface IPowerPlanService
 {

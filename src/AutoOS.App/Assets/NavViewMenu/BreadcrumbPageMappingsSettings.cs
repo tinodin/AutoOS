@@ -10,7 +10,7 @@ public partial class BreadcrumbPageMappingsSettings
 		{ typeof(Views.Settings.GraphicsPage), new BreadcrumbPageConfig { PageTitle = null, IsHeaderVisible = false, ClearNavigation = false } },
 		{ typeof(Views.Settings.SchedulingPage), new BreadcrumbPageConfig { PageTitle = null, IsHeaderVisible = false, ClearNavigation = false } },
 		{ typeof(Views.Settings.DevicesPage), new BreadcrumbPageConfig { PageTitle = null, IsHeaderVisible = false, ClearNavigation = false } },
-		{ typeof(Views.Settings.InternetPage), new BreadcrumbPageConfig { PageTitle = null, IsHeaderVisible = false, ClearNavigation = false } },
+		{ typeof(Views.Settings.NetworkPage), new BreadcrumbPageConfig { PageTitle = null, IsHeaderVisible = false, ClearNavigation = false } },
 		{ typeof(Views.Settings.PowerPage), new BreadcrumbPageConfig { PageTitle = null, IsHeaderVisible = false, ClearNavigation = false } },
 		{ typeof(Views.Settings.ServicesPage), new BreadcrumbPageConfig { PageTitle = null, IsHeaderVisible = false, ClearNavigation = false } },
 		{ typeof(Views.Settings.BiosSettingsPage), new BreadcrumbPageConfig { PageTitle = null, IsHeaderVisible = false, ClearNavigation = false } },

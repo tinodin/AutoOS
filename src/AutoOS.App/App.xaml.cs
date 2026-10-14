@@ -1,7 +1,10 @@
 using AutoOS.App.Data.Contexts.Bios;
-using AutoOS.App.Data.Contracts;
+using AutoOS.App.Data.Contracts.Bios;
+using AutoOS.App.Data.Contracts.Network;
+using AutoOS.App.Data.Contracts.Power;
 using AutoOS.App.Services;
 using AutoOS.App.Services.Bios;
+using AutoOS.App.Services.Network;
 using AutoOS.App.Services.Power;
 using AutoOS.App.ViewModels;
 using AutoOS.App.Views;
@@ -35,13 +38,15 @@ public partial class App : Application
 	private static IServiceProvider BuildServiceProvider => new ServiceCollection()
 		.AddSingleton<IFilePickerService, FilePickerService>()
 		.AddSingleton<IDialogService, DialogService>()
+		.AddTransient<INetworkSettingsService, NetworkSettingsService>()
+		.AddTransient<NetworkPageViewModel>()
+		.AddTransient<IPowerPlanService, PowerPlanService>()
+		.AddTransient<PowerPageViewModel>()
 		.AddSingleton<IBiosSettingsContext, BiosSettingsContext>()
 		.AddSingleton<IBiosNvramService, BiosNvramService>()
 		.AddSingleton<IBiosBackupService, BiosBackupService>()
 		.AddSingleton<IBiosInfoService, BiosInfoService>()
 		.AddTransient<IBiosSettingsService, BiosSettingsService>()
-		.AddTransient<IPowerPlanService, PowerPlanService>()
-		.AddTransient<PowerPageViewModel>()
 		.AddTransient<BiosSettingsPageViewModel>()
 		.AddTransient<BenchmarksPageViewModel>()
 		.BuildServiceProvider();

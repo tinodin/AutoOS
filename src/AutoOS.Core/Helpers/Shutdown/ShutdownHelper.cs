@@ -1,4 +1,6 @@
 using System.Runtime.InteropServices;
+using AutoOS.App;
+using AutoOS.Core.Helpers.Bios;
 using AutoOS.Core.Helpers.Registry;
 using Windows.Win32;
 using Windows.Win32.Foundation;
@@ -9,8 +11,6 @@ namespace AutoOS.Core.Helpers.Shutdown;
 public static partial class ShutdownHelper
 {
 	private const ulong EFI_OS_INDICATIONS_BOOT_TO_FIRMWARE_UI = 0x1;
-
-	private static readonly Guid EFI_GLOBAL_VARIABLE = new("8BE4DF61-93CA-11D2-AA0D-00E098032B8C");
 
 	public static void Shutdown()
 	{
@@ -31,7 +31,7 @@ public static partial class ShutdownHelper
 
 		unsafe
 		{
-			string guidString = $"{{{EFI_GLOBAL_VARIABLE.ToString().ToUpperInvariant()}}}";
+			string guidString = HiiHelper.GetGuidString(Constants.Bios.GlobalVariableGuid);
 
 			byte[] supportedBuffer = new byte[8];
 			uint supportedAttrs = 0;

@@ -24,7 +24,6 @@
 			Header="Name:"
 			Text="{x:Bind ViewModel.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-
 		<!--  Description  -->
 		<TextBox
 			x:Name="DescriptionTextBox"

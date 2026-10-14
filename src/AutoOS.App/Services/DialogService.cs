@@ -1,8 +1,10 @@
 using AutoOS.App.Data.Enums;
 using AutoOS.App.Dialogs.Bios;
+using AutoOS.App.Dialogs.Network;
 using AutoOS.App.Dialogs.Power;
 using AutoOS.App.ViewModels.Dialogs;
 using AutoOS.App.ViewModels.Dialogs.Bios;
+using AutoOS.App.ViewModels.Dialogs.Network;
 using AutoOS.App.ViewModels.Dialogs.Power;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -13,6 +15,8 @@ public sealed class DialogService : IDialogService
 {
 	private readonly Dictionary<Type, Func<ContentDialog>> _dialogFactories = new()
 	{
+		{ typeof(OptimizeDialogViewModel), () => new OptimizeDialog() },
+		{ typeof(RestoreDialogViewModel), () => new RestoreDialog() },
 		{ typeof(EditDialogViewModel), () => new EditDialog() },
 		{ typeof(BiosPasswordDialogViewModel), () => new BiosPasswordDialog() }
 	};
