@@ -36,5 +36,6 @@ public enum IfrOpcode : byte
 	UInt64 = 0x45,
 	True = 0x46,
 	False = 0x47,
-	Default = 0x5B
+	Default = 0x5B,
+	ModalTag = 0x61
 }

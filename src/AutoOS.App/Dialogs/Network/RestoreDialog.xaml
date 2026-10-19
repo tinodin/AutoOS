@@ -38,42 +38,13 @@
 			SelectionMode="Multiple">
 			<ListView.ItemTemplate>
 				<DataTemplate x:DataType="device:DeviceInfo">
-					<Grid>
-						<Grid.ColumnDefinitions>
-							<ColumnDefinition Width="Auto" />
-							<ColumnDefinition Width="*" />
-						</Grid.ColumnDefinitions>
-						<Grid.RowDefinitions>
-							<RowDefinition Height="*" />
-							<RowDefinition Height="*" />
-						</Grid.RowDefinitions>
-
+					<StackPanel Orientation="Horizontal" Spacing="8">
 						<!--  Icon  -->
-						<FontIcon
-							Grid.RowSpan="2"
-							FontSize="24"
-							Foreground="{ThemeResource SystemAccentColor}"
-							Glyph="{x:Bind Glyph, Mode=OneWay}" />
+						<FontIcon Foreground="{ThemeResource SystemColorControlAccentColor}" Glyph="{x:Bind Glyph, Mode=OneWay}" />
 
 						<!--  Name  -->
-						<TextBlock
-							Grid.Column="1"
-							Margin="8,4,0,0"
-							FontWeight="Normal"
-							Text="{x:Bind FriendlyName, Mode=OneWay}" />
-
-						<!--  Description  -->
-						<TextBlock
-							Grid.Row="1"
-							Grid.Column="1"
-							Margin="8,0,0,4"
-							Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-							Style="{StaticResource CaptionTextBlockStyle}">
-							<Run Text="{x:Bind DriverType, Mode=OneWay}" />
-							<Run Text=" " />
-							<Run Text="{x:Bind CurrentVersion, Mode=OneWay}" />
-						</TextBlock>
-					</Grid>
+						<TextBlock Text="{x:Bind FriendlyName, Mode=OneWay}" />
+					</StackPanel>
 				</DataTemplate>
 			</ListView.ItemTemplate>
 		</ListView>

@@ -568,6 +568,7 @@ public static partial class HiiHelper
 
 		int questionScopeIndex = -1;
 		ushort formId = 0;
+		bool isModalForm = false;
 		int offset = 0;
 		int end = formPackage.Length;
 
@@ -610,7 +611,12 @@ public static partial class HiiHelper
 						formOrder.Add(newFormId);
 					formId = newFormId;
 					currentQuestion = null;
+					isModalForm = false;
 					awaitingUInt64Default = false;
+				}
+				else if (opcode == IfrOpcode.ModalTag && length == 2)
+				{
+					isModalForm = true;
 				}
 				else if (opcode == IfrOpcode.FormReference && length >= 15)
 				{
@@ -625,7 +631,7 @@ public static partial class HiiHelper
 						formOrder.Add(targetFormId);
 					}
 				}
-				else if (opcode is IfrOpcode.OneOf or IfrOpcode.CheckBox or IfrOpcode.Numeric)
+				else if (!isModalForm && opcode is IfrOpcode.OneOf or IfrOpcode.CheckBox or IfrOpcode.Numeric)
 				{
 					if (length >= 13)
 					{
@@ -706,7 +712,7 @@ public static partial class HiiHelper
 						questionScopeIndex = scopes.Count - 1;
 					}
 				}
-				else if (opcode == IfrOpcode.String && length >= 15)
+				else if (!isModalForm && opcode == IfrOpcode.String && length >= 15)
 				{
 					ushort promptStringId = BinaryPrimitives.ReadUInt16LittleEndian(formPackage[(offset + QUESTION_PROMPT_OFFSET)..]);
 					ushort helpStringId = BinaryPrimitives.ReadUInt16LittleEndian(formPackage[(offset + QUESTION_HELP_OFFSET)..]);
