@@ -7,7 +7,6 @@
 	xmlns:converters="using:CommunityToolkit.WinUI.Converters"
 	xmlns:dev="using:DevWinUI"
 	xmlns:local="using:AutoOS.App.Views.Settings.Games"
-	xmlns:sc="using:AutoOS.App.UserControls.StoreCarousel2"
 	xmlns:uc="using:AutoOS.App.UserControls"
 	xmlns:views="using:AutoOS.App.Views.Settings">
 	<Style TargetType="local:HeaderCarousel">
@@ -41,7 +40,7 @@
 								</RadialGradientBrush>
 							</dev:OpacityMaskView.OpacityMask>
 							<Grid>
-								<dev:AnimatedImage
+								<uc:AnimatedImage
 									x:Name="PART_BackDropImage"
 									Height="Auto"
 									Stretch="{TemplateBinding ImageStretch}" />
@@ -632,7 +631,7 @@
 												Style="{StaticResource CardRightChevronButtonStyle}"
 												ToolTipService.ToolTip="See all" />
 										</dev:Card.TitleContent>
-										<sc:StoreCarousel2 x:Name="ScreenshotsCarousel" ItemsSource="{Binding Media, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}" />
+										<uc:StoreCarousel2 x:Name="ScreenshotsCarousel" ItemsSource="{Binding Media, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}" />
 									</dev:Card>
 									<dev:Card Title="Additional information" Margin="0,0,0,12">
 										<ItemsRepeater x:Name="PART_ItemsRepeater">

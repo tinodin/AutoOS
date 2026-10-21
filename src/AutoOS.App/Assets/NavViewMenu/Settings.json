@@ -12,121 +12,121 @@
         {
           "UniqueId": "AutoOS.App.Views.Settings.HomePage",
           "Title": "Home",
-          "Subtitle": "Home Page",
+          "Subtitle": "Quick access for links",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Home.png",
           "HideItem": true
         },
         {
           "UniqueId": "AutoOS.App.Views.Settings.SoundPage",
           "Title": "Sound",
-          "Subtitle": "Sound",
+          "Subtitle": "Adjust Volume, Format and Buffer Size of your current input and output device",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Sound.png",
-          "HideItem": true
+          "HideItem": false
         },
         {
           "UniqueId": "AutoOS.App.Views.Settings.DisplaysPage",
           "Title": "Displays",
-          "Subtitle": "Displays",
+          "Subtitle": "Manually adjust or import a Custom Resolution Utility (CRU) profile",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Display.png",
-          "HideItem": true
+          "HideItem": false
         },
         {
           "UniqueId": "AutoOS.App.Views.Settings.GraphicsPage",
           "Title": "Graphics Cards",
-          "Subtitle": "Graphics Cards",
+          "Subtitle": "Select your Graphics Card preferences",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Gpu.png",
-          "HideItem": true
+          "HideItem": false
         },
         {
           "UniqueId": "AutoOS.App.Views.Settings.SchedulingPage",
           "Title": "Per-CPU Scheduling",
-          "Subtitle": "Per-CPU Scheduling",
+          "Subtitle": "Manually adjust or automatically optimize Audio, GPU, XHCI and NIC Affinities",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Cpu.png",
-          "HideItem": true
+          "HideItem": false
         },
         {
           "UniqueId": "AutoOS.App.Views.Settings.DevicesPage",
           "Title": "Bluetooth & Devices",
-          "Subtitle": "Bluetooth & Devices",
+          "Subtitle": "Toggle Bluetooth Services & Drivers and XHCI Interrupt Moderation (IMOD) per controller",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Bluetooth.png",
-          "HideItem": true
+          "HideItem": false
         },
         {
           "UniqueId": "AutoOS.App.Views.Settings.NetworkPage",
           "Title": "Network & Internet",
-          "Subtitle": "Network & Internet",
+          "Subtitle": "Manually adjust or automatically optimize advanced network adapter settings",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Internet.png",
-          "HideItem": true
+          "HideItem": false
         },
         {
           "UniqueId": "AutoOS.App.Views.Settings.PowerPage",
           "Title": "Energy & Power",
-          "Subtitle": "Energy & Power",
+          "Subtitle": "Adjust, Edit, Duplicate, Delete, Restore, Export, Import Power plans and compare them",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Power.png",
-          "HideItem": true
+          "HideItem": false
         },
         {
           "UniqueId": "AutoOS.App.Views.Settings.ServicesPage",
           "Title": "Services & Drivers",
-          "Subtitle": "Services & Drivers",
+          "Subtitle": "Toggle Services & Drivers states with configured functionality",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Services.png",
-          "HideItem": true
+          "HideItem": false
         },
         {
           "UniqueId": "AutoOS.App.Views.Settings.BiosSettingsPage",
           "Title": "BIOS Settings",
-          "Subtitle": "BIOS Settings",
+          "Subtitle": "Manually adjust or merge recommended BIOS Settings",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Bios.png",
-          "HideItem": true
+          "HideItem": false
         },
         {
           "UniqueId": "AutoOS.App.Views.Settings.DiskCleanupPage",
           "Title": "Disk Cleanup",
-          "Subtitle": "Disk Cleanup",
+          "Subtitle": "Clean up your drives",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/DiskCleanup.png",
-          "HideItem": true
+          "HideItem": false
         },
         {
           "UniqueId": "AutoOS.App.Views.Settings.SecurityPage",
           "Title": "Windows Security",
-          "Subtitle": "Windows Security",
+          "Subtitle": "Toggle Windows Security Options",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Security.png",
-          "HideItem": true
+          "HideItem": false
         },
         {
           "UniqueId": "AutoOS.App.Views.Settings.UpdatePage",
           "Title": "Windows Update",
-          "Subtitle": "Windows Update",
+          "Subtitle": "Toggle Windows Updates and set target version",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Update.png",
-          "HideItem": true
+          "HideItem": false
         },
         {
           "UniqueId": "AutoOS.App.Views.Settings.BrowsersPage",
           "Title": "Browsers",
-          "Subtitle": "Browsers",
+          "Subtitle": "Post-install your Browsers and Browser Extensions",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Browsers.png",
-          "HideItem": true
+          "HideItem": false
         },
         {
           "UniqueId": "AutoOS.App.Views.Settings.AppsPage",
           "Title": "Apps",
-          "Subtitle": "Apps",
+          "Subtitle": "Post-install your Applications",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Apps.png",
-          "HideItem": true
+          "HideItem": false
         },
         {
           "UniqueId": "AutoOS.App.Views.Settings.BenchmarksPage",
           "Title": "Benchmarks",
-          "Subtitle": "Benchmarks",
+          "Subtitle": "Analyze your Benchmarks",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Benchmarks.png",
-          "HideItem": true
+          "HideItem": false
         },
         {
           "UniqueId": "AutoOS.App.Views.Settings.GamesPage",
           "Title": "Games",
-          "Subtitle": "Games",
+          "Subtitle": "View your Game Library (Supports Epic Games, Riot Games, EA, Ubisoft Connect, Steam, Eden, Citron and Ryujinx)",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Games.png",
-          "HideItem": true
+          "HideItem": false
         }
       ]
     }

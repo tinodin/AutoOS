@@ -2,7 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Animation;
 
-namespace AutoOS.App.UserControls.StoreCarousel2;
+namespace AutoOS.App.UserControls;
 
 [TemplatePart(Name = "ScreenshotsControl", Type = typeof(ScreenshotsViewer))]
 public partial class StoreCarousel2 : Control

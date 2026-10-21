@@ -3,7 +3,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Animation;
 using Windows.Foundation;
 
-namespace AutoOS.App.UserControls.StoreCarousel2;
+namespace AutoOS.App.UserControls;
 
 public class PreviewViewerHelperListViewSource(ListViewBase listView)
 {

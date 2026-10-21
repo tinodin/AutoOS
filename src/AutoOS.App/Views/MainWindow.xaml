@@ -8,13 +8,17 @@
 	xmlns:local="using:AutoOS.App"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	mc:Ignorable="d">
-	<Grid x:Name="RootGrid" Loaded="RootGrid_Loaded">
+	<Grid
+		x:Name="RootGrid"
+		Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+		Loaded="RootGrid_Loaded">
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto" />
 			<RowDefinition />
 		</Grid.RowDefinitions>
 		<TitleBar
 			x:Name="AppTitleBar"
+			Background="{x:Bind RootGrid.Background, Mode=OneWay}"
 			IsBackButtonVisible="False"
 			IsPaneToggleButtonVisible="True"
 			Subtitle="{x:Bind dev:ProcessInfoHelper.VersionWithPrefix}">
@@ -31,14 +35,40 @@
 		<NavigationView
 			x:Name="NavView"
 			Grid.Row="1"
+			Background="{x:Bind RootGrid.Background, Mode=OneWay}"
 			IsBackButtonVisible="Collapsed"
 			IsPaneToggleButtonVisible="False"
 			IsSettingsVisible="False"
-			OpenPaneLength="300">
-			<NavigationView.Header>
-				<dev:BreadcrumbNavigator x:Name="BreadCrumbNav" />
-			</NavigationView.Header>
-			<Frame x:Name="NavFrame" />
+			OpenPaneLength="256">
+			<NavigationView.Resources>
+				<SolidColorBrush x:Key="NavigationViewContentBackground" Color="Transparent" />
+				<CornerRadius x:Key="NavigationViewContentGridCornerRadius">0</CornerRadius>
+				<Thickness x:Key="NavigationViewContentGridBorderThickness">0</Thickness>
+				<Thickness x:Key="NavigationViewContentMargin">0</Thickness>
+				<CornerRadius x:Key="NavigationViewMinimalContentGridCornerRadius">0</CornerRadius>
+				<Thickness x:Key="NavigationViewMinimalContentGridBorderThickness">0</Thickness>
+				<Thickness x:Key="NavigationViewMinimalContentMargin">0</Thickness>
+				<Thickness x:Key="NavigationViewItemMargin">2,0,2,0</Thickness>
+			</NavigationView.Resources>
+			<Grid
+				Margin="0,4,8,8"
+				HorizontalAlignment="Stretch"
+				VerticalAlignment="Stretch">
+				<Border
+					Background="{ThemeResource LayerFillColorDefaultBrush}"
+					BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+					BorderThickness="1"
+					CornerRadius="8">
+					<Grid>
+						<Grid.RowDefinitions>
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="*" />
+						</Grid.RowDefinitions>
+						<dev:BreadcrumbNavigator x:Name="BreadCrumbNav" Margin="16,8,16,0" />
+						<Frame x:Name="NavFrame" Grid.Row="1" />
+					</Grid>
+				</Border>
+			</Grid>
 		</NavigationView>
 	</Grid>
 </Window>

@@ -1,4 +1,4 @@
-<UserControl x:Class="AutoOS.App.UserControls.StoreCarousel2.PreviewViewerScreenshotItem"
+<UserControl x:Class="AutoOS.App.UserControls.PreviewViewerScreenshotItem"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"

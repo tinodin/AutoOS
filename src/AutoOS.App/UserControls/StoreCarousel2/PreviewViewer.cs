@@ -7,7 +7,7 @@ using Microsoft.UI.Xaml.Media.Animation;
 using Windows.Media.Playback;
 using Windows.System;
 
-namespace AutoOS.App.UserControls.StoreCarousel2;
+namespace AutoOS.App.UserControls;
 
 public sealed partial class PreviewViewer : OverlayPopupBase
 {

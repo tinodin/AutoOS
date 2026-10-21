@@ -1,6 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-namespace AutoOS.App.UserControls.StoreCarousel2;
+namespace AutoOS.App.UserControls;
 
 public partial class OverlayPopupBase : UserControl
 {

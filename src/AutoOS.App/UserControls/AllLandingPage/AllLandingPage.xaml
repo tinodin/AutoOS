@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<dev:ItemsPageBase
+	x:Class="AutoOS.App.UserControls.AllLandingPage"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:dev="using:DevWinUI"
+	HighContrastAdjustment="None"
+	NavigationCacheMode="Enabled">
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+
+		<dev:HomePageHeader
+			Grid.RowSpan="2"
+			VerticalAlignment="Top"
+			HeaderContent="{x:Bind HeaderContent, Mode=OneWay}"
+			HeaderFontSize="{x:Bind HeaderFontSize, Mode=OneWay}"
+			HeaderImage="{x:Bind HeaderImage, Mode=OneWay}"
+			HeaderImageHeight="{x:Bind HeaderImageHeight, Mode=OneWay}"
+			HeaderSubtitleFontSize="{x:Bind HeaderSubtitleFontSize, Mode=OneWay}"
+			HeaderSubtitleText="{x:Bind HeaderSubtitleText, Mode=OneWay}"
+			HeaderText="{x:Bind HeaderText, Mode=OneWay}"
+			IsTileImage="{x:Bind IsTileImage, Mode=OneWay}"
+			Stretch="{x:Bind Stretch, Mode=OneWay}" />
+		<Border Height="{x:Bind HeaderImageHeight, Mode=OneWay}" />
+		<GridView
+			x:Name="itemGridView"
+			Grid.Row="1"
+			Padding="{x:Bind GridViewPadding, Mode=OneWay}"
+			AutomationProperties.AutomationId="ItemGridView"
+			AutomationProperties.Name="Items In Group"
+			ContainerContentChanging="OnItemGridViewContainerContentChanging"
+			IsItemClickEnabled="True"
+			IsSwipeEnabled="False"
+			ItemClick="OnItemGridViewItemClick"
+			ItemContainerStyle="{StaticResource IndentedGridViewItemStyle}"
+			ItemTemplate="{StaticResource ControlItemTemplate}"
+			ItemsSource="{x:Bind Items, Mode=OneWay}"
+			Loaded="OnItemGridViewLoaded"
+			SelectionMode="None">
+			<GridView.Resources>
+				<CornerRadius x:Key="GridViewItemCornerRadius">8</CornerRadius>
+			</GridView.Resources>
+			<GridView.Footer>
+				<Grid
+					Margin="{x:Bind FooterMargin, Mode=OneWay}"
+					VerticalAlignment="Bottom"
+					Visibility="{x:Bind FooterContent, Converter={StaticResource NullToVisibilityConverter}, Mode=OneWay}">
+					<ContentPresenter Content="{x:Bind FooterContent, Mode=OneWay}" />
+				</Grid>
+			</GridView.Footer>
+		</GridView>
+		<dev:Empty
+			Title="{x:Bind EmptyTitle, Mode=OneWay}"
+			Grid.Row="1"
+			Icon="{x:Bind EmptyIcon, Mode=OneWay}"
+			IsEmpty="{x:Bind IsEmpty, Mode=OneWay}"
+			IsHitTestVisible="False"
+			Subtitle="{x:Bind EmptySubtitle, Mode=OneWay}" />
+		<VisualStateManager.VisualStateGroups>
+			<VisualStateGroup x:Name="LayoutVisualStates">
+				<VisualState x:Name="WideLayout">
+					<VisualState.StateTriggers>
+						<AdaptiveTrigger MinWindowWidth="{StaticResource Breakpoint640Plus}" />
+					</VisualState.StateTriggers>
+				</VisualState>
+				<VisualState x:Name="NarrowLayout">
+					<VisualState.StateTriggers>
+						<AdaptiveTrigger MinWindowWidth="0" />
+					</VisualState.StateTriggers>
+					<VisualState.Setters>
+						<Setter Target="itemGridView.Padding" Value="16,16,16,24" />
+						<Setter Target="itemGridView.ItemContainerStyle" Value="{StaticResource GridViewItemStyleSmall}" />
+					</VisualState.Setters>
+				</VisualState>
+			</VisualStateGroup>
+		</VisualStateManager.VisualStateGroups>
+	</Grid>
+</dev:ItemsPageBase>

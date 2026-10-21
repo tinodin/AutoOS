@@ -2,7 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.Xaml.Interactivity;
 using Windows.Foundation;
 
-namespace AutoOS.App.UserControls.StoreCarousel2;
+namespace AutoOS.App.UserControls;
 
 public abstract class OnScreenBehaviorBase : Behavior<FrameworkElement>
 {

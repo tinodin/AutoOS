@@ -4,7 +4,7 @@ using Windows.Media.Core;
 using Windows.Media.Playback;
 using Windows.Media.Streaming.Adaptive;
 
-namespace AutoOS.App.UserControls.StoreCarousel2;
+namespace AutoOS.App.UserControls;
 
 public class VideoPlayerSource : IImageItem
 {
@@ -25,11 +25,13 @@ public class VideoPlayerSource : IImageItem
 		get
 		{
 			if (field == null && ImageUri != null)
+			{
 				field = new BitmapImage(ImageUri)
 				{
-					CreateOptions = BitmapCreateOptions.None,
-					DecodePixelHeight = 316
+					CreateOptions = BitmapCreateOptions.None
 				};
+			}
+
 			return field;
 		}
 	}

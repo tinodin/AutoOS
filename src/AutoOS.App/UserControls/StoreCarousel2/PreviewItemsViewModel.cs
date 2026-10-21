@@ -1,4 +1,4 @@
-namespace AutoOS.App.UserControls.StoreCarousel2;
+namespace AutoOS.App.UserControls;
 
 public partial class PreviewItemsViewModel : ObservableObject
 {

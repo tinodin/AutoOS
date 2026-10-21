@@ -2,7 +2,7 @@ using System.Globalization;
 using System.ServiceProcess;
 using System.Text;
 using System.Text.RegularExpressions;
-using AutoOS.App.UserControls.StoreCarousel2;
+using AutoOS.App.UserControls;
 using AutoOS.Core.Data.Models.Games;
 using AutoOS.Core.Helpers.Games;
 using AutoOS.Core.Helpers.Logging;
@@ -25,7 +25,7 @@ using WinRT;
 
 namespace AutoOS.App.Views.Settings.Games;
 
-[TemplatePart(Name = nameof(PART_BackDropImage), Type = typeof(AnimatedImage))]
+[TemplatePart(Name = nameof(PART_BackDropImage), Type = typeof(UserControls.AnimatedImage))]
 [TemplatePart(Name = nameof(PART_ScrollViewer), Type = typeof(ScrollViewer))]
 [TemplatePart(Name = nameof(PART_ItemsRepeater), Type = typeof(ItemsRepeater))]
 
@@ -35,7 +35,7 @@ public partial class HeaderCarousel : ItemsControl
 	private const string PART_BackDropImage = "PART_BackDropImage";
 	private const string PART_ItemsRepeater = "PART_ItemsRepeater";
 	private ScrollViewer scrollViewer = null!;
-	private AnimatedImage backDropImage = null!;
+	private UserControls.AnimatedImage backDropImage = null!;
 	private ItemsRepeater itemsRepeater = null!;
 
 	private TextBlock PageTitle = null!;
@@ -134,7 +134,7 @@ public partial class HeaderCarousel : ItemsControl
 		deselectionTimer.Interval = DeSelectionDuration;
 
 		scrollViewer = (ScrollViewer)GetTemplateChild(PART_ScrollViewer)!;
-		backDropImage = (AnimatedImage)GetTemplateChild(PART_BackDropImage)!;
+		backDropImage = (UserControls.AnimatedImage)GetTemplateChild(PART_BackDropImage)!;
 		itemsRepeater = (ItemsRepeater)GetTemplateChild("PART_ItemsRepeater")!;
 		itemsRepeater.ItemsSource = InfoItems;
 		itemsRepeater.ElementPrepared += ItemsRepeater_ElementPrepared;

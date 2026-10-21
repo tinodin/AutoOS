@@ -1,6 +1,6 @@
 using Microsoft.UI.Xaml;
 
-namespace AutoOS.App.UserControls.StoreCarousel2;
+namespace AutoOS.App.UserControls;
 
 public sealed partial class ScreenshotsViewer
 {

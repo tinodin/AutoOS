@@ -14,6 +14,9 @@ public static partial class EdenHelper
 	{
 		var games = new ConcurrentBag<GameModel>();
 
+		if (string.IsNullOrWhiteSpace(dataPath))
+			dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "eden");
+
 		// if paths defined
 		if (!string.IsNullOrEmpty(exePath) && !string.IsNullOrEmpty(dataPath) && File.Exists(exePath) && Directory.Exists(dataPath))
 		{
@@ -27,16 +30,12 @@ public static partial class EdenHelper
 				await File.WriteAllTextAsync(filePath, content);
 			}
 
-			// get game list
-			using FileStream stream = File.OpenRead(Path.Combine(dataPath, "cache", "game_list", "game_metadata_cache.json"));
-			using JsonDocument configDoc = await JsonDocument.ParseAsync(stream);
-			JsonElement config = configDoc.RootElement;
-
 			// read json database
 			using FileStream fs = File.OpenRead(Path.Combine(PathHelper.GetAppDataFolderPath(), "Switch", "US.en.json"));
 			using JsonDocument doc = await JsonDocument.ParseAsync(fs);
 
 			var jsonById = new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
+			var jsonByName = new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
 
 			foreach (JsonProperty kvp in doc.RootElement.EnumerateObject())
 			{
@@ -46,14 +45,67 @@ public static partial class EdenHelper
 					if (!string.IsNullOrEmpty(key))
 						jsonById.TryAdd(key, kvp.Value);
 				}
+
+				string? name = kvp.Value.TryGetProperty("name", out JsonElement nameElem) ? nameElem.GetString() : null;
+				if (string.IsNullOrWhiteSpace(name)) continue;
+				if (!kvp.Value.TryGetProperty("id", out JsonElement nameId) || string.IsNullOrWhiteSpace(nameId.GetString())) continue;
+
+				string simpleName = SimpleCleanNameRegex().Replace(CleanNameRegex().Replace(name.Replace('’', '\''), "").ToLowerInvariant(), "");
+				if (!string.IsNullOrEmpty(simpleName))
+					jsonByName.TryAdd(simpleName, kvp.Value);
 			}
 
-			if (config.TryGetProperty("entries", out JsonElement entries) && entries.ValueKind == JsonValueKind.Array)
+			// get game list
+			var edenEntries = new List<(string ProgramId, string FilePath, long FileSize)>();
+			var seenIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			string configPath = Path.Combine(dataPath, "config", "qt-config.ini");
+
+			if (File.Exists(configPath))
 			{
-				await Parallel.ForEachAsync(entries.EnumerateArray(), new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount * 2 }, async (edenEntry, _) =>
+				foreach (string line in File.ReadLines(configPath))
+				{
+					if (!line.StartsWith("Paths\\gamedirs\\", StringComparison.OrdinalIgnoreCase) || !line.Contains("\\path=", StringComparison.OrdinalIgnoreCase))
+						continue;
+
+					string gameDir = line[(line.IndexOf('=') + 1)..].Trim().Trim('"');
+					if (string.IsNullOrWhiteSpace(gameDir) || !Directory.Exists(gameDir))
+						continue;
+
+					foreach (string gameFile in Directory.EnumerateFiles(gameDir, "*", SearchOption.TopDirectoryOnly))
+					{
+						string extension = Path.GetExtension(gameFile);
+						if (!extension.Equals(".xci", StringComparison.OrdinalIgnoreCase) && !extension.Equals(".nsp", StringComparison.OrdinalIgnoreCase))
+							continue;
+
+						string simpleName = SimpleCleanNameRegex().Replace(Path.GetFileNameWithoutExtension(gameFile).ToLowerInvariant(), "");
+						string? bestMatch = null;
+
+						foreach (string key in jsonByName.Keys)
+						{
+							if (key.Length < 4 || !simpleName.StartsWith(key, StringComparison.Ordinal))
+								continue;
+
+							if (bestMatch is null || key.Length > bestMatch.Length)
+								bestMatch = key;
+						}
+
+						if (bestMatch is null) continue;
+
+						JsonElement entry = jsonByName[bestMatch];
+						string? id = entry.TryGetProperty("id", out JsonElement idElement) ? idElement.GetString() : null;
+						if (string.IsNullOrWhiteSpace(id) || !seenIds.Add(id)) continue;
+
+						edenEntries.Add((id.ToLowerInvariant(), Path.GetFullPath(gameFile), new FileInfo(gameFile).Length));
+					}
+				}
+			}
+
+			if (edenEntries.Count > 0)
+			{
+				await Parallel.ForEachAsync(edenEntries, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount * 2 }, async (edenEntry, _) =>
 				{
 					// check if game id exists in database
-					string id = "0" + edenEntry.GetProperty("program_id").GetString();
+					string id = edenEntry.ProgramId;
 					if (!jsonById.TryGetValue(id, out JsonElement entry))
 						return;
 
@@ -65,7 +117,7 @@ public static partial class EdenHelper
 					string cleanName = CleanNameRegex().Replace(name.Replace('’', '\''), "");
 
 					// get install location
-					string? installLocation = edenEntry.GetProperty("file_path").GetString()?.Replace("/", "\\");
+					string installLocation = edenEntry.FilePath;
 
 					// get playtime
 					string playTime = "0m";
@@ -83,7 +135,7 @@ public static partial class EdenHelper
 					}
 
 					// get size
-					long sizeBytes = edenEntry.TryGetProperty("file_size", out JsonElement sizeElem) ? sizeElem.GetInt64() : 0;
+					long sizeBytes = edenEntry.FileSize;
 
 					// search on igdb
 Dictionary<string, string?>? result = await IgdbHelper.SearchCovers(cleanName);

@@ -12,51 +12,51 @@
         {
           "UniqueId": "AutoOS.App.Views.Installer.HomePage",
           "Title": "Home",
-          "Subtitle": "Home Page",
+          "Subtitle": "Quick access for links",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Home.png",
           "HideItem": true
         },
         {
           "UniqueId": "AutoOS.App.Views.Installer.PersonalizationPage",
           "Title": "Personalization",
-          "Subtitle": "Personalization",
+          "Subtitle": "Choose your Theme and Taskbar preferences",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Personalization.png",
-          "HideItem": true
+          "HideItem": false
         },
         {
           "UniqueId": "AutoOS.App.Views.Installer.BrowsersPage",
           "Title": "Browsers",
-          "Subtitle": "Browsers",
+          "Subtitle": "Choose your Browsers and Browser Extensions",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Browsers.png",
-          "HideItem": true
+          "HideItem": false
         },
         {
           "UniqueId": "AutoOS.App.Views.Installer.AppsPage",
           "Title": "Apps",
-          "Subtitle": "Apps",
+          "Subtitle": "Choose your Applications",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Apps.png",
-          "HideItem": true
+          "HideItem": false
         },
         {
           "UniqueId": "AutoOS.App.Views.Installer.DisplaysPage",
           "Title": "Displays",
-          "Subtitle": "Sisplays",
+          "Subtitle": "Import a pre-configured Custom Resolution Utility (CRU) profile (optional)",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Display.png",
-          "HideItem": true
+          "HideItem": false
         },
         {
           "UniqueId": "AutoOS.App.Views.Installer.GraphicsPage",
           "Title": "Graphics Cards",
-          "Subtitle": "Graphics Cards",
+          "Subtitle": "Select your Graphics Card preferences",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Gpu.png",
-          "HideItem": true
+          "HideItem": false
         },
         {
           "UniqueId": "AutoOS.App.Views.Installer.SecurityPage",
           "Title": "Windows Security",
-          "Subtitle": "Windows Security",
+          "Subtitle": "Choose your Windows Security settings",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Security.png",
-          "HideItem": true
+          "HideItem": false
         }
       ]
     },
@@ -71,7 +71,7 @@
         {
           "UniqueId": "AutoOS.App.Views.Installer.InstallPage",
           "Title": "Install AutoOS",
-          "Subtitle": "Install AutoOS",
+          "Subtitle": "Start the AutoOS Installation",
           "ImagePath": "ms-appx:///Assets/FluentIcons/Sidebar/Install.png",
           "HideItem": true
         }

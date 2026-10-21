@@ -7,14 +7,15 @@
 	xmlns:dev="using:DevWinUI"
 	xmlns:local="using:AutoOS.App"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:uc="using:AutoOS.App.UserControls"
 	mc:Ignorable="d">
-	<dev:MainLandingPage
+	<uc:AllLandingPage
 		HeaderImage="{ThemeResource HeaderCover}"
 		HeaderImageHeight="400"
 		HeaderSubtitleText="Windows App SDK 2.5"
 		HeaderText="AutoOS Installer"
 		JsonNavigationService="{x:Bind local:App.Current.NavService}">
-		<dev:MainLandingPage.HeaderContent>
+		<uc:AllLandingPage.HeaderContent>
 			<StackPanel Orientation="Horizontal" Spacing="12">
 				<dev:HeaderTile
 					Title="AutoOS User Guide"
@@ -51,9 +52,6 @@
 					</dev:HeaderTile.Source>
 				</dev:HeaderTile>
 			</StackPanel>
-		</dev:MainLandingPage.HeaderContent>
-		<dev:MainLandingPage.FooterContent>
-			<StackPanel />
-		</dev:MainLandingPage.FooterContent>
-	</dev:MainLandingPage>
+		</uc:AllLandingPage.HeaderContent>
+	</uc:AllLandingPage>
 </Page>

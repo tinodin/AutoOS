@@ -82,7 +82,7 @@
 	<Thickness x:Key="NavigationViewItemBorderThickness">1,1,1,1</Thickness>
 	<x:Double x:Key="NavigationViewItemOnLeftMinHeight">36</x:Double>
 	<Thickness x:Key="NavigationViewCompactItemContentPresenterMargin">2,0,0,0</Thickness>
-	<Thickness x:Key="NavigationViewItemContentPresenterMargin">2,0,0,2</Thickness>
+	<Thickness x:Key="NavigationViewItemContentPresenterMargin">-2,0,0,2</Thickness>
 	<Thickness x:Key="NavigationViewItemExpandChevronMargin">0</Thickness>
 	<Thickness x:Key="NavigationViewItemExPadding">0</Thickness>
 

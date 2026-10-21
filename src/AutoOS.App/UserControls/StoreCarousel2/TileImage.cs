@@ -5,7 +5,7 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Media.Imaging;
 
-namespace AutoOS.App.UserControls.StoreCarousel2;
+namespace AutoOS.App.UserControls;
 
 public partial class TileImage : UserControl
 {

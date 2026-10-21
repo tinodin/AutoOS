@@ -3,7 +3,7 @@
                     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
                     xmlns:dev="using:DevWinUI"
                     xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
-                    xmlns:local="using:AutoOS.App.UserControls.StoreCarousel2"
+                    xmlns:local="using:AutoOS.App.UserControls"
                     xmlns:primitives="using:Microsoft.UI.Xaml.Controls.Primitives">
 
     <ResourceDictionary.ThemeDictionaries>

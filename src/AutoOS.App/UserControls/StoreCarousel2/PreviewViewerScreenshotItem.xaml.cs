@@ -2,7 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
 
-namespace AutoOS.App.UserControls.StoreCarousel2;
+namespace AutoOS.App.UserControls;
 
 public sealed partial class PreviewViewerScreenshotItem : UserControl
 {

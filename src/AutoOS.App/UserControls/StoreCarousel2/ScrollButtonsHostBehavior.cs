@@ -3,7 +3,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.Xaml.Interactivity;
 
-namespace AutoOS.App.UserControls.StoreCarousel2;
+namespace AutoOS.App.UserControls;
 
 public sealed partial class ScrollButtonsHostBehavior : Behavior<Grid>
 {

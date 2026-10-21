@@ -1,7 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.Xaml.Interactivity;
 
-namespace AutoOS.App.UserControls.StoreCarousel2;
+namespace AutoOS.App.UserControls;
 
 public abstract class ChangePropertyAction<TTarget, TValue> : DependencyObject, IAction
 {
