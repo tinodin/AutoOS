@@ -113,7 +113,7 @@ Dictionary<string, string?>? result = await IgdbHelper.SearchCovers(cleanName);
 												? entry.GetProperty("ratingContent")[0].GetString()
 												: null,
 						Description = data.GetProperty("summary").GetString(),
-						Screenshots = [.. entry.GetProperty("screenshots").EnumerateArray().Select(x => x.GetString() ?? "")],
+						Media = GameMediaModel.CreateScreenshots(entry.GetProperty("screenshots").EnumerateArray().Select(x => x.GetString())),
 						ReleaseDate = result["release_date"],
 						Size = sizeBytes >= 1024 * 1024 * 1024
 								? $"{sizeBytes / (1024d * 1024d * 1024d):F1} GB"

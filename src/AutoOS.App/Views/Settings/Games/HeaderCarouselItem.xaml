@@ -37,7 +37,7 @@
 								VerticalAlignment="Stretch"
 								AutomationProperties.AccessibilityView="Raw"
 								CornerRadius="{TemplateBinding CornerRadius}"
-								DecodePixelHeight="208"
+								DecodePixelHeight="320"
 								DecodePixelType="Logical"
 								IsCacheEnabled="True"
 								Source="{TemplateBinding ImageUrl}"

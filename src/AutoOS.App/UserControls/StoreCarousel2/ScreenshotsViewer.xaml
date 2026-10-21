@@ -1,0 +1,99 @@
+<UserControl x:Class="AutoOS.App.UserControls.StoreCarousel2.ScreenshotsViewer"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:dev="using:DevWinUI"
+             xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
+             xmlns:local="using:AutoOS.App.UserControls.StoreCarousel2"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <DataTemplate x:Key="VideoPlaySourceTemplate">
+            <Grid x:Name="VideoPlayerPreviewGrid">
+                <Grid.Children>
+                    <controls:ConstrainedBox x:Name="Shimmer" AspectRatio="16:9">
+                        <dev:Shimmer />
+                    </controls:ConstrainedBox>
+                    <Image>
+                        <interactivity:Interaction.Behaviors>
+                            <local:ImageOpenedEventTriggerBehavior>
+                                <local:ImageOpenedEventTriggerBehavior.Actions>
+                                    <local:ChangeVisibilityPropertyAction TargetObject="{Binding ElementName=PlayButton}" Value="Visible" />
+                                    <local:ChangeVisibilityPropertyAction TargetObject="{Binding ElementName=Shimmer}" Value="Collapsed" />
+                                </local:ImageOpenedEventTriggerBehavior.Actions>
+                            </local:ImageOpenedEventTriggerBehavior>
+                            <local:ImageFailedEventTriggerBehavior>
+                                <local:ImageFailedEventTriggerBehavior.Actions>
+                                    <local:ChangeVisibilityPropertyAction TargetObject="{Binding ElementName=Shimmer}" Value="Collapsed" />
+                                </local:ImageFailedEventTriggerBehavior.Actions>
+                            </local:ImageFailedEventTriggerBehavior>
+                        </interactivity:Interaction.Behaviors>
+                    </Image>
+                    <Button x:Name="PlayButton" Content="{StaticResource StoreGlyphPlay}" Style="{StaticResource VideoPlayButtonStyle}" Visibility="Collapsed" />
+                </Grid.Children>
+            </Grid>
+        </DataTemplate>
+
+        <local:ScreenshotDataTemplateSelector x:Key="ScreenshotTemplateSelector" AgeRestrictedBlockedDataTemplate="{StaticResource AgeRestrictedBlockedDataTemplate}" AgeRestrictedDataTemplate="{StaticResource AgeRestrictedDataTemplate}" ScreenshotDataTemplate="{StaticResource ScreenshotTileContentTemplate}" VideoItemDataTemplate="{StaticResource PreviewVideoThumbnailTemplate}" VideoPlayerTemplate="{StaticResource VideoPlaySourceTemplate}" />
+
+        <DataTemplate x:Key="PreviewVideoThumbnailTemplate">
+            <Grid x:Name="VideoPreviewImage">
+                <Grid.Children>
+                    <controls:ConstrainedBox x:Name="Shimmer" AspectRatio="16:9">
+                        <dev:Shimmer />
+                    </controls:ConstrainedBox>
+                    <Image>
+                        <interactivity:Interaction.Behaviors>
+                            <local:ImageOpenedEventTriggerBehavior>
+                                <local:ImageOpenedEventTriggerBehavior.Actions>
+                                    <local:ChangeVisibilityPropertyAction TargetObject="{Binding ElementName=PlayIcon}" Value="Visible" />
+                                    <local:ChangeVisibilityPropertyAction TargetObject="{Binding ElementName=Shimmer}" Value="Collapsed" />
+                                </local:ImageOpenedEventTriggerBehavior.Actions>
+                            </local:ImageOpenedEventTriggerBehavior>
+                            <local:ImageFailedEventTriggerBehavior>
+                                <local:ImageFailedEventTriggerBehavior.Actions>
+                                    <local:ChangeVisibilityPropertyAction TargetObject="{Binding ElementName=Shimmer}" Value="Collapsed" />
+                                </local:ImageFailedEventTriggerBehavior.Actions>
+                            </local:ImageFailedEventTriggerBehavior>
+                            <local:ViewDisplayedBehavior />
+                        </interactivity:Interaction.Behaviors>
+                    </Image>
+                    <Grid x:Name="PlayIcon" Width="40" Height="40" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed">
+                        <Ellipse Fill="{ThemeResource AcrylicInAppFillColorThinBrush}" />
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="{StaticResource StoreGlyphPlay}" />
+                    </Grid>
+                </Grid.Children>
+            </Grid>
+        </DataTemplate>
+    </UserControl.Resources>
+    <UserControl.Content>
+        <Grid>
+
+            <interactivity:Interaction.Behaviors>
+                <local:ScrollButtonsHostBehavior LeftScrollButton="{Binding ElementName=LeftScrollButton}" RightScrollButton="{Binding ElementName=RightScrollButton}" />
+            </interactivity:Interaction.Behaviors>
+            <Grid.Children>
+
+                <local:NoPointerWheelListView x:Name="ScreenshotTileList" Margin="0,0,0.5,0" Padding="12,0" local:ScrollViewerExtensions.AutoResetOffset="True" HorizontalScrollMode="Enabled" ItemContainerStyle="{StaticResource DefaultScreenshotContainerStyle}" ItemTemplateSelector="{StaticResource ScreenshotTemplateSelector}" ScrollViewer.HorizontalScrollBarVisibility="Hidden" ScrollViewer.HorizontalScrollMode="Auto" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollMode="Disabled" SelectionMode="None" Style="{StaticResource StaticListViewStyle}">
+                    <local:NoPointerWheelListView.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <ItemsStackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </local:NoPointerWheelListView.ItemsPanel>
+                </local:NoPointerWheelListView>
+                <Button x:Name="LeftScrollButton" AutomationProperties.AccessibilityView="Raw" AutomationProperties.AutomationId="LeftScrollButton" Style="{StaticResource LeftArrowScrollViewerButtonStyle}" Visibility="Collapsed">
+                    <Button.Command>
+                        <local:ScrollCommand ScrollDirection="Left" />
+                    </Button.Command>
+                </Button>
+                <Button x:Name="RightScrollButton" AutomationProperties.AccessibilityView="Raw" AutomationProperties.AutomationId="RightScrollButton" Style="{StaticResource RightArrowScrollViewerButtonStyle}" Visibility="Collapsed">
+                    <Button.Command>
+                        <local:ScrollCommand ScrollDirection="Right" />
+                    </Button.Command>
+                </Button>
+            </Grid.Children>
+        </Grid>
+    </UserControl.Content>
+</UserControl>

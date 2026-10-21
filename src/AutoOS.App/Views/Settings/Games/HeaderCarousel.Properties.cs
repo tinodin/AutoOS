@@ -1,6 +1,5 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
-using Windows.Media.Core;
 
 namespace AutoOS.App.Views.Settings.Games;
 
@@ -154,23 +153,14 @@ public partial class HeaderCarousel
 	public static readonly DependencyProperty DescriptionProperty =
 		DependencyProperty.Register("Description", typeof(string), typeof(HeaderCarousel), new PropertyMetadata(null));
 
-	public IList<string> Screenshots
+	public ObservableCollection<object> Media
 	{
-		get => (IList<string>)GetValue(ScreenshotsProperty);
-		set => SetValue(ScreenshotsProperty, value);
+		get => (ObservableCollection<object>)GetValue(MediaProperty);
+		set => SetValue(MediaProperty, value);
 	}
 
-	public static readonly DependencyProperty ScreenshotsProperty =
-		DependencyProperty.Register(nameof(Screenshots), typeof(IList<string>), typeof(HeaderCarousel), new PropertyMetadata(new List<string>()));
-
-	public IList<MediaSource> Videos
-	{
-		get => (IList<MediaSource>)GetValue(VideosProperty);
-		set => SetValue(VideosProperty, value);
-	}
-
-	public static readonly DependencyProperty VideosProperty =
-		DependencyProperty.Register(nameof(Videos), typeof(IList<MediaSource>), typeof(HeaderCarousel), new PropertyMetadata(new List<MediaSource>()));
+	public static readonly DependencyProperty MediaProperty =
+		DependencyProperty.Register(nameof(Media), typeof(ObservableCollection<object>), typeof(HeaderCarousel), new PropertyMetadata(null));
 
 	public string InstallLocation
 	{

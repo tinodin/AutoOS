@@ -165,14 +165,14 @@ public static class DpopHelper
 	{
 		signature = null;
 
-		if (PInvoke.NCryptOpenStorageProvider(out NCryptFreeObjectSafeHandle provider, SoftwareKeyStorageProviderName, 0).Failed)
+		if (PInvoke.NCryptOpenStorageProvider(out NCryptFreeObjectNCRYPT_PROV_HANDLESafeHandle provider, SoftwareKeyStorageProviderName, 0).Failed)
 		{
 			return false;
 		}
 
 		using (provider)
 		{
-			if (PInvoke.NCryptOpenKey(provider, out NCryptFreeObjectSafeHandle key, keyName, 0, 0).Failed)
+			if (PInvoke.NCryptOpenKey(provider, out NCryptFreeObjectNCRYPT_KEY_HANDLESafeHandle key, keyName, 0, 0).Failed)
 			{
 				return false;
 			}

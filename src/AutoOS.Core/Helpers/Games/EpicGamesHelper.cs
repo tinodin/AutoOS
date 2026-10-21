@@ -1192,23 +1192,82 @@ public static partial class EpicGamesHelper
 					if (!sizeBytes.HasValue)
 						sizeBytes = new DirectoryInfo(installLocation).EnumerateFiles("*", System.IO.SearchOption.AllDirectories).Sum(fi => fi.Length);
 
-					// get screenshots
+					// get media
 					var keyImagesList = (offerEntry as JsonObject)?["keyImages"] as JsonArray;
-					var screenshots = new List<string>();
+					var media = new List<GameMediaModel>();
+
 					foreach (JsonNode? image in keyImagesList ?? [])
 					{
-						if ((image as JsonObject)?["type"]?.GetValue<string>() == "featuredMedia")
+						string? type = (image as JsonObject)?["type"]?.GetValue<string>();
+						string? url = (image as JsonObject)?["url"]?.GetValue<string>();
+
+						if (type == "featuredMedia")
 						{
-							string? url = (image as JsonObject)?["url"]?.GetValue<string>();
-							if (!string.IsNullOrEmpty(url))
+							if (!string.IsNullOrEmpty(url) && !media.Any(existing => existing.Url == url))
 							{
-								screenshots.Add(url);
+								media.Add(new GameMediaModel { Url = url, MediaType = GameMediaType.Screenshot });
+							}
+						}
+						else if (type == "heroCarouselVideo" && !string.IsNullOrEmpty(url))
+						{
+							bool isQuicksilver = url.StartsWith("com.epicgames.video.qs://", StringComparison.OrdinalIgnoreCase);
+							string? videoId = null;
+							string? thumbnailUrl = null;
+							int schemeEnd = url.IndexOf("://", StringComparison.Ordinal);
+							if (schemeEnd >= 0)
+							{
+								string value = url[(schemeEnd + 3)..];
+								int queryIndex = value.IndexOf('?');
+								videoId = queryIndex >= 0 ? value[..queryIndex] : value;
+								if (queryIndex >= 0)
+								{
+									foreach (string parameter in value[(queryIndex + 1)..].Split('&', StringSplitOptions.RemoveEmptyEntries))
+									{
+										int equalsIndex = parameter.IndexOf('=');
+										if (equalsIndex > 0 && parameter[..equalsIndex] == "cover")
+										{
+											thumbnailUrl = Uri.UnescapeDataString(parameter[(equalsIndex + 1)..]);
+											break;
+										}
+									}
+								}
+							}
+
+							string? videoUrl = null;
+							if (!string.IsNullOrEmpty(videoId))
+							{
+								string endpoint = isQuicksilver ? "qs-videos" : "videos";
+								TlsResponse videoResponse = await tlsClient.Value.GetAsync($"https://store.epicgames.com/proxy/api/video/{endpoint}/{videoId}").ConfigureAwait(false);
+								if (videoResponse.IsSuccess && !string.IsNullOrEmpty(videoResponse.Body) && JsonNode.Parse(videoResponse.Body) is JsonObject videoJson)
+								{
+									IEnumerable<string?>? outputs = null;
+									if (videoJson["output"] is JsonArray quickOutputs)
+										outputs = quickOutputs.Select(output => output?.GetValue<string>());
+									else if (videoJson["outputs"] is JsonArray legacyOutputs)
+										outputs = legacyOutputs.OfType<JsonObject>().Select(output => output["url"]?.GetValue<string>());
+
+									videoUrl = outputs?
+										.Where(outputUrl => !string.IsNullOrEmpty(outputUrl) && (outputUrl.Contains(".m3u8", StringComparison.OrdinalIgnoreCase) || outputUrl.Contains(".mp4", StringComparison.OrdinalIgnoreCase) || outputUrl.Contains(".webm", StringComparison.OrdinalIgnoreCase)))
+										.Where(outputUrl => !outputUrl!.Contains(".mpd", StringComparison.OrdinalIgnoreCase))
+										.OrderBy(outputUrl => outputUrl!.Contains(".m3u8", StringComparison.OrdinalIgnoreCase) ? 0 : outputUrl.Contains(".mp4", StringComparison.OrdinalIgnoreCase) ? 1 : 2)
+										.FirstOrDefault();
+								}
+							}
+
+							if (!string.IsNullOrEmpty(videoUrl) && !media.Any(existing => existing.Url == videoUrl))
+							{
+								media.Add(new GameMediaModel { Url = videoUrl, ThumbnailUrl = thumbnailUrl, MediaType = GameMediaType.Video });
+							}
+							else if (!string.IsNullOrEmpty(thumbnailUrl) && !media.Any(existing => existing.Url == thumbnailUrl))
+							{
+								media.Add(new GameMediaModel { Url = thumbnailUrl, MediaType = GameMediaType.Screenshot });
 							}
 						}
 					}
 
-					if (screenshots.Count == 0 && !string.IsNullOrEmpty(productSlug))
+					if (media.Count == 0 && !string.IsNullOrEmpty(productSlug))
 					{
+						var cmsMedia = new List<GameMediaModel>();
 						string cmsUrl = $"https://store-content-ipv4.ak.epicgames.com/api/en-US/content/products/{productSlug}";
 						TlsResponse cmsResponse = await tlsClient.Value.GetAsync(cmsUrl).ConfigureAwait(false);
 						if (cmsResponse.IsSuccess)
@@ -1223,90 +1282,79 @@ public static partial class EpicGamesHelper
 									{
 										foreach (JsonNode? item in carouselItems)
 										{
-											if (item == null)
+											if (item is not JsonObject carouselItem)
 												continue;
 
-											string? src = ((item as JsonObject)?["image"] as JsonObject)?["src"]?.GetValue<string>();
-											if (!string.IsNullOrEmpty(src))
+											string? imageUrl = (carouselItem["image"] as JsonObject)?["src"]?.GetValue<string>();
+											JsonNode? videoNode = carouselItem["video"];
+											string? thumbnailUrl = (videoNode as JsonObject)?["poster"]?.GetValue<string>();
+											thumbnailUrl ??= (videoNode as JsonObject)?["thumbnail"]?.GetValue<string>();
+											string? videoUrl = null;
+
+											if ((videoNode as JsonObject)?["recipes"]?.GetValue<string>() is string recipesJson && !string.IsNullOrEmpty(recipesJson))
 											{
-												if (!screenshots.Contains(src))
+												try
 												{
-													screenshots.Add(src);
-												}
-												continue;
-											}
-
-											JsonNode? videoNode = (item as JsonObject)?["video"];
-											if (videoNode != null)
-											{
-												string? poster = (videoNode as JsonObject)?["poster"]?.GetValue<string>();
-												if (!string.IsNullOrEmpty(poster))
-												{
-													if (!screenshots.Contains(poster))
+													if (JsonNode.Parse(recipesJson) is JsonObject recipes)
 													{
-														screenshots.Add(poster);
-													}
-													continue;
-												}
+														if (recipes["thumbnail"] is JsonValue thumbnailValue && thumbnailValue.TryGetValue(out string? thumbnailText))
+															thumbnailUrl ??= thumbnailText;
 
-												string? videoThumb = (videoNode as JsonObject)?["thumbnail"]?.GetValue<string>();
-												if (!string.IsNullOrEmpty(videoThumb))
-												{
-													if (!screenshots.Contains(videoThumb))
-													{
-														screenshots.Add(videoThumb);
-													}
-													continue;
-												}
-
-												string? recipesStr = (videoNode as JsonObject)?["recipes"]?.GetValue<string>();
-												if (!string.IsNullOrEmpty(recipesStr))
-												{
-													var recipesJson = JsonNode.Parse(recipesStr);
-													if (recipesJson != null)
-													{
-														string? thumbnail = (recipesJson as JsonObject)?["thumbnail"]?.GetValue<string>();
-														if (!string.IsNullOrEmpty(thumbnail))
+														if (recipes["output"] is JsonArray recipeOutputs)
 														{
-															if (!screenshots.Contains(thumbnail))
-															{
-																screenshots.Add(thumbnail);
-															}
-															continue;
+															videoUrl = recipeOutputs
+																.Select(output => output is JsonValue value && value.TryGetValue(out string? text) ? text : null)
+																.Where(outputUrl => !string.IsNullOrEmpty(outputUrl) && (outputUrl.Contains(".m3u8", StringComparison.OrdinalIgnoreCase) || outputUrl.Contains(".mp4", StringComparison.OrdinalIgnoreCase)))
+																.OrderBy(outputUrl => outputUrl!.Contains(".m3u8", StringComparison.OrdinalIgnoreCase) ? 0 : 1)
+																.FirstOrDefault();
 														}
 
-														if (recipesJson is JsonObject obj)
+														if (string.IsNullOrEmpty(videoUrl))
 														{
-															foreach (KeyValuePair<string, JsonNode?> kvp in obj)
+															foreach (KeyValuePair<string, JsonNode?> recipe in recipes)
 															{
-																if (kvp.Value is JsonArray recipeArray)
+																if (recipe.Value is not JsonArray recipeArray)
+																	continue;
+
+																foreach (JsonNode? recipeItem in recipeArray)
 																{
-																	foreach (JsonNode? recipe in recipeArray)
+																	if ((recipeItem as JsonObject)?["outputs"] is not JsonArray recipeItemOutputs)
+																		continue;
+
+																	foreach (JsonNode? output in recipeItemOutputs)
 																	{
-																		JsonArray? outputs = (recipe as JsonObject)?["outputs"] as JsonArray;
-																		if (outputs != null)
+																		string? outputUrl = (output as JsonObject)?["url"]?.GetValue<string>();
+																		if (!string.IsNullOrEmpty(outputUrl) && (outputUrl.Contains(".m3u8", StringComparison.OrdinalIgnoreCase) || outputUrl.Contains(".mp4", StringComparison.OrdinalIgnoreCase)))
 																		{
-																			foreach (JsonNode? output in outputs)
-																			{
-																				if ((output as JsonObject)?["key"]?.GetValue<string>() == "thumbnail")
-																				{
-																					string? url = (output as JsonObject)?["url"]?.GetValue<string>();
-																					if (!string.IsNullOrEmpty(url))
-																					{
-																						if (!screenshots.Contains(url))
-																						{
-																							screenshots.Add(url);
-																						}
-																					}
-																				}
-																			}
+																			videoUrl ??= outputUrl;
+																			if (outputUrl.Contains(".m3u8", StringComparison.OrdinalIgnoreCase))
+																				videoUrl = outputUrl;
 																		}
+
+																		if ((output as JsonObject)?["key"]?.GetValue<string>() == "thumbnail" && !string.IsNullOrEmpty(outputUrl))
+																			thumbnailUrl ??= outputUrl;
 																	}
 																}
 															}
 														}
 													}
 												}
+												catch (JsonException)
+												{
+												}
+											}
+
+											if (!string.IsNullOrEmpty(videoUrl) && !cmsMedia.Any(existing => existing.Url == videoUrl))
+											{
+												cmsMedia.Add(new GameMediaModel { Url = videoUrl, ThumbnailUrl = imageUrl ?? thumbnailUrl, MediaType = GameMediaType.Video });
+											}
+											else if (!string.IsNullOrEmpty(imageUrl) && !cmsMedia.Any(existing => existing.Url == imageUrl))
+											{
+												cmsMedia.Add(new GameMediaModel { Url = imageUrl, MediaType = GameMediaType.Screenshot });
+											}
+											else if (!string.IsNullOrEmpty(thumbnailUrl) && !cmsMedia.Any(existing => existing.Url == thumbnailUrl))
+											{
+												cmsMedia.Add(new GameMediaModel { Url = thumbnailUrl, MediaType = GameMediaType.Screenshot });
 											}
 										}
 									}
@@ -1316,23 +1364,23 @@ public static partial class EpicGamesHelper
 										foreach (JsonNode? img in galleryImages)
 										{
 											string? src = (img as JsonObject)?["src"]?.GetValue<string>();
-											if (!string.IsNullOrEmpty(src))
+											if (!string.IsNullOrEmpty(src) && !cmsMedia.Any(existing => existing.Url == src))
 											{
-												if (!screenshots.Contains(src))
-												{
-													screenshots.Add(src);
-												}
+												cmsMedia.Add(new GameMediaModel { Url = src, MediaType = GameMediaType.Screenshot });
 											}
 										}
 									}
 
-									if (screenshots.Count > 0)
+									if (cmsMedia.Count > 0)
 									{
 										break;
 									}
 								}
 							}
 						}
+
+						if (cmsMedia.Count > 0)
+							media = cmsMedia;
 					}
 
 					string? ratingDescription = ((ageRatingData as JsonObject)?["ageRating"] as JsonObject)?["contentDescriptors"] is JsonArray ratingDescriptors
@@ -1369,7 +1417,7 @@ public static partial class EpicGamesHelper
 						AgeRatingDescription = ratingDescription,
 						Elements = interactiveElements,
 						Description = description,
-						Screenshots = screenshots,
+						Media = media,
 						ReleaseDate = releaseDate.ToString("d"),
 						Size = sizeBytes >= 1_000_000_000 ? $"{sizeBytes.Value / 1_000_000_000d:F1} GB" : $"{sizeBytes.Value / 1_000_000d:F2} MB",
 						Version = currentVersion

@@ -2,6 +2,7 @@ using System.Globalization;
 using System.ServiceProcess;
 using System.Text;
 using System.Text.RegularExpressions;
+using AutoOS.App.UserControls.StoreCarousel2;
 using AutoOS.Core.Data.Models.Games;
 using AutoOS.Core.Helpers.Games;
 using AutoOS.Core.Helpers.Logging;
@@ -47,6 +48,8 @@ public partial class HeaderCarousel : ItemsControl
 	private ScrollViewer Metadata_ScrollViewer = null!;
 
 	private Card Screenshots_Card = null!;
+	private StoreCarousel2 ScreenshotsCarousel = null!;
+	private Button ShowAllIconButton = null!;
 	//private GameGallery Screenshots_Gallery;
 	//private ScrollViewer Videos_ScrollViewer;
 
@@ -95,6 +98,7 @@ public partial class HeaderCarousel : ItemsControl
 	private readonly DispatcherTimer deselectionTimer = new();
 	private readonly List<int> numbers = [];
 	private HeaderCarouselItem? selectedTile;
+	private CancellationTokenSource? _tileUpdateCancellation;
 	private int currentIndex;
 
 	private BlurEffectManager? _blurManager;
@@ -204,6 +208,10 @@ public partial class HeaderCarousel : ItemsControl
 		ElementsText = (TextBlock)GetTemplateChild("ElementsText")!;
 
 		Screenshots_Card = (Card)GetTemplateChild("Screenshots_Card")!;
+		ScreenshotsCarousel = (StoreCarousel2)GetTemplateChild("ScreenshotsCarousel")!;
+		ShowAllIconButton = (Button)GetTemplateChild("ShowAllIconButton")!;
+		ShowAllIconButton.Click -= ShowAllIconButton_Click;
+		ShowAllIconButton.Click += ShowAllIconButton_Click;
 		//Screenshots_Gallery = GetTemplateChild("Screenshots_Gallery") as GameGallery;
 		//Videos_ScrollViewer = GetTemplateChild("Videos_ScrollViewer") as ScrollViewer;
 
@@ -223,6 +231,8 @@ public partial class HeaderCarousel : ItemsControl
 
 		InitializeGamepadSupport();
 	}
+
+	private void ShowAllIconButton_Click(object sender, RoutedEventArgs e) => ScreenshotsCarousel.OpenPreview();
 
 	private void InitializeGamepadSupport()
 	{
@@ -683,7 +693,7 @@ public partial class HeaderCarousel : ItemsControl
 		if (Items[0] is HeaderCarouselItem tile)
 		{
 			selectedTile = tile;
-			SelectTile(true);
+			SelectTile(true, isImmediate: true);
 			(ContainerFromIndex(0) as Control)?.Focus(FocusState.Programmatic);
 			PageTitle.RequestedTheme = ElementTheme.Dark;
 
@@ -731,7 +741,7 @@ public partial class HeaderCarousel : ItemsControl
 				AgeRatingDescription = game.AgeRatingDescription ?? "",
 				Elements = game.Elements ?? "",
 				Description = game.Description ?? "",
-				Screenshots = game.Screenshots,
+				MediaItems = game.Media,
 				ReleaseDate = game.ReleaseDate ?? "",
 				Size = game.Size ?? "",
 				Version = game.Version ?? "",
@@ -762,6 +772,7 @@ public partial class HeaderCarousel : ItemsControl
 	{
 		_activeInstances.Remove(this);
 
+		CancelTileUpdate();
 		UnsubscribeToEvents();
 
 		ElementSoundPlayer.State = ElementSoundPlayerState.Off;
@@ -948,138 +959,214 @@ public partial class HeaderCarousel : ItemsControl
 		return nextIndex;
 	}
 
-	private void SetTileVisuals(bool playSound = false)
+	private void SetTileVisuals(bool playSound = false, bool isImmediate = false)
 	{
-		if (selectedTile != null)
+		if (selectedTile == null)
 		{
-			selectedTile.IsSelected = true;
-			if (playSound)
-				ElementSoundPlayer.Play(ElementSoundKind.Focus);
+			CancelTileUpdate();
+			return;
+		}
 
-			if (!string.IsNullOrEmpty(selectedTile.BackgroundImageUrl) && backDropImage.ImageUrl?.ToString() != selectedTile.BackgroundImageUrl)
-				backDropImage.ImageUrl = new Uri(selectedTile.BackgroundImageUrl);
+		HeaderCarouselItem tile = selectedTile;
+		tile.IsSelected = true;
+		if (playSound)
+			ElementSoundPlayer.Play(ElementSoundKind.Focus);
 
-			if (MetadataGrid.Visibility == Visibility.Collapsed)
-				MetadataGrid.Visibility = Visibility.Visible;
+		if (!string.IsNullOrEmpty(tile.BackgroundImageUrl) && backDropImage.ImageUrl?.ToString() != tile.BackgroundImageUrl)
+			backDropImage.ImageUrl = new Uri(tile.BackgroundImageUrl);
 
-			Metadata_ScrollViewer.ChangeView(null, 0, null);
+		if (MetadataGrid.Visibility == Visibility.Collapsed)
+			MetadataGrid.Visibility = Visibility.Visible;
 
-			Play?.XYFocusUp = selectedTile!;
-			Update?.XYFocusUp = selectedTile!;
-			StopProcesses?.XYFocusUp = selectedTile!;
-			RestartProcesses?.XYFocusUp = selectedTile!;
+		Metadata_ScrollViewer.ChangeView(null, 0, null);
 
-			if (selectedTile != null && SearchBox != null)
-				selectedTile.XYFocusUp = SearchBox;
+		Play?.XYFocusUp = tile;
+		Update?.XYFocusUp = tile;
+		StopProcesses?.XYFocusUp = tile;
+		RestartProcesses?.XYFocusUp = tile;
 
-			SearchBox?.XYFocusDown = selectedTile!;
-			Sort?.XYFocusDown = selectedTile!;
-			EpicGamesButton?.XYFocusDown = selectedTile!;
-			SteamButton?.XYFocusDown = selectedTile!;
+		if (SearchBox != null)
+			tile.XYFocusUp = SearchBox;
 
-			Title = selectedTile?.Title ?? "";
-			Developers = selectedTile?.Developers ?? "";
+		SearchBox?.XYFocusDown = tile;
+		Sort?.XYFocusDown = tile;
+		EpicGamesButton?.XYFocusDown = tile;
+		SteamButton?.XYFocusDown = tile;
 
-			UpdateIsAvailable = selectedTile?.UpdateIsAvailable ?? false;
+		if (isImmediate)
+		{
+			CancelTileUpdate();
+			ApplyTileUpdate(tile, CancellationToken.None);
+		}
+		else
+		{
+			QueueTileUpdate(tile);
+		}
+	}
 
-			Rating = selectedTile?.Rating is double r && r != 0.0 ? r : Rating;
-			RoundedRating = Math.Round((selectedTile?.Rating ?? 0.0), 1).ToString("0.0", CultureInfo.InvariantCulture);
-			PlayTime = selectedTile?.PlayTime ?? "";
-			AgeRatingUrl = selectedTile?.AgeRatingUrl ?? "";
-			AgeRatingTitle = selectedTile?.AgeRatingTitle ?? "";
-			AgeRatingDescription = selectedTile?.AgeRatingDescription ?? "";
-			AgeRatingDescriptionText.Visibility = string.IsNullOrEmpty(AgeRatingDescription)
-				? Visibility.Collapsed
-				: Visibility.Visible;
+	private void CancelTileUpdate()
+	{
+		_tileUpdateCancellation?.Cancel();
+		_tileUpdateCancellation?.Dispose();
+		_tileUpdateCancellation = null;
+	}
 
-			Elements = selectedTile?.Elements ?? "";
-			ElementsText.Visibility = string.IsNullOrEmpty(Elements)
-				? Visibility.Collapsed
-				: Visibility.Visible;
+	private void QueueTileUpdate(HeaderCarouselItem tile)
+	{
+		CancelTileUpdate();
 
-			Genres = selectedTile?.Genres ?? [];
-			Features = selectedTile?.Features ?? [];
-			Description = selectedTile?.Description ?? "";
+		var cancellation = new CancellationTokenSource();
+		_tileUpdateCancellation = cancellation;
+		CancellationToken cancellationToken = cancellation.Token;
 
-			InstallLocation = selectedTile?.InstallLocation ?? "";
+		DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
+		{
+			if (cancellationToken.IsCancellationRequested)
+				return;
 
-			Launcher = selectedTile?.Launcher ?? "";
+			ApplyTileUpdate(tile, cancellationToken);
+		});
+	}
 
-			CatalogItemId = selectedTile?.CatalogItemId ?? "";
-			CatalogNamespace = selectedTile?.CatalogNamespace ?? "";
-			AppName = selectedTile?.AppName ?? "";
-			LaunchExecutable = selectedTile?.LaunchExecutable ?? "";
-			LaunchCommand = selectedTile?.LaunchCommand ?? "";
-			ProcessNames = selectedTile?.ProcessNames!;
-			ArtifactId = selectedTile?.ArtifactId ?? "";
+	private void ApplyTileUpdate(HeaderCarouselItem tile, CancellationToken cancellationToken)
+	{
+		ApplyTileDetails(tile);
+		CheckGameRunning();
 
-			GameID = selectedTile?.GameID ?? "";
+		ObservableCollection<object> media = CreateMediaItems(tile.MediaItems);
+		if (cancellationToken.IsCancellationRequested)
+			return;
 
-			LauncherLocation = selectedTile?.LauncherLocation ?? "";
-			DataLocation = selectedTile?.DataLocation ?? "";
-			GameLocation = selectedTile?.GameLocation ?? "";
+		Media = media;
+		Screenshots_Card.Visibility = media.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+	}
 
-			ReleaseDate = selectedTile?.ReleaseDate ?? "";
-			Size = selectedTile?.Size ?? "";
-			Version = selectedTile?.Version ?? "";
+	private void ApplyTileDetails(HeaderCarouselItem tile)
+	{
+		Title = tile.Title ?? "";
+		Developers = tile.Developers ?? "";
 
-			InfoItems.Clear();
+		UpdateIsAvailable = tile.UpdateIsAvailable;
 
+		Rating = tile.Rating != 0.0 ? tile.Rating : Rating;
+		RoundedRating = Math.Round(tile.Rating, 1).ToString("0.0", CultureInfo.InvariantCulture);
+		PlayTime = tile.PlayTime ?? "";
+		AgeRatingUrl = tile.AgeRatingUrl ?? "";
+		AgeRatingTitle = tile.AgeRatingTitle ?? "";
+		AgeRatingDescription = tile.AgeRatingDescription ?? "";
+		AgeRatingDescriptionText.Visibility = string.IsNullOrEmpty(tile.AgeRatingDescription)
+			? Visibility.Collapsed
+			: Visibility.Visible;
+
+		Elements = tile.Elements ?? "";
+		ElementsText.Visibility = string.IsNullOrEmpty(tile.Elements)
+			? Visibility.Collapsed
+			: Visibility.Visible;
+
+		Genres = tile.Genres ?? [];
+		Features = tile.Features ?? [];
+		Description = tile.Description ?? "";
+
+		InstallLocation = tile.InstallLocation ?? "";
+
+		Launcher = tile.Launcher ?? "";
+
+		CatalogItemId = tile.CatalogItemId ?? "";
+		CatalogNamespace = tile.CatalogNamespace ?? "";
+		AppName = tile.AppName ?? "";
+		LaunchExecutable = tile.LaunchExecutable ?? "";
+		LaunchCommand = tile.LaunchCommand ?? "";
+		ProcessNames = tile.ProcessNames!;
+		ArtifactId = tile.ArtifactId ?? "";
+
+		GameID = tile.GameID ?? "";
+
+		LauncherLocation = tile.LauncherLocation ?? "";
+		DataLocation = tile.DataLocation ?? "";
+		GameLocation = tile.GameLocation ?? "";
+
+		ReleaseDate = tile.ReleaseDate ?? "";
+		Size = tile.Size ?? "";
+		Version = tile.Version ?? "";
+
+		InfoItems.Clear();
+
+		InfoItems.Add(new InfoItem
+		{
+			Label = "Published by",
+			Value = tile.Developers ?? "",
+			PathData = (Geometry)XamlBindingHelper.ConvertValue(typeof(Geometry), Application.Current.Resources["PackageIconPath"]),
+			IconType = InfoIconType.PathIcon
+		});
+
+		InfoItems.Add(new InfoItem
+		{
+			Label = "Release date",
+			Value = tile.ReleaseDate ?? "",
+			Glyph = "\uE787",
+			IconType = InfoIconType.FontIcon
+		});
+
+		InfoItems.Add(new InfoItem
+		{
+			Label = "Approximate size",
+			Value = tile.Size ?? "",
+			Glyph = "\uECAA",
+			IconType = InfoIconType.FontIcon
+		});
+
+		if (!string.IsNullOrEmpty(tile.Version))
+		{
 			InfoItems.Add(new InfoItem
 			{
-				Label = "Published by",
-				Value = Developers,
-				PathData = (Geometry)XamlBindingHelper.ConvertValue(typeof(Geometry), Application.Current.Resources["PackageIconPath"]),
+				Label = "Installed version",
+				Value = tile.Version,
+				PathData = (Geometry)XamlBindingHelper.ConvertValue(typeof(Geometry), Application.Current.Resources["VersionIconPath"]),
 				IconType = InfoIconType.PathIcon
 			});
+		}
 
-			InfoItems.Add(new InfoItem
-			{
-				Label = "Release date",
-				Value = ReleaseDate,
-				Glyph = "\uE787",
-				IconType = InfoIconType.FontIcon
-			});
+		InfoItems.Add(new InfoItem
+		{
+			Label = "Install location",
+			IsHyperlink = true,
+			Hyperlink = tile.InstallLocation ?? "",
+			Glyph = "\uE8B7",
+			IconType = InfoIconType.FontIcon
+		});
+	}
 
-			InfoItems.Add(new InfoItem
-			{
-				Label = "Approximate size",
-				Value = Size,
-				Glyph = "\uECAA",
-				IconType = InfoIconType.FontIcon
-			});
+	private static ObservableCollection<object> CreateMediaItems(IList<GameMediaModel>? mediaItems)
+	{
+		var media = new ObservableCollection<object>();
 
-			if (!string.IsNullOrEmpty(Version))
+		foreach (GameMediaModel mediaItem in mediaItems ?? [])
+		{
+			if (string.IsNullOrEmpty(mediaItem.Url) || !Uri.TryCreate(mediaItem.Url, UriKind.RelativeOrAbsolute, out Uri? uri))
+				continue;
+
+			if (mediaItem.MediaType == GameMediaType.Video)
 			{
-				InfoItems.Add(new InfoItem
+				Uri? thumbnail = Uri.TryCreate(mediaItem.ThumbnailUrl, UriKind.RelativeOrAbsolute, out Uri? thumbnailUri) ? thumbnailUri : null;
+
+				media.Add(new VideoPlayerSource
 				{
-					Label = "Installed version",
-					Value = Version,
-					PathData = (Geometry)XamlBindingHelper.ConvertValue(typeof(Geometry), Application.Current.Resources["VersionIconPath"]),
-					IconType = InfoIconType.PathIcon
+					Source = uri,
+					ImageUri = thumbnail,
+					Title = $"Video {media.Count + 1}"
 				});
 			}
-
-			InfoItems.Add(new InfoItem
+			else
 			{
-				Label = "Install location",
-				IsHyperlink = true,
-				Hyperlink = InstallLocation,
-				Glyph = "\uE8B7",
-				IconType = InfoIconType.FontIcon
-			});
-
-			DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, async () =>
-			{
-				CheckGameRunning();
-				Screenshots = selectedTile?.Screenshots!;
-				Screenshots_Card.Visibility = (Screenshots?.Count > 0) ? Visibility.Visible : Visibility.Collapsed;
-				//Screenshots_Gallery.ResetScrollPosition();
-
-				//Videos = selectedTile?.Videos;
-				//Videos_ScrollViewer.Visibility = (Videos?.Count > 0) ? Visibility.Visible : Visibility.Collapsed;
-			});
+				media.Add(new ScreenshotTileItem
+				{
+					ImageUri = uri,
+					Title = $"Screenshot {media.Count + 1}"
+				});
+			}
 		}
+
+		return media;
 	}
 
 	private void Tile_PointerEntered(object sender, PointerRoutedEventArgs e)
@@ -1100,7 +1187,7 @@ public partial class HeaderCarousel : ItemsControl
 		}
 	}
 
-	private void SelectTile(bool playSound = false)
+	private void SelectTile(bool playSound = false, bool isImmediate = false)
 	{
 		selectionTimer.Stop();
 
@@ -1111,7 +1198,7 @@ public partial class HeaderCarousel : ItemsControl
 
 		selectedTile?.IsSelected = true;
 
-		SetTileVisuals(playSound);
+		SetTileVisuals(playSound, isImmediate);
 	}
 
 	private void Tile_GotFocus(object sender, RoutedEventArgs e)

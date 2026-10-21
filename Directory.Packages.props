@@ -7,20 +7,23 @@
     <PackageVersion Include="CommunityToolkit.Labs.WinUI.Controls.DataTable" Version="0.1.260915-build.2673" />
     <PackageVersion Include="CommunityToolkit.Labs.WinUI.Controls.MarkdownTextBlock" Version="0.1.260915-build.2673" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageVersion Include="CommunityToolkit.WinUI.Animations" Version="8.3.260402-preview2" />
     <PackageVersion Include="CommunityToolkit.WinUI.Controls.HeaderedControls" Version="8.3.260402-preview2" />
     <PackageVersion Include="CommunityToolkit.WinUI.Controls.Primitives" Version="8.3.260402-preview2" />
     <PackageVersion Include="CommunityToolkit.WinUI.Controls.TabbedCommandBar" Version="8.3.260402-preview2" />
     <PackageVersion Include="CommunityToolkit.WinUI.Converters" Version="8.3.260402-preview2" />
+    <PackageVersion Include="CommunityToolkit.WinUI.Media" Version="8.3.260402-preview2" />
     <PackageVersion Include="DevWinUI" Version="10.8.0" />
     <PackageVersion Include="Downloader" Version="5.10.1" />
     <PackageVersion Include="LevelDBSharp" Version="1.0.0" />
     <PackageVersion Include="Microsoft.Data.Sqlite" Version="11.0.0-preview.5.26302.115" />
     <PackageVersion Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="4.0.0" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0-rc.2.26504.105" />
-    <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.363" />
+    <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.366" />
     <PackageVersion Include="Microsoft.Windows.CsWinRT" Version="[2.3.0-prerelease.251115.2]" />
     <PackageVersion Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.29648.1000-preview" />
     <PackageVersion Include="Microsoft.WindowsAppSDK" Version="2.5.4-experimental" />
+    <PackageVersion Include="Microsoft.Xaml.Behaviors.WinUI.Managed" Version="3.0.1" />
     <PackageVersion Include="Newtonsoft.Json" Version="14.0.1-beta2" />
     <PackageVersion Include="nucs.JsonSettings" Version="2.3.2" />
     <PackageVersion Include="nucs.JsonSettings.AutoSave" Version="2.3.2" />
@@ -30,8 +33,8 @@
     <PackageVersion Include="Snappier" Version="1.3.1" />
     <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />
     <PackageVersion Include="System.ServiceProcess.ServiceController" Version="11.0.0-rc.2.26504.105" />
-    <PackageVersion Include="Syncfusion.Chart.WinUI" Version="35.1.40" />
-    <PackageVersion Include="Syncfusion.Grid.WinUI" Version="35.1.40" />
+    <PackageVersion Include="Syncfusion.Chart.WinUI" Version="35.1.41" />
+    <PackageVersion Include="Syncfusion.Grid.WinUI" Version="35.1.41" />
     <PackageVersion Include="ValveKeyValue" Version="0.72.0.534" />
   </ItemGroup>
 </Project>

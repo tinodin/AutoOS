@@ -1,0 +1,27 @@
+<UserControl x:Class="AutoOS.App.UserControls.StoreCarousel2.TileImage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <SolidColorBrush x:Key="ColoredBackplateBrush" x:Name="ColoredBackplateBrush" />
+    </UserControl.Resources>
+
+    <Grid x:Name="RootGrid" Opacity="0">
+        <Border x:Name="BackgroundElement" AutomationProperties.AccessibilityView="Raw" />
+        <Image x:Name="MainImage" HorizontalAlignment="Center" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+        <ContentPresenter x:Name="FooterPresenter" />
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup>
+                <VisualState x:Name="DefaultBackplateVisualState" />
+                <VisualState x:Name="ColoredBackplateVisualState">
+                    <VisualState.Setters>
+                        <Setter Target="BackgroundElement.Background" Value="{StaticResource ColoredBackplateBrush}" />
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+    </Grid>
+</UserControl>

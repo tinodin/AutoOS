@@ -7,6 +7,7 @@
 	xmlns:converters="using:CommunityToolkit.WinUI.Converters"
 	xmlns:dev="using:DevWinUI"
 	xmlns:local="using:AutoOS.App.Views.Settings.Games"
+	xmlns:sc="using:AutoOS.App.UserControls.StoreCarousel2"
 	xmlns:uc="using:AutoOS.App.UserControls"
 	xmlns:views="using:AutoOS.App.Views.Settings">
 	<Style TargetType="local:HeaderCarousel">
@@ -353,7 +354,7 @@
 									<!--  Games  -->
 									<ScrollViewer
 										x:Name="PART_ScrollViewer"
-										Margin="0,141,0,0"
+										Margin="0,129,0,0"
 										VerticalAlignment="Top"
 										HorizontalScrollBarVisibility="Hidden"
 										VerticalScrollBarVisibility="Disabled"
@@ -383,7 +384,7 @@
 						<!--  Metadata Grid  -->
 						<Grid
 							x:Name="MetadataGrid"
-							Margin="36,485,36,0"
+							Margin="36,461,36,0"
 							Visibility="Collapsed"
 							XYFocusKeyboardNavigation="Disabled">
 							<Grid.RowDefinitions>
@@ -405,7 +406,7 @@
 									Text="{TemplateBinding Developers}" />
 								<!--  Play, Update, Stop Processes, Launch Explorer Buttons  -->
 								<StackPanel
-									Margin="0,16,0,0"
+									Margin="0,8,0,0"
 									Orientation="Horizontal"
 									Spacing="8">
 									<Button
@@ -479,7 +480,7 @@
 									</Button>
 								</StackPanel>
 								<!--  Divider  -->
-								<dev:Divider Margin="0,12,0,12" RequestedTheme="Dark" />
+								<dev:Divider Margin="0,8,0,8" RequestedTheme="Dark" />
 							</StackPanel>
 							<!--  Ratings  -->
 							<StackPanel
@@ -572,7 +573,7 @@
 												<ItemsControl.ItemTemplate>
 													<DataTemplate x:DataType="x:String">
 														<Border
-															Padding="12,4"
+															Padding="12,2"
 															Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}"
 															BorderBrush="{ThemeResource ControlStrokeColorDefault}"
 															BorderThickness="1"
@@ -601,7 +602,7 @@
 												<ItemsControl.ItemTemplate>
 													<DataTemplate x:DataType="x:String">
 														<Border
-															Padding="12,4"
+															Padding="12,2"
 															Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}"
 															BorderBrush="{ThemeResource ControlStrokeColorDefault}"
 															BorderThickness="1"
@@ -618,106 +619,21 @@
 										<TextBlock Text="{TemplateBinding Description}" TextWrapping="Wrap" />
 									</dev:Card>
 									<!--  Screenshots  -->
-									<!--<views:GameGallery x:Name="Screenshots_Gallery" Margin="0,0,0,16" >
-											<views:GameGallery.HeaderContent>
-												<ItemsControl ItemsSource="{TemplateBinding Screenshots}">
-													<ItemsControl.ItemsPanel>
-														<ItemsPanelTemplate>
-															<StackPanel Orientation="Horizontal" Spacing="18" />
-														</ItemsPanelTemplate>
-													</ItemsControl.ItemsPanel>
-													<ItemsControl.ItemTemplate>
-														<DataTemplate>
-															<dev:ImageEx
-																Height="160"
-																Margin="0,8,0,8"
-																HorizontalAlignment="Stretch"
-																VerticalAlignment="Stretch"
-																AutomationProperties.AccessibilityView="Raw"
-																CornerRadius="{ThemeResource ControlCornerRadius}"
-																IsCacheEnabled="True"
-																Source="{Binding}"
-																Stretch="Uniform" />
-														</DataTemplate>
-													</ItemsControl.ItemTemplate>
-												</ItemsControl>
-											</views:GameGallery.HeaderContent>
-										</views:GameGallery>-->
 									<dev:Card
 										x:Name="Screenshots_Card"
 										Title="Screenshots"
 										Margin="0,0,0,12"
+										Padding="0"
 										Visibility="Collapsed">
 										<dev:Card.TitleContent>
 											<Button
-												Margin="0,4,16,4"
-												Padding="6"
-												Style="{StaticResource SubtleButtonStyle}"
-												Visibility="Collapsed">
-												<FontIcon FontSize="16" Glyph="&#xE76C;" />
-											</Button>
+												x:Name="ShowAllIconButton"
+												Margin="0,0,16,0"
+												Style="{StaticResource CardRightChevronButtonStyle}"
+												ToolTipService.ToolTip="See all" />
 										</dev:Card.TitleContent>
-										<ScrollViewer
-											HorizontalAlignment="Left"
-											HorizontalScrollBarVisibility="Hidden"
-											HorizontalScrollMode="Disabled"
-											VerticalScrollBarVisibility="Hidden"
-											VerticalScrollMode="Disabled"
-											ZoomMode="Disabled">
-											<ItemsControl ItemsSource="{TemplateBinding Screenshots}">
-												<ItemsControl.ItemsPanel>
-													<ItemsPanelTemplate>
-														<StackPanel Orientation="Horizontal" Spacing="24" />
-													</ItemsPanelTemplate>
-												</ItemsControl.ItemsPanel>
-												<ItemsControl.ItemTemplate>
-													<DataTemplate x:DataType="x:String">
-														<dev:ImageEx
-															Height="160"
-															HorizontalAlignment="Stretch"
-															VerticalAlignment="Stretch"
-															AutomationProperties.AccessibilityView="Raw"
-															CornerRadius="{ThemeResource ControlCornerRadius}"
-															DecodePixelHeight="160"
-															DecodePixelType="Logical"
-															IsCacheEnabled="True"
-															Source="{Binding}"
-															Stretch="Uniform" />
-													</DataTemplate>
-												</ItemsControl.ItemTemplate>
-											</ItemsControl>
-										</ScrollViewer>
+										<sc:StoreCarousel2 x:Name="ScreenshotsCarousel" ItemsSource="{Binding Media, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}" />
 									</dev:Card>
-									<!--  Videos  -->
-									<ScrollViewer
-										x:Name="Videos_ScrollViewer"
-										Margin="0,0,0,16"
-										HorizontalAlignment="Left"
-										HorizontalScrollBarVisibility="Hidden"
-										HorizontalScrollMode="Auto"
-										VerticalScrollBarVisibility="Hidden"
-										VerticalScrollMode="Disabled"
-										Visibility="Collapsed"
-										ZoomMode="Disabled">
-										<!--<ItemsControl ItemsSource="{TemplateBinding Videos}">
-											<ItemsControl.ItemsPanel>
-												<ItemsPanelTemplate>
-													<StackPanel Orientation="Horizontal"
-																Spacing="16" />
-												</ItemsPanelTemplate>
-											</ItemsControl.ItemsPanel>
-											<ItemsControl.ItemTemplate>
-												<DataTemplate x:DataType="x:String">
-													<MediaPlayerElement Height="250"
-																		Margin="0,8,0,8"
-																		AreTransportControlsEnabled="True"
-																		AutoPlay="False"
-																		CornerRadius="{ThemeResource ControlCornerRadius}"
-																		Source="{Binding}" />
-												</DataTemplate>
-											</ItemsControl.ItemTemplate>
-										</ItemsControl>-->
-									</ScrollViewer>
 									<dev:Card Title="Additional information" Margin="0,0,0,12">
 										<ItemsRepeater x:Name="PART_ItemsRepeater">
 											<ItemsRepeater.Layout>

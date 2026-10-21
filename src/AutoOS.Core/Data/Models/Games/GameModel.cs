@@ -17,8 +17,7 @@ public class GameModel
 	public List<string> Genres { get; set; } = [];
 	public List<string> Features { get; set; } = [];
 	public string? Description { get; set; }
-	public List<string> Screenshots { get; set; } = [];
-	public List<string> VideoUrls { get; set; } = [];
+	public List<GameMediaModel> Media { get; set; } = [];
 	public string? InstallLocation { get; set; }
 	public string? Launcher { get; set; }
 	public string? CatalogItemId { get; set; }
