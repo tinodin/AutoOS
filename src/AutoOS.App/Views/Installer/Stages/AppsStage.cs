@@ -30,6 +30,7 @@ public class ApplicationSelection
 	public bool DiscordAccount { get; set; }
 	public bool DiscordKeybinds { get; set; }
 	public bool WhatsApp { get; set; }
+	public bool Messenger { get; set; }
 	public bool Telegram { get; set; }
 	public bool Unigram { get; set; }
 	public bool ZoomWorkplace { get; set; }
@@ -194,6 +195,7 @@ public static class AppsStage
 		bool DiscordAccount = selection?.DiscordAccount ?? PreparingStage.DiscordAccount;
 		bool DiscordKeybinds = selection?.DiscordKeybinds ?? PreparingStage.DiscordKeybinds;
 		bool WhatsApp = selection?.WhatsApp ?? PreparingStage.WhatsApp;
+		bool Messenger = selection?.Messenger ?? PreparingStage.Messenger;
 		bool Telegram = selection?.Telegram ?? PreparingStage.Telegram;
 		bool Unigram = selection?.Unigram ?? PreparingStage.Unigram;
 		bool ZoomWorkplace = selection?.ZoomWorkplace ?? PreparingStage.ZoomWorkplace;
@@ -614,6 +616,15 @@ public static class AppsStage
 
 			// disable whatsapp startup entry
 			("Disabling WhatsApp startup entry", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\SystemAppData\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\2defd21c-0b9e-4e4e-873a-2a68c47d7da5", "State", 1, RegistryValueKind.DWord), () => WhatsApp == true),
+
+			// download messenger
+			("Downloading Messenger", async () => await StoreHelper.Download("Facebook.317180B0BB486_8xx8rvfyw5nnt", reporter: reporter), () => Messenger == true),
+
+			// install messenger
+			("Installing Messenger", async () => await StoreHelper.Install("Facebook.317180B0BB486_8xx8rvfyw5nnt"), () => Messenger == true),
+
+			// pin messenger to the taskbar
+			("Pinning Messenger to the taskbar", async () => await ProcessActions.PinToTaskbar("UWA", "Facebook.317180B0BB486_8xx8rvfyw5nnt!App"), () => Messenger == true),
 
 			// download telegram desktop
 			("Downloading Telegram Desktop", async () => await StoreHelper.Download("TelegramMessengerLLP.TelegramDesktop_t4vj0pshhgkwm", reporter: reporter), () => Telegram == true),
