@@ -34,7 +34,7 @@
     <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />
     <PackageVersion Include="System.ServiceProcess.ServiceController" Version="11.0.0-rc.2.26504.105" />
     <PackageVersion Include="Syncfusion.Chart.WinUI" Version="35.1.41" />
-    <PackageVersion Include="Syncfusion.Grid.WinUI" Version="35.1.41" />
+    <PackageVersion Include="Syncfusion.Grid.WinUI" Version="35.1.43" />
     <PackageVersion Include="ValveKeyValue" Version="0.72.0.534" />
   </ItemGroup>
 </Project>
