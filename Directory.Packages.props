@@ -16,7 +16,7 @@
     <PackageVersion Include="DevWinUI" Version="10.8.0" />
     <PackageVersion Include="Downloader" Version="5.10.1" />
     <PackageVersion Include="LevelDBSharp" Version="1.0.0" />
-    <PackageVersion Include="Microsoft.Data.Sqlite" Version="11.0.0-preview.5.26302.115" />
+    <PackageVersion Include="Microsoft.Data.Sqlite" Version="11.0.0" />
     <PackageVersion Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="4.0.0" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0-rc.2.26504.105" />
     <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.366" />
