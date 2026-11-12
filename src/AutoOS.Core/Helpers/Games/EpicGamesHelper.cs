@@ -759,7 +759,7 @@ public static partial class EpicGamesHelper
 	{
 		var games = new ConcurrentBag<GameModel>();
 
-		if (File.Exists(EpicGamesPath) && (Directory.Exists(EpicGamesManifestDir) || Directory.Exists(EpicGamesThirdPartyManifestDir)))
+		if (File.Exists(EpicGamesPath) && (Directory.Exists(EpicGamesManifestDir) || Directory.Exists(EpicGamesThirdPartyManifestDir) || Directory.Exists(EpicGamesInstalledItemsDir)))
 		{
 			// get access token
 			string? AccessToken = await UpdateEpicGamesToken(ActiveEpicGamesAccountPath);
@@ -945,6 +945,52 @@ public static partial class EpicGamesHelper
 								["ProcessNames"] = (json as JsonObject)?["ProcessNames"]?.AsArray().DeepClone()
 							});
 						}
+					}
+					catch
+					{
+						continue;
+					}
+				}
+			}
+
+			// newer launcher versions no longer write .item manifests, the installs are only tracked as .egi files
+			if (Directory.Exists(EpicGamesInstalledItemsDir))
+			{
+				foreach (string file in Directory.GetFiles(EpicGamesInstalledItemsDir, "*.egi", System.IO.SearchOption.TopDirectoryOnly))
+				{
+					try
+					{
+						if ((JsonNode.Parse(File.ReadAllText(file)) as JsonObject)?["v4"] is not JsonObject installedItem)
+							continue;
+
+						var installedItemData = installedItem["manifestData"] as JsonObject;
+						string? installedAppName = installedItem["artifactId"]?.GetValue<string>();
+						string? installedCatalogItemId = installedItem["itemId"]?.GetValue<string>();
+						string? installedLaunchExecutable = installedItemData?["launchExe"]?.GetValue<string>();
+
+						// skip incomplete installs
+						if (string.IsNullOrEmpty(installedAppName) || string.IsNullOrEmpty(installedCatalogItemId) || string.IsNullOrEmpty(installedLaunchExecutable))
+							continue;
+
+						// skip if there already is a manifest for it
+						if (allManifests.Any(existing => string.Equals((existing as JsonObject)?["AppName"]?.GetValue<string>(), installedAppName, StringComparison.OrdinalIgnoreCase)))
+							continue;
+
+						long? installedSize = installedItemData?["buildSize"]?.GetValue<long>();
+
+						allManifests.Add(new JsonObject
+						{
+							["bIsApplication"] = true,
+							["AppCategories"] = new JsonArray(JsonValue.Create("games")),
+							["CatalogItemId"] = installedCatalogItemId,
+							["CatalogNamespace"] = installedItem["sandboxId"]?.GetValue<string>(),
+							["AppName"] = installedAppName,
+							["InstallLocation"] = installedItem["dir"]?.GetValue<string>(),
+							["LaunchExecutable"] = installedLaunchExecutable,
+							["LaunchCommand"] = installedItemData?["launchCommand"]?.GetValue<string>(),
+							["AppVersionString"] = installedItemData?["version"]?.GetValue<string>(),
+							["InstallSize"] = installedSize > 0 ? installedSize : null
+						});
 					}
 					catch
 					{
