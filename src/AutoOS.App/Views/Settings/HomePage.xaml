@@ -12,7 +12,7 @@
 	<uc:AllLandingPage
 		HeaderImage="{ThemeResource HeaderCover}"
 		HeaderImageHeight="400"
-		HeaderSubtitleText="Windows App SDK 2.5"
+		HeaderSubtitleText="Windows App SDK 2.6"
 		HeaderText="AutoOS Settings"
 		JsonNavigationService="{x:Bind local:App.Current.NavService}">
 		<uc:AllLandingPage.HeaderContent>

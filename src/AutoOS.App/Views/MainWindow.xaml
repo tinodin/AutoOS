@@ -49,9 +49,10 @@
 				<Thickness x:Key="NavigationViewMinimalContentGridBorderThickness">0</Thickness>
 				<Thickness x:Key="NavigationViewMinimalContentMargin">0</Thickness>
 				<Thickness x:Key="NavigationViewItemMargin">2,0,2,0</Thickness>
+				<Thickness x:Key="NavigationViewPaneContentGridMargin">-1,-2,-1,6</Thickness>
 			</NavigationView.Resources>
 			<Grid
-				Margin="0,4,8,8"
+				Margin="0,0,8,8"
 				HorizontalAlignment="Stretch"
 				VerticalAlignment="Stretch">
 				<Border
