@@ -295,7 +295,7 @@
 					<AppBarToggleButton
 						x:Name="CompareToDefaults"
 						Command="{x:Bind ViewModel.ToggleCompareToDefaultsCommand}"
-						Icon="{dev:FontIcon Glyph=&#xEC77;}"
+						Icon="{dev:FontIcon Glyph=&#xE8AB;}"
 						IsChecked="{x:Bind ViewModel.CompareToDefaults, Mode=TwoWay}"
 						Label="{x:Bind ViewModel.CompareToDefaultsLabel, Mode=OneWay}"
 						ToolTipService.ToolTip="Compare to Defaults (Ctrl+Shift+D)">
@@ -317,6 +317,16 @@
 						</AppBarToggleButton.KeyboardAccelerators>
 					</AppBarToggleButton>
 
+					<!--  Write  -->
+					<AppBarButton
+						Command="{x:Bind ViewModel.WriteToNvramCommand}"
+						Icon="{dev:FontIcon Glyph=&#xE8B5;}"
+						Label="Write to NVRAM">
+						<AppBarButton.KeyboardAccelerators>
+							<KeyboardAccelerator Key="I" Modifiers="Control" />
+						</AppBarButton.KeyboardAccelerators>
+					</AppBarButton>
+
 					<!--  Separator  -->
 					<AppBarSeparator Margin="4,0" />
 
@@ -327,19 +337,6 @@
 						Label="Restore">
 						<AppBarButton.KeyboardAccelerators>
 							<KeyboardAccelerator Key="R" Modifiers="Control" />
-						</AppBarButton.KeyboardAccelerators>
-					</AppBarButton>
-
-					<!--  Separator  -->
-					<AppBarSeparator Margin="4,0" />
-
-					<!--  Write  -->
-					<AppBarButton
-						Command="{x:Bind ViewModel.WriteToNvramCommand}"
-						Icon="{dev:FontIcon Glyph=&#xE8B5;}"
-						Label="Write to NVRAM">
-						<AppBarButton.KeyboardAccelerators>
-							<KeyboardAccelerator Key="I" Modifiers="Control" />
 						</AppBarButton.KeyboardAccelerators>
 					</AppBarButton>
 

@@ -156,9 +156,9 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 
 	public bool CanRedo => IsLoaded && _redoStates.Count > 0;
 
-	public bool CanSave => IsLoaded && ModifiedCount > 0;
-
 	public bool CanDelete => Plans.Count > 1;
+
+	public bool CanSave => IsLoaded && ModifiedCount > 0;
 
 	public bool CanRestore => IsLoaded;
 
@@ -266,17 +266,16 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		SetPlans(await Task.Run(powerService.GetPowerPlans), importedGuid);
 	}
 
-	[RelayCommand(CanExecute = nameof(CanRestore))]
-	private async Task RestoreAsync()
+	[RelayCommand]
+	private async Task ChangeComparePlansAsync()
 	{
-		if (await dialogService.ShowConfirmationDialogAsync("Restore default power plans", "Are you sure that you want to restore the default power plans?", "Yes", "No") != DialogResult.Primary)
+		var viewModel = new CompareDialogViewModel(Plans, ComparePlan1, ComparePlan2);
+		if (await dialogService.ShowDialogAsync(viewModel) != DialogResult.Primary || viewModel.SelectedPlan1 is not Plan plan1 || viewModel.SelectedPlan2 is not Plan plan2)
 			return;
 
-		await powerService.RestoreDefaultPowerPlansAsync();
-
-		Guid activeGuid = await Task.Run(powerService.GetActivePowerPlan);
-		SetPlans(await Task.Run(powerService.GetPowerPlans), activeGuid);
-		await ReloadActiveValuesAsync();
+		ComparePlan1 = plan1;
+		ComparePlan2 = plan2;
+		CompareActive = true;
 	}
 
 	[RelayCommand(CanExecute = nameof(CanSave))]
@@ -300,6 +299,19 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		SyncCompareAndChanges();
 		UpdateNodeCounts();
 		RefreshFilterOnlyAction?.Invoke();
+	}
+
+	[RelayCommand(CanExecute = nameof(CanRestore))]
+	private async Task RestoreAsync()
+	{
+		if (await dialogService.ShowConfirmationDialogAsync("Restore default power plans", "Are you sure that you want to restore the default power plans?", "Yes", "No") != DialogResult.Primary)
+			return;
+
+		await powerService.RestoreDefaultPowerPlansAsync();
+
+		Guid activeGuid = await Task.Run(powerService.GetActivePowerPlan);
+		SetPlans(await Task.Run(powerService.GetPowerPlans), activeGuid);
+		await ReloadActiveValuesAsync();
 	}
 
 	[RelayCommand]
@@ -382,67 +394,6 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		_ = SwitchActivePowerPlanAsync(value.Guid, _activePlanReloadCts.Token);
 	}
 
-	partial void OnComparePlan1Changed(Plan? value) => RefreshCompare();
-
-	partial void OnComparePlan2Changed(Plan? value) => RefreshCompare();
-
-	partial void OnCompareActiveChanged(bool value)
-	{
-		if (!IsLoaded)
-			return;
-
-		if (value)
-		{
-			if (HasComparePlans)
-			{
-				ViewChangesActive = false;
-				return;
-			}
-
-			_ = ShowCompareDialogAsync();
-			return;
-		}
-
-		ComparePlan1 = null;
-		ComparePlan2 = null;
-	}
-
-	private async Task ShowCompareDialogAsync()
-	{
-		var viewModel = new CompareDialogViewModel(Plans);
-		if (await dialogService.ShowDialogAsync(viewModel) != DialogResult.Primary || viewModel.SelectedPlan1 is not Plan plan1 || viewModel.SelectedPlan2 is not Plan plan2)
-		{
-			CompareActive = false;
-			return;
-		}
-
-		ComparePlan1 = plan1;
-		ComparePlan2 = plan2;
-	}
-
-	[RelayCommand]
-	private async Task ChangeComparePlansAsync()
-	{
-		var viewModel = new CompareDialogViewModel(Plans, ComparePlan1, ComparePlan2);
-		if (await dialogService.ShowDialogAsync(viewModel) != DialogResult.Primary || viewModel.SelectedPlan1 is not Plan plan1 || viewModel.SelectedPlan2 is not Plan plan2)
-			return;
-
-		ComparePlan1 = plan1;
-		ComparePlan2 = plan2;
-		CompareActive = true;
-	}
-
-	private void RefreshCompare()
-	{
-		if (HasComparePlans)
-			ViewChangesActive = false;
-		RefreshComparisonValues();
-		SyncActiveCompareValues();
-		SyncCompare();
-		UpdateNodeCounts();
-		RefreshFilterOnlyAction?.Invoke();
-	}
-
 	private async Task SwitchActivePowerPlanAsync(Guid planGuid, CancellationToken token)
 	{
 		try
@@ -473,6 +424,54 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		ResetHistory();
 		ViewChangesActive = false;
 		SyncCompareAndChanges();
+		UpdateNodeCounts();
+		RefreshFilterOnlyAction?.Invoke();
+	}
+
+	partial void OnComparePlan1Changed(Plan? value) => RefreshCompare();
+
+	partial void OnComparePlan2Changed(Plan? value) => RefreshCompare();
+
+	partial void OnCompareActiveChanged(bool value)
+	{
+		if (!IsLoaded)
+			return;
+
+		if (value)
+		{
+			if (HasComparePlans)
+			{
+				ViewChangesActive = false;
+				return;
+			}
+
+			CompareActive = false;
+			_ = ShowCompareDialogAsync();
+			return;
+		}
+
+		ComparePlan1 = null;
+		ComparePlan2 = null;
+	}
+
+	private async Task ShowCompareDialogAsync()
+	{
+		var viewModel = new CompareDialogViewModel(Plans);
+		if (await dialogService.ShowDialogAsync(viewModel) != DialogResult.Primary || viewModel.SelectedPlan1 is not Plan plan1 || viewModel.SelectedPlan2 is not Plan plan2)
+			return;
+
+		ComparePlan1 = plan1;
+		ComparePlan2 = plan2;
+		CompareActive = true;
+	}
+
+	private void RefreshCompare()
+	{
+		if (HasComparePlans)
+			ViewChangesActive = false;
+		RefreshComparisonValues();
+		SyncActiveCompareValues();
+		SyncCompare();
 		UpdateNodeCounts();
 		RefreshFilterOnlyAction?.Invoke();
 	}

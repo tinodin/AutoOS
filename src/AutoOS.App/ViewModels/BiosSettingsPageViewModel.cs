@@ -83,6 +83,48 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 	public partial bool IsLoaded { get; set; }
 
 	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(CanApplyMerge))]
+	[NotifyCanExecuteChangedFor(nameof(ApplyRecommendationsCommand))]
+	public partial int MergeCount { get; set; }
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(CanMerge))]
+	[NotifyPropertyChangedFor(nameof(CanApplyMerge))]
+	[NotifyCanExecuteChangedFor(nameof(ApplyRecommendationsCommand))]
+	public partial bool HasRecommendations { get; set; }
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(CanApplyMerge))]
+	public partial int RecommendedCount { get; set; }
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(NormalVisibility))]
+	[NotifyPropertyChangedFor(nameof(CompareToDefaultsVisibility))]
+	public partial bool CompareToDefaults { get; set; }
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(CompareToDefaultsLabel))]
+	public partial int CompareToDefaultsCount { get; set; }
+
+	public string CompareToDefaultsLabel => $"Compare to Defaults ({CompareToDefaultsCount})";
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(NormalVisibility))]
+	[NotifyPropertyChangedFor(nameof(ViewChangesVisibility))]
+	public partial bool ViewChanges { get; set; }
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(ViewChangesLabel))]
+	[NotifyPropertyChangedFor(nameof(CanWrite))]
+	[NotifyCanExecuteChangedFor(nameof(WriteToNvramCommand))]
+	public partial int ModifiedCount { get; set; }
+
+	public string ViewChangesLabel => $"View Changes ({ModifiedCount})";
+
+	[ObservableProperty]
+	public partial string? DriverLoadError { get; set; }
+
+	[ObservableProperty]
 	public partial string SearchText { get; set; } = string.Empty;
 
 	[ObservableProperty]
@@ -127,43 +169,17 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 	[ObservableProperty]
 	public partial FilterMode FilterMode { get; set; } = FilterMode.Contains;
 
-	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(NormalVisibility))]
-	[NotifyPropertyChangedFor(nameof(CompareToDefaultsVisibility))]
-	public partial bool CompareToDefaults { get; set; }
+	partial void OnCompareToDefaultsChanged(bool value)
+	{
+		if (value)
+			ViewChanges = false;
+	}
 
-	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(NormalVisibility))]
-	[NotifyPropertyChangedFor(nameof(ViewChangesVisibility))]
-	public partial bool ViewChanges { get; set; }
-
-	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(CompareToDefaultsLabel))]
-	public partial int CompareToDefaultsCount { get; set; }
-
-	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(ViewChangesLabel))]
-	[NotifyPropertyChangedFor(nameof(CanWrite))]
-	[NotifyCanExecuteChangedFor(nameof(WriteToNvramCommand))]
-	public partial int ModifiedCount { get; set; }
-
-	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(CanApplyMerge))]
-	[NotifyCanExecuteChangedFor(nameof(ApplyRecommendationsCommand))]
-	public partial int MergeCount { get; set; }
-
-	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(CanMerge))]
-	[NotifyPropertyChangedFor(nameof(CanApplyMerge))]
-	[NotifyCanExecuteChangedFor(nameof(ApplyRecommendationsCommand))]
-	public partial bool HasRecommendations { get; set; }
-
-	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(CanApplyMerge))]
-	public partial int RecommendedCount { get; set; }
-
-	[ObservableProperty]
-	public partial string? DriverLoadError { get; set; }
+	partial void OnViewChangesChanged(bool value)
+	{
+		if (value)
+			CompareToDefaults = false;
+	}
 
 	partial void OnSearchTextChanged(string value) => RefreshFilter();
 
@@ -195,30 +211,15 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 
 	partial void OnFilterModeChanged(FilterMode value) => RefreshFilter();
 
-	partial void OnCompareToDefaultsChanged(bool value)
-	{
-		if (value)
-			ViewChanges = false;
-	}
-
-	partial void OnViewChangesChanged(bool value)
-	{
-		if (value)
-			CompareToDefaults = false;
-	}
-
-	public void RefreshFilter() => RefreshFilterAction?.Invoke();
-
-	public ICommand CopyTextCommand { get; } = new CopyTextCommand();
-
-	[RelayCommand]
-	private void SetFilterMode(string value) => FilterMode = Enum.Parse<FilterMode>(value);
-
 	public Visibility NormalVisibility => ViewChanges || CompareToDefaults ? Visibility.Collapsed : Visibility.Visible;
 
 	public Visibility CompareToDefaultsVisibility => CompareToDefaults ? Visibility.Visible : Visibility.Collapsed;
 
 	public Visibility ViewChangesVisibility => ViewChanges ? Visibility.Visible : Visibility.Collapsed;
+
+	public void RefreshFilter() => RefreshFilterAction?.Invoke();
+
+	public ICommand CopyTextCommand { get; } = new CopyTextCommand();
 
 	public bool CanUndo => IsLoaded && _undoStates.Count > 0;
 
@@ -232,13 +233,9 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 
 	public bool CanToggleViewChanges => IsLoaded;
 
-	public bool CanRestore => IsLoaded;
-
 	public bool CanWrite => IsLoaded && ModifiedCount > 0;
 
-	public string CompareToDefaultsLabel => $"Compare to Defaults ({CompareToDefaultsCount})";
-
-	public string ViewChangesLabel => $"View Changes ({ModifiedCount})";
+	public bool CanRestore => IsLoaded;
 
 	public async Task ReadFromNvramAsync()
 	{
@@ -341,6 +338,38 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 	[RelayCommand(CanExecute = nameof(CanToggleViewChanges))]
 	private void ToggleViewChanges() => RefreshFilter();
 
+	[RelayCommand(CanExecute = nameof(CanWrite))]
+	private async Task WriteToNvramAsync()
+	{
+		PageState = PageMode.Writing;
+
+		var modified = _settingStates
+			.Where(pair => pair.Value.IsModified)
+			.ToDictionary(pair => pair.Key, pair => pair.Value);
+
+		(PageMode result, IReadOnlyList<Setting> failed) = await biosService.WriteToNvramAsync(modified);
+
+		DriverLoadError = biosService.LastDriverError;
+
+		foreach (Setting setting in _settings)
+		{
+			if (failed.Contains(setting) || !_settingStates[setting].IsModified)
+				continue;
+
+			_settingStates[setting].Value = setting.Value;
+			_settingStates[setting].Commit();
+		}
+
+		SearchText = string.Empty;
+		_undoStates.Clear();
+		_redoStates.Clear();
+		ViewChanges = false;
+		UpdateState();
+		SyncMergeCount();
+
+		PageState = result;
+	}
+
 	[RelayCommand(CanExecute = nameof(CanRestore))]
 	private async Task RestoreAsync()
 	{
@@ -393,52 +422,6 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		PageState = result;
 	}
 
-	[RelayCommand(CanExecute = nameof(CanWrite))]
-	private async Task WriteToNvramAsync()
-	{
-		PageState = PageMode.Writing;
-
-		var modified = _settingStates
-			.Where(pair => pair.Value.IsModified)
-			.ToDictionary(pair => pair.Key, pair => pair.Value);
-
-		(PageMode result, IReadOnlyList<Setting> failed) = await biosService.WriteToNvramAsync(modified);
-
-		DriverLoadError = biosService.LastDriverError;
-
-		foreach (Setting setting in _settings)
-		{
-			if (failed.Contains(setting) || !_settingStates[setting].IsModified)
-				continue;
-
-			_settingStates[setting].Value = setting.Value;
-			_settingStates[setting].Commit();
-		}
-
-		SearchText = string.Empty;
-		_undoStates.Clear();
-		_redoStates.Clear();
-		ViewChanges = false;
-		UpdateState();
-		SyncMergeCount();
-
-		PageState = result;
-	}
-
-	[RelayCommand]
-	private async Task UnlockWithPasswordAsync()
-	{
-		BiosPasswordDialogViewModel vm = new();
-		DialogResult result = await dialogService.ShowDialogAsync(vm);
-		if (result != DialogResult.Primary)
-			return;
-
-		if (_settingStates.Any(pair => pair.Value.IsModified))
-			await WriteToNvramAsync();
-		else
-			await ReadFromNvramAsync();
-	}
-
 	[RelayCommand]
 	private async Task RestartIntoBiosAsync()
 	{
@@ -459,6 +442,23 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 
 		ShutdownHelper.Restart();
 	}
+
+	[RelayCommand]
+	private async Task UnlockWithPasswordAsync()
+	{
+		BiosPasswordDialogViewModel vm = new();
+		DialogResult result = await dialogService.ShowDialogAsync(vm);
+		if (result != DialogResult.Primary)
+			return;
+
+		if (_settingStates.Any(pair => pair.Value.IsModified))
+			await WriteToNvramAsync();
+		else
+			await ReadFromNvramAsync();
+	}
+
+	[RelayCommand]
+	private void SetFilterMode(string value) => FilterMode = Enum.Parse<FilterMode>(value);
 
 	public void BeginEdit(Node? node)
 	{
