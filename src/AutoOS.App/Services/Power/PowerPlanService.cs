@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using AutoOS.App.Data.Contracts.Power;
-using AutoOS.App.Data.Models.Power;
 using AutoOS.App.Views.Installer.Stages;
+using AutoOS.Core.Data.Models.Power;
 using AutoOS.Core.Helpers.Power;
 
 namespace AutoOS.App.Services.Power;

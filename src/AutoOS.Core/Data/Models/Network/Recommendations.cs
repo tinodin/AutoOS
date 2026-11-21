@@ -42,7 +42,7 @@ public static class Recommendations
 		new() { Type = NicDeviceType.WiFi, Name = "EnableAdaptivity", Recommended = "Auto" },
 		new() { Type = NicDeviceType.WiFi, Name = "Fat Channel Intolerant", Recommended = "Disabled" },
 		new() { Type = NicDeviceType.WiFi, Name = "Global BG Scan blocking", Recommended = "Always" },
-		new() { Type = NicDeviceType.WiFi, Name = "GTK rekeying for WoWLAN", Recommended = "Disabled" },
+		new() { Type = NicDeviceType.WiFi, Name = "GTK rekeying for WoWLAN", Recommended = "Enabled" },
 		new() { Type = NicDeviceType.WiFi, Name = "HLDiffForAdaptivity", Recommended = "7" },
 		new() { Type = NicDeviceType.WiFi, Name = "HT mode", Recommended = "VHT mode" },
 		new() { Type = NicDeviceType.WiFi, Name = "Idle Power Down Restriction", Recommended = "Enabled" },

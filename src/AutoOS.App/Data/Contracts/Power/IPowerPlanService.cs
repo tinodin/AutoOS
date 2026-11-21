@@ -1,4 +1,4 @@
-using AutoOS.App.Data.Models.Power;
+using AutoOS.Core.Data.Models.Power;
 
 namespace AutoOS.App.Data.Contracts.Power;
 

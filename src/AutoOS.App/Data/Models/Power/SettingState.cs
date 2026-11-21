@@ -1,4 +1,5 @@
 using System.Globalization;
+using AutoOS.Core.Data.Models.Power;
 
 namespace AutoOS.App.Data.Models.Power;
 
@@ -11,7 +12,6 @@ public sealed partial class SettingState(Setting setting) : ObservableObject
 	[NotifyPropertyChangedFor(nameof(IsAcModified))]
 	[NotifyPropertyChangedFor(nameof(DisplayAc))]
 	[NotifyPropertyChangedFor(nameof(EditAcToolTip))]
-	[NotifyPropertyChangedFor(nameof(IsAcDifferent))]
 	public partial uint AcValue { get; set; }
 
 	[ObservableProperty]
@@ -19,7 +19,6 @@ public sealed partial class SettingState(Setting setting) : ObservableObject
 	[NotifyPropertyChangedFor(nameof(IsDcModified))]
 	[NotifyPropertyChangedFor(nameof(DisplayDc))]
 	[NotifyPropertyChangedFor(nameof(EditDcToolTip))]
-	[NotifyPropertyChangedFor(nameof(IsDcDifferent))]
 	public partial uint DcValue { get; set; }
 
 	[ObservableProperty]
@@ -49,14 +48,24 @@ public sealed partial class SettingState(Setting setting) : ObservableObject
 	public partial Option? EditDcOption { get; set; }
 
 	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(DisplayCompareAc))]
+	[NotifyPropertyChangedFor(nameof(DisplayCompare1Ac))]
 	[NotifyPropertyChangedFor(nameof(IsAcDifferent))]
-	public partial uint? CompareAcValue { get; set; }
+	public partial uint? Compare1AcValue { get; set; }
 
 	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(DisplayCompareDc))]
+	[NotifyPropertyChangedFor(nameof(DisplayCompare1Dc))]
 	[NotifyPropertyChangedFor(nameof(IsDcDifferent))]
-	public partial uint? CompareDcValue { get; set; }
+	public partial uint? Compare1DcValue { get; set; }
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(DisplayCompare2Ac))]
+	[NotifyPropertyChangedFor(nameof(IsAcDifferent))]
+	public partial uint? Compare2AcValue { get; set; }
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(DisplayCompare2Dc))]
+	[NotifyPropertyChangedFor(nameof(IsDcDifferent))]
+	public partial uint? Compare2DcValue { get; set; }
 
 	public bool IsModified => AcValue != OriginalAcValue || DcValue != OriginalDcValue;
 
@@ -64,17 +73,23 @@ public sealed partial class SettingState(Setting setting) : ObservableObject
 
 	public bool IsDcModified => DcValue != OriginalDcValue;
 
-	public bool IsAcDifferent => CompareAcValue is { } compare && !string.Equals(GetDisplayValue(Setting, AcValue), GetDisplayValue(Setting, compare), StringComparison.Ordinal);
+	public bool IsAcDifferent => Compare1AcValue is { } plan1 && Compare2AcValue is { } plan2
+		&& !string.Equals(GetDisplayValue(Setting, plan1), GetDisplayValue(Setting, plan2), StringComparison.Ordinal);
 
-	public bool IsDcDifferent => CompareDcValue is { } compare && !string.Equals(GetDisplayValue(Setting, DcValue), GetDisplayValue(Setting, compare), StringComparison.Ordinal);
+	public bool IsDcDifferent => Compare1DcValue is { } plan1 && Compare2DcValue is { } plan2
+		&& !string.Equals(GetDisplayValue(Setting, plan1), GetDisplayValue(Setting, plan2), StringComparison.Ordinal);
 
 	public string DisplayAc => GetDisplayValue(Setting, AcValue);
 
 	public string DisplayDc => GetDisplayValue(Setting, DcValue);
 
-	public string DisplayCompareAc => CompareAcValue is { } compare ? GetDisplayValue(Setting, compare) : string.Empty;
+	public string DisplayCompare1Ac => Compare1AcValue is { } compare ? GetDisplayValue(Setting, compare) : string.Empty;
 
-	public string DisplayCompareDc => CompareDcValue is { } compare ? GetDisplayValue(Setting, compare) : string.Empty;
+	public string DisplayCompare1Dc => Compare1DcValue is { } compare ? GetDisplayValue(Setting, compare) : string.Empty;
+
+	public string DisplayCompare2Ac => Compare2AcValue is { } compare ? GetDisplayValue(Setting, compare) : string.Empty;
+
+	public string DisplayCompare2Dc => Compare2DcValue is { } compare ? GetDisplayValue(Setting, compare) : string.Empty;
 
 	public string DisplayOriginalAc => GetDisplayValue(Setting, OriginalAcValue);
 
@@ -84,9 +99,13 @@ public sealed partial class SettingState(Setting setting) : ObservableObject
 
 	public string DcToolTip => GetValueToolTip(Setting, DcValue);
 
-	public string CompareAcToolTip => CompareAcValue is { } compare ? GetValueToolTip(Setting, compare) : string.Empty;
+	public string Compare1AcToolTip => Compare1AcValue is { } compare ? GetValueToolTip(Setting, compare) : string.Empty;
 
-	public string CompareDcToolTip => CompareDcValue is { } compare ? GetValueToolTip(Setting, compare) : string.Empty;
+	public string Compare1DcToolTip => Compare1DcValue is { } compare ? GetValueToolTip(Setting, compare) : string.Empty;
+
+	public string Compare2AcToolTip => Compare2AcValue is { } compare ? GetValueToolTip(Setting, compare) : string.Empty;
+
+	public string Compare2DcToolTip => Compare2DcValue is { } compare ? GetValueToolTip(Setting, compare) : string.Empty;
 
 	public string OriginalAcToolTip => GetValueToolTip(Setting, OriginalAcValue);
 

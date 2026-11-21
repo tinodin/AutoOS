@@ -1,5 +1,4 @@
 using System.Runtime.InteropServices;
-using AutoOS.App;
 using AutoOS.Core.Helpers.Bios;
 using AutoOS.Core.Helpers.Registry;
 using Windows.Win32;

@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using AutoOS.App.Data.Enums.Power;
+using AutoOS.Core.Data.Models.Power;
 
 namespace AutoOS.App.Data.Models.Power;
 
@@ -10,8 +11,10 @@ public sealed partial class Node : ObservableObject, IOrderedNode
 	[DynamicDependency(nameof(DisplayName), typeof(Node))]
 	[DynamicDependency(nameof(DisplayAc), typeof(Node))]
 	[DynamicDependency(nameof(DisplayDc), typeof(Node))]
-	[DynamicDependency(nameof(DisplayCompareAc), typeof(Node))]
-	[DynamicDependency(nameof(DisplayCompareDc), typeof(Node))]
+	[DynamicDependency(nameof(DisplayCompare1Ac), typeof(Node))]
+	[DynamicDependency(nameof(DisplayCompare1Dc), typeof(Node))]
+	[DynamicDependency(nameof(DisplayCompare2Ac), typeof(Node))]
+	[DynamicDependency(nameof(DisplayCompare2Dc), typeof(Node))]
 	[DynamicDependency(nameof(DisplayOriginalAc), typeof(Node))]
 	[DynamicDependency(nameof(DisplayOriginalDc), typeof(Node))]
 	internal Node(
@@ -58,8 +61,10 @@ public sealed partial class Node : ObservableObject, IOrderedNode
 	[NotifyPropertyChangedFor(nameof(DisplayDc))]
 	[NotifyPropertyChangedFor(nameof(DisplayOriginalAc))]
 	[NotifyPropertyChangedFor(nameof(DisplayOriginalDc))]
-	[NotifyPropertyChangedFor(nameof(DisplayCompareAc))]
-	[NotifyPropertyChangedFor(nameof(DisplayCompareDc))]
+	[NotifyPropertyChangedFor(nameof(DisplayCompare1Ac))]
+	[NotifyPropertyChangedFor(nameof(DisplayCompare1Dc))]
+	[NotifyPropertyChangedFor(nameof(DisplayCompare2Ac))]
+	[NotifyPropertyChangedFor(nameof(DisplayCompare2Dc))]
 	[NotifyPropertyChangedFor(nameof(IsAcModified))]
 	[NotifyPropertyChangedFor(nameof(IsDcModified))]
 	[NotifyPropertyChangedFor(nameof(IsAcDifferent))]
@@ -68,8 +73,10 @@ public sealed partial class Node : ObservableObject, IOrderedNode
 	[NotifyPropertyChangedFor(nameof(DcToolTip))]
 	[NotifyPropertyChangedFor(nameof(OriginalAcToolTip))]
 	[NotifyPropertyChangedFor(nameof(OriginalDcToolTip))]
-	[NotifyPropertyChangedFor(nameof(CompareAcToolTip))]
-	[NotifyPropertyChangedFor(nameof(CompareDcToolTip))]
+	[NotifyPropertyChangedFor(nameof(Compare1AcToolTip))]
+	[NotifyPropertyChangedFor(nameof(Compare1DcToolTip))]
+	[NotifyPropertyChangedFor(nameof(Compare2AcToolTip))]
+	[NotifyPropertyChangedFor(nameof(Compare2DcToolTip))]
 	[NotifyPropertyChangedFor(nameof(EditAcToolTip))]
 	[NotifyPropertyChangedFor(nameof(EditDcToolTip))]
 	public partial SettingState? State { get; set; }
@@ -90,13 +97,21 @@ public sealed partial class Node : ObservableObject, IOrderedNode
 
 	public string DcToolTip => State?.DcToolTip ?? string.Empty;
 
-	public string DisplayCompareAc => State?.DisplayCompareAc ?? string.Empty;
+	public string DisplayCompare1Ac => State?.DisplayCompare1Ac ?? string.Empty;
 
-	public string DisplayCompareDc => State?.DisplayCompareDc ?? string.Empty;
+	public string DisplayCompare1Dc => State?.DisplayCompare1Dc ?? string.Empty;
 
-	public string CompareAcToolTip => State?.CompareAcToolTip ?? string.Empty;
+	public string DisplayCompare2Ac => State?.DisplayCompare2Ac ?? string.Empty;
 
-	public string CompareDcToolTip => State?.CompareDcToolTip ?? string.Empty;
+	public string DisplayCompare2Dc => State?.DisplayCompare2Dc ?? string.Empty;
+
+	public string Compare1AcToolTip => State?.Compare1AcToolTip ?? string.Empty;
+
+	public string Compare1DcToolTip => State?.Compare1DcToolTip ?? string.Empty;
+
+	public string Compare2AcToolTip => State?.Compare2AcToolTip ?? string.Empty;
+
+	public string Compare2DcToolTip => State?.Compare2DcToolTip ?? string.Empty;
 
 	public string DisplayOriginalAc => State?.DisplayOriginalAc ?? string.Empty;
 

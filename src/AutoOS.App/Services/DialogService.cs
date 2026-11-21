@@ -18,6 +18,7 @@ public sealed class DialogService : IDialogService
 		{ typeof(OptimizeDialogViewModel), () => new OptimizeDialog() },
 		{ typeof(RestoreDialogViewModel), () => new RestoreDialog() },
 		{ typeof(EditDialogViewModel), () => new EditDialog() },
+		{ typeof(CompareDialogViewModel), () => new CompareDialog() },
 		{ typeof(BiosPasswordDialogViewModel), () => new BiosPasswordDialog() }
 	};
 

@@ -231,17 +231,12 @@
 												Margin="0,2"
 												Fill="{ThemeResource ControlStrokeColorDefault}" />
 											<!--  Account  -->
-											<uc:ComboBoxEx
+											<ComboBox
 												x:Name="EpicGamesAccounts"
 												Padding="12,8"
 												HorizontalAlignment="Stretch"
 												HorizontalContentAlignment="Center"
 												CornerRadius="12" />
-											<StackPanel
-												x:Name="EpicGrowl"
-												dev:Growl.GrowlEnterTransition="PopupThemeTransition"
-												dev:Growl.GrowlParent="True"
-												Spacing="8" />
 										</StackPanel>
 									</Flyout>
 								</Button.Flyout>
@@ -314,16 +309,12 @@
 												Margin="0,2"
 												Fill="{ThemeResource ControlStrokeColorDefault}" />
 											<!--  Account  -->
-											<uc:ComboBoxEx
+											<ComboBox
 												x:Name="SteamAccounts"
 												Padding="12,8"
 												HorizontalAlignment="Stretch"
 												HorizontalContentAlignment="Center"
 												CornerRadius="12" />
-											<StackPanel
-												x:Name="SteamGrowl"
-												dev:Growl.GrowlEnterTransition="PopupThemeTransition"
-												dev:Growl.GrowlParent="True" />
 										</StackPanel>
 									</Flyout>
 								</Button.Flyout>
@@ -697,6 +688,14 @@
 								</StackPanel>
 							</ScrollViewer>
 						</Grid>
+						<dev:GrowlHost
+							HostKey="Epic"
+							DefaultPosition="TopRight"
+							MaxVisiblePerPosition="3" />
+						<dev:GrowlHost
+							HostKey="Steam"
+							DefaultPosition="BottomRight"
+							MaxVisiblePerPosition="3" />
 					</Grid>
 				</ControlTemplate>
 			</Setter.Value>

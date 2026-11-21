@@ -34,6 +34,8 @@ public sealed partial class PowerPage : Page
 		args.Handled = true;
 	}
 
+	private void CompareToggle_RightTapped(object sender, RightTappedRoutedEventArgs args) => ViewModel.ChangeComparePlansCommand.Execute(null);
+
 	private void TreeGrid_SizeChanged(object sender, SizeChangedEventArgs e)
 	{
 		if (e.NewSize.Width <= 0 || e.NewSize.Width == e.PreviousSize.Width)
@@ -63,8 +65,10 @@ public sealed partial class PowerPage : Page
 			nameof(Node.DisplayName) => node.Description,
 			nameof(Node.DisplayAc) => node.AcToolTip,
 			nameof(Node.DisplayDc) => node.DcToolTip,
-			nameof(Node.DisplayCompareAc) => node.CompareAcToolTip,
-			nameof(Node.DisplayCompareDc) => node.CompareDcToolTip,
+			nameof(Node.DisplayCompare1Ac) => node.Compare1AcToolTip,
+			nameof(Node.DisplayCompare2Ac) => node.Compare2AcToolTip,
+			nameof(Node.DisplayCompare1Dc) => node.Compare1DcToolTip,
+			nameof(Node.DisplayCompare2Dc) => node.Compare2DcToolTip,
 			nameof(Node.DisplayOriginalAc) => node.OriginalAcToolTip,
 			nameof(Node.DisplayOriginalDc) => node.OriginalDcToolTip,
 			_ => null
@@ -91,7 +95,16 @@ public sealed partial class PowerPage : Page
 			return;
 		}
 
-		ViewModel.BeginEdit(node, e.Column?.MappingName ?? string.Empty);
+		string mappingName = e.Column?.MappingName ?? string.Empty;
+		bool isPlan1Column = mappingName is nameof(Node.DisplayCompare1Ac) or nameof(Node.DisplayCompare1Dc);
+		bool isPlan2Column = mappingName is nameof(Node.DisplayCompare2Ac) or nameof(Node.DisplayCompare2Dc);
+		if ((isPlan1Column && !ViewModel.IsComparePlan1Active) || (isPlan2Column && !ViewModel.IsComparePlan2Active))
+		{
+			e.Cancel = true;
+			return;
+		}
+
+		ViewModel.BeginEdit(node, mappingName);
 	}
 
 	private void TreeGrid_CurrentCellEndEdit(object sender, CurrentCellEndEditEventArgs e)

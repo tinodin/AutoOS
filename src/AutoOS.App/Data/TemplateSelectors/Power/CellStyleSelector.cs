@@ -17,15 +17,15 @@ public sealed partial class CompareCellStyleSelector : StyleSelector
 			return null;
 
 		string? mappingName = cell.ColumnBase?.TreeGridColumn?.MappingName;
-		bool isAc = mappingName is nameof(Node.DisplayAc) or nameof(Node.DisplayCompareAc);
-		bool isDc = mappingName is nameof(Node.DisplayDc) or nameof(Node.DisplayCompareDc);
+		bool isAc = mappingName is nameof(Node.DisplayCompare1Ac) or nameof(Node.DisplayCompare2Ac);
+		bool isDc = mappingName is nameof(Node.DisplayCompare1Dc) or nameof(Node.DisplayCompare2Dc);
 		if (!isAc && !isDc)
 			return null;
 
 		if ((isAc && !node.IsAcDifferent) || (isDc && !node.IsDcDifferent))
 			return null;
 
-		if (mappingName is nameof(Node.DisplayCompareAc) or nameof(Node.DisplayCompareDc))
+		if (mappingName is nameof(Node.DisplayCompare2Ac) or nameof(Node.DisplayCompare2Dc))
 			return SuccessStyle;
 
 		return CriticalStyle;

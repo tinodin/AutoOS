@@ -70,9 +70,6 @@ public partial class HeaderCarousel : ItemsControl
 	private Button AddSteamAccount = null!;
 	private Button RemoveSteamAccount = null!;
 
-	private StackPanel EpicGrowl = null!;
-	private StackPanel SteamGrowl = null!;
-
 	private readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 
 	private TextBlock AgeRatingDescriptionText = null!;
@@ -170,8 +167,6 @@ public partial class HeaderCarousel : ItemsControl
 		AddEpicGamesAccount.Click += AddEpicGamesAccount_Click;
 		RemoveEpicGamesAccount = (Button)GetTemplateChild("RemoveEpicGamesAccount")!;
 		RemoveEpicGamesAccount.Click += RemoveEpicGamesAccount_Click;
-		EpicGrowl = (StackPanel)GetTemplateChild("EpicGrowl")!;
-		Growl.Register("Epic", EpicGrowl);
 		LoadEpicGamesAccounts();
 
 		SteamButton = (Button)GetTemplateChild("SteamButton")!;
@@ -181,8 +176,6 @@ public partial class HeaderCarousel : ItemsControl
 		AddSteamAccount.Click += AddSteamAccount_Click;
 		RemoveSteamAccount = (Button)GetTemplateChild("RemoveSteamAccount")!;
 		RemoveSteamAccount.Click += RemoveSteamAccount_Click;
-		SteamGrowl = (StackPanel)GetTemplateChild("SteamGrowl")!;
-		Growl.Register("Steam", SteamGrowl);
 		LoadSteamAccounts();
 
 		SwitchPresenter = (SwitchPresenter)GetTemplateChild("SwitchPresenter")!;
@@ -1530,18 +1523,35 @@ public partial class HeaderCarousel : ItemsControl
 		SwitchPresenter.Value = false;
 	}
 
+	private static void ShowGrowlInfo(string hostKey, string title, string? message = null)
+	{
+		Growl.Show(new GrowlOptions
+		{
+			Severity = GrowlCardSeverity.Info,
+			Title = title,
+			Message = message,
+			ShowCloseButton = false,
+			AutoClose = GrowlCardAutoClose.None,
+			SentTimeVisibility = GrowlCardSentTimeVisibility.Hidden
+		}, hostKey);
+	}
+
+	private static void ShowGrowlSuccess(string hostKey, string title)
+	{
+		Growl.Show(new GrowlOptions
+		{
+			Severity = GrowlCardSeverity.Success,
+			Title = title,
+			ShowCloseButton = false,
+			AutoClose = GrowlCardAutoClose.Default,
+			SentTimeVisibility = GrowlCardSentTimeVisibility.Hidden
+		}, hostKey);
+	}
+
 	private async void UpdateInvalidEpicGamesToken()
 	{
 		// add growl
-		Growl.Info(new GrowlInfo
-		{
-			ShowDateTime = false,
-			StaysOpen = true,
-			IsClosable = false,
-			UseBlueColorForInfo = true,
-			Title = "The refresh token is no longer valid. Please enter your password again...",
-			Token = "Epic"
-		});
+		ShowGrowlInfo("Epic", "The refresh token is no longer valid. Please enter your password again...");
 
 		// close epic games launcher
 		EpicGamesHelper.CloseEpicGames();
@@ -1577,17 +1587,10 @@ public partial class HeaderCarousel : ItemsControl
 		EpicGamesHelper.DisableNotifications(EpicGamesHelper.ActiveEpicGamesAccountPath);
 
 		// clear
-		Growl.Clear("Epic");
+		Growl.ClearAll("Epic");
 
 		// add growl
-		Growl.Success(new GrowlInfo
-		{
-			ShowDateTime = false,
-			StaysOpen = false,
-			IsClosable = false,
-			Title = $"Successfully logged in as {EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath).DisplayName}.",
-			Token = "Epic"
-		});
+		ShowGrowlSuccess("Epic", $"Successfully logged in as {EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath).DisplayName}.");
 
 		// refresh combobox
 		isInitializingEpicGamesAccounts = true;
@@ -1623,15 +1626,7 @@ public partial class HeaderCarousel : ItemsControl
 		if (result == ContentDialogResult.Primary)
 		{
 			// add growl
-			Growl.Info(new GrowlInfo
-			{
-				ShowDateTime = false,
-				StaysOpen = true,
-				IsClosable = false,
-				UseBlueColorForInfo = true,
-				Title = "Please log in to your Epic Games account...",
-				Token = "Epic"
-			});
+			ShowGrowlInfo("Epic", "Please log in to your Epic Games account...");
 
 			// close epic games launcher
 			EpicGamesHelper.CloseEpicGames();
@@ -1670,17 +1665,10 @@ public partial class HeaderCarousel : ItemsControl
 			EpicGamesHelper.DisableNotifications(EpicGamesHelper.ActiveEpicGamesAccountPath);
 
 			// clear
-			Growl.Clear("Epic");
+			Growl.ClearAll("Epic");
 
 			// add growl
-			Growl.Success(new GrowlInfo
-			{
-				ShowDateTime = false,
-				StaysOpen = false,
-				IsClosable = false,
-				Title = $"Successfully logged in as {EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath).DisplayName}.",
-				Token = "Epic"
-			});
+			ShowGrowlSuccess("Epic", $"Successfully logged in as {EpicGamesHelper.GetAccountData(EpicGamesHelper.ActiveEpicGamesAccountPath).DisplayName}.");
 
 			// refresh combobox
 			isInitializingEpicGamesAccounts = true;
@@ -1726,14 +1714,7 @@ public partial class HeaderCarousel : ItemsControl
 			Directory.Delete(Path.Combine(EpicGamesHelper.EpicGamesAccountDir, accountId), true);
 
 			// add growl
-			Growl.Success(new GrowlInfo
-			{
-				ShowDateTime = false,
-				StaysOpen = false,
-				IsClosable = false,
-				Title = $"Successfully removed {(EpicGamesAccounts.SelectedItem as ComboBoxItem)?.Content}.",
-				Token = "Epic",
-			});
+			ShowGrowlSuccess("Epic", $"Successfully removed {(EpicGamesAccounts.SelectedItem as ComboBoxItem)?.Content}.");
 
 			// refresh combobox
 			isInitializingEpicGamesAccounts = true;
@@ -1879,16 +1860,7 @@ public partial class HeaderCarousel : ItemsControl
 		if (result == ContentDialogResult.Primary)
 		{
 			// add growl
-			Growl.Info(new GrowlInfo
-			{
-				ShowDateTime = false,
-				StaysOpen = true,
-				IsClosable = false,
-				UseBlueColorForInfo = true,
-				Title = "Info",
-				Token = "Steam",
-				Message = "Please log in to your Steam account..."
-			});
+			ShowGrowlInfo("Steam", "Please log in to your Steam account...");
 
 			// close steam
 			SteamHelper.CloseSteam();
@@ -1984,17 +1956,10 @@ public partial class HeaderCarousel : ItemsControl
 			SwitchPresenter.Value = false;
 
 			// clear
-			Growl.Clear("Steam");
+			Growl.ClearAll("Steam");
 
 			// add growl
-			Growl.Success(new GrowlInfo
-			{
-				ShowDateTime = false,
-				StaysOpen = false,
-				IsClosable = false,
-				Title = $"Successfully logged in as {SteamAccounts.SelectedItem}",
-				Token = "Steam"
-			});
+			ShowGrowlSuccess("Steam", $"Successfully logged in as {SteamAccounts.SelectedItem}");
 		}
 	}
 
@@ -2052,14 +2017,7 @@ public partial class HeaderCarousel : ItemsControl
 			File.WriteAllText(SteamHelper.SteamLoginUsersPath, new StreamReader(msOut).ReadToEnd());
 
 			// add growl
-			Growl.Success(new GrowlInfo
-			{
-				ShowDateTime = false,
-				StaysOpen = false,
-				IsClosable = false,
-				Title = $"Successfully removed {SteamAccounts.SelectedItem}.",
-				Token = "Epic",
-			});
+			ShowGrowlSuccess("Steam", $"Successfully removed {SteamAccounts.SelectedItem}.");
 
 			// refresh combobox
 			isInitializingSteamAccounts = true;

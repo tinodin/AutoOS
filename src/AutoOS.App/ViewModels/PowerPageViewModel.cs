@@ -8,6 +8,7 @@ using AutoOS.App.Data.Models.Power;
 using AutoOS.App.Extensions;
 using AutoOS.App.Services;
 using AutoOS.App.ViewModels.Dialogs.Power;
+using AutoOS.Core.Data.Models.Power;
 using Microsoft.UI.Xaml;
 
 namespace AutoOS.App.ViewModels;
@@ -28,8 +29,6 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 	public Action? RefreshFilterOnlyAction { get; set; }
 
 	public ObservableCollection<Plan> Plans { get; } = [];
-
-	public ObservableCollection<Plan> ComparePlans { get; } = [];
 
 	public ObservableCollection<Node> TreeNodes { get; } = [];
 
@@ -69,21 +68,46 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 	public string ActivePlanToolTip => ActivePlan is { Description.Length: > 0 } plan ? plan.Description : ActivePlan?.Name ?? string.Empty;
 
 	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(ComparePlanToolTip))]
-	[NotifyPropertyChangedFor(nameof(ComparePlanAcHeader))]
-	[NotifyPropertyChangedFor(nameof(ComparePlanDcHeader))]
+	[NotifyPropertyChangedFor(nameof(ComparePlan1ToolTip))]
+	[NotifyPropertyChangedFor(nameof(ComparePlan1AcHeader))]
+	[NotifyPropertyChangedFor(nameof(ComparePlan1DcHeader))]
 	[NotifyPropertyChangedFor(nameof(NormalVisibility))]
 	[NotifyPropertyChangedFor(nameof(ComparisonVisibility))]
 	[NotifyPropertyChangedFor(nameof(ViewChangesVisibility))]
-	public partial Plan ComparePlan { get; set; } = null!;
+	public partial Plan? ComparePlan1 { get; set; }
 
-	public string ComparePlanAcHeader => $"{ComparePlan?.Name} (AC)";
+	public string ComparePlan1AcHeader => $"{ComparePlan1?.Name} (AC)";
 
-	public string ComparePlanDcHeader => $"{ComparePlan?.Name} (DC)";
+	public string ComparePlan1DcHeader => $"{ComparePlan1?.Name} (DC)";
 
-	public string ComparePlanToolTip => ComparePlan is { Description.Length: > 0 } plan ? plan.Description : ComparePlan?.Name ?? string.Empty;
+	public string ComparePlan1ToolTip => ComparePlan1 is { Description.Length: > 0 } plan ? plan.Description : ComparePlan1?.Name ?? string.Empty;
 
-	private bool HasComparePlan => ComparePlan != null && ComparePlan.Guid != Guid.Empty;
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(ComparePlan2ToolTip))]
+	[NotifyPropertyChangedFor(nameof(ComparePlan2AcHeader))]
+	[NotifyPropertyChangedFor(nameof(ComparePlan2DcHeader))]
+	[NotifyPropertyChangedFor(nameof(NormalVisibility))]
+	[NotifyPropertyChangedFor(nameof(ComparisonVisibility))]
+	[NotifyPropertyChangedFor(nameof(ViewChangesVisibility))]
+	public partial Plan? ComparePlan2 { get; set; }
+
+	public string ComparePlan2AcHeader => $"{ComparePlan2?.Name} (AC)";
+
+	public string ComparePlan2DcHeader => $"{ComparePlan2?.Name} (DC)";
+
+	public string ComparePlan2ToolTip => ComparePlan2 is { Description.Length: > 0 } plan ? plan.Description : ComparePlan2?.Name ?? string.Empty;
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(NormalVisibility))]
+	[NotifyPropertyChangedFor(nameof(ComparisonVisibility))]
+	[NotifyPropertyChangedFor(nameof(ViewChangesVisibility))]
+	public partial bool CompareActive { get; set; }
+
+	private bool HasComparePlans => CompareActive && ComparePlan1 != null && ComparePlan2 != null;
+
+	public bool IsComparePlan1Active => ComparePlan1 is { } plan1 && ActivePlan is { } active && plan1.Guid == active.Guid;
+
+	public bool IsComparePlan2Active => ComparePlan2 is { } plan2 && ActivePlan is { } active && plan2.Guid == active.Guid;
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(NormalVisibility))]
@@ -91,9 +115,9 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 	[NotifyPropertyChangedFor(nameof(ViewChangesVisibility))]
 	public partial bool ViewChangesActive { get; set; }
 
-	public Visibility NormalVisibility => !ViewChangesActive && !HasComparePlan ? Visibility.Visible : Visibility.Collapsed;
+	public Visibility NormalVisibility => !ViewChangesActive && !HasComparePlans ? Visibility.Visible : Visibility.Collapsed;
 
-	public Visibility ComparisonVisibility => HasComparePlan && !ViewChangesActive ? Visibility.Visible : Visibility.Collapsed;
+	public Visibility ComparisonVisibility => HasComparePlans && !ViewChangesActive ? Visibility.Visible : Visibility.Collapsed;
 
 	public Visibility ViewChangesVisibility => ViewChangesActive ? Visibility.Visible : Visibility.Collapsed;
 
@@ -332,7 +356,6 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 			Plans.Add(plan);
 
 		ActivePlan = activeGuid == Guid.Empty ? null! : (Plans.FirstOrDefault(plan => plan.Guid == activeGuid) ?? Plans.FirstOrDefault())!;
-		RefreshComparePlans();
 		if (ActivePlan == null)
 		{
 			_subgroups = [];
@@ -348,18 +371,6 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		OnPropertyChanged(nameof(CanDelete));
 	}
 
-	public void RefreshComparePlans()
-	{
-		var emptyPlan = new Plan(Guid.Empty, "None", "Select another Power Plan to compare.");
-		Plan? previouslySelected = HasComparePlan ? ComparePlan : null;
-		ComparePlans.Clear();
-		ComparePlans.Add(emptyPlan);
-		foreach (Plan plan in Plans.Where(plan => plan.Guid != ActivePlan?.Guid).OrderBy(plan => plan.Name, StringComparer.CurrentCultureIgnoreCase))
-			ComparePlans.Add(plan);
-
-		ComparePlan = previouslySelected != null && ComparePlans.Any(plan => plan.Guid == previouslySelected.Guid) ? previouslySelected : emptyPlan;
-	}
-
 	partial void OnActivePlanChanged(Plan value)
 	{
 		if (value == null || !IsLoaded)
@@ -371,13 +382,62 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		_ = SwitchActivePowerPlanAsync(value.Guid, _activePlanReloadCts.Token);
 	}
 
-	partial void OnComparePlanChanged(Plan value)
+	partial void OnComparePlan1Changed(Plan? value) => RefreshCompare();
+
+	partial void OnComparePlan2Changed(Plan? value) => RefreshCompare();
+
+	partial void OnCompareActiveChanged(bool value)
 	{
-		if (value == null)
+		if (!IsLoaded)
 			return;
-		if (HasComparePlan)
+
+		if (value)
+		{
+			if (HasComparePlans)
+			{
+				ViewChangesActive = false;
+				return;
+			}
+
+			_ = ShowCompareDialogAsync();
+			return;
+		}
+
+		ComparePlan1 = null;
+		ComparePlan2 = null;
+	}
+
+	private async Task ShowCompareDialogAsync()
+	{
+		var viewModel = new CompareDialogViewModel(Plans);
+		if (await dialogService.ShowDialogAsync(viewModel) != DialogResult.Primary || viewModel.SelectedPlan1 is not Plan plan1 || viewModel.SelectedPlan2 is not Plan plan2)
+		{
+			CompareActive = false;
+			return;
+		}
+
+		ComparePlan1 = plan1;
+		ComparePlan2 = plan2;
+	}
+
+	[RelayCommand]
+	private async Task ChangeComparePlansAsync()
+	{
+		var viewModel = new CompareDialogViewModel(Plans, ComparePlan1, ComparePlan2);
+		if (await dialogService.ShowDialogAsync(viewModel) != DialogResult.Primary || viewModel.SelectedPlan1 is not Plan plan1 || viewModel.SelectedPlan2 is not Plan plan2)
+			return;
+
+		ComparePlan1 = plan1;
+		ComparePlan2 = plan2;
+		CompareActive = true;
+	}
+
+	private void RefreshCompare()
+	{
+		if (HasComparePlans)
 			ViewChangesActive = false;
 		RefreshComparisonValues();
+		SyncActiveCompareValues();
 		SyncCompare();
 		UpdateNodeCounts();
 		RefreshFilterOnlyAction?.Invoke();
@@ -388,7 +448,6 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		try
 		{
 			powerService.SetActivePowerPlan(planGuid);
-			RefreshComparePlans();
 			await ReloadActiveValuesAsync(token);
 		}
 		catch (OperationCanceledException)
@@ -418,6 +477,26 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		RefreshFilterOnlyAction?.Invoke();
 	}
 
+	private void SyncActiveCompareValues()
+	{
+		if (!IsComparePlan1Active && !IsComparePlan2Active)
+			return;
+
+		foreach (SettingState state in _settingStates.Values)
+		{
+			if (IsComparePlan1Active)
+			{
+				state.Compare1AcValue = state.AcValue;
+				state.Compare1DcValue = state.DcValue;
+			}
+			if (IsComparePlan2Active)
+			{
+				state.Compare2AcValue = state.AcValue;
+				state.Compare2DcValue = state.DcValue;
+			}
+		}
+	}
+
 	private void RefreshComparisonValues()
 	{
 		foreach (Setting setting in _settings)
@@ -425,16 +504,12 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 			if (!_settingStates.TryGetValue(setting, out SettingState? state) || state is null)
 				continue;
 
-			if (!HasComparePlan)
-			{
-				state.CompareAcValue = null;
-				state.CompareDcValue = null;
-				continue;
-			}
-
-			Value? value = powerService.ReadValue(ComparePlan.Guid, setting.SubgroupGuid, setting.Guid);
-			state.CompareAcValue = value?.AcValue;
-			state.CompareDcValue = value?.DcValue;
+			Value? plan1 = ComparePlan1 is { } first ? powerService.ReadValue(first.Guid, setting.SubgroupGuid, setting.Guid) : null;
+			Value? plan2 = ComparePlan2 is { } second ? powerService.ReadValue(second.Guid, setting.SubgroupGuid, setting.Guid) : null;
+			state.Compare1AcValue = plan1?.AcValue;
+			state.Compare1DcValue = plan1?.DcValue;
+			state.Compare2AcValue = plan2?.AcValue;
+			state.Compare2DcValue = plan2?.DcValue;
 		}
 	}
 
@@ -445,14 +520,14 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		if (!_settingStates.TryGetValue(setting, out SettingState? values) || values is null)
 			return;
 
-		if (mappingName == nameof(Node.DisplayAc))
+		if (IsAcMapping(mappingName))
 		{
 			if (setting.Options.Count > 0)
 				values.EditAcOption = setting.Options.FirstOrDefault(option => option.Index == values.AcValue);
 			else
 				values.EditAcValue = values.AcValue.ToString(CultureInfo.InvariantCulture);
 		}
-		else if (mappingName == nameof(Node.DisplayDc))
+		else if (IsDcMapping(mappingName))
 		{
 			if (setting.Options.Count > 0)
 				values.EditDcOption = setting.Options.FirstOrDefault(option => option.Index == values.DcValue);
@@ -482,10 +557,14 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		return true;
 	}
 
+	private static bool IsAcMapping(string mappingName) => mappingName is nameof(Node.DisplayAc) or nameof(Node.DisplayCompare1Ac) or nameof(Node.DisplayCompare2Ac);
+
+	private static bool IsDcMapping(string mappingName) => mappingName is nameof(Node.DisplayDc) or nameof(Node.DisplayCompare1Dc) or nameof(Node.DisplayCompare2Dc);
+
 	private static bool ApplyEditedValue(Setting setting, SettingState values, string mappingName, out bool changed)
 	{
 		changed = false;
-		if (mappingName == nameof(Node.DisplayAc))
+		if (IsAcMapping(mappingName))
 		{
 			if (!TryGetEditedValue(setting, values.EditAcValue, values.EditAcOption, out uint value))
 				return false;
@@ -493,7 +572,7 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 			if (changed)
 				values.AcValue = value;
 		}
-		else if (mappingName == nameof(Node.DisplayDc))
+		else if (IsDcMapping(mappingName))
 		{
 			if (!TryGetEditedValue(setting, values.EditDcValue, values.EditDcOption, out uint value))
 				return false;
@@ -558,17 +637,20 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 				return new[]
 				{
 					("Copy Setting", setting.Name),
-					("Copy Description", setting.Description)
+					("Copy Description", setting.Description),
+					("Copy GUID", setting.Guid.ToString())
 				};
 			}
 
 			(string displayValue, string description) = columnMappingName switch
 			{
 				nameof(Node.DisplayAc) => (node.DisplayAc, node.AcToolTip),
-				nameof(Node.DisplayCompareAc) => (node.DisplayCompareAc, node.CompareAcToolTip),
+				nameof(Node.DisplayCompare1Ac) => (node.DisplayCompare1Ac, node.Compare1AcToolTip),
+				nameof(Node.DisplayCompare2Ac) => (node.DisplayCompare2Ac, node.Compare2AcToolTip),
 				nameof(Node.DisplayOriginalAc) => (node.DisplayOriginalAc, node.OriginalAcToolTip),
 				nameof(Node.DisplayDc) => (node.DisplayDc, node.DcToolTip),
-				nameof(Node.DisplayCompareDc) => (node.DisplayCompareDc, node.CompareDcToolTip),
+				nameof(Node.DisplayCompare1Dc) => (node.DisplayCompare1Dc, node.Compare1DcToolTip),
+				nameof(Node.DisplayCompare2Dc) => (node.DisplayCompare2Dc, node.Compare2DcToolTip),
 				nameof(Node.DisplayOriginalDc) => (node.DisplayOriginalDc, node.OriginalDcToolTip),
 				_ => (setting.Name, setting.Description)
 			};
@@ -687,13 +769,13 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 	{
 		Setting setting = node.Setting!;
 		SettingState values = _settingStates[setting];
-		uint[] acCandidates;
-		uint[] dcCandidates;
+		uint?[] acCandidates;
+		uint?[] dcCandidates;
 
-		if (HasComparePlan && !ViewChangesActive)
+		if (HasComparePlans && !ViewChangesActive)
 		{
-			acCandidates = [values.AcValue, values.CompareAcValue!.Value];
-			dcCandidates = [values.DcValue, values.CompareDcValue!.Value];
+			acCandidates = [values.Compare1AcValue, values.Compare2AcValue];
+			dcCandidates = [values.Compare1DcValue, values.Compare2DcValue];
 		}
 		else if (ViewChangesActive)
 		{
@@ -709,8 +791,8 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		return (FilterAc && CandidatesMatch(acCandidates, setting, query)) || (FilterDc && CandidatesMatch(dcCandidates, setting, query));
 	}
 
-	private bool CandidatesMatch(uint[] candidates, Setting setting, string query) =>
-		candidates.Any(value => TextMatches(SettingState.GetDisplayValue(setting, value), query) || TextMatches(value.ToString(CultureInfo.InvariantCulture), query) || (FilterDescription && TextMatches(SettingState.GetValueToolTip(setting, value), query)));
+	private bool CandidatesMatch(uint?[] candidates, Setting setting, string query) =>
+		candidates.Where(static value => value.HasValue).Any(value => TextMatches(SettingState.GetDisplayValue(setting, value!.Value), query) || TextMatches(value!.Value.ToString(CultureInfo.InvariantCulture), query) || (FilterDescription && TextMatches(SettingState.GetValueToolTip(setting, value!.Value), query)));
 
 	private bool TextMatches(string text, string query)
 	{
@@ -821,6 +903,7 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 
 	private void RefreshState()
 	{
+		SyncActiveCompareValues();
 		int count = 0;
 		foreach (Setting setting in _settings)
 		{

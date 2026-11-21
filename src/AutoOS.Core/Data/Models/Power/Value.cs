@@ -1,4 +1,4 @@
-namespace AutoOS.App.Data.Models.Power;
+namespace AutoOS.Core.Data.Models.Power;
 
 public readonly record struct Value(
 	uint AcValue,
