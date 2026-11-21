@@ -62,7 +62,8 @@ public sealed partial class BrowsersPage : Page
 			new() { Text = "Wayback Machine", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/WaybackMachine.png" },
 			new() { Text = "iCloud Passwords", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/IcloudPasswords.png" },
 			new() { Text = "Bitwarden", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/Bitwarden.png" },
-			new() { Text = "1Password", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/1Password.png" }
+			new() { Text = "1Password", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/1Password.png" },
+			new() { Text = "KeePassXC", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/KeePassXC.png" }
 		};
 	}
 

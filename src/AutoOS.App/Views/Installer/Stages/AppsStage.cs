@@ -26,6 +26,7 @@ public class ApplicationSelection
 	public bool iCloud { get; set; }
 	public bool Bitwarden { get; set; }
 	public bool OnePassword { get; set; }
+	public bool KeePassXC { get; set; }
 	public bool Discord { get; set; }
 	public bool DiscordAccount { get; set; }
 	public bool DiscordKeybinds { get; set; }
@@ -188,6 +189,7 @@ public static class AppsStage
 		bool iCloud = selection?.iCloud ?? PreparingStage.iCloud;
 		bool Bitwarden = selection?.Bitwarden ?? PreparingStage.Bitwarden;
 		bool OnePassword = selection?.OnePassword ?? PreparingStage.OnePassword;
+		bool KeePassXC = selection?.KeePassXC ?? PreparingStage.KeePassXC;
 		bool AlwaysShowTrayIcons = selection != null ? true : PreparingStage.AlwaysShowTrayIcons;
 		bool LeftTaskbarAlignment = selection != null ? true : PreparingStage.LeftTaskbarAlignment;
 
@@ -461,6 +463,14 @@ public static class AppsStage
 
 			// disable 1password startup entry
 			("Disabling 1Password startup entry", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\SystemAppData\DC5C6510.2032887045529_2v019pwa6amcg\1PasswordStartup", "State", 1, RegistryValueKind.DWord), () => OnePassword == true),
+
+			// download keepassxc
+			("Downloading KeePassXC", async () => await DownloadHelper.DownloadGitHubReleaseAssetAsync("keepassxreboot/keepassxc", Path.GetTempPath(), name => name.EndsWith("x64.msi"), "KeePassXC.msi", reporter: reporter), () => KeePassXC == true),
+
+			// install keepassxc
+			("Installing KeePassXC", async () => await Process.Start(new ProcessStartInfo { FileName = "msiexec.exe", Arguments = $@"/i ""{Path.Combine(Path.GetTempPath(), "KeePassXC.msi")}"" /qn", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => KeePassXC == true),
+			("Installing KeePassXC", async () => { string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "KeePassXC", "keepassxc.ini"); Directory.CreateDirectory(Path.GetDirectoryName(path)!); await File.WriteAllTextAsync(path, "[Browser]\nEnabled=true\n\n[GUI]\nMinimizeToTray=false\n"); }, () => KeePassXC == true),
+			("Cleaning up KeePassXC files", async () => { string path = Path.Combine(Path.GetTempPath(), "KeePassXC.msi"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => KeePassXC == true),
 
 			// download nanazip
 			("Downloading NanaZip", async () => await StoreHelper.Download("40174MouriNaruto.NanaZip_gnj4mf6z9tkrc", reporter: reporter), () => selection == null),

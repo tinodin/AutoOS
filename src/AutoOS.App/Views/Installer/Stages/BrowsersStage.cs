@@ -44,6 +44,7 @@ public class BrowserSelection
 	public bool iCloud { get; set; }
 	public bool Bitwarden { get; set; }
 	public bool OnePassword { get; set; }
+	public bool KeePassXC { get; set; }
 }
 
 public static class BrowsersStage
@@ -84,6 +85,7 @@ public static class BrowsersStage
 		bool? iCloud = selection?.iCloud ?? PreparingStage.iCloud;
 		bool? Bitwarden = selection?.Bitwarden ?? PreparingStage.Bitwarden;
 		bool? OnePassword = selection?.OnePassword ?? PreparingStage.OnePassword;
+		bool? KeePassXC = selection?.KeePassXC ?? PreparingStage.KeePassXC;
 
 		string edgeVersion = "";
 		string chromeVersion = "";
@@ -203,6 +205,9 @@ public static class BrowsersStage
 			// install 1password extension
 			("Installing 1Password Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\ExtensionInstallForcelist", "aeblfdkhhhdcdjpifhhbdiojplfjncoa"), () => Chrome == true && OnePassword == true),
 
+			// install keepassxc extension
+			("Installing KeePassXC Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\ExtensionInstallForcelist", "oboonakemofpalcgghocfoadofidjkkk"), () => Chrome == true && KeePassXC == true),
+
 			// remove google chrome shortcut from the desktop
 			("Removing Google Chrome shortcut from the desktop", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Google Chrome.lnk")), () => Chrome == true),
 
@@ -293,6 +298,9 @@ public static class BrowsersStage
 			// install 1password extension
 			("Installing 1Password Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "aeblfdkhhhdcdjpifhhbdiojplfjncoa"), () => Thorium == true && OnePassword == true),
 
+			// install keepassxc extension
+			("Installing KeePassXC Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "oboonakemofpalcgghocfoadofidjkkk"), () => Thorium == true && KeePassXC == true),
+
 			// remove thorium shortcut from the desktop
 			("Removing Thorium shortcut from the desktop", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Thorium.lnk")), () => Thorium == true),
 
@@ -360,6 +368,9 @@ public static class BrowsersStage
 
 			// install 1password extension
 			("Installing 1Password Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Helium\ExtensionInstallForcelist", "aeblfdkhhhdcdjpifhhbdiojplfjncoa"), () => Helium == true && OnePassword == true),
+
+			// install keepassxc extension
+			("Installing KeePassXC Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Helium\ExtensionInstallForcelist", "oboonakemofpalcgghocfoadofidjkkk"), () => Helium == true && KeePassXC == true),
 
 			// remove helium shortcut from the desktop
 			("Removing Helium shortcut from the desktop", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Helium.lnk")), () => Helium == true),
@@ -446,6 +457,9 @@ public static class BrowsersStage
 			// install 1password extension
 			("Installing 1Password Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\BraveSoftware\Brave\ExtensionInstallForcelist", "aeblfdkhhhdcdjpifhhbdiojplfjncoa"), () => Brave == true && OnePassword == true),
 
+			// install keepassxc extension
+			("Installing KeePassXC Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\BraveSoftware\Brave\ExtensionInstallForcelist", "oboonakemofpalcgghocfoadofidjkkk"), () => Brave == true && KeePassXC == true),
+
 			// download vivaldi
 			("Downloading Vivaldi", async () => await DownloadHelper.Download("https://vivaldi.com/download/Vivaldi.x64.exe", Path.GetTempPath(), "Vivaldi.x64.exe", reporter ?? new InstallPageReporter()), () => Vivaldi == true),
 
@@ -503,6 +517,9 @@ public static class BrowsersStage
 
 			// install 1password extension
 			("Installing 1Password Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Vivaldi\ExtensionInstallForcelist", "aeblfdkhhhdcdjpifhhbdiojplfjncoa"), () => Vivaldi == true && OnePassword == true),
+
+			// install keepassxc extension
+			("Installing KeePassXC Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Vivaldi\ExtensionInstallForcelist", "oboonakemofpalcgghocfoadofidjkkk"), () => Vivaldi == true && KeePassXC == true),
 
 			// remove vivaldi shortcut from the desktop
 			("Removing Vivaldi shortcut from the desktop", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Vivaldi.lnk")), () => Vivaldi == true),
@@ -577,6 +594,9 @@ public static class BrowsersStage
 			// install 1password extension
 			("Installing 1Password Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "aeblfdkhhhdcdjpifhhbdiojplfjncoa"), () => Arc == true && OnePassword == true),
 
+			// install keepassxc extension
+			("Installing KeePassXC Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "oboonakemofpalcgghocfoadofidjkkk"), () => Arc == true && KeePassXC == true),
+
 			// download comet
 			("Downloading Comet", async () => await DownloadHelper.Download("https://www.perplexity.ai/rest/browser/download?platform=win_x64&channel=stable", Path.GetTempPath(), "Comet.exe", reporter ?? new InstallPageReporter()), () => Comet == true),
 
@@ -631,6 +651,9 @@ public static class BrowsersStage
 
 			// install 1password extension
 			("Installing 1Password Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "aeblfdkhhhdcdjpifhhbdiojplfjncoa"), () => Comet == true && OnePassword == true),
+
+			// install keepassxc extension
+			("Installing KeePassXC Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "oboonakemofpalcgghocfoadofidjkkk"), () => Comet == true && KeePassXC == true),
 
 			// remove comet shortcut from the desktop
 			("Removing Comet shortcut from the desktop", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Comet.lnk")), () => Comet == true),
@@ -715,6 +738,9 @@ public static class BrowsersStage
 			// install 1password extension
 			("Installing 1Password Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Mozilla Firefox", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/1password-x-password-manager"), () => Firefox == true && OnePassword == true),
 
+			// install keepassxc extension
+			("Installing KeePassXC Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Mozilla Firefox", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/keepassxc-browser"), () => Firefox == true && KeePassXC == true),
+
 			// download zen
 			("Downloading Zen", async () => await DownloadHelper.DownloadGitHubReleaseAssetAsync("zen-browser/desktop", Path.GetTempPath(), name => name.Contains("zen.installer.exe"), reporter: reporter ?? new InstallPageReporter()), () => Zen == true),
 
@@ -778,6 +804,9 @@ public static class BrowsersStage
 
 			// install 1password extension
 			("Installing 1Password Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Zen Browser", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/1password-x-password-manager"), () => Zen == true && OnePassword == true),
+
+			// install keepassxc extension
+			("Installing KeePassXC Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Zen Browser", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/keepassxc-browser"), () => Zen == true && KeePassXC == true),
 
 			// download waterfox
 			("Downloading Waterfox", async () =>
@@ -846,6 +875,9 @@ public static class BrowsersStage
 
 			// install 1password extension
 			("Installing 1Password Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Waterfox", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/1password-x-password-manager"), () => Waterfox == true && OnePassword == true),
+
+			// install keepassxc extension
+			("Installing KeePassXC Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Waterfox", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/keepassxc-browser"), () => Waterfox == true && KeePassXC == true),
 			
 			// download librewolf
 			("Downloading LibreWolf", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://codeberg.org/api/v1/repos/librewolf/bsys6/releases")).RootElement.EnumerateArray().First(release => release.GetProperty("assets").EnumerateArray().Any(asset => asset.GetProperty("name").GetString()?.Contains("windows-x86_64-setup.exe") ?? false)).GetProperty("assets").EnumerateArray().First(asset => asset.GetProperty("name").GetString()?.Contains("windows-x86_64-setup.exe") ?? false).GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "librewolf-windows-x86_64-setup.exe", reporter: reporter), () => LibreWolf == true),
@@ -903,6 +935,9 @@ public static class BrowsersStage
 
 			// install 1password extension
 			("Installing 1Password Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "LibreWolf", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/1password-x-password-manager"), () => LibreWolf == true && OnePassword == true),
+
+			// install keepassxc extension
+			("Installing KeePassXC Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "LibreWolf", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/keepassxc-browser"), () => LibreWolf == true && KeePassXC == true),
 
 			// download floorp
 			("Downloading Floorp", async () => await DownloadHelper.DownloadGitHubReleaseAssetAsync("Floorp-Projects/Floorp", Path.GetTempPath(), name => name.Contains("floorp-windows-x86_64.installer.exe"), "FloorpSetup.exe", reporter: reporter ?? new InstallPageReporter()), () => Floorp == true),
@@ -968,6 +1003,9 @@ public static class BrowsersStage
 			// install 1password extension
 			("Installing 1Password Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Ablaze Floorp", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/1password-x-password-manager"), () => Floorp == true && OnePassword == true),
 
+			// install keepassxc extension
+			("Installing KeePassXC Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Ablaze Floorp", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/keepassxc-browser"), () => Floorp == true && KeePassXC == true),
+
 			// download mullvad
 			("Downloading Mullvad Browser", async () => await DownloadHelper.Download("https://mullvad.net/en/download/browser/win64/latest", Path.GetTempPath(), "mullvad-browser-windows-x86_64.exe", reporter ?? new InstallPageReporter()), () => Mullvad == true),
 
@@ -1027,6 +1065,9 @@ public static class BrowsersStage
 
 			// install 1password extension
 			("Installing 1Password Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mullvad", "MullvadBrowser", "Release", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/1password-x-password-manager"), () => Mullvad == true && OnePassword == true),
+
+			// install keepassxc extension
+			("Installing KeePassXC Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mullvad", "MullvadBrowser", "Release", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/keepassxc-browser"), () => Mullvad == true && KeePassXC == true),
 		};
 
 		if (selection != null)

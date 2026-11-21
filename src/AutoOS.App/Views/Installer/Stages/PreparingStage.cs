@@ -56,6 +56,7 @@ public static partial class PreparingStage
 	public static bool iCloud;
 	public static bool Bitwarden;
 	public static bool OnePassword;
+	public static bool KeePassXC;
 
 	public static bool Discord;
 	public static bool DiscordAccount;
@@ -465,6 +466,7 @@ public static partial class PreparingStage
 			iCloud = (localSettings.Values["Extensions"]?.ToString()?.Contains("iCloud Passwords") ?? false);
 			Bitwarden = (localSettings.Values["Extensions"]?.ToString()?.Contains("Bitwarden") ?? false);
 			OnePassword = (localSettings.Values["Extensions"]?.ToString()?.Contains("1Password") ?? false);
+			KeePassXC = (localSettings.Values["Extensions"]?.ToString()?.Contains("KeePassXC") ?? false);
 
 			Discord = (localSettings.Values["Messaging"]?.ToString()?.Contains("Discord") ?? false);
 			WhatsApp = (localSettings.Values["Messaging"]?.ToString()?.Contains("WhatsApp") ?? false);

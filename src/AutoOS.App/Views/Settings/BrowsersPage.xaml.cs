@@ -63,7 +63,8 @@ public sealed partial class BrowsersPage : Page
 			new() { Text = "Wayback Machine", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/WaybackMachine.png" },
 			new() { Text = "iCloud Passwords", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/IcloudPasswords.png" },
 			new() { Text = "Bitwarden", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/Bitwarden.png" },
-			new() { Text = "1Password", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/1Password.png" }
+			new() { Text = "1Password", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/1Password.png" },
+			new() { Text = "KeePassXC", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Extensions/KeePassXC.png" }
 		};
 		foreach (GridViewItem item in extensions)
 			extensionItems.Add(item);
@@ -114,7 +115,8 @@ public sealed partial class BrowsersPage : Page
 			WaybackMachine = selectedExtensions.Contains("Wayback Machine"),
 			iCloud = selectedExtensions.Contains("iCloud Passwords"),
 			Bitwarden = selectedExtensions.Contains("Bitwarden"),
-			OnePassword = selectedExtensions.Contains("1Password")
+			OnePassword = selectedExtensions.Contains("1Password"),
+			KeePassXC = selectedExtensions.Contains("KeePassXC")
 		};
 
 		var updateDialog = new UpdateDialog();
