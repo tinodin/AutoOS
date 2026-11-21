@@ -52,6 +52,7 @@ public class ApplicationSelection
 	public bool FeatherClient { get; set; }
 	public bool NoRiskClient { get; set; }
 	public bool PrismLauncher { get; set; }
+	public bool PineconeMC { get; set; }
 	public bool Bloxstrap { get; set; }
 	public bool Froststrap { get; set; }
 	public bool RockstarGamesLauncher { get; set; }
@@ -217,6 +218,7 @@ public static class AppsStage
 		bool FeatherClient = selection?.FeatherClient ?? PreparingStage.FeatherClient;
 		bool NoRiskClient = selection?.NoRiskClient ?? PreparingStage.NoRiskClient;
 		bool PrismLauncher = selection?.PrismLauncher ?? PreparingStage.PrismLauncher;
+		bool PineconeMC = selection?.PineconeMC ?? PreparingStage.PineconeMC;
 		bool Bloxstrap = selection?.Bloxstrap ?? PreparingStage.Bloxstrap;
 		bool Froststrap = selection?.Froststrap ?? PreparingStage.Froststrap;
 		bool RockstarGamesLauncher = selection?.RockstarGamesLauncher ?? PreparingStage.RockstarGamesLauncher;
@@ -877,6 +879,13 @@ public static class AppsStage
 			// install prism launcher
 			("Installing Prism Launcher", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "PrismLauncher-Windows-MSVC-Setup.exe"), Arguments = "/S" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => PrismLauncher == true),
 			("Cleaning up Prism Launcher files", async () => { string path = Path.Combine(Path.GetTempPath(), "PrismLauncher-Windows-MSVC-Setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => PrismLauncher == true),
+
+			// download pinecone mc
+			("Downloading PineconeMC", async () => await DownloadHelper.DownloadGitHubReleaseAssetAsync("ElyPrismLauncher/Launcher", Path.GetTempPath(), name => name.Contains("Windows-MSVC") && !name.Contains("arm64") && !name.Contains("Portable") && name.EndsWith(".exe"), "PineconeMC-Windows-MSVC-Setup.exe", reporter: reporter), () => PineconeMC == true),
+
+			// install pinecone mc
+			("Installing PineconeMC", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "PineconeMC-Windows-MSVC-Setup.exe"), Arguments = "/S" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => PineconeMC == true),
+			("Cleaning up PineconeMC files", async () => { string path = Path.Combine(Path.GetTempPath(), "PineconeMC-Windows-MSVC-Setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => PineconeMC == true),
 
 			// download bloxstrap
 			("Downloading Bloxstrap", async () => await DownloadHelper.DownloadGitHubReleaseAssetAsync("bloxstraplabs/bloxstrap", Path.GetTempPath(), name => name.StartsWith("Bloxstrap-v") && name.EndsWith(".exe"), "Bloxstrap.exe", reporter: reporter), () => Bloxstrap == true),

@@ -75,6 +75,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "Feather Client", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/FeatherClient.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "feather", "Feather Launcher.exe")) },
 			new() { Text = "NoRisk Client", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/NoRiskClient.png", IsInstalled = Directory.GetDirectories(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NoRisk Launcher").SelectMany(directory => Directory.GetFiles(directory, "noriskclient-launcher-v*.exe")).Any() },
 			new() { Text = "Prism Launcher", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/PrismLauncher.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "PrismLauncher", "prismlauncher.exe")) },
+			new() { Text = "PineconeMC", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/PineconeMC.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "ElyPrismLauncher", "elyprismlauncher.exe")) },
 			new() { Text = "Bloxstrap", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/Bloxstrap.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Bloxstrap", "Bloxstrap.exe")) },
 			new() { Text = "Froststrap", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/Froststrap.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Froststrap", "Froststrap.exe")) },
 			new() { Text = "Rockstar Games Launcher", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/RockstarGamesLauncher.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Rockstar Games", "Launcher", "Launcher.exe")) },
@@ -302,6 +303,7 @@ public sealed partial class AppsPage : Page
 		selection.FeatherClient = selectedLaunchers.Contains("Feather Client");
 		selection.NoRiskClient = selectedLaunchers.Contains("NoRisk Client");
 		selection.PrismLauncher = selectedLaunchers.Contains("Prism Launcher");
+		selection.PineconeMC = selectedLaunchers.Contains("PineconeMC");
 		selection.Bloxstrap = selectedLaunchers.Contains("Bloxstrap");
 		selection.Froststrap = selectedLaunchers.Contains("Froststrap");
 		selection.RockstarGamesLauncher = selectedLaunchers.Contains("Rockstar Games Launcher");
