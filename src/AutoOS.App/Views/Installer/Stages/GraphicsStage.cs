@@ -85,7 +85,7 @@ public static class GraphicsStage
 			("Applying MSI Afterburner profile", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "MSI Afterburner", "MSIAfterburner.exe"), Arguments = "/Profile1 /q", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => MSI == true),
 		
 			// download obs studio
-			("Downloading OBS Studio", async () => await DownloadHelper.DownloadGitHubReleaseAssetAsync("obsproject/obs-studio", Path.GetTempPath(), "Windows-x64-Installer.exe", "OBS-Studio-Windows-x64-Installer.exe", reporter: new InstallPageReporter()), null),
+			("Downloading OBS Studio", async () => await DownloadHelper.DownloadGitHubReleaseAssetAsync("obsproject/obs-studio", Path.GetTempPath(), name => name.Contains("Windows-x64-Installer.exe"), "OBS-Studio-Windows-x64-Installer.exe", reporter: new InstallPageReporter()), null),
 			("Downloading OBS Studio", async () => await DownloadHelper.Download("https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/Files/OBS/obs-studio.zip", Path.GetTempPath(), "obs-studio.zip", new InstallPageReporter()), null),
 			("Downloading OBS Studio", async () => await DownloadHelper.Download("https://raw.githubusercontent.com/tinodin/AutoOS-Resources/main/Files/OBS/uninstall.exe", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "obs-studio"), "uninstall.exe", new InstallPageReporter()), null),
 

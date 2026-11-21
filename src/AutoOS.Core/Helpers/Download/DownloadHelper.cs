@@ -23,14 +23,9 @@ public static partial class DownloadHelper
 		}
 	};
 
-	public static Task Download(string url, string path, string? file = null, IStatusReporter? reporter = null)
+	public static Task Download(string url, string path, string? file = null, IStatusReporter? reporter = null, string? sha256 = null)
 	{
-		return Download(new[] { url }, path, file != null ? new[] { file } : null, reporter);
-	}
-
-	public static Task DownloadGitHubReleaseAssetAsync(string repository, string path, string assetName, string? file = null, bool includePrerelease = false, IStatusReporter? reporter = null)
-	{
-		return DownloadGitHubReleaseAssetAsync(repository, path, name => name.Contains(assetName), file, includePrerelease, reporter);
+		return Download(new[] { url }, path, file != null ? new[] { file } : null, reporter, sha256 != null ? new string?[] { sha256 } : null);
 	}
 
 	public static async Task DownloadGitHubReleaseAssetAsync(string repository, string path, Func<string, bool> assetNameMatcher, string? file = null, bool includePrerelease = false, IStatusReporter? reporter = null)
@@ -41,31 +36,39 @@ public static partial class DownloadHelper
 			r.GetProperty("assets").EnumerateArray().Any(a => assetNameMatcher(a.GetProperty("name").GetString() ?? string.Empty)));
 		JsonElement asset = release.GetProperty("assets").EnumerateArray().First(a => assetNameMatcher(a.GetProperty("name").GetString() ?? string.Empty));
 		string url = asset.GetProperty("browser_download_url").GetString() ?? string.Empty;
-		string? digest = asset.TryGetProperty("digest", out JsonElement digestElement) ? digestElement.GetString() : null;
-		string destination = Path.Combine(path, string.IsNullOrWhiteSpace(file) ? Path.GetFileName(url) : file);
+		string? sha256 = asset.TryGetProperty("digest", out JsonElement digestElement) && digestElement.GetString() is { } digest && digest.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase) ? digest["sha256:".Length..] : null;
 
-		for (int attempt = 1; ; attempt++)
-		{
-			await Download(url, path, file, reporter);
-			if (digest == null || await VerifyHashAsync(destination, digest))
-				return;
-			if (attempt == 3)
-				throw new InvalidDataException($"Hash mismatch for {destination} after {attempt} attempts");
-		}
+		await Download(url, path, file, reporter, sha256);
 	}
 
-	private static async Task<bool> VerifyHashAsync(string path, string digest)
+	public static string? GetSha256Hash(string checksums, string fileName)
 	{
-		string[] parts = digest.Split(':', 2);
-		if (parts.Length != 2 || !parts[0].Equals("sha256", StringComparison.OrdinalIgnoreCase))
-			return true;
+		foreach (string line in checksums.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+		{
+			string trimmed = line.Trim();
+			int separatorIndex = trimmed.IndexOf(' ');
+			if (separatorIndex <= 0 || trimmed.Length - separatorIndex <= 1)
+				continue;
 
+			string hash = trimmed[..separatorIndex];
+			string name = trimmed[(separatorIndex + 1)..].Trim().TrimStart('*').Trim();
+			if (name.Equals(fileName, StringComparison.OrdinalIgnoreCase) && hash.Length == 64)
+				return hash;
+		}
+
+		return null;
+	}
+
+	public static Task<string> GetStringAsync(string url) => httpClient.GetStringAsync(url);
+
+	private static async Task<bool> VerifyHashAsync(string path, string sha256)
+	{
 		await using FileStream stream = File.OpenRead(path);
 		byte[] actual = await SHA256.HashDataAsync(stream);
-		return actual.AsSpan().SequenceEqual(Convert.FromHexString(parts[1]));
+		return actual.AsSpan().SequenceEqual(Convert.FromHexString(sha256));
 	}
 
-	public static async Task Download(IEnumerable<string> urls, string path, IEnumerable<string>? files = null, IStatusReporter? reporter = null)
+	public static async Task Download(IEnumerable<string> urls, string path, IEnumerable<string>? files = null, IStatusReporter? reporter = null, IEnumerable<string?>? hashes = null)
 	{
 		Directory.CreateDirectory(path);
 		var urlList = urls.ToList();
@@ -346,6 +349,27 @@ public static partial class DownloadHelper
 				if (downloaderError != null)
 				{
 					throw downloaderError;
+				}
+			}
+		}
+
+		if (hashes != null)
+		{
+			List<string?> hashList = hashes.ToList();
+			for (int i = 0; i < urlList.Count && i < hashList.Count; i++)
+			{
+				string? sha256 = hashList[i];
+				if (sha256 == null)
+					continue;
+
+				string fileName = fileList.Count > i && !string.IsNullOrWhiteSpace(fileList[i]) ? fileList[i] : Path.GetFileName(urlList[i]);
+				string destination = Path.Combine(path, fileName);
+				int attempt = 0;
+				while (!await VerifyHashAsync(destination, sha256))
+				{
+					if (++attempt == 3)
+						throw new InvalidDataException($"Hash mismatch for {destination} after {attempt} attempts");
+					await Download(urlList[i], path, fileList.Count > i ? fileList[i] : null, reporter);
 				}
 			}
 		}

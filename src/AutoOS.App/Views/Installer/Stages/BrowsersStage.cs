@@ -143,7 +143,7 @@ public static class BrowsersStage
 			("Disabling Microsoft Edge services", async () => TaskSchedulerHelper.Toggle("MicrosoftEdgeUpdateTaskMachineUA", false), () => selection == null),
 
 			// download google chrome
-			("Downloading Google Chrome", async () => await DownloadHelper.Download("http://dl.google.com/chrome/install/375.126/chrome_installer.exe", Path.GetTempPath(), "ChromeSetup.exe", reporter ?? new InstallPageReporter()), () => Chrome == true),
+			("Downloading Google Chrome", async () => await DownloadHelper.Download("https://dl.google.com/chrome/install/latest/chrome_installer.exe", Path.GetTempPath(), "ChromeSetup.exe", reporter ?? new InstallPageReporter()), () => Chrome == true),
 
 			// install google chrome
 			("Installing Google Chrome", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "ChromeSetup.exe"), Arguments = "--silent --install --system-level --do-not-launch-chrome", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Chrome == true),
@@ -231,7 +231,7 @@ public static class BrowsersStage
 			("Disabling Google Chrome services", async () => TaskSchedulerHelper.Toggle(@"\GoogleUserPEH\RunPlatformExperienceHelper_Metrics", false), () => Chrome == true),
 
 			// download thorium
-			("Downloading Thorium", async () => await DownloadHelper.DownloadGitHubReleaseAssetAsync("Alex313031/Thorium-Win", Path.GetTempPath(), "thorium_SSE4_mini_installer.exe", "ThoriumSetup.exe", includePrerelease: true, reporter: reporter ?? new InstallPageReporter()), () => Thorium == true),
+			("Downloading Thorium", async () => await DownloadHelper.DownloadGitHubReleaseAssetAsync("Alex313031/Thorium-Win", Path.GetTempPath(), name => name.Contains("thorium_SSE4_mini_installer.exe"), "ThoriumSetup.exe", includePrerelease: true, reporter: reporter ?? new InstallPageReporter()), () => Thorium == true),
 			
 			// install thorium
 			("Installing Thorium", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "ThoriumSetup.exe"), Arguments = "--silent --install --system-level --do-not-launch-chrome", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Thorium == true),
@@ -297,7 +297,7 @@ public static class BrowsersStage
 			("Removing Thorium shortcut from the desktop", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Thorium.lnk")), () => Thorium == true),
 
 			// download helium
-			("Downloading Helium", async () => await DownloadHelper.DownloadGitHubReleaseAssetAsync("imputnet/helium-windows", Path.GetTempPath(), "_x64-installer.exe", "helium_x64-installer.exe", reporter: reporter ?? new InstallPageReporter()), () => Helium == true),
+			("Downloading Helium", async () => await DownloadHelper.DownloadGitHubReleaseAssetAsync("imputnet/helium-windows", Path.GetTempPath(), name => name.Contains("_x64-installer.exe"), "helium_x64-installer.exe", reporter: reporter ?? new InstallPageReporter()), () => Helium == true),
 
 			// install helium
 			("Installing Helium", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "helium_x64-installer.exe"), Arguments = "/S /SYSTEM", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Helium == true),
@@ -516,14 +516,14 @@ public static class BrowsersStage
 			("Disabling Vivaldi services", async () => RegistryHelper.DeleteKey(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\{9C142C0C-124C-4467-B117-EBCC62801D7B}"), () => Vivaldi == true),
 
 			// download arc dependency
-			("Downloading Arc Dependency", async () => await DownloadHelper.Download("https://releases.arc.net/windows/dependencies/x64/Microsoft.VCLibs.x64.14.00.Desktop.14.0.33728.0.appx", Path.GetTempPath(), "Microsoft.VCLibs.x64.14.00.Desktop.14.0.33728.0.appx", reporter ?? new InstallPageReporter()), () => Arc == true),
+			("Downloading Arc Dependency", async () => await DownloadHelper.Download("https://releases.arc.net/windows/dependencies/x64/Microsoft.VCLibs.x64.14.00.Desktop.14.0.33728.0.appx", Path.GetTempPath(), "Microsoft.VCLibs.x64.appx", reporter ?? new InstallPageReporter()), () => Arc == true),
 
 			// install arc dependency
-			("Installing Arc Dependency", async () => await Process.Start(new ProcessStartInfo { FileName = "powershell", Arguments = @$"-Command ""Add-AppxPackage -Path {Path.Combine(Path.GetTempPath(), "Microsoft.VCLibs.x64.14.00.Desktop.14.0.33728.0.appx")}""", UseShellExecute = false, CreateNoWindow = true })!.WaitForExitAsync(), () => Arc == true),
-			("Cleaning up Arc Dependency files", async () => { string path = Path.Combine(Path.GetTempPath(), "Microsoft.VCLibs.x64.14.00.Desktop.14.0.33728.0.appx"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Arc == true),
+			("Installing Arc Dependency", async () => await Process.Start(new ProcessStartInfo { FileName = "powershell", Arguments = @$"-Command ""Add-AppxPackage -Path {Path.Combine(Path.GetTempPath(), "Microsoft.VCLibs.x64.appx")}""", UseShellExecute = false, CreateNoWindow = true })!.WaitForExitAsync(), () => Arc == true),
+			("Cleaning up Arc Dependency files", async () => { string path = Path.Combine(Path.GetTempPath(), "Microsoft.VCLibs.x64.appx"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Arc == true),
 
 			// download arc
-			("Downloading Arc", async () => await DownloadHelper.Download("https://releases.arc.net/windows/prod/1.72.0.296/Arc.x64.msix", Path.GetTempPath(), "Arc.x64.msix", reporter ?? new InstallPageReporter()), () => Arc == true),
+			("Downloading Arc", async () => await DownloadHelper.Download("https://releases.arc.net/windows/prod/1.133.1.2/Arc.x64.msix", Path.GetTempPath(), "Arc.x64.msix", reporter ?? new InstallPageReporter()), () => Arc == true),
 
 			// install arc
 			("Installing Arc", async () => await new PackageManager().AddPackageAsync(new Uri(Path.Combine(Path.GetTempPath(), "Arc.x64.msix")), null, DeploymentOptions.None), () => Arc == true),
@@ -652,7 +652,7 @@ public static class BrowsersStage
 
 			// download firefox
 			("Downloading Firefox", async () => firefoxVersion = JsonDocument.Parse(await ProcessActions.httpClient.GetStringAsync("https://product-details.mozilla.org/1.0/firefox_versions.json")).RootElement.GetProperty("LATEST_FIREFOX_VERSION").GetString() ?? "", () => Firefox == true),
-			("Downloading Firefox", async () => await DownloadHelper.Download($"https://releases.mozilla.org/pub/firefox/releases/{firefoxVersion}/win64/en-US/Firefox%20Setup%20{firefoxVersion}.exe", Path.GetTempPath(), "FirefoxSetup.exe", reporter ?? new InstallPageReporter()), () => Firefox == true),
+			("Downloading Firefox", async () => await DownloadHelper.Download($"https://releases.mozilla.org/pub/firefox/releases/{firefoxVersion}/win64/en-US/Firefox%20Setup%20{firefoxVersion}.exe", Path.GetTempPath(), "FirefoxSetup.exe", reporter ?? new InstallPageReporter(), DownloadHelper.GetSha256Hash(await DownloadHelper.GetStringAsync($"https://releases.mozilla.org/pub/firefox/releases/{firefoxVersion}/SHA256SUMS"), $"Firefox Setup {firefoxVersion}.exe")), () => Firefox == true),
 
 			// install firefox
 			("Installing Firefox", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "FirefoxSetup.exe"), Arguments = "/S /MaintenanceService=false /DesktopShortcut=false /StartMenuShortcut=true", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Firefox == true),
@@ -716,7 +716,7 @@ public static class BrowsersStage
 			("Installing 1Password Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Mozilla Firefox", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/1password-x-password-manager"), () => Firefox == true && OnePassword == true),
 
 			// download zen
-			("Downloading Zen", async () => await DownloadHelper.Download("https://github.com/zen-browser/desktop/releases/latest/download/zen.installer.exe", Path.GetTempPath(), "zen.installer.exe", reporter ?? new InstallPageReporter()), () => Zen == true),
+			("Downloading Zen", async () => await DownloadHelper.DownloadGitHubReleaseAssetAsync("zen-browser/desktop", Path.GetTempPath(), name => name.Contains("zen.installer.exe"), reporter: reporter ?? new InstallPageReporter()), () => Zen == true),
 
 			// install zen
 			("Installing Zen", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "zen.installer.exe"), Arguments = "/S /MaintenanceService=false /DesktopShortcut=false /StartMenuShortcut=true", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Zen == true),
@@ -780,7 +780,11 @@ public static class BrowsersStage
 			("Installing 1Password Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Zen Browser", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/1password-x-password-manager"), () => Zen == true && OnePassword == true),
 
 			// download waterfox
-			("Downloading Waterfox", async () => await DownloadHelper.Download("https://cdn.waterfox.com/waterfox/releases/6.6.13/WINNT_x86_64/Waterfox%20Setup%206.6.13.exe", Path.GetTempPath(), "WaterfoxSetup.exe", reporter ?? new InstallPageReporter()), () => Waterfox == true),
+			("Downloading Waterfox", async () =>
+			{
+				string version = JsonDocument.Parse(await DownloadHelper.GetStringAsync("https://api.github.com/repos/BrowserWorks/Waterfox/releases/latest")).RootElement.GetProperty("tag_name").GetString()?.TrimStart('G') ?? "";
+				await DownloadHelper.Download($"https://cdn.waterfox.com/waterfox/releases/{version}/WINNT_x86_64/Waterfox%20Setup%20{version}.exe", Path.GetTempPath(), "WaterfoxSetup.exe", reporter ?? new InstallPageReporter());
+			}, () => Waterfox == true),
 
 			// install waterfox
 			("Installing Waterfox", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "WaterfoxSetup.exe"), Arguments = "/S /MaintenanceService=false /DesktopShortcut=false /StartMenuShortcut=true", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Waterfox == true),
@@ -901,7 +905,7 @@ public static class BrowsersStage
 			("Installing 1Password Extension", async () => UpdatePolicies(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "LibreWolf", "distribution", "policies.json"), "https://addons.mozilla.org/firefox/downloads/latest/1password-x-password-manager"), () => LibreWolf == true && OnePassword == true),
 
 			// download floorp
-			("Downloading Floorp", async () => await DownloadHelper.Download("https://github.com/Floorp-Projects/Floorp/releases/latest/download/floorp-windows-x86_64.installer.exe", Path.GetTempPath(), "FloorpSetup.exe", reporter ?? new InstallPageReporter()), () => Floorp == true),
+			("Downloading Floorp", async () => await DownloadHelper.DownloadGitHubReleaseAssetAsync("Floorp-Projects/Floorp", Path.GetTempPath(), name => name.Contains("floorp-windows-x86_64.installer.exe"), "FloorpSetup.exe", reporter: reporter ?? new InstallPageReporter()), () => Floorp == true),
 
 			// install floorp
 			("Installing Floorp", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "FloorpSetup.exe"), Arguments = "/S /MaintenanceService=false /DesktopShortcut=false /StartMenuShortcut=true", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Floorp == true),

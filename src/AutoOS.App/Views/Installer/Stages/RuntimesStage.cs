@@ -14,7 +14,7 @@ public static class RuntimesStage
 		return
 		[
 			// download the visual c++ redistributable
-			("Downloading Visual C++ Redistributable", async () => await DownloadHelper.Download("https://github.com/abbodi1406/vcredist/releases/latest/download/VisualCppRedist_AIO_x86_x64.exe", Path.GetTempPath(), "VisualCppRedist_AIO_x86_x64.exe", new InstallPageReporter()), null),
+			("Downloading Visual C++ Redistributable", async () => await DownloadHelper.DownloadGitHubReleaseAssetAsync("abbodi1406/vcredist", Path.GetTempPath(), name => name.Contains("VisualCppRedist_AIO_x86_x64.exe"), reporter: new InstallPageReporter()), null),
 
 			// install visual c++ redistributable
 			("Installing Visual C++ Redistributable", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "VisualCppRedist_AIO_x86_x64.exe"), Arguments = "/ai /gm2", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), null),
@@ -50,7 +50,7 @@ public static class RuntimesStage
 			("Cleaning up .NET 10 Desktop Runtime files", async () => { string path = Path.Combine(Path.GetTempPath(), "windowsdesktop-runtime-win-x64.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, null),
 
 			// download microsoft windows app runtime
-			("Downloading Microsoft Windows App Runtime", async () => await DownloadHelper.Download("https://aka.ms/windowsappsdk/1.6/1.6.250602001/windowsappruntimeinstall-x64.exe", Path.GetTempPath(), "WindowsAppRuntimeInstall-x64.exe", new InstallPageReporter()), null),
+			("Downloading Microsoft Windows App Runtime", async () => await DownloadHelper.Download("https://aka.ms/windowsappsdk/1.6/latest/windowsappruntimeinstall-x64.exe", Path.GetTempPath(), "WindowsAppRuntimeInstall-x64.exe", new InstallPageReporter()), null),
 
 			// install microsoft windows app runtime
 			("Installing Microsoft Windows App Runtime", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "WindowsAppRuntimeInstall-x64.exe"), Arguments = "--quiet --force --msix --license" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), null),
