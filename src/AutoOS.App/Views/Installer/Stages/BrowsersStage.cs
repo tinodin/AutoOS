@@ -231,7 +231,7 @@ public static class BrowsersStage
 			("Disabling Google Chrome services", async () => TaskSchedulerHelper.Toggle(@"\GoogleUserPEH\RunPlatformExperienceHelper_Metrics", false), () => Chrome == true),
 
 			// download thorium
-			("Downloading Thorium", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/Alex313031/Thorium-Win/releases")).RootElement.EnumerateArray().First(r => r.GetProperty("assets").EnumerateArray().Any(a => a.GetProperty("name").GetString()?.Contains("thorium_SSE4_mini_installer.exe") ?? false)).GetProperty("assets").EnumerateArray().First(a => a.GetProperty("name").GetString()?.Contains("thorium_SSE4_mini_installer.exe") ?? false).GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "ThoriumSetup.exe", reporter ?? new InstallPageReporter()), () => Thorium == true),
+			("Downloading Thorium", async () => await DownloadHelper.DownloadGitHubReleaseAssetAsync("Alex313031/Thorium-Win", Path.GetTempPath(), "thorium_SSE4_mini_installer.exe", "ThoriumSetup.exe", includePrerelease: true, reporter: reporter ?? new InstallPageReporter()), () => Thorium == true),
 			
 			// install thorium
 			("Installing Thorium", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "ThoriumSetup.exe"), Arguments = "--silent --install --system-level --do-not-launch-chrome", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Thorium == true),
@@ -297,7 +297,7 @@ public static class BrowsersStage
 			("Removing Thorium shortcut from the desktop", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Thorium.lnk")), () => Thorium == true),
 
 			// download helium
-			("Downloading Helium", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/imputnet/helium-windows/releases/latest")).RootElement.GetProperty("assets").EnumerateArray().First(a => a.GetProperty("name").GetString()?.Contains("_x64-installer.exe") ?? false).GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "helium_x64-installer.exe", reporter ?? new InstallPageReporter()), () => Helium == true),
+			("Downloading Helium", async () => await DownloadHelper.DownloadGitHubReleaseAssetAsync("imputnet/helium-windows", Path.GetTempPath(), "_x64-installer.exe", "helium_x64-installer.exe", reporter: reporter ?? new InstallPageReporter()), () => Helium == true),
 
 			// install helium
 			("Installing Helium", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "helium_x64-installer.exe"), Arguments = "/S /SYSTEM", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Helium == true),
@@ -365,7 +365,7 @@ public static class BrowsersStage
 			("Removing Helium shortcut from the desktop", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Helium.lnk")), () => Helium == true),
 
 			// download brave
-			("Downloading Brave", async () => await DownloadHelper.Download(JsonDocument.Parse(await new HttpClient { DefaultRequestHeaders = { { "User-Agent", "AutoOS" } } }.GetStringAsync("https://api.github.com/repos/brave/brave-browser/releases/latest")).RootElement.GetProperty("assets").EnumerateArray().First(a => a.GetProperty("name").GetString() == "BraveBrowserStandaloneSetup.exe").GetProperty("browser_download_url").GetString() ?? "", Path.GetTempPath(), "BraveBrowserStandaloneSetup.exe", reporter ?? new InstallPageReporter()), () => Brave == true),
+			("Downloading Brave", async () => await DownloadHelper.DownloadGitHubReleaseAssetAsync("brave/brave-browser", Path.GetTempPath(), name => name == "BraveBrowserStandaloneSetup.exe", "BraveBrowserStandaloneSetup.exe", reporter: reporter ?? new InstallPageReporter()), () => Brave == true),
 			
 			// install brave
 			("Installing Brave", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "BraveBrowserStandaloneSetup.exe"), Arguments = "/silent /install", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Brave == true),

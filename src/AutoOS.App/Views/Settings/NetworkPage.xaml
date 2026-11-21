@@ -248,7 +248,7 @@
 					<AppBarToggleButton
 						x:Name="CompareToDefaults"
 						Command="{x:Bind ViewModel.ToggleCompareToDefaultsCommand}"
-						Icon="{dev:FontIcon Glyph=&#xEC77;}"
+						Icon="{dev:FontIcon Glyph=&#xE8AB;}"
 						IsChecked="{x:Bind ViewModel.CompareToDefaults, Mode=TwoWay}"
 						Label="{x:Bind ViewModel.CompareToDefaultsLabel, Mode=OneWay}"
 						ToolTipService.ToolTip="Compare to Defaults (Ctrl+Shift+D)">

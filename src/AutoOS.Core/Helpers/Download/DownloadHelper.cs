@@ -1,6 +1,8 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using AutoOS.Core.Common;
 using AutoOS.Core.Helpers.Logging;
 using DevWinUI;
@@ -21,9 +23,46 @@ public static partial class DownloadHelper
 		}
 	};
 
-	public static async Task Download(string url, string path, string? file = null, IStatusReporter? reporter = null)
+	public static Task Download(string url, string path, string? file = null, IStatusReporter? reporter = null)
 	{
-		await Download([url], path, file != null ? new[] { file } : null, reporter);
+		return Download(new[] { url }, path, file != null ? new[] { file } : null, reporter);
+	}
+
+	public static Task DownloadGitHubReleaseAssetAsync(string repository, string path, string assetName, string? file = null, bool includePrerelease = false, IStatusReporter? reporter = null)
+	{
+		return DownloadGitHubReleaseAssetAsync(repository, path, name => name.Contains(assetName), file, includePrerelease, reporter);
+	}
+
+	public static async Task DownloadGitHubReleaseAssetAsync(string repository, string path, Func<string, bool> assetNameMatcher, string? file = null, bool includePrerelease = false, IStatusReporter? reporter = null)
+	{
+		using var document = JsonDocument.Parse(await httpClient.GetStringAsync($"https://api.github.com/repos/{repository}/releases"));
+		JsonElement release = document.RootElement.EnumerateArray().First(r =>
+			(includePrerelease || !r.GetProperty("prerelease").GetBoolean()) &&
+			r.GetProperty("assets").EnumerateArray().Any(a => assetNameMatcher(a.GetProperty("name").GetString() ?? string.Empty)));
+		JsonElement asset = release.GetProperty("assets").EnumerateArray().First(a => assetNameMatcher(a.GetProperty("name").GetString() ?? string.Empty));
+		string url = asset.GetProperty("browser_download_url").GetString() ?? string.Empty;
+		string? digest = asset.TryGetProperty("digest", out JsonElement digestElement) ? digestElement.GetString() : null;
+		string destination = Path.Combine(path, string.IsNullOrWhiteSpace(file) ? Path.GetFileName(url) : file);
+
+		for (int attempt = 1; ; attempt++)
+		{
+			await Download(url, path, file, reporter);
+			if (digest == null || await VerifyHashAsync(destination, digest))
+				return;
+			if (attempt == 3)
+				throw new InvalidDataException($"Hash mismatch for {destination} after {attempt} attempts");
+		}
+	}
+
+	private static async Task<bool> VerifyHashAsync(string path, string digest)
+	{
+		string[] parts = digest.Split(':', 2);
+		if (parts.Length != 2 || !parts[0].Equals("sha256", StringComparison.OrdinalIgnoreCase))
+			return true;
+
+		await using FileStream stream = File.OpenRead(path);
+		byte[] actual = await SHA256.HashDataAsync(stream);
+		return actual.AsSpan().SequenceEqual(Convert.FromHexString(parts[1]));
 	}
 
 	public static async Task Download(IEnumerable<string> urls, string path, IEnumerable<string>? files = null, IStatusReporter? reporter = null)
