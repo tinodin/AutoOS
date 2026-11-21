@@ -24,6 +24,9 @@ public static partial class IntelHelper
 	[GeneratedRegex(@"(gfx_win_[0-9.]+\.exe)", RegexOptions.IgnoreCase)]
 	private static partial Regex ExeFileRegex();
 
+	[GeneratedRegex(@"(gfx_win_[0-9.]+\.zip)", RegexOptions.IgnoreCase)]
+	private static partial Regex ZipFileRegex();
+
 	[GeneratedRegex(@"(win64_[0-9.]+\.zip)", RegexOptions.IgnoreCase)]
 	private static partial Regex LegacyZipFileRegex();
 
@@ -58,7 +61,7 @@ public static partial class IntelHelper
 		else if (is4to5)
 			driverPageUrl = "https://www.intel.com/content/www/us/en/download/18369/intel-graphics-driver-for-windows-15-40.html";
 		else if (is6th)
-			return ("31.0.101.2115", "https://github.com/tinodin/AutoOS-Resources/releases/download/v1.0.0.0/gfx_win_101.2115.zip");
+			driverPageUrl = "https://www.intel.com/content/www/us/en/download/762755/intel-6th-gen-processor-graphics-windows.html";
 		else if (is7to10)
 			driverPageUrl = "https://www.intel.com/content/www/us/en/download/776137/intel-7th-10th-gen-processor-graphics-windows.html";
 		else if (is11to14)
@@ -85,7 +88,7 @@ public static partial class IntelHelper
 		if (versionMatch.Success)
 			newestVersion = versionMatch.Groups[1].Value;
 
-		Match fileMatch = (is3rd || is4to5) ? LegacyZipFileRegex().Match(domHtml) : ExeFileRegex().Match(domHtml);
+		Match fileMatch = (is3rd || is4to5) ? LegacyZipFileRegex().Match(domHtml) : (is6th ? ZipFileRegex().Match(domHtml) : ExeFileRegex().Match(domHtml));
 		string fileName = fileMatch.Success ? fileMatch.Groups[1].Value : string.Empty;
 
 		Match idMatch = IntelIdRegex().Match(domHtml);
