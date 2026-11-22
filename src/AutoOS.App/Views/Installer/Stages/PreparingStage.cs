@@ -65,8 +65,9 @@ public static partial class PreparingStage
 	public static bool Telegram;
 	public static bool Unigram;
 	public static bool ZoomWorkplace;
-	public static bool Thunderbird;
 	public static bool Signal;
+	public static bool Thunderbird;
+	public static bool ProtonMail;
 
 	public static bool EpicGames;
 	public static bool EpicGamesGames;
@@ -474,8 +475,9 @@ public static partial class PreparingStage
 			Telegram = (localSettings.Values["Messaging"]?.ToString()?.Contains("Telegram Desktop") ?? false);
 			Unigram = (localSettings.Values["Messaging"]?.ToString()?.Contains("Unigram") ?? false);
 			ZoomWorkplace = (localSettings.Values["Messaging"]?.ToString()?.Contains("Zoom Workplace") ?? false);
-			Thunderbird = (localSettings.Values["Messaging"]?.ToString()?.Contains("Thunderbird") ?? false);
 			Signal = (localSettings.Values["Messaging"]?.ToString()?.Contains("Signal") ?? false);
+			Thunderbird = (localSettings.Values["Messaging"]?.ToString()?.Contains("Thunderbird") ?? false);
+			ProtonMail = (localSettings.Values["Messaging"]?.ToString()?.Contains("Proton Mail") ?? false);
 
 			EpicGames = (localSettings.Values["Launchers"]?.ToString()?.Contains("Epic Games") ?? false);
 			Steam = (localSettings.Values["Launchers"]?.ToString()?.Contains("Steam") ?? false);

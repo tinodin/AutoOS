@@ -34,8 +34,9 @@ public class ApplicationSelection
 	public bool Telegram { get; set; }
 	public bool Unigram { get; set; }
 	public bool ZoomWorkplace { get; set; }
-	public bool Thunderbird { get; set; }
 	public bool Signal { get; set; }
+	public bool Thunderbird { get; set; }
+	public bool ProtonMail { get; set; }
 	public bool EpicGames { get; set; }
 	public bool EpicGamesGames { get; set; }
 	public bool Steam { get; set; }
@@ -201,8 +202,9 @@ public static class AppsStage
 		bool Telegram = selection?.Telegram ?? PreparingStage.Telegram;
 		bool Unigram = selection?.Unigram ?? PreparingStage.Unigram;
 		bool ZoomWorkplace = selection?.ZoomWorkplace ?? PreparingStage.ZoomWorkplace;
-		bool Thunderbird = selection?.Thunderbird ?? PreparingStage.Thunderbird;
 		bool Signal = selection?.Signal ?? PreparingStage.Signal;
+		bool Thunderbird = selection?.Thunderbird ?? PreparingStage.Thunderbird;
+		bool ProtonMail = selection?.ProtonMail ?? PreparingStage.ProtonMail;
 
 		bool EpicGames = selection?.EpicGames ?? PreparingStage.EpicGames;
 		bool EpicGamesGames = selection?.EpicGamesGames ?? PreparingStage.EpicGamesGames;
@@ -669,6 +671,16 @@ public static class AppsStage
 			// remove zoom workplace desktop shortcut
 			("Removing Zoom Workplace desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Zoom Workplace.lnk")), () => ZoomWorkplace == true),
 
+			// download signal
+			("Downloading Signal", async () => await DownloadHelper.Download($"https://updates.signal.org/desktop/signal-desktop-win-{Regex.Match(await DownloadHelper.GetStringAsync("https://updates.signal.org/desktop/latest.yml"), @"(?m)^version:\s*(\S+)").Groups[1].Value}.exe", Path.GetTempPath(), "SignalSetup.exe", reporter: reporter), () => Signal == true),
+
+			// install signal
+			("Installing Signal", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "SignalSetup.exe"), Arguments = "/S" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Signal == true),
+			("Cleaning up Signal files", async () => { string path = Path.Combine(Path.GetTempPath(), "SignalSetup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Signal == true),
+
+			// remove signal desktop shortcut
+			("Removing Signal desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Signal.lnk")), () => Signal == true),
+
 			// download thunderbird
 			("Downloading Thunderbird", async () => await DownloadHelper.Download($"https://download.mozilla.org/?product=thunderbird-{JsonDocument.Parse(await DownloadHelper.GetStringAsync("https://product-details.mozilla.org/1.0/thunderbird_versions.json")).RootElement.GetProperty("LATEST_THUNDERBIRD_VERSION").GetString()}-msi-SSL&os=win64&lang=en-US", Path.GetTempPath(), "Thunderbird Setup.msi", reporter: reporter), () => Thunderbird == true),
 
@@ -686,15 +698,12 @@ public static class AppsStage
 			// remove thunderbird desktop shortcut
 			("Removing Thunderbird desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), "Thunderbird.lnk")), () => Thunderbird == true),
 
-			// download signal
-			("Downloading Signal", async () => await DownloadHelper.Download($"https://updates.signal.org/desktop/signal-desktop-win-{Regex.Match(await DownloadHelper.GetStringAsync("https://updates.signal.org/desktop/latest.yml"), @"(?m)^version:\s*(\S+)").Groups[1].Value}.exe", Path.GetTempPath(), "SignalSetup.exe", reporter: reporter), () => Signal == true),
+			// download proton mail
+			("Downloading Proton Mail", async () => await DownloadHelper.Download("https://proton.me/download/mail/windows/ProtonMail-desktop.exe", Path.GetTempPath(), "ProtonMail-Setup.exe", reporter: reporter), () => ProtonMail == true),
 
-			// install signal
-			("Installing Signal", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "SignalSetup.exe"), Arguments = "/S" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Signal == true),
-			("Cleaning up Signal files", async () => { string path = Path.Combine(Path.GetTempPath(), "SignalSetup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Signal == true),
-
-			// remove signal desktop shortcut
-			("Removing Signal desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Signal.lnk")), () => Signal == true),
+			// install proton mail
+			("Installing Proton Mail", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "ProtonMail-Setup.exe"), Arguments = "/S" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => ProtonMail == true),
+			("Cleaning up Proton Mail files", async () => { string path = Path.Combine(Path.GetTempPath(), "ProtonMail-Setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => ProtonMail == true),
 
 			// download epic games launcher
 			("Downloading Epic Games Launcher", async () => await DownloadHelper.Download("https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncherInstaller.msi", Path.GetTempPath(), "EpicGamesLauncherInstaller.msi", reporter: reporter), () => EpicGames == true),
@@ -1270,8 +1279,6 @@ public static class AppsStage
 
 			// install batteryhub
 			("Installing BatteryHub", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "BatteryHub-Setup.exe"), Arguments = @"/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /TASKS=""""", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => BatteryHub == true),
-			("Disabling BatteryHub startup entry", async () => RegistryHelper.DeleteValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run", "WirelessBattery"), () => BatteryHub == true),
-			("Disabling BatteryHub startup entry", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", "WirelessBattery", new byte[] { 0x01 }, RegistryValueKind.Binary), () => BatteryHub == true),
 			("Cleaning up BatteryHub files", async () => { string path = Path.Combine(Path.GetTempPath(), "BatteryHub-Setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => BatteryHub == true),
 
 			// download endgame gear

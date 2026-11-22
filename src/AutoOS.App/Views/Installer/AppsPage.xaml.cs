@@ -58,8 +58,9 @@ public sealed partial class AppsPage : Page
 			new() { Text = "Telegram Desktop", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/Telegram.png" },
 			new() { Text = "Unigram", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/Unigram.png" },
 			new() { Text = "Zoom Workplace", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/Zoom.png" },
+			new() { Text = "Signal", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/Signal.png" },
 			new() { Text = "Thunderbird", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/Thunderbird.png" },
-			new() { Text = "Signal", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/Signal.png" }
+			new() { Text = "Proton Mail", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/ProtonMail.png" }
 		};
 
 		Launchers.ItemsSource = new List<GridViewItem>

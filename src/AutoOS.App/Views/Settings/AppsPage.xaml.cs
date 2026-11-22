@@ -54,8 +54,9 @@ public sealed partial class AppsPage : Page
 			new() { Text = "Telegram Desktop", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/Telegram.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "TelegramMessengerLLP.TelegramDesktop_t4vj0pshhgkwm")) },
 			new() { Text = "Unigram", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/Unigram.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "38833FF26BA1D.UnigramPreview_g9c9v27vpyspw")) },
 			new() { Text = "Zoom Workplace", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/Zoom.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Zoom", "bin", "Zoom.exe")) },
+			new() { Text = "Signal", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/Signal.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "signal-desktop", "Signal.exe")) },
 			new() { Text = "Thunderbird", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/Thunderbird.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Mozilla Thunderbird", "thunderbird.exe")) },
-			new() { Text = "Signal", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/Signal.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "signal-desktop", "Signal.exe")) }
+			new() { Text = "Proton Mail", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Messaging/ProtonMail.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Proton Mail")) }
 		};
 		foreach (GridViewItem item in messagingList.Where(item => !item.IsInstalled))
 			messagingItems.Add(item);
@@ -287,8 +288,9 @@ public sealed partial class AppsPage : Page
 		selection.Telegram = selectedMessaging.Contains("Telegram Desktop");
 		selection.Unigram = selectedMessaging.Contains("Unigram");
 		selection.ZoomWorkplace = selectedMessaging.Contains("Zoom Workplace");
-		selection.Thunderbird = selectedMessaging.Contains("Thunderbird");
 		selection.Signal = selectedMessaging.Contains("Signal");
+		selection.Thunderbird = selectedMessaging.Contains("Thunderbird");
+		selection.ProtonMail = selectedMessaging.Contains("Proton Mail");
 
 		var selectedLaunchersItems = Launchers.SelectedItems.Cast<GridViewItem>().ToList();
 		var selectedLaunchers = selectedLaunchersItems.Select(item => item.Text).ToList();
