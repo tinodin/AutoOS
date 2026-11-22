@@ -92,6 +92,7 @@ public class ApplicationSelection
 	public bool XboxAccessories { get; set; }
 	public bool VisualStudio { get; set; }
 	public bool VisualStudioCode { get; set; }
+	public bool Claude { get; set; }
 	public bool Antigravity { get; set; }
 	public bool Cursor { get; set; }
 	public bool Zed { get; set; }
@@ -265,6 +266,7 @@ public static class AppsStage
 
 		bool VisualStudio = selection?.VisualStudio ?? PreparingStage.VisualStudio;
 		bool VisualStudioCode = selection?.VisualStudioCode ?? PreparingStage.VisualStudioCode;
+		bool Claude = selection?.Claude ?? PreparingStage.Claude;
 		bool Antigravity = selection?.Antigravity ?? PreparingStage.Antigravity;
 		bool Cursor = selection?.Cursor ?? PreparingStage.Cursor;
 		bool Zed = selection?.Zed ?? PreparingStage.Zed;
@@ -1530,6 +1532,12 @@ public static class AppsStage
 			// pin visual studio code to the taskbar
 			("Pinning Visual Studio Code to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Visual Studio Code", "Visual Studio Code.lnk")), () => VisualStudioCode == true),
 
+			// download claude
+			("Downloading Claude", async () => await StoreHelper.Download("AnthropicPBC.Claude_fnn82j28hfe8t", reporter: reporter), () => Claude == true),
+
+			// install claude
+			("Installing Claude", async () => await StoreHelper.Install("AnthropicPBC.Claude_fnn82j28hfe8t"), () => Claude == true),
+
 			// download antigravity
 			("Downloading Antigravity", async () => await DownloadHelper.Download($"https://storage.googleapis.com/antigravity-public/antigravity-hub/{Regex.Match(await DownloadHelper.GetStringAsync("https://antigravity.google/download"), @"antigravity-hub/([\d.]+-[\d]+)/windows-x64/Antigravity-x64\.exe").Groups[1].Value}/windows-x64/Antigravity-x64.exe", Path.GetTempPath(), "Antigravity-x64.exe", reporter: reporter), () => Antigravity == true),
 
@@ -1699,7 +1707,6 @@ public static class AppsStage
 			// disable java startup entry
 			("Disabling Java startup entry", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32", "SunJavaUpdateSched", new byte[] { 0x03 }, RegistryValueKind.Binary), () => Java == true),
 
-			// download go
 			// download go
 			("Downloading Go", async () =>
 			{
