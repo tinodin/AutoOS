@@ -36,6 +36,8 @@ public partial class App : Application
 	private readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
 
 	private static IServiceProvider BuildServiceProvider => new ServiceCollection()
+		.AddSingleton<ThemeService>()
+		.AddSingleton<IThemeService>(serviceProvider => serviceProvider.GetRequiredService<ThemeService>())
 		.AddSingleton<IFilePickerService, FilePickerService>()
 		.AddSingleton<IDialogService, DialogService>()
 		.AddTransient<INetworkSettingsService, NetworkSettingsService>()
@@ -98,13 +100,13 @@ public partial class App : Application
 				MainWindow = new MainWindow();
 				MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Settings";
 				MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
-				ThemeService = new ThemeService().Initialize(MainWindow);
+				ThemeService = Ioc.Default.GetRequiredService<ThemeService>().ConfigureBackdrop(BackdropType.MicaAlt).Initialize(MainWindow);
 
 				if (localSettings.Values.TryGetValue("TintColor", out object? tintValue) && tintValue is string tintHex)
 				{
 					if (MainWindow.Content is Grid rootGrid)
 					{
-						rootGrid.Background = new SolidColorBrush(DevWinUI.ColorHelper.GetColorFromHex(tintHex));
+						rootGrid.Background = new SolidColorBrush(ColorHelper.GetColorFromHex(tintHex));
 					}
 				}
 
@@ -169,7 +171,7 @@ public partial class App : Application
 			MainWindow.Title = MainWindow.AppWindow.Title = "AutoOS Installer";
 			MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
 
-			ThemeService = new ThemeService().Initialize(MainWindow);
+			ThemeService = Ioc.Default.GetRequiredService<ThemeService>().ConfigureBackdrop(BackdropType.MicaAlt).Initialize(MainWindow);
 
 			MainWindow.Activate();
 		}

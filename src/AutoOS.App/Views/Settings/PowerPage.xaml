@@ -271,7 +271,7 @@
 					<AppBarSeparator Margin="4,0" />
 
 					<!--  Active CombobBox  -->
-					<AppBarElementContainer Margin="2.0" VerticalContentAlignment="Center">
+					<AppBarElementContainer Margin="2,0" VerticalContentAlignment="Center">
 						<uc:ComboBoxEx
 							MinWidth="180"
 							IsEnabled="{x:Bind ViewModel.IsLoaded, Mode=OneWay}"
@@ -307,6 +307,7 @@
 
 					<!--  Import  -->
 					<AppBarButton
+						Margin="2,0,0,0"
 						Command="{x:Bind ViewModel.ImportCommand}"
 						Icon="{dev:FontIcon Glyph=&#xE8B5;}"
 						Label="Import"

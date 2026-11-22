@@ -87,9 +87,9 @@ public sealed partial class HomePage : Page
 			}
 		}
 
-		// ; 58989092
-		// ; Feature_TestLoc02
-		// ; Low Latency Profile Feature Bundle June
+		// 58989092
+		// Feature_TestLoc02
+		// Low Latency Profile Feature Bundle June
 		if (ubr >= 8524 && (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1213986446", "EnabledState", null) is not int v1213986446 || v1213986446 != 2))
 		{
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1213986446", "EnabledState", 2, RegistryValueKind.DWord);
@@ -98,9 +98,10 @@ public sealed partial class HomePage : Page
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1213986446", "VariantPayload", 0, RegistryValueKind.DWord);
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1213986446", "VariantPayloadKind", 0, RegistryValueKind.DWord);
 		}
-		// ; 58989177
-		// ; Feature_TestLoc03
-		// ; Low Latency Profile Feature Bundle July
+
+		// 58989177
+		// Feature_TestLoc03
+		// Low Latency Profile Feature Bundle July
 		if (ubr >= 8524 && (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\4066113166", "EnabledState", null) is not int v4066113166 || v4066113166 != 2))
 		{
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\4066113166", "EnabledState", 2, RegistryValueKind.DWord);
@@ -109,9 +110,10 @@ public sealed partial class HomePage : Page
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\4066113166", "VariantPayload", 0, RegistryValueKind.DWord);
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\4066113166", "VariantPayloadKind", 0, RegistryValueKind.DWord);
 		}
-		// ; 61161244
-		// ; Feature_TestUxGate
-		// ; Main Feature Bundle
+
+		// 61161244
+		// Feature_TestUxGate
+		// Main Feature Bundle
 		if (ubr >= 9278 && (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\940684430", "EnabledState", null) is not int v940684430 || v940684430 != 2))
 		{
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\940684430", "EnabledState", 2, RegistryValueKind.DWord);
@@ -120,9 +122,10 @@ public sealed partial class HomePage : Page
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\940684430", "VariantPayload", 0, RegistryValueKind.DWord);
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\940684430", "VariantPayloadKind", 0, RegistryValueKind.DWord);
 		}
-		// ; 62353331
-		// ; Feature_62353331
-		// ; New Start Menu Customization:
+
+		// 62353331
+		// Feature_62353331
+		// New Start Menu Customization:
 		if (ubr >= 9278 && (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1722912911", "EnabledState", null) is not int v1722912911 || v1722912911 != 2))
 		{
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1722912911", "EnabledState", 2, RegistryValueKind.DWord);
@@ -131,9 +134,10 @@ public sealed partial class HomePage : Page
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1722912911", "VariantPayload", 0, RegistryValueKind.DWord);
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1722912911", "VariantPayloadKind", 0, RegistryValueKind.DWord);
 		}
-		// ; 62762248
-		// ; Feature_62762248
-		// ; New Search UI
+
+		// 62762248
+		// Feature_62762248
+		// New Search UI
 		if (ubr >= 9278 && (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\288720014", "EnabledState", null) is not int v288720014 || v288720014 != 2))
 		{
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\288720014", "EnabledState", 2, RegistryValueKind.DWord);
@@ -142,9 +146,10 @@ public sealed partial class HomePage : Page
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\288720014", "VariantPayload", 0, RegistryValueKind.DWord);
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\288720014", "VariantPayloadKind", 0, RegistryValueKind.DWord);
 		}
-		// ; 61754985
-		// ; Feature_61754985
-		// ; New Search UI
+
+		// 61754985
+		// Feature_61754985
+		// New Search UI
 		if (ubr >= 9278 && (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\3539182222", "EnabledState", null) is not int v3539182222 || v3539182222 != 2))
 		{
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\3539182222", "EnabledState", 2, RegistryValueKind.DWord);
@@ -153,8 +158,9 @@ public sealed partial class HomePage : Page
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\3539182222", "VariantPayload", 0, RegistryValueKind.DWord);
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\3539182222", "VariantPayloadKind", 0, RegistryValueKind.DWord);
 		}
-		// ; 61161304
-		// ; Feature_ExpToc
+
+		// 61161304
+		// Feature_ExpToc
 		if (ubr >= 10075 && (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\2953950350", "EnabledState", null) is not int v2953950350 || v2953950350 != 2))
 		{
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\2953950350", "EnabledState", 2, RegistryValueKind.DWord);
@@ -163,8 +169,9 @@ public sealed partial class HomePage : Page
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\2953950350", "VariantPayload", 0, RegistryValueKind.DWord);
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\2953950350", "VariantPayloadKind", 0, RegistryValueKind.DWord);
 		}
-		// ; 58381341
-		// ; Feature_58381341
+
+		// 58381341
+		// Feature_58381341
 		if (ubr >= 10075 && (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1002834574", "EnabledState", null) is not int v1002834574 || v1002834574 != 2))
 		{
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1002834574", "EnabledState", 2, RegistryValueKind.DWord);
@@ -172,6 +179,12 @@ public sealed partial class HomePage : Page
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1002834574", "Variant", 0, RegistryValueKind.DWord);
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1002834574", "VariantPayload", 0, RegistryValueKind.DWord);
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1002834574", "VariantPayloadKind", 0, RegistryValueKind.DWord);
+		}
+
+		// Enable modern run dialog
+		if (ubr >= 10075 && (Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\TaskbarDeveloperSettings", "Run", null) is not int run || run != 1))
+		{
+			Registry.SetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\TaskbarDeveloperSettings", "Run", 1, RegistryValueKind.DWord);
 		}
 
 		Version currentVersion = new(ProcessInfoHelper.Version);

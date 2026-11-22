@@ -503,9 +503,11 @@ public static class AppsStage
 			// download everything
 			("Downloading Everything", async () =>
 			{
-				string version = Regex.Match(await DownloadHelper.GetStringAsync("https://www.voidtools.com/downloads/"), @"Everything-(1\.5\.0\.\d+[ab]?)\.x64-Setup\.exe").Groups[1].Value;
-				string checksums = await DownloadHelper.GetStringAsync($"https://www.voidtools.com/Everything-{version}.sha256");
-				await DownloadHelper.Download($"https://www.voidtools.com/Everything-{version}.x64-Setup.exe", Path.GetTempPath(), "Everything.exe", reporter: reporter, sha256: DownloadHelper.GetSha256Hash(checksums, $"Everything-{version}.x64-Setup.exe"));
+				string html = await DownloadHelper.GetStringAsync("https://www.voidtools.com/downloads/");
+				string betaSection = Regex.Match(html, @"(?is)<h2[^>]*>[^<]*Beta[^<]*</h2>(?<section>.*?)(?=<h2|$)").Groups["section"].Value;
+				string installerFile = Regex.Match(betaSection, @"href=""(?<file>/Everything-[^""]+?\.x64-Setup\.exe)""").Groups["file"].Value.TrimStart('/');
+				string checksums = await DownloadHelper.GetStringAsync($"https://www.voidtools.com/{installerFile.Replace(".x64-Setup.exe", ".sha256")}");
+				await DownloadHelper.Download($"https://www.voidtools.com/{installerFile}", Path.GetTempPath(), "Everything.exe", reporter: reporter, sha256: DownloadHelper.GetSha256Hash(checksums, installerFile));
 			}, () => selection == null),
 			
 			// install everything

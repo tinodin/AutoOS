@@ -38,7 +38,7 @@ public sealed partial class MainWindow : Window
 				.ConfigureDefaultPage(typeof(Settings.HomePage))
 				.ConfigureSettingsPage(typeof(Settings.SettingsPage))
 				.ConfigureJsonFile("Assets/NavViewMenu/Settings.json")
-				.ConfigureTitleBar(AppTitleBar, false)
+				.ConfigureTitleBar(AppTitleBar)
 				.ConfigureBreadcrumbBar(BreadCrumbNav, BreadcrumbPageMappingsSettings.PageDictionary);
 			AppTitleBar.Title = "AutoOS Settings";
 
@@ -50,7 +50,7 @@ public sealed partial class MainWindow : Window
 				.Initialize(NavView, NavFrame, NavigationPageMappingsInstaller.PageDictionary)
 				.ConfigureDefaultPage((Windows.Storage.ApplicationData.Current.LocalSettings.Values["actionStage"] as int? ?? -1) > 0 ? typeof(Installer.InstallPage) : typeof(Installer.HomePage))
 				.ConfigureJsonFile("Assets/NavViewMenu/Installer.json")
-				.ConfigureTitleBar(AppTitleBar, false)
+				.ConfigureTitleBar(AppTitleBar)
 				.ConfigureBreadcrumbBar(BreadCrumbNav, BreadcrumbPageMappingsInstaller.PageDictionary);
 			AppTitleBar.Title = "AutoOS Installer";
 
@@ -115,7 +115,7 @@ public sealed partial class MainWindow : Window
 		return AppTitleBar;
 	}
 
-	private static void NavSearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+	private void NavSearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
 	{
 		if (args.Reason != AutoSuggestionBoxTextChangeReason.UserInput)
 		{
@@ -177,7 +177,7 @@ public sealed partial class MainWindow : Window
 		}
 	}
 
-	private static void NavSearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
+	private void NavSearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
 	{
 		if (args.ChosenSuggestion is DataItem item)
 		{

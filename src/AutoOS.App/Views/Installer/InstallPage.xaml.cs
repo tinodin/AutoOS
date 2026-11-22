@@ -16,7 +16,7 @@ public sealed partial class InstallPage : Page
 	public static TextBlock Status { get; private set; } = new();
 	public static ProgressBar Progress { get; private set; } = new();
 	public static InfoBar Info { get; private set; } = new();
-	public static Microsoft.UI.Xaml.Controls.ProgressRing ProgressRingControl { get; private set; } = new();
+	public static ProgressRing ProgressRingControl { get; private set; } = new();
 	public static string CurrentTitle { get; set; } = string.Empty;
 	public static Button ResumeButton { get; private set; } = new();
 	private static readonly ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;

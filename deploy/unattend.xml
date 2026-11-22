@@ -1002,6 +1002,10 @@ else
 		<File path="C:\Windows\Setup\Scripts\unattend-0f.reg">
 Windows Registry Editor Version 5.00
 
+; Enable modern run dialog
+[HKEY_USERS\DefaultUser\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\TaskbarDeveloperSettings]
+"Run"=dword:00000001
+
 ; Remove startup delay
 [HKEY_USERS\DefaultUser\Software\Microsoft\Windows\CurrentVersion\Explorer\Serialize] 
 "StartupDelayInMSec"=dword:00000000 
