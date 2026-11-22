@@ -1530,15 +1530,15 @@ public static class AppsStage
 			// pin visual studio code to the taskbar
 			("Pinning Visual Studio Code to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Visual Studio Code", "Visual Studio Code.lnk")), () => VisualStudioCode == true),
 
-			// download antigravity ide
-			("Downloading Antigravity IDE", async () => await DownloadHelper.Download(JsonDocument.Parse(await DownloadHelper.GetStringAsync("https://antigravity-ide-auto-updater-974169037036.us-central1.run.app/api/update/win32-x64-user/stable/latest")).RootElement.GetProperty("url").GetString() ?? "", Path.GetTempPath(), "Antigravity IDE.exe", reporter: reporter), () => Antigravity == true),
+			// download antigravity
+			("Downloading Antigravity", async () => await DownloadHelper.Download($"https://storage.googleapis.com/antigravity-public/antigravity-hub/{Regex.Match(await DownloadHelper.GetStringAsync("https://antigravity.google/download"), @"antigravity-hub/([\d.]+-[\d]+)/windows-x64/Antigravity-x64\.exe").Groups[1].Value}/windows-x64/Antigravity-x64.exe", Path.GetTempPath(), "Antigravity-x64.exe", reporter: reporter), () => Antigravity == true),
 
-			// install antigravity ide
-			("Installing Antigravity IDE", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "Antigravity IDE.exe"), Arguments = "/VERYSILENT /NORESTART /MERGETASKS=!runcode" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Antigravity == true),
-			("Cleaning up Antigravity IDE files", async () => { string path = Path.Combine(Path.GetTempPath(), "Antigravity IDE.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Antigravity == true),
+			// install antigravity
+			("Installing Antigravity", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "Antigravity-x64.exe"), Arguments = "/S", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => Antigravity == true),
+			("Cleaning up Antigravity files", async () => { string path = Path.Combine(Path.GetTempPath(), "Antigravity-x64.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Antigravity == true),
 
-			// pin antigravity ide to the taskbar
-			("Pinning Antigravity IDE to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Antigravity IDE", "Antigravity IDE.lnk")), () => Antigravity == true),
+			// pin antigravity to the taskbar
+			("Pinning Antigravity to the taskbar", async () => await ProcessActions.PinToTaskbar("Link", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Windows", "Start Menu", "Programs", "Antigravity.lnk")), () => Antigravity == true),
 
 			// download cursor
 			("Downloading Cursor", async () => await DownloadHelper.Download("https://api2.cursor.sh/updates/download/golden/win32-x64/cursor/latest", Path.GetTempPath(), "CursorSetup-x64.exe", reporter: reporter), () => Cursor == true),

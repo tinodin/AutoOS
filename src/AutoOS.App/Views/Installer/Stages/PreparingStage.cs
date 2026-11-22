@@ -536,7 +536,7 @@ public static partial class PreparingStage
 
 			VisualStudio = (localSettings.Values["Development"]?.ToString()?.Contains("Visual Studio") ?? false);
 			VisualStudioCode = (localSettings.Values["Development"]?.ToString()?.Contains("Visual Studio Code") ?? false);
-			Antigravity = (localSettings.Values["Development"]?.ToString()?.Contains("Antigravity IDE") ?? false);
+			Antigravity = (localSettings.Values["Development"]?.ToString()?.Contains("Antigravity") ?? false);
 			Cursor = (localSettings.Values["Development"]?.ToString()?.Contains("Cursor") ?? false);
 			Zed = (localSettings.Values["Development"]?.ToString()?.Contains("Zed") ?? false);
 			Devin = (localSettings.Values["Development"]?.ToString()?.Contains("Devin") ?? false);
