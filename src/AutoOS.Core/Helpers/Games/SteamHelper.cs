@@ -902,9 +902,9 @@ public static partial class SteamHelper
 
 		try
 		{
-			JsonElement reviewData = JsonDocument.Parse(await httpClient.GetStringAsync($"https://store.steampowered.com/appreviews/{steamAppId}?json=1", cancellationToken)).RootElement.GetProperty("query_summary");
-			int totalPositive = reviewData.GetProperty("total_positive").GetInt32();
-			int totalNegative = reviewData.GetProperty("total_negative").GetInt32();
+			JsonElement reviewData = JsonDocument.Parse(await httpClient.GetStringAsync($"https://steamspy.com/api.php?request=appdetails&appid={steamAppId}", cancellationToken)).RootElement;
+			int totalPositive = reviewData.GetProperty("positive").GetInt32();
+			int totalNegative = reviewData.GetProperty("negative").GetInt32();
 
 			model.Rating = totalPositive + totalNegative > 0 ? Math.Round(5.0 * totalPositive / (totalPositive + totalNegative), 1) : 0.0;
 		}
