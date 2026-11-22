@@ -115,7 +115,7 @@ public sealed partial class MainWindow : Window
 		return AppTitleBar;
 	}
 
-	private void NavSearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+	private static void NavSearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
 	{
 		if (args.Reason != AutoSuggestionBoxTextChangeReason.UserInput)
 		{
@@ -177,7 +177,7 @@ public sealed partial class MainWindow : Window
 		}
 	}
 
-	private void NavSearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
+	private static void NavSearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
 	{
 		if (args.ChosenSuggestion is DataItem item)
 		{
