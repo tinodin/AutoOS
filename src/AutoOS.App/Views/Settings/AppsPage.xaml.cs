@@ -114,7 +114,9 @@ public sealed partial class AppsPage : Page
 			new() { Text = "Corsair iCUE", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/CorsairICue.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Corsair", "Corsair iCUE5 Software", "iCUE.exe")) },
 			new() { Text = "OpenRGB", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/OpenRGB.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "OpenRGB", "OpenRGB.exe")) },
 			new() { Text = "FanControl", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/FanControl.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "FanControl", "FanControl.exe")) },
-			new() { Text = "GHelper", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/GHelper.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "GHelper", "GHelper.exe")) }
+			new() { Text = "GHelper", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/GHelper.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "GHelper", "GHelper.exe")) },
+			new() { Text = "G-Menu", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/GMenu.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "G-Menu", "G-Menu.exe")) },
+			new() { Text = "BatteryHub", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/BatteryHub.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "BatteryHub", "BatteryHub.exe")) }
 		};
 		foreach (GridViewItem item in peripheralsList.Where(item => !item.IsInstalled))
 			peripheralsItems.Add(item);
@@ -330,6 +332,7 @@ public sealed partial class AppsPage : Page
 		selection.LogitechOnboardMemoryManager = selectedPeripherals.Contains("Logitech Onboard Memory Manager");
 		selection.Wootility = selectedPeripherals.Contains("Wootility");
 		selection.GMenu = selectedPeripherals.Contains("G-Menu");
+		selection.BatteryHub = selectedPeripherals.Contains("BatteryHub");
 		selection.EndgameGear = selectedPeripherals.Contains("Endgame Gear");
 		selection.GloriousCORE = selectedPeripherals.Contains("Glorious CORE");
 		selection.MCHOSE = selectedPeripherals.Contains("MCHOSE HUB");

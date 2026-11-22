@@ -106,6 +106,7 @@ public static partial class PreparingStage
 	public static bool LogitechOnboardMemoryManager;
 	public static bool Wootility;
 	public static bool GMenu;
+	public static bool BatteryHub;
 	public static bool EndgameGear;
 	public static bool GloriousCORE;
 	public static bool MCHOSE;
@@ -512,6 +513,7 @@ public static partial class PreparingStage
 			LogitechOnboardMemoryManager = (localSettings.Values["Peripherals"]?.ToString()?.Contains("Logitech Onboard Memory Manager") ?? false);
 			Wootility = (localSettings.Values["Peripherals"]?.ToString()?.Contains("Wootility") ?? false);
 			GMenu = (localSettings.Values["Peripherals"]?.ToString()?.Contains("G-Menu") ?? false);
+			BatteryHub = (localSettings.Values["Peripherals"]?.ToString()?.Contains("BatteryHub") ?? false);
 			EndgameGear = (localSettings.Values["Peripherals"]?.ToString()?.Contains("Endgame Gear") ?? false);
 			GloriousCORE = (localSettings.Values["Peripherals"]?.ToString()?.Contains("Glorious CORE") ?? false);
 			MCHOSE = (localSettings.Values["Peripherals"]?.ToString()?.Contains("MCHOSE HUB") ?? false);

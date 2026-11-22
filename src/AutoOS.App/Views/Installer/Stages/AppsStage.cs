@@ -72,6 +72,7 @@ public class ApplicationSelection
 	public bool LogitechOnboardMemoryManager { get; set; }
 	public bool Wootility { get; set; }
 	public bool GMenu { get; set; }
+	public bool BatteryHub { get; set; }
 	public bool EndgameGear { get; set; }
 	public bool GloriousCORE { get; set; }
 	public bool MCHOSE { get; set; }
@@ -241,6 +242,7 @@ public static class AppsStage
 		bool LogitechOnboardMemoryManager = selection?.LogitechOnboardMemoryManager ?? PreparingStage.LogitechOnboardMemoryManager;
 		bool Wootility = selection?.Wootility ?? PreparingStage.Wootility;
 		bool GMenu = selection?.GMenu ?? PreparingStage.GMenu;
+		bool BatteryHub = selection?.BatteryHub ?? PreparingStage.BatteryHub;
 		bool EndgameGear = selection?.EndgameGear ?? PreparingStage.EndgameGear;
 		bool GloriousCORE = selection?.GloriousCORE ?? PreparingStage.GloriousCORE;
 		bool MCHOSE = selection?.MCHOSE ?? PreparingStage.MCHOSE;
@@ -1256,12 +1258,21 @@ public static class AppsStage
 
 			// install g-menu
 			("Installing G-Menu", async () => await ExtractHelper.Extract(Path.Combine(Path.GetTempPath(), "G-Menu.zip"), Path.Combine(Path.GetTempPath(), "G-Menu")), () => GMenu == true),
-			("Installing G-Menu", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "G-Menu", "G-Menu Setup 3.34.0.exe"), Arguments = "/S", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => GMenu == true),
+			("Installing G-Menu", async () => await Process.Start(new ProcessStartInfo { FileName = Directory.GetFiles(Path.Combine(Path.GetTempPath(), "G-Menu"), "G-Menu Setup*.exe").First(), Arguments = "/S", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => GMenu == true),
 			("Cleaning up G-Menu files", async () => { string path = Path.Combine(Path.GetTempPath(), "G-Menu.zip"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => GMenu == true),
 			("Cleaning up G-Menu files", async () => { string path = Path.Combine(Path.GetTempPath(), "G-Menu"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => Directory.Delete(path, true)); }, () => GMenu == true),
 
 			// remove g-menu desktop shortcut
 			("Removing G-Menu desktop shortcut", async () => File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "G-Menu.lnk")), () => GMenu == true),
+
+			// download batteryhub
+			("Downloading BatteryHub", async () => await DownloadHelper.DownloadGitHubReleaseAssetAsync("krisgfx9/Wireless-Device-Battery-Monitor", Path.GetTempPath(), name => name.StartsWith("BatteryHub-Setup") && name.EndsWith(".exe"), "BatteryHub-Setup.exe", reporter: reporter), () => BatteryHub == true),
+
+			// install batteryhub
+			("Installing BatteryHub", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "BatteryHub-Setup.exe"), Arguments = @"/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /TASKS=""""", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => BatteryHub == true),
+			("Disabling BatteryHub startup entry", async () => RegistryHelper.DeleteValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run", "WirelessBattery"), () => BatteryHub == true),
+			("Disabling BatteryHub startup entry", async () => RegistryHelper.SetValue(RegistryHelper.Identity.CurrentUser, @"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", "WirelessBattery", new byte[] { 0x01 }, RegistryValueKind.Binary), () => BatteryHub == true),
+			("Cleaning up BatteryHub files", async () => { string path = Path.Combine(Path.GetTempPath(), "BatteryHub-Setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => BatteryHub == true),
 
 			// download endgame gear
 			("Downloading Endgame Gear", async () => await DownloadHelper.Download($"https://img.endgamegear.com/downloads/Endgame_Gear_Setup_V{Regex.Match(await DownloadHelper.GetStringAsync("https://endgamegear.com/pages/kb65he-8k-downloads"), @"Endgame_Gear_Setup_V([\d.]+)\.exe").Groups[1].Value}.exe", Path.GetTempPath(), "Endgame_Gear_Setup.exe", reporter: reporter), () => EndgameGear == true),
