@@ -22,6 +22,9 @@
 			IsBackButtonVisible="False"
 			IsPaneToggleButtonVisible="True"
 			Subtitle="{x:Bind dev:ProcessInfoHelper.VersionWithPrefix}">
+			<TitleBar.Resources>
+				<HorizontalAlignment x:Key="TitleBarContentHorizontalAlignment">Stretch</HorizontalAlignment>
+			</TitleBar.Resources>
 			<TitleBar.LeftHeader>
 				<ImageIcon
 					Width="16"
@@ -30,6 +33,41 @@
 					PointerPressed="AppIcon_PointerPressed"
 					Source="/Assets/AppIcon.png" />
 			</TitleBar.LeftHeader>
+			<AutoSuggestBox
+				x:Name="NavSearchBox"
+				MaxWidth="480"
+				HorizontalAlignment="Stretch"
+				VerticalAlignment="Center"
+				PlaceholderText="Search"
+				QueryIcon="Find"
+				QuerySubmitted="NavSearchBox_QuerySubmitted"
+				TextChanged="NavSearchBox_TextChanged">
+				<AutoSuggestBox.ItemTemplate>
+					<DataTemplate x:DataType="dev:DataItem">
+						<Grid ColumnSpacing="12">
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="Auto" />
+								<ColumnDefinition Width="*" />
+							</Grid.ColumnDefinitions>
+							<Viewbox
+								Width="16"
+								Height="16"
+								VerticalAlignment="Center">
+								<Image Source="{x:Bind ImagePath}" />
+							</Viewbox>
+							<TextBlock
+								Grid.Column="1"
+								Text="{x:Bind Title}" />
+						</Grid>
+					</DataTemplate>
+				</AutoSuggestBox.ItemTemplate>
+				<AutoSuggestBox.KeyboardAccelerators>
+					<KeyboardAccelerator
+						Key="F"
+						Invoked="NavSearchBox_AcceleratorInvoked"
+						Modifiers="Control" />
+				</AutoSuggestBox.KeyboardAccelerators>
+			</AutoSuggestBox>
 		</TitleBar>
 		<dev:ModernWindowCaptionButtonToolTip Window="{x:Bind}" />
 		<NavigationView

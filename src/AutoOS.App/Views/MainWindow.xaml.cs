@@ -115,6 +115,81 @@ public sealed partial class MainWindow : Window
 		return AppTitleBar;
 	}
 
+	private void NavSearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+	{
+		if (args.Reason != AutoSuggestionBoxTextChangeReason.UserInput)
+		{
+			return;
+		}
+
+		string query = sender.Text.Trim();
+		if (query.Length == 0)
+		{
+			sender.ItemsSource = null;
+			return;
+		}
+
+		string[] querySplit = query.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+		List<DataItem> suggestions = [];
+		foreach (DataGroup group in DataSource.Instance.Groups)
+		{
+			foreach (DataItem item in group.Items)
+			{
+				if (!item.IncludedInBuild || item.IsSeparator || item.Title == null)
+				{
+					continue;
+				}
+
+				bool match = true;
+				foreach (string token in querySplit)
+				{
+					if (item.Title.IndexOf(token, StringComparison.OrdinalIgnoreCase) < 0)
+					{
+						match = false;
+						break;
+					}
+				}
+
+				if (match)
+				{
+					suggestions.Add(item);
+				}
+			}
+		}
+
+		if (suggestions.Count > 0)
+		{
+			sender.ItemsSource = suggestions
+				.OrderByDescending(item => item.Title?.StartsWith(query, StringComparison.OrdinalIgnoreCase) ?? false)
+				.ThenBy(item => item.Title, StringComparer.CurrentCulture)
+				.ToList();
+		}
+		else
+		{
+			sender.ItemsSource = new List<DataItem>
+			{
+				new()
+				{
+					Title = "No result found",
+					ImagePath = "ms-appx:///Assets/AppIcon.png"
+				}
+			};
+		}
+	}
+
+	private void NavSearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
+	{
+		if (args.ChosenSuggestion is DataItem item)
+		{
+			App.Current.NavService.NavigateTo(item.UniqueId, item);
+		}
+	}
+
+	private void NavSearchBox_AcceleratorInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+	{
+		NavSearchBox.Focus(FocusState.Programmatic);
+	}
+
 	private void AppIcon_PointerPressed(object sender, PointerRoutedEventArgs e)
 	{
 		PInvoke.PostMessage((HWND)WindowNative.GetWindowHandle(App.MainWindow), PInvoke.WM_SYSCOMMAND, 0xF090, 0);
