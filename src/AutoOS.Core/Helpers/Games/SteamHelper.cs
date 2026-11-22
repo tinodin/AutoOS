@@ -741,7 +741,7 @@ public static partial class SteamHelper
 							features = [.. modesProp.EnumerateArray().Select(m => m.GetProperty("name").GetString() ?? "")];
 						}
 
-						rating = data.TryGetProperty("aggregated_rating", out JsonElement ratingProp) ? Math.Round(ratingProp.GetDouble() / 20.0, 2) : 0;
+						rating = IgdbHelper.GetRating(data);
 					}
 
 					var igdbGame = new GameModel
@@ -906,7 +906,7 @@ public static partial class SteamHelper
 			int totalPositive = reviewData.GetProperty("positive").GetInt32();
 			int totalNegative = reviewData.GetProperty("negative").GetInt32();
 
-			model.Rating = totalPositive + totalNegative > 0 ? Math.Round(5.0 * totalPositive / (totalPositive + totalNegative), 1) : 0.0;
+			model.Rating = totalPositive + totalNegative > 0 ? Math.Round(5.0 * totalPositive / (totalPositive + totalNegative), 1) : await IgdbHelper.GetRatingAsync(model.Title ?? "");
 		}
 		catch
 		{

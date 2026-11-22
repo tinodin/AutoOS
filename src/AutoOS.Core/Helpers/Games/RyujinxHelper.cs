@@ -141,7 +141,7 @@ public static partial class RyujinxHelper
 					Developers = result["developers"],
 					Genres = [.. data.GetProperty("genres").EnumerateArray().Select(g => g.GetProperty("name").GetString() ?? "")],
 					Features = [.. data.GetProperty("game_modes").EnumerateArray().Select(m => m.GetProperty("name").GetString() ?? "")],
-					Rating = Math.Round(data.GetProperty("aggregated_rating").GetDouble() / 20.0, 2),
+					Rating = IgdbHelper.GetRating(data),
 					PlayTime = playTime,
 					AgeRatingUrl = result["age_rating_url"],
 					AgeRatingTitle = result["age_rating_title"],

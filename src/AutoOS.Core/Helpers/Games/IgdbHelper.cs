@@ -234,4 +234,28 @@ public static partial class IgdbHelper
 
 		return null;
 	}
+
+	public static async Task<double> GetRatingAsync(string title)
+	{
+		try
+		{
+			Dictionary<string, string?>? result = await SearchCovers(title);
+			if (result == null || !result.TryGetValue("game_url", out string? gameUrl) || string.IsNullOrEmpty(gameUrl))
+				return 0.0;
+
+			using var doc = JsonDocument.Parse(await httpClient.GetStringAsync(gameUrl));
+			return GetRating(doc.RootElement);
+		}
+		catch
+		{
+			return 0.0;
+		}
+	}
+
+	public static double GetRating(JsonElement gameData)
+	{
+		return gameData.TryGetProperty("aggregated_rating", out JsonElement rating) && rating.ValueKind == JsonValueKind.Number
+			? Math.Round(rating.GetDouble() / 20.0, 2)
+			: 0.0;
+	}
 }

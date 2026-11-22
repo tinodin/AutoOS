@@ -47,8 +47,10 @@ public static partial class EdenHelper
 				}
 
 				string? name = kvp.Value.TryGetProperty("name", out JsonElement nameElem) ? nameElem.GetString() : null;
-				if (string.IsNullOrWhiteSpace(name)) continue;
-				if (!kvp.Value.TryGetProperty("id", out JsonElement nameId) || string.IsNullOrWhiteSpace(nameId.GetString())) continue;
+				if (string.IsNullOrWhiteSpace(name))
+					continue;
+				if (!kvp.Value.TryGetProperty("id", out JsonElement nameId) || string.IsNullOrWhiteSpace(nameId.GetString()))
+					continue;
 
 				string simpleName = SimpleCleanNameRegex().Replace(CleanNameRegex().Replace(name.Replace('’', '\''), "").ToLowerInvariant(), "");
 				if (!string.IsNullOrEmpty(simpleName))
@@ -89,11 +91,13 @@ public static partial class EdenHelper
 								bestMatch = key;
 						}
 
-						if (bestMatch is null) continue;
+						if (bestMatch is null)
+							continue;
 
 						JsonElement entry = jsonByName[bestMatch];
 						string? id = entry.TryGetProperty("id", out JsonElement idElement) ? idElement.GetString() : null;
-						if (string.IsNullOrWhiteSpace(id) || !seenIds.Add(id)) continue;
+						if (string.IsNullOrWhiteSpace(id) || !seenIds.Add(id))
+							continue;
 
 						edenEntries.Add((id.ToLowerInvariant(), Path.GetFullPath(gameFile), new FileInfo(gameFile).Length));
 					}
@@ -113,7 +117,8 @@ public static partial class EdenHelper
 					string? name = entry.TryGetProperty("name", out JsonElement nameElement) ? nameElement.GetString() : null;
 
 					// clean name for searching
-					if (string.IsNullOrWhiteSpace(name)) return;
+					if (string.IsNullOrWhiteSpace(name))
+						return;
 					string cleanName = CleanNameRegex().Replace(name.Replace('’', '\''), "");
 
 					// get install location
@@ -138,8 +143,9 @@ public static partial class EdenHelper
 					long sizeBytes = edenEntry.FileSize;
 
 					// search on igdb
-Dictionary<string, string?>? result = await IgdbHelper.SearchCovers(cleanName);
-				if (result == null) return;
+					Dictionary<string, string?>? result = await IgdbHelper.SearchCovers(cleanName);
+					if (result == null)
+						return;
 
 					using var docData = JsonDocument.Parse(await httpClient.GetStringAsync(result["game_url"]!, _));
 					JsonElement data = docData.RootElement.Clone();
@@ -157,7 +163,7 @@ Dictionary<string, string?>? result = await IgdbHelper.SearchCovers(cleanName);
 						Developers = result["developers"],
 						Genres = [.. data.GetProperty("genres").EnumerateArray().Select(g => g.GetProperty("name").GetString() ?? "")],
 						Features = [.. data.GetProperty("game_modes").EnumerateArray().Select(m => m.GetProperty("name").GetString() ?? "")],
-						Rating = Math.Round(data.GetProperty("aggregated_rating").GetDouble() / 20.0, 2),
+						Rating = IgdbHelper.GetRating(data),
 						PlayTime = playTime,
 						AgeRatingUrl = result["age_rating_url"],
 						AgeRatingTitle = result["age_rating_title"],
