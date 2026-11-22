@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using AutoOS.App.Common;
 using AutoOS.App.Views.Installer.Actions;
 using AutoOS.Core.Common;
@@ -20,6 +21,7 @@ public class BrowserSelection
 	public bool Helium { get; set; }
 	public bool Brave { get; set; }
 	public bool Vivaldi { get; set; }
+	public bool Dia { get; set; }
 	public bool Arc { get; set; }
 	public bool Comet { get; set; }
 	public bool Firefox { get; set; }
@@ -61,6 +63,7 @@ public static class BrowsersStage
 		bool? Helium = selection?.Helium ?? PreparingStage.Helium;
 		bool? Brave = selection?.Brave ?? PreparingStage.Brave;
 		bool? Vivaldi = selection?.Vivaldi ?? PreparingStage.Vivaldi;
+		bool? Dia = selection?.Dia ?? PreparingStage.Dia;
 		bool? Arc = selection?.Arc ?? PreparingStage.Arc;
 		bool? Comet = selection?.Comet ?? PreparingStage.Comet;
 		bool? Firefox = selection?.Firefox ?? PreparingStage.Firefox;
@@ -532,12 +535,69 @@ public static class BrowsersStage
 			("Disabling Vivaldi services", async () => RegistryHelper.SetValue(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\AutorunsDisabled\{9C142C0C-124C-4467-B117-EBCC62801D7B}", "IsInstalled", 1, RegistryValueKind.DWord), () => Vivaldi == true),
 			("Disabling Vivaldi services", async () => RegistryHelper.DeleteKey(RegistryHelper.Identity.TrustedInstaller, @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\{9C142C0C-124C-4467-B117-EBCC62801D7B}"), () => Vivaldi == true),
 
-			// download arc dependency
-			("Downloading Arc Dependency", async () => await DownloadHelper.Download("https://releases.arc.net/windows/dependencies/x64/Microsoft.VCLibs.x64.14.00.Desktop.14.0.33728.0.appx", Path.GetTempPath(), "Microsoft.VCLibs.x64.appx", reporter ?? new InstallPageReporter()), () => Arc == true),
+			// download vclibs dependency
+			("Downloading VCLibs Dependency", async () => await DownloadHelper.Download("https://releases.arc.net/windows/dependencies/x64/Microsoft.VCLibs.x64.14.00.Desktop.14.0.33728.0.appx", Path.GetTempPath(), "Microsoft.VCLibs.x64.appx", reporter ?? new InstallPageReporter()), () => Arc == true || Dia == true),
 
-			// install arc dependency
-			("Installing Arc Dependency", async () => await Process.Start(new ProcessStartInfo { FileName = "powershell", Arguments = @$"-Command ""Add-AppxPackage -Path {Path.Combine(Path.GetTempPath(), "Microsoft.VCLibs.x64.appx")}""", UseShellExecute = false, CreateNoWindow = true })!.WaitForExitAsync(), () => Arc == true),
-			("Cleaning up Arc Dependency files", async () => { string path = Path.Combine(Path.GetTempPath(), "Microsoft.VCLibs.x64.appx"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Arc == true),
+			// install vclibs dependency
+			("Installing VCLibs Dependency", async () => await Process.Start(new ProcessStartInfo { FileName = "powershell", Arguments = @$"-Command ""Add-AppxPackage -Path {Path.Combine(Path.GetTempPath(), "Microsoft.VCLibs.x64.appx")}""", UseShellExecute = false, CreateNoWindow = true })!.WaitForExitAsync(), () => Arc == true || Dia == true),
+			("Cleaning up VCLibs Dependency files", async () => { string path = Path.Combine(Path.GetTempPath(), "Microsoft.VCLibs.x64.appx"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Arc == true || Dia == true),
+
+			// download dia
+			("Downloading Dia", async () => await DownloadHelper.Download(Regex.Match(await DownloadHelper.GetStringAsync("https://releases.diabrowser.com/windows/release/Dia.x64.appinstaller"), @"<MainPackage[^>]*Uri=""([^""]+)""").Groups[1].Value, Path.GetTempPath(), "Dia.x64.msix", reporter ?? new InstallPageReporter()), () => Dia == true),
+
+			// install dia
+			("Installing Dia", async () => await new PackageManager().AddPackageAsync(new Uri(Path.Combine(Path.GetTempPath(), "Dia.x64.msix")), null, DeploymentOptions.None), () => Dia == true),
+			("Cleaning up Dia files", async () => { string path = Path.Combine(Path.GetTempPath(), "Dia.x64.msix"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => Dia == true),
+
+			// pin dia to the taskbar
+			("Pinning Dia to the taskbar", async () => await ProcessActions.PinToTaskbar("UWA", "TheBrowserCompany.Dia_ttt1ap7aakyb4!Dia"), () => Dia == true),
+
+			// install ublock origin extension
+			("Installing uBlock Origin Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "cjpalhdlnbpafiamejdnhcphjbkeiagm"), () => Dia == true && uBlock == true),
+
+			// install privacy badger extension
+			("Installing Privacy Badger Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "pkehgijcmpdhfbdbbnkijodmdjhbjlgp"), () => Dia == true && PrivacyBadger == true),
+
+			// install decentraleyes extension
+			("Installing Decentraleyes Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "ldpochfccmkkmhdbclfhpagapcfdljkj"), () => Dia == true && Decentraleyes == true),
+
+			// install i still don't care about cookies extension
+			("Installing I still don't care about cookies Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "edibdbjcniadpccecjdfdjjppcpchdlm"), () => Dia == true && Cookies == true),
+
+			// install violentmonkey extension
+			("Installing Violentmonkey Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "jinjaccalgkegednnccohejagnlnfdag"), () => Dia == true && Violentmonkey == true),
+
+			// install tampermonkey extension
+			("Installing Tampermonkey Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "dhdgffkkebhmkfjojejmpbldmpobfkfo"), () => Dia == true && Tampermonkey == true),
+
+			// install sponsorblock extension
+			("Installing SponsorBlock Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "mnjggcdmjocbbbhaepdhchncahnbgone"), () => Dia == true && SponsorBlock == true),
+
+			// install return youtube dislike extension
+			("Installing Return YouTube Dislike Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "gebbhagfogifgggkldgodflihgfeippi"), () => Dia == true && ReturnYouTubeDislike == true),
+
+			// install dark reader extension
+			("Installing Dark Reader Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "eimadpbcbfnmbkopoojfekhnkhdbieeh"), () => Dia == true && DarkReader == true),
+
+			// install shazam extension
+			("Installing Shazam Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "mmioliijnhnoblpgimnlajmefafdfilb"), () => Dia == true && Shazam == true),
+
+			("Installing Proton Pass Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "ghmbeldphafepmbegfdlkpapadhbakde"), () => Dia == true && ProtonPass == true),
+
+			// install wayback machine extension
+			("Installing Wayback Machine Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "fpnmgdkabkmnadcjpehmlllkndpkmiak"), () => Dia == true && WaybackMachine == true),
+
+			// install icloud passwords extension
+			("Installing iCloud Passwords Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "pejdijmoenmkgeppbflobdenhhabjlaj"), () => Dia == true && iCloud == true),
+
+			// install bitwarden extension
+			("Installing Bitwarden Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "nngceckbapebfimnlniiiahkandclblb"), () => Dia == true && Bitwarden == true),
+
+			// install 1password extension
+			("Installing 1Password Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "aeblfdkhhhdcdjpifhhbdiojplfjncoa"), () => Dia == true && OnePassword == true),
+
+			// install keepassxc extension
+			("Installing KeePassXC Extension", async () => await InstallChromiumExtension(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Chromium\ExtensionInstallForcelist", "oboonakemofpalcgghocfoadofidjkkk"), () => Dia == true && KeePassXC == true),
 
 			// download arc
 			("Downloading Arc", async () => await DownloadHelper.Download("https://releases.arc.net/windows/prod/1.133.1.2/Arc.x64.msix", Path.GetTempPath(), "Arc.x64.msix", reporter ?? new InstallPageReporter()), () => Arc == true),

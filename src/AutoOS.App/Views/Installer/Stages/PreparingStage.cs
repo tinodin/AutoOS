@@ -32,6 +32,7 @@ public static partial class PreparingStage
 	public static bool Helium;
 	public static bool Brave;
 	public static bool Vivaldi;
+	public static bool Dia;
 	public static bool Arc;
 	public static bool Comet;
 	public static bool Firefox;
@@ -443,6 +444,7 @@ public static partial class PreparingStage
 			Helium = (localSettings.Values["Browsers"]?.ToString()?.Contains("Helium") ?? false);
 			Brave = (localSettings.Values["Browsers"]?.ToString()?.Contains("Brave") ?? false);
 			Vivaldi = (localSettings.Values["Browsers"]?.ToString()?.Contains("Vivaldi") ?? false);
+			Dia = (localSettings.Values["Browsers"]?.ToString()?.Contains("Dia") ?? false);
 			Arc = (localSettings.Values["Browsers"]?.ToString()?.Contains("Arc") ?? false);
 			Comet = (localSettings.Values["Browsers"]?.ToString()?.Contains("Comet") ?? false);
 			Firefox = (localSettings.Values["Browsers"]?.ToString()?.Contains("Firefox") ?? false);

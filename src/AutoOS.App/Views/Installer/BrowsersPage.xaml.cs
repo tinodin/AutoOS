@@ -35,6 +35,7 @@ public sealed partial class BrowsersPage : Page
 			new() { Text = "Helium", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Helium.png" },
 			new() { Text = "Brave", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Brave.png" },
 			new() { Text = "Vivaldi", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Vivaldi.png" },
+			new() { Text = "Dia", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Dia.png" },
 			new() { Text = "Arc", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Arc.png" },
 			new() { Text = "Comet", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Comet.png" },
 			new() { Text = "Firefox", ImageSource = "ms-appx:///Assets/FluentIcons/Browsers/Firefox.png" },

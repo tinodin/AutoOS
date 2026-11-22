@@ -305,8 +305,6 @@
 						</uc:ComboBoxEx>
 					</AppBarElementContainer>
 
-					<AppBarSeparator Margin="4,0" />
-
 					<!--  Import  -->
 					<AppBarButton
 						Command="{x:Bind ViewModel.ImportCommand}"
