@@ -93,6 +93,7 @@ public class ApplicationSelection
 	public bool VisualStudio { get; set; }
 	public bool VisualStudioCode { get; set; }
 	public bool Claude { get; set; }
+	public bool ChatGPT { get; set; }
 	public bool Antigravity { get; set; }
 	public bool Cursor { get; set; }
 	public bool Zed { get; set; }
@@ -267,6 +268,7 @@ public static class AppsStage
 		bool VisualStudio = selection?.VisualStudio ?? PreparingStage.VisualStudio;
 		bool VisualStudioCode = selection?.VisualStudioCode ?? PreparingStage.VisualStudioCode;
 		bool Claude = selection?.Claude ?? PreparingStage.Claude;
+		bool ChatGPT = selection?.ChatGPT ?? PreparingStage.ChatGPT;
 		bool Antigravity = selection?.Antigravity ?? PreparingStage.Antigravity;
 		bool Cursor = selection?.Cursor ?? PreparingStage.Cursor;
 		bool Zed = selection?.Zed ?? PreparingStage.Zed;
@@ -1537,6 +1539,12 @@ public static class AppsStage
 
 			// install claude
 			("Installing Claude", async () => await StoreHelper.Install("AnthropicPBC.Claude_fnn82j28hfe8t"), () => Claude == true),
+
+			// download chatgpt
+			("Downloading ChatGPT", async () => await StoreHelper.Download("OpenAI.Codex_2p2nqsd0c76g0", reporter: reporter), () => ChatGPT == true),
+
+			// install chatgpt
+			("Installing ChatGPT", async () => await StoreHelper.Install("OpenAI.Codex_2p2nqsd0c76g0"), () => ChatGPT == true),
 
 			// download antigravity
 			("Downloading Antigravity", async () => await DownloadHelper.Download($"https://storage.googleapis.com/antigravity-public/antigravity-hub/{Regex.Match(await DownloadHelper.GetStringAsync("https://antigravity.google/download"), @"antigravity-hub/([\d.]+-[\d]+)/windows-x64/Antigravity-x64\.exe").Groups[1].Value}/windows-x64/Antigravity-x64.exe", Path.GetTempPath(), "Antigravity-x64.exe", reporter: reporter), () => Antigravity == true),

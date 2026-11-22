@@ -140,6 +140,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "Visual Studio", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/VisualStudio.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Microsoft Visual Studio")) },
 			new() { Text = "Visual Studio Code", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/VisualStudioCode.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Microsoft VS Code", "Code.exe")) },
 			new() { Text = "Claude", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Claude.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "AnthropicPBC.Claude_fnn82j28hfe8t")) },
+			new() { Text = "ChatGPT", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/ChatGPT.png", IsInstalled = Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Packages", "OpenAI.Codex_2p2nqsd0c76g0")) },
 			new() { Text = "Antigravity", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Antigravity.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "antigravity", "Antigravity.exe")) },
 			new() { Text = "Cursor", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Cursor.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "cursor", "Cursor.exe")) || File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "cursor", "Cursor.exe")) },
 			new() { Text = "Zed", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Development/Zed.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Zed", "Zed.exe")) },
@@ -359,6 +360,7 @@ public sealed partial class AppsPage : Page
 		selection.VisualStudio = selectedDev.Contains("Visual Studio");
 		selection.VisualStudioCode = selectedDev.Contains("Visual Studio Code");
 		selection.Claude = selectedDev.Contains("Claude");
+		selection.ChatGPT = selectedDev.Contains("ChatGPT");
 		selection.Antigravity = selectedDev.Contains("Antigravity");
 		selection.Cursor = selectedDev.Contains("Cursor");
 		selection.Zed = selectedDev.Contains("Zed");

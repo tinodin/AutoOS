@@ -130,6 +130,7 @@ public static partial class PreparingStage
 	public static bool VisualStudio;
 	public static bool VisualStudioCode;
 	public static bool Claude;
+	public static bool ChatGPT;
 	public static bool Antigravity;
 	public static bool Cursor;
 	public static bool Zed;
@@ -538,6 +539,7 @@ public static partial class PreparingStage
 			VisualStudio = (localSettings.Values["Development"]?.ToString()?.Contains("Visual Studio") ?? false);
 			VisualStudioCode = (localSettings.Values["Development"]?.ToString()?.Contains("Visual Studio Code") ?? false);
 			Claude = (localSettings.Values["Development"]?.ToString()?.Contains("Claude") ?? false);
+			ChatGPT = (localSettings.Values["Development"]?.ToString()?.Contains("ChatGPT") ?? false);
 			Antigravity = (localSettings.Values["Development"]?.ToString()?.Contains("Antigravity") ?? false);
 			Cursor = (localSettings.Values["Development"]?.ToString()?.Contains("Cursor") ?? false);
 			Zed = (localSettings.Values["Development"]?.ToString()?.Contains("Zed") ?? false);
