@@ -15,7 +15,7 @@ public sealed class Recommendation
 
 public static class Recommendations
 {
-	public static readonly IReadOnlyList<Recommendation> Rules =
+	public static readonly Recommendation[] Rules =
 	[
 		// WiFi
 		new() { Type = NicDeviceType.WiFi, Name = "2.4G Wireless Mode", Recommended = "IEEE 802.11b/g/n/ax" },

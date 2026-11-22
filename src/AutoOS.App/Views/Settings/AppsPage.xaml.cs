@@ -116,7 +116,6 @@ public sealed partial class AppsPage : Page
 			new() { Text = "OpenRGB", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/OpenRGB.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "OpenRGB", "OpenRGB.exe")) },
 			new() { Text = "FanControl", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/FanControl.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "FanControl", "FanControl.exe")) },
 			new() { Text = "GHelper", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/GHelper.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "GHelper", "GHelper.exe")) },
-			new() { Text = "G-Menu", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/GMenu.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "G-Menu", "G-Menu.exe")) },
 			new() { Text = "BatteryHub", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/BatteryHub.png", IsInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "BatteryHub", "BatteryHub.exe")) }
 		};
 		foreach (GridViewItem item in peripheralsList.Where(item => !item.IsInstalled))

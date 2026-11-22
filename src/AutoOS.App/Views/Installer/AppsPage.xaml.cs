@@ -114,7 +114,6 @@ public sealed partial class AppsPage : Page
 			new() { Text = "OpenRGB", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/OpenRGB.png" },
 			new() { Text = "FanControl", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/FanControl.png" },
 			new() { Text = "GHelper", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/GHelper.png" },
-			new() { Text = "G-Menu", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/GMenu.png" },
 			new() { Text = "BatteryHub", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Peripherals/BatteryHub.png" }
 		};
 

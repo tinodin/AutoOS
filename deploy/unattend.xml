@@ -288,6 +288,7 @@ Set-ItemProperty -LiteralPath $key -Name 'ConfigureStartPins_ProviderSet' -Value
 Windows Registry Editor Version 5.00
 
 ; 58989092
+; Feature_TestLoc02
 ; Low Latency Profile Feature Bundle June
 [HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1213986446]
 "EnabledState"=dword:00000002
@@ -296,25 +297,8 @@ Windows Registry Editor Version 5.00
 "VariantPayload"=dword:00000000
 "VariantPayloadKind"=dword:00000000
 
-; 60716524
-; New Low Latency Profile
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\3632644751]
-"EnabledState"=dword:00000002
-"EnabledStateOptions"=dword:00000000
-"Variant"=dword:00000000
-"VariantPayload"=dword:00000000
-"VariantPayloadKind"=dword:00000000
-
-; 61391826
-; New Low Latency Profile For Application Launch
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\2783555215]
-"EnabledState"=dword:00000002
-"EnabledStateOptions"=dword:00000000
-"Variant"=dword:00000000
-"VariantPayload"=dword:00000000
-"VariantPayloadKind"=dword:00000000
-
 ; 58989177
+; Feature_TestLoc03
 ; Low Latency Profile Feature Bundle July
 [HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\4066113166]
 "EnabledState"=dword:00000002
@@ -324,8 +308,9 @@ Windows Registry Editor Version 5.00
 "VariantPayloadKind"=dword:00000000
 
 ; 61161244
+; Feature_TestUxGate
 ; Main Feature Bundle
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\940684430] 
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\940684430]
 "EnabledState"=dword:00000002
 "EnabledStateOptions"=dword:00000000
 "Variant"=dword:00000000
@@ -333,6 +318,7 @@ Windows Registry Editor Version 5.00
 "VariantPayloadKind"=dword:00000000
 
 ; 62353331
+; Feature_62353331
 ; New Start Menu Customization:
 [HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1722912911]
 "EnabledState"=dword:00000002
@@ -342,8 +328,9 @@ Windows Registry Editor Version 5.00
 "VariantPayloadKind"=dword:00000000
 
 ; 62762248
+; Feature_62762248
 ; New Search UI
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\288720014] ; 62762248
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\288720014]
 "EnabledState"=dword:00000002
 "EnabledStateOptions"=dword:00000000
 "Variant"=dword:00000000
@@ -351,8 +338,29 @@ Windows Registry Editor Version 5.00
 "VariantPayloadKind"=dword:00000000
 
 ; 61754985
+; Feature_61754985
 ; New Search UI
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\3539182222] 
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\3539182222]
+"EnabledState"=dword:00000002
+"EnabledStateOptions"=dword:00000000
+"Variant"=dword:00000000
+"VariantPayload"=dword:00000000
+"VariantPayloadKind"=dword:00000000
+
+; 61161304
+; Feature_ExpToc
+; WinUI Search
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\2953950350]
+"EnabledState"=dword:00000002
+"EnabledStateOptions"=dword:00000000
+"Variant"=dword:00000000
+"VariantPayload"=dword:00000000
+"VariantPayloadKind"=dword:00000000
+
+; 58381341
+; Feature_58381341
+; WinUI Search
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1002834574]
 "EnabledState"=dword:00000002
 "EnabledStateOptions"=dword:00000000
 "Variant"=dword:00000000
