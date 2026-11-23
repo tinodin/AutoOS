@@ -8,7 +8,7 @@ public sealed partial class CompareDialogViewModel : BaseDialogViewModel
 	{
 		Plans = [.. plans];
 		SelectedPlan1 = Plans.FirstOrDefault(plan => plan.Guid == selectedPlan1?.Guid) ?? Plans.FirstOrDefault();
-		SelectedPlan2 = Plans.FirstOrDefault(plan => plan.Guid == selectedPlan2?.Guid) ?? Plans.FirstOrDefault(plan => plan.Guid != SelectedPlan1?.Guid);
+		SelectedPlan2 = Plans.FirstOrDefault(plan => plan.Guid == selectedPlan2?.Guid) ?? Plans.FirstOrDefault(plan => plan.Guid != SelectedPlan1?.Guid) ?? Plans.FirstOrDefault();
 		Title = "Compare";
 		IsPrimaryButtonEnabled = PlansDiffer;
 		PrimaryButtonText = "Compare";

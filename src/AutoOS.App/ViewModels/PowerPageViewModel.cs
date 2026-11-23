@@ -13,7 +13,7 @@ using Microsoft.UI.Xaml;
 
 namespace AutoOS.App.ViewModels;
 
-public sealed partial class PowerPageViewModel(IPowerPlanService powerService, IDialogService dialogService, IFilePickerService filePickerService) : ObservableObject
+public sealed partial class PowerPageViewModel(IPowerPlanService powerService, IDialogService dialogService, IFilePickerService filePickerService, IStatusCenterService statusCenterService) : ObservableObject
 {
 	private readonly Stack<Dictionary<Setting, Value>> _undoStates = [];
 	private readonly Stack<Dictionary<Setting, Value>> _redoStates = [];
@@ -219,8 +219,19 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		}
 		while (Plans.Any(item => item.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase)));
 
-		Guid guid = powerService.DuplicatePowerPlan(plan.Guid, name, plan.Description);
-		SetPlans(await Task.Run(powerService.GetPowerPlans), guid);
+		StatusCenterItem card = statusCenterService.Begin($"Duplicating \"{plan.Name}\" to \"{name}\"", "\uECCD");
+		try
+		{
+			Guid guid = powerService.DuplicatePowerPlan(plan.Guid, name, plan.Description);
+			SetPlans(await Task.Run(powerService.GetPowerPlans), guid);
+		}
+		catch (Exception)
+		{
+			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to duplicate \"{plan.Name}\" to \"{name}\"");
+			return;
+		}
+
+		statusCenterService.Complete(card, ReturnResult.Success, $"Duplicated \"{plan.Name}\" to \"{name}\"");
 	}
 
 	[RelayCommand]
@@ -233,7 +244,23 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		if (filePath == null)
 			return;
 
-		await Task.Run(() => powerService.ExportPowerPlan(plan.Guid, filePath));
+		string destinationName = Path.GetFileName(Path.GetDirectoryName(filePath) ?? filePath);
+		StatusCenterItem card = statusCenterService.Begin($"Exporting \"{plan.Name}\" to \"{destinationName}\"", "\uEDE1");
+		int exitCode;
+		try
+		{
+			exitCode = await Task.Run(() => powerService.ExportPowerPlan(plan.Guid, filePath));
+		}
+		catch (Exception)
+		{
+			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to export \"{plan.Name}\" to \"{destinationName}\"");
+			return;
+		}
+
+		if (exitCode == 0)
+			statusCenterService.Complete(card, ReturnResult.Success, $"Exported \"{plan.Name}\" to \"{destinationName}\"");
+		else
+			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to export \"{plan.Name}\" to \"{destinationName}\"");
 	}
 
 	[RelayCommand(CanExecute = nameof(CanDelete))]
@@ -247,9 +274,20 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 
 		int index = Plans.IndexOf(planToDelete);
 		Plan nextPlan = index > 0 ? Plans[index - 1] : Plans[index + 1];
-		powerService.SetActivePowerPlan(nextPlan.Guid);
-		powerService.DeletePowerPlan(planToDelete.Guid);
-		SetPlans(await Task.Run(powerService.GetPowerPlans), nextPlan.Guid);
+		StatusCenterItem card = statusCenterService.Begin($"Deleting \"{planToDelete.Name}\"", "\uE74D");
+		try
+		{
+			powerService.SetActivePowerPlan(nextPlan.Guid);
+			powerService.DeletePowerPlan(planToDelete.Guid);
+			SetPlans(await Task.Run(powerService.GetPowerPlans), nextPlan.Guid);
+		}
+		catch (Exception)
+		{
+			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to delete \"{planToDelete.Name}\"");
+			return;
+		}
+
+		statusCenterService.Complete(card, ReturnResult.Success, $"Deleted \"{planToDelete.Name}\"");
 	}
 
 	[RelayCommand(CanExecute = nameof(CanRestore))]
@@ -259,11 +297,27 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		if (filePath == null)
 			return;
 
-		Guid importedGuid = await Task.Run(() => powerService.ImportPowerPlan(filePath));
-		if (importedGuid == Guid.Empty)
+		StatusCenterItem card = statusCenterService.Begin($"Importing \"{Path.GetFileName(filePath)}\"", "\uE8B5");
+		(Guid Scheme, uint Result) importResult;
+		try
+		{
+			importResult = await Task.Run(() => powerService.ImportPowerPlan(filePath));
+		}
+		catch (Exception)
+		{
+			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to import: \"{Path.GetFileName(filePath)}\"");
 			return;
+		}
 
-		SetPlans(await Task.Run(powerService.GetPowerPlans), importedGuid);
+		if (importResult.Scheme == Guid.Empty)
+		{
+			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to import: \"{Path.GetFileName(filePath)}\"");
+			return;
+		}
+
+		SetPlans(await Task.Run(powerService.GetPowerPlans), importResult.Scheme);
+		Plan imported = Plans.First(item => item.Guid == importResult.Scheme);
+		statusCenterService.Complete(card, ReturnResult.Success, $"Imported \"{imported.Name}\"");
 	}
 
 	[RelayCommand]
@@ -293,7 +347,21 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 			values.OriginalDcValue = values.DcValue;
 		}
 
-		powerService.SaveChanges(ActivePlan.Guid, changes);
+		int changeCount = changes.Count;
+		string planName = ActivePlan.Name;
+		string changesText = changeCount == 1 ? "1 change" : $"{changeCount} changes";
+		StatusCenterItem card = statusCenterService.Begin($"Saving {changesText} to \"{planName}\"", "\uE74E");
+		try
+		{
+			powerService.SaveChanges(ActivePlan.Guid, changes);
+		}
+		catch (Exception)
+		{
+			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to save {changesText} to \"{planName}\"");
+			return;
+		}
+
+		statusCenterService.Complete(card, ReturnResult.Success, $"Saved {changesText} to \"{planName}\"");
 		ResetHistory();
 		RefreshState();
 		SyncCompareAndChanges();
@@ -307,11 +375,22 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		if (await dialogService.ShowConfirmationDialogAsync("Restore default power plans", "Are you sure that you want to restore the default power plans?", "Yes", "No") != DialogResult.Primary)
 			return;
 
-		await powerService.RestoreDefaultPowerPlansAsync();
+		StatusCenterItem card = statusCenterService.Begin("Restoring default power plans", "\uE777");
+		try
+		{
+			await powerService.RestoreDefaultPowerPlansAsync();
 
-		Guid activeGuid = await Task.Run(powerService.GetActivePowerPlan);
-		SetPlans(await Task.Run(powerService.GetPowerPlans), activeGuid);
-		await ReloadActiveValuesAsync();
+			Guid activeGuid = await Task.Run(powerService.GetActivePowerPlan);
+			SetPlans(await Task.Run(powerService.GetPowerPlans), activeGuid);
+			await ReloadActiveValuesAsync();
+		}
+		catch (Exception)
+		{
+			statusCenterService.Complete(card, ReturnResult.Failed, "Failed to restore default power plans");
+			return;
+		}
+
+		statusCenterService.Complete(card, ReturnResult.Success, "Restored default power plans");
 	}
 
 	[RelayCommand]

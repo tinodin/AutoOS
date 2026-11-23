@@ -201,16 +201,16 @@ public static unsafe class PowerHelper
         return (uint)PInvoke.PowerDeleteScheme(default, scheme) == 0;
     }
 
-    public static Guid ImportPowerScheme(string filePath)
+    public static (Guid Scheme, uint Result) ImportPowerScheme(string filePath)
     {
         Guid* destination = null;
         uint result = (uint)PInvoke.PowerImportPowerScheme(default, filePath, ref destination);
         if (result != 0 || destination == null)
-            return Guid.Empty;
+            return (Guid.Empty, result);
 
         try
         {
-            return *destination;
+            return (*destination, result);
         }
         finally
         {
@@ -218,7 +218,7 @@ public static unsafe class PowerHelper
         }
     }
 
-    public static void ExportPowerScheme(Guid scheme, string path)
+    public static int ExportPowerScheme(Guid scheme, string path)
     {
         var startInfo = new ProcessStartInfo
         {
@@ -228,7 +228,11 @@ public static unsafe class PowerHelper
             CreateNoWindow = true
         };
         using var process = Process.Start(startInfo);
-        process?.WaitForExit();
+        if (process is null)
+            return -1;
+
+        process.WaitForExit();
+        return process.ExitCode;
     }
 
     public static uint RestoreDefaultPowerSchemes()

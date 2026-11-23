@@ -17,7 +17,6 @@
 				<ResourceDictionary Source="ms-appx:///Styles/ShortcutStyles.xaml" />
 				<ResourceDictionary Source="ms-appx:///Styles/TreeGridCellStyles.xaml" />
 				<ResourceDictionary Source="ms-appx:///Styles/TreeGridEditStyles.xaml" />
-				<ResourceDictionary Source="ms-appx:///Styles/NavigationViewItemStyle.xaml" />
 				<ResourceDictionary Source="ms-appx:///UserControls/StoreCarousel2/StoreCarousel2.xaml" />
 				<ResourceDictionary Source="ms-appx:///Views/Settings/Games/HeaderCarousel.xaml" />
 				<ResourceDictionary Source="ms-appx:///Views/Settings/Games/HeaderCarouselItem.xaml" />

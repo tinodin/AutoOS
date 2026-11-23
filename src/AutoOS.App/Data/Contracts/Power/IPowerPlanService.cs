@@ -20,11 +20,11 @@ public interface IPowerPlanService
 
 	Guid DuplicatePowerPlan(Guid scheme, string name, string description);
 
-	void ExportPowerPlan(Guid scheme, string path);
+	int ExportPowerPlan(Guid scheme, string path);
 
 	void DeletePowerPlan(Guid scheme);
 
-	Guid ImportPowerPlan(string filePath);
+	(Guid Scheme, uint Result) ImportPowerPlan(string filePath);
 
 	Task RestoreDefaultPowerPlansAsync();
 

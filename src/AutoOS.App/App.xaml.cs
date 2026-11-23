@@ -40,6 +40,7 @@ public partial class App : Application
 		.AddSingleton<IThemeService>(serviceProvider => serviceProvider.GetRequiredService<ThemeService>())
 		.AddSingleton<IFilePickerService, FilePickerService>()
 		.AddSingleton<IDialogService, DialogService>()
+		.AddSingleton<IStatusCenterService, StatusCenterService>()
 		.AddTransient<INetworkSettingsService, NetworkSettingsService>()
 		.AddTransient<NetworkPageViewModel>()
 		.AddTransient<IPowerPlanService, PowerPlanService>()

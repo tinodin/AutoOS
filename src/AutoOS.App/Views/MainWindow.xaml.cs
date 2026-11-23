@@ -1,4 +1,5 @@
 using AutoOS.App.Assets.NavViewMenu;
+using AutoOS.App.Services;
 using Microsoft.UI.Input;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -20,6 +21,7 @@ public sealed partial class MainWindow : Window
 	{
 		Instance = this;
 		InitializeComponent();
+		Ioc.Default.GetRequiredService<IStatusCenterService>().Attach(AppStatusCenterButton);
 		ExtendsContentIntoTitleBar = true;
 		SetTitleBar(AppTitleBar);
 		AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;

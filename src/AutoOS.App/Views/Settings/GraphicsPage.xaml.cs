@@ -378,7 +378,7 @@ public sealed partial class GraphicsPage : Page
 			await DeviceHelper.RestartDevicesAsync(changedDevices);
 		}
 
-		progressButton.CheckedContent = null;
+		progressButton.ClearValue(ProgressButton.CheckedContentProperty);
 	}
 
 	private async void ECC_Toggled(object sender, RoutedEventArgs e)

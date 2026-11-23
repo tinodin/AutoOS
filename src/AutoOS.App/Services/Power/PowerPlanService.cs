@@ -128,11 +128,11 @@ public sealed class PowerPlanService : IPowerPlanService
 
 	public Guid DuplicatePowerPlan(Guid scheme, string name, string description) => PowerHelper.DuplicateScheme(scheme, name, description);
 
-	public void ExportPowerPlan(Guid scheme, string path) => PowerHelper.ExportPowerScheme(scheme, path);
+	public int ExportPowerPlan(Guid scheme, string path) => PowerHelper.ExportPowerScheme(scheme, path);
 
 	public void DeletePowerPlan(Guid scheme) => PowerHelper.DeleteScheme(scheme);
 
-	public Guid ImportPowerPlan(string filePath) => PowerHelper.ImportPowerScheme(filePath);
+	public (Guid Scheme, uint Result) ImportPowerPlan(string filePath) => PowerHelper.ImportPowerScheme(filePath);
 
 	public async Task RestoreDefaultPowerPlansAsync()
 	{

@@ -29,6 +29,9 @@
 					PointerPressed="AppIcon_PointerPressed"
 					Source="/Assets/AppIcon.png" />
 			</TitleBar.LeftHeader>
+			<TitleBar.RightHeader>
+				<dev:StatusCenterButton x:Name="AppStatusCenterButton" />
+			</TitleBar.RightHeader>
 			<AutoSuggestBox
 				x:Name="NavSearchBox"
 				MaxWidth="480"
