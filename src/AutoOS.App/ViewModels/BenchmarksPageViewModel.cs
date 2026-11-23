@@ -4,10 +4,10 @@ using AutoOS.App.Data.Enums.Benchmarks;
 using AutoOS.App.Data.Models.Benchmarks;
 using AutoOS.App.Services;
 using AutoOS.App.Services.Benchmarks;
-using AutoOS.Core.Helpers.Picker;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.Windows.Storage.Pickers;
 using nietras.SeparatedValues;
 using Windows.Storage;
 using Windows.System;
@@ -313,19 +313,18 @@ public sealed partial class BenchmarksPageViewModel(IDialogService dialogService
 	[RelayCommand(CanExecute = nameof(IsAddEnabled))]
 	private async Task AddAsync()
 	{
-		var picker = new FilePicker(App.MainWindow)
+		var picker = new FileOpenPicker(App.MainWindow.Content.XamlRoot.ContentIslandEnvironment.AppWindowId)
 		{
-			ShowAllFilesOption = false,
-			InitialDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"),
+			SuggestedFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"),
 			Title = "Add Recordings"
 		};
-		picker.FileTypeChoices.Add("PresentMon recordings", ["*.csv"]);
-		List<StorageFile> files = await picker.PickMultipleFilesAsync();
-		if (files.Count == 0)
+		picker.FileTypeFilter.Add(".csv");
+		IReadOnlyList<PickFileResult> results = await picker.PickMultipleFilesAsync();
+		if (results.Count == 0)
 			return;
 
-		foreach (StorageFile file in files)
-			File.Copy(file.Path, Path.Combine(RecordingAnalysisService.RecordingsDirectory, file.Name), true);
+		foreach (PickFileResult file in results.Where(result => result is not null))
+			File.Copy(file.Path, Path.Combine(RecordingAnalysisService.RecordingsDirectory, Path.GetFileName(file.Path)), true);
 
 		await LoadRecordingsAsync();
 	}

@@ -1,9 +1,8 @@
 using AutoOS.App.Views.Installer.Actions;
-using AutoOS.Core.Helpers.Picker;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.Windows.Storage.Pickers;
 using Windows.Storage;
-using Windows.Storage.FileProperties;
 
 namespace AutoOS.App.Views.Settings;
 
@@ -39,17 +38,14 @@ public sealed partial class DisplaysPage : Page
 		await Task.Delay(300);
 
 		// launch file picker
-		var picker = new FilePicker(App.MainWindow)
-		{
-			ShowAllFilesOption = false
-		};
-		picker.FileTypeChoices.Add("CRU profile", ["*.exe"]);
-		StorageFile? file = await picker.PickSingleFileAsync();
+		var picker = new FileOpenPicker(XamlRoot.ContentIslandEnvironment.AppWindowId);
+		picker.FileTypeFilter.Add(".exe");
+		PickFileResult? result = await picker.PickSingleFileAsync();
+		string? filePath = result?.Path;
 
-		if (file != null)
+		if (!string.IsNullOrEmpty(filePath))
 		{
-			BasicProperties properties = await file.GetBasicPropertiesAsync();
-			ulong fileSizeInBytes = properties.Size;
+			ulong fileSizeInBytes = (ulong)new FileInfo(filePath).Length;
 			const ulong expectedSize = 53 * 1024;
 
 			if (fileSizeInBytes == expectedSize)
@@ -84,7 +80,7 @@ public sealed partial class DisplaysPage : Page
 				await Task.Delay(300);
 
 				// import profile
-				await Process.Start(new ProcessStartInfo(file.Path) { Arguments = "/i" })!.WaitForExitAsync();
+				await Process.Start(new ProcessStartInfo(filePath) { Arguments = "/i" })!.WaitForExitAsync();
 
 				// restart driver
 				await Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Applications", "CRU", "restart64.exe")) { Arguments = "/q" })!.WaitForExitAsync();

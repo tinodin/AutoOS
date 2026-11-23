@@ -12,9 +12,9 @@ public sealed class StatusCenterService : IStatusCenterService
 		_statusCenterButton = statusCenterButton;
 	}
 
-	public StatusCenterItem Begin(string header, string glyph)
+	public StatusCenterItem Begin(string header, string glyph, bool canProvideProgress = false, long itemsCount = 0, Func<StatusCenterItem, StatusCenterItemProgressModel, (string Header, string SubHeader, string Message)>? update = null)
 	{
-		StatusCenterItem card = _statusCenterButton!.AddCard(ReturnResult.InProgress, header, header, string.Empty, StatusCenterItemIconKind.InstallFont, canProvideProgress: false);
+		StatusCenterItem card = _statusCenterButton!.AddCard(ReturnResult.InProgress, header, header, string.Empty, StatusCenterItemIconKind.InstallFont, canProvideProgress, itemsCount, update: update);
 		card.IconSource = new FontIconSource { Glyph = glyph, FontFamily = new FontFamily("Segoe Fluent Icons"), FontSize = 16 };
 		card.IsCancelable = false;
 		card.IsPausable = false;

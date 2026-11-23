@@ -13,10 +13,11 @@ using AutoOS.Core.Data.Models.Bios;
 using AutoOS.Core.Helpers.Bios;
 using AutoOS.Core.Helpers.Shutdown;
 using Microsoft.UI.Xaml;
+using Microsoft.Windows.Storage.Pickers;
 
 namespace AutoOS.App.ViewModels;
 
-public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosService, IBiosBackupService backupService, IFilePickerService filePickerService, IDialogService dialogService, IStatusCenterService statusCenterService) : ObservableObject
+public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosService, IBiosBackupService backupService, IDialogService dialogService, IStatusCenterService statusCenterService) : ObservableObject
 {
 	private readonly Stack<Dictionary<Setting, string?>> _undoStates = [];
 
@@ -389,7 +390,14 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 	[RelayCommand(CanExecute = nameof(CanRestore))]
 	private async Task RestoreAsync()
 	{
-		string? file = await filePickerService.PickSingleFileAsync("HII Backup", ["*.json.zip", "*.json"], backupService.BackupDirectory);
+		var picker = new FileOpenPicker(App.MainWindow.Content.XamlRoot.ContentIslandEnvironment.AppWindowId)
+		{
+			SuggestedFolder = backupService.BackupDirectory
+		};
+		picker.FileTypeFilter.Add(".json");
+		picker.FileTypeFilter.Add(".zip");
+		PickFileResult? pickResult = await picker.PickSingleFileAsync();
+		string? file = pickResult?.Path;
 		if (string.IsNullOrEmpty(file))
 			return;
 
@@ -397,39 +405,45 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		string fileName = Path.GetFileName(file) ?? file;
 		StatusCenterItem card = statusCenterService.Begin($"Restoring \"{fileName}\"", "\uE777");
 
+		BackupFile? backup = await BiosBackupService.ReadBackupFileAsync(file);
+		if (backup == null || backup.Settings is not { Count: > 0 })
+		{
+			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to restore \"{fileName}\"", $"\"{file}\" is not a valid BIOS backup");
+			PageState = PageMode.Loaded;
+			return;
+		}
+
 		(PageMode result, IReadOnlyList<Setting> unapplied) = await biosService.RestoreFromBackupAsync(file);
 
 		DriverLoadError = biosService.LastDriverError;
 
-		int appliedCount = 0;
-		BackupFile? backup = await BiosBackupService.ReadBackupFileAsync(file);
-		if (backup != null)
+		Dictionary<(string VarStoreName, string VarStoreGuid, uint Offset), string> backupMap = [with(backup.Settings.Count)];
+		foreach (BackupSetting s in backup.Settings)
 		{
-			Dictionary<(string VarStoreName, string VarStoreGuid, uint Offset), string> backupMap = [with(backup.Settings.Count)];
-			foreach (BackupSetting s in backup.Settings)
+			if (!HiiHelper.TryParseHexUInt32(s.Offset, out uint offset))
+				continue;
+
+			backupMap[(s.VarStoreName, s.VarStoreGuid, offset)] = s.Value;
+		}
+
+		int appliedCount = 0;
+		int matchedCount = 0;
+		foreach (Setting setting in _settings)
+		{
+			if (unapplied.Contains(setting))
+				continue;
+
+			string guidStr = HiiHelper.GetGuidString(setting.VarStoreGuid);
+			if (backupMap.TryGetValue((setting.VarStoreName, guidStr, setting.Offset), out string? value))
 			{
-				if (!HiiHelper.TryParseHexUInt32(s.Offset, out uint offset))
-					continue;
+				matchedCount++;
+				string canonical = SettingState.GetCanonicalValue(setting, value);
+				if (!string.Equals(_settingStates[setting].Value, canonical, StringComparison.Ordinal))
+					appliedCount++;
 
-				backupMap[(s.VarStoreName, s.VarStoreGuid, offset)] = s.Value;
-			}
-
-			foreach (Setting setting in _settings)
-			{
-				if (unapplied.Contains(setting))
-					continue;
-
-				string guidStr = HiiHelper.GetGuidString(setting.VarStoreGuid);
-				if (backupMap.TryGetValue((setting.VarStoreName, guidStr, setting.Offset), out string? value))
-				{
-					string canonical = SettingState.GetCanonicalValue(setting, value);
-					if (!string.Equals(_settingStates[setting].Value, canonical, StringComparison.Ordinal))
-						appliedCount++;
-
-					setting.Value = value;
-					_settingStates[setting].Value = canonical;
-					_settingStates[setting].Commit();
-				}
+				setting.Value = value;
+				_settingStates[setting].Value = canonical;
+				_settingStates[setting].Commit();
 			}
 		}
 
@@ -446,14 +460,17 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		int failedCount = unapplied.Count;
 		string unappliedNames = string.Join(", ", unapplied.Select(static setting => setting.Name));
 		string? failedSubHeader = unappliedNames.Length > 0 ? $"Failed settings: {unappliedNames}" : null;
-		string restoredText = appliedCount > 0 ? $"{appliedCount} setting{(appliedCount == 1 ? "" : "s")}" : "BIOS settings";
-		if (failedCount == 0)
-			statusCenterService.Complete(card, ReturnResult.Success, $"Restored {restoredText} from \"{fileName}\"", $"Restored {restoredText} from \"{file}\"");
+		string restoredText = $"{appliedCount} setting{(appliedCount == 1 ? "" : "s")}";
+		string restoredSubHeader = $"Restored {restoredText} from \"{file}\"";
+		if (failedCount == 0 && matchedCount == 0)
+			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to restore \"{fileName}\"", $"\"{file}\" does not contain settings for this system's BIOS");
+		else if (failedCount == 0)
+			statusCenterService.Complete(card, ReturnResult.Success, $"Restored {restoredText} from \"{fileName}\"", restoredSubHeader);
 		else if (appliedCount == 0)
 			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to restore \"{fileName}\"", failedSubHeader);
 		else
 		{
-			statusCenterService.Complete(card, ReturnResult.Success, $"Restored {appliedCount} setting{(appliedCount == 1 ? "" : "s")} from \"{fileName}\"", $"Restored {appliedCount} setting{(appliedCount == 1 ? "" : "s")} from \"{file}\"");
+			statusCenterService.Complete(card, ReturnResult.Success, $"Restored {restoredText} from \"{fileName}\"", restoredSubHeader);
 			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to restore {failedCount} setting{(failedCount == 1 ? "" : "s")} from \"{fileName}\"", failedSubHeader);
 		}
 

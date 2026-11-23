@@ -1,9 +1,8 @@
-using AutoOS.Core.Helpers.Picker;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+using Microsoft.Windows.Storage.Pickers;
 using Windows.Storage;
-using Windows.Storage.FileProperties;
 
 namespace AutoOS.App.Views.Installer;
 
@@ -66,17 +65,14 @@ public sealed partial class DisplaysPage : Page
 
 		await Task.Delay(300);
 
-		var picker = new FilePicker(App.MainWindow)
-		{
-			ShowAllFilesOption = false
-		};
-		picker.FileTypeChoices.Add("CRU profile", ["*.exe"]);
-		StorageFile? file = await picker.PickSingleFileAsync();
+		var picker = new FileOpenPicker(XamlRoot.ContentIslandEnvironment.AppWindowId);
+		picker.FileTypeFilter.Add(".exe");
+		PickFileResult? result = await picker.PickSingleFileAsync();
+		string? filePath = result?.Path;
 
-		if (file != null)
+		if (!string.IsNullOrEmpty(filePath))
 		{
-			BasicProperties properties = await file.GetBasicPropertiesAsync();
-			ulong fileSizeInBytes = properties.Size;
+			ulong fileSizeInBytes = (ulong)new FileInfo(filePath).Length;
 			const ulong expectedSize = 53 * 1024;
 
 			if (fileSizeInBytes == expectedSize)
@@ -84,11 +80,11 @@ public sealed partial class DisplaysPage : Page
 				senderButton.IsEnabled = true;
 				CruInfo.Children.Clear();
 
-				localSettings.Values["CruProfile"] = file.Path;
+				localSettings.Values["CruProfile"] = filePath;
 
 				var infoBar = new InfoBar
 				{
-					Title = file.Path,
+					Title = filePath,
 					IsClosable = true,
 					IsOpen = true,
 					Severity = InfoBarSeverity.Success,

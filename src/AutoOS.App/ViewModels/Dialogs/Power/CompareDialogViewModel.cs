@@ -4,10 +4,12 @@ namespace AutoOS.App.ViewModels.Dialogs.Power;
 
 public sealed partial class CompareDialogViewModel : BaseDialogViewModel
 {
-	public CompareDialogViewModel(IEnumerable<Plan> plans, Plan? selectedPlan1 = null, Plan? selectedPlan2 = null)
+	public CompareDialogViewModel(IEnumerable<Plan> plans, Plan? activePlan = null, Plan? selectedPlan1 = null, Plan? selectedPlan2 = null)
 	{
 		Plans = [.. plans];
-		SelectedPlan1 = Plans.FirstOrDefault(plan => plan.Guid == selectedPlan1?.Guid) ?? Plans.FirstOrDefault();
+		SelectedPlan1 = Plans.FirstOrDefault(plan => plan.Guid == activePlan?.Guid)
+			?? Plans.FirstOrDefault(plan => plan.Guid == selectedPlan1?.Guid)
+			?? Plans.FirstOrDefault();
 		SelectedPlan2 = Plans.FirstOrDefault(plan => plan.Guid == selectedPlan2?.Guid) ?? Plans.FirstOrDefault(plan => plan.Guid != SelectedPlan1?.Guid) ?? Plans.FirstOrDefault();
 		Title = "Compare";
 		IsPrimaryButtonEnabled = PlansDiffer;

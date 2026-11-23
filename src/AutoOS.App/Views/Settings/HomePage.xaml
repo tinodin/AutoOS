@@ -11,8 +11,8 @@
 	<dev:MainLandingPage
 		HeaderImage="{ThemeResource HeaderCover}"
 		HeaderImageHeight="400"
-		HeaderSubtitleText="Windows App SDK 2.6"
-		HeaderText="AutoOS Settings"
+		HeaderSubtitleText="Windows App SDK 2.7"
+		HeaderText="AutoOS"
 		JsonNavigationService="{x:Bind local:App.Current.NavService}">
 		<dev:MainLandingPage.HeaderContent>
 			<StackPanel Orientation="Horizontal" Spacing="12">

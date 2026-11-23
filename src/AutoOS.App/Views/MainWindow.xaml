@@ -13,35 +13,27 @@
 			<RowDefinition Height="Auto" />
 			<RowDefinition />
 		</Grid.RowDefinitions>
-		<Border
-			Width="0"
-			Height="0"
-			Background="Transparent">
-			<Border.KeyboardAccelerators>
-				<KeyboardAccelerator
-					Key="S"
-					Invoked="ToggleStatusCenter"
-					Modifiers="Control,Menu" />
-			</Border.KeyboardAccelerators>
-		</Border>
 		<TitleBar
 			x:Name="AppTitleBar"
+			Title="AutoOS"
 			IsBackButtonVisible="True"
 			IsPaneToggleButtonVisible="True"
 			Subtitle="{x:Bind dev:ProcessInfoHelper.VersionWithPrefix}">
 			<TitleBar.Resources>
 				<HorizontalAlignment x:Key="TitleBarContentHorizontalAlignment">Stretch</HorizontalAlignment>
 			</TitleBar.Resources>
-			<TitleBar.LeftHeader>
-				<ImageIcon
-					Width="16"
-					Height="16"
-					Margin="4,0,8,0"
-					PointerPressed="AppIcon_PointerPressed"
-					Source="/Assets/AppIcon.png" />
-			</TitleBar.LeftHeader>
+			<TitleBar.IconSource>
+				<ImageIconSource ImageSource="ms-appx:///Assets/AppIcon.png" />
+			</TitleBar.IconSource>
 			<TitleBar.RightHeader>
-				<dev:StatusCenterButton x:Name="AppStatusCenterButton" ToolTipService.ToolTip="Status center (Ctrl+Alt+S)" />
+				<dev:StatusCenterButton x:Name="AppStatusCenterButton" ToolTipService.ToolTip="Status center (Ctrl+Alt+S)">
+					<dev:StatusCenterButton.KeyboardAccelerators>
+						<KeyboardAccelerator
+							Key="S"
+							Invoked="ToggleStatusCenter"
+							Modifiers="Control,Menu" />
+					</dev:StatusCenterButton.KeyboardAccelerators>
+				</dev:StatusCenterButton>
 			</TitleBar.RightHeader>
 			<AutoSuggestBox
 				x:Name="NavSearchBox"
@@ -73,7 +65,7 @@
 					<KeyboardAccelerator
 						Key="F"
 						Invoked="NavSearchBox_AcceleratorInvoked"
-						Modifiers="Control" />
+						Modifiers="Control,Menu" />
 				</AutoSuggestBox.KeyboardAccelerators>
 			</AutoSuggestBox>
 		</TitleBar>

@@ -1,10 +1,10 @@
 using System.Text.Json.Nodes;
 using AutoOS.Core.Data.Models.GPU;
 using AutoOS.Core.Helpers.GPU;
-using AutoOS.Core.Helpers.Picker;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+using Microsoft.Windows.Storage.Pickers;
 using Windows.Storage;
 
 namespace AutoOS.App.Views.Installer;
@@ -158,27 +158,25 @@ public sealed partial class GraphicsPage : Page
 
 		await Task.Delay(300);
 
-		var picker = new FilePicker(App.MainWindow)
-		{
-			ShowAllFilesOption = false
-		};
-		picker.FileTypeChoices.Add("MSI Afterburner profile", ["*.cfg"]);
-		StorageFile? file = await picker.PickSingleFileAsync();
+		var picker = new FileOpenPicker(XamlRoot.ContentIslandEnvironment.AppWindowId);
+		picker.FileTypeFilter.Add(".cfg");
+		PickFileResult? result = await picker.PickSingleFileAsync();
+		string? filePath = result?.Path;
 
-		if (file != null)
+		if (!string.IsNullOrEmpty(filePath))
 		{
-			string fileContent = await FileIO.ReadTextAsync(file);
+			string fileContent = await File.ReadAllTextAsync(filePath);
 
 			if (fileContent.Contains("[Startup]"))
 			{
 				senderButton!.IsEnabled = true;
 				MsiAfterburnerInfo.Children.Clear();
 
-				localSettings.Values["MsiProfile"] = file.Path;
+				localSettings.Values["MsiProfile"] = filePath;
 
 				var infoBar = new InfoBar
 				{
-					Title = file.Path,
+					Title = filePath,
 					IsClosable = true,
 					IsOpen = true,
 					Severity = InfoBarSeverity.Success,

@@ -42,7 +42,6 @@ public sealed partial class MainWindow : Window
 				.ConfigureJsonFile("Assets/NavViewMenu/Settings.json")
 				.ConfigureTitleBar(AppTitleBar)
 				.ConfigureBreadcrumbBar(BreadCrumbNav, BreadcrumbPageMappingsSettings.PageDictionary);
-			AppTitleBar.Title = "AutoOS Settings";
 
 			NavView.IsSettingsVisible = true;
 		}
@@ -54,7 +53,6 @@ public sealed partial class MainWindow : Window
 				.ConfigureJsonFile("Assets/NavViewMenu/Installer.json")
 				.ConfigureTitleBar(AppTitleBar)
 				.ConfigureBreadcrumbBar(BreadCrumbNav, BreadcrumbPageMappingsInstaller.PageDictionary);
-			AppTitleBar.Title = "AutoOS Installer";
 
 			presenter.Maximize();
 		}

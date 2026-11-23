@@ -10,10 +10,11 @@ using AutoOS.App.Services;
 using AutoOS.App.ViewModels.Dialogs.Power;
 using AutoOS.Core.Data.Models.Power;
 using Microsoft.UI.Xaml;
+using Microsoft.Windows.Storage.Pickers;
 
 namespace AutoOS.App.ViewModels;
 
-public sealed partial class PowerPageViewModel(IPowerPlanService powerService, IDialogService dialogService, IFilePickerService filePickerService, IStatusCenterService statusCenterService) : ObservableObject
+public sealed partial class PowerPageViewModel(IPowerPlanService powerService, IDialogService dialogService, IStatusCenterService statusCenterService) : ObservableObject
 {
 	private readonly Stack<Dictionary<Setting, Value>> _undoStates = [];
 	private readonly Stack<Dictionary<Setting, Value>> _redoStates = [];
@@ -240,7 +241,13 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		if (ActivePlan is not Plan plan)
 			return;
 
-		string? filePath = await filePickerService.PickSaveFileAsync("Power Scheme Files", ["*.pow"], plan.Name);
+		var picker = new FileSavePicker(App.MainWindow.Content.XamlRoot.ContentIslandEnvironment.AppWindowId)
+		{
+			SuggestedFileName = plan.Name
+		};
+		picker.FileTypeChoices["Power Scheme Files"] = [".pow"];
+		PickFileResult? result = await picker.PickSaveFileAsync();
+		string? filePath = result?.Path;
 		if (filePath == null)
 			return;
 
@@ -293,37 +300,113 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 	[RelayCommand(CanExecute = nameof(CanRestore))]
 	private async Task ImportAsync()
 	{
-		string? filePath = await filePickerService.PickSingleFileAsync("Power Scheme Files", ["*.pow"], Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"));
-		if (filePath == null)
+		var picker = new FileOpenPicker(App.MainWindow.Content.XamlRoot.ContentIslandEnvironment.AppWindowId)
+		{
+			SuggestedFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads")
+		};
+		picker.FileTypeFilter.Add(".pow");
+		IReadOnlyList<PickFileResult> results = await picker.PickMultipleFilesAsync();
+		List<string> filePaths = [.. results.Where(result => result is not null).Select(result => result.Path)];
+		if (filePaths.Count == 0)
 			return;
 
-		StatusCenterItem card = statusCenterService.Begin($"Importing \"{Path.GetFileName(filePath)}\"", "\uE8B5");
-		(Guid Scheme, uint Result) importResult;
-		try
+		string beginText = filePaths.Count == 1 ? $"Importing \"{Path.GetFileName(filePaths[0])}\"" : $"Importing {filePaths.Count} power plans";
+		bool trackProgress = filePaths.Count > 1;
+		StatusCenterItem card = statusCenterService.Begin(beginText, "\uE8B5", trackProgress, filePaths.Count,
+			update: trackProgress
+				? (item, progress) => (beginText, string.Empty, $"{progress.ProcessedItemsCount}/{filePaths.Count} items processed")
+				: null);
+
+		var resumeSignal = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		if (trackProgress)
 		{
-			importResult = await Task.Run(() => powerService.ImportPowerPlan(filePath));
+			card.IsPausable = true;
+			card.Progress.EnumerationCompleted = true;
+			card.OnPauseAsync = () =>
+			{
+				resumeSignal = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+				return Task.CompletedTask;
+			};
+			card.OnResumeAsync = () =>
+			{
+				resumeSignal.TrySetResult();
+				return Task.CompletedTask;
+			};
+			card.Progress.Report(0);
 		}
-		catch (Exception)
+
+		var imported = new List<(Guid Guid, string Path)>();
+		var failedPaths = new List<string>();
+		foreach (string filePath in filePaths)
 		{
-			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to import: \"{Path.GetFileName(filePath)}\"", $"Failed to import \"{Path.GetFileName(filePath)}\" from \"{filePath}\"");
+			while (card.IsPaused)
+				await resumeSignal.Task;
+
+			if (trackProgress)
+				card.Progress.FileName = Path.GetFileName(filePath);
+
+			(Guid Scheme, uint Result) importResult;
+			try
+			{
+				importResult = await Task.Run(() => powerService.ImportPowerPlan(filePath));
+			}
+			catch (Exception)
+			{
+				importResult = (Guid.Empty, 0);
+			}
+
+			if (importResult.Scheme == Guid.Empty)
+			{
+				failedPaths.Add(filePath);
+			}
+			else
+				imported.Add((importResult.Scheme, filePath));
+
+			if (trackProgress)
+			{
+				card.Progress.AddProcessedItemsCount(1);
+				card.Progress.Report(card.Progress.ProcessedItemsCount * 100.0 / filePaths.Count);
+				await Task.Delay(50);
+			}
+		}
+
+		List<(Plan Plan, string Path)> importedPlans = [];
+		if (imported.Count > 0)
+		{
+			IReadOnlyList<Plan> plans = await Task.Run(powerService.GetPowerPlans);
+			SetPlans(plans, imported[^1].Guid);
+			foreach ((Guid guid, string path) in imported)
+			{
+				Plan? plan = plans.FirstOrDefault(item => item.Guid == guid);
+				if (plan != null)
+					importedPlans.Add((plan, path));
+			}
+		}
+
+		string failedSubHeader = string.Join("; ", failedPaths.Select(path => $"\"{path}\""));
+		if (importedPlans.Count == 0)
+		{
+			string failedHeader = filePaths.Count == 1 ? $"Failed to import: \"{Path.GetFileName(filePaths[0])}\"" : $"Failed to import {filePaths.Count} power plans";
+			string failedDetail = filePaths.Count == 1 ? $"Failed to import \"{Path.GetFileName(failedPaths[0])}\" from \"{failedPaths[0]}\"" : $"Failed to import: {failedSubHeader}";
+			statusCenterService.Complete(card, ReturnResult.Failed, failedHeader, failedDetail);
 			return;
 		}
 
-		if (importResult.Scheme == Guid.Empty)
-		{
-			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to import: \"{Path.GetFileName(filePath)}\"", $"Failed to import \"{Path.GetFileName(filePath)}\" from \"{filePath}\"");
-			return;
-		}
+		string importedText = importedPlans.Count == 1 ? $"Imported \"{importedPlans[0].Plan.Name}\"" : $"Imported {importedPlans.Count} power plans";
+		string importedSubHeader = string.Join("; ", importedPlans.Select(item => $"\"{item.Plan.Name}\" from \"{item.Path}\""));
+		statusCenterService.Complete(card, ReturnResult.Success, importedText, importedSubHeader);
 
-		SetPlans(await Task.Run(powerService.GetPowerPlans), importResult.Scheme);
-		Plan imported = Plans.First(item => item.Guid == importResult.Scheme);
-		statusCenterService.Complete(card, ReturnResult.Success, $"Imported \"{imported.Name}\"", $"Imported \"{imported.Name}\" from \"{filePath}\"");
+		if (failedPaths.Count > 0)
+		{
+			string failedText = failedPaths.Count == 1 ? "1 power plan" : $"{failedPaths.Count} power plans";
+			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to import {failedText}", $"Failed to import: {failedSubHeader}");
+		}
 	}
 
 	[RelayCommand]
 	private async Task ChangeComparePlansAsync()
 	{
-		var viewModel = new CompareDialogViewModel(Plans, ComparePlan1, ComparePlan2);
+		var viewModel = new CompareDialogViewModel(Plans, ActivePlan, ComparePlan1, ComparePlan2);
 		if (await dialogService.ShowDialogAsync(viewModel) != DialogResult.Primary || viewModel.SelectedPlan1 is not Plan plan1 || viewModel.SelectedPlan2 is not Plan plan2)
 			return;
 
@@ -535,7 +618,7 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 
 	private async Task ShowCompareDialogAsync()
 	{
-		var viewModel = new CompareDialogViewModel(Plans);
+		var viewModel = new CompareDialogViewModel(Plans, ActivePlan);
 		if (await dialogService.ShowDialogAsync(viewModel) != DialogResult.Primary || viewModel.SelectedPlan1 is not Plan plan1 || viewModel.SelectedPlan2 is not Plan plan2)
 			return;
 

@@ -1,13 +1,13 @@
 using System.Globalization;
 using System.Runtime.InteropServices.WindowsRuntime;
 using AutoOS.App.ViewModels;
-using AutoOS.Core.Helpers.Picker;
 using CommunityToolkit.WinUI.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Navigation;
+using Microsoft.Windows.Storage.Pickers;
 using Syncfusion.UI.Xaml.Charts;
 using Syncfusion.UI.Xaml.DataGrid;
 using Syncfusion.UI.Xaml.Grids;
@@ -470,16 +470,15 @@ public sealed partial class BenchmarksPage : Page
 
 	private static async Task SaveChartAsync(FrameworkElement chart, string suggestedFileName, Guid encoderId, string extension, bool flattenBackground)
 	{
-		var picker = new SavePicker(App.MainWindow)
+		var picker = new FileSavePicker(chart.XamlRoot.ContentIslandEnvironment.AppWindowId)
 		{
-			DefaultFileExtension = $"{extension}",
-			ShowAllFilesOption = false,
 			SuggestedFileName = suggestedFileName,
-			InitialDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"),
+			SuggestedFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads")
 		};
-		picker.FileTypeChoices.Add($"{extension} image", [$"*.{extension}"]);
+		picker.FileTypeChoices[$"{extension} image"] = [$".{extension}"];
 
-		string? filePath = picker.PickSaveFile();
+		PickFileResult? result = await picker.PickSaveFileAsync();
+		string? filePath = result?.Path;
 		if (string.IsNullOrWhiteSpace(filePath))
 			return;
 		if (!filePath.EndsWith($".{extension}", StringComparison.OrdinalIgnoreCase))

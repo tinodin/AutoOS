@@ -6,12 +6,12 @@ using AutoOS.Core.Data.Models.Device;
 using AutoOS.Core.Data.Models.GPU;
 using AutoOS.Core.Helpers.Device;
 using AutoOS.Core.Helpers.GPU;
-using AutoOS.Core.Helpers.Picker;
 using AutoOS.Core.Helpers.Registry;
 using AutoOS.Core.Helpers.Scheduling;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Win32;
+using Microsoft.Windows.Storage.Pickers;
 using Windows.Storage;
 
 namespace AutoOS.App.Views.Settings;
@@ -775,20 +775,18 @@ public sealed partial class GraphicsPage : Page
 		await Task.Delay(300);
 
 		// launch file picker
-		var picker = new FilePicker(App.MainWindow)
-		{
-			ShowAllFilesOption = false
-		};
-		picker.FileTypeChoices.Add("MSI Afterburner profile", ["*.cfg"]);
-		StorageFile? file = await picker.PickSingleFileAsync();
+		var picker = new FileOpenPicker(XamlRoot.ContentIslandEnvironment.AppWindowId);
+		picker.FileTypeFilter.Add(".cfg");
+		PickFileResult? result = await picker.PickSingleFileAsync();
+		string? filePath = result?.Path;
 
-		if (file?.Path != null)
+		if (!string.IsNullOrEmpty(filePath))
 		{
-			string fileContent = await FileIO.ReadTextAsync(file);
+			string fileContent = await File.ReadAllTextAsync(filePath);
 
 			if (fileContent.Contains("[Startup]"))
 			{
-				if (file.Path.Contains(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "MSI Afterburner", "Profiles"), StringComparison.OrdinalIgnoreCase))
+				if (filePath.Contains(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "MSI Afterburner", "Profiles"), StringComparison.OrdinalIgnoreCase))
 				{
 					// re-enable the button
 					senderButton.IsEnabled = true;
@@ -840,7 +838,7 @@ public sealed partial class GraphicsPage : Page
 				.ForEach(File.Delete);
 
 				// import profile
-				File.Copy(file.Path, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "MSI Afterburner", "Profiles", file.Name), true);
+				File.Copy(filePath, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "MSI Afterburner", "Profiles", Path.GetFileName(filePath)), true);
 
 				// apply profile
 				await Process.Start(new ProcessStartInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "MSI Afterburner", "MSIAfterburner.exe")) { Arguments = "/Profile1 /q" })!.WaitForExitAsync();

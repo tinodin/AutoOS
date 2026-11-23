@@ -99,24 +99,29 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 
 	internal static async Task<BackupFile?> ReadBackupFileAsync(string filePath)
 	{
-		await using FileStream fs = File.OpenRead(filePath);
-		if (!filePath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
-			return await JsonSerializer.DeserializeAsync(fs, BackupJsonContextRelaxed.BackupFile);
+		try
+		{
+			await using FileStream fs = File.OpenRead(filePath);
+			if (!filePath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+				return await JsonSerializer.DeserializeAsync(fs, BackupJsonContextRelaxed.BackupFile);
 
-		using ZipArchive archive = new(fs, ZipArchiveMode.Read);
-		ZipArchiveEntry? entry = archive.Entries.FirstOrDefault(static e => e.Name.EndsWith(".json", StringComparison.OrdinalIgnoreCase));
-		if (entry == null)
+			using ZipArchive archive = new(fs, ZipArchiveMode.Read);
+			ZipArchiveEntry? entry = archive.Entries.FirstOrDefault(static e => e.Name.EndsWith(".json", StringComparison.OrdinalIgnoreCase));
+			if (entry == null)
+				return null;
+
+			await using Stream entryStream = entry.Open();
+			return await JsonSerializer.DeserializeAsync(entryStream, BackupJsonContextRelaxed.BackupFile);
+		}
+		catch (Exception ex) when (ex is IOException or JsonException or InvalidDataException)
+		{
 			return null;
-
-		await using Stream entryStream = entry.Open();
-		return await JsonSerializer.DeserializeAsync(entryStream, BackupJsonContextRelaxed.BackupFile);
+		}
 	}
 
 	public async Task<(PageMode Result, IReadOnlyList<Setting> UnappliedSettings)> RestoreFromBackupAsync(string filePath)
 	{
 		BackupFile? backup = await ReadBackupFileAsync(filePath);
-		if (backup == null)
-			return (infoService.GetWriteProtectedState(), []);
 
 		LastDriverError = null;
 

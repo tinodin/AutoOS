@@ -1,7 +1,7 @@
-using AutoOS.Core.Helpers.Picker;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.Windows.Storage.Pickers;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.UI;
@@ -240,21 +240,22 @@ public sealed partial class SettingsPage : Page
 
 	private async void ExecutableLocation_Click(object sender, RoutedEventArgs e)
 	{
-		var picker = new FilePicker(App.MainWindow) { ShowAllFilesOption = false };
-		picker.FileTypeChoices.Add("Emulator executable", ["*.exe"]);
+		var picker = new FileOpenPicker(XamlRoot.ContentIslandEnvironment.AppWindowId);
+		picker.FileTypeFilter.Add(".exe");
 
-		StorageFile? file = await picker.PickSingleFileAsync();
-		if (file != null && SwitchEmulator.SelectedItem is SettingsGridViewItem selectedItem)
+		PickFileResult? result = await picker.PickSingleFileAsync();
+		string? filePath = result?.Path;
+		if (!string.IsNullOrEmpty(filePath) && SwitchEmulator.SelectedItem is SettingsGridViewItem selectedItem)
 		{
 			string emulator = selectedItem.Text;
-			string exeName = Path.GetFileName(file.Path).ToLowerInvariant();
+			string exeName = Path.GetFileName(filePath).ToLowerInvariant();
 
 			if ((emulator == "Eden" && exeName == "eden.exe") ||
 				(emulator == "Citron" && exeName == "citron.exe") ||
 				(emulator == "Ryujinx" && exeName == "ryujinx.exe"))
 			{
-				ExecutableLocationValue.Text = file.Path;
-				localSettings.Values[$"{emulator}Location"] = file.Path;
+				ExecutableLocationValue.Text = filePath;
+				localSettings.Values[$"{emulator}Location"] = filePath;
 			}
 			else
 			{
@@ -296,20 +297,21 @@ public sealed partial class SettingsPage : Page
 		if (SwitchEmulator.SelectedItem is not SettingsGridViewItem selectedItem || selectedItem.Text != "Ryujinx")
 			return;
 
-		var picker = new FolderPicker(App.MainWindow)
+		var picker = new FolderPicker(XamlRoot.ContentIslandEnvironment.AppWindowId)
 		{
-			InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)
+			SuggestedFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)
 		};
 
-		StorageFolder? folder = await picker.PickSingleFolderAsync();
-		if (folder == null)
+		PickFolderResult? result = await picker.PickSingleFolderAsync();
+		string? folderPath = result?.Path;
+		if (string.IsNullOrEmpty(folderPath))
 			return;
 
-		string folderName = Path.GetFileName(folder.Path).ToLowerInvariant();
+		string folderName = Path.GetFileName(folderPath).ToLowerInvariant();
 		if (folderName is "portable" or "ryujinx")
 		{
-			DataLocationValue.Text = folder.Path;
-			localSettings.Values["RyujinxDataLocation"] = folder.Path;
+			DataLocationValue.Text = folderPath;
+			localSettings.Values["RyujinxDataLocation"] = folderPath;
 		}
 		else
 		{
