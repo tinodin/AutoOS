@@ -55,6 +55,7 @@ public class ApplicationSelection
 	public bool NoRiskClient { get; set; }
 	public bool PrismLauncher { get; set; }
 	public bool PineconeMC { get; set; }
+	public bool OneClient { get; set; }
 	public bool Bloxstrap { get; set; }
 	public bool Froststrap { get; set; }
 	public bool RockstarGamesLauncher { get; set; }
@@ -226,6 +227,7 @@ public static class AppsStage
 		bool NoRiskClient = selection?.NoRiskClient ?? PreparingStage.NoRiskClient;
 		bool PrismLauncher = selection?.PrismLauncher ?? PreparingStage.PrismLauncher;
 		bool PineconeMC = selection?.PineconeMC ?? PreparingStage.PineconeMC;
+		bool OneClient = selection?.OneClient ?? PreparingStage.OneClient;
 		bool Bloxstrap = selection?.Bloxstrap ?? PreparingStage.Bloxstrap;
 		bool Froststrap = selection?.Froststrap ?? PreparingStage.Froststrap;
 		bool RockstarGamesLauncher = selection?.RockstarGamesLauncher ?? PreparingStage.RockstarGamesLauncher;
@@ -910,6 +912,13 @@ public static class AppsStage
 			// install pinecone mc
 			("Installing PineconeMC", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "PineconeMC-Windows-MSVC-Setup.exe"), Arguments = "/S" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => PineconeMC == true),
 			("Cleaning up PineconeMC files", async () => { string path = Path.Combine(Path.GetTempPath(), "PineconeMC-Windows-MSVC-Setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => PineconeMC == true),
+
+			// download oneclient
+			("Downloading OneClient", async () => await DownloadHelper.DownloadGitHubReleaseAssetAsync("Polyfrost/OneLauncher", Path.GetTempPath(), name => name.EndsWith("x64-setup.exe"), "OneClient-Setup.exe", reporter: reporter), () => OneClient == true),
+
+			// install oneclient
+			("Installing OneClient", async () => await Process.Start(new ProcessStartInfo { FileName = Path.Combine(Path.GetTempPath(), "OneClient-Setup.exe"), Arguments = "/S" , WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), () => OneClient == true),
+			("Cleaning up OneClient files", async () => { string path = Path.Combine(Path.GetTempPath(), "OneClient-Setup.exe"); foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => File.Delete(path)); }, () => OneClient == true),
 
 			// download bloxstrap
 			("Downloading Bloxstrap", async () => await DownloadHelper.DownloadGitHubReleaseAssetAsync("bloxstraplabs/bloxstrap", Path.GetTempPath(), name => name.StartsWith("Bloxstrap-v") && name.EndsWith(".exe"), "Bloxstrap.exe", reporter: reporter), () => Bloxstrap == true),

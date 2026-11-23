@@ -88,6 +88,7 @@ public static partial class PreparingStage
 	public static bool NoRiskClient;
 	public static bool PrismLauncher;
 	public static bool PineconeMC;
+	public static bool OneClient;
 	public static bool Bloxstrap;
 	public static bool Froststrap;
 	public static bool RockstarGamesLauncher;
@@ -497,6 +498,7 @@ public static partial class PreparingStage
 			NoRiskClient = (localSettings.Values["Launchers"]?.ToString()?.Contains("NoRisk Client") ?? false);
 			PrismLauncher = (localSettings.Values["Launchers"]?.ToString()?.Contains("Prism Launcher") ?? false);
 			PineconeMC = (localSettings.Values["Launchers"]?.ToString()?.Contains("PineconeMC") ?? false);
+			OneClient = (localSettings.Values["Launchers"]?.ToString()?.Contains("OneClient") ?? false);
 			Bloxstrap = (localSettings.Values["Launchers"]?.ToString()?.Contains("Bloxstrap") ?? false);
 			Froststrap = (localSettings.Values["Launchers"]?.ToString()?.Contains("Froststrap") ?? false);
 			RockstarGamesLauncher = (localSettings.Values["Launchers"]?.ToString()?.Contains("Rockstar Games Launcher") ?? false);

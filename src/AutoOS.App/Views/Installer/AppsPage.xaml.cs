@@ -79,6 +79,7 @@ public sealed partial class AppsPage : Page
 			new() { Text = "NoRisk Client", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/NoRiskClient.png" },
 			new() { Text = "Prism Launcher", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/PrismLauncher.png" },
 			new() { Text = "PineconeMC", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/PineconeMC.png" },
+			new() { Text = "OneClient", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/OneClient.png" },
 			new() { Text = "Bloxstrap", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/Bloxstrap.png" },
 			new() { Text = "Froststrap", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/Froststrap.png" },
 			new() { Text = "Rockstar Games Launcher", ImageSource = "ms-appx:///Assets/FluentIcons/Apps/Launchers/RockstarGamesLauncher.png" },
