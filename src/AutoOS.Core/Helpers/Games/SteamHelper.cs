@@ -597,7 +597,7 @@ public static partial class SteamHelper
 			}
 		}
 
-		foreach (GameModel nonSteamGame in await GetNonSteamGames())
+		foreach (GameModel nonSteamGame in await Task.Run(GetNonSteamGames))
 		{
 			games.Add(nonSteamGame);
 		}

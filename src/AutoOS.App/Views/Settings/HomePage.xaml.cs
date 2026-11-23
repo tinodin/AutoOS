@@ -161,9 +161,9 @@ public sealed partial class HomePage : Page
 
 		// 61161304
 		// Feature_ExpToc
-		if (ubr >= 10075 && (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\2953950350", "EnabledState", null) is not int v2953950350 || v2953950350 != 2))
+		if (ubr >= 10075 && (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\2953950350", "EnabledState", null) is not int v2953950350 || v2953950350 != 1))
 		{
-			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\2953950350", "EnabledState", 2, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\2953950350", "EnabledState", 1, RegistryValueKind.DWord);
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\2953950350", "EnabledStateOptions", 0, RegistryValueKind.DWord);
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\2953950350", "Variant", 0, RegistryValueKind.DWord);
 			Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\2953950350", "VariantPayload", 0, RegistryValueKind.DWord);
@@ -182,9 +182,9 @@ public sealed partial class HomePage : Page
 		}
 
 		// Enable modern run dialog
-		if (ubr >= 10075 && (Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\TaskbarDeveloperSettings", "Run", null) is not int run || run != 1))
+		if (ubr >= 10075 && (Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\TaskbarDeveloperSettings", "Run", null) is not int run || run != 0))
 		{
-			Registry.SetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\TaskbarDeveloperSettings", "Run", 1, RegistryValueKind.DWord);
+			Registry.SetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\TaskbarDeveloperSettings", "Run", 0, RegistryValueKind.DWord);
 		}
 
 		Version currentVersion = new(ProcessInfoHelper.Version);
