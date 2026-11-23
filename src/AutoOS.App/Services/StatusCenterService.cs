@@ -21,9 +21,9 @@ public sealed class StatusCenterService : IStatusCenterService
 		return card;
 	}
 
-	public void Complete(StatusCenterItem card, ReturnResult result, string header)
+	public void Complete(StatusCenterItem card, ReturnResult result, string header, string? subHeader = null)
 	{
 		_statusCenterButton!.RemoveItem(card);
-		_statusCenterButton.AddCard(result, header, header, string.Empty, result is ReturnResult.Failed ? StatusCenterItemIconKind.Error : StatusCenterItemIconKind.Successful, canProvideProgress: false);
+		_statusCenterButton.AddCard(result, header, subHeader ?? header, string.Empty, result is ReturnResult.Failed ? StatusCenterItemIconKind.Error : StatusCenterItemIconKind.Successful, canProvideProgress: false);
 	}
 }

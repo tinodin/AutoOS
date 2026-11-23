@@ -371,14 +371,16 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		SyncMergeCount();
 
 		int succeeded = modified.Count - failed.Count;
+		string failedNames = string.Join(", ", failed.Select(static setting => setting.Name));
+		string failedSubHeader = $"Failed settings: {failedNames}";
 		if (failed.Count == 0)
 			statusCenterService.Complete(card, ReturnResult.Success, $"Wrote {changesText} to NVRAM");
 		else if (succeeded == 0)
-			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to write {changesText} to NVRAM");
+			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to write {changesText} to NVRAM", failedSubHeader);
 		else
 		{
 			statusCenterService.Complete(card, ReturnResult.Success, $"Wrote {succeeded} change{(succeeded == 1 ? "" : "s")} to NVRAM");
-			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to write {failed.Count} change{(failed.Count == 1 ? "" : "s")} to NVRAM");
+			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to write {failed.Count} change{(failed.Count == 1 ? "" : "s")} to NVRAM", failedSubHeader);
 		}
 
 		PageState = result;
@@ -442,15 +444,17 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 			_ = backupService.BackupAsync(_settings);
 
 		int failedCount = unapplied.Count;
+		string unappliedNames = string.Join(", ", unapplied.Select(static setting => setting.Name));
+		string? failedSubHeader = unappliedNames.Length > 0 ? $"Failed settings: {unappliedNames}" : null;
 		string restoredText = appliedCount > 0 ? $"{appliedCount} setting{(appliedCount == 1 ? "" : "s")}" : "BIOS settings";
 		if (failedCount == 0)
-			statusCenterService.Complete(card, ReturnResult.Success, $"Restored {restoredText} from \"{fileName}\"");
+			statusCenterService.Complete(card, ReturnResult.Success, $"Restored {restoredText} from \"{fileName}\"", $"Restored {restoredText} from \"{file}\"");
 		else if (appliedCount == 0)
-			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to restore \"{fileName}\"");
+			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to restore \"{fileName}\"", failedSubHeader);
 		else
 		{
-			statusCenterService.Complete(card, ReturnResult.Success, $"Restored {appliedCount} setting{(appliedCount == 1 ? "" : "s")} from \"{fileName}\"");
-			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to restore {failedCount} setting{(failedCount == 1 ? "" : "s")} from \"{fileName}\"");
+			statusCenterService.Complete(card, ReturnResult.Success, $"Restored {appliedCount} setting{(appliedCount == 1 ? "" : "s")} from \"{fileName}\"", $"Restored {appliedCount} setting{(appliedCount == 1 ? "" : "s")} from \"{file}\"");
+			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to restore {failedCount} setting{(failedCount == 1 ? "" : "s")} from \"{fileName}\"", failedSubHeader);
 		}
 
 		PageState = result;

@@ -253,14 +253,14 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		}
 		catch (Exception)
 		{
-			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to export \"{plan.Name}\" to \"{destinationName}\"");
+			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to export \"{plan.Name}\" to \"{destinationName}\"", $"Failed to export \"{plan.Name}\" to \"{filePath}\"");
 			return;
 		}
 
 		if (exitCode == 0)
-			statusCenterService.Complete(card, ReturnResult.Success, $"Exported \"{plan.Name}\" to \"{destinationName}\"");
+			statusCenterService.Complete(card, ReturnResult.Success, $"Exported \"{plan.Name}\" to \"{destinationName}\"", $"Exported \"{plan.Name}\" to \"{filePath}\"");
 		else
-			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to export \"{plan.Name}\" to \"{destinationName}\"");
+			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to export \"{plan.Name}\" to \"{destinationName}\"", $"Failed to export \"{plan.Name}\" to \"{filePath}\"");
 	}
 
 	[RelayCommand(CanExecute = nameof(CanDelete))]
@@ -305,19 +305,19 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		}
 		catch (Exception)
 		{
-			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to import: \"{Path.GetFileName(filePath)}\"");
+			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to import: \"{Path.GetFileName(filePath)}\"", $"Failed to import \"{Path.GetFileName(filePath)}\" from \"{filePath}\"");
 			return;
 		}
 
 		if (importResult.Scheme == Guid.Empty)
 		{
-			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to import: \"{Path.GetFileName(filePath)}\"");
+			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to import: \"{Path.GetFileName(filePath)}\"", $"Failed to import \"{Path.GetFileName(filePath)}\" from \"{filePath}\"");
 			return;
 		}
 
 		SetPlans(await Task.Run(powerService.GetPowerPlans), importResult.Scheme);
 		Plan imported = Plans.First(item => item.Guid == importResult.Scheme);
-		statusCenterService.Complete(card, ReturnResult.Success, $"Imported \"{imported.Name}\"");
+		statusCenterService.Complete(card, ReturnResult.Success, $"Imported \"{imported.Name}\"", $"Imported \"{imported.Name}\" from \"{filePath}\"");
 	}
 
 	[RelayCommand]

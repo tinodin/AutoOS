@@ -192,6 +192,12 @@ public sealed partial class MainWindow : Window
 		NavSearchBox.Focus(FocusState.Programmatic);
 	}
 
+	private void ToggleStatusCenter(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+	{
+		AppStatusCenterButton.Open();
+		args.Handled = true;
+	}
+
 	private void AppIcon_PointerPressed(object sender, PointerRoutedEventArgs e)
 	{
 		PInvoke.PostMessage((HWND)WindowNative.GetWindowHandle(App.MainWindow), PInvoke.WM_SYSCOMMAND, 0xF090, 0);

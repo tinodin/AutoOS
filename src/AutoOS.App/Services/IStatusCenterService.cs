@@ -6,5 +6,5 @@ public interface IStatusCenterService
 
 	StatusCenterItem Begin(string header, string glyph);
 
-	void Complete(StatusCenterItem card, ReturnResult result, string header);
+	void Complete(StatusCenterItem card, ReturnResult result, string header, string? subHeader = null);
 }
