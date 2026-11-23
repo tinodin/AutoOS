@@ -75,9 +75,6 @@ public sealed class BiosSettingsService(IBiosSettingsContext context, IBiosNvram
 
 			foreach (IGrouping<(string Name, Guid Guid), KeyValuePair<Setting, SettingState>> group in modified.GroupBy(pair => (pair.Key.VarStoreName, pair.Key.VarStoreGuid)))
 			{
-				if (group.Key.Guid == Constants.Bios.SecureBootVarStoreGuid)
-					continue;
-
 				if (!nvramService.PatchVariable(group, out byte[]? patched, out uint attributes, transport))
 				{
 					failures.AddRange(group.Select(pair => pair.Key));

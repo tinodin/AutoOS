@@ -279,6 +279,7 @@
 
 					<!--  Merge  -->
 					<AppBarButton
+						Margin="2,0,0,0"
 						Command="{x:Bind ViewModel.ApplyRecommendationsCommand}"
 						CommandParameter="{x:Bind ViewModel.MergeCount, Mode=OneWay}"
 						Icon="{dev:FontIcon Glyph=&#xEA3C;}"
@@ -738,6 +739,10 @@
 						Text="{x:Bind ViewModel.DriverLoadError, Mode=OneWay}"
 						TextWrapping="Wrap"
 						Visibility="{x:Bind ViewModel.DriverLoadError, Mode=OneWay, Converter={StaticResource StringVisibilityConverter}}" />
+					<Button
+						HorizontalAlignment="Center"
+						Command="{x:Bind ViewModel.ReloadCommand}"
+						Content="Reload" />
 				</StackPanel>
 			</dev:Case>
 
@@ -926,6 +931,10 @@
 							HorizontalAlignment="Center"
 							Command="{x:Bind ViewModel.UnlockWithPasswordCommand}"
 							Content="Unlock Write Protection" />
+						<Button
+							HorizontalAlignment="Center"
+							Command="{x:Bind ViewModel.ReloadCommand}"
+							Content="Reload" />
 					</StackPanel>
 				</StackPanel>
 			</dev:Case>
@@ -997,6 +1006,10 @@
 							HorizontalAlignment="Center"
 							Command="{x:Bind ViewModel.UnlockWithPasswordCommand}"
 							Content="Unlock Write Protection" />
+						<Button
+							HorizontalAlignment="Center"
+							Command="{x:Bind ViewModel.ReloadCommand}"
+							Content="Reload" />
 					</StackPanel>
 				</StackPanel>
 			</dev:Case>
@@ -1039,6 +1052,10 @@
 							HorizontalAlignment="Center"
 							Command="{x:Bind ViewModel.UnlockWithPasswordCommand}"
 							Content="Unlock Write Protection" />
+						<Button
+							HorizontalAlignment="Center"
+							Command="{x:Bind ViewModel.ReloadCommand}"
+							Content="Reload" />
 					</StackPanel>
 				</StackPanel>
 			</dev:Case>

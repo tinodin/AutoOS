@@ -133,33 +133,14 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 			}
 
 			Dictionary<(string Variable, Guid Guid, uint Offset), Setting> settingsByKey = [with((context.LastSettings?.Count ?? 0))];
-			Dictionary<Guid, List<Setting>> settingsByVarStore = [with((context.LastSettings?.Count ?? 0))];
 			if (context.LastSettings != null)
 			{
 				foreach (Setting s in context.LastSettings)
-				{
 					settingsByKey[(s.VarStoreName, s.VarStoreGuid, s.Offset)] = s;
-
-					if (!settingsByVarStore.TryGetValue(s.VarStoreGuid, out List<Setting>? varStoreSettings))
-					{
-						varStoreSettings = [];
-						settingsByVarStore[s.VarStoreGuid] = varStoreSettings;
-					}
-
-					varStoreSettings.Add(s);
-				}
 			}
 
 			foreach (IGrouping<(string Name, Guid Guid), BackupSetting> group in backup.Settings.GroupBy(static setting => (Name: setting.VarStoreName, Guid: Guid.TryParse(setting.VarStoreGuid, out Guid guid) ? guid : Guid.Empty)))
 			{
-				if (group.Key.Guid == Constants.Bios.SecureBootVarStoreGuid)
-				{
-					if (settingsByVarStore.TryGetValue(group.Key.Guid, out List<Setting>? skipped))
-						unapplied.AddRange(skipped);
-
-					continue;
-				}
-
 				List<KeyValuePair<Setting, SettingState>> pairs = [with(group.Count())];
 				foreach (BackupSetting backupSetting in group)
 				{
@@ -173,7 +154,12 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 						continue;
 
 					if (settingsByKey.TryGetValue((backupSetting.VarStoreName, parsedGuid, offset), out Setting? current))
+					{
+						if (string.Equals(SettingState.GetDisplayValue(current, current.Value), backupSetting.Value, StringComparison.OrdinalIgnoreCase))
+							continue;
+
 						pairs.Add(new KeyValuePair<Setting, SettingState>(current, new SettingState { Value = backupSetting.Value }));
+					}
 				}
 
 				if (pairs.Count == 0)

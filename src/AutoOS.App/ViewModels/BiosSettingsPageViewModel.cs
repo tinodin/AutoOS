@@ -16,7 +16,7 @@ using Microsoft.UI.Xaml;
 
 namespace AutoOS.App.ViewModels;
 
-public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosService, IBiosBackupService backupService, IFilePickerService filePickerService, IDialogService dialogService) : ObservableObject
+public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosService, IBiosBackupService backupService, IFilePickerService filePickerService, IDialogService dialogService, IStatusCenterService statusCenterService) : ObservableObject
 {
 	private readonly Stack<Dictionary<Setting, string?>> _undoStates = [];
 
@@ -347,6 +347,9 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 			.Where(pair => pair.Value.IsModified)
 			.ToDictionary(pair => pair.Key, pair => pair.Value);
 
+		string changesText = modified.Count == 1 ? "1 change" : $"{modified.Count} changes";
+		StatusCenterItem card = statusCenterService.Begin($"Writing {changesText} to NVRAM", "\uE74E");
+
 		(PageMode result, IReadOnlyList<Setting> failed) = await biosService.WriteToNvramAsync(modified);
 
 		DriverLoadError = biosService.LastDriverError;
@@ -367,6 +370,17 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 		UpdateState();
 		SyncMergeCount();
 
+		int succeeded = modified.Count - failed.Count;
+		if (failed.Count == 0)
+			statusCenterService.Complete(card, ReturnResult.Success, $"Wrote {changesText} to NVRAM");
+		else if (succeeded == 0)
+			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to write {changesText} to NVRAM");
+		else
+		{
+			statusCenterService.Complete(card, ReturnResult.Success, $"Wrote {succeeded} change{(succeeded == 1 ? "" : "s")} to NVRAM");
+			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to write {failed.Count} change{(failed.Count == 1 ? "" : "s")} to NVRAM");
+		}
+
 		PageState = result;
 	}
 
@@ -378,10 +392,14 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 			return;
 
 		PageState = PageMode.Writing;
+		string fileName = Path.GetFileName(file) ?? file;
+		StatusCenterItem card = statusCenterService.Begin($"Restoring \"{fileName}\"", "\uE777");
+
 		(PageMode result, IReadOnlyList<Setting> unapplied) = await biosService.RestoreFromBackupAsync(file);
 
 		DriverLoadError = biosService.LastDriverError;
 
+		int appliedCount = 0;
 		BackupFile? backup = await BiosBackupService.ReadBackupFileAsync(file);
 		if (backup != null)
 		{
@@ -402,8 +420,12 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 				string guidStr = HiiHelper.GetGuidString(setting.VarStoreGuid);
 				if (backupMap.TryGetValue((setting.VarStoreName, guidStr, setting.Offset), out string? value))
 				{
+					string canonical = SettingState.GetCanonicalValue(setting, value);
+					if (!string.Equals(_settingStates[setting].Value, canonical, StringComparison.Ordinal))
+						appliedCount++;
+
 					setting.Value = value;
-					_settingStates[setting].Value = SettingState.GetCanonicalValue(setting, value);
+					_settingStates[setting].Value = canonical;
 					_settingStates[setting].Commit();
 				}
 			}
@@ -418,6 +440,18 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 
 		if (result == PageMode.Loaded)
 			_ = backupService.BackupAsync(_settings);
+
+		int failedCount = unapplied.Count;
+		string restoredText = appliedCount > 0 ? $"{appliedCount} setting{(appliedCount == 1 ? "" : "s")}" : "BIOS settings";
+		if (failedCount == 0)
+			statusCenterService.Complete(card, ReturnResult.Success, $"Restored {restoredText} from \"{fileName}\"");
+		else if (appliedCount == 0)
+			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to restore \"{fileName}\"");
+		else
+		{
+			statusCenterService.Complete(card, ReturnResult.Success, $"Restored {appliedCount} setting{(appliedCount == 1 ? "" : "s")} from \"{fileName}\"");
+			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to restore {failedCount} setting{(failedCount == 1 ? "" : "s")} from \"{fileName}\"");
+		}
 
 		PageState = result;
 	}
@@ -455,6 +489,18 @@ public sealed partial class BiosSettingsPageViewModel(IBiosSettingsService biosS
 			await WriteToNvramAsync();
 		else
 			await ReadFromNvramAsync();
+	}
+
+	[RelayCommand]
+	private async Task ReloadAsync()
+	{
+		if (IsLoaded)
+		{
+			PageState = PageMode.Loaded;
+			return;
+		}
+
+		await ReadFromNvramAsync();
 	}
 
 	[RelayCommand]
