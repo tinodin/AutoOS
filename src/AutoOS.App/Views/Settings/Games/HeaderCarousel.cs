@@ -2426,7 +2426,11 @@ public partial class HeaderCarousel : ItemsControl
 		//ProcessesHelper.ResumeProcess(ServicesHelper.GetServicePid("TextInputManagementService"));
 		//Process.Start("ctfmon.exe");
 
-		string filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Everything 1.5a", "Everything.exe");
+		string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+		string filePath = Path.Combine(programFiles, "Everything", "Everything.exe");
+
+		if (!File.Exists(filePath))
+			filePath = Path.Combine(programFiles, "Everything 1.5a", "Everything.exe");
 
 		if (File.Exists(filePath))
 		{

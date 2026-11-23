@@ -41,7 +41,7 @@ public sealed partial class HomePage : Page
 		}
 
 		(ushort major, ushort minor, ushort build, ushort ubr) = OSHelper.GetWindowsVersion();
-		if (build < 26300 || (build == 26300 && ubr < 9457))
+		if (build < 26300 || (build == 26300 && ubr < 10075))
 		{
 			var dialog = new ContentDialog
 			{
