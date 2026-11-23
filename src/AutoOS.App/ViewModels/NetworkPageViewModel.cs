@@ -16,7 +16,7 @@ using Microsoft.UI.Xaml;
 
 namespace AutoOS.App.ViewModels;
 
-public sealed partial class NetworkPageViewModel(INetworkSettingsService networkService, IDialogService dialogService) : ObservableObject
+public sealed partial class NetworkPageViewModel(INetworkSettingsService networkService, IDialogService dialogService, IStatusCenterService statusCenterService) : ObservableObject
 {
 	private readonly Stack<Dictionary<Setting, string>> _undoStates = [];
 	private readonly Stack<Dictionary<Setting, string>> _redoStates = [];
@@ -41,8 +41,8 @@ public sealed partial class NetworkPageViewModel(INetworkSettingsService network
 	[NotifyCanExecuteChangedFor(nameof(UndoCommand))]
 	[NotifyCanExecuteChangedFor(nameof(RedoCommand))]
 	[NotifyCanExecuteChangedFor(nameof(OptimizeCommand))]
-	[NotifyCanExecuteChangedFor(nameof(RestoreCommand))]
 	[NotifyCanExecuteChangedFor(nameof(SaveChangesCommand))]
+	[NotifyCanExecuteChangedFor(nameof(RestoreCommand))]
 	[NotifyCanExecuteChangedFor(nameof(ToggleCompareToDefaultsCommand))]
 	public partial bool IsLoaded { get; set; }
 
@@ -59,11 +59,6 @@ public sealed partial class NetworkPageViewModel(INetworkSettingsService network
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(NormalVisibility))]
-	[NotifyPropertyChangedFor(nameof(ViewChangesVisibility))]
-	public partial bool ViewChangesActive { get; set; }
-
-	[ObservableProperty]
-	[NotifyPropertyChangedFor(nameof(NormalVisibility))]
 	[NotifyPropertyChangedFor(nameof(CompareToDefaultsVisibility))]
 	public partial bool CompareToDefaults { get; set; }
 
@@ -77,9 +72,10 @@ public sealed partial class NetworkPageViewModel(INetworkSettingsService network
 
 	public Visibility CompareToDefaultsVisibility => CompareToDefaults ? Visibility.Visible : Visibility.Collapsed;
 
-	public Visibility NormalVisibility => ViewChangesActive || CompareToDefaults ? Visibility.Collapsed : Visibility.Visible;
-
-	public Visibility ViewChangesVisibility => ViewChangesActive ? Visibility.Visible : Visibility.Collapsed;
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(NormalVisibility))]
+	[NotifyPropertyChangedFor(nameof(ViewChangesVisibility))]
+	public partial bool ViewChangesActive { get; set; }
 
 	[ObservableProperty]
 	[NotifyPropertyChangedFor(nameof(ViewChangesLabel))]
@@ -87,6 +83,10 @@ public sealed partial class NetworkPageViewModel(INetworkSettingsService network
 	public partial int ModifiedCount { get; set; }
 
 	public string ViewChangesLabel => $"View Changes ({ModifiedCount})";
+
+	public Visibility NormalVisibility => ViewChangesActive || CompareToDefaults ? Visibility.Collapsed : Visibility.Visible;
+
+	public Visibility ViewChangesVisibility => ViewChangesActive ? Visibility.Visible : Visibility.Collapsed;
 
 	[ObservableProperty]
 	public partial string SearchText { get; set; } = string.Empty;
@@ -165,6 +165,66 @@ public sealed partial class NetworkPageViewModel(INetworkSettingsService network
 		RefreshAfterEdit();
 	}
 
+	[RelayCommand(CanExecute = nameof(CanSave))]
+	private async Task SaveChangesAsync()
+	{
+		int totalChanges = Adapters.SelectMany(adapter => adapter.AdvancedSettings).Count(setting => _settingStates[setting].IsModified);
+		string changesText = totalChanges == 1 ? "1 change" : $"{totalChanges} changes";
+		StatusCenterItem card = statusCenterService.Begin($"Saving {changesText}", "\uE74E");
+
+		IsLoaded = false;
+		int succeededChanges = 0;
+		var failedAdapters = new List<string>();
+		try
+		{
+			bool allSucceeded = true;
+			foreach (DeviceInfo adapter in Adapters)
+			{
+				var changes = adapter.AdvancedSettings.Where(setting => _settingStates[setting].IsModified)
+					.ToDictionary(setting => setting, setting => _settingStates[setting].Value);
+				if (changes.Count == 0)
+					continue;
+
+				if (await networkService.SaveChangesAsync(adapter, changes))
+				{
+					succeededChanges += changes.Count;
+					foreach ((Setting setting, string value) in changes)
+					{
+						setting.Value = value;
+						_settingStates[setting].OriginalValue = value;
+					}
+				}
+				else
+				{
+					allSucceeded = false;
+					failedAdapters.Add(adapter.FriendlyName);
+				}
+			}
+
+			_undoStates.Clear();
+			_redoStates.Clear();
+			if (allSucceeded)
+				ViewChangesActive = false;
+		}
+		finally
+		{
+			IsLoaded = true;
+			RefreshAfterEdit();
+		}
+
+		int failedChanges = totalChanges - succeededChanges;
+		string? failedSubHeader = failedAdapters.Count > 0 ? $"Failed adapters: {string.Join(", ", failedAdapters)}" : null;
+		if (failedChanges == 0)
+			statusCenterService.Complete(card, ReturnResult.Success, $"Saved {changesText}");
+		else if (succeededChanges == 0)
+			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to save {changesText}", failedSubHeader);
+		else
+		{
+			statusCenterService.Complete(card, ReturnResult.Success, $"Saved {succeededChanges} change{(succeededChanges == 1 ? "" : "s")}");
+			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to save {failedChanges} change{(failedChanges == 1 ? "" : "s")}", failedSubHeader);
+		}
+	}
+
 	[RelayCommand(CanExecute = nameof(CanRestore))]
 	private async Task RestoreAsync()
 	{
@@ -180,46 +240,6 @@ public sealed partial class NetworkPageViewModel(INetworkSettingsService network
 		}
 		PushUndoState(previous);
 		RefreshAfterEdit();
-	}
-
-	[RelayCommand(CanExecute = nameof(CanSave))]
-	private async Task SaveChangesAsync()
-	{
-		IsLoaded = false;
-		try
-		{
-			bool allSucceeded = true;
-			foreach (DeviceInfo adapter in Adapters)
-			{
-				var changes = adapter.AdvancedSettings.Where(setting => _settingStates[setting].IsModified)
-					.ToDictionary(setting => setting, setting => _settingStates[setting].Value);
-				if (changes.Count == 0)
-					continue;
-
-				if (await networkService.SaveChangesAsync(adapter, changes))
-				{
-					foreach ((Setting setting, string value) in changes)
-					{
-						setting.Value = value;
-						_settingStates[setting].OriginalValue = value;
-					}
-				}
-				else
-				{
-					allSucceeded = false;
-				}
-			}
-
-			_undoStates.Clear();
-			_redoStates.Clear();
-			if (allSucceeded)
-				ViewChangesActive = false;
-		}
-		finally
-		{
-			IsLoaded = true;
-			RefreshAfterEdit();
-		}
 	}
 
 	[RelayCommand]

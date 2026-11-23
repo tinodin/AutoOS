@@ -270,6 +270,17 @@
 						</AppBarToggleButton.KeyboardAccelerators>
 					</AppBarToggleButton>
 
+					<!--  Save Changes  -->
+					<AppBarButton
+						Command="{x:Bind ViewModel.SaveChangesCommand}"
+						Icon="{dev:FontIcon Glyph=&#xE74E;}"
+						Label="Save Changes"
+						ToolTipService.ToolTip="Save Changes (Ctrl+S)">
+						<AppBarButton.KeyboardAccelerators>
+							<KeyboardAccelerator Key="S" Modifiers="Control" />
+						</AppBarButton.KeyboardAccelerators>
+					</AppBarButton>
+
 					<!--  Separator  -->
 					<AppBarSeparator Margin="4,0" />
 
@@ -281,20 +292,6 @@
 						ToolTipService.ToolTip="Restore (Ctrl+R)">
 						<AppBarButton.KeyboardAccelerators>
 							<KeyboardAccelerator Key="R" Modifiers="Control" />
-						</AppBarButton.KeyboardAccelerators>
-					</AppBarButton>
-
-					<!--  Separator  -->
-					<AppBarSeparator Margin="4,0" />
-
-					<!--  Save Changes  -->
-					<AppBarButton
-						Command="{x:Bind ViewModel.SaveChangesCommand}"
-						Icon="{dev:FontIcon Glyph=&#xE74E;}"
-						Label="Save Changes"
-						ToolTipService.ToolTip="Save Changes (Ctrl+S)">
-						<AppBarButton.KeyboardAccelerators>
-							<KeyboardAccelerator Key="S" Modifiers="Control" />
 						</AppBarButton.KeyboardAccelerators>
 					</AppBarButton>
 				</CommandBar>
