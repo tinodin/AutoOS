@@ -12,6 +12,7 @@ using AutoOS.App.ViewModels.Dialogs.Network;
 using AutoOS.Core.Data.Enums.Network;
 using AutoOS.Core.Data.Models.Device;
 using AutoOS.Core.Data.Models.Network;
+using AutoOS.Core.Helpers.Device;
 using Microsoft.UI.Xaml;
 
 namespace AutoOS.App.ViewModels;
@@ -146,47 +147,107 @@ public sealed partial class NetworkPageViewModel(INetworkSettingsService network
 		if (await dialogService.ShowDialogAsync(viewModel) != DialogResult.Primary || viewModel.SelectedAdapters.Count == 0)
 			return;
 
-		Dictionary<Setting, string> previous = CaptureState();
+		var workItems = new List<(DeviceInfo Adapter, IReadOnlyDictionary<Setting, string> Changes)>();
 		foreach (DeviceInfo adapter in viewModel.SelectedAdapters)
 		{
+			Dictionary<Setting, string> changes = [];
 			foreach (Setting setting in adapter.AdvancedSettings)
 			{
 				SettingState state = _settingStates[setting];
-				if (string.IsNullOrEmpty(state.Recommended))
-					continue;
-				if (string.Equals(state.Value.Trim(), state.Recommended.Trim(), StringComparison.OrdinalIgnoreCase))
+				if (string.IsNullOrEmpty(state.Recommended) || string.Equals(setting.Value.Trim(), state.Recommended.Trim(), StringComparison.OrdinalIgnoreCase))
 					continue;
 
-				state.Value = state.Recommended;
+				changes[setting] = state.Recommended;
 			}
+
+			if (changes.Count > 0)
+				workItems.Add((adapter, changes));
 		}
 
-		PushUndoState(previous);
+		if (workItems.Count == 0)
+			return;
+
+		StatusCenterItem card = statusCenterService.Begin("Optimizing network settings", "\uE74E");
+		var applied = new List<DeviceInfo>();
+		var failedAdapters = new List<string>();
+		IsLoaded = false;
+		try
+		{
+			foreach ((DeviceInfo adapter, IReadOnlyDictionary<Setting, string> changes) in workItems)
+			{
+				if (await networkService.SaveChangesAsync(adapter, changes))
+				{
+					applied.Add(adapter);
+					foreach ((Setting setting, string value) in changes)
+					{
+						setting.Value = value;
+						_settingStates[setting].Value = value;
+						_settingStates[setting].OriginalValue = value;
+					}
+				}
+				else
+				{
+					failedAdapters.Add(adapter.FriendlyName);
+				}
+			}
+		}
+		finally
+		{
+			IsLoaded = true;
+		}
+
+		string? failedSubHeader = failedAdapters.Count > 0 ? $"Failed adapters: {string.Join(", ", failedAdapters)}" : null;
+		if (failedAdapters.Count == 0)
+			statusCenterService.Complete(card, ReturnResult.Success, "Optimized network settings");
+		else if (applied.Count == 0)
+			statusCenterService.Complete(card, ReturnResult.Failed, "Failed to optimize network settings", failedSubHeader);
+		else
+		{
+			statusCenterService.Complete(card, ReturnResult.Success, "Optimized network settings");
+			statusCenterService.Complete(card, ReturnResult.Failed, "Failed to optimize network settings", failedSubHeader);
+		}
+
+		foreach (DeviceInfo adapter in applied)
+		{
+			StatusCenterItem restartCard = statusCenterService.Begin($"Restarting {adapter.FriendlyName}", adapter.Glyph);
+			bool restarted = await Task.Run(() => DeviceHelper.RestartDevice(adapter));
+			statusCenterService.Complete(restartCard, restarted ? ReturnResult.Success : ReturnResult.Failed,
+				restarted ? $"Restarted {adapter.FriendlyName}" : $"Failed to restart {adapter.FriendlyName}");
+		}
 		RefreshAfterEdit();
 	}
 
 	[RelayCommand(CanExecute = nameof(CanSave))]
 	private async Task SaveChangesAsync()
 	{
-		int totalChanges = Adapters.SelectMany(adapter => adapter.AdvancedSettings).Count(setting => _settingStates[setting].IsModified);
+		var workItems = new List<(DeviceInfo Adapter, IReadOnlyDictionary<Setting, string> Changes)>();
+		int totalChanges = 0;
+		foreach (DeviceInfo adapter in Adapters)
+		{
+			var changes = adapter.AdvancedSettings.Where(setting => _settingStates[setting].IsModified)
+				.ToDictionary(setting => setting, setting => _settingStates[setting].Value);
+			if (changes.Count == 0)
+				continue;
+
+			workItems.Add((adapter, changes));
+			totalChanges += changes.Count;
+		}
+
+		if (workItems.Count == 0)
+			return;
+
 		string changesText = totalChanges == 1 ? "1 change" : $"{totalChanges} changes";
 		StatusCenterItem card = statusCenterService.Begin($"Saving {changesText}", "\uE74E");
-
-		IsLoaded = false;
+		var applied = new List<DeviceInfo>();
 		int succeededChanges = 0;
-		var failedAdapters = new List<string>();
+		IsLoaded = false;
 		try
 		{
-			bool allSucceeded = true;
-			foreach (DeviceInfo adapter in Adapters)
+			foreach ((DeviceInfo adapter, IReadOnlyDictionary<Setting, string> changes) in workItems)
 			{
-				var changes = adapter.AdvancedSettings.Where(setting => _settingStates[setting].IsModified)
-					.ToDictionary(setting => setting, setting => _settingStates[setting].Value);
-				if (changes.Count == 0)
-					continue;
-
 				if (await networkService.SaveChangesAsync(adapter, changes))
 				{
+					applied.Add(adapter);
 					succeededChanges += changes.Count;
 					foreach ((Setting setting, string value) in changes)
 					{
@@ -194,35 +255,36 @@ public sealed partial class NetworkPageViewModel(INetworkSettingsService network
 						_settingStates[setting].OriginalValue = value;
 					}
 				}
-				else
-				{
-					allSucceeded = false;
-					failedAdapters.Add(adapter.FriendlyName);
-				}
 			}
-
-			_undoStates.Clear();
-			_redoStates.Clear();
-			if (allSucceeded)
-				ViewChangesActive = false;
 		}
 		finally
 		{
 			IsLoaded = true;
-			RefreshAfterEdit();
 		}
 
 		int failedChanges = totalChanges - succeededChanges;
-		string? failedSubHeader = failedAdapters.Count > 0 ? $"Failed adapters: {string.Join(", ", failedAdapters)}" : null;
 		if (failedChanges == 0)
 			statusCenterService.Complete(card, ReturnResult.Success, $"Saved {changesText}");
 		else if (succeededChanges == 0)
-			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to save {changesText}", failedSubHeader);
+			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to save {changesText}");
 		else
 		{
 			statusCenterService.Complete(card, ReturnResult.Success, $"Saved {succeededChanges} change{(succeededChanges == 1 ? "" : "s")}");
-			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to save {failedChanges} change{(failedChanges == 1 ? "" : "s")}", failedSubHeader);
+			statusCenterService.Complete(card, ReturnResult.Failed, $"Failed to save {failedChanges} change{(failedChanges == 1 ? "" : "s")}");
 		}
+
+		foreach (DeviceInfo adapter in applied)
+		{
+			StatusCenterItem restartCard = statusCenterService.Begin($"Restarting {adapter.FriendlyName}", adapter.Glyph);
+			bool restarted = await Task.Run(() => DeviceHelper.RestartDevice(adapter));
+			statusCenterService.Complete(restartCard, restarted ? ReturnResult.Success : ReturnResult.Failed,
+				restarted ? $"Restarted {adapter.FriendlyName}" : $"Failed to restart {adapter.FriendlyName}");
+		}
+		_undoStates.Clear();
+		_redoStates.Clear();
+		if (failedChanges == 0)
+			ViewChangesActive = false;
+		RefreshAfterEdit();
 	}
 
 	[RelayCommand(CanExecute = nameof(CanRestore))]
@@ -232,13 +294,82 @@ public sealed partial class NetworkPageViewModel(INetworkSettingsService network
 		if (await dialogService.ShowDialogAsync(viewModel) != DialogResult.Primary || viewModel.SelectedAdapters.Count == 0)
 			return;
 
-		Dictionary<Setting, string> previous = CaptureState();
+		var workItems = new List<(DeviceInfo Adapter, IReadOnlyDictionary<Setting, string> Changes)>();
 		foreach (DeviceInfo adapter in viewModel.SelectedAdapters)
 		{
+			Dictionary<Setting, string> changes = [];
 			foreach (Setting setting in adapter.AdvancedSettings)
-				_settingStates[setting].Value = setting.Default;
+			{
+				if (!string.Equals(setting.Value, setting.Default, StringComparison.OrdinalIgnoreCase))
+					changes[setting] = setting.Default;
+			}
+
+			if (changes.Count == 0)
+			{
+				foreach (Setting setting in adapter.AdvancedSettings)
+				{
+					_settingStates[setting].Value = setting.Default;
+					_settingStates[setting].OriginalValue = setting.Value;
+				}
+				continue;
+			}
+
+			workItems.Add((adapter, changes));
 		}
-		PushUndoState(previous);
+
+		if (workItems.Count == 0)
+		{
+			RefreshAfterEdit();
+			return;
+		}
+
+		StatusCenterItem card = statusCenterService.Begin("Restoring default network settings", "\uE777");
+		var applied = new List<DeviceInfo>();
+		var failedAdapters = new List<string>();
+		IsLoaded = false;
+		try
+		{
+			foreach ((DeviceInfo adapter, IReadOnlyDictionary<Setting, string> changes) in workItems)
+			{
+				if (await networkService.SaveChangesAsync(adapter, changes))
+				{
+					applied.Add(adapter);
+					foreach (Setting setting in adapter.AdvancedSettings)
+					{
+						setting.Value = setting.Default;
+						_settingStates[setting].Value = setting.Default;
+						_settingStates[setting].OriginalValue = setting.Default;
+					}
+				}
+				else
+				{
+					failedAdapters.Add(adapter.FriendlyName);
+				}
+			}
+		}
+		finally
+		{
+			IsLoaded = true;
+		}
+
+		string? failedSubHeader = failedAdapters.Count > 0 ? $"Failed adapters: {string.Join(", ", failedAdapters)}" : null;
+		if (failedAdapters.Count == 0)
+			statusCenterService.Complete(card, ReturnResult.Success, "Restored default network settings");
+		else if (applied.Count == 0)
+			statusCenterService.Complete(card, ReturnResult.Failed, "Failed to restore default network settings", failedSubHeader);
+		else
+		{
+			statusCenterService.Complete(card, ReturnResult.Success, "Restored default network settings");
+			statusCenterService.Complete(card, ReturnResult.Failed, "Failed to restore default network settings", failedSubHeader);
+		}
+
+		foreach (DeviceInfo adapter in applied)
+		{
+			StatusCenterItem restartCard = statusCenterService.Begin($"Restarting {adapter.FriendlyName}", adapter.Glyph);
+			bool restarted = await Task.Run(() => DeviceHelper.RestartDevice(adapter));
+			statusCenterService.Complete(restartCard, restarted ? ReturnResult.Success : ReturnResult.Failed,
+				restarted ? $"Restarted {adapter.FriendlyName}" : $"Failed to restart {adapter.FriendlyName}");
+		}
 		RefreshAfterEdit();
 	}
 

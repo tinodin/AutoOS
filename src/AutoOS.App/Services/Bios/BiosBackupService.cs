@@ -122,6 +122,8 @@ public sealed class BiosBackupService(IBiosSettingsContext context, IBiosNvramSe
 	public async Task<(PageMode Result, IReadOnlyList<Setting> UnappliedSettings)> RestoreFromBackupAsync(string filePath)
 	{
 		BackupFile? backup = await ReadBackupFileAsync(filePath);
+		if (backup == null)
+			return (PageMode.Reading, []);
 
 		LastDriverError = null;
 

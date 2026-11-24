@@ -23,7 +23,7 @@ public sealed class NetworkSettingsService : INetworkSettingsService
 			foreach ((Setting setting, string value) in changes)
 				Core.Helpers.Network.NetworkHelper.SetAdvancedSetting(adapter, setting.Key, value);
 
-			return DeviceHelper.RestartDevice(adapter);
+			return true;
 		}
 		catch
 		{
