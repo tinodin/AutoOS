@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:sfgrid="using:Syncfusion.UI.Xaml.TreeGrid">
+
+	<ResourceDictionary.ThemeDictionaries>
+		<ResourceDictionary x:Key="Light">
+			<SolidColorBrush x:Key="TreeGridAlternatingRowBackgroundBrush" Color="#05000000" />
+		</ResourceDictionary>
+		<ResourceDictionary x:Key="Dark">
+			<SolidColorBrush x:Key="TreeGridAlternatingRowBackgroundBrush" Color="#05FFFFFF" />
+		</ResourceDictionary>
+		<ResourceDictionary x:Key="HighContrast">
+			<SolidColorBrush x:Key="TreeGridAlternatingRowBackgroundBrush" Color="Transparent" />
+		</ResourceDictionary>
+	</ResourceDictionary.ThemeDictionaries>
+
+	<Style x:Key="TreeGridAlternatingRowStyle" TargetType="sfgrid:TreeGridRowControl">
+		<Setter Property="Background" Value="{ThemeResource TreeGridAlternatingRowBackgroundBrush}" />
+	</Style>
+
+</ResourceDictionary>

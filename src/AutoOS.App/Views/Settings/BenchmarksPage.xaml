@@ -14,6 +14,7 @@
 	xmlns:sfdata="using:Syncfusion.UI.Xaml.DataGrid"
 	xmlns:sfgrid="using:Syncfusion.UI.Xaml.TreeGrid"
 	xmlns:templateselectors="using:AutoOS.App.Data.TemplateSelectors.Benchmarks"
+	xmlns:treegridselectors="using:AutoOS.App.Data.TemplateSelectors.TreeGrid"
 	xmlns:uc="using:AutoOS.App.UserControls"
 	xmlns:viewmodels="using:AutoOS.App.ViewModels"
 	mc:Ignorable="d">
@@ -30,6 +31,9 @@
 			x:Key="CellStyleSelector"
 			CriticalStyle="{StaticResource CriticalCellStyle}"
 			SuccessStyle="{StaticResource SuccessCellStyle}" />
+
+		<!--  Alternating Row Style Selector  -->
+		<treegridselectors:AlternatingRowStyleSelector x:Key="AlternatingRowStyleSelector" AlternatingStyle="{StaticResource TreeGridAlternatingRowStyle}" />
 
 	</Page.Resources>
 	<Grid>
@@ -212,7 +216,7 @@
 
 							<!--  Bar / Column Statistics  -->
 							<AppBarElementContainer
-								Margin="0,0,2,0"
+								Margin="0,0,4,0"
 								IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}"
 								Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
 								<ToggleButton
@@ -230,7 +234,7 @@
 							<AppBarSeparator Margin="4,0" Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}" />
 
 							<AppBarElementContainer
-								Margin="0,0,2,0"
+								Margin="0,0,4,0"
 								IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}"
 								Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
 								<ToggleButton
@@ -248,7 +252,7 @@
 							<AppBarSeparator Margin="4,0" Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}" />
 
 							<AppBarElementContainer
-								Margin="0,0,2,0"
+								Margin="0,0,4,0"
 								IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}"
 								Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
 								<ToggleButton
@@ -266,7 +270,7 @@
 							<AppBarSeparator Margin="4,0" Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}" />
 
 							<AppBarElementContainer
-								Margin="0,0,2,0"
+								Margin="0,0,4,0"
 								IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}"
 								Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
 								<ToggleButton
@@ -275,7 +279,7 @@
 									ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P0.1')}" />
 							</AppBarElementContainer>
 							<AppBarElementContainer
-								Margin="0,0,2,0"
+								Margin="0,0,4,0"
 								IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}"
 								Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
 								<ToggleButton
@@ -284,7 +288,7 @@
 									ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P1')}" />
 							</AppBarElementContainer>
 							<AppBarElementContainer
-								Margin="0,0,2,0"
+								Margin="0,0,4,0"
 								IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}"
 								Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
 								<ToggleButton
@@ -293,7 +297,7 @@
 									ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P5')}" />
 							</AppBarElementContainer>
 							<AppBarElementContainer
-								Margin="0,0,2,0"
+								Margin="0,0,4,0"
 								IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}"
 								Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
 								<ToggleButton
@@ -302,7 +306,7 @@
 									ToolTipService.ToolTip="{x:Bind ViewModel.GetStatisticTooltip('P50 (Median)')}" />
 							</AppBarElementContainer>
 							<AppBarElementContainer
-								Margin="0,0,2,0"
+								Margin="0,0,4,0"
 								IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}"
 								Visibility="{x:Bind ViewModel.StatisticsVisibility, Mode=OneWay}">
 								<ToggleButton
@@ -434,7 +438,7 @@
 									Value="{x:Bind ViewModel.LowFpsThreshold, Mode=TwoWay}" />
 							</AppBarElementContainer>
 							<AppBarElementContainer
-								Margin="2,0"
+								Margin="4,0"
 								IsEnabled="{x:Bind ViewModel.HasSelectedRecordings, Mode=OneWay}"
 								ToolTipService.ToolTip="Stutter factor">
 								<NumberBox
@@ -496,6 +500,7 @@
 									ItemsSource="{x:Bind ViewModel.Recordings, Mode=OneWay}"
 									NavigationMode="Cell"
 									PasteOption="None"
+									RowStyleSelector="{StaticResource AlternatingRowStyleSelector}"
 									SelectionChanged="RecordingsTreeGrid_SelectionChanged"
 									SelectionMode="Multiple"
 									ShowCheckBox="True"
@@ -1203,6 +1208,7 @@
 									GridLinesVisibility="Both"
 									HeaderLinesVisibility="Both"
 									ItemsSource="{x:Bind ViewModel.StatisticsRows, Mode=OneWay}"
+									RowStyleSelector="{StaticResource AlternatingRowStyleSelector}"
 									SelectionMode="None"
 									SizeChanged="StatisticsTreeGrid_SizeChanged">
 									<sfgrid:SfTreeGrid.ColumnSizer>

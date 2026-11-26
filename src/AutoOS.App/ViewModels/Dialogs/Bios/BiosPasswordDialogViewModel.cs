@@ -49,7 +49,7 @@ public sealed partial class BiosPasswordDialogViewModel : BaseDialogViewModel, I
 
 	public BiosPasswordDialogViewModel()
 	{
-		Title = "Unlock Write Protection";
+		Title = "Unlock write protection";
 		PrimaryButtonText = "Unlock";
 		CloseButtonText = "Cancel";
 		IsPrimaryButtonEnabled = false;

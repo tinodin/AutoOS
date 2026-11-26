@@ -12,7 +12,7 @@ public sealed partial class RestoreDialogViewModel : BaseDialogViewModel
 	public RestoreDialogViewModel(IEnumerable<DeviceInfo> adapters, Func<DeviceInfo, bool> canApply)
 	{
 		Adapters = adapters.Where(canApply).ToList();
-		Title = "Restore";
+		Title = "Restore network adapters settings";
 		PrimaryButtonText = "Restore";
 		CloseButtonText = "Cancel";
 		IsPrimaryButtonEnabled = false;

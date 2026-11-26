@@ -11,7 +11,7 @@ public sealed partial class CompareDialogViewModel : BaseDialogViewModel
 			?? Plans.FirstOrDefault(plan => plan.Guid == selectedPlan1?.Guid)
 			?? Plans.FirstOrDefault();
 		SelectedPlan2 = Plans.FirstOrDefault(plan => plan.Guid == selectedPlan2?.Guid) ?? Plans.FirstOrDefault(plan => plan.Guid != SelectedPlan1?.Guid) ?? Plans.FirstOrDefault();
-		Title = "Compare";
+		Title = "Compare power plans";
 		IsPrimaryButtonEnabled = PlansDiffer;
 		PrimaryButtonText = "Compare";
 		CloseButtonText = "Cancel";

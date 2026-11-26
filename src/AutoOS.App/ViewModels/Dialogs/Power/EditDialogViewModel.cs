@@ -6,7 +6,7 @@ public sealed partial class EditDialogViewModel : BaseDialogViewModel
 	{
 		Name = name;
 		Description = description;
-		Title = "Edit Power Plan";
+		Title = "Edit power plan";
 		IsPrimaryButtonEnabled = !string.IsNullOrWhiteSpace(name);
 		PrimaryButtonText = "Save";
 		CloseButtonText = "Cancel";

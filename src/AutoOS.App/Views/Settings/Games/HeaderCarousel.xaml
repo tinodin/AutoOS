@@ -689,12 +689,12 @@
 							</ScrollViewer>
 						</Grid>
 						<dev:GrowlHost
-							HostKey="Epic"
 							DefaultPosition="TopRight"
+							HostKey="Epic"
 							MaxVisiblePerPosition="3" />
 						<dev:GrowlHost
-							HostKey="Steam"
 							DefaultPosition="BottomRight"
+							HostKey="Steam"
 							MaxVisiblePerPosition="3" />
 					</Grid>
 				</ControlTemplate>

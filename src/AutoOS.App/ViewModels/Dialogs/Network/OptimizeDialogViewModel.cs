@@ -12,7 +12,7 @@ public sealed partial class OptimizeDialogViewModel : BaseDialogViewModel
 	public OptimizeDialogViewModel(IEnumerable<DeviceInfo> adapters, Func<DeviceInfo, bool> canApply)
 	{
 		Adapters = adapters.Where(canApply).ToList();
-		Title = "Optimize";
+		Title = "Optimize network adapters settings";
 		PrimaryButtonText = "Optimize";
 		CloseButtonText = "Cancel";
 		IsPrimaryButtonEnabled = false;

@@ -208,7 +208,7 @@ public sealed partial class PowerPageViewModel(IPowerPlanService powerService, I
 		if (ActivePlan is not Plan plan)
 			return;
 
-		if (await dialogService.ShowConfirmationDialogAsync("Duplicate Power Plan", @$"Are you sure you want to duplicate ""{plan.Name}""?", "Yes", "No") != DialogResult.Primary)
+		if (await dialogService.ShowConfirmationDialogAsync("Duplicate power plan", @$"Are you sure you want to duplicate ""{plan.Name}""?", "Yes", "No") != DialogResult.Primary)
 			return;
 
 		int number = 1;

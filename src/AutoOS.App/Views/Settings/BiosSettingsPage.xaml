@@ -15,6 +15,7 @@
 	xmlns:selectors="using:AutoOS.App.Data.TemplateSelectors.Bios"
 	xmlns:sfgrid="using:Syncfusion.UI.Xaml.TreeGrid"
 	xmlns:treegrid="using:AutoOS.App.Helpers.TreeGrid"
+	xmlns:treegridselectors="using:AutoOS.App.Data.TemplateSelectors.TreeGrid"
 	xmlns:views="using:AutoOS.App.Views"
 	xmlns:wctconverters="using:CommunityToolkit.WinUI.Converters"
 	DataContext="{x:Bind ViewModel, Mode=OneWay}"
@@ -46,6 +47,9 @@
 				CautionStyle="{StaticResource CautionCellStyle}"
 				CriticalStyle="{StaticResource CriticalCellStyle}"
 				SuccessStyle="{StaticResource SuccessCellStyle}" />
+
+			<!--  Alternating Row Style Selector  -->
+			<treegridselectors:AlternatingRowStyleSelector x:Key="AlternatingRowStyleSelector" AlternatingStyle="{StaticResource TreeGridAlternatingRowStyle}" />
 
 			<!--  ComboBox Template  -->
 			<DataTemplate x:Key="ComboBoxEditTemplate" x:DataType="local:Node">
@@ -421,6 +425,7 @@
 						ItemsSource="{x:Bind ViewModel.TreeNodes}"
 						NavigationMode="Cell"
 						PasteOption="None"
+						RowStyleSelector="{StaticResource AlternatingRowStyleSelector}"
 						SelectionMode="Single"
 						ShowToolTip="True"
 						SizeChanged="TreeGrid_SizeChanged"
@@ -521,6 +526,7 @@
 						ItemsSource="{x:Bind ViewModel.CompareNodes}"
 						NavigationMode="Cell"
 						PasteOption="None"
+						RowStyleSelector="{StaticResource AlternatingRowStyleSelector}"
 						SelectionMode="Single"
 						ShowToolTip="True"
 						SizeChanged="TreeGrid_SizeChanged"
@@ -609,6 +615,7 @@
 						ItemsSource="{x:Bind ViewModel.DiffNodes}"
 						NavigationMode="Cell"
 						PasteOption="None"
+						RowStyleSelector="{StaticResource AlternatingRowStyleSelector}"
 						SelectionMode="Single"
 						ShowToolTip="True"
 						SizeChanged="TreeGrid_SizeChanged"

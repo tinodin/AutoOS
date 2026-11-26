@@ -14,6 +14,7 @@
 	xmlns:sfgrid="using:Syncfusion.UI.Xaml.TreeGrid"
 	xmlns:templateselectors="using:AutoOS.App.Data.TemplateSelectors.Network"
 	xmlns:treegrid="using:AutoOS.App.Helpers.TreeGrid"
+	xmlns:treegridselectors="using:AutoOS.App.Data.TemplateSelectors.TreeGrid"
 	mc:Ignorable="d">
 	<Page.Resources>
 
@@ -83,6 +84,9 @@
 			CautionStyle="{StaticResource CautionCellStyle}"
 			CriticalStyle="{StaticResource CriticalCellStyle}"
 			SuccessStyle="{StaticResource SuccessCellStyle}" />
+
+		<!--  Alternating Row Style Selector  -->
+		<treegridselectors:AlternatingRowStyleSelector x:Key="AlternatingRowStyleSelector" AlternatingStyle="{StaticResource TreeGridAlternatingRowStyle}" />
 
 		<!--  Edit Template Selectors  -->
 		<templateselectors:EditTemplateSelector
@@ -344,6 +348,7 @@
 						ItemsSource="{x:Bind ViewModel.TreeNodes}"
 						NavigationMode="Cell"
 						PasteOption="None"
+						RowStyleSelector="{StaticResource AlternatingRowStyleSelector}"
 						SelectionMode="Single"
 						ShowToolTip="True"
 						SizeChanged="TreeGrid_SizeChanged"
@@ -442,6 +447,7 @@
 						ItemsSource="{x:Bind ViewModel.CompareNodes}"
 						NavigationMode="Cell"
 						PasteOption="None"
+						RowStyleSelector="{StaticResource AlternatingRowStyleSelector}"
 						SelectionMode="Single"
 						ShowToolTip="True"
 						SizeChanged="TreeGrid_SizeChanged"
@@ -527,6 +533,7 @@
 						ItemsSource="{x:Bind ViewModel.ChangesNodes}"
 						NavigationMode="Cell"
 						PasteOption="None"
+						RowStyleSelector="{StaticResource AlternatingRowStyleSelector}"
 						SelectionMode="Single"
 						ShowToolTip="True"
 						SizeChanged="TreeGrid_SizeChanged"
