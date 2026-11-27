@@ -96,6 +96,7 @@ public partial class App : Application
 			else
 			{
 				MainWindow = new MainWindow();
+				MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
 				ThemeService = Ioc.Default.GetRequiredService<ThemeService>().ConfigureBackdrop(BackdropType.MicaAlt).Initialize(MainWindow);
 
 				if (localSettings.Values.TryGetValue("TintColor", out object? tintValue) && tintValue is string tintHex)
@@ -164,6 +165,7 @@ public partial class App : Application
 		else
 		{
 			MainWindow = new MainWindow();
+			MainWindow.AppWindow.SetIcon("Assets/AppIcon.ico");
 			ThemeService = Ioc.Default.GetRequiredService<ThemeService>().ConfigureBackdrop(BackdropType.MicaAlt).Initialize(MainWindow);
 			MainWindow.Activate();
 		}
