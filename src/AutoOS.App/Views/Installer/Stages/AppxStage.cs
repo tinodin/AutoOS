@@ -19,7 +19,10 @@ public static class AppxStage
 			("Uninstalling OneDrive", async () => { string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft OneDrive"); if (Directory.Exists(path)) { foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => Directory.Delete(path, true)); } }, null),
 			("Uninstalling OneDrive", async () => { string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "OneDrive"); if (Directory.Exists(path)) { foreach (Process process in ProcessesHelper.GetLockingProcesses(path)) { process.Kill(); process.WaitForExit(); } RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => Directory.Delete(path, true)); } }, null),
 			("Uninstalling OneDrive", async () => RegistryHelper.RunAs(RegistryHelper.Identity.TrustedInstaller, () => { string file = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "OneDriveSetup.exe"); if (File.Exists(file)) File.Move(file, file + "e"); }), null),
-			("Uninstalling OneDrive", async () => TaskSchedulerHelper.Unregister("OneDrive Startup Task"), null)
+			("Uninstalling OneDrive", async () => TaskSchedulerHelper.Unregister("OneDrive Startup Task"), null),
+
+			// copilot
+			("Uninstalling Copilot", async () => await Process.Start(new ProcessStartInfo { FileName = Directory.GetFiles(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Microsoft", "Copilot", "Application"), "copilot_setup.exe", SearchOption.AllDirectories).First(), Arguments = "--uninstall --mscopilot --channel=stable --system-level --verbose-logging", WindowStyle = ProcessWindowStyle.Hidden })!.WaitForExitAsync(), null)
 		};
 
 		// add uninstall actions
